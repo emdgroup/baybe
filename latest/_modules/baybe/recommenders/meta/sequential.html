@@ -876,6 +876,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -996,6 +997,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">deep_iterable</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">NoRecommendersLeftError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
@@ -1041,7 +1043,8 @@
 
 <div class="viewcode-block" id="TwoPhaseMetaRecommender.select_recommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.html#baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.select_recommender">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>  <span class="c1"># noqa: D102</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1049,8 +1052,6 @@
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PureRecommender</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">measurements</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">switch_after</span><span class="p">)</span>
@@ -1058,6 +1059,7 @@
         <span class="p">)</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Initial recommender&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_recommender</span><span class="p">),</span>
@@ -1127,7 +1129,8 @@
 
 <div class="viewcode-block" id="SequentialMetaRecommender.select_recommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.SequentialMetaRecommender.html#baybe.recommenders.meta.sequential.SequentialMetaRecommender.select_recommender">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>  <span class="c1"># noqa: D102</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1135,8 +1138,6 @@
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PureRecommender</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="n">n_data</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="k">if</span> <span class="n">measurements</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
 
         <span class="c1"># If the training dataset size has increased, move to the next recommender</span>
@@ -1173,6 +1174,7 @@
         <span class="k">return</span> <span class="n">recommender</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Recommenders&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommenders</span><span class="p">),</span>
@@ -1226,7 +1228,8 @@
 
 <div class="viewcode-block" id="StreamingSequentialMetaRecommender.select_recommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender.html#baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender.select_recommender">[docs]</a>
-    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>  <span class="c1"># noqa: D102</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1234,8 +1237,6 @@
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PureRecommender</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="n">use_last</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="n">n_data</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="k">if</span> <span class="n">measurements</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span>
 
@@ -1268,6 +1269,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_recommender</span>  <span class="c1"># type: ignore[return-value]</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Recommenders&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommenders</span><span class="p">),</span>

@@ -877,6 +877,7 @@
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1010,6 +1011,18 @@ and <code class="docutils literal notranslate"><span class="pre">matminer</span>
 packages. If you require other packages, try to install <code class="docutils literal notranslate"><span class="pre">baybe</span></code> first.</p>
 </div>
 </section>
+<section id="cpus-without-avx-support-installation-of-polars">
+<h3>CPUs without AVX support – Installation of <code class="docutils literal notranslate"><span class="pre">polars</span></code><a class="headerlink" href="#cpus-without-avx-support-installation-of-polars" title="Link to this heading">¶</a></h3>
+<p>The package <code class="docutils literal notranslate"><span class="pre">polars</span></code> that can be installed as an optional dependency is only supported for
+CPUs with AVX support. As a consequence, you might not be able to install the optional dependency.
+This is in particular the case for M1 Macs, as these do not offer this support.</p>
+<div class="tip admonition">
+<p class="admonition-title">Suggested Fix</p>
+<p>Instead of <code class="docutils literal notranslate"><span class="pre">polars</span></code>, install <code class="docutils literal notranslate"><span class="pre">polars-lts-cpu</span></code>. BayBE will automatically detect the
+presence of <code class="docutils literal notranslate"><span class="pre">polars</span></code> and active its advanced machinery. For more details, we refer to the
+<a class="reference external" href="https://docs.pola.rs/user-guide/installation/">polars installation guide</a>.</p>
+</div>
+</section>
 <section id="windows-torch-problems">
 <h3>Windows – Torch Problems<a class="headerlink" href="#windows-torch-problems" title="Link to this heading">¶</a></h3>
 <p>Reports of crashes during runtime on Windows machines often stem from a faulty <code class="docutils literal notranslate"><span class="pre">torch</span></code>
@@ -1133,6 +1146,7 @@ of your script</strong>:</p>
 <li><a class="reference internal" href="#">Known Issues</a><ul>
 <li><a class="reference internal" href="#installation-related-issues">Installation Related Issues</a><ul>
 <li><a class="reference internal" href="#macos-arm64-leaked-semaphore">macOS-arm64 – Leaked Semaphore</a></li>
+<li><a class="reference internal" href="#cpus-without-avx-support-installation-of-polars">CPUs without AVX support – Installation of <code class="docutils literal notranslate"><span class="pre">polars</span></code></a></li>
 <li><a class="reference internal" href="#windows-torch-problems">Windows – Torch Problems</a></li>
 </ul>
 </li>

@@ -876,6 +876,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -987,12 +988,14 @@
 <span></span><span class="sd">&quot;&quot;&quot;Binary targets.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeAlias</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">InvalidTargetValueError</span>
 <span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">SerialMixin</span>
@@ -1043,36 +1046,54 @@
 
 <div class="viewcode-block" id="BinaryTarget.transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.binary.BinaryTarget.html#baybe.targets.binary.BinaryTarget.transform">[docs]</a>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>  <span class="c1"># noqa: D102</span>
-        <span class="c1"># TODO: The method (signature) needs to be refactored, potentially when</span>
-        <span class="c1">#   enabling multi-target settings. The current input type suggests that passing</span>
-        <span class="c1">#   dataframes is allowed, but the code was designed for single targets and</span>
-        <span class="c1">#   desirability objectives, where only one column is present.</span>
-        <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="c1"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Deprecation</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="n">series</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Provide the data to be transformed as first positional argument.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="n">series</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Providing a dataframe via the `data` argument is deprecated and &quot;</span>
+                <span class="s2">&quot;will be removed in a future version. Please pass your data &quot;</span>
+                <span class="s2">&quot;in form of a series as positional argument instead.&quot;</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Mypy does not infer from the above that `series` must be a series here</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+        <span class="c1"># &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt; Deprecation</span>
 
         <span class="c1"># Validate target values</span>
-        <span class="n">col</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-        <span class="n">invalid</span> <span class="o">=</span> <span class="n">col</span><span class="p">[</span><span class="o">~</span><span class="n">col</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">success_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">failure_value</span><span class="p">])</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="n">series</span><span class="p">[</span>
+            <span class="o">~</span><span class="n">series</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">success_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">failure_value</span><span class="p">])</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">invalid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidTargetValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The following values entered for target &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; are not in the &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;set of accepted choice values &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="s2">self.success_value, self.failure_value</span><span class="se">}}</span><span class="s2">: </span><span class="se">\n</span><span class="si">{</span><span class="n">invalid</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">set</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">success_value</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">failure_value</span><span class="p">))</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="n">invalid</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
         <span class="c1"># Transform</span>
-        <span class="n">success_idx</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">success_value</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">success_idx</span> <span class="o">=</span> <span class="n">series</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">success_value</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">success_idx</span><span class="p">,</span> <span class="n">_SUCCESS_VALUE_COMP</span><span class="p">,</span> <span class="n">_FAILURE_VALUE_COMP</span><span class="p">),</span>
-            <span class="n">index</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BinaryTarget.summary">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.binary.BinaryTarget.html#baybe.targets.binary.BinaryTarget.summary">[docs]</a>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>  <span class="c1"># noqa: D102</span>
-        <span class="c1"># See base class.</span>
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">Type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
             <span class="n">Name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

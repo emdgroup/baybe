@@ -876,6 +876,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -992,6 +993,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
 
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibleSearchSpaceError</span><span class="p">,</span> <span class="n">ModelNotTrainedError</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.categorical</span> <span class="kn">import</span> <span class="n">CategoricalParameter</span>
@@ -1079,9 +1081,8 @@
 
 <div class="viewcode-block" id="BetaBernoulliMultiArmedBanditSurrogate.to_botorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.html#baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.to_botorch">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>  <span class="c1"># noqa: D102</span>
-        <span class="c1"># See base class.</span>
-
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
         <span class="c1"># We register the sampler on the fly to avoid eager loading of torch</span>
 
         <span class="kn">from</span> <span class="nn">botorch.sampling.base</span> <span class="kn">import</span> <span class="n">MCSampler</span>
@@ -1105,23 +1106,20 @@
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">()</span></div>
 
 
+    <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_make_input_scaler_factory</span><span class="p">():</span>
-        <span class="c1"># See base class.</span>
-        <span class="c1">#</span>
         <span class="c1"># Due to enforced one-hot encoding, no input scaling is needed.</span>
         <span class="k">return</span> <span class="kc">None</span>
 
+    <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_make_target_scaler_factory</span><span class="p">():</span>
-        <span class="c1"># See base class.</span>
-        <span class="c1">#</span>
         <span class="c1"># We directly use the binary computational representation from the target.</span>
         <span class="k">return</span> <span class="kc">None</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TorchPosterior</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">TorchPosterior</span>
         <span class="kn">from</span> <span class="nn">torch.distributions</span> <span class="kn">import</span> <span class="n">Beta</span>
 
@@ -1130,9 +1128,8 @@
         <span class="p">]</span>
         <span class="k">return</span> <span class="n">TorchPosterior</span><span class="p">(</span><span class="n">Beta</span><span class="p">(</span><span class="o">*</span><span class="n">beta_params_for_candidates</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># See base class.</span>
-
         <span class="c1"># TODO: Fix requirement of OHE encoding. This is likely a long-term goal since</span>
         <span class="c1">#   probably requires decoupling parameter from encodings and associating the</span>
         <span class="c1">#   latter with the surrogate.</span>
@@ -1160,6 +1157,7 @@
         <span class="n">losses</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_x</span> <span class="o">*</span> <span class="p">(</span><span class="n">train_y</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="n">_FAILURE_VALUE_COMP</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_win_lose_counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">wins</span><span class="p">,</span> <span class="n">losses</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Prior&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__str__</span><span class="p">(),</span> <span class="o">*</span><span class="n">fields</span><span class="p">)</span></div>

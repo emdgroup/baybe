@@ -877,6 +877,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -1120,20 +1121,20 @@ process.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>  Scenario  Monte_Carlo_Run  Iteration  Num_Experiments Target_1_Measurements  \
 0    BayBE                0          0                1                [12.0]   
 1    BayBE                0          1                2                [16.0]   
-2    BayBE                1          0                1                [12.0]   
+2    BayBE                1          0                1                 [4.0]   
 3    BayBE                1          1                2                [16.0]   
 
   Target_2_Measurements  Target_1_IterBest  Target_1_CumBest  \
 0               [287.0]               12.0              12.0   
 1               [511.0]               16.0              16.0   
-2               [287.0]               12.0              12.0   
+2                [31.0]                4.0               4.0   
 3               [511.0]               16.0              16.0   
 
    Target_2_IterBest  Target_2_CumBest  
 0              287.0             287.0  
 1              511.0             287.0  
-2              287.0             287.0  
-3              511.0             287.0  
+2               31.0              31.0  
+3              511.0              31.0  
 </pre></div>
 </div>
 </section>

@@ -876,6 +876,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
@@ -986,6 +987,7 @@
           <h1>Source code for baybe.searchspace.validation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Validation functionality for search spaces.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
 
@@ -994,6 +996,7 @@
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">EmptySearchSpaceError</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">TaskParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">get_transform_objects</span>
 
 <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Parameter</span><span class="p">)</span>
 
@@ -1043,43 +1046,17 @@
 <span class="k">def</span> <span class="nf">get_transform_parameters</span><span class="p">(</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">allow_missing</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="n">allow_extra</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">allow_missing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">allow_extra</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract the parameters relevant for transforming a given dataframe.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        parameters: The parameters to be considered for transformation (provided</span>
-<span class="sd">            they have match in the given dataframe).</span>
-<span class="sd">        df: See :meth:`baybe.searchspace.core.SearchSpace.transform`.</span>
-<span class="sd">        allow_missing: See :meth:`baybe.searchspace.core.SearchSpace.transform`.</span>
-<span class="sd">        allow_extra: See :meth:`baybe.searchspace.core.SearchSpace.transform`.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the given parameters and dataframe are not compatible</span>
-<span class="sd">            under the specified values for the Boolean flags.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        The (subset of) parameters that need to be considered for the transformation.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">parameter_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">allow_missing</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">missing</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">parameter_names</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>  <span class="c1"># type: ignore[arg-type]</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;The search space parameter(s) </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> cannot be matched against &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;the provided dataframe. If you want to transform a subset of &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;parameter columns, explicitly set `allow_missing=True`.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">allow_extra</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">extra</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">parameter_names</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;The provided dataframe column(s) </span><span class="si">{</span><span class="n">extra</span><span class="si">}</span><span class="s2"> cannot be matched against&quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;the search space parameters. If you want to transform a dataframe &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;with additional columns, explicitly set `allow_extra=True&#39;.&quot;</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span> <span class="k">if</span> <span class="n">allow_missing</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;The function &#39;get_transform_parameters&#39; has been deprecated and will be &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;removed in a future version. Use &#39;</span><span class="si">{</span><span class="n">get_transform_objects</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">get_transform_objects</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">allow_missing</span><span class="o">=</span><span class="n">allow_missing</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="n">allow_extra</span>
     <span class="p">)</span></div>
 
 </pre></div>
