@@ -4,8 +4,10 @@ from collections.abc import Callable, Collection
 from typing import Any, TypeVar
 
 import pandas as pd
+from attrs import evolve
 
 from baybe.parameters.base import Parameter
+from baybe.parameters.numerical import NumericalContinuousParameter
 
 _TParameter = TypeVar("_TParameter", bound=Parameter)
 
@@ -87,3 +89,51 @@ def get_parameters_from_dataframe(
 def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
     """Sort parameters alphabetically by their names."""
     return tuple(sorted(parameters, key=lambda p: p.name))
+
+
+def activate_parameter(
+    parameter: NumericalContinuousParameter, threshold: float
+) -> NumericalContinuousParameter:
+    """Activates a given parameter by moving its bounds away from zero.
+
+    Important:
+        Parameters whose ranges include zero but whose bounds do not overlap with the
+        inactive range (i.e. parameters that contain the value zero far from their
+        boundary values) remain unchanged, because the corresponding activated parameter
+        would no longer have a continuous value range.
+
+    Args:
+        parameter: The parameter to be activated.
+        threshold: The threshold for a parameter to be considered active.
+
+    Returns:
+        A copy of the parameter with adjusted bounds.
+
+    Raises:
+        ValueError: If the parameter cannot be activated since both its bounds are
+            in the inactive range.
+    """
+    lower = parameter.bounds.lower
+    upper = parameter.bounds.upper
+
+    def in_inactive_range(x: float, /) -> bool:
+        return -threshold <= x <= threshold
+
+    # Upper bound is in inactive range
+    if lower < -threshold and in_inactive_range(upper):
+        return evolve(parameter, bounds=(lower, -threshold))
+
+    # Lower bound is in inactive range
+    if upper > threshold and in_inactive_range(lower):
+        return evolve(parameter, bounds=(threshold, upper))
+
+    # Both bounds in inactive range
+    if in_inactive_range(lower) and in_inactive_range(upper):
+        raise ValueError(
+            f"Parameter '{parameter.name}' cannot be set active since its "
+            f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
+            f"inactive range [-{threshold}, {threshold}]."
+        )
+
+    # Both bounds separated from inactive range
+    return parameter

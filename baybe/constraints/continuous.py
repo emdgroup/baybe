@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
+from itertools import combinations
+from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -137,6 +139,26 @@ class ContinuousCardinalityConstraint(
     CardinalityConstraint, ContinuousNonlinearConstraint
 ):
     """Class for continuous cardinality constraints."""
+
+    @property
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return sum(
+            comb(len(self.parameters), n_inactive_parameters)
+            for n_inactive_parameters in self._inactive_set_sizes()
+        )
+
+    def _inactive_set_sizes(self) -> range:
+        """Get all possible sizes of inactive parameter sets."""
+        return range(
+            len(self.parameters) - self.max_cardinality,
+            len(self.parameters) - self.min_cardinality + 1,
+        )
+
+    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible combinations of inactive parameters."""
+        for n_inactive_parameters in self._inactive_set_sizes():
+            yield from combinations(self.parameters, n_inactive_parameters)
 
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.
