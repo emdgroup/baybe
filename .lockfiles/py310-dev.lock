@@ -609,7 +609,6 @@ prompt-toolkit==3.0.47
     #   jupyter-console
 protobuf==3.20.3
     # via
-    #   baybe (pyproject.toml)
     #   googleapis-common-protos
     #   onnx
     #   onnxconverter-common
@@ -860,7 +859,7 @@ toml==0.10.2
     # via
     #   pip-audit
     #   streamlit
-tomli==2.0.1 ; python_full_version == '3.11'
+tomli==2.0.1 ; python_full_version <= '3.11'
     # via
     #   coverage
     #   jupyterlab
