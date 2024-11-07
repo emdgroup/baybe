@@ -44,10 +44,10 @@ if TYPE_CHECKING:
     from botorch.posteriors import Posterior
 
 # Metadata columns
-_WAS_RECOMMENDED = "was_recommended"
-_WAS_MEASURED = "was_measured"
-_DONT_RECOMMEND = "dont_recommend"
-_METADATA_COLUMNS = [_WAS_RECOMMENDED, _WAS_MEASURED, _DONT_RECOMMEND]
+_RECOMMENDED = "recommended"
+_MEASURED = "measured"
+_EXCLUDED = "excluded"
+_METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 
 @define
@@ -262,7 +262,7 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
-        self._searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
+        self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
     def exclude_discrete_candidates(
         self, filter: pd.DataFrame, value: bool, dry_run: bool = False
@@ -286,7 +286,7 @@ class Campaign(SerialMixin):
             how="inner",
         ).set_index("_df_index")
         if not dry_run:
-            self._searchspace_metadata.loc[points.index, _DONT_RECOMMEND] = value
+            self._searchspace_metadata.loc[points.index, _EXCLUDED] = value
         return points
 
     def recommend(
@@ -349,7 +349,7 @@ class Campaign(SerialMixin):
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._searchspace_metadata.loc[rec.index, _WAS_RECOMMENDED] = True
+            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)

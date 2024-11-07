@@ -30,14 +30,14 @@ class AnnotatedSubspaceDiscrete(SubspaceDiscrete):
         allow_recommending_already_measured: bool = False,
         exclude: pd.DataFrame | None = None,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
-        from baybe.campaign import _DONT_RECOMMEND, _WAS_MEASURED, _WAS_RECOMMENDED
+        from baybe.campaign import _EXCLUDED, _MEASURED, _RECOMMENDED
 
         # Exclude parts marked by metadata
-        mask_todrop = self.metadata[_DONT_RECOMMEND].copy()
+        mask_todrop = self.metadata[_EXCLUDED].copy()
         if not allow_repeated_recommendations:
-            mask_todrop |= self.metadata[_WAS_RECOMMENDED]
+            mask_todrop |= self.metadata[_RECOMMENDED]
         if not allow_recommending_already_measured:
-            mask_todrop |= self.metadata[_WAS_MEASURED]
+            mask_todrop |= self.metadata[_MEASURED]
 
         # Remove additional excludes
         if exclude is not None:
