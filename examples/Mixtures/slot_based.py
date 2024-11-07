@@ -245,9 +245,9 @@ print("Number of permuted configurations: ", n_permute)
 # slightly more complex version of the ["stars and bars"
 # problem](https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)), where the
 # number of non-empty bins is fixed. That is, we need to ask how many possible ways
-# exist to distribute `N` items (= increase from one percentage level to the next)
-# across `M` bins (= number of available solvents) if exactly `K` bins are non-empty (=
-# number of solvents allowed in the mixture).
+# exist to distribute `N` items (= number of elemental steps for the amounts, in our
+# case `RESOLUTION-1`) across `M` bins (= number of available solvents) if exactly
+# `K` bins are non-empty (= number of solvents allowed in the mixture).
 #
 # There are `(M choose K)` ways to select the non-empty buckets. When distributing the
 # `N` items, one item needs to go to each of the `K` buckets for it to be non-empty.
