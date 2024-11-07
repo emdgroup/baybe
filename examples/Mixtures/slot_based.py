@@ -68,9 +68,9 @@ RESOLUTION = 5  # resolution for discretizing the slot amounts
 
 dict_solvents = {
     "water": "O",
-    "C1": "C",
-    "C2": "CC",
-    "C3": "CCC",
+    "ethanol": "CCO",
+    "methanol": "CO",
+    "acetone": "CC(=O)C",
 }
 slot1_label = SubstanceParameter(
     name="Slot1_Label", data=dict_solvents, encoding="MORDRED"
