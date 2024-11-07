@@ -187,11 +187,12 @@ constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 #
 # In this example, we use the
 # {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_product` constructor in order
-# to demonstrate the explicit creation all involved constraint objects. However, for
+# to demonstrate the explicit creation of all involved constraints. However, for
 # creating mixture representations, the
 # {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` constructor should
-# generally be preferred, as it provides a more efficient path to the same result.
-# ````
+# generally be used. It takes care of the overall sum constraint already during search
+# space creation, providing a more efficient path to the same result.
+# ```
 
 space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
 print(
