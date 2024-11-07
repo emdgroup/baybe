@@ -264,6 +264,31 @@ class Campaign(SerialMixin):
         )
         self._searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
 
+    def exclude_discrete_candidates(
+        self, filter: pd.DataFrame, value: bool, dry_run: bool = False
+    ) -> pd.DataFrame:
+        """Un-/exclude a certain set of discrete candidate points.
+
+        Args:
+            filter: A dataframe defining the candidates to be un-/excluded.
+                The subset is determined via an inner merge with the discrete space.
+            value: If True, the specified set of candidates are excluded.
+                If False, the candidates are re-considered for recommendation.
+            dry_run: If True, the matching candidate set is only extracted but not
+                affected. Useful for setting up the correct filtering mechanism.
+
+        Returns:
+            The discrete candidate set passing through the specified filter.
+        """
+        points = pd.merge(
+            self.searchspace.discrete.exp_rep.reset_index(names="_df_index"),
+            filter,
+            how="inner",
+        ).set_index("_df_index")
+        if not dry_run:
+            self._searchspace_metadata.loc[points.index, _DONT_RECOMMEND] = value
+        return points
+
     def recommend(
         self,
         batch_size: int,

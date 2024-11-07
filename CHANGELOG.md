@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example for a traditional mixture
 - `add_noise_to_perturb_degenerate_rows` utility
 - `benchmarks` subpackage for defining and running performance tests
+– `Campaign.exclude_discrete_candidates` for dynamically un-/excluding discrete
+  candidates from recommendation
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
