@@ -1,6 +1,6 @@
-## Modelling a Mixture in Traditional Representation
+## Modeling a Mixture in Traditional Representation
 
-# When modelling mixtures, we are often faced with a large set of ingredients to choose
+# When modeling mixtures, we are often faced with a large set of ingredients to choose
 # from. A common way to formalize this type of selection problem is to assign each
 # ingredient its own numerical parameter representing the amount of the ingredient in
 # the mixture. A sum constraint imposed on all parameters then ensures that the total

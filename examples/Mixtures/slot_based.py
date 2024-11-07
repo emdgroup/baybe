@@ -1,4 +1,4 @@
-## Modelling a Mixture in Slot-Based Representation
+## Modeling a Mixture in Slot-Based Representation
 
 ### Terminology
 
@@ -135,14 +135,14 @@ no_duplicates_constraint = DiscreteNoLabelDuplicatesConstraint(
 
 # Next, we need to take care of permutation invariance. If our order of addition does
 # not matter, the result of interchanging any two slots does not alter the overall
-# mixture, i.e. the mixture slots are are considered permutation-invariant.
+# mixture, i.e. the mixture slots are considered permutation-invariant.
 
-# A complication with permutation invariance arises from the fact that we have not only
-# a label per slot, but also a numerical amount. If this amount is zero, then the label
-# of the slot becomes meaningless, because adding zero of the corresponding substance
-# does not change the mixture. In BayBE, we call this a "dependency", i.e. the slot
-# labels depend on the slot amounts and are only relevant if the amount satisfies some
-# condition (in this case "amount > 0").
+# A complication with permutation invariance arises from the fact that we do not only
+# have a label per slot, but also a numerical amount. If this amount is zero, then the
+# label of the slot becomes meaningless, because adding zero of the corresponding
+# substance does not change the mixture. In BayBE, we call this a "dependency", i.e.
+# the slot labels depend on the slot amounts and are only relevant if the amount
+# satisfies some condition (in this case "amount > 0").
 
 # The {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint` informs the
 # {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint` about
