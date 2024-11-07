@@ -280,11 +280,12 @@ class Campaign(SerialMixin):
         Returns:
             The discrete candidate set passing through the specified filter.
         """
+        exp_rep = self.searchspace.discrete.exp_rep
+        index_name = exp_rep.index.name
         points = pd.merge(
-            self.searchspace.discrete.exp_rep.reset_index(names="_df_index"),
-            filter,
-            how="inner",
+            exp_rep.reset_index(names="_df_index"), filter, how="inner"
         ).set_index("_df_index")
+        points.index.name = index_name
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = value
         return points
