@@ -44,6 +44,7 @@
 import math
 
 import numpy as np
+import pandas as pd
 
 from baybe.constraints import (
     DiscreteDependenciesConstraint,
@@ -223,7 +224,12 @@ print(
 
 amounts = space.exp_rep[["Slot1_Amount", "Slot2_Amount", "Slot3_Amount"]]
 labels = space.exp_rep[["Slot1_Label", "Slot2_Label", "Slot3_Label"]]
-
+slots = space.exp_rep.apply(
+    lambda row: pd.Series(
+        [(row[f"Slot{k}_Label"], row[f"Slot{k}_Amount"]) for k in range(1, 4)]
+    ),
+    axis=1,
+)
 
 # * All amounts sum to 100:
 
@@ -241,10 +247,9 @@ print("Number of configurations with duplicate slot labels: ", n_duplicates)
 
 # * There are no permutation-invariant configurations:
 
-n_permute = labels.apply(frozenset, axis=1).to_frame().join(amounts).duplicated().sum()
+n_permute = slots.apply(frozenset, axis=1).duplicated().sum()
 assert n_permute == 0
 print("Number of permuted configurations: ", n_permute)
-
 
 ### Verification of Span
 
