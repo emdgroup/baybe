@@ -90,7 +90,7 @@ c_g3_max = ContinuousLinearConstraint(
 searchspace = SubspaceContinuous.from_product(
     parameters=[*p_g1_amounts, *p_g2_amounts, *p_g3_amounts],
     constraints=[c_total_sum, c_g2_min, c_g3_max],
-).to_searchspace()
+).to_searchspace()  # alternatively use SearchSpace.from_product
 
 
 ### Verification of Constraints
