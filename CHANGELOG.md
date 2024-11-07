@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `MORGAN_FP`. As a replacement, `ECFP` with 1024 bits and
   radius of 4 can be used.
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
+- The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
+  exclusively handled by the `Campaign` class.
 
 ## [0.11.3] - 2024-11-06
 ### Fixed

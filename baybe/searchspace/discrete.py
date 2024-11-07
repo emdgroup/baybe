@@ -18,7 +18,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import OptionalImportError
+from baybe.exceptions import DeprecationError, OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -514,6 +514,18 @@ class SubspaceDiscrete(SerialMixin):
             parameters=[*simplex_parameters, *product_parameters],
             exp_rep=exp_rep,
             constraints=constraints,
+        )
+
+    @property
+    def metadata(self) -> pd.DataFrame:
+        """Deprecated!"""
+        from baybe.campaign import Campaign
+
+        raise DeprecationError(
+            f"Search spaces no longer carry any metadata to avoid stateful behavior. "
+            f"Metadata is now exclusively tracked by the `{Campaign.__name__}` class. "
+            f"To dynamically exclude discrete candidates from the search space, "
+            f"use its `{Campaign.exclude_discrete_candidates.__name__}` method."
         )
 
     @property
