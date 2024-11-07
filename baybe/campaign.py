@@ -85,7 +85,7 @@ class Campaign(SerialMixin):
     """The employed recommender"""
 
     # Metadata
-    searchspace_metadata: pd.DataFrame = field(
+    _searchspace_metadata: pd.DataFrame = field(
         init=False,
         default=Factory(
             lambda self: pd.DataFrame(
@@ -262,7 +262,7 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
-        self.searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
+        self._searchspace_metadata.loc[idxs_matched, _WAS_MEASURED] = True
 
     def recommend(
         self,
@@ -306,7 +306,7 @@ class Campaign(SerialMixin):
         annotated_searchspace = evolve(
             self.searchspace,
             discrete=AnnotatedSubspaceDiscrete.from_subspace(
-                self.searchspace.discrete, self.searchspace_metadata
+                self.searchspace.discrete, self._searchspace_metadata
             ),
         )
 
@@ -324,7 +324,7 @@ class Campaign(SerialMixin):
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self.searchspace_metadata.loc[rec.index, _WAS_RECOMMENDED] = True
+            self._searchspace_metadata.loc[rec.index, _WAS_RECOMMENDED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
