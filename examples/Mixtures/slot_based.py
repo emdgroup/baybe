@@ -182,17 +182,6 @@ constraints = [perm_inv_constraint, sum_constraint, no_duplicates_constraint]
 # With all building blocks in place, we can now assemble our discrete space and inspect
 # its configurations:
 
-# ```{admonition} Simplex Construction
-# :class: tip
-#
-# In this example, we use the
-# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_product` constructor in order
-# to demonstrate the explicit creation of all involved constraints. However, for
-# creating mixture representations, the
-# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` constructor should
-# generally be used. It takes care of the overall sum constraint already during search
-# space creation, providing a more efficient path to the same result.
-# ```
 
 space = SubspaceDiscrete.from_product(parameters=parameters, constraints=constraints)
 print(
@@ -202,6 +191,31 @@ print(
         max_columns=len(space.exp_rep.columns),
     )
 )
+
+# ````{admonition} Simplex Construction
+# :class: tip
+# In this example, we use the
+# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_product` constructor in order
+# to demonstrate the explicit creation of all involved constraints. However, for
+# creating mixture representations, the
+# {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex` constructor should
+# generally be used. It takes care of the overall sum constraint already during search
+# space creation, providing a more efficient path to the same result.
+#
+# The alternative in our case would look like:
+# ```python
+# space = SubspaceDiscrete.from_simplex(
+#     max_sum=100.0,
+#     boundary_only=True,
+#     simplex_parameters=[slot1_amount, slot2_amount, slot3_amount],
+#     product_parameters=[slot1_label, slot2_label, slot3_label],
+#     constraints=[perm_inv_constraint, no_duplicates_constraint],
+# )
+# ```
+# Note that `from_simplex` explicitly ensures the sum constraint, hence we do not pass
+# it to `constraints`.
+# ````
+
 
 ### Verification of Constraints
 
