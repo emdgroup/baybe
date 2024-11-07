@@ -149,16 +149,6 @@ subspace = SubspaceDiscrete.from_product(parameters=[speed, temperature])
   5           0             0           1        105.0
 ~~~
 
-### Metadata
-
-```{warning}
-Although possible, it is not intended to manually change the metadata. The metadata is maintained internally, and there is a risk involved with manipulating it manually.
-Consequently, we advise to only change the metadata manually if you are certain about it.
-```
-
-Discrete subspaces keep track of the recommendations that were made during a campaign.
-The information is stored in a [`metadata`](baybe.searchspace.discrete.SubspaceDiscrete.metadata) field, and it is possible to manually modify `metadata` to influence the behavior of the corresponding `campaign` exploring the space. In particular, by manually changing the values of `metadata["dont_recommend"]`, it is possible to prevent certain points of the subspace from being recommended.
-
 ## Continuous Subspaces
 
 The `SubspaceContinuous` contains all the continuous parameters of a `SearchSpace`. There are different ways of constructing this subspace.
