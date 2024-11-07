@@ -212,11 +212,10 @@ class PureRecommender(ABC, RecommenderProtocol):
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
-                "possible data points left to recommend. This can be "
-                "either because all data points have been measured at some point "
-                "(while 'allow_repeated_recommendations' or "
-                "'allow_recommending_already_measured' being False) "
-                "or because all data points are marked as 'dont_recommend'."
+                "possible data points left to recommend. This can happen "
+                "when all candidates have already been measured/recommended while "
+                "`allow_repeated_recommendations'/'allow_recommending_already_measured' "  # noqa: E501
+                "are set to `False`."
             )
 
         # Get recommendations
