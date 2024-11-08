@@ -265,17 +265,27 @@ class Campaign(SerialMixin):
         self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
     def exclude_discrete_candidates(
-        self, filter: pd.DataFrame, value: bool, dry_run: bool = False
+        self,
+        filter: pd.DataFrame,
+        value: bool,
+        anti: bool = False,
+        dry_run: bool = False,
     ) -> pd.DataFrame:
         """Un-/exclude a certain set of discrete candidate points.
 
         Args:
-            filter: A dataframe defining the candidates to be un-/excluded.
-                The subset is determined via an inner merge with the discrete space.
-            value: If True, the specified set of candidates are excluded.
-                If False, the candidates are re-considered for recommendation.
-            dry_run: If True, the matching candidate set is only extracted but not
-                affected. Useful for setting up the correct filtering mechanism.
+            filter: A dataframe defining the candidates subset to be un-/excluded.
+                The subset is determined via a join (see ``anti`` argument) with the
+                discrete space.
+            value: If ``True``, the specified set of candidates are excluded.
+                If ``False``, the candidates are considered for recommendation.
+            anti: If ``False``, the filter determines the points to be affected (i.e.
+                selection using a regular join). If ``True``, the filtering mechanism is
+                inverted in that only the points passing the filter are unaffected (i.e.
+                selection using an anti-join).
+            dry_run: If ``True``, the matching subset is only extracted but not
+                affected. If ``False``, the candidate set is updated correspondingly.
+                Useful for setting up the correct filtering mechanism.
 
         Returns:
             The discrete candidate set passing through the specified filter.
@@ -283,11 +293,16 @@ class Campaign(SerialMixin):
         exp_rep = self.searchspace.discrete.exp_rep
         index_name = exp_rep.index.name
         points = pd.merge(
-            exp_rep.reset_index(names="_df_index"), filter, how="inner"
+            exp_rep.reset_index(names="_df_index"), filter, how="left", indicator=True
         ).set_index("_df_index")
+        selector = "left_only" if anti else "both"
+        points = points[points["_merge"] == selector]
+        points.drop("_merge", axis=1, inplace=True)
         points.index.name = index_name
+
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = value
+
         return points
 
     def recommend(
