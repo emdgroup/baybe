@@ -525,7 +525,7 @@ class SubspaceDiscrete(SerialMixin):
             f"Search spaces no longer carry any metadata to avoid stateful behavior. "
             f"Metadata is now exclusively tracked by the `{Campaign.__name__}` class. "
             f"To dynamically exclude discrete candidates from the search space, "
-            f"use its `{Campaign.exclude_discrete_candidates.__name__}` method."
+            f"use its `{Campaign.toggle_discrete_candidates.__name__}` method."
         )
 
     @property

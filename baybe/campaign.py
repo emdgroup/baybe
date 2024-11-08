@@ -264,26 +264,26 @@ class Campaign(SerialMixin):
         )
         self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
-    def exclude_discrete_candidates(
+    def toggle_discrete_candidates(
         self,
         filter: pd.DataFrame,
-        value: bool,
+        exclude: bool,
         anti: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
-        """Un-/exclude a certain set of discrete candidate points.
+        """Un-/exclude certain discrete points from the candidate set.
 
         Args:
-            filter: A dataframe defining the candidates subset to be un-/excluded.
-                The subset is determined via a join (see ``anti`` argument) with the
-                discrete space.
-            value: If ``True``, the specified set of candidates are excluded.
+            filter: A dataframe specifying the filtering mechanism to determine the
+                candidates subset to be un-/excluded. The subset is determined via a
+                join (see ``anti`` argument for details) with the discrete space.
+            exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
             anti: If ``False``, the filter determines the points to be affected (i.e.
-                selection using a regular join). If ``True``, the filtering mechanism is
+                selection via regular join). If ``True``, the filtering mechanism is
                 inverted in that only the points passing the filter are unaffected (i.e.
-                selection using an anti-join).
-            dry_run: If ``True``, the matching subset is only extracted but not
+                selection via anti-join).
+            dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
 
@@ -301,7 +301,7 @@ class Campaign(SerialMixin):
         points.index.name = index_name
 
         if not dry_run:
-            self._searchspace_metadata.loc[points.index, _EXCLUDED] = value
+            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
 
         return points
 
