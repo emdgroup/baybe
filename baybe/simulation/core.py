@@ -125,21 +125,10 @@ def simulate_experiment(
 
         # For impute_mode 'ignore', do not recommend space entries that are not
         # available in the lookup
-        # TODO [16605]: Avoid direct manipulation of metadata
         if impute_mode == "ignore":
-            exp_rep = campaign.searchspace.discrete.exp_rep
-            lookup_configurations = lookup[
-                [p.name for p in campaign.parameters]
-            ].drop_duplicates()
-            missing_inds = exp_rep.index[
-                exp_rep.merge(lookup_configurations, how="left", indicator=True)[
-                    "_merge"
-                ]
-                == "left_only"
-            ]
-            campaign.searchspace.discrete.metadata.loc[
-                missing_inds, "dont_recommend"
-            ] = True
+            campaign.toggle_discrete_candidates(
+                lookup[[p.name for p in campaign.parameters]], exclude=True, anti=True
+            )
 
         # Run the DOE loop
         limit = n_doe_iterations or np.inf

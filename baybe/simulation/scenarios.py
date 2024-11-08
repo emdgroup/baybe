@@ -8,7 +8,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
-import numpy as np
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -222,15 +221,12 @@ def _simulate_groupby(
         # off-group configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
         campaign_group = deepcopy(campaign)
-        # TODO: Implement SubspaceDiscrete.__len__
-        off_group_idx = np.full(
-            len(campaign.searchspace.discrete.exp_rep), fill_value=True, dtype=bool
-        )
-        off_group_idx[group.index.values] = False
-        # TODO [16605]: Avoid direct manipulation of metadata
-        campaign_group.searchspace.discrete.metadata.loc[
-            off_group_idx, "dont_recommend"
-        ] = True
+        cols = [
+            c
+            for c in group.columns
+            if c in campaign.searchspace.discrete.parameter_names
+        ]
+        campaign_group.toggle_discrete_candidates(group[cols], exclude=True, anti=True)
 
         # Run the group simulation
         try:
