@@ -7,7 +7,7 @@ from pytest import param
 
 from baybe.campaign import Campaign
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace.discrete import SubspaceDiscrete
 
 from .conftest import run_iterations
 
@@ -42,28 +42,25 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     [
         (
             False,
-            pd.DataFrame(
-                {"a": {0: 0.0, 2: 0.0, 4: 0.0}, "b": {0: 3.0, 2: 4.0, 4: 5.0}}
-            ),
+            pd.DataFrame(columns=["a", "b"], data=[[0.0, 3.0], [0.0, 4.0], [0.0, 5.0]]),
         ),
         (
             True,
-            pd.DataFrame(
-                {"a": {1: 1.0, 3: 1.0, 5: 1.0}, "b": {1: 3.0, 3: 4.0, 5: 5.0}}
-            ),
+            pd.DataFrame(columns=["a", "b"], data=[[1.0, 3.0], [1.0, 4.0], [1.0, 5.0]]),
         ),
     ],
     ids=["regular", "anti"],
 )
 def test_candidate_filter(anti, expected):
     """The candidate filter extracts the correct subset of points."""
-    campaign = Campaign(
-        SearchSpace.from_product(
-            [
-                NumericalDiscreteParameter("a", [0, 1]),
-                NumericalDiscreteParameter("b", [3, 4, 5]),
-            ]
-        )
+    subspace = SubspaceDiscrete.from_product(
+        [
+            NumericalDiscreteParameter("a", [0, 1]),
+            NumericalDiscreteParameter("b", [3, 4, 5]),
+        ]
     )
+    campaign = Campaign(subspace)
     df = campaign.toggle_discrete_candidates(pd.DataFrame({"a": [0]}), False, anti=anti)
-    assert_frame_equal(df, expected)
+    assert_frame_equal(
+        df, pd.merge(df.reset_index(), expected).set_index("index"), check_names=False
+    )
