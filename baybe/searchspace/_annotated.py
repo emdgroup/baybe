@@ -15,28 +15,42 @@ class AnnotatedSubspaceDiscrete(SubspaceDiscrete):
     metadata: pd.DataFrame = field(kw_only=True, eq=eq_dataframe)
     """The metadata."""
 
+    allow_repeated_recommendations: bool = field(kw_only=True)
+    """Allow to make recommendations that were already recommended earlier.
+    This only has an influence in discrete search spaces."""
+
+    allow_recommending_already_measured: bool = field(kw_only=True)
+    """Allow to make recommendations that were measured previously.
+    This only has an influence in discrete search spaces."""
+
     @classmethod
-    def from_subspace(cls, subspace: SubspaceDiscrete, metadata: pd.DataFrame) -> Self:
+    def from_subspace(
+        cls,
+        subspace: SubspaceDiscrete,
+        *,
+        metadata: pd.DataFrame,
+        allow_repeated_recommendations: bool,
+        allow_recommending_already_measured: bool,
+    ) -> Self:
         """Annotate an existing subspace with metadata."""
         return cls(
             **asdict(subspace, filter=lambda attr, _: attr.init, recurse=False),
             metadata=metadata,
+            allow_repeated_recommendations=allow_repeated_recommendations,
+            allow_recommending_already_measured=allow_recommending_already_measured,
         )
 
     @override
     def get_candidates(
-        self,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = False,
-        exclude: pd.DataFrame | None = None,
+        self, exclude: pd.DataFrame | None = None
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         from baybe.campaign import _EXCLUDED, _MEASURED, _RECOMMENDED
 
         # Exclude parts marked by metadata
         mask_todrop = self.metadata[_EXCLUDED].copy()
-        if not allow_repeated_recommendations:
+        if not self.allow_repeated_recommendations:
             mask_todrop |= self.metadata[_RECOMMENDED]
-        if not allow_recommending_already_measured:
+        if not self.allow_recommending_already_measured:
             mask_todrop |= self.metadata[_MEASURED]
 
         # Remove additional excludes

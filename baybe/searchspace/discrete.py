@@ -599,22 +599,11 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     def get_candidates(
-        self,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = False,
-        exclude: pd.DataFrame | None = None,
+        self, exclude: pd.DataFrame | None = None
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
 
         Args:
-            allow_repeated_recommendations: If ``True``, parameter settings that have
-                already been recommended in an earlier iteration are still considered
-                valid candidates. This is relevant, for instance, when an earlier
-                recommended parameter setting has not been measured by the user (for any
-                reason) after the corresponding recommendation was made.
-            allow_recommending_already_measured: If ``True``, parameters settings for
-                which there are already target values available are still considered as
-                valid candidates.
             exclude: Points in experimental representation that should be excluded as
                 candidates.
 

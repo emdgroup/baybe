@@ -29,14 +29,6 @@ class PureRecommender(ABC, RecommenderProtocol):
     """Class variable reflecting the search space compatibility."""
 
     # Object variables
-    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
-    """Allow to make recommendations that were already recommended earlier.
-    This only has an influence in discrete search spaces."""
-
-    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
-    """Allow to make recommendations that were measured previously.
-    This only has an influence in discrete search spaces."""
-
     allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
     """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
     the corresponding points will be removed from the candidates. This only has an
@@ -198,10 +190,6 @@ class PureRecommender(ABC, RecommenderProtocol):
             is_hybrid_space or self.allow_recommending_pending_experiments
         )
         candidates_exp, _ = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=is_hybrid_space
-            or self.allow_repeated_recommendations,
-            allow_recommending_already_measured=is_hybrid_space
-            or self.allow_recommending_already_measured,
             exclude=None if dont_exclude_pending else pending_experiments,
         )
 
@@ -212,10 +200,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
-                "possible data points left to recommend. This can happen "
-                "when all candidates have already been measured/recommended while "
-                "`allow_repeated_recommendations'/'allow_recommending_already_measured' "  # noqa: E501
-                "are set to `False`."
+                f"possible data points left to recommend."
             )
 
         # Get recommendations
