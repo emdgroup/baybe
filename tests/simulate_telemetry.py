@@ -72,10 +72,7 @@ config = {
         mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
     ),
     "recommender": TwoPhaseMetaRecommender(
-        recommender=BotorchRecommender(
-            allow_repeated_recommendations=False,
-            allow_recommending_already_measured=False,
-        ),
+        recommender=BotorchRecommender(),
         initial_recommender=RandomRecommender(),
     ),
 }
