@@ -16,7 +16,7 @@ set ENVAR_NAME=my_value
 ```
 Note that variables set in this manner are interpreted as text, but converted internally
 to the needed format. See for instance the [`strtobool`](baybe.utils.boolean.strtobool) 
-converter for values that can be set so BayBE can interpret them as booleans.
+converter for values that can be set so BayBE can interpret them as Booleans.
 
 It is also possible to set environment variables in Python:
 ```python
@@ -108,7 +108,7 @@ In general, double precision is recommended because numerical stability during o
 can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.
 
-If you still want to use single precision, you can set the following boolean variables:
+If you still want to use single precision, you can set the following Boolean variables:
 - `BAYBE_NUMPY_USE_SINGLE_PRECISION` (defaults to `False`)
 - `BAYBE_TORCH_USE_SINGLE_PRECISION` (defaults to `False`)
 

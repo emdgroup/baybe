@@ -41,7 +41,7 @@ def test_qNIPV(sampling_n_points, sampling_fraction, sampling_method, error, mat
 
 @pytest.mark.parametrize("acqf", [qNEI, qLogNEI])
 def test_EI(acqf):
-    """Providing a non-boolean argument to `prune_baseline` raises an error."""
+    """Providing a non-Boolean argument to `prune_baseline` raises an error."""
     with pytest.raises(TypeError):
         acqf(1)
 

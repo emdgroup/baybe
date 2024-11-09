@@ -90,7 +90,7 @@ valid_mc_acqfs = [
 valid_nonmc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
 
 # List of all hybrid recommenders with default attributes. Is extended with other lists
-# of hybird recommenders like naive ones or recommenders not using default arguments
+# of hybrid recommenders like naive ones or recommenders not using default arguments
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_hybrid_recommenders = [
