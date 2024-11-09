@@ -580,7 +580,14 @@ def fixture_default_constraint_selection():
 
 
 @pytest.fixture(name="campaign")
-def fixture_campaign(parameters, constraints, recommender, objective):
+def fixture_campaign(
+    parameters,
+    constraints,
+    recommender,
+    objective,
+    allow_repeated_recommendations,
+    allow_recommending_already_measured,
+):
     """Returns a campaign."""
     return Campaign(
         searchspace=SearchSpace.from_product(
@@ -588,6 +595,8 @@ def fixture_campaign(parameters, constraints, recommender, objective):
         ),
         recommender=recommender,
         objective=objective,
+        allow_repeated_recommendations=allow_repeated_recommendations,
+        allow_recommending_already_measured=allow_recommending_already_measured,
     )
 
 
@@ -665,14 +674,10 @@ def fixture_allow_recommending_pending_experiments():
 
 @pytest.fixture(name="initial_recommender")
 def fixture_initial_recommender(
-    allow_recommending_already_measured,
-    allow_repeated_recommendations,
     allow_recommending_pending_experiments,
 ):
     """The default initial recommender to be used if not specified differently."""
     return RandomRecommender(
-        allow_repeated_recommendations=allow_repeated_recommendations,
-        allow_recommending_already_measured=allow_recommending_already_measured,
         allow_recommending_pending_experiments=allow_recommending_pending_experiments,
     )
 
@@ -682,8 +687,6 @@ def fixture_recommender(
     initial_recommender,
     surrogate_model,
     acqf,
-    allow_repeated_recommendations,
-    allow_recommending_already_measured,
     allow_recommending_pending_experiments,
 ):
     """The default recommender to be used if not specified differently."""
@@ -692,8 +695,6 @@ def fixture_recommender(
         recommender=BotorchRecommender(
             surrogate_model=surrogate_model,
             acquisition_function=acqf,
-            allow_repeated_recommendations=allow_repeated_recommendations,
-            allow_recommending_already_measured=allow_recommending_already_measured,
             allow_recommending_pending_experiments=allow_recommending_pending_experiments,
         ),
     )
@@ -772,9 +773,7 @@ def fixture_default_config():
             },
             "recommender": {
                 "type": "BotorchRecommender",
-                "acquisition_function": "qEI",
-                "allow_repeated_recommendations": false,
-                "allow_recommending_already_measured": false
+                "acquisition_function": "qEI"
             },
             "switch_after": 1
         }
