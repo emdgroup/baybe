@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import Factory, define, evolve, field
+from attrs import define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -85,18 +85,7 @@ class Campaign(SerialMixin):
     """The employed recommender"""
 
     # Metadata
-    _searchspace_metadata: pd.DataFrame = field(
-        init=False,
-        default=Factory(
-            lambda self: pd.DataFrame(
-                False,
-                index=self.searchspace.discrete.exp_rep.index,
-                columns=_METADATA_COLUMNS,
-            ),
-            takes_self=True,
-        ),
-        eq=eq_dataframe,
-    )
+    _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
     """Metadata tracking the experimentation status of the search space."""
 
     n_batches_done: int = field(default=0, init=False)
@@ -115,6 +104,17 @@ class Campaign(SerialMixin):
         factory=pd.DataFrame, eq=eq_dataframe, init=False
     )
     """The cached recommendations."""
+
+    @_searchspace_metadata.default
+    def _default_searchspace_metadata(self) -> pd.DataFrame:
+        """Create a fresh metadata object."""
+        df = pd.DataFrame(
+            False,
+            index=self.searchspace.discrete.exp_rep.index,
+            columns=_METADATA_COLUMNS,
+        )
+        df.loc[:, _EXCLUDED] = self.searchspace.discrete._excluded
+        return df
 
     @override
     def __str__(self) -> str:

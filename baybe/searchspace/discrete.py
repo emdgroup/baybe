@@ -99,6 +99,7 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
+    # TODO: remove when refactoring active values mechanism
     _excluded: pd.Series = field(init=False, eq=eq_dataframe)
     """Temporary workaround for handling inactive ``TaskParameter`` values."""
 
