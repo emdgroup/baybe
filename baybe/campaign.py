@@ -88,6 +88,14 @@ class Campaign(SerialMixin):
     )
     """The employed recommender"""
 
+    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
+    """Allow to make recommendations that were already recommended earlier.
+    This only has an influence in discrete search spaces."""
+
+    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
+    """Allow to make recommendations that were measured previously.
+    This only has an influence in discrete search spaces."""
+
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
     """Metadata tracking the experimentation status of the search space."""
@@ -374,7 +382,10 @@ class Campaign(SerialMixin):
         annotated_searchspace = evolve(
             self.searchspace,
             discrete=AnnotatedSubspaceDiscrete.from_subspace(
-                self.searchspace.discrete, self._searchspace_metadata
+                self.searchspace.discrete,
+                metadata=self._searchspace_metadata,
+                allow_repeated_recommendations=self.allow_repeated_recommendations,
+                allow_recommending_already_measured=self.allow_recommending_already_measured,
             ),
         )
 

@@ -4,7 +4,6 @@ import gc
 from abc import ABC, abstractmethod
 from typing import Any
 
-import cattrs
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
@@ -135,17 +134,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(
-    MetaRecommender,
-    lambda x: unstructure_base(
-        x,
-        # TODO: Remove once deprecation got expired:
-        overrides=dict(
-            allow_repeated_recommendations=cattrs.override(omit=True),
-            allow_recommending_already_measured=cattrs.override(omit=True),
-        ),
-    ),
-)
+converter.register_unstructure_hook(MetaRecommender, unstructure_base)
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )
