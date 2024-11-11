@@ -27,11 +27,3 @@ class Result:
 
     execution_time_ns: int = field(validator=instance_of(int))
     """The execution time of the benchmark in nanoseconds."""
-
-    def to_csv(self) -> str:
-        """Return the result as a csv string.
-
-        Returns:
-            The csv as a string.
-        """
-        return self.benchmark_result.to_csv(index=False)
