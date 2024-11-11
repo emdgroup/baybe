@@ -1,10 +1,14 @@
 """This module contains the configuration of a benchmark scenario."""
 
+from typing import TypeVar
+
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of
 
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.serialization.mixin import SerialMixin
+
+BenchmarkConfig = TypeVar("BenchmarkConfig", bound="SerialMixin")
 
 
 @define(frozen=True)
