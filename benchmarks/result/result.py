@@ -12,7 +12,7 @@ from pandas import DataFrame
 from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from benchmarks.definition.config import BenchmarkConfig
-from benchmarks.result.metadata_class import ResultMetadata
+from benchmarks.result.metadata import ResultMetadata
 
 
 @define(frozen=True)

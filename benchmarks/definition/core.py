@@ -11,7 +11,7 @@ from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
 from benchmarks.definition.config import BenchmarkConfig
-from benchmarks.result.metadata_class import ResultMetadata
+from benchmarks.result.metadata import ResultMetadata
 from benchmarks.result.result import Result
 
 BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
