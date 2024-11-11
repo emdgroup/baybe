@@ -2,7 +2,7 @@
 
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Generic
 from uuid import UUID
 
@@ -49,9 +49,11 @@ class Benchmark(Generic[BenchmarkConfig]):
         result = self.callable(self.settings)
         stop_sec = time.perf_counter()
 
+        duration = timedelta(seconds=stop_sec - start_sec)
+
         metadata = ResultMetadata(
             start_datetime=start_datetime,
-            execution_time_sec=stop_sec - start_sec,
+            duration=duration,
         )
 
         return Result(self.identifier, result, metadata)

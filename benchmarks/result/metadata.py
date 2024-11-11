@@ -1,6 +1,6 @@
 """Benchmark result metadata."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import git
 from attrs import define, field
@@ -18,8 +18,8 @@ class ResultMetadata(SerialMixin):
     start_datetime: datetime = field(validator=instance_of(datetime))
     """The start datetime of the benchmark."""
 
-    execution_time_sec: float = field(validator=instance_of(float))
-    """The execution time of the benchmark in seconds."""
+    duration: timedelta = field(validator=instance_of(timedelta))
+    """The time it took to complete the benchmark."""
 
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
