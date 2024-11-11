@@ -1,14 +1,14 @@
 """Basic result classes for benchmarking."""
 
-from typing import Any
 from uuid import UUID
 
 from attrs import define, field
-from attrs.validators import deep_mapping, instance_of
+from attrs.validators import instance_of
 from pandas import DataFrame
 
 from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
+from benchmark.definition.config import BenchmarkScenarioSettings
 from benchmark.result.metadata_class import ResultMetadata
 
 
@@ -20,10 +20,10 @@ class Result(SerialMixin):
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    benchmark_settings: dict[str, Any] = field(
-        validator=deep_mapping(instance_of(str), instance_of(Any), instance_of(dict))
+    benchmark_settings: BenchmarkScenarioSettings = field(
+        validator=instance_of(BenchmarkScenarioSettings)
     )
-    """Metadata about the benchmarking result."""
+    """Settings about the benchmarking result."""
 
     benchmark_result: DataFrame = field()
     """The result of the benchmarked callable."""

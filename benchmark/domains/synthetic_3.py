@@ -1,6 +1,5 @@
 """Synthetic dataset. Custom parabolic test with irrelevant parameters."""
 
-from typing import Any
 from uuid import UUID
 
 from numpy import pi, sin, sqrt
@@ -9,11 +8,14 @@ from pandas import DataFrame
 from baybe.campaign import Campaign
 from baybe.objective import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.recommenders import RandomRecommender
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmark.definition import Benchmark
+from benchmark.definition.config import BenchmarkScenarioSettings
 
 
 def lookup_synthetic_3(z: int, x: float, y: float) -> float:
@@ -33,7 +35,9 @@ def lookup_synthetic_3(z: int, x: float, y: float) -> float:
     raise ValueError("Invalid z value.")
 
 
-def synthetic_3() -> tuple[DataFrame, dict[str, Any]]:
+def synthetic_3(
+    scenario_config: BenchmarkScenarioSettings,
+) -> DataFrame:
     """Synthetic dataset.
 
     Number of Samples            inf
@@ -55,42 +59,41 @@ def synthetic_3() -> tuple[DataFrame, dict[str, Any]]:
         target=NumericalTarget(name="output", mode=TargetMode.MAX)
     )
 
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(parameters=parameters),
-        objective=objective,
-    )
-    campaign_rand = Campaign(
-        searchspace=SearchSpace.from_product(parameters=parameters),
-        recommender=RandomRecommender(),
-        objective=objective,
-    )
+    scenarios = {}
 
-    batch_size = 5
-    n_doe_iterations = 30
-    n_mc_iterations = 50
+    for scenario_name, recommender in scenario_config.recommender.items():
+        campaign = Campaign(
+            searchspace=SearchSpace.from_product(parameters=parameters),
+            objective=objective,
+            recommender=recommender,
+        )
+        scenarios[scenario_name] = campaign
 
-    metadata = {
-        "n_doe_iterations": n_doe_iterations,
-        "batch_size": batch_size,
-        "n_mc_iterations": n_mc_iterations,
-    }
-
-    scenarios = {
-        "Default Recommender": campaign,
-        "Random Recommender": campaign_rand,
-    }
     return simulate_scenarios(
         scenarios,
         lookup_synthetic_3,
-        batch_size=batch_size,
-        n_doe_iterations=n_doe_iterations,
-        n_mc_iterations=n_mc_iterations,
+        batch_size=scenario_config.batch_size,
+        n_doe_iterations=scenario_config.n_doe_iterations,
+        n_mc_iterations=scenario_config.n_mc_iterations,
         impute_mode="error",
-    ), metadata
+    )
 
+
+benchmark_config = BenchmarkScenarioSettings(
+    batch_size=5,
+    n_doe_iterations=30,
+    n_mc_iterations=50,
+    recommender={
+        "Random Recommender": RandomRecommender(),
+        "Default Recommender": TwoPhaseMetaRecommender(
+            RandomRecommender(), BotorchRecommender(), 1
+        ),
+    },
+)
 
 benchmark_synthetic_3 = Benchmark(
     name="Synthetic dataset with three dimensions.",
+    benchmark_settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     benchmark_function=synthetic_3,
 )

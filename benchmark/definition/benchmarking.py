@@ -3,17 +3,17 @@
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
+from benchmark.definition.config import BenchmarkScenarioSettings
 from benchmark.result.metadata_class import ResultMetadata
 from benchmark.result.result import Result
 
-BenchmarkFunction = Callable[[], tuple[DataFrame, dict[str, Any]]]
+BenchmarkFunction = Callable[[BenchmarkScenarioSettings], DataFrame]
 
 
 @define
@@ -22,6 +22,9 @@ class Benchmark:
 
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
+
+    benchmark_settings: BenchmarkScenarioSettings = field()
+    """The configuration for the benchmark settings."""
 
     benchmark_function: BenchmarkFunction = field(validator=is_callable())
     """The function that executes the benchmark code and returns
@@ -45,13 +48,11 @@ class Benchmark:
         and return the result
         """
         start_datetime = datetime.now()
-        start_ns = time.perf_counter_ns()
-        result, benchmark_settings = self.benchmark_function()
-        stop_ns = time.perf_counter_ns()
+        start_ns = time.time()
+        result = self.benchmark_function(self.benchmark_settings)
+        stop_ns = time.time()
 
-        benchmark_settings["benchmark_name"] = self.name
-        time_delta = stop_ns - start_ns
-        time_delta_sec = time_delta / 1e9
+        time_delta_sec = stop_ns - start_ns
 
         result_metadata = ResultMetadata(
             benchmark_name=self.name,
@@ -60,6 +61,6 @@ class Benchmark:
         )
 
         benchmark_result = Result(
-            self.identifier, benchmark_settings, result, result_metadata
+            self.identifier, self.benchmark_settings, result, result_metadata
         )
         return benchmark_result
