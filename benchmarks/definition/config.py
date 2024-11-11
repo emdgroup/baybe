@@ -1,5 +1,6 @@
 """Benchmark configurations."""
 
+from enum import Enum, auto
 from typing import TypeVar
 
 from attrs import define, field
@@ -11,14 +12,22 @@ from baybe.serialization.mixin import SerialMixin
 BenchmarkConfig = TypeVar("BenchmarkConfig", bound="SerialMixin")
 
 
+class _DEFAULT(Enum):
+    NOTHING = auto()
+
+
+# Sentinel indicating the absence of a recommender specification
+DEFAULT_RECOMMENDER = _DEFAULT.NOTHING
+
+
 @define(frozen=True)
 class RecommenderConvergenceAnalysis(SerialMixin):
     """Benchmark configuration for recommender convergence analyses."""
 
-    recommenders: dict[str, RecommenderProtocol] = field(
+    recommenders: dict[str, RecommenderProtocol | _DEFAULT] = field(
         validator=deep_mapping(
             key_validator=instance_of(str),
-            value_validator=instance_of(RecommenderProtocol),
+            value_validator=instance_of(RecommenderProtocol | _DEFAULT),
             mapping_validator=instance_of(dict),
         )
     )

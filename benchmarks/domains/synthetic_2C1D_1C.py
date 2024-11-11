@@ -13,7 +13,10 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import Benchmark
-from benchmarks.definition.config import RecommenderConvergenceAnalysis
+from benchmarks.definition.config import (
+    DEFAULT_RECOMMENDER,
+    RecommenderConvergenceAnalysis,
+)
 
 
 def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -50,18 +53,16 @@ def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataF
     ]
 
     objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
-    scenarios = {
-        "Default Recommender": Campaign(
-            searchspace=SearchSpace.from_product(parameters=parameters),
-            objective=objective,
-        )
-    }
 
+    scenarios: dict[str, Campaign] = {}
     for scenario_name, recommender in scenario_config.recommenders.items():
+        recommender_dct = (
+            {} if recommender is DEFAULT_RECOMMENDER else {"recommender": recommender}
+        )
         campaign = Campaign(
             searchspace=SearchSpace.from_product(parameters=parameters),
             objective=objective,
-            recommender=recommender,
+            **recommender_dct,
         )
         scenarios[scenario_name] = campaign
 
@@ -77,6 +78,7 @@ def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataF
 
 benchmark_config = RecommenderConvergenceAnalysis(
     recommenders={
+        "Default Recommender": DEFAULT_RECOMMENDER,
         "Random Recommender": RandomRecommender(),
     },
     batch_size=5,
