@@ -5,7 +5,6 @@ import pickle
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any, TypeVar, get_type_hints
-from uuid import UUID
 
 import attrs
 import cattrs
@@ -171,5 +170,3 @@ converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s"
 converter.register_structure_hook(
     timedelta, lambda x, _: timedelta(seconds=float(x.removesuffix("s")))
 )
-converter.register_unstructure_hook(UUID, lambda x: str(x))
-converter.register_structure_hook(UUID, lambda x, _: UUID(x))
