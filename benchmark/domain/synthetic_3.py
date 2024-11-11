@@ -13,7 +13,6 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmark.definition import SingleExecutionBenchmark
-from benchmark.metric import NormalizedSimpleRegret
 
 
 def lookup_synthetic_3(x: float, y: float, z: float) -> float:
@@ -83,13 +82,8 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     ), metadata
 
 
-metric = NormalizedSimpleRegret(
-    objective_name="output",
-    evaluation_range=(0.0, 4.09685),
-)
 benchmark_synthetic_3 = SingleExecutionBenchmark(
     title="Synthetic dataset 3. Three dimensional.",
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     benchmark_function=synthetic_3,
-    metrics=[metric],
 )

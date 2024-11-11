@@ -7,7 +7,6 @@ from uuid import UUID, uuid4
 from attrs import define, field
 from pandas import DataFrame
 
-from benchmark.metric.base import Metric
 from benchmark.result.base import Result
 
 
@@ -33,9 +32,6 @@ class Benchmark(ABC):
 
     _metadata: dict[str, str] = field(factory=lambda: dict())
     """Metadata about the benchmark. Will be set after the benchmark is executed."""
-
-    metrics: list[Metric] = field(factory=lambda: list())
-    """Optional metrics to evaluate the benchmarking results."""
 
     @abstractmethod
     def execute_benchmark(self) -> Result:

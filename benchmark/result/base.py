@@ -6,8 +6,6 @@ from uuid import UUID
 
 from attrs import define, field
 
-from benchmark.metric.base import Metric
-
 
 @define(frozen=True)
 class Result(ABC):
@@ -39,21 +37,6 @@ class Result(ABC):
     @abstractmethod
     def get_execution_time_ns(self) -> float:
         """Return the execution time of the benchmark in nanoseconds."""
-        pass
-
-    @abstractmethod
-    def evaluate_result(
-        self, metric: Metric, objective_scenario: list[str]
-    ) -> dict[str, float]:
-        """Evaluate the result based on the given metric and objective scenario.
-
-        Args:
-            metric: The metric to be used for evaluation.
-            objective_scenario: The scenario name to be used for evaluation.
-
-        Returns:
-            float: The evaluation result as a floating-point number.
-        """
         pass
 
     @abstractmethod
