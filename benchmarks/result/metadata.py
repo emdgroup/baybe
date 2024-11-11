@@ -36,7 +36,7 @@ class ResultMetadata(SerialMixin):
         return sha
 
     @last_published_baybe_version.default
-    def _baybe_version_default(self) -> str:
+    def _last_published_baybe_version_default(self) -> str:
         """Extract the BayBE version."""
         POST_SUBVERSION_CONSTRUCTED = baybe_package_version.count(".") > 2
         if POST_SUBVERSION_CONSTRUCTED:
