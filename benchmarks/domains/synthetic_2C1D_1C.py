@@ -81,6 +81,7 @@ def benchmark_callable(scenario_config: ConvergenceExperimentSettings) -> DataFr
         n_doe_iterations=scenario_config.n_doe_iterations,
         n_mc_iterations=scenario_config.n_mc_iterations,
         impute_mode="error",
+        random_seed=scenario_config.random_seed,
     )
 
 

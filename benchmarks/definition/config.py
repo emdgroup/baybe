@@ -22,3 +22,6 @@ class ConvergenceExperimentSettings(SerialMixin):
 
     n_mc_iterations: int = field(validator=instance_of(int))
     """The number of Monte Carlo iterations."""
+
+    random_seed: int = field(validator=instance_of(int), default=1337)
+    """The random seed for reproducibility."""
