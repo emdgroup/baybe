@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from numpy import pi, sin, sqrt
 from pandas import DataFrame
+from typing_extensions import override
 
 from baybe.campaign import Campaign
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
@@ -56,6 +57,7 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
 class Synthetic2C1D1C(BenchmarkExecutableBase[ConvergenceExperimentSettings]):
     """Three Dimensional maximization comparison with random and default recommender."""
 
+    @override
     def __call__(self) -> DataFrame:
         """3 Dimensional maximization comparison with random and default recommender.
 

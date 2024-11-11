@@ -54,7 +54,7 @@ class BenchmarkExecutableBase(ABC, Generic[FunctionSettings]):
     @property
     def description(self) -> str:
         """The description of the benchmark function."""
-        if isinstance(self.lookup, Callable) and self.lookup.__doc__ is not None:
+        if callable(self.lookup) and self.lookup.__doc__ is not None:
             return self.lookup.__doc__
         if self.__call__.__doc__ is not None:
             return self.__call__.__doc__
