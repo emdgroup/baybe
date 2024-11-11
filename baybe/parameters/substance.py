@@ -20,7 +20,6 @@ try:  # For python < 3.11, use the exceptiongroup backport
 except NameError:
     from exceptiongroup import ExceptionGroup
 
-
 Smiles = str
 """Type alias for SMILES strings."""
 
@@ -64,6 +63,14 @@ class SubstanceParameter(DiscreteParameter):
         default=SubstanceEncoding.MORDRED, converter=SubstanceEncoding
     )
     # See base class.
+
+    kwargs_fingerprint: dict[str, Any] = field(
+        factory=dict, validator=instance_of(dict)
+    )
+    """Keyword arguments passed to fingerprint generator."""
+
+    kwargs_conformer: dict[str, Any] = field(factory=dict, validator=instance_of(dict))
+    """Keyword arguments passed to conformer generator."""
 
     @data.validator
     def _validate_substance_data(  # noqa: DOC101, DOC103
@@ -118,27 +125,20 @@ class SubstanceParameter(DiscreteParameter):
         from baybe.utils import chemistry
 
         vals = list(self.data.values())
-        pref = self.name + "_"
+        pref = self.name
 
         # Get the raw descriptors
-        if self.encoding is SubstanceEncoding.MORDRED:
-            comp_df = chemistry.smiles_to_mordred_features(vals, prefix=pref)
-        elif self.encoding is SubstanceEncoding.RDKIT:
-            comp_df = chemistry.smiles_to_rdkit_features(vals, prefix=pref)
-        elif self.encoding is SubstanceEncoding.MORGAN_FP:
-            comp_df = chemistry.smiles_to_fp_features(vals, prefix=pref)
-        else:
-            raise ValueError(
-                f"Unknown parameter encoding {self.encoding} for parameter {self.name}."
-            )
+        comp_df = chemistry.smiles_to_fingerprint_features(
+            vals,
+            encoding=self.encoding,
+            prefix=pref,
+            kwargs_conformer=self.kwargs_conformer,
+            kwargs_fingerprint=self.kwargs_fingerprint,
+        )
 
         # Drop NaN and constant columns
         comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
         comp_df = df_drop_single_value_columns(comp_df)
-
-        # If there are bool columns, convert them to int (possible for Mordred)
-        bool_cols = comp_df.select_dtypes(bool).columns
-        comp_df[bool_cols] = comp_df[bool_cols].astype(int)
 
         # Label the rows with the molecule names
         comp_df.index = pd.Index(self.values)

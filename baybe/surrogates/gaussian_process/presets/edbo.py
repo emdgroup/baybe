@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+from collections.abc import Collection
 from typing import TYPE_CHECKING
 
 from attrs import define
@@ -11,7 +12,10 @@ from typing_extensions import override
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
 from baybe.parameters import TaskParameter
+from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
+from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
 
 if TYPE_CHECKING:
@@ -19,6 +23,25 @@ if TYPE_CHECKING:
 
     from baybe.kernels.base import Kernel
     from baybe.searchspace.core import SearchSpace
+
+
+def _contains_encoding(
+    subspace: SubspaceDiscrete, encodings: Collection[SubstanceEncoding]
+) -> bool:
+    """Tell if any of the substance parameters uses one of the specified encodings."""
+    return any(
+        p.encoding in encodings
+        for p in subspace.parameters
+        if isinstance(p, SubstanceParameter)
+    )
+
+
+_EDBO_ENCODINGS = (
+    SubstanceEncoding.MORDRED,
+    SubstanceEncoding.RDKIT,
+    SubstanceEncoding.RDKIT2DDESCRIPTORS,
+)
+"""Encodings relevant to EDBO logic."""
 
 
 @define
@@ -38,9 +61,9 @@ class EDBOKernelFactory(KernelFactory):
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
         )
 
-        mordred = (searchspace.contains_mordred or searchspace.contains_rdkit) and (
-            effective_dims >= 50
-        )
+        switching_condition = _contains_encoding(
+            searchspace.discrete, _EDBO_ENCODINGS
+        ) and (effective_dims >= 50)
 
         # low D priors
         if effective_dims < 5:
@@ -50,14 +73,14 @@ class EDBOKernelFactory(KernelFactory):
             outputscale_initial_value = 8.0
 
         # DFT optimized priors
-        elif mordred and effective_dims < 100:
+        elif switching_condition and effective_dims < 100:
             lengthscale_prior = GammaPrior(2.0, 0.2)
             lengthscale_initial_value = 5.0
             outputscale_prior = GammaPrior(5.0, 0.5)
             outputscale_initial_value = 8.0
 
         # Mordred optimized priors
-        elif mordred:
+        elif switching_condition:
             lengthscale_prior = GammaPrior(2.0, 0.1)
             lengthscale_initial_value = 10.0
             outputscale_prior = GammaPrior(2.0, 0.1)
@@ -97,8 +120,8 @@ def _edbo_noise_factory(
         [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
     )
 
-    uses_descriptors = (
-        searchspace.contains_mordred or searchspace.contains_rdkit
+    switching_condition = _contains_encoding(
+        searchspace.discrete, _EDBO_ENCODINGS
     ) and (effective_dims >= 50)
 
     # low D priors
@@ -106,11 +129,11 @@ def _edbo_noise_factory(
         return (GammaPrior(1.05, 0.5), 0.1)
 
     # DFT optimized priors
-    elif uses_descriptors and effective_dims < 100:
+    elif switching_condition and effective_dims < 100:
         return (GammaPrior(1.5, 0.1), 5.0)
 
     # Mordred optimized priors
-    elif uses_descriptors:
+    elif switching_condition:
         return (GammaPrior(1.5, 0.1), 5.0)
 
     # OHE optimized priors
