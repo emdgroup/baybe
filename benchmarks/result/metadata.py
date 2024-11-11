@@ -25,7 +25,7 @@ class ResultMetadata(SerialMixin):
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
 
-    baybe_version: str = field(init=False)
+    last_published_baybe_version: str = field(init=False)
     """The used BayBE version."""
 
     @commit_hash.default
@@ -35,7 +35,7 @@ class ResultMetadata(SerialMixin):
         sha = repo.head.object.hexsha
         return sha
 
-    @baybe_version.default
+    @last_published_baybe_version.default
     def _baybe_version_default(self) -> str:
         """Extract the BayBE version."""
         POST_SUBVERSION_CONSTRUCTED = baybe_package_version.count(".") > 2
