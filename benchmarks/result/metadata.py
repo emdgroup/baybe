@@ -25,7 +25,7 @@ class ResultMetadata(SerialMixin):
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
 
-    baybe_version: str = field(default=baybe_package_version, init=False)
+    baybe_version: str = field(init=False)
     """The used BayBE version."""
 
     @commit_hash.default
@@ -34,6 +34,17 @@ class ResultMetadata(SerialMixin):
         repo = git.Repo(search_parent_directories=True)
         sha = repo.head.object.hexsha
         return sha
+
+    @baybe_version.default
+    def _baybe_version_default(self) -> str:
+        """Extract the BayBE version."""
+        POST_SUBVERSION_CONSTRUCTED = baybe_package_version.count(".") > 2
+        if POST_SUBVERSION_CONSTRUCTED:
+            CORE_BAYBE_VERSION = baybe_package_version[
+                : baybe_package_version.rfind(".")
+            ]
+            return CORE_BAYBE_VERSION
+        return baybe_package_version
 
 
 # Register un-/structure hooks
