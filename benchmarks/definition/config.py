@@ -27,7 +27,7 @@ class RecommenderConvergenceAnalysis(SerialMixin):
     recommenders: dict[str, RecommenderProtocol | _DEFAULT] = field(
         validator=deep_mapping(
             key_validator=instance_of(str),
-            value_validator=instance_of(RecommenderProtocol | _DEFAULT),
+            value_validator=instance_of((RecommenderProtocol, _DEFAULT)),
             mapping_validator=instance_of(dict),
         )
     )

@@ -1,5 +1,8 @@
 """Synthetic function with two continuous and one discrete input."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
@@ -17,6 +20,9 @@ from benchmarks.definition.config import (
     DEFAULT_RECOMMENDER,
     RecommenderConvergenceAnalysis,
 )
+
+if TYPE_CHECKING:
+    from mpl_toolkits.mplot3d import Axes3D
 
 
 def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -107,8 +113,8 @@ if __name__ == "__main__":
 
     fig = plt.figure(figsize=(10, 10))
     for i, z in enumerate(Z):
-        ax = fig.add_subplot(2, 2, i + 1, projection="3d")
-        z_mesh = lookup(x_mesh, y_mesh, z)
+        ax: Axes3D = fig.add_subplot(2, 2, i + 1, projection="3d")
+        z_mesh = lookup(x_mesh, y_mesh, np.asarray(z))
         ax.plot_surface(x_mesh, y_mesh, z_mesh)
         plt.title(f"{z=}")
 
