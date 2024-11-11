@@ -23,7 +23,7 @@ class Result(SerialMixin, Generic[BenchmarkConfig]):
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    result_dataframe: DataFrame = field(validator=instance_of(DataFrame))
+    result: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""
 
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
