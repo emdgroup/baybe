@@ -872,6 +872,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1001,7 +1002,11 @@
 <span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.validation</span> <span class="kn">import</span> <span class="n">validate_decorrelation</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">group_duplicate_values</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">df_drop_single_value_columns</span><span class="p">,</span> <span class="n">df_uncorrelated_features</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">add_noise_to_perturb_degenerate_rows</span><span class="p">,</span>
+    <span class="n">df_drop_single_value_columns</span><span class="p">,</span>
+    <span class="n">df_uncorrelated_features</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># For python &lt; 3.11, use the exceptiongroup backport</span>
     <span class="n">ExceptionGroup</span>
@@ -1139,6 +1144,9 @@
                 <span class="n">comp_df</span> <span class="o">=</span> <span class="n">df_uncorrelated_features</span><span class="p">(</span><span class="n">comp_df</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">comp_df</span> <span class="o">=</span> <span class="n">df_uncorrelated_features</span><span class="p">(</span><span class="n">comp_df</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decorrelate</span><span class="p">)</span>
+
+        <span class="c1"># Add noise to degenerate rows if present</span>
+        <span class="n">add_noise_to_perturb_degenerate_rows</span><span class="p">(</span><span class="n">comp_df</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">comp_df</span></div>
 

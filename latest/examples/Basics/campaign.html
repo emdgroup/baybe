@@ -873,6 +873,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1083,13 +1084,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base                        Ligand  \
-79     Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-304  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
+         Solvent               Base                        Ligand  \
+44   Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
+393     p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration  
-79         120.0            0.1  
-304        120.0            0.1  
+44         120.0          0.153  
+393        120.0          0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1102,13 +1103,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-79     Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
-304  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
+         Solvent               Base                        Ligand  \
+44   Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
+393     p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration      yield  
-79         120.0            0.1  16.853671  
-304        120.0            0.1  15.273442  
+44         120.0          0.153   4.738525  
+393        120.0          0.057  32.291993  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

@@ -873,6 +873,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1120,22 +1121,22 @@ process.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>  Scenario  Monte_Carlo_Run  Iteration  Num_Experiments Target_1_Measurements  \
-0    BayBE                0          0                1                 [8.0]   
+0    BayBE                0          0                1                [12.0]   
 1    BayBE                0          1                2                [16.0]   
-2    BayBE                1          0                1                 [8.0]   
+2    BayBE                1          0                1                 [0.0]   
 3    BayBE                1          1                2                [16.0]   
 
   Target_2_Measurements  Target_1_IterBest  Target_1_CumBest  \
-0               [127.0]                8.0               8.0   
+0               [287.0]               12.0              12.0   
 1               [511.0]               16.0              16.0   
-2               [127.0]                8.0               8.0   
+2                [-1.0]                0.0               0.0   
 3               [511.0]               16.0              16.0   
 
    Target_2_IterBest  Target_2_CumBest  
-0              127.0             127.0  
-1              511.0             127.0  
-2              127.0             127.0  
-3              511.0             127.0  
+0              287.0             287.0  
+1              511.0             287.0  
+2               -1.0              -1.0  
+3              511.0              -1.0  
 </pre></div>
 </div>
 </section>

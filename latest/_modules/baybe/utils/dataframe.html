@@ -872,6 +872,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1363,6 +1364,58 @@
         <span class="n">data</span><span class="p">[</span><span class="n">exclude_list</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">exclude_list</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="add_noise_to_perturb_degenerate_rows">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows">[docs]</a>
+<span class="k">def</span> <span class="nf">add_noise_to_perturb_degenerate_rows</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">noise_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add noise to degenerate rows to make them numerically distinguishable.</span>
+
+<span class="sd">    Note that the dataframe is changed in-place and also returned. The dataframe is</span>
+<span class="sd">    left untouched if no rows are degenerate.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df: The dataframe to be modified.</span>
+<span class="sd">        noise_ratio: The magnitude of generated uniform noise relative to the</span>
+<span class="sd">            min-max range of values for each column.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The modified dataframe.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError: If the provided dataframe has non-numerical content.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Find degenerate rows, exit if there are none</span>
+    <span class="n">degen_rows</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">degen_rows</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="c1"># Assert that the input is purely numerical</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;iufb&quot;</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">add_noise_to_perturb_degenerate_rows</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; only supports purely &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;numerical dataframes.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Find the min-max range for each column. Constant columns will be assigned a range</span>
+    <span class="c1"># of 1 as fallback as otherwise they would be left untouched</span>
+    <span class="n">column_ranges</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">column_ranges</span> <span class="o">=</span> <span class="n">column_ranges</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Generate noise</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+        <span class="o">-</span><span class="n">noise_ratio</span><span class="p">,</span> <span class="n">noise_ratio</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">degen_rows</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">)</span>
+    <span class="n">noise_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">degen_rows</span><span class="p">])</span>
+
+    <span class="c1"># Scale noise by column ranges and add it to the original dataframe</span>
+    <span class="n">noise_df</span> <span class="o">=</span> <span class="n">noise_df</span> <span class="o">*</span> <span class="n">column_ranges</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">degen_rows</span><span class="p">]</span> <span class="o">+=</span> <span class="n">noise_df</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
 
 
 

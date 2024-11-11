@@ -266,15 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    364    Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
-    134           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-    267  Butyornitrile  Potassium pivalate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    240         DMAc   Potassium acetate                     BrettPhos   
+    367  Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    404  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    364        105.0          0.100  
-    134        120.0          0.153  
-    267        120.0          0.057  
+    240        120.0          0.057  
+    367        120.0          0.100  
+    404        120.0          0.153  
 
 
 
@@ -287,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    364    Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
-    134           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-    267  Butyornitrile  Potassium pivalate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    240         DMAc   Potassium acetate                     BrettPhos   
+    367  Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    404  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    364        105.0          0.100  24.713191  
-    134        120.0          0.153  22.297272  
-    267        120.0          0.057  26.449980  
+    240        120.0          0.057  16.585888  
+    367        120.0          0.100  23.019015  
+    404        120.0          0.153  26.630162  
 
 
 

@@ -873,6 +873,7 @@
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.utils.dataframe</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
@@ -1002,28 +1003,31 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements" title="baybe.utils.dataframe.add_fake_measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_fake_measurements</span></code></a>(data, targets[, ...])</p></td>
 <td><p>Add fake measurements to a dataframe which was the result of a recommendation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise" title="baybe.utils.dataframe.add_parameter_noise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_parameter_noise</span></code></a>(data, parameters[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows" title="baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_noise_to_perturb_degenerate_rows</span></code></a>(df[, ...])</p></td>
+<td><p>Add noise to degenerate rows to make them numerically distinguishable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise" title="baybe.utils.dataframe.add_parameter_noise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_parameter_noise</span></code></a>(data, parameters[, ...])</p></td>
 <td><p>Apply uniform noise to the parameter values of a recommendation frame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html#baybe.utils.dataframe.df_drop_single_value_columns" title="baybe.utils.dataframe.df_drop_single_value_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_drop_single_value_columns</span></code></a>(df[, lst_exclude])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html#baybe.utils.dataframe.df_drop_single_value_columns" title="baybe.utils.dataframe.df_drop_single_value_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_drop_single_value_columns</span></code></a>(df[, lst_exclude])</p></td>
 <td><p>Drop dataframe columns with zero variance.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html#baybe.utils.dataframe.df_drop_string_columns" title="baybe.utils.dataframe.df_drop_string_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_drop_string_columns</span></code></a>(df[, ignore_list])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html#baybe.utils.dataframe.df_drop_string_columns" title="baybe.utils.dataframe.df_drop_string_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_drop_string_columns</span></code></a>(df[, ignore_list])</p></td>
 <td><p>Drop dataframe columns with string values.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html#baybe.utils.dataframe.df_uncorrelated_features" title="baybe.utils.dataframe.df_uncorrelated_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_uncorrelated_features</span></code></a>(df[, exclude_list, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html#baybe.utils.dataframe.df_uncorrelated_features" title="baybe.utils.dataframe.df_uncorrelated_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">df_uncorrelated_features</span></code></a>(df[, exclude_list, ...])</p></td>
 <td><p>Return an uncorrelated set of features.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html#baybe.utils.dataframe.fuzzy_row_match" title="baybe.utils.dataframe.fuzzy_row_match"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fuzzy_row_match</span></code></a>(left_df, right_df, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html#baybe.utils.dataframe.fuzzy_row_match" title="baybe.utils.dataframe.fuzzy_row_match"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fuzzy_row_match</span></code></a>(left_df, right_df, ...)</p></td>
 <td><p>Match row of the right dataframe to the rows of the left dataframe.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html#baybe.utils.dataframe.get_transform_objects" title="baybe.utils.dataframe.get_transform_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_transform_objects</span></code></a>(df, objects, /, *[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html#baybe.utils.dataframe.get_transform_objects" title="baybe.utils.dataframe.get_transform_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_transform_objects</span></code></a>(df, objects, /, *[, ...])</p></td>
 <td><p>Extract the objects relevant for transforming a given dataframe.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html#baybe.utils.dataframe.pretty_print_df" title="baybe.utils.dataframe.pretty_print_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty_print_df</span></code></a>(df[, max_rows, max_columns, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html#baybe.utils.dataframe.pretty_print_df" title="baybe.utils.dataframe.pretty_print_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty_print_df</span></code></a>(df[, max_rows, max_columns, ...])</p></td>
 <td><p>Convert a dataframe into a pretty/readable format.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html#baybe.utils.dataframe.to_tensor" title="baybe.utils.dataframe.to_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tensor</span></code></a>(*x)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html#baybe.utils.dataframe.to_tensor" title="baybe.utils.dataframe.to_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tensor</span></code></a>(*x)</p></td>
 <td><p>Convert numpy arrays and pandas dataframes to tensors.</p></td>
 </tr>
 </tbody>
