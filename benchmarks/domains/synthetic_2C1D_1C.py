@@ -54,7 +54,11 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def benchmark_callable(scenario_config: ConvergenceExperimentSettings) -> DataFrame:
-    """Optimization benchmark with two continuous and one discrete input."""
+    """Three Dimensional maximization comparsion with random and default recommender.
+
+    Optimization benchmark with two continuous and one discrete input to
+    compare the random and the default recommander on a maximization task.
+    """
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
