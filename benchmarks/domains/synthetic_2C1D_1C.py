@@ -16,7 +16,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import Benchmark
-from benchmarks.definition.config import RecommenderConvergenceAnalysis
+from benchmarks.definition.config import ConvergenceExperimentSettings
 
 if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
@@ -51,7 +51,7 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
     )
 
 
-def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataFrame:
+def benchmark_callable(scenario_config: ConvergenceExperimentSettings) -> DataFrame:
     """Run different recommenders against the test function."""
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
@@ -84,7 +84,7 @@ def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataF
     )
 
 
-benchmark_config = RecommenderConvergenceAnalysis(
+benchmark_config = ConvergenceExperimentSettings(
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,

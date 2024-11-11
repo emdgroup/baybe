@@ -11,7 +11,7 @@ BenchmarkSettings = TypeVar("BenchmarkSettings")
 
 
 @define(frozen=True)
-class RecommenderConvergenceAnalysis(SerialMixin):
+class ConvergenceExperimentSettings(SerialMixin):
     """Benchmark configuration for recommender convergence analyses."""
 
     batch_size: int = field(validator=instance_of(int))
