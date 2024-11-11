@@ -12,16 +12,13 @@ from baybe.serialization.mixin import SerialMixin
 BenchmarkSettings = TypeVar("BenchmarkSettings")
 
 BenchmarkParametrizedFunction = Callable[[BenchmarkSettings], DataFrame]
-BenchmarkPlainFunction = Callable[[], DataFrame]
 
 
 @define(frozen=True)
 class BenchmarkFunctionDefinition:
     """The core components including the benchmark function."""
 
-    callable: BenchmarkParametrizedFunction | BenchmarkPlainFunction = field(
-        validator=is_callable()
-    )
+    callable: BenchmarkParametrizedFunction = field(validator=is_callable())
     """The callable that executes the benchmark code and returns the result."""
 
     description: str = field(validator=instance_of(str))

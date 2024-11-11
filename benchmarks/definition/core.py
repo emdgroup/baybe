@@ -26,7 +26,7 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
     """The benchmark function definition which contains information about the callable
     holding the domain and further information about it."""
 
-    settings: BenchmarkSettings | None = field(default=None)
+    settings: BenchmarkSettings = field()
     """The benchmark configuration."""
 
     @identifier.validator
