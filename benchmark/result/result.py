@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from attrs import define, field
+from attrs.validators import instance_of
 from pandas import DataFrame
 
 
@@ -11,10 +12,10 @@ from pandas import DataFrame
 class Result:
     """A single result of the benchmarking."""
 
-    name: str = field()
+    name: str = field(validator=instance_of(str))
     """The name of the benchmarking result."""
 
-    identifier: UUID = field()
+    identifier: UUID = field(validator=instance_of(UUID))
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
@@ -24,7 +25,7 @@ class Result:
     benchmark_result: DataFrame = field()
     """The result of the benchmarked callable."""
 
-    execution_time_ns: int = field()
+    execution_time_ns: int = field(validator=instance_of(int))
     """The execution time of the benchmark in nanoseconds."""
 
     @metadata.validator
@@ -37,10 +38,6 @@ class Result:
         for key, value in metadata.items():
             sanitized_key = str(key).replace(" ", "_")
             metadata[sanitized_key] = str(value)
-
-    def get_execution_time_ns(self) -> float:
-        """Return the execution time of the benchmark in nanoseconds."""
-        return self.execution_time_ns
 
     def to_csv(self) -> str:
         """Return the result as a csv string.
