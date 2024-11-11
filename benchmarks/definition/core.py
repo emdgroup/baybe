@@ -31,15 +31,11 @@ class Benchmark(Generic[BenchmarkSettings]):
     callable: BenchmarkFunction = field(validator=is_callable())
     """The callable that executes the benchmark code and returns the result."""
 
+    description: str = field(validator=instance_of(str))
+    """The description of the benchmark callable."""
+
     settings: BenchmarkSettings | None = field(default=None)
     """The benchmark configuration."""
-
-    @property
-    def description(self) -> str:
-        """The description of the benchmark callable."""
-        if self.callable.__doc__ is None:
-            return ""
-        return self.callable.__doc__
 
     def __call__(self) -> Result:
         """Execute the benchmark and return the result."""
