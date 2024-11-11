@@ -11,7 +11,7 @@ from baybe.serialization.mixin import SerialMixin
 
 BenchmarkSettings = TypeVar("BenchmarkSettings")
 
-BenchmarkFunction = Callable[[BenchmarkSettings, Callable | DataFrame], DataFrame]
+BenchmarkFunction = Callable[[BenchmarkSettings], DataFrame]
 
 
 @define(frozen=True)

@@ -93,9 +93,13 @@ benchmark_config = ConvergenceExperimentSettings(
     n_mc_iterations=50,
 )
 
+description = ""
+if lookup.__doc__:
+    description = lookup.__doc__
+
 benchmark_function_definition = BenchmarkFunctionDefinition(
     callable=benchmark_callable,
-    description=lookup.__doc__,
+    description=description,
     best_possible_result=4.09685,
 )
 
