@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from numpy import sin, sqrt
+from numpy import pi, sin, sqrt
 from pandas import DataFrame
 
 from baybe.campaign import Campaign
@@ -43,11 +43,11 @@ def lookup_synthetic_3(x: float, y: float, z: int) -> float:
 def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     """Synthetic dataset. Custom parabolic test with irrelevant parameters."""
     synthetic_3_continues = [
-        NumericalContinuousParameter("x", (-6.283185, 6.283185)),
+        NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-6.283185, 6.283185)),
         NumericalDiscreteParameter("z", (1, 2, 3, 4)),
     ]
-
+    print(NumericalContinuousParameter("x", (-2 * pi, 2 * pi)).to_json())
     objective = SingleTargetObjective(
         target=NumericalTarget(name="output", mode=TargetMode.MAX)
     )
@@ -59,7 +59,6 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     campaign_rand = Campaign(
         searchspace=SearchSpace.from_product(parameters=synthetic_3_continues),
         recommender=RandomRecommender(),
-        objective=objective,
     )
 
     batch_size = 5
@@ -67,13 +66,13 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     n_mc_iterations = 50
 
     metadata = {
-        "DOE_iterations": str(n_doe_iterations),
+        "n_doe_iterations": str(n_doe_iterations),
         "batch_size": str(batch_size),
         "n_mc_iterations": str(n_mc_iterations),
     }
 
     scenarios = {
-        "Default Two Phase Meta Recommender": campaign,
+        "Default Recommender": campaign,
         "Random Baseline": campaign_rand,
     }
     return simulate_scenarios(
