@@ -18,10 +18,7 @@ import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.constraints import (
-    ContinuousLinearConstraint,
-    ContinuousLinearInterPointConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
@@ -159,20 +156,18 @@ print(
 
 
 inter_constraints = [
-    ContinuousLinearInterPointConstraint(
-        parameters=["x_1"],
-        operator=">=",
-        coefficients=[1],
-        rhs=2.5,
+    ContinuousLinearConstraint(
+        parameters=["x_1"], operator=">=", coefficients=[1], rhs=2.5, is_interpoint=True
     ),
-    ContinuousLinearInterPointConstraint(
-        parameters=["x_2"], operator="=", coefficients=[1], rhs=5
+    ContinuousLinearConstraint(
+        parameters=["x_2"], operator="=", coefficients=[1], rhs=5, is_interpoint=True
     ),
-    ContinuousLinearInterPointConstraint(
+    ContinuousLinearConstraint(
         parameters=["x_3", "x_4"],
         operator=">=",
         coefficients=[2, -1],
         rhs=5,
+        is_interpoint=True,
     ),
 ]
 
