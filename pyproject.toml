@@ -145,7 +145,8 @@ benchmarking = [
     "baybe[chem]",
     "baybe[onnx]",
     "baybe[simulation]",
-    "GitPython>=3.1.0",
+    "gitdb2<3.0.2",         # This dependency is necessary for GitPython<3.0.6: https://github.com/gitpython-developers/GitPython/issues/983
+    "GitPython>=1.0.0",
 ]
 
 test = [
