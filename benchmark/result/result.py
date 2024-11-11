@@ -37,15 +37,5 @@ class Result(SerialMixin):
                 raise ValueError(f"Metadata keys must be strings, got {type(key)}")
 
 
-def _unstructure_uuid_hook(obj: UUID) -> str:
-    """Unstructure hook for UUID to string for serialization."""
-    return str(obj)
-
-
-def _structure_uuid_hook(obj: str) -> UUID:
-    """Structure hook for string to UUID for deserialization."""
-    return UUID(obj)
-
-
-converter.register_unstructure_hook(UUID, _unstructure_uuid_hook)
-converter.register_structure_hook(UUID, _structure_uuid_hook)
+converter.register_unstructure_hook(UUID, lambda x: str(x))
+converter.register_structure_hook(UUID, lambda x, _: UUID(x))
