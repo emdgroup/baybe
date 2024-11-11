@@ -3,17 +3,17 @@
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Generic
 from uuid import UUID
 
 from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
+from benchmarks.definition.config import BenchmarkConfig
 from benchmarks.result.metadata_class import ResultMetadata
 from benchmarks.result.result import Result
 
-BenchmarkConfig = TypeVar("BenchmarkConfig")
 BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
 
 
@@ -21,26 +21,26 @@ BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
 class Benchmark(Generic[BenchmarkConfig]):
     """A class to define a benchmark task."""
 
-    name: str = field(validator=instance_of(str))
-    """The name of the benchmark."""
-
-    settings: BenchmarkConfig = field()
-    """The configuration for the benchmark settings."""
-
-    benchmark_callable: BenchmarkFunction = field(validator=is_callable())
-    """The function that executes the benchmark code and returns
-    the results as well as metadata."""
-
     identifier: UUID = field(validator=instance_of(UUID))
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
+    name: str = field(validator=instance_of(str))
+    """The name of the benchmark."""
+
+    callable: BenchmarkFunction = field(validator=is_callable())
+    """The function that executes the benchmark code and returns
+    the results as well as metadata."""
+
+    settings: BenchmarkConfig | None = field(default=None)
+    """The configuration for the benchmark settings."""
+
     @property
     def description(self) -> str:
         """The description of the benchmark callable."""
-        if self.benchmark_callable.__doc__ is None:
+        if self.callable.__doc__ is None:
             return ""
-        return self.benchmark_callable.__doc__
+        return self.callable.__doc__
 
     def run(self) -> Result:
         """Execute the benchmark.
@@ -50,16 +50,17 @@ class Benchmark(Generic[BenchmarkConfig]):
         """
         start_datetime = datetime.now()
         start_sec = time.perf_counter()
-        result = self.benchmark_callable(self.settings)
+        result = self.callable(self.settings)
         stop_sec = time.perf_counter()
 
         time_delta_sec = start_sec - stop_sec
 
         metadata = ResultMetadata(
-            benchmark_name=self.name,
             execution_time_sec=time_delta_sec,
             start_datetime=start_datetime,
         )
 
-        benchmark_result = Result(self.identifier, self.settings, result, metadata)
+        benchmark_result = Result(
+            self.identifier, self.name, result, metadata, self.settings
+        )
         return benchmark_result
