@@ -30,7 +30,7 @@ BenchmarkFunction = Callable[[ConvergenceExperimentSettings], DataFrame]
 
 
 @define(frozen=True)
-class BenchmarkFunctionDefinition:
+class BenchmarkConvergenceExperimentFunctionDefinition:
     """The core components including the benchmark function."""
 
     callable: BenchmarkFunction = field(validator=is_callable())

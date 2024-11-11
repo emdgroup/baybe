@@ -16,7 +16,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import BenchmarkDefinition
 from benchmarks.definition.config import (
-    BenchmarkFunctionDefinition,
+    BenchmarkConvergenceExperimentFunctionDefinition,
     ConvergenceExperimentSettings,
 )
 
@@ -101,7 +101,7 @@ description = ""
 if lookup.__doc__ is not None:
     description = lookup.__doc__
 
-benchmark_function_definition = BenchmarkFunctionDefinition(
+benchmark_function_definition = BenchmarkConvergenceExperimentFunctionDefinition(
     callable=benchmark_callable,
     description=description,
     best_possible_result=4.09685,
