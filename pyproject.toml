@@ -140,6 +140,13 @@ simulation = [
     "xyzpy>=1.2.1",
 ]
 
+benchmarking = [
+    "baybe[chem]",
+    "baybe[onnx]",
+    "baybe[simulation]",
+    "GitPython==3.1.43",
+]
+
 test = [
     "hypothesis[pandas]>=6.88.4",
     "tenacity>=8.5.0",
