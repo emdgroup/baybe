@@ -24,7 +24,7 @@ class RecommenderConvergenceAnalysis(SerialMixin):
     n_mc_iterations: int = field(validator=instance_of(int))
     """The number of Monte Carlo iterations."""
 
-    recommender: dict[str, RecommenderProtocol] = field(
+    recommenders: dict[str, RecommenderProtocol] = field(
         validator=deep_mapping(
             instance_of(str), instance_of(RecommenderProtocol), instance_of(dict)
         )

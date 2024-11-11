@@ -64,7 +64,7 @@ def synthetic_3(
         )
     }
 
-    for scenario_name, recommender in scenario_config.recommender.items():
+    for scenario_name, recommender in scenario_config.recommenders.items():
         campaign = Campaign(
             searchspace=SearchSpace.from_product(parameters=parameters),
             objective=objective,
@@ -86,7 +86,7 @@ benchmark_config = RecommenderConvergenceAnalysis(
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,
-    recommender={
+    recommenders={
         "Random Recommender": RandomRecommender(),
     },
 )
