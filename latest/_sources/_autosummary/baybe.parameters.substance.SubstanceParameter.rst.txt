@@ -42,6 +42,8 @@ SubstanceParameter
       ~SubstanceParameter.data
       ~SubstanceParameter.decorrelate
       ~SubstanceParameter.encoding
+      ~SubstanceParameter.kwargs_fingerprint
+      ~SubstanceParameter.kwargs_conformer
       ~SubstanceParameter.name
    
    

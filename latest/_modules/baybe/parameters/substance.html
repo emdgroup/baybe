@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.parameters.substance - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=259b2e4a" />
@@ -860,12 +860,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1011,7 +1008,6 @@
 <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">exceptiongroup</span> <span class="kn">import</span> <span class="n">ExceptionGroup</span>
 
-
 <span class="n">Smiles</span> <span class="o">=</span> <span class="nb">str</span>
 <span class="sd">&quot;&quot;&quot;Type alias for SMILES strings.&quot;&quot;&quot;</span>
 
@@ -1057,6 +1053,14 @@
         <span class="n">default</span><span class="o">=</span><span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">MORDRED</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">SubstanceEncoding</span>
     <span class="p">)</span>
     <span class="c1"># See base class.</span>
+
+    <span class="n">kwargs_fingerprint</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keyword arguments passed to fingerprint generator.&quot;&quot;&quot;</span>
+
+    <span class="n">kwargs_conformer</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">dict</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keyword arguments passed to conformer generator.&quot;&quot;&quot;</span>
 
     <span class="nd">@data</span><span class="o">.</span><span class="n">validator</span>
     <span class="k">def</span> <span class="nf">_validate_substance_data</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
@@ -1111,27 +1115,20 @@
         <span class="kn">from</span> <span class="nn">baybe.utils</span> <span class="kn">import</span> <span class="n">chemistry</span>
 
         <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="n">pref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span>
+        <span class="n">pref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
         <span class="c1"># Get the raw descriptors</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">MORDRED</span><span class="p">:</span>
-            <span class="n">comp_df</span> <span class="o">=</span> <span class="n">chemistry</span><span class="o">.</span><span class="n">smiles_to_mordred_features</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">pref</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT</span><span class="p">:</span>
-            <span class="n">comp_df</span> <span class="o">=</span> <span class="n">chemistry</span><span class="o">.</span><span class="n">smiles_to_rdkit_features</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">pref</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">MORGAN_FP</span><span class="p">:</span>
-            <span class="n">comp_df</span> <span class="o">=</span> <span class="n">chemistry</span><span class="o">.</span><span class="n">smiles_to_fp_features</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">pref</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unknown parameter encoding </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="si">}</span><span class="s2"> for parameter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span>
-            <span class="p">)</span>
+        <span class="n">comp_df</span> <span class="o">=</span> <span class="n">chemistry</span><span class="o">.</span><span class="n">smiles_to_fingerprint_features</span><span class="p">(</span>
+            <span class="n">vals</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
+            <span class="n">prefix</span><span class="o">=</span><span class="n">pref</span><span class="p">,</span>
+            <span class="n">kwargs_conformer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs_conformer</span><span class="p">,</span>
+            <span class="n">kwargs_fingerprint</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs_fingerprint</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Drop NaN and constant columns</span>
         <span class="n">comp_df</span> <span class="o">=</span> <span class="n">comp_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="o">~</span><span class="n">comp_df</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
         <span class="n">comp_df</span> <span class="o">=</span> <span class="n">df_drop_single_value_columns</span><span class="p">(</span><span class="n">comp_df</span><span class="p">)</span>
-
-        <span class="c1"># If there are bool columns, convert them to int (possible for Mordred)</span>
-        <span class="n">bool_cols</span> <span class="o">=</span> <span class="n">comp_df</span><span class="o">.</span><span class="n">select_dtypes</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span><span class="o">.</span><span class="n">columns</span>
-        <span class="n">comp_df</span><span class="p">[</span><span class="n">bool_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">comp_df</span><span class="p">[</span><span class="n">bool_cols</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
         <span class="c1"># Label the rows with the molecule names</span>
         <span class="n">comp_df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
@@ -1182,7 +1179,7 @@
     </aside>
   </div>
 </div><script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

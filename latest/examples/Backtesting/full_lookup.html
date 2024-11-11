@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Example for full simulation loop using a table-based lookup mechanism with incomplete" href="impute_mode.html" /><link rel="prev" title="Simulation loop using a BoTorch test function" href="botorch_analytical.html" />
 
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Example for full simulation loop using a table-based lookup mechanism - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
@@ -861,12 +861,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1104,7 +1101,7 @@ Note that we now need to ensure that the names fit the names in the provided .xl
 <p>In this example, we create several campaigns.
 First let us create three campaigns that each use a different chemical encoding to
 treat substances.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">substance_encodings</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MORDRED&quot;</span><span class="p">,</span> <span class="s2">&quot;RDKIT&quot;</span><span class="p">,</span> <span class="s2">&quot;MORGAN_FP&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">substance_encodings</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;MORDRED&quot;</span><span class="p">,</span> <span class="s2">&quot;RDKIT2DDESCRIPTORS&quot;</span><span class="p">,</span> <span class="s2">&quot;ECFP&quot;</span><span class="p">]</span>
 <span class="n">scenarios</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">encoding</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">(</span>
         <span class="n">searchspace</span><span class="o">=</span><span class="n">SearchSpace</span><span class="o">.</span><span class="n">from_product</span><span class="p">(</span>
@@ -1126,171 +1123,6 @@ treat substances.</p>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">encoding</span> <span class="ow">in</span> <span class="n">substance_encodings</span>
 <span class="p">}</span>
-</pre></div>
-</div>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;O=C([O-])C.[Cs+]&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;O=C([O-])C(C)(C)C.[Cs+]&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;O=C([O-])C.[K+]&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;O=C([O-])C(C)(C)C.[K+]&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-
-
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-</pre></div>
-</div>
-<p>_smiles_to_mordred_features(‘CN(C)C1=CC=CC(N(C)C)=C1C2=CC=CC=C2P(C(C)(C)C)C3=CC=CC=C3’)
-_______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features…
-_smiles_to_mordred_features(‘CC(OC1=C(P(C2CCCCC2)C3CCCCC3)C(OC(C)C)=CC=C1)C’)</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>_______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CC(C)C1=CC(C(C)C)=C(C(C(C)C)=C1)C2=C(P(C3CCCCC3)C4CCCCC
-</pre></div>
-</div>
-<p>4)C(OC)=CC=C2OC’)</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>_______________________________________smiles_to_mordred_features - 0.3s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CC(C)(C)P(C1=CC=CC=C1)C(C)(C)C&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;FC(F)(F)C1=CC(P(C2=C(C3=C(C(C)C)C=C(C(C)C)C=C3C(C)C)C(O
-</pre></div>
-</div>
-<p>C)=CC=C2OC)C4=CC(C(F)(F)F)=CC(C(F)(F)F)=C4)=CC(C(F)(F)F)=C1’)</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>_______________________________________smiles_to_mordred_features - 0.4s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CP(C)C1=CC=CC=C1&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CP(C1=CC=CC=C1)C2=CC=CC=C2&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;P(C1=CC=CO1)(C2=CC=CO2)C3=CC=CO3&#39;)
-
-
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;P(C1=CC=CC=C1)(C2=CC=CC=C2)C3=CC=CC=C3&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;C[C@]1(O2)O[C@](C[C@]2(C)P3C4=CC=CC=C4)(C)O[C@]3(C)C1&#39;)
-
-
-_______________________________________smiles_to_mordred_features - 0.3s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;P(C1CCCCC1)(C2CCCCC2)C3CCCCC3&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CC(C1=C(C2=CC=CC=C2P(C3CCCCC3)C4CCCCC4)C(C(C)C)=CC(C(C)
-</pre></div>
-</div>
-<p>C)=C1)C’)</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>_______________________________________smiles_to_mordred_features - 0.2s, 0.0min
-
-
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CCCCOC(C)=O&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CCCC#N&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CC(N(C)C)=O&#39;)
-_______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-________________________________________________________________________________
-[Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-_smiles_to_mordred_features(&#39;CC1=CC=C(C)C=C1&#39;)
-_______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-
-
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
-[14:29:25] DEPRECATION WARNING: please use MorganGenerator
 </pre></div>
 </div>
 <p>Now we create another campaign that treats the substances as simple one-hot encoded
@@ -1428,7 +1260,7 @@ traditional ones at almost no extra cost.</p>
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

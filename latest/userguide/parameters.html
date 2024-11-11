@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Recommenders" href="recommenders.html" /><link rel="prev" title="Objective" href="objectives.html" />
 
-    <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Parameters - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
@@ -861,12 +861,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -997,7 +994,7 @@
         <article role="main" id="furo-main-content">
           <section class="tex2jax_ignore mathjax_ignore" id="parameters">
 <h1>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h1>
-<p>Parameters are fundamental for BayBE, as they configure the <code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code> and serve
+<p>Parameters are fundamental for BayBE, as they configure the <a class="reference internal" href="../_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace" title="baybe.searchspace.core.SearchSpace"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SearchSpace</span></code></span></a> and serve
 as the direct link to the controllable variables in your experiment.
 Before starting an iterative campaign, the user is required to specify the exact
 parameters they can control and want to consider in their optimization.</p>
@@ -1011,11 +1008,11 @@ differently under the hood: Discrete and continuous parameters.</p>
 <section id="continuous-parameters">
 <h2>Continuous Parameters<a class="headerlink" href="#continuous-parameters" title="Link to this heading">¶</a></h2>
 <section id="numericalcontinuousparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">NumericalContinuousParameter</span></code><a class="headerlink" href="#numericalcontinuousparameter" title="Link to this heading">¶</a></h3>
+<h3>NumericalContinuousParameter<a class="headerlink" href="#numericalcontinuousparameter" title="Link to this heading">¶</a></h3>
 <p>This is currently the only continuous parameter type BayBE supports.
 It defines possible values from a numerical interval called
 <code class="docutils literal notranslate"><span class="pre">bounds</span></code>, and thus has an infinite amount of possibilities.
-Unless restrained by <code class="docutils literal notranslate"><span class="pre">Constraint</span></code>s, BayBE will consider any possible parameter value
+Unless restrained by <a class="reference internal" href="../_autosummary/baybe.constraints.base.Constraint.html#baybe.constraints.base.Constraint" title="baybe.constraints.base.Constraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Constraint</span></code></span></a>s, BayBE will consider any possible parameter value
 that lies within the chosen interval.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
 
@@ -1042,7 +1039,7 @@ number space. For different parameters, different types of encoding make sense. 
 situations are reflected by the different discrete parameter types BayBE offers.</p>
 </div>
 <section id="numericaldiscreteparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">NumericalDiscreteParameter</span></code><a class="headerlink" href="#numericaldiscreteparameter" title="Link to this heading">¶</a></h3>
+<h3>NumericalDiscreteParameter<a class="headerlink" href="#numericaldiscreteparameter" title="Link to this heading">¶</a></h3>
 <p>This is the right type for parameters that have numerical values.
 We support sets with equidistant values like <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5)</span></code> but also unevenly
 spaced sets of numbers like <code class="docutils literal notranslate"><span class="pre">(0.2,</span> <span class="pre">1.0,</span> <span class="pre">2.0,</span> <span class="pre">5.0,</span> <span class="pre">10.0,</span> <span class="pre">50.0)</span></code>.</p>
@@ -1060,8 +1057,8 @@ that specified tolerance from any of the possible values.</p>
 </div>
 </section>
 <section id="categoricalparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">CategoricalParameter</span></code><a class="headerlink" href="#categoricalparameter" title="Link to this heading">¶</a></h3>
-<p>A <code class="docutils literal notranslate"><span class="pre">CategoricalParameter</span></code> supports sets of strings as labels.
+<h3>CategoricalParameter<a class="headerlink" href="#categoricalparameter" title="Link to this heading">¶</a></h3>
+<p>A <a class="reference internal" href="../_autosummary/baybe.parameters.categorical.CategoricalParameter.html#baybe.parameters.categorical.CategoricalParameter" title="baybe.parameters.categorical.CategoricalParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CategoricalParameter</span></code></span></a> supports sets of strings as labels.
 This is most suitable if the experimental choices cannot easily be translated into a
 number.
 Examples for this could be vendors like <code class="docutils literal notranslate"><span class="pre">(&quot;Vendor</span> <span class="pre">A&quot;,</span> <span class="pre">&quot;Vendor</span> <span class="pre">B&quot;,</span> <span class="pre">&quot;Vendor</span> <span class="pre">C&quot;)</span></code> or
@@ -1088,15 +1085,15 @@ simply because the number 1 is closer to 2 than to 3.
 Hence, for an arbitrary set of labels, such an ordering cannot generally be assumed.
 In the particular case of substances, it not even possible to describe the similarity
 between labels by ordering along one single dimension.
-For this reason, we also provide the <code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code>, which encodes labels
+For this reason, we also provide the <a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a>, which encodes labels
 corresponding to small molecules with chemical descriptors, capturing their similarities
 much better and without the need for the user to think about ordering and similarity
 in the first place.
-This concept is generalized in the <code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code>, where the user can
+This concept is generalized in the <a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>, where the user can
 provide their own custom set of descriptors for each label.</p>
 </section>
 <section id="substanceparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code><a class="headerlink" href="#substanceparameter" title="Link to this heading">¶</a></h3>
+<h3>SubstanceParameter<a class="headerlink" href="#substanceparameter" title="Link to this heading">¶</a></h3>
 <p>Instead of <code class="docutils literal notranslate"><span class="pre">values</span></code>, this parameter accepts <code class="docutils literal notranslate"><span class="pre">data</span></code> in form of a dictionary. The
 items correspond to pairs of labels and <a class="reference external" href="https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system">SMILES</a>.
 SMILES are string-based representations of molecular structures.
@@ -1116,13 +1113,41 @@ Based on these, BayBE can assign each label a set of molecular descriptors as en
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">encoding</span></code> option defines what kind of descriptors are calculated:</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">encoding</span></code> defines what kind of descriptors are calculated using the
+<a class="reference external" href="https://scikit-fingerprints.github.io/scikit-fingerprints/">scikit-fingerprints</a> package.
+It can be specified either by passing the corresponding <a class="reference internal" href="../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding" title="baybe.parameters.enum.SubstanceEncoding"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceEncoding</span></code></span></a> member
+(click to see full list of options) or its string representation, e.g. use
+<a class="reference internal" href="../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MORDRED" title="baybe.parameters.enum.SubstanceEncoding.MORDRED"><span class="xref myst py py-attr"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter.MORDRED</span></code></span></a>
+or its string alias <code class="docutils literal notranslate"><span class="pre">&quot;MORDRED&quot;</span></code> to select the <a class="reference external" href="https://scikit-fingerprints.github.io/scikit-fingerprints/modules/generated/skfp.fingerprints.MordredFingerprint.html#skfp.fingerprints.MordredFingerprint" title="(in scikit-fingerprints)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MordredFingerprint</span></code></a>.</p>
+<p>Here are examples of a few popular fingerprints:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">MORDRED</span></code>: 2D descriptors from the <a class="reference external" href="https://mordred-descriptor.github.io/documentation/master/">Mordred package</a>.
-Since the original package is now unmaintained, baybe requires the community replacement <a class="reference external" href="https://github.com/JacksonBurns/mordred-community">mordredcommunity</a></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">RDKIT</span></code>: 2D descriptors from the <a class="reference external" href="https://www.rdkit.org/">RDKit package</a></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">MORGAN_FP</span></code>: Morgan fingerprints calculated with RDKit (1024 bits, radius 4)</p></li>
+<li><p><a class="reference internal" href="../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ECFP" title="baybe.parameters.enum.SubstanceEncoding.ECFP"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ECFP</span></code></a>: Extended Connectivity FingerPrint,
+which is a circular topological fingerprint similar to Morgan fingerprint.</p></li>
+<li><p><a class="reference internal" href="../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MORDRED" title="baybe.parameters.enum.SubstanceEncoding.MORDRED"><code class="xref py py-attr docutils literal notranslate"><span class="pre">MORDRED</span></code></a>: Chemical descriptor based fingerprint.</p></li>
+<li><p><a class="reference internal" href="../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.RDKIT" title="baybe.parameters.enum.SubstanceEncoding.RDKIT"><code class="xref py py-attr docutils literal notranslate"><span class="pre">RDKIT</span></code></a>: The RDKit fingerprint, which is based on hashing of molecular subgraphs.</p></li>
 </ul>
+<p>You can customize the fingerprint computation by passing arguments of the corresponding
+<a class="reference external" href="https://scikit-fingerprints.github.io/scikit-fingerprints/">scikit-fingerprints</a> class to the <code class="docutils literal notranslate"><span class="pre">kwargs_fingerprint</span></code> argument the <a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a> constructor.
+Similarly, for fingerprints requiring conformers,
+the configuration options for conformer computation can be specified via <code class="docutils literal notranslate"><span class="pre">kwargs_conformer</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">SubstanceParameter</span>
+
+<span class="n">SubstanceParameter</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Solvent&quot;</span><span class="p">,</span>
+    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;Water&quot;</span><span class="p">:</span> <span class="s2">&quot;O&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;1-Octanol&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCCO&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Toluene&quot;</span><span class="p">:</span> <span class="s2">&quot;CC1=CC=CC=C1&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;ECFP&quot;</span><span class="p">,</span>
+    <span class="n">kwargs_fingerprint</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>  <span class="c1"># Set maximum radius of resulting subgraphs</span>
+        <span class="s2">&quot;fp_size&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span>  <span class="c1"># Change the number of computed bits</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+
+</pre></div>
+</div>
 <p>These calculations will typically result in 500 to 1500 numbers per molecule.
 To avoid detrimental effects on the surrogate model fit, we reduce the number of
 descriptors via decorrelation before using them.
@@ -1132,10 +1157,10 @@ This usually reduces the number of descriptors to 10-50, depending on the specif
 items in <code class="docutils literal notranslate"><span class="pre">data</span></code>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>The descriptors calculated for a <code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code> were developed to describe
+<p>The descriptors calculated for a <a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a> were developed to describe
 small molecules and are not suitable for other substances. If you deal with large
 molecules like polymers or arbitrary substance mixtures, we recommend to provide your
-own descriptors via the <code class="docutils literal notranslate"><span class="pre">CustomParameter</span></code>.</p>
+own descriptors via the <a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>.</p>
 </div>
 <p>In the following example from an application you can see
 the outcome for treating the solvent, base and ligand in a direct arylation reaction
@@ -1150,13 +1175,13 @@ additional <code class="docutils literal notranslate"><span class="pre">chem</sp
 </div>
 </section>
 <section id="customdiscreteparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code><a class="headerlink" href="#customdiscreteparameter" title="Link to this heading">¶</a></h3>
+<h3>CustomDiscreteParameter<a class="headerlink" href="#customdiscreteparameter" title="Link to this heading">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">encoding</span></code> concept introduced above is generalized by the
-<code class="docutils literal notranslate"><span class="pre">CustomParameter</span></code>.
+<a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>.
 Here, the user is expected to provide their own descriptors for the encoding.</p>
 <p>Take, for instance, a parameter that corresponds to the choice of a polymer.
 Polymers are not well represented by the small molecule descriptors utilized in the
-<code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code>.
+<a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a>.
 Still, one could provide experimental measurements or common metrics used to classify
 polymers:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -1177,16 +1202,16 @@ polymers:</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>With the <code class="docutils literal notranslate"><span class="pre">CustomParameter</span></code>, you can also encode parameter labels that have
+<p>With the <a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>, you can also encode parameter labels that have
 nothing to do with substances.
 For example, a parameter corresponding to the choice of a vendor is typically not
 easily encoded with standard means.
 In BayBE’s framework, you can provide numbers corresponding e.g. to delivery time,
 reliability or average price of the vendor to encode the labels via the
-<code class="docutils literal notranslate"><span class="pre">CustomParameter</span></code>.</p>
+<a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>.</p>
 </section>
 <section id="taskparameter">
-<h3><code class="docutils literal notranslate"><span class="pre">TaskParameter</span></code><a class="headerlink" href="#taskparameter" title="Link to this heading">¶</a></h3>
+<h3>TaskParameter<a class="headerlink" href="#taskparameter" title="Link to this heading">¶</a></h3>
 <p>Often, several experimental campaigns involve similar or even identical parameters but
 still have one or more differences.
 For example, when optimizing reagents in a chemical reaction, the reactants remain
@@ -1195,7 +1220,7 @@ Similarly, in a mixture development for cell culture media, the cell type is fix
 hence not a parameter.
 However, once we plan to mix data from several campaigns, both reactants and cell
 lines can also be considered parameters in that they encode the necessary context.
-BayBE is able to process such context information with the <code class="docutils literal notranslate"><span class="pre">TaskParameter</span></code>.
+BayBE is able to process such context information with the <a class="reference internal" href="../_autosummary/baybe.parameters.categorical.TaskParameter.html#baybe.parameters.categorical.TaskParameter" title="baybe.parameters.categorical.TaskParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">TaskParameter</span></code></span></a>.
 In many cases, this can drastically increase the optimization performance due to the
 enlarged data corpus.</p>
 <div class="admonition seealso">
@@ -1263,15 +1288,15 @@ enlarged data corpus.</p>
             <ul>
 <li><a class="reference internal" href="#">Parameters</a><ul>
 <li><a class="reference internal" href="#continuous-parameters">Continuous Parameters</a><ul>
-<li><a class="reference internal" href="#numericalcontinuousparameter"><code class="docutils literal notranslate"><span class="pre">NumericalContinuousParameter</span></code></a></li>
+<li><a class="reference internal" href="#numericalcontinuousparameter">NumericalContinuousParameter</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#discrete-parameters">Discrete Parameters</a><ul>
-<li><a class="reference internal" href="#numericaldiscreteparameter"><code class="docutils literal notranslate"><span class="pre">NumericalDiscreteParameter</span></code></a></li>
-<li><a class="reference internal" href="#categoricalparameter"><code class="docutils literal notranslate"><span class="pre">CategoricalParameter</span></code></a></li>
-<li><a class="reference internal" href="#substanceparameter"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></a></li>
-<li><a class="reference internal" href="#customdiscreteparameter"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></a></li>
-<li><a class="reference internal" href="#taskparameter"><code class="docutils literal notranslate"><span class="pre">TaskParameter</span></code></a></li>
+<li><a class="reference internal" href="#numericaldiscreteparameter">NumericalDiscreteParameter</a></li>
+<li><a class="reference internal" href="#categoricalparameter">CategoricalParameter</a></li>
+<li><a class="reference internal" href="#substanceparameter">SubstanceParameter</a></li>
+<li><a class="reference internal" href="#customdiscreteparameter">CustomDiscreteParameter</a></li>
+<li><a class="reference internal" href="#taskparameter">TaskParameter</a></li>
 </ul>
 </li>
 </ul>
@@ -1286,7 +1311,7 @@ enlarged data corpus.</p>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

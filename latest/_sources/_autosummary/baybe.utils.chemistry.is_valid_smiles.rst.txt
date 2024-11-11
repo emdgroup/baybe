@@ -1,6 +1,0 @@
-baybe.utils.chemistry.is\_valid\_smiles
-=======================================
-
-.. currentmodule:: baybe.utils.chemistry
-
-.. autofunction:: is_valid_smiles

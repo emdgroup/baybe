@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Modeling a Mixture in Slot-Based Representation" href="slot_based.html" /><link rel="prev" title="Mixtures" href="Mixtures.html" />
 
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Modeling a Mixture in Traditional Representation - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
@@ -861,12 +861,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1101,16 +1098,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  11.774353  18.404595     0.795691     0.482124  42.835691  25.707546
-1   9.881496   3.313893     1.439787     2.582608  53.590017  29.192199
-2  13.979553   9.150106     0.117885     3.994555  12.991155  59.766745
-3   7.395264  17.067153     2.739742     0.805833  27.564832  44.427176
-4   9.587357  13.319332     0.428121     3.295406  62.524445  10.845339
-5  15.011667  15.624176     3.469941     0.242156  28.855931  36.796130
-6   1.141228  13.419054     0.055076     1.216111  34.565489  49.603041
-7  16.349588   7.576415     0.647833     1.187152   9.045743  65.193270
-8   7.717001   7.465927     0.110159     1.364970  63.465408  19.876536
-9  17.911176   4.103283     1.254153     2.954894  71.446252   2.330242
+0   0.075557  15.297996     0.130411     2.931995  16.869523  64.694518
+1   1.464077  18.541475     2.558045     0.064041  33.203065  44.169297
+2  10.074554  16.870584     3.286867     0.875594  56.529032  12.363369
+3  12.021649   0.046196     3.453213     1.412392  47.073609  35.992940
+4   8.144968   7.251435     0.818909     3.580597  17.308161  62.895929
+5   3.984474  18.685451     2.965263     1.822112  54.510407  18.032293
+6  15.285516   9.840844     1.906750     2.184416  64.249240   6.533233
+7   8.527795   7.208003     2.730251     1.207706  19.334606  60.991640
+8   2.934550  19.469381     1.642363     1.931773  64.329057   9.692876
+9  10.040073  19.993933     2.700381     0.444689  59.894503   6.926420
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1125,16 +1122,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    30.178948            1.277815
-1  100.0    13.195389            4.022394
-2  100.0    23.129660            4.112440
-3  100.0    24.462417            3.545576
-4  100.0    22.906690            3.723527
-5  100.0    30.635843            3.712097
-6  100.0    14.560283            1.271187
-7  100.0    23.926003            1.834985
-8  100.0    15.182928            1.475129
-9  100.0    22.014459            4.209047
+0  100.0    15.373553            3.062406
+1  100.0    20.005553            2.622086
+2  100.0    26.945138            4.162461
+3  100.0    12.067846            4.865605
+4  100.0    15.396404            4.399506
+5  100.0    22.669925            4.787375
+6  100.0    25.126360            4.091167
+7  100.0    15.735798            3.937956
+8  100.0    22.403931            3.574136
+9  100.0    30.034006            3.145071
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
@@ -1218,7 +1215,7 @@ random points from the search space:</p>
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../../../genindex.html" /><link rel="search" title="Search" href="../../../../../search.html" />
 
-    <link rel="shortcut icon" href="../../../../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.surrogates.gaussian_process.presets.edbo - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../../../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=259b2e4a" />
@@ -860,12 +860,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -994,6 +991,7 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span>
@@ -1002,7 +1000,10 @@
 <span class="kn">from</span> <span class="nn">baybe.kernels.basic</span> <span class="kn">import</span> <span class="n">MaternKernel</span>
 <span class="kn">from</span> <span class="nn">baybe.kernels.composite</span> <span class="kn">import</span> <span class="n">ScaleKernel</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">TaskParameter</span>
+<span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
+<span class="kn">from</span> <span class="nn">baybe.parameters.substance</span> <span class="kn">import</span> <span class="n">SubstanceParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.priors.basic</span> <span class="kn">import</span> <span class="n">GammaPrior</span>
+<span class="kn">from</span> <span class="nn">baybe.searchspace.discrete</span> <span class="kn">import</span> <span class="n">SubspaceDiscrete</span>
 <span class="kn">from</span> <span class="nn">baybe.surrogates.gaussian_process.kernel_factory</span> <span class="kn">import</span> <span class="n">KernelFactory</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -1010,6 +1011,25 @@
 
     <span class="kn">from</span> <span class="nn">baybe.kernels.base</span> <span class="kn">import</span> <span class="n">Kernel</span>
     <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
+
+
+<span class="k">def</span> <span class="nf">_contains_encoding</span><span class="p">(</span>
+    <span class="n">subspace</span><span class="p">:</span> <span class="n">SubspaceDiscrete</span><span class="p">,</span> <span class="n">encodings</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">SubstanceEncoding</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tell if any of the substance parameters uses one of the specified encodings.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">encoding</span> <span class="ow">in</span> <span class="n">encodings</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">subspace</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">SubstanceParameter</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="n">_EDBO_ENCODINGS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">MORDRED</span><span class="p">,</span>
+    <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT</span><span class="p">,</span>
+    <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT2DDESCRIPTORS</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Encodings relevant to EDBO logic.&quot;&quot;&quot;</span>
 
 
 <div class="viewcode-block" id="EDBOKernelFactory">
@@ -1031,9 +1051,9 @@
             <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">TaskParameter</span><span class="p">)]</span>
         <span class="p">)</span>
 
-        <span class="n">mordred</span> <span class="o">=</span> <span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">contains_mordred</span> <span class="ow">or</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">contains_rdkit</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="n">effective_dims</span> <span class="o">&gt;=</span> <span class="mi">50</span>
-        <span class="p">)</span>
+        <span class="n">switching_condition</span> <span class="o">=</span> <span class="n">_contains_encoding</span><span class="p">(</span>
+            <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="p">,</span> <span class="n">_EDBO_ENCODINGS</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">effective_dims</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">)</span>
 
         <span class="c1"># low D priors</span>
         <span class="k">if</span> <span class="n">effective_dims</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
@@ -1043,14 +1063,14 @@
             <span class="n">outputscale_initial_value</span> <span class="o">=</span> <span class="mf">8.0</span>
 
         <span class="c1"># DFT optimized priors</span>
-        <span class="k">elif</span> <span class="n">mordred</span> <span class="ow">and</span> <span class="n">effective_dims</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">switching_condition</span> <span class="ow">and</span> <span class="n">effective_dims</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
             <span class="n">lengthscale_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">)</span>
             <span class="n">lengthscale_initial_value</span> <span class="o">=</span> <span class="mf">5.0</span>
             <span class="n">outputscale_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
             <span class="n">outputscale_initial_value</span> <span class="o">=</span> <span class="mf">8.0</span>
 
         <span class="c1"># Mordred optimized priors</span>
-        <span class="k">elif</span> <span class="n">mordred</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">switching_condition</span><span class="p">:</span>
             <span class="n">lengthscale_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
             <span class="n">lengthscale_initial_value</span> <span class="o">=</span> <span class="mf">10.0</span>
             <span class="n">outputscale_prior</span> <span class="o">=</span> <span class="n">GammaPrior</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -1091,8 +1111,8 @@
         <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">TaskParameter</span><span class="p">)]</span>
     <span class="p">)</span>
 
-    <span class="n">uses_descriptors</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">searchspace</span><span class="o">.</span><span class="n">contains_mordred</span> <span class="ow">or</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">contains_rdkit</span>
+    <span class="n">switching_condition</span> <span class="o">=</span> <span class="n">_contains_encoding</span><span class="p">(</span>
+        <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="p">,</span> <span class="n">_EDBO_ENCODINGS</span>
     <span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">effective_dims</span> <span class="o">&gt;=</span> <span class="mi">50</span><span class="p">)</span>
 
     <span class="c1"># low D priors</span>
@@ -1100,11 +1120,11 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mf">0.1</span><span class="p">)</span>
 
     <span class="c1"># DFT optimized priors</span>
-    <span class="k">elif</span> <span class="n">uses_descriptors</span> <span class="ow">and</span> <span class="n">effective_dims</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">switching_condition</span> <span class="ow">and</span> <span class="n">effective_dims</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">)</span>
 
     <span class="c1"># Mordred optimized priors</span>
-    <span class="k">elif</span> <span class="n">uses_descriptors</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">switching_condition</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">GammaPrior</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">)</span>
 
     <span class="c1"># OHE optimized priors</span>
@@ -1147,7 +1167,7 @@
     </aside>
   </div>
 </div><script src="../../../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../../../_static/clipboard.min.js?v=a7894cd8"></script>

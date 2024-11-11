@@ -126,15 +126,10 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ```
 
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
-    [14:25:55] DEPRECATION WARNING: please use MorganGenerator
+    /home/runner/work/baybe/baybe/.tox/docs-py310/lib/python3.10/site-
+packages/baybe/utils/chemistry.py:126: DeprecationWarning: Substance encoding 'RDKIT' is
+deprecated and will be disabled in a future version. Use 'RDKIT2DDESCRIPTORS' instead.
+      warnings.warn(
 
 
 
@@ -189,14 +184,14 @@ print(campaign)
                 1  DiscreteSumC...  [NumParam5, ...
                 2  DiscreteProd...  [NumParam3, ...
              Computational Representation
-                     NumParam1  NumParam2  ...  Solvent_RDKIT_Ma  Speed
-                0          0.0        0.0  ...           -0.078     0.0
-                1          0.0        0.0  ...           -0.078     0.0
-                2          0.0        0.0  ...           -0.078     0.0
+                     NumParam1  NumParam2  ...  Solvent_RDKIT2DD  Speed
+                0          0.0        0.0  ...              1.0     0.0
+                1          0.0        0.0  ...              1.0     0.0
+                2          0.0        0.0  ...              1.0     0.0
                 ..         ...        ...  ...              ...     ...
-                861      100.0       50.0  ...           -0.412     2.0
-                862      100.0       50.0  ...           -0.412     2.0
-                863      100.0       50.0  ...           -0.412     2.0
+                861      100.0       50.0  ...              0.0     2.0
+                862      100.0       50.0  ...              0.0     2.0
+                863      100.0       50.0  ...              0.0     2.0
                 
                 [864 rows x 9 columns]
        Objective

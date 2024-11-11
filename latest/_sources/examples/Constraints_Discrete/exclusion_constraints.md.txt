@@ -127,30 +127,10 @@ searchspace = SearchSpace.from_product(
 )
 ```
 
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
-    [14:26:19] DEPRECATION WARNING: please use MorganGenerator
+    /home/runner/work/baybe/baybe/.tox/docs-py310/lib/python3.10/site-
+packages/baybe/utils/chemistry.py:126: DeprecationWarning: Substance encoding 'RDKIT' is
+deprecated and will be disabled in a future version. Use 'RDKIT2DDESCRIPTORS' instead.
+      warnings.warn(
 
 
 
@@ -199,7 +179,7 @@ print(campaign)
                 1  DiscreteExcl...  [Pressure, S...
                 2  DiscreteExcl...  [Pressure, T...
              Computational Representation
-                      Pressure  Solv_RDKIT_MaxAb  ...  Speed     Temp
+                      Pressure  Solv_RDKIT2DDESC  ...  Speed     Temp
                 0          1.0              0.0   ...    0.0  100.000
                 1          2.0              0.0   ...    0.0  100.000
                 2          5.0              0.0   ...    0.0  100.000
@@ -208,7 +188,7 @@ print(campaign)
                 1148       5.0              0.0   ...    4.0  200.000
                 1149      10.0              0.0   ...    4.0  200.000
                 
-                [1150 rows x 9 columns]
+                [1150 rows x 8 columns]
        Objective
           Type: SingleTargetObjective
           Targets

@@ -4,9 +4,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#" /><link rel="search" title="Search" href="search.html" />
 
-    <link rel="shortcut icon" href="_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 --><title>Index - BayBE documentation</title>
+    <link rel="shortcut icon" href="_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 --><title>Index - BayBE documentation</title>
 <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=259b2e4a" />
@@ -859,12 +859,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1451,6 +1448,12 @@
 </li>
         </ul></li>
         <li><a href="_autosummary/baybe.priors.basic.BetaPrior.html#baybe.priors.basic.BetaPrior.alpha">alpha (baybe.priors.basic.BetaPrior attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ATOMPAIR">ATOMPAIR (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.AUTOCORR">AUTOCORR (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.AVALON">AVALON (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -2441,10 +2444,6 @@
 </li>
         <li><a href="_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.contains">contains() (baybe.utils.interval.Interval method)</a>
 </li>
-        <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.contains_mordred">contains_mordred (baybe.searchspace.core.SearchSpace property)</a>
-</li>
-        <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.contains_rdkit">contains_rdkit (baybe.searchspace.core.SearchSpace property)</a>
-</li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.continuous">continuous (baybe.searchspace.core.SearchSpace attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpaceType.html#baybe.searchspace.core.SearchSpaceType.CONTINUOUS">CONTINUOUS (baybe.searchspace.core.SearchSpaceType attribute)</a>
@@ -2573,9 +2572,15 @@
   <h2>E</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.E3FP">E3FP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ECFP">ECFP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory.html#baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory">EDBOKernelFactory (class in baybe.surrogates.gaussian_process.presets.edbo)</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpaceType.html#baybe.searchspace.core.SearchSpaceType.EITHER">EITHER (baybe.searchspace.core.SearchSpaceType attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ELECTROSHAPE">ELECTROSHAPE (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous.empty">empty() (baybe.searchspace.continuous.SubspaceContinuous class method)</a>
 
@@ -2601,6 +2606,10 @@
           <li><a href="_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter.encoding">(baybe.parameters.substance.SubstanceParameter attribute)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ERG">ERG (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.ESTATE">ESTATE (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.estimate_product_space_size">estimate_product_space_size() (baybe.searchspace.core.SearchSpace static method)</a>
 
         <ul>
@@ -3187,6 +3196,8 @@
 </li>
         <li><a href="_autosummary/baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous.full_factorial">full_factorial (baybe.searchspace.continuous.SubspaceContinuous property)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.FUNCTIONALGROUPS">FUNCTIONALGROUPS (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.utils.dataframe.fuzzy_row_match.html#baybe.utils.dataframe.fuzzy_row_match">fuzzy_row_match() (in module baybe.utils.dataframe)</a>
 </li>
     </ul></td>
@@ -3229,6 +3240,8 @@
           <li><a href="_autosummary/baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.html#baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.get_current_recommender">(baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender method)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.utils.chemistry.get_fingerprint_class.html#baybe.utils.chemistry.get_fingerprint_class">get_fingerprint_class() (in module baybe.utils.chemistry)</a>
+</li>
         <li><a href="_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.get_integration_points">get_integration_points() (baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance method)</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid">get_invalid() (baybe.constraints.base.DiscreteConstraint method)</a>
@@ -3253,8 +3266,6 @@
           <li><a href="_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid">(baybe.constraints.discrete.DiscreteSumConstraint method)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid_polars">get_invalid_polars() (baybe.constraints.base.DiscreteConstraint method)</a>
 
         <ul>
@@ -3277,6 +3288,8 @@
           <li><a href="_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars">(baybe.constraints.discrete.DiscreteSumConstraint method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.surrogates.validation.get_model_params_validator.html#baybe.surrogates.validation.get_model_params_validator">get_model_params_validator() (in module baybe.surrogates.validation)</a>
 </li>
         <li><a href="_autosummary/baybe.recommenders.meta.base.MetaRecommender.html#baybe.recommenders.meta.base.MetaRecommender.get_next_recommender">get_next_recommender() (baybe.recommenders.meta.base.MetaRecommender method)</a>
@@ -3314,6 +3327,10 @@
         <li><a href="_autosummary/baybe.searchspace.validation.get_transform_parameters.html#baybe.searchspace.validation.get_transform_parameters">get_transform_parameters() (in module baybe.searchspace.validation)</a>
 </li>
         <li><a href="_autosummary/baybe.telemetry.get_user_details.html#baybe.telemetry.get_user_details">get_user_details() (in module baybe.telemetry)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.GETAWAY">GETAWAY (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.GHOSECRIPPEN">GHOSECRIPPEN (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.utils.basic.group_duplicate_values.html#baybe.utils.basic.group_duplicate_values">group_duplicate_values() (in module baybe.utils.basic)</a>
 </li>
@@ -3537,8 +3554,6 @@
         </ul></li>
         <li><a href="_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.is_right_bounded">is_right_bounded (baybe.utils.interval.Interval property)</a>
 </li>
-        <li><a href="_autosummary/baybe.utils.chemistry.is_valid_smiles.html#baybe.utils.chemistry.is_valid_smiles">is_valid_smiles() (in module baybe.utils.chemistry)</a>
-</li>
     </ul></td>
   </tr></table>
 </section>
@@ -3551,13 +3566,19 @@
 </li>
         <li><a href="_autosummary/baybe.kernels.base.Kernel.html#baybe.kernels.base.Kernel">Kernel (class in baybe.kernels.base)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.kernel_factory">kernel_factory (baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.surrogates.gaussian_process.kernel_factory.KernelFactory.html#baybe.surrogates.gaussian_process.kernel_factory.KernelFactory">KernelFactory (class in baybe.surrogates.gaussian_process.kernel_factory)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.KLEKOTAROTH">KLEKOTAROTH (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.html#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender">KMeansClusteringRecommender (class in baybe.recommenders.pure.nonpredictive.clustering)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter.kwargs_conformer">kwargs_conformer (baybe.parameters.substance.SubstanceParameter attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter.kwargs_fingerprint">kwargs_fingerprint (baybe.parameters.substance.SubstanceParameter attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -3567,6 +3588,10 @@
   <h2>L</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.LAGGNER">LAGGNER (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.LAYERED">LAYERED (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.kernels.basic.MaternKernel.html#baybe.kernels.basic.MaternKernel.lengthscale_initial_value">lengthscale_initial_value (baybe.kernels.basic.MaternKernel attribute)</a>
 
         <ul>
@@ -3603,6 +3628,8 @@
 </li>
         <li><a href="_autosummary/baybe.kernels.basic.LinearKernel.html#baybe.kernels.basic.LinearKernel">LinearKernel (class in baybe.kernels.basic)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.LINGO">LINGO (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.priors.basic.LogNormalPrior.html#baybe.priors.basic.LogNormalPrior.loc">loc (baybe.priors.basic.LogNormalPrior attribute)</a>
 
         <ul>
@@ -3625,7 +3652,11 @@
   <h2>M</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MACCS">MACCS (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.surrogates.gaussian_process.presets.core.make_gp_from_preset.html#baybe.surrogates.gaussian_process.presets.core.make_gp_from_preset">make_gp_from_preset() (in module baybe.surrogates.gaussian_process.presets.core)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MAP">MAP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.utils.scaling.ColumnTransformer.html#baybe.utils.scaling.ColumnTransformer.mapping">mapping (baybe.utils.scaling.ColumnTransformer attribute)</a>
 </li>
@@ -3660,6 +3691,8 @@
         <li><a href="_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.metadata">metadata (baybe.searchspace.discrete.SubspaceDiscrete attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.recommenders.meta.base.MetaRecommender.html#baybe.recommenders.meta.base.MetaRecommender">MetaRecommender (class in baybe.recommenders.meta.base)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MHFP">MHFP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.targets.enum.TargetMode.html#baybe.targets.enum.TargetMode.MIN">MIN (baybe.targets.enum.TargetMode attribute)</a>
 </li>
@@ -3934,6 +3967,10 @@
 </li>
         <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MORGAN_FP">MORGAN_FP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MORSE">MORSE (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.MQNS">MQNS (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -4162,15 +4199,21 @@
         </ul></li>
         <li><a href="_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction">PartialAcquisitionFunction (class in baybe.acquisition.partial)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.PATTERN">PATTERN (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel.period_length_initial_value">period_length_initial_value (baybe.kernels.basic.PeriodicKernel attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel.period_length_prior">period_length_prior (baybe.kernels.basic.PeriodicKernel attribute)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel.period_length_prior">period_length_prior (baybe.kernels.basic.PeriodicKernel attribute)</a>
-</li>
         <li><a href="_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel">PeriodicKernel (class in baybe.kernels.basic)</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint.permutation_invariant">permutation_invariant (baybe.constraints.discrete.DiscreteDependenciesConstraint attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.PHARMACOPHORE">PHARMACOPHORE (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.PHYSIOCHEMICALPROPERTIES">PHYSIOCHEMICALPROPERTIES (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.kernels.basic.PiecewisePolynomialKernel.html#baybe.kernels.basic.PiecewisePolynomialKernel">PiecewisePolynomialKernel (class in baybe.kernels.basic)</a>
 </li>
@@ -4230,6 +4273,8 @@
           <li><a href="_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html#baybe.acquisition.acqfs.qNoisyExpectedImprovement.prune_baseline">(baybe.acquisition.acqfs.qNoisyExpectedImprovement attribute)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.PUBCHEM">PUBCHEM (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.recommenders.pure.base.PureRecommender.html#baybe.recommenders.pure.base.PureRecommender">PureRecommender (class in baybe.recommenders.pure.base)</a>
 </li>
     </ul></td>
@@ -4282,7 +4327,13 @@
 </li>
         <li><a href="_autosummary/baybe.kernels.basic.RBFKernel.html#baybe.kernels.basic.RBFKernel">RBFKernel (class in baybe.kernels.basic)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.RDF">RDF (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.RDKIT">RDKIT (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.RDKIT2DDESCRIPTORS">RDKIT2DDESCRIPTORS (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.RDKITFINGERPRINT">RDKITFINGERPRINT (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.recommend">recommend() (baybe.campaign.Campaign method)</a>
 
@@ -4400,6 +4451,8 @@
 </li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpaceType.html#baybe.searchspace.core.SearchSpaceType">SearchSpaceType (class in baybe.searchspace.core)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.SECFP">SECFP (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.serialization.core.select_constructor_hook.html#baybe.serialization.core.select_constructor_hook">select_constructor_hook() (in module baybe.serialization.core)</a>
 </li>
         <li><a href="_autosummary/baybe.recommenders.meta.base.MetaRecommender.html#baybe.recommenders.meta.base.MetaRecommender.select_recommender">select_recommender() (baybe.recommenders.meta.base.MetaRecommender method)</a>
@@ -4442,13 +4495,7 @@
 </li>
         <li><a href="_autosummary/baybe.parameters.substance.Smiles.html#baybe.parameters.substance.Smiles">Smiles (in module baybe.parameters.substance)</a>
 </li>
-        <li><a href="_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html#baybe.utils.chemistry.smiles_to_fp_features">smiles_to_fp_features() (in module baybe.utils.chemistry)</a>
-</li>
-        <li><a href="_autosummary/baybe.utils.chemistry.smiles_to_molecules.html#baybe.utils.chemistry.smiles_to_molecules">smiles_to_molecules() (in module baybe.utils.chemistry)</a>
-</li>
-        <li><a href="_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html#baybe.utils.chemistry.smiles_to_mordred_features">smiles_to_mordred_features() (in module baybe.utils.chemistry)</a>
-</li>
-        <li><a href="_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html#baybe.utils.chemistry.smiles_to_rdkit_features">smiles_to_rdkit_features() (in module baybe.utils.chemistry)</a>
+        <li><a href="_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html#baybe.utils.chemistry.smiles_to_fingerprint_features">smiles_to_fingerprint_features() (in module baybe.utils.chemistry)</a>
 </li>
         <li><a href="_autosummary/baybe.priors.basic.SmoothedBoxPrior.html#baybe.priors.basic.SmoothedBoxPrior">SmoothedBoxPrior (class in baybe.priors.basic)</a>
 </li>
@@ -4460,10 +4507,10 @@
 </li>
         <li><a href="_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool">strtobool() (in module baybe.utils.boolean)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.constraints.deprecation.structure_constraints.html#baybe.constraints.deprecation.structure_constraints">structure_constraints() (in module baybe.constraints.deprecation)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.objectives.deprecation.structure_objective.html#baybe.objectives.deprecation.structure_objective">structure_objective() (in module baybe.objectives.deprecation)</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.conditions.SubSelectionCondition.html#baybe.constraints.conditions.SubSelectionCondition">SubSelectionCondition (class in baybe.constraints.conditions)</a>
@@ -5204,6 +5251,8 @@
           <li><a href="_autosummary/baybe.parameters.numerical.NumericalDiscreteParameter.html#baybe.parameters.numerical.NumericalDiscreteParameter.tolerance">(baybe.parameters.numerical.NumericalDiscreteParameter attribute)</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.TOPOLOGICALTORSION">TOPOLOGICALTORSION (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
         <li><a href="_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.transform">transform() (baybe.objectives.base.Objective method)</a>
 
         <ul>
@@ -5262,15 +5311,19 @@
 </li>
         <li><a href="_autosummary/baybe.serialization.core.unstructure_base.html#baybe.serialization.core.unstructure_base">unstructure_base() (in module baybe.serialization.core)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning">UnusedObjectWarning</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.upper">upper (baybe.utils.interval.Interval attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.acquisition.acqfs.UpperConfidenceBound.html#baybe.acquisition.acqfs.UpperConfidenceBound">UpperConfidenceBound (class in baybe.acquisition.acqfs)</a>
 </li>
         <li><a href="_autosummary/baybe.utils.interval.use_fallback_constructor_hook.html#baybe.utils.interval.use_fallback_constructor_hook">use_fallback_constructor_hook() (in module baybe.utils.interval)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.USR">USR (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.USRCAT">USRCAT (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -5332,6 +5385,8 @@
 </li>
         <li><a href="_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html#baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION">VARNAME_TORCH_USE_SINGLE_PRECISION (in module baybe.utils.torch)</a>
 </li>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.VSA">VSA (baybe.parameters.enum.SubstanceEncoding attribute)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -5341,6 +5396,10 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective.weights">weights (baybe.objectives.desirability.DesirabilityObjective attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding.WHIM">WHIM (baybe.parameters.enum.SubstanceEncoding attribute)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -5379,7 +5438,7 @@
     </aside>
   </div>
 </div><script src="_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>

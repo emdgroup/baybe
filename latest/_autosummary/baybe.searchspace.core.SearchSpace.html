@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="SearchSpaceType" href="baybe.searchspace.core.SearchSpaceType.html" /><link rel="prev" title="baybe.searchspace.core.validate_searchspace_from_config" href="baybe.searchspace.core.validate_searchspace_from_config.html" />
 
-    <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>SearchSpace - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
@@ -861,12 +861,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1073,12 +1070,6 @@ by continuous ones.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.constraints_augmentable" title="baybe.searchspace.core.SearchSpace.constraints_augmentable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constraints_augmentable</span></code></a></p></td>
 <td><p>The searchspace constraints that can be considered during augmentation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.contains_mordred" title="baybe.searchspace.core.SearchSpace.contains_mordred"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contains_mordred</span></code></a></p></td>
-<td><p>Indicates if any of the discrete parameters uses <code class="docutils literal notranslate"><span class="pre">MORDRED</span></code> encoding.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.contains_rdkit" title="baybe.searchspace.core.SearchSpace.contains_rdkit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">contains_rdkit</span></code></a></p></td>
-<td><p>Indicates if any of the discrete parameters uses <code class="docutils literal notranslate"><span class="pre">RDKIT</span></code> encoding.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.n_tasks" title="baybe.searchspace.core.SearchSpace.n_tasks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_tasks</span></code></a></p></td>
 <td><p>The number of tasks encoded in the search space.</p></td>
@@ -1363,18 +1354,6 @@ and will be removed in a future version.</p></li>
 <dd><p>The searchspace constraints that can be considered during augmentation.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="baybe.searchspace.core.SearchSpace.contains_mordred">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contains_mordred</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.searchspace.core.SearchSpace.contains_mordred" title="Link to this definition">¶</a></dt>
-<dd><p>Indicates if any of the discrete parameters uses <code class="docutils literal notranslate"><span class="pre">MORDRED</span></code> encoding.</p>
-</dd></dl>
-
-<dl class="py property">
-<dt class="sig sig-object py" id="baybe.searchspace.core.SearchSpace.contains_rdkit">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contains_rdkit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></em><a class="headerlink" href="#baybe.searchspace.core.SearchSpace.contains_rdkit" title="Link to this definition">¶</a></dt>
-<dd><p>Indicates if any of the discrete parameters uses <code class="docutils literal notranslate"><span class="pre">RDKIT</span></code> encoding.</p>
-</dd></dl>
-
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.searchspace.core.SearchSpace.continuous">
 <span class="sig-name descname"><span class="pre">continuous</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous" title="baybe.searchspace.continuous.SubspaceContinuous"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubspaceContinuous</span></code></a></em><a class="headerlink" href="#baybe.searchspace.core.SearchSpace.continuous" title="Link to this definition">¶</a></dt>
@@ -1494,8 +1473,6 @@ and will be removed in a future version.</p></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.comp_rep_columns"><code class="docutils literal notranslate"><span class="pre">SearchSpace.comp_rep_columns</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.constraints"><code class="docutils literal notranslate"><span class="pre">SearchSpace.constraints</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.constraints_augmentable"><code class="docutils literal notranslate"><span class="pre">SearchSpace.constraints_augmentable</span></code></a></li>
-<li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.contains_mordred"><code class="docutils literal notranslate"><span class="pre">SearchSpace.contains_mordred</span></code></a></li>
-<li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.contains_rdkit"><code class="docutils literal notranslate"><span class="pre">SearchSpace.contains_rdkit</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.continuous"><code class="docutils literal notranslate"><span class="pre">SearchSpace.continuous</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.discrete"><code class="docutils literal notranslate"><span class="pre">SearchSpace.discrete</span></code></a></li>
 <li><a class="reference internal" href="#baybe.searchspace.core.SearchSpace.n_tasks"><code class="docutils literal notranslate"><span class="pre">SearchSpace.n_tasks</span></code></a></li>
@@ -1517,7 +1494,7 @@ and will be removed in a future version.</p></li>
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

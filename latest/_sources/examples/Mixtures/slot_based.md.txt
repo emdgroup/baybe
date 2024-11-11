@@ -226,20 +226,6 @@ print(
 )
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CC(=O)C')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCO')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CO')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-
-
        Slot1_Label Slot2_Label Slot3_Label  Slot1_Amount  Slot2_Amount  Slot3_Amount
     0     methanol     ethanol     acetone           0.0           0.0         100.0
     1     methanol     ethanol     acetone           0.0          25.0          75.0

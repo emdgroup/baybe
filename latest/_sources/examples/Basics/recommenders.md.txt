@@ -266,15 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base                        Ligand  \
-    380         DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
-    270         DMAc  Potassium pivalate                     BrettPhos   
-    328  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    364    Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    134           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
+    267  Butyornitrile  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    380         90.0          0.153  
-    270         90.0          0.057  
-    328        105.0          0.100  
+    364        105.0          0.100  
+    134        120.0          0.153  
+    267        120.0          0.057  
 
 
 
@@ -287,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base                        Ligand  \
-    380         DMAc   Potassium acetate  Di-tert-butylphenylphosphine   
-    270         DMAc  Potassium pivalate                     BrettPhos   
-    328  Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    364    Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    134           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
+    267  Butyornitrile  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    380         90.0          0.153  24.220784  
-    270         90.0          0.057  13.220068  
-    328        105.0          0.100  21.426046  
+    364        105.0          0.100  24.713191  
+    134        120.0          0.153  22.297272  
+    267        120.0          0.057  26.449980  
 
 
 

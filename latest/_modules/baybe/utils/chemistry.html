@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.utils.chemistry - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=259b2e4a" />
@@ -860,12 +860,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -995,6 +992,8 @@
 <span class="kn">import</span> <span class="nn">ssl</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 <span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 
@@ -1003,16 +1002,14 @@
 <span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Memory</span>
 
 <span class="kn">from</span> <span class="nn">baybe._optional.chem</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Calculator</span><span class="p">,</span>
+    <span class="n">BaseFingerprintTransformer</span><span class="p">,</span>
     <span class="n">Chem</span><span class="p">,</span>
-    <span class="n">GetMorganFingerprintAsBitVect</span><span class="p">,</span>
-    <span class="n">RDLogger</span><span class="p">,</span>
-    <span class="n">descriptors</span><span class="p">,</span>
+    <span class="n">ConformerGenerator</span><span class="p">,</span>
+    <span class="n">MolFromSmilesTransformer</span><span class="p">,</span>
+    <span class="n">fingerprints</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
-
-<span class="n">_mordred_calculator</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-
 
 <span class="c1"># Caching</span>
 <span class="n">_cachedir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -1024,7 +1021,9 @@
     <span class="k">return</span> <span class="n">func</span>
 
 
-<span class="n">_disk_cache</span> <span class="o">=</span> <span class="n">_dummy_wrapper</span> <span class="k">if</span> <span class="n">_cachedir</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="n">Memory</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">_cachedir</span><span class="p">))</span><span class="o">.</span><span class="n">cache</span>
+<span class="n">_disk_cache</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">_dummy_wrapper</span> <span class="k">if</span> <span class="n">_cachedir</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="n">Memory</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">_cachedir</span><span class="p">),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">cache</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="name_to_smiles">
@@ -1066,172 +1065,122 @@
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="nd">@_disk_cache</span>
-<span class="k">def</span> <span class="nf">_smiles_to_mordred_features</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Memory- and disk-cached computation of Mordred descriptors.</span>
+<span class="k">def</span> <span class="nf">_molecule_to_fingerprint_features</span><span class="p">(</span>
+    <span class="n">molecule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Chem</span><span class="o">.</span><span class="n">Mol</span><span class="p">,</span>
+    <span class="n">encoder</span><span class="p">:</span> <span class="n">BaseFingerprintTransformer</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute molecular fingerprint for a single molecule.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        smiles: SMILES string.</span>
+<span class="sd">        molecule: SMILES string or molecule object.</span>
+<span class="sd">        encoder: Instance of the fingerprint class to be used for computation.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Mordred descriptors for the given smiles string.</span>
+<span class="sd">        Array of fingerprint features.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
-            <span class="n">_mordred_calculator</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">))</span><span class="o">.</span><span class="n">fill_missing</span><span class="p">()</span>
-        <span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_mordred_calculator</span><span class="o">.</span><span class="n">descriptors</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">molecule</span><span class="p">])</span>
 
 
-<div class="viewcode-block" id="smiles_to_mordred_features">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html#baybe.utils.chemistry.smiles_to_mordred_features">[docs]</a>
-<span class="k">def</span> <span class="nf">smiles_to_mordred_features</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">dropna</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<div class="viewcode-block" id="smiles_to_fingerprint_features">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html#baybe.utils.chemistry.smiles_to_fingerprint_features">[docs]</a>
+<span class="k">def</span> <span class="nf">smiles_to_fingerprint_features</span><span class="p">(</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">encoding</span><span class="p">:</span> <span class="n">SubstanceEncoding</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kwargs_conformer</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kwargs_fingerprint</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Mordred chemical descriptors for a list of SMILES strings.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute molecular fingerprints for a list of SMILES strings.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        smiles_list: List of SMILES strings.</span>
-<span class="sd">        prefix: Name prefix for each descriptor</span>
-<span class="sd">            (e.g., nBase --&gt; &lt;prefix&gt;_nBase).</span>
-<span class="sd">        dropna: If ``True``, drops columns that contain NaNs.</span>
+<span class="sd">        smiles: Sequence of SMILES strings.</span>
+<span class="sd">        encoding: Encoding used to transform SMILES to fingerprints.</span>
+<span class="sd">        prefix: Name prefix for each descriptor (e.g., nBase --&gt; &lt;prefix&gt;_nBase).</span>
+<span class="sd">        kwargs_conformer: kwargs for conformer generator</span>
+<span class="sd">        kwargs_fingerprint: kwargs for fingerprint generator</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Dataframe containing overlapping Mordred descriptors for each SMILES</span>
-<span class="sd">        string.</span>
+<span class="sd">        Dataframe containing fingerprints for each SMILES string.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">_smiles_to_mordred_features</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span> <span class="k">for</span> <span class="n">smiles</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">]</span>
-    <span class="n">descriptor_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_mordred_calculator</span><span class="o">.</span><span class="n">descriptors</span><span class="p">)</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;MORDRED_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">descriptor_names</span><span class="p">]</span>
-    <span class="n">dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+    <span class="n">kwargs_fingerprint</span> <span class="o">=</span> <span class="n">kwargs_fingerprint</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="n">kwargs_conformer</span> <span class="o">=</span> <span class="n">kwargs_conformer</span> <span class="ow">or</span> <span class="p">{}</span>
 
-    <span class="k">if</span> <span class="n">dropna</span><span class="p">:</span>
-        <span class="n">dataframe</span> <span class="o">=</span> <span class="n">dataframe</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">MORGAN_FP</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Substance encoding &#39;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is deprecated and will be disabled &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;in a future version. Use &#39;</span><span class="si">{</span><span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">ECFP</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;with &#39;fp_size&#39; 1024 and &#39;radius&#39; 4 instead.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">ECFP</span>
+        <span class="n">kwargs_fingerprint</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;fp_size&quot;</span><span class="p">:</span> <span class="mi">1024</span><span class="p">,</span> <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">})</span>
 
-    <span class="k">return</span> <span class="n">dataframe</span></div>
+    <span class="k">elif</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Substance encoding &#39;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is deprecated and will be disabled &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;in a future version. Use &#39;</span><span class="si">{</span><span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT2DDESCRIPTORS</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;instead.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKIT2DDESCRIPTORS</span>
+
+    <span class="n">fingerprint_cls</span> <span class="o">=</span> <span class="n">get_fingerprint_class</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span>
+    <span class="n">fingerprint_encoder</span> <span class="o">=</span> <span class="n">fingerprint_cls</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_fingerprint</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">fingerprint_encoder</span><span class="o">.</span><span class="n">requires_conformers</span><span class="p">:</span>
+        <span class="n">mol_list</span> <span class="o">=</span> <span class="n">ConformerGenerator</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs_conformer</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+            <span class="n">MolFromSmilesTransformer</span><span class="p">()</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mol_list</span> <span class="o">=</span> <span class="n">smiles</span>
+
+    <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">_molecule_to_fingerprint_features</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">fingerprint_encoder</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">mol_list</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_&quot;</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">prefix</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;fingerprint&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fingerprint_encoder</span><span class="o">.</span><span class="n">get_feature_names_out</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">col_names</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
 
 
 
-<div class="viewcode-block" id="smiles_to_molecules">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html#baybe.utils.chemistry.smiles_to_molecules">[docs]</a>
-<span class="k">def</span> <span class="nf">smiles_to_molecules</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Chem</span><span class="o">.</span><span class="n">Mol</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a given list of SMILES strings into corresponding Molecule objects.</span>
+<div class="viewcode-block" id="get_fingerprint_class">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html#baybe.utils.chemistry.get_fingerprint_class">[docs]</a>
+<span class="k">def</span> <span class="nf">get_fingerprint_class</span><span class="p">(</span><span class="n">encoding</span><span class="p">:</span> <span class="n">SubstanceEncoding</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseFingerprintTransformer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the fingerprint class corresponding to a given encoding.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        smiles_list: List of SMILES strings.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List of corresponding molecules.</span>
+<span class="sd">        encoding: A substance encoding.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the SMILES does not seem to be chemically valid.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mols</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">smiles</span> <span class="ow">in</span> <span class="n">smiles_list</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">()</span>
-            <span class="n">mols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;The SMILES </span><span class="si">{</span><span class="n">smiles</span><span class="si">}</span><span class="s2"> does not seem to be chemically valid.&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
-    <span class="k">return</span> <span class="n">mols</span></div>
-
-
-
-<div class="viewcode-block" id="smiles_to_rdkit_features">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html#baybe.utils.chemistry.smiles_to_rdkit_features">[docs]</a>
-<span class="k">def</span> <span class="nf">smiles_to_rdkit_features</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">dropna</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute RDKit chemical descriptors for a list of SMILES strings.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        smiles_list: List of SMILES strings.</span>
-<span class="sd">        prefix: Name prefix for each descriptor (e.g., nBase --&gt; &lt;prefix&gt;_nBase).</span>
-<span class="sd">        dropna: If ``True``, drops columns that contain NaNs.</span>
+<span class="sd">        ValueError: If no fingerprint class for the specified encoding is found.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Dataframe containing overlapping RDKit descriptors for each SMILES string.</span>
+<span class="sd">        The fingerprint class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mols</span> <span class="o">=</span> <span class="n">smiles_to_molecules</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">)</span>
+    <span class="c1"># Exception case</span>
+    <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="n">SubstanceEncoding</span><span class="o">.</span><span class="n">RDKITFINGERPRINT</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fingerprints</span><span class="o">.</span><span class="n">RDKitFingerprint</span>
 
-    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">:</span>
-        <span class="n">desc</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;RDKIT_&quot;</span> <span class="o">+</span> <span class="n">dname</span><span class="p">:</span> <span class="n">DTypeFloatNumpy</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">mol</span><span class="p">))</span>
-            <span class="k">for</span> <span class="n">dname</span><span class="p">,</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">Chem</span><span class="o">.</span><span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span>
-        <span class="p">}</span>
-        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">desc</span><span class="p">)</span>
-
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">dropna</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">df</span></div>
-
-
-
-<div class="viewcode-block" id="smiles_to_fp_features">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html#baybe.utils.chemistry.smiles_to_fp_features">[docs]</a>
-<span class="k">def</span> <span class="nf">smiles_to_fp_features</span><span class="p">(</span>
-    <span class="n">smiles_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-    <span class="n">dtype</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">type</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute standard Morgan molecule fingerprints for a list of SMILES strings.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        smiles_list: List of SMILES strings.</span>
-<span class="sd">        prefix: Name prefix for each descriptor (e.g., nBase --&gt; &lt;prefix&gt;_nBase).</span>
-<span class="sd">        dtype: Specifies whether fingerprints will have int or float data type.</span>
-<span class="sd">        radius: Radius for the Morgan fingerprint.</span>
-<span class="sd">        n_bits:Number of bits for the Morgan fingerprint.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Dataframe containing Morgan fingerprints for each SMILES string.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mols</span> <span class="o">=</span> <span class="n">smiles_to_molecules</span><span class="p">(</span><span class="n">smiles_list</span><span class="p">)</span>
-
-    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">mols</span><span class="p">:</span>
-        <span class="n">RDLogger</span><span class="o">.</span><span class="n">logger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">RDLogger</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">)</span>
-
-        <span class="n">fingerp</span> <span class="o">=</span> <span class="n">GetMorganFingerprintAsBitVect</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">nBits</span><span class="o">=</span><span class="n">n_bits</span><span class="p">)</span><span class="o">.</span><span class="n">ToBitString</span><span class="p">()</span>
-        <span class="n">fingerp</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">fingerp</span><span class="p">)</span>
-        <span class="n">fpvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">fingerp</span><span class="p">))</span>
-        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">{</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">&quot;FP_&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">dtype</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fpvec</span><span class="p">)}</span>
-        <span class="p">)</span>
-
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">df</span></div>
-
-
-
-<div class="viewcode-block" id="is_valid_smiles">
-<a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html#baybe.utils.chemistry.is_valid_smiles">[docs]</a>
-<span class="k">def</span> <span class="nf">is_valid_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test if a SMILES string is valid according to RDKit.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        smiles: SMILES string to be tested.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        ``True`` if the provided SMILES is valid, ``False`` else.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">mol</span> <span class="o">=</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">mol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span></div>
+        <span class="n">cls_name</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="n">name</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;Fingerprint&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="o">==</span> <span class="n">name</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">StopIteration</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;No fingerprint class exists for the specified encoding &#39;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">,</span> <span class="n">cls_name</span><span class="p">)</span></div>
 
 
 
@@ -1277,7 +1226,7 @@
     </aside>
   </div>
 </div><script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

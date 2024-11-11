@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 7.4.7 and Furo 2024.07.18 -->
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.parameters.enum - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
-    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=613ab9ff" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=259b2e4a" />
@@ -860,12 +860,9 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.is_valid_smiles.html">baybe.utils.chemistry.is_valid_smiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fp_features.html">baybe.utils.chemistry.smiles_to_fp_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_molecules.html">baybe.utils.chemistry.smiles_to_molecules</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_mordred_features.html">baybe.utils.chemistry.smiles_to_mordred_features</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_rdkit_features.html">baybe.utils.chemistry.smiles_to_rdkit_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1014,22 +1011,6 @@
 
 
 
-<div class="viewcode-block" id="SubstanceEncoding">
-<a class="viewcode-back" href="../../../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding">[docs]</a>
-<span class="k">class</span> <span class="nc">SubstanceEncoding</span><span class="p">(</span><span class="n">ParameterEncoding</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Available encodings for substance parameters.&quot;&quot;&quot;</span>
-
-    <span class="n">MORDRED</span> <span class="o">=</span> <span class="s2">&quot;MORDRED&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encoding based on Mordred chemical descriptors.&quot;&quot;&quot;</span>
-
-    <span class="n">RDKIT</span> <span class="o">=</span> <span class="s2">&quot;RDKIT&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encoding based on RDKit chemical descriptors.&quot;&quot;&quot;</span>
-
-    <span class="n">MORGAN_FP</span> <span class="o">=</span> <span class="s2">&quot;MORGAN_FP&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encoding based on Morgan molecule fingerprints.&quot;&quot;&quot;</span></div>
-
-
-
 <div class="viewcode-block" id="CustomEncoding">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.enum.CustomEncoding.html#baybe.parameters.enum.CustomEncoding">[docs]</a>
 <span class="k">class</span> <span class="nc">CustomEncoding</span><span class="p">(</span><span class="n">ParameterEncoding</span><span class="p">):</span>
@@ -1037,6 +1018,127 @@
 
     <span class="n">CUSTOM</span> <span class="o">=</span> <span class="s2">&quot;CUSTOM&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;User-defined encoding.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SubstanceEncoding">
+<a class="viewcode-back" href="../../../_autosummary/baybe.parameters.enum.SubstanceEncoding.html#baybe.parameters.enum.SubstanceEncoding">[docs]</a>
+<span class="k">class</span> <span class="nc">SubstanceEncoding</span><span class="p">(</span><span class="n">ParameterEncoding</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Available encodings for substance parameters from `scikit-fingerprints`_ package.</span>
+
+<span class="sd">    .. _scikit-fingerprints: https://scikit-fingerprints.github.io/scikit-fingerprints/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ATOMPAIR</span> <span class="o">=</span> <span class="s2">&quot;ATOMPAIR&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.AtomPairFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">AUTOCORR</span> <span class="o">=</span> <span class="s2">&quot;AUTOCORR&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.AutocorrFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">AVALON</span> <span class="o">=</span> <span class="s2">&quot;AVALON&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.AvalonFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">E3FP</span> <span class="o">=</span> <span class="s2">&quot;E3FP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.E3FPFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">ECFP</span> <span class="o">=</span> <span class="s2">&quot;ECFP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.ECFPFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">ELECTROSHAPE</span> <span class="o">=</span> <span class="s2">&quot;ELECTROSHAPE&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.ElectroShapeFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MORGAN_FP</span> <span class="o">=</span> <span class="s2">&quot;MORGAN_FP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deprecated! Uses :class:`skfp.fingerprints.ECFPFingerprint` with ``fp_size=1024``</span>
+<span class="sd">    and ``radius=4``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ERG</span> <span class="o">=</span> <span class="s2">&quot;ERG&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.ERGFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">ESTATE</span> <span class="o">=</span> <span class="s2">&quot;ESTATE&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.EStateFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">FUNCTIONALGROUPS</span> <span class="o">=</span> <span class="s2">&quot;FUNCTIONALGROUPS&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.FunctionalGroupsFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">GETAWAY</span> <span class="o">=</span> <span class="s2">&quot;GETAWAY&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.GETAWAYFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">GHOSECRIPPEN</span> <span class="o">=</span> <span class="s2">&quot;GHOSECRIPPEN&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.GhoseCrippenFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">KLEKOTAROTH</span> <span class="o">=</span> <span class="s2">&quot;KLEKOTAROTH&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.KlekotaRothFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">LAGGNER</span> <span class="o">=</span> <span class="s2">&quot;LAGGNER&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.LaggnerFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">LAYERED</span> <span class="o">=</span> <span class="s2">&quot;LAYERED&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.LayeredFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">LINGO</span> <span class="o">=</span> <span class="s2">&quot;LINGO&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.LingoFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MACCS</span> <span class="o">=</span> <span class="s2">&quot;MACCS&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MACCSFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MAP</span> <span class="o">=</span> <span class="s2">&quot;MAP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MAPFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MHFP</span> <span class="o">=</span> <span class="s2">&quot;MHFP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MHFPFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MORSE</span> <span class="o">=</span> <span class="s2">&quot;MORSE&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MORSEFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MQNS</span> <span class="o">=</span> <span class="s2">&quot;MQNS&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MQNsFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">MORDRED</span> <span class="o">=</span> <span class="s2">&quot;MORDRED&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.MordredFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">PATTERN</span> <span class="o">=</span> <span class="s2">&quot;PATTERN&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.PatternFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">PHARMACOPHORE</span> <span class="o">=</span> <span class="s2">&quot;PHARMACOPHORE&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.PharmacophoreFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">PHYSIOCHEMICALPROPERTIES</span> <span class="o">=</span> <span class="s2">&quot;PHYSIOCHEMICALPROPERTIES&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.PhysiochemicalPropertiesFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">PUBCHEM</span> <span class="o">=</span> <span class="s2">&quot;PUBCHEM&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.PubChemFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">RDF</span> <span class="o">=</span> <span class="s2">&quot;RDF&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.RDFFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">RDKIT</span> <span class="o">=</span> <span class="s2">&quot;RDKIT&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated! Uses :class:`skfp.fingerprints.RDKit2DDescriptors`.&quot;&quot;&quot;</span>
+
+    <span class="n">RDKITFINGERPRINT</span> <span class="o">=</span> <span class="s2">&quot;RDKITFINGERPRINT&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.RDKitFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">RDKIT2DDESCRIPTORS</span> <span class="o">=</span> <span class="s2">&quot;RDKIT2DDESCRIPTORS&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.RDKit2DDescriptorsFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">SECFP</span> <span class="o">=</span> <span class="s2">&quot;SECFP&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.SECFPFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">TOPOLOGICALTORSION</span> <span class="o">=</span> <span class="s2">&quot;TOPOLOGICALTORSION&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.TopologicalTorsionFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">USR</span> <span class="o">=</span> <span class="s2">&quot;USR&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.USRFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">USRCAT</span> <span class="o">=</span> <span class="s2">&quot;USRCAT&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.USRCATFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">VSA</span> <span class="o">=</span> <span class="s2">&quot;VSA&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.VSAFingerprint`&quot;&quot;&quot;</span>
+
+    <span class="n">WHIM</span> <span class="o">=</span> <span class="s2">&quot;WHIM&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;:class:`skfp.fingerprints.WHIMFingerprint`&quot;&quot;&quot;</span></div>
 
 </pre></div>
         </article>
@@ -1071,7 +1173,7 @@
     </aside>
   </div>
 </div><script src="../../../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>

@@ -15,12 +15,9 @@ baybe.utils.chemistry
       :toctree:                                       
    
       get_canonical_smiles
-      is_valid_smiles
+      get_fingerprint_class
       name_to_smiles
-      smiles_to_fp_features
-      smiles_to_molecules
-      smiles_to_mordred_features
-      smiles_to_rdkit_features
+      smiles_to_fingerprint_features
    
    
 
