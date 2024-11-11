@@ -90,3 +90,24 @@ benchmark_synthetic_3 = Benchmark(
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     callable=benchmark_callable,
 )
+
+
+if __name__ == "__main__":
+    #  Visualize the domain
+
+    import matplotlib.pyplot as plt
+
+    X = np.linspace(-2 * pi, 2 * pi)
+    Y = np.linspace(-2 * pi, 2 * pi)
+    Z = [1, 2, 3, 4]
+
+    x_mesh, y_mesh = np.meshgrid(X, Y)
+
+    fig = plt.figure(figsize=(10, 10))
+    for i, z in enumerate(Z):
+        ax = fig.add_subplot(2, 2, i + 1, projection="3d")
+        z_mesh = lookup(x_mesh, y_mesh, z)
+        ax.plot_surface(x_mesh, y_mesh, z_mesh)
+        plt.title(f"{z=}")
+
+    plt.show()
