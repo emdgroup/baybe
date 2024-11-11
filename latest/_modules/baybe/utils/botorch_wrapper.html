@@ -994,6 +994,8 @@
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">SyntheticTestFunction</span>
 
+<span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+
 
 <div class="viewcode-block" id="botorch_function_wrapper">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.botorch_wrapper.botorch_function_wrapper.html#baybe.utils.botorch_wrapper.botorch_function_wrapper">[docs]</a>
@@ -1012,7 +1014,7 @@
 
     <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="c1"># Cast the provided list of floats to a tensor.</span>
-        <span class="n">x_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatTorch</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="n">test_function</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">x_tensor</span><span class="p">)</span>
         <span class="c1"># We do not need to return a tuple here.</span>
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
