@@ -18,6 +18,9 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
+    description: str = field(validator=instance_of(str))
+    """The description of the benchmark callable."""
+
     benchmark_function: Callable[[], tuple[DataFrame, dict[str, str]]]
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
@@ -29,14 +32,13 @@ class Benchmark:
     def run(self) -> Result:
         """Execute the benchmark.
 
-        The function will execute the benchmark and return the result apply added
-        metrics if any were set and measures execution time.
+        The function will execute the benchmark
+        and return the result
         """
         start_ns = time.perf_counter_ns()
         result, metadata = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
+        metadata["benchmark_name"] = self.name
         time_delta = stop_ns - start_ns
-        benchmark_result = Result(
-            self.name, self.identifier, metadata, result, time_delta
-        )
+        benchmark_result = Result(self.identifier, metadata, result, time_delta)
         return benchmark_result
