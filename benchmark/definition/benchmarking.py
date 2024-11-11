@@ -3,7 +3,7 @@
 import time
 from collections.abc import Callable
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 import torch
 from attrs import define, field
@@ -27,7 +27,7 @@ class Benchmark:
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
-    identifier: UUID = field(factory=uuid4, validator=instance_of(UUID))
+    identifier: UUID = field(validator=instance_of(UUID))
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
