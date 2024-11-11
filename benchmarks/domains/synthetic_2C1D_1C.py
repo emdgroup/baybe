@@ -33,7 +33,11 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         x   continuous [-2*pi, 2*pi]
         y   continuous [-2*pi, 2*pi]
     Output: continuous
-    Best value: 4.09685
+    Objective: Maximization
+    Optimal Inputs:
+        {x: 1.610, y: 1.571, z: 3}
+        {x: 1.610, y: -4.712, z: 3}
+    Optimal Output: 4.09685
     """
     try:
         assert np.all(-2 * pi <= x) and np.all(x <= 2 * pi)
