@@ -19,7 +19,7 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_function: Callable[[], tuple[DataFrame, dict[str, Any]]]
+    benchmark_function: Callable[[], tuple[DataFrame, dict[str, Any]]] = field()
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
@@ -27,14 +27,21 @@ class Benchmark:
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    description: str = field(validator=instance_of(str), init=False)
-    """The description of the benchmark callable. Will be
-    set as the docstring of the benchmark function automatically."""
-
-    def __attrs_post_init__(self):
+    @property
+    def description(self) -> str:
+        """The description of the benchmark callable."""
         if self.benchmark_function.__doc__ is None:
-            raise ValueError("Description of the benchmark callable is not set.")
-        self.description = self.benchmark_function.__doc__
+            return ""
+        return self.benchmark_function.__doc__
+
+    @benchmark_function.validator
+    def _validate_callable(
+        self, _: Any, value: Callable[[], tuple[DataFrame, dict[str, Any]]]
+    ) -> None:
+        if not callable(value):
+            raise ValueError(f"Callable must be a function, got {type(value)}")
+        if value.__doc__ is None:
+            raise ValueError("Callable must have a docstring")
 
     def run(self) -> Result:
         """Execute the benchmark.
