@@ -139,17 +139,19 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 if p in param_names
             ]
             coefficients = self.coefficients
+            torch_indices = torch.tensor(param_indices)
         else:
             param_index = {name: param_names.index(name) for name in self.parameters}
-            param_indices = [
+            param_indices_interpoint = [
                 (batch, param_index[name] + idx_offset)
                 for name in self.parameters
                 for batch in range(batch_size)
             ]
             coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
+            torch_indices = torch.tensor(param_indices_interpoint)
 
         return (
-            torch.tensor(param_indices),
+            torch_indices,
             torch.tensor(
                 [self._multiplier * c for c in coefficients], dtype=DTypeFloatTorch
             ),
