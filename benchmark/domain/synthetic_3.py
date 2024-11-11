@@ -38,9 +38,9 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
         Number of Samples            inf
         Dimensionality                 3
         Features:
+            z   discrete {1,2,3,4}
             x   continuous [-2*pi, 2*pi]
             y   continuous [-2*pi, 2*pi]
-            z   discrete {1,2,3,4}
         Targets:
             output   continuous
     Best Value 4.09685
