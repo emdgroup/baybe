@@ -23,7 +23,9 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_settings: BenchmarkScenarioSettings = field()
+    benchmark_settings: BenchmarkScenarioSettings = field(
+        validator=instance_of(BenchmarkScenarioSettings)
+    )
     """The configuration for the benchmark settings."""
 
     benchmark_function: BenchmarkFunction = field(validator=is_callable())

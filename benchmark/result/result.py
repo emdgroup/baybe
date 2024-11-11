@@ -25,7 +25,7 @@ class Result(SerialMixin):
     )
     """Settings about the benchmarking result."""
 
-    benchmark_result: DataFrame = field()
+    benchmark_result: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""
 
     result_metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
