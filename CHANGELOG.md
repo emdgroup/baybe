@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- Example for a traditional mixture
+
+### Changed
+- Example for slot-based mixtures has been revised and grouped together with the new 
+  traditional mixture example
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
