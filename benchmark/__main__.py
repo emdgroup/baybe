@@ -9,8 +9,11 @@ from benchmark.result.result import Result
 def main():
     """Run the performance test for the given scenario."""
     for benchmark in BENCHMARKS:
-        result_benchmarking: Result = benchmark.run()
-        logging.info(f"Result: {result_benchmarking}")
+        benchmark_result: Result = benchmark.run()
+        logging.info(
+            f"Benchmark {benchmark_result.name}"
+            + f"({benchmark_result.identifier}) finished."
+        )
 
 
 if __name__ == "__main__":
