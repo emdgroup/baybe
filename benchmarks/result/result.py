@@ -9,7 +9,6 @@ from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
 
-from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from benchmarks.definition.config import BenchmarkConfig
 from benchmarks.result.metadata import ResultMetadata
@@ -27,7 +26,3 @@ class Result(SerialMixin, Generic[BenchmarkConfig]):
 
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
     """The metadata associated with the benchmark result."""
-
-
-converter.register_unstructure_hook(UUID, lambda x: str(x))
-converter.register_structure_hook(UUID, lambda x, _: UUID(x))
