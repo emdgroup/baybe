@@ -118,9 +118,31 @@ class Campaign(SerialMixin):
 
     @override
     def __str__(self) -> str:
+        recommended_count = sum(self._searchspace_metadata[_RECOMMENDED])
+        measured_count = sum(self._searchspace_metadata[_MEASURED])
+        excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
+        n_elements = len(self._searchspace_metadata)
+        searchspace_fields = [
+            to_string(
+                "Recommended:",
+                f"{recommended_count}/{n_elements}",
+                single_line=True,
+            ),
+            to_string(
+                "Measured:",
+                f"{measured_count}/{n_elements}",
+                single_line=True,
+            ),
+            to_string(
+                "Excluded:",
+                f"{excluded_count}/{n_elements}",
+                single_line=True,
+            ),
+        ]
         metadata_fields = [
             to_string("Batches done", self.n_batches_done, single_line=True),
             to_string("Fits done", self.n_fits_done, single_line=True),
+            to_string("Discrete Subspace Meta Data", *searchspace_fields),
         ]
         metadata = to_string("Meta Data", *metadata_fields)
         fields = [metadata, self.searchspace, self.objective, self.recommender]
