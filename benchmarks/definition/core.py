@@ -51,7 +51,7 @@ class Benchmark(Generic[BenchmarkConfig]):
 
         metadata = ResultMetadata(
             start_datetime=start_datetime,
-            execution_time_sec=start_sec - stop_sec,
+            execution_time_sec=stop_sec - start_sec,
         )
 
         return Result(self.identifier, result, metadata)
