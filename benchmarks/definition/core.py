@@ -53,7 +53,6 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
         metadata = ResultMetadata(
             start_datetime=start_datetime,
             duration=duration,
-            best_possible_result=self.best_possible_result,
         )
 
         return Result(self.identifier, result, metadata)
