@@ -27,7 +27,7 @@ import pandas as pd
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender
-from baybe.searchspace import SubspaceContinuous
+from baybe.searchspace import SearchSpace
 
 ### Parameter Setup
 
@@ -87,10 +87,10 @@ c_g3_max = ContinuousLinearConstraint(
 # Having both parameter and constraint definitions at hand, we can create our
 # search space:
 
-searchspace = SubspaceContinuous.from_product(
+searchspace = SearchSpace.from_product(
     parameters=[*p_g1_amounts, *p_g2_amounts, *p_g3_amounts],
     constraints=[c_total_sum, c_g2_min, c_g3_max],
-).to_searchspace()  # alternatively use SearchSpace.from_product
+)
 
 
 ### Verification of Constraints

@@ -213,8 +213,8 @@ print(
 #     constraints=[perm_inv_constraint, no_duplicates_constraint],
 # )
 # ```
-# Note that `from_simplex` explicitly ensures the sum constraint, hence we do not pass
-# it to `constraints`.
+# Note that {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex`
+# inherently ensures the sum constraint, hence we do not pass it to `constraints`.
 # ````
 
 
