@@ -2,10 +2,10 @@
 
 import time
 from collections.abc import Callable
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-import torch
 from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
@@ -23,7 +23,7 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_function: BenchmarkFunction = field(validator=is_callable)
+    benchmark_function: BenchmarkFunction = field(validator=is_callable())
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
@@ -44,6 +44,7 @@ class Benchmark:
         The function will execute the benchmark
         and return the result
         """
+        start_datetime = datetime.now()
         start_ns = time.perf_counter_ns()
         result, benchmark_settings = self.benchmark_function()
         stop_ns = time.perf_counter_ns()
@@ -52,17 +53,10 @@ class Benchmark:
         time_delta = stop_ns - start_ns
         time_delta_sec = time_delta / 1e9
 
-        assuming_gpu_usage_if_device_available = (
-            torch.cuda.is_available()
-            and torch.cuda.current_device() != -1
-            or torch.backends.mps.is_available()
-            and torch.backends.mps.is_built()
-        )
-
         result_metadata = ResultMetadata(
             benchmark_name=self.name,
             execution_time_sec=time_delta_sec,
-            gpu_used=assuming_gpu_usage_if_device_available,
+            start_datetime=start_datetime,
         )
 
         benchmark_result = Result(
