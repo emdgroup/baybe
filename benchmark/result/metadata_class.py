@@ -6,7 +6,7 @@ import git
 from attrs import define, field
 from attrs.validators import instance_of
 
-from baybe import __version__ as baybe_version
+from baybe import __version__ as baybe_package_version
 from baybe.serialization.mixin import SerialMixin
 
 
@@ -20,22 +20,20 @@ class ResultMetadata(SerialMixin):
     execution_time_sec: float = field(validator=instance_of(float))
     """The execution time of the benchmark in seconds."""
 
-    gpu_used: bool = field(validator=instance_of(bool))
-    """Whether the benchmark used a GPU."""
-
-    start_datetime: str = field(
-        validator=instance_of(str), factory=datetime.now().isoformat
-    )
+    start_datetime: datetime = field(validator=instance_of(datetime))
     """The start datetime of the benchmark."""
 
-    @property
-    def baybe_version(self) -> str:
-        """The version of the baybe package."""
-        return baybe_version
+    commit_hash: str = field(validator=instance_of(str), init=False)
+    """Current commit hash of the baybe package."""
 
-    @property
-    def commit_hash(self) -> str:
-        """The commit hash of the baybe package."""
+    baybe_version: str = field(
+        validator=instance_of(str), default=baybe_package_version
+    )
+    """The version of the baybe package."""
+
+    @commit_hash.default
+    def _commit_hash_default(self) -> str:
+        """Commit hash of the baybe package."""
         repo = git.Repo(search_parent_directories=True)
         sha = repo.head.object.hexsha
         return sha
