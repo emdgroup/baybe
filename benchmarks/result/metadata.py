@@ -25,7 +25,7 @@ class ResultMetadata(SerialMixin):
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
 
-    last_published_baybe_version: str = field(init=False)
+    last_published_baybe_version: str = field(validator=instance_of(str), init=False)
     """The used BayBE version."""
 
     @commit_hash.default
