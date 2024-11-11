@@ -8,8 +8,6 @@ from pandas import DataFrame
 from baybe.campaign import Campaign
 from baybe.objective import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
@@ -59,7 +57,12 @@ def synthetic_3(
         target=NumericalTarget(name="output", mode=TargetMode.MAX)
     )
 
-    scenarios = {}
+    scenarios = {
+        "Default Recommender": Campaign(
+            searchspace=SearchSpace.from_product(parameters=parameters),
+            objective=objective,
+        )
+    }
 
     for scenario_name, recommender in scenario_config.recommender.items():
         campaign = Campaign(
@@ -85,9 +88,6 @@ benchmark_config = RecommenderConvergenceAnalysis(
     n_mc_iterations=50,
     recommender={
         "Random Recommender": RandomRecommender(),
-        "Default Recommender": TwoPhaseMetaRecommender(
-            RandomRecommender(), BotorchRecommender(), 1
-        ),
     },
 )
 
@@ -95,5 +95,5 @@ benchmark_synthetic_3 = Benchmark(
     name="Synthetic dataset with three dimensions.",
     settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
-    benchmark_callable=synthetic_3,
+    callable=synthetic_3,
 )
