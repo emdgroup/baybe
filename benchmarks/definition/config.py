@@ -15,6 +15,15 @@ BenchmarkConfig = TypeVar("BenchmarkConfig", bound="SerialMixin")
 class RecommenderConvergenceAnalysis(SerialMixin):
     """Benchmark configuration for recommender convergence analyses."""
 
+    recommenders: dict[str, RecommenderProtocol] = field(
+        validator=deep_mapping(
+            key_validator=instance_of(str),
+            value_validator=instance_of(RecommenderProtocol),
+            mapping_validator=instance_of(dict),
+        )
+    )
+    """The recommenders to compare (keys act as labels in the benchmark result)."""
+
     batch_size: int = field(validator=instance_of(int))
     """The recommendation batch size."""
 
@@ -23,10 +32,3 @@ class RecommenderConvergenceAnalysis(SerialMixin):
 
     n_mc_iterations: int = field(validator=instance_of(int))
     """The number of Monte Carlo iterations."""
-
-    recommenders: dict[str, RecommenderProtocol] = field(
-        validator=deep_mapping(
-            instance_of(str), instance_of(RecommenderProtocol), instance_of(dict)
-        )
-    )
-    """The recommenders to compare (keys act as labels in the benchmark result)."""

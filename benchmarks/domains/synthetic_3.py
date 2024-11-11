@@ -83,12 +83,12 @@ def synthetic_3(
 
 
 benchmark_config = RecommenderConvergenceAnalysis(
-    batch_size=5,
-    n_doe_iterations=30,
-    n_mc_iterations=50,
     recommenders={
         "Random Recommender": RandomRecommender(),
     },
+    batch_size=5,
+    n_doe_iterations=30,
+    n_mc_iterations=50,
 )
 
 benchmark_synthetic_3 = Benchmark(
