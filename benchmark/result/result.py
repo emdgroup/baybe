@@ -7,9 +7,12 @@ from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
 
+from baybe.serialization.core import converter
+from baybe.serialization.mixin import SerialMixin
+
 
 @define(frozen=True)
-class Result:
+class Result(SerialMixin):
     """A single result of the benchmarking."""
 
     benchmark_origin_id: UUID = field(validator=instance_of(UUID))
@@ -32,3 +35,17 @@ class Result:
         for key in value.keys():
             if not isinstance(key, str):
                 raise ValueError(f"Metadata keys must be strings, got {type(key)}")
+
+
+def _unstructure_uuid_hook(obj: UUID) -> str:
+    """Unstructure hook for UUID to string for serialization."""
+    return str(obj)
+
+
+def _structure_uuid_hook(obj: str) -> UUID:
+    """Structure hook for string to UUID for deserialization."""
+    return UUID(obj)
+
+
+converter.register_unstructure_hook(UUID, _unstructure_uuid_hook)
+converter.register_structure_hook(UUID, _structure_uuid_hook)
