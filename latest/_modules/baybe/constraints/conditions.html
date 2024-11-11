@@ -1019,7 +1019,7 @@
 
 
 <span class="k">def</span> <span class="nf">_is_not_close</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean array indicating where ``x`` and ``y`` are not close.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Boolean array indicating where ``x`` and ``y`` are not close.</span>
 
 <span class="sd">    The counterpart to ``numpy.isclose``.</span>
 
@@ -1030,7 +1030,7 @@
 <span class="sd">        atol: The absolute tolerance parameter.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A boolean array of where ``x`` and ``y`` are not equal within the</span>
+<span class="sd">        A Boolean array of where ``x`` and ``y`` are not equal within the</span>
 <span class="sd">        given tolerances.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1038,7 +1038,7 @@
 
 
 <span class="k">def</span> <span class="nf">_is_close</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">rtol</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a boolean array indicating where ``x`` and ``y`` are close.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a Boolean array indicating where ``x`` and ``y`` are close.</span>
 
 <span class="sd">    The equivalent to :func:``numpy.isclose``.</span>
 <span class="sd">    Using ``numpy.isclose`` with Polars dataframes results in this error:</span>
@@ -1051,7 +1051,7 @@
 <span class="sd">        atol: The absolute tolerance parameter.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A boolean array of where ``x`` and ``y`` are equal within the</span>
+<span class="sd">        A Boolean array of where ``x`` and ``y`` are equal within the</span>
 <span class="sd">        given tolerances.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -1098,7 +1098,7 @@
 <span class="sd">            data: A series containing parameter values.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            A boolean series indicating which elements satisfy the condition.</span>
+<span class="sd">            A Boolean series indicating which elements satisfy the condition.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
 

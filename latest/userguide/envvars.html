@@ -1009,7 +1009,7 @@ python<span class="w"> </span>do_baybe_work.py
 </div>
 <p>Note that variables set in this manner are interpreted as text, but converted internally
 to the needed format. See for instance the <a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">strtobool</span></code></span></a>
-converter for values that can be set so BayBE can interpret them as booleans.</p>
+converter for values that can be set so BayBE can interpret them as Booleans.</p>
 <p>It is also possible to set environment variables in Python:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
@@ -1099,7 +1099,7 @@ the disk cache, change:</p>
 <p>In general, double precision is recommended because numerical stability during optimization
 can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.</p>
-<p>If you still want to use single precision, you can set the following boolean variables:</p>
+<p>If you still want to use single precision, you can set the following Boolean variables:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">BAYBE_NUMPY_USE_SINGLE_PRECISION</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">BAYBE_TORCH_USE_SINGLE_PRECISION</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>

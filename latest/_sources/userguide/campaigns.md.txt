@@ -68,7 +68,7 @@ rec = campaign.recommend(batch_size=3)
 Calling the function returns a `DataFrame` with `batch_size` many rows, each
 representing a particular parameter configuration from the campaign's search space.
 Thus, the following might be a `DataFrame` returned by `recommend` in a search space
-with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
+with the three parameters `Categorical_1`, `Categorical_2` and `Num_disc_1`:
 
 |    | Categorical_1   | Categorical_2   |   Num_disc_1 |
 |---:|:----------------|:----------------|-------------:|

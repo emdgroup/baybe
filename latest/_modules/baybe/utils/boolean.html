@@ -985,7 +985,7 @@
         </div>
         <article role="main" id="furo-main-content">
           <h1>Source code for baybe.utils.boolean</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Functions implementing boolean checks.&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Functions implementing Boolean checks.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
@@ -1037,7 +1037,7 @@
 <span class="sd">        The ``bool`` value of the corresponding string representation.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If ``val`` cannot be evaluated to a suitable boolean value.</span>
+<span class="sd">        ValueError: If ``val`` cannot be evaluated to a suitable Boolean value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span> <span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
