@@ -15,11 +15,11 @@ from baybe.serialization.mixin import SerialMixin
 class ResultMetadata(SerialMixin):
     """The metadata of a benchmark result."""
 
-    execution_time_sec: float = field(validator=instance_of(float))
-    """The execution time of the benchmark in seconds."""
-
     start_datetime: datetime = field(validator=instance_of(datetime))
     """The start datetime of the benchmark."""
+
+    execution_time_sec: float = field(validator=instance_of(float))
+    """The execution time of the benchmark in seconds."""
 
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""

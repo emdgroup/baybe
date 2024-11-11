@@ -50,8 +50,8 @@ class Benchmark(Generic[BenchmarkConfig]):
         stop_sec = time.perf_counter()
 
         metadata = ResultMetadata(
-            execution_time_sec=start_sec - stop_sec,
             start_datetime=start_datetime,
+            execution_time_sec=start_sec - stop_sec,
         )
 
         return Result(self.identifier, result, metadata)
