@@ -12,10 +12,10 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmark.definition import SingleExecutionBenchmark
+from benchmark.definition import Benchmark
 
 
-def lookup_synthetic_3(x: float, y: float, z: float) -> float:
+def lookup_synthetic_3(x: float, y: float, z: int) -> float:
     """Synthetic dataset.
 
         Number of Samples            inf
@@ -28,12 +28,16 @@ def lookup_synthetic_3(x: float, y: float, z: float) -> float:
             output   continuous
     Best Value 4.09685
     """
-    return (
-        (z == 1) * sin(x) * (1 + sin(y))
-        + (z == 2) * (x * sin(0.9 * x) + sin(x) * sin(y))
-        + (z == 3) * (sqrt(x + 8) * sin(x) + sin(x) * sin(y))
-        + (z == 4) * (x * sin(1.666 * sqrt(x + 8)) + sin(x) * sin(y))
-    )
+    if z == 1:
+        return sin(x) * (1 + sin(y))
+    if z == 2:
+        return x * sin(0.9 * x) + sin(x) * sin(y)
+    if z == 3:
+        return sqrt(x + 8) * sin(x) + sin(x) * sin(y)
+    if z == 4:
+        return x * sin(1.666 * sqrt(x + 8)) + sin(x) * sin(y)
+
+    return 0.0
 
 
 def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
@@ -82,8 +86,8 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     ), metadata
 
 
-benchmark_synthetic_3 = SingleExecutionBenchmark(
-    title="Synthetic dataset 3. Three dimensional.",
+benchmark_synthetic_3 = Benchmark(
+    name="Synthetic dataset 3. Three dimensional.",
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     benchmark_function=synthetic_3,
 )
