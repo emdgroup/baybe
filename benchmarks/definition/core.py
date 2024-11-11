@@ -31,7 +31,7 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
     callable: BenchmarkFunction = field(validator=is_callable())
     """The callable that executes the benchmark code and returns the result."""
 
-    description: str = field(validator=instance_of(str))
+    description: str | None = field(default=None)
     """The description of the benchmark callable."""
 
     best_possible_result: float | None = field(default=None)
