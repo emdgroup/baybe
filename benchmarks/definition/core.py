@@ -60,7 +60,5 @@ class Benchmark(Generic[BenchmarkConfig]):
             start_datetime=start_datetime,
         )
 
-        benchmark_result = Result(
-            self.identifier, self.name, result, metadata, self.settings
-        )
+        benchmark_result = Result(self.identifier, result, metadata)
         return benchmark_result

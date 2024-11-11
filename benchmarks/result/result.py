@@ -23,17 +23,11 @@ class Result(SerialMixin, Generic[BenchmarkConfig]):
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    benchmark_name: str = field(validator=instance_of(str))
-    """The name of the benchmark."""
-
     result_dataframe: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""
 
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
     """The metadata of the benchmark result."""
-
-    settings: BenchmarkConfig | None = field(default=None)
-    """Settings about the benchmarking result."""
 
 
 converter.register_unstructure_hook(UUID, lambda x: str(x))
