@@ -24,9 +24,7 @@ class ResultMetadata(SerialMixin):
     commit_hash: str = field(validator=instance_of(str), init=False)
     """Current commit hash of the baybe package."""
 
-    baybe_version: str = field(
-        validator=instance_of(str), default=baybe_package_version
-    )
+    baybe_version: str = field(default=baybe_package_version, init=False)
     """The version of the baybe package."""
 
     @commit_hash.default
