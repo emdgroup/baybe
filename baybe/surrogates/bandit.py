@@ -151,7 +151,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         import torch
 
         # IMPROVE: The training inputs/targets can actually be represented as
-        #   integers/boolean values but the transformation pipeline currently
+        #   integers / Boolean values but the transformation pipeline currently
         #   converts them float. Potentially, this can be improved by making
         #   the type conversion configurable.
 

@@ -252,7 +252,7 @@ BayBE objects typically appear as part of a larger object hierarchy.
 For instance, a
 {class}`SearchSpace <baybe.searchspace.core.SearchSpace>` can hold one or several
 {class}`Parameters <baybe.parameters.base.Parameter>`, just like an
-{class}`Objective <baybe.objectives.base.Objective>` can hold one ore several 
+{class}`Objective <baybe.objectives.base.Objective>` can hold one or several 
 {class}`Targets <baybe.targets.base.Target>`.
 This hierarchical structure can be directly replicated in the serialization string:
 

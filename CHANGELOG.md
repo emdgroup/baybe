@@ -7,10 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- Example for a traditional mixture
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
   `scikit-fingerprints` package, granting access to all fingerprints available therein
+- Example for slot-based mixtures has been revised and grouped together with the new 
+  traditional mixture example
+- Memory caching is now non-verbose
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
@@ -23,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `MORGAN_FP`. As a replacement, `ECFP` with 1024 bits and
   radius of 4 can be used.
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
+
+## [0.11.3] - 2024-11-06
+### Fixed
+- `protobuf` dependency issue, version pin was removed
 
 ## [0.11.2] - 2024-10-11
 ### Added
