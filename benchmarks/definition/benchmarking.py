@@ -9,9 +9,9 @@ from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
-from benchmark.definition.config import BenchmarkScenarioSettings
-from benchmark.result.metadata_class import ResultMetadata
-from benchmark.result.result import Result
+from benchmarks.definition.config import BenchmarkScenarioSettings
+from benchmarks.result.metadata_class import ResultMetadata
+from benchmarks.result.result import Result
 
 BenchmarkFunction = Callable[[BenchmarkScenarioSettings], DataFrame]
 

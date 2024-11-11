@@ -8,8 +8,8 @@ from pandas import DataFrame
 
 from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
-from benchmark.definition.config import BenchmarkScenarioSettings
-from benchmark.result.metadata_class import ResultMetadata
+from benchmarks.definition.config import BenchmarkScenarioSettings
+from benchmarks.result.metadata_class import ResultMetadata
 
 
 @define(frozen=True)

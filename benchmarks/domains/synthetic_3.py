@@ -14,8 +14,8 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmark.definition import Benchmark
-from benchmark.definition.config import BenchmarkScenarioSettings
+from benchmarks.definition import Benchmark
+from benchmarks.definition.config import BenchmarkScenarioSettings
 
 
 def lookup_synthetic_3(z: int, x: float, y: float) -> float:

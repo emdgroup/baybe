@@ -1,5 +1,5 @@
 """Results from the benchmarking classes."""
 
-from benchmark.result.result import Result
+from benchmarks.result.result import Result
 
 __all__ = ["Result"]

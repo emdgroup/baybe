@@ -1,6 +1,6 @@
 """Run the benchmarks."""
 
-from benchmark.domains import BENCHMARKS
+from benchmarks.domains import BENCHMARKS
 
 
 def main():
