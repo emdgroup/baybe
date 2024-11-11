@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import numpy as np
 from numpy import pi, sin, sqrt
@@ -16,7 +15,10 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import BenchmarkDefinition
-from benchmarks.definition.config import ConvergenceExperimentSettings
+from benchmarks.definition.config import (
+    BenchmarkFunctionDefinition,
+    ConvergenceExperimentSettings,
+)
 
 if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
@@ -52,7 +54,7 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 def benchmark_callable(scenario_config: ConvergenceExperimentSettings) -> DataFrame:
-    """Run different recommenders against the test function."""
+    """Optimization benchmark with two continuous and one discrete input."""
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
@@ -91,13 +93,16 @@ benchmark_config = ConvergenceExperimentSettings(
     n_mc_iterations=50,
 )
 
-benchmark = BenchmarkDefinition(
-    name="synthetic_2C1D_1C",
-    settings=benchmark_config,
-    identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
+benchmark_function_definition = BenchmarkFunctionDefinition(
     callable=benchmark_callable,
     description=lookup.__doc__,
     best_possible_result=4.09685,
+)
+
+benchmark = BenchmarkDefinition(
+    identifier="synthetic_2C1D_1C",
+    benchmark_function_definition=benchmark_function_definition,
+    settings=benchmark_config,
 )
 
 

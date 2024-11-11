@@ -1,6 +1,6 @@
 """Benchmark domains."""
 
-from benchmarks.definition import BenchmarkDefinition
+from benchmarks.definition.core import BenchmarkDefinition
 from benchmarks.domains import synthetic_2C1D_1C
 
 BENCHMARKS: list[BenchmarkDefinition] = [

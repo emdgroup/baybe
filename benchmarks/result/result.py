@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from uuid import UUID
-
 from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
@@ -16,7 +14,7 @@ from benchmarks.result.metadata import ResultMetadata
 class Result(SerialMixin):
     """A single result of the benchmarking."""
 
-    benchmark_identifier: UUID = field(validator=instance_of(UUID))
+    benchmark_identifier: str = field(validator=instance_of(str))
     """The identifier of the benchmark that produced the result."""
 
     result: DataFrame = field(validator=instance_of(DataFrame))
