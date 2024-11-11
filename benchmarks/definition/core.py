@@ -2,7 +2,7 @@
 
 import time
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Generic
 from uuid import UUID
 
@@ -48,7 +48,7 @@ class Benchmark(Generic[BenchmarkConfig]):
         The function will execute the benchmark
         and return the result
         """
-        start_datetime = datetime.now()
+        start_datetime = datetime.now(timezone.utc)
         start_sec = time.perf_counter()
         result = self.callable(self.settings)
         stop_sec = time.perf_counter()
