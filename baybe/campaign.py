@@ -248,7 +248,7 @@ class Campaign(SerialMixin):
         measurements: pd.DataFrame,
         numerical_measurements_must_be_within_tolerance: bool,
     ) -> None:
-        """Mark the given elements of the space as measured.
+        """Mark the given elements of the discrete subspace as measured.
 
         Args:
             measurements: A dataframe containing parameter configurations to be
