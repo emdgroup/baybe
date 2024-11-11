@@ -105,12 +105,12 @@ benchmark_function_definition = BenchmarkFunctionDefinition(
     callable=benchmark_callable,
     description=description,
     best_possible_result=4.09685,
+    settings=benchmark_config,
 )
 
 benchmark = BenchmarkDefinition(
     identifier="synthetic_2C1D_1C",
     benchmark_function_definition=benchmark_function_definition,
-    settings=benchmark_config,
 )
 
 

@@ -2,18 +2,17 @@
 
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Generic
 
 from attrs import define, field
 from attrs.validators import instance_of
 
-from benchmarks.definition.config import BenchmarkFunctionDefinition, BenchmarkSettings
+from benchmarks.definition.config import BenchmarkFunctionDefinition
 from benchmarks.result.metadata import ResultMetadata
 from benchmarks.result.result import Result
 
 
 @define
-class BenchmarkDefinition(Generic[BenchmarkSettings]):
+class BenchmarkDefinition:
     """Definition of a benchmark task."""
 
     identifier: str = field(validator=instance_of(str))
@@ -25,9 +24,6 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
     )
     """The benchmark function definition which contains information about the callable
     holding the domain and further information about it."""
-
-    settings: BenchmarkSettings = field()
-    """The benchmark configuration."""
 
     @identifier.validator
     def _validate_identifier(self, _, value: str) -> None:
@@ -51,7 +47,7 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
         start_datetime = datetime.now(timezone.utc)
 
         start_sec = time.perf_counter()
-        result = self.benchmark_function_definition.callable(self.settings)
+        result = self.benchmark_function_definition()
         stop_sec = time.perf_counter()
 
         duration = timedelta(seconds=stop_sec - start_sec)
