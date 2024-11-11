@@ -1,4 +1,4 @@
-"""Synthetic dataset. Custom parabolic test with irrelevant parameters."""
+"""Synthetic dataset with three dimensions."""
 
 from uuid import UUID
 
