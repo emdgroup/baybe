@@ -1,17 +1,16 @@
 """Run the benchmarks for the given scenario."""
 
-from benchmark.domain import SINGLE_BENCHMARKS_TO_RUN
-from benchmark.result.basic_results import SingleResult
+import logging
+
+from benchmark.domain import BENCHMARKS
+from benchmark.result.result import Result
 
 
 def main():
     """Run the performance test for the given scenario."""
-    for benchmark in SINGLE_BENCHMARKS_TO_RUN:
-        try:
-            result_benchmarking: SingleResult = benchmark.execute_benchmark()
-            print(f"Result: {result_benchmarking}")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+    for benchmark in BENCHMARKS:
+        result_benchmarking: Result = benchmark.run()
+        logging.info(f"Result: {result_benchmarking}")
 
 
 if __name__ == "__main__":
