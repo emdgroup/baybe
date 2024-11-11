@@ -1,12 +1,12 @@
-"""Synthetic dataset with three dimensions."""
+"""Synthetic function with two continuous and one discrete input."""
 
 from uuid import UUID
 
+import numpy as np
 from numpy import pi, sin, sqrt
 from pandas import DataFrame
 
 from baybe.campaign import Campaign
-from baybe.objective import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
@@ -16,47 +16,40 @@ from benchmarks.definition import Benchmark
 from benchmarks.definition.config import RecommenderConvergenceAnalysis
 
 
-def lookup_synthetic_3(z: int, x: float, y: float) -> float:
-    """Lookup function for the synthetic dataset."""
-    assert -2 * pi <= x <= 2 * pi
-    assert -2 * pi <= y <= 2 * pi
-    assert z in {1, 2, 3, 4}
+def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Lookup function.
 
-    if z == 1:
-        return sin(x) * (1 + sin(y))
-    if z == 2:
-        return x * sin(0.9 * x) + sin(x) * sin(y)
-    if z == 3:
-        return sqrt(x + 8) * sin(x) + sin(x) * sin(y)
-    if z == 4:
-        return x * sin(1.666 * sqrt(x + 8)) + sin(x) * sin(y)
-    raise ValueError("Invalid z value.")
-
-
-def synthetic_3(
-    scenario_config: RecommenderConvergenceAnalysis,
-) -> DataFrame:
-    """Synthetic dataset.
-
-    Number of Samples            inf
-    Dimensionality                 3
-    Features:
+    Inputs:
         z   discrete   {1,2,3,4}
         x   continuous [-2*pi, 2*pi]
         y   continuous [-2*pi, 2*pi]
-    Targets:
-        output   continuous
-    Best Value 4.09685
+    Output: continuous
+    Best value: 4.09685
     """
+    try:
+        assert np.all(-2 * pi <= x) and np.all(x <= 2 * pi)
+        assert np.all(-2 * pi <= y) and np.all(y <= 2 * pi)
+        assert np.all(np.isin(z, [1, 2, 3, 4]))
+    except AssertionError:
+        raise ValueError("Inputs are not in the valid ranges.")
+
+    return (
+        (z == 1) * sin(x) * (1 + sin(y))
+        + (z == 2) * (x * sin(0.9 * x) + sin(x) * sin(y))
+        + (z == 3) * (sqrt(x + 8) * sin(x) + sin(x) * sin(y))
+        + (z == 4) * (x * sin(1.666 * sqrt(x + 8)) + sin(x) * sin(y))
+    )
+
+
+def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataFrame:
+    """Run different recommenders against the test function."""
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
         NumericalDiscreteParameter("z", (1, 2, 3, 4)),
     ]
-    objective = SingleTargetObjective(
-        target=NumericalTarget(name="output", mode=TargetMode.MAX)
-    )
 
+    objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
     scenarios = {
         "Default Recommender": Campaign(
             searchspace=SearchSpace.from_product(parameters=parameters),
@@ -74,7 +67,7 @@ def synthetic_3(
 
     return simulate_scenarios(
         scenarios,
-        lookup_synthetic_3,
+        lookup,
         batch_size=scenario_config.batch_size,
         n_doe_iterations=scenario_config.n_doe_iterations,
         n_mc_iterations=scenario_config.n_mc_iterations,
@@ -92,8 +85,8 @@ benchmark_config = RecommenderConvergenceAnalysis(
 )
 
 benchmark_synthetic_3 = Benchmark(
-    name="Synthetic dataset with three dimensions.",
+    name="synthetic_2C1D_1C",
     settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
-    callable=synthetic_3,
+    callable=benchmark_callable,
 )
