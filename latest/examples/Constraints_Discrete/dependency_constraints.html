@@ -1025,7 +1025,7 @@ We thus refer to <a class="reference internal" href="../Basics/campaign.html"><s
 <section id="experiment-setup">
 <h2>Experiment setup<a class="headerlink" href="#experiment-setup" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">SMOKE_TEST</span> <span class="o">=</span> <span class="s2">&quot;SMOKE_TEST&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
-<span class="n">FRAC_RESOLUTION</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">7</span>
+<span class="n">RESOLUTION</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">SMOKE_TEST</span> <span class="k">else</span> <span class="mi">7</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dict_solvent</span> <span class="o">=</span> <span class="p">{</span>
@@ -1036,7 +1036,7 @@ We thus refer to <a class="reference internal" href="../Basics/campaign.html"><s
 <span class="n">switch1</span> <span class="o">=</span> <span class="n">CategoricalParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Switch1&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;on&quot;</span><span class="p">,</span> <span class="s2">&quot;off&quot;</span><span class="p">])</span>
 <span class="n">switch2</span> <span class="o">=</span> <span class="n">CategoricalParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Switch2&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">])</span>
 <span class="n">fraction1</span> <span class="o">=</span> <span class="n">NumericalDiscreteParameter</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Frac1&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">FRAC_RESOLUTION</span><span class="p">)),</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.2</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Frac1&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">RESOLUTION</span><span class="p">)),</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.2</span>
 <span class="p">)</span>
 <span class="n">frame1</span> <span class="o">=</span> <span class="n">CategoricalParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;FrameA&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">])</span>
 <span class="n">frame2</span> <span class="o">=</span> <span class="n">CategoricalParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;FrameB&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">])</span>
@@ -1158,7 +1158,7 @@ constraints.</p>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;## ASSERTS ##&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Number entries with both switches on &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;(expected </span><span class="si">{</span><span class="mi">7</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dict_solvent</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="si">}</span><span class="s2">): &quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;(expected </span><span class="si">{</span><span class="n">RESOLUTION</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dict_solvent</span><span class="p">)</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="mi">2</span><span class="si">}</span><span class="s2">): &quot;</span><span class="p">,</span>
         <span class="p">(</span>
             <span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">[</span><span class="s2">&quot;Switch1&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;on&quot;</span><span class="p">)</span>
             <span class="o">&amp;</span> <span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">[</span><span class="s2">&quot;Switch2&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;right&quot;</span><span class="p">)</span>
@@ -1173,7 +1173,7 @@ constraints.</p>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Number entries with Switch2 off &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;(expected </span><span class="si">{</span><span class="mi">7</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dict_solvent</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(expected </span><span class="si">{</span><span class="n">RESOLUTION</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dict_solvent</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;      &quot;</span><span class="p">,</span>
         <span class="p">(</span>
             <span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">[</span><span class="s2">&quot;Switch1&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;on&quot;</span><span class="p">)</span>
@@ -1195,16 +1195,16 @@ constraints.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#### ITERATION 1 ####
 ## ASSERTS ##
-Number entries with both switches on (expected 56):  24
+Number entries with both switches on (expected 24):  24
 Number entries with Switch1 off (expected 4):        4
-Number entries with Switch2 off (expected 14):       6
+Number entries with Switch2 off (expected 6):       6
 Number entries with both switches off (expected 1):  1
 
 #### ITERATION 2 ####
 ## ASSERTS ##
-Number entries with both switches on (expected 56):  24
+Number entries with both switches on (expected 24):  24
 Number entries with Switch1 off (expected 4):        4
-Number entries with Switch2 off (expected 14):       6
+Number entries with Switch2 off (expected 6):       6
 Number entries with both switches off (expected 1):  1
 </pre></div>
 </div>
