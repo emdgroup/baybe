@@ -16,18 +16,7 @@ from benchmark.definition import Benchmark
 
 
 def lookup_synthetic_3(z: int, x: float, y: float) -> float:
-    """Synthetic dataset.
-
-        Number of Samples            inf
-        Dimensionality                 3
-        Features:
-            x   continuous [-2*pi, 2*pi]
-            y   continuous [-2*pi, 2*pi]
-            z   discrete {1,2,3,4}
-        Targets:
-            output   continuous
-    Best Value 4.09685
-    """
+    """Lookup function for the synthetic dataset."""
     assert -2 * pi <= x <= 2 * pi
     assert -2 * pi <= y <= 2 * pi
     assert z in {1, 2, 3, 4}
@@ -44,7 +33,18 @@ def lookup_synthetic_3(z: int, x: float, y: float) -> float:
 
 
 def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
-    """Synthetic dataset. Custom parabolic test with irrelevant parameters."""
+    """Synthetic dataset.
+
+        Number of Samples            inf
+        Dimensionality                 3
+        Features:
+            x   continuous [-2*pi, 2*pi]
+            y   continuous [-2*pi, 2*pi]
+            z   discrete {1,2,3,4}
+        Targets:
+            output   continuous
+    Best Value 4.09685
+    """
     synthetic_3_continues = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
@@ -61,7 +61,6 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     campaign_rand = Campaign(
         searchspace=SearchSpace.from_product(parameters=synthetic_3_continues),
         recommender=RandomRecommender(),
-        objective=objective,
     )
 
     batch_size = 5
@@ -90,18 +89,6 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
 
 benchmark_synthetic_3 = Benchmark(
     name="Synthetic dataset with three dimensions.",
-    description="""Synthetic dataset.
-
-        Number of Samples            inf
-        Dimensionality                 3
-        Features:
-            x   continuous [-2*pi, 2*pi]
-            y   continuous [-2*pi, 2*pi]
-            z   discrete {1,2,3,4}
-        Targets:
-            output   continuous
-    Best Value 4.09685
-    """,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     benchmark_function=synthetic_3,
 )

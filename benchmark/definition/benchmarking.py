@@ -18,9 +18,6 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    description: str = field(validator=instance_of(str))
-    """The description of the benchmark callable."""
-
     benchmark_function: Callable[[], tuple[DataFrame, dict[str, str]]]
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
@@ -28,6 +25,17 @@ class Benchmark:
     identifier: UUID = field(factory=uuid4, validator=instance_of(UUID))
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
+
+    description: str = field(validator=instance_of(str), init=False)
+    """The description of the benchmark callable. Will be
+    set as the docstring of the benchmark function automatically."""
+
+    def __attrs_post_init__(self):
+        """Set the description of the benchmark."""
+        DESCRIPTION_NOT_SET = self.benchmark_function.__doc__ is None
+        if DESCRIPTION_NOT_SET:
+            raise ValueError("Description of the benchmark callable is not set.")
+        self.description = self.benchmark_function.__doc__
 
     def run(self) -> Result:
         """Execute the benchmark.
