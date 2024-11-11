@@ -15,7 +15,7 @@ from baybe.targets import NumericalTarget, TargetMode
 from benchmark.definition import Benchmark
 
 
-def lookup_synthetic_3(z: int, y: float, x: float) -> float:
+def lookup_synthetic_3(z: int, x: float, y: float) -> float:
     """Synthetic dataset.
 
         Number of Samples            inf
