@@ -21,7 +21,7 @@ classifiers = [
 ]
 keywords = [
     "Active Learning",
-    "Bayesian Optmization",
+    "Bayesian Optimization",
     "Design of Experiments",
     "DOE",
     "Optimization",
