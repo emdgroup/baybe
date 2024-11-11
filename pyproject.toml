@@ -145,7 +145,7 @@ benchmarking = [
     "baybe[chem]",
     "baybe[onnx]",
     "baybe[simulation]",
-    "GitPython>=3.1.43",
+    "GitPython>=3.1.0",
 ]
 
 test = [
