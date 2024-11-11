@@ -13,6 +13,8 @@ from pandas import DataFrame
 from benchmark.result.metadata_class import ResultMetadata
 from benchmark.result.result import Result
 
+BenchmarkFunction = Callable[[], tuple[DataFrame, dict[str, Any]]]
+
 
 @define
 class Benchmark:
@@ -21,7 +23,7 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_function: Callable[[], tuple[DataFrame, dict[str, Any]]] = field()
+    benchmark_function: BenchmarkFunction = field()
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
