@@ -97,6 +97,7 @@ benchmark = Benchmark(
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
     callable=benchmark_callable,
     description=lookup.__doc__,
+    best_possible_result=4.09685,
 )
 
 

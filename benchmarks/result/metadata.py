@@ -22,6 +22,11 @@ class ResultMetadata(SerialMixin):
     duration: timedelta = field(validator=instance_of(timedelta))
     """The time it took to complete the benchmark."""
 
+    best_possible_result: float | None = field(
+        validator=instance_of((float, None)), default=None
+    )
+    """The best possible result which can be achieved in the optimization process."""
+
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
 

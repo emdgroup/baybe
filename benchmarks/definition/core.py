@@ -34,6 +34,11 @@ class Benchmark(Generic[BenchmarkSettings]):
     description: str = field(validator=instance_of(str))
     """The description of the benchmark callable."""
 
+    best_possible_result: float | None = field(
+        validator=instance_of((float, None)), default=None
+    )
+    """The best possible result which can be achieved in the optimization process."""
+
     settings: BenchmarkSettings | None = field(default=None)
     """The benchmark configuration."""
 
@@ -50,6 +55,7 @@ class Benchmark(Generic[BenchmarkSettings]):
         metadata = ResultMetadata(
             start_datetime=start_datetime,
             duration=duration,
+            best_possible_result=self.best_possible_result,
         )
 
         return Result(self.identifier, result, metadata)
