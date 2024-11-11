@@ -1,12 +1,11 @@
 """Basic result classes for benchmarking."""
 
+from typing import Any
 from uuid import UUID
 
 from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
-
-from benchmark.result.utils import _convert_metadata_to_string
 
 
 @define(frozen=True)
@@ -17,13 +16,19 @@ class Result:
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    metadata: dict[str, str] = field(
-        validator=instance_of(dict), converter=_convert_metadata_to_string
-    )
+    metadata: dict[str, Any] = field(validator=instance_of(dict))
     """Metadata about the benchmarking result."""
 
     benchmark_result: DataFrame = field()
     """The result of the benchmarked callable."""
 
-    execution_time_ns: int = field(validator=instance_of(int))
-    """The execution time of the benchmark in nanoseconds."""
+    execution_time_sec: float = field(validator=instance_of(float))
+    """The execution time of the benchmark in seconds."""
+
+    @metadata.validator
+    def _validate_metadata(self, _: Any, value: dict[str, Any]) -> None:
+        if not isinstance(value, dict):
+            raise ValueError(f"Metadata must be a dictionary, got {type(value)}")
+        for key in value.keys():
+            if not isinstance(key, str):
+                raise ValueError(f"Metadata keys must be strings, got {type(key)}")
