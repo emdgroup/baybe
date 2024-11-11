@@ -114,8 +114,8 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=(10, 10))
     for i, z in enumerate(Z):
         ax: Axes3D = fig.add_subplot(2, 2, i + 1, projection="3d")
-        z_mesh = lookup(x_mesh, y_mesh, np.asarray(z))
-        ax.plot_surface(x_mesh, y_mesh, z_mesh)
+        t_mesh = lookup(np.asarray(z), x_mesh, y_mesh)
+        ax.plot_surface(x_mesh, y_mesh, t_mesh)
         plt.title(f"{z=}")
 
     plt.show()
