@@ -94,7 +94,7 @@ benchmark_config = ConvergenceExperimentSettings(
 )
 
 description = ""
-if lookup.__doc__:
+if lookup.__doc__ is not None:
     description = lookup.__doc__
 
 benchmark_function_definition = BenchmarkFunctionDefinition(
