@@ -42,7 +42,7 @@ class Benchmark(Generic[BenchmarkConfig]):
             return ""
         return self.callable.__doc__
 
-    def run(self) -> Result:
+    def __call__(self) -> Result:
         """Execute the benchmark.
 
         The function will execute the benchmark
