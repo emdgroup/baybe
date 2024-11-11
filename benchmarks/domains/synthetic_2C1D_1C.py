@@ -16,10 +16,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import Benchmark
-from benchmarks.definition.config import (
-    DEFAULT_RECOMMENDER,
-    RecommenderConvergenceAnalysis,
-)
+from benchmarks.definition.config import RecommenderConvergenceAnalysis
 
 if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
@@ -63,18 +60,19 @@ def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataF
     ]
 
     objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
+    search_space = SearchSpace.from_product(parameters=parameters)
 
-    scenarios: dict[str, Campaign] = {}
-    for scenario_name, recommender in scenario_config.recommenders.items():
-        recommender_dct = (
-            {} if recommender is DEFAULT_RECOMMENDER else {"recommender": recommender}
-        )
-        campaign = Campaign(
-            searchspace=SearchSpace.from_product(parameters=parameters),
+    scenarios: dict[str, Campaign] = {
+        "Random Recommender": Campaign(
+            searchspace=search_space,
+            recommender=RandomRecommender(),
             objective=objective,
-            **recommender_dct,
-        )
-        scenarios[scenario_name] = campaign
+        ),
+        "Default Recommender": Campaign(
+            searchspace=search_space,
+            objective=objective,
+        ),
+    }
 
     return simulate_scenarios(
         scenarios,
@@ -87,10 +85,6 @@ def benchmark_callable(scenario_config: RecommenderConvergenceAnalysis) -> DataF
 
 
 benchmark_config = RecommenderConvergenceAnalysis(
-    recommenders={
-        "Default Recommender": DEFAULT_RECOMMENDER,
-        "Random Recommender": RandomRecommender(),
-    },
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,
