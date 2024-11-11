@@ -23,7 +23,7 @@ class BenchmarkDefinition(Generic[BenchmarkSettings]):
     benchmark_function_definition: BenchmarkFunctionDefinition = field(
         validator=instance_of(BenchmarkFunctionDefinition)
     )
-    """The benchmark function definition which contain information about the callable
+    """The benchmark function definition which contains information about the callable
     holding the domain and further information about it."""
 
     settings: BenchmarkSettings | None = field(default=None)
