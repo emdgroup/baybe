@@ -10,15 +10,15 @@ from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
-from benchmarks.definition.config import BenchmarkConfig
+from benchmarks.definition.config import BenchmarkSettings
 from benchmarks.result.metadata import ResultMetadata
 from benchmarks.result.result import Result
 
-BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
+BenchmarkFunction = Callable[[BenchmarkSettings], DataFrame]
 
 
 @define
-class Benchmark(Generic[BenchmarkConfig]):
+class Benchmark(Generic[BenchmarkSettings]):
     """Definition of a benchmark task."""
 
     identifier: UUID = field(validator=instance_of(UUID))
@@ -31,7 +31,7 @@ class Benchmark(Generic[BenchmarkConfig]):
     callable: BenchmarkFunction = field(validator=is_callable())
     """The callable that executes the benchmark code and returns the result."""
 
-    settings: BenchmarkConfig | None = field(default=None)
+    settings: BenchmarkSettings | None = field(default=None)
     """The benchmark configuration."""
 
     @property

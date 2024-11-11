@@ -9,7 +9,7 @@ from attrs.validators import deep_mapping, instance_of
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.serialization.mixin import SerialMixin
 
-BenchmarkConfig = TypeVar("BenchmarkConfig")
+BenchmarkSettings = TypeVar("BenchmarkSettings")
 
 
 class _DEFAULT(Enum):

@@ -10,12 +10,12 @@ from attrs.validators import instance_of
 from pandas import DataFrame
 
 from baybe.serialization.mixin import SerialMixin
-from benchmarks.definition.config import BenchmarkConfig
+from benchmarks.definition.config import BenchmarkSettings
 from benchmarks.result.metadata import ResultMetadata
 
 
 @define(frozen=True)
-class Result(SerialMixin, Generic[BenchmarkConfig]):
+class Result(SerialMixin, Generic[BenchmarkSettings]):
     """A single result of the benchmarking."""
 
     benchmark_identifier: UUID = field(validator=instance_of(UUID))
