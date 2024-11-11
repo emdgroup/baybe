@@ -49,11 +49,11 @@ class Benchmark(Generic[BenchmarkConfig]):
         and return the result
         """
         start_datetime = datetime.now()
-        start_ns = time.time()
+        start_sec = time.perf_counter()
         result = self.benchmark_callable(self.settings)
-        stop_ns = time.time()
+        stop_sec = time.perf_counter()
 
-        time_delta_sec = stop_ns - start_ns
+        time_delta_sec = start_sec - stop_sec
 
         metadata = ResultMetadata(
             benchmark_name=self.name,
