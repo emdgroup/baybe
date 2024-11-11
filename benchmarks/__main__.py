@@ -1,4 +1,5 @@
 """Executes the benchmarking module."""
+# Run this via 'python -m benchmarks' from the root directory.
 
 from benchmarks.domains import BENCHMARKS
 
