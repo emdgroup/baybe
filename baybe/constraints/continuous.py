@@ -9,9 +9,8 @@ from itertools import chain, repeat
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import in_
+from attr.validators import in_, instance_of
 from attrs import define, field
-from typing_extensions import override
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -46,6 +45,15 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
+
+    is_interpoint: bool = field(default=False, validator=instance_of(bool))
+    """Flag for defining an interpoint constraint.
+
+    An inter-point constraint is a constraint that is defined over full batches. That
+    is, and inter-point constraint of the form ``param_1 + 2*param_2 <=2`` means that
+    the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
+    must not exceed 2.
+    """
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -113,7 +121,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         Args:
             parameters: The parameter objects of the continuous space.
             idx_offset: Offset to the provided parameter indices.
-            batch_size: the batch size used in the recommendation. Necessary for
+            batch_size: The batch size used in the recommendation. Necessary for
                 interpoint constraints, ignored by all others.
 
         Returns:
@@ -124,78 +132,30 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         from baybe.utils.torch import DTypeFloatTorch
 
         param_names = [p.name for p in parameters]
-        param_indices = [
-            param_names.index(p) + idx_offset
-            for p in self.parameters
-            if p in param_names
-        ]
+        if not self.is_interpoint:
+            param_indices = [
+                param_names.index(p) + idx_offset
+                for p in self.parameters
+                if p in param_names
+            ]
+            coefficients = self.coefficients
+            torch_indices = torch.tensor(param_indices)
+        else:
+            param_index = {name: param_names.index(name) for name in self.parameters}
+            param_indices_interpoint = [
+                (batch, param_index[name] + idx_offset)
+                for name in self.parameters
+                for batch in range(batch_size)
+            ]
+            coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
+            torch_indices = torch.tensor(param_indices_interpoint)
 
         return (
-            torch.tensor(param_indices),
+            torch_indices,
             torch.tensor(
-                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
+                [self._multiplier * c for c in coefficients], dtype=DTypeFloatTorch
             ),
             np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
-        )
-
-
-@define(frozen=True)
-class ContinuousLinearInterPointConstraint(ContinuousLinearConstraint):
-    """Class for inter-point constraints.
-
-    An inter-point constraint is a constraint that is defined over full batches. That
-    is, and inter-point constraint of the form ``param_1 + 2*param_2 <=2`` means that
-    the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
-    must not exceed 2.
-    """
-
-    eval_during_creation = False
-    eval_during_modeling = True
-    numerical_only = True
-
-    @override
-    def to_botorch(
-        self,
-        parameters: Sequence[NumericalContinuousParameter],
-        idx_offset: int = 0,
-        batch_size: int = 1,
-    ) -> tuple[Tensor, Tensor, float]:
-        """Cast the constraint in a format required by botorch.
-
-        Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
-
-        Args:
-            parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
-            batch_size: The size of the batch for which the constraint is applied.
-
-        Raises:
-            ValueError: If ``batch_size`` is smaller than 1.
-
-        Returns:
-            The tuple required by botorch.
-        """
-        if batch_size < 1:
-            raise ValueError(f"Batch size must be at least 1 but is {batch_size}.")
-
-        import torch
-
-        from baybe.utils.torch import DTypeFloatTorch
-
-        param_names = [p.name for p in parameters]
-        # Get the indices of the parameters used in the constraint
-        param_index = {name: param_names.index(name) for name in self.parameters}
-        param_indices = [
-            (batch, param_index[name] + idx_offset)
-            for name in self.parameters
-            for batch in range(batch_size)
-        ]
-        coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
-        return (
-            torch.tensor(param_indices),
-            torch.tensor(coefficients, dtype=DTypeFloatTorch),
-            np.asarray(self.rhs, dtype=DTypeFloatNumpy).item(),
         )
 
 

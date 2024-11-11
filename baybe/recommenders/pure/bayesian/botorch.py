@@ -11,9 +11,6 @@ from attrs.validators import gt, instance_of
 from typing_extensions import override
 
 from baybe.acquisition.acqfs import qThompsonSampling
-from baybe.constraints import (
-    ContinuousLinearInterPointConstraint,
-)
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
@@ -181,25 +178,6 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
-        interpoint_constraints_lin_eq = (
-            [
-                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
-                for c in subspace_continuous.constraints_ip_lin_eq
-                if isinstance(c, ContinuousLinearInterPointConstraint) and c.is_eq
-            ]
-            if subspace_continuous.has_interpoint_constraints
-            else []
-        )
-        interpoint_constraints_lin_ineq = (
-            [
-                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
-                for c in subspace_continuous.constraints_ip_lin_ineq
-                if isinstance(c, ContinuousLinearInterPointConstraint) and not c.is_eq
-            ]
-            if subspace_continuous.has_interpoint_constraints
-            else []
-        )
-
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
@@ -207,16 +185,14 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_eq
             ]
-            + interpoint_constraints_lin_eq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
-            + interpoint_constraints_lin_ineq
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             sequential=self.sequential_continuous,
         )

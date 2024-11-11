@@ -4,7 +4,6 @@ from baybe.constraints.conditions import SubSelectionCondition, ThresholdConditi
 from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
-    ContinuousLinearInterPointConstraint,
 )
 from baybe.constraints.deprecation import (
     ContinuousLinearEqualityConstraint,
@@ -33,7 +32,6 @@ __all__ = [
     "ContinuousCardinalityConstraint",
     "ContinuousLinearEqualityConstraint",
     "ContinuousLinearInequalityConstraint",
-    "ContinuousLinearInterPointConstraint",
     # --- Discrete constraints ---#
     "DiscreteCardinalityConstraint",
     "DiscreteCustomConstraint",
