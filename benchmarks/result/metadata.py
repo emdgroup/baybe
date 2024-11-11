@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 import git
 from attrs import define, field
 from attrs.validators import instance_of
+from cattrs.gen import make_dict_unstructure_fn
 
 from baybe import __version__ as baybe_package_version
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 
 
@@ -32,3 +34,12 @@ class ResultMetadata(SerialMixin):
         repo = git.Repo(search_parent_directories=True)
         sha = repo.head.object.hexsha
         return sha
+
+
+# Register un-/structure hooks
+converter.register_unstructure_hook(
+    ResultMetadata,
+    make_dict_unstructure_fn(
+        ResultMetadata, converter, _cattrs_include_init_false=True
+    ),
+)
