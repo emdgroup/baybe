@@ -93,7 +93,7 @@ benchmark_config = BenchmarkScenarioSettings(
 
 benchmark_synthetic_3 = Benchmark(
     name="Synthetic dataset with three dimensions.",
-    benchmark_settings=benchmark_config,
+    settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),
-    benchmark_function=synthetic_3,
+    benchmark_callable=synthetic_3,
 )

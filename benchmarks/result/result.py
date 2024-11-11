@@ -16,19 +16,19 @@ from benchmarks.result.metadata_class import ResultMetadata
 class Result(SerialMixin):
     """A single result of the benchmarking."""
 
-    benchmark_origin_identifier: UUID = field(validator=instance_of(UUID))
+    benchmark_identifier: UUID = field(validator=instance_of(UUID))
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    benchmark_settings: BenchmarkScenarioSettings = field(
+    settings: BenchmarkScenarioSettings = field(
         validator=instance_of(BenchmarkScenarioSettings)
     )
-    """Settings about the benchmarking result."""
+    """Settings which were applied to the benchmark."""
 
     benchmark_result: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""
 
-    result_metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
+    metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
     """The metadata of the benchmark result."""
 
 

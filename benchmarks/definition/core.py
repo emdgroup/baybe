@@ -23,12 +23,12 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_settings: BenchmarkScenarioSettings = field(
+    settings: BenchmarkScenarioSettings = field(
         validator=instance_of(BenchmarkScenarioSettings)
     )
     """The configuration for the benchmark settings."""
 
-    benchmark_function: BenchmarkFunction = field(validator=is_callable())
+    benchmark_callable: BenchmarkFunction = field(validator=is_callable())
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
@@ -39,9 +39,9 @@ class Benchmark:
     @property
     def description(self) -> str:
         """The description of the benchmark callable."""
-        if self.benchmark_function.__doc__ is None:
+        if self.benchmark_callable.__doc__ is None:
             return ""
-        return self.benchmark_function.__doc__
+        return self.benchmark_callable.__doc__
 
     def run(self) -> Result:
         """Execute the benchmark.
@@ -51,18 +51,16 @@ class Benchmark:
         """
         start_datetime = datetime.now()
         start_ns = time.time()
-        result = self.benchmark_function(self.benchmark_settings)
+        result = self.benchmark_callable(self.settings)
         stop_ns = time.time()
 
         time_delta_sec = stop_ns - start_ns
 
-        result_metadata = ResultMetadata(
+        metadata = ResultMetadata(
             benchmark_name=self.name,
             execution_time_sec=time_delta_sec,
             start_datetime=start_datetime,
         )
 
-        benchmark_result = Result(
-            self.identifier, self.benchmark_settings, result, result_metadata
-        )
+        benchmark_result = Result(self.identifier, self.settings, result, metadata)
         return benchmark_result
