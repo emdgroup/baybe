@@ -84,7 +84,7 @@ benchmark_config = RecommenderConvergenceAnalysis(
     n_mc_iterations=50,
 )
 
-benchmark_synthetic_3 = Benchmark(
+benchmark = Benchmark(
     name="synthetic_2C1D_1C",
     settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),

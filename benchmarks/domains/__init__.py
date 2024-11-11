@@ -1,10 +1,10 @@
 """Benchmark domains."""
 
 from benchmarks.definition import Benchmark
-from benchmarks.domains.synthetic_3 import benchmark_synthetic_3
+from benchmarks.domains import synthetic_2C1D_1C
 
 BENCHMARKS: list[Benchmark] = [
-    benchmark_synthetic_3,
+    synthetic_2C1D_1C.benchmark,
 ]
 
 __all__ = ["BENCHMARKS"]
