@@ -1,6 +1,6 @@
-"""Run the benchmarks for the given scenario."""
+"""Run the benchmarks."""
 
-from benchmark.domain import BENCHMARKS
+from benchmark.domains import BENCHMARKS
 
 
 def main():

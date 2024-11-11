@@ -1,5 +1,6 @@
 """Synthetic dataset. Custom parabolic test with irrelevant parameters."""
 
+from typing import Any
 from uuid import UUID
 
 from numpy import pi, sin, sqrt
@@ -32,20 +33,20 @@ def lookup_synthetic_3(z: int, x: float, y: float) -> float:
     raise ValueError("Invalid z value.")
 
 
-def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
+def synthetic_3() -> tuple[DataFrame, dict[str, Any]]:
     """Synthetic dataset.
 
-        Number of Samples            inf
-        Dimensionality                 3
-        Features:
-            z   discrete {1,2,3,4}
-            x   continuous [-2*pi, 2*pi]
-            y   continuous [-2*pi, 2*pi]
-        Targets:
-            output   continuous
+    Number of Samples            inf
+    Dimensionality                 3
+    Features:
+        z   discrete   {1,2,3,4}
+        x   continuous [-2*pi, 2*pi]
+        y   continuous [-2*pi, 2*pi]
+    Targets:
+        output   continuous
     Best Value 4.09685
     """
-    synthetic_3_continues = [
+    parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
         NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
         NumericalDiscreteParameter("z", (1, 2, 3, 4)),
@@ -55,12 +56,13 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     )
 
     campaign = Campaign(
-        searchspace=SearchSpace.from_product(parameters=synthetic_3_continues),
+        searchspace=SearchSpace.from_product(parameters=parameters),
         objective=objective,
     )
     campaign_rand = Campaign(
-        searchspace=SearchSpace.from_product(parameters=synthetic_3_continues),
+        searchspace=SearchSpace.from_product(parameters=parameters),
         recommender=RandomRecommender(),
+        objective=objective,
     )
 
     batch_size = 5
@@ -68,9 +70,9 @@ def synthetic_3() -> tuple[DataFrame, dict[str, str]]:
     n_mc_iterations = 50
 
     metadata = {
-        "n_doe_iterations": str(n_doe_iterations),
-        "batch_size": str(batch_size),
-        "n_mc_iterations": str(n_mc_iterations),
+        "n_doe_iterations": n_doe_iterations,
+        "batch_size": batch_size,
+        "n_mc_iterations": n_mc_iterations,
     }
 
     scenarios = {
