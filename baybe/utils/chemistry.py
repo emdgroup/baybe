@@ -33,7 +33,9 @@ def _dummy_wrapper(func):
     return func
 
 
-_disk_cache = _dummy_wrapper if _cachedir == "" else Memory(Path(_cachedir)).cache
+_disk_cache = (
+    _dummy_wrapper if _cachedir == "" else Memory(Path(_cachedir), verbose=0).cache
+)
 
 
 def name_to_smiles(name: str) -> str:
