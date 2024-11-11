@@ -277,10 +277,10 @@ def test_deprecated_encodings(deprecated, replacement):
             patched.assert_called_once()
 
 
-def test_migrated_metadata_attribue():
+def test_migrated_metadata_attribute():
     """Accessing the migrated metadata search space attribute raises an error."""
     with pytest.raises(DeprecationError, match="no longer carry any metadata"):
         subspace = SubspaceDiscrete.from_parameter(
             NumericalDiscreteParameter("p", [0, 1])
         )
-        subspace.metadata()
+        subspace.metadata
