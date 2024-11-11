@@ -26,7 +26,7 @@ class Result(SerialMixin, Generic[BenchmarkConfig]):
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_result: DataFrame = field(validator=instance_of(DataFrame))
+    result_dataframe: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""
 
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
