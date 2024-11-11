@@ -360,6 +360,55 @@ def df_uncorrelated_features(
     return data
 
 
+def add_noise_to_perturb_degenerate_rows(
+    df: pd.DataFrame, noise_ratio: float = 0.001
+) -> pd.DataFrame:
+    """Add noise to degenerate rows to make them numerically distinguishable.
+
+    Note that the dataframe is changed in-place and also returned. The dataframe is
+    left untouched if no rows are degenerate.
+
+    Args:
+        df: The dataframe to be modified.
+        noise_ratio: The magnitude of generated uniform noise relative to the
+            min-max range of values for each column.
+
+    Returns:
+        The modified dataframe.
+
+    Raises:
+        TypeError: If the provided dataframe has non-numerical content.
+    """
+    # Find degenerate rows, exit if there are none
+    degen_rows = df.duplicated(keep=False)
+    if not degen_rows.any():
+        return df
+
+    # Assert that the input is purely numerical
+    if any(df[col].dtype.kind not in "iufb" for col in df.columns):
+        raise TypeError(
+            f"'{add_noise_to_perturb_degenerate_rows.__name__}' only supports purely "
+            f"numerical dataframes."
+        )
+
+    # Find the min-max range for each column. Constant columns will be assigned a range
+    # of 1 as fallback as otherwise they would be left untouched
+    column_ranges = df.max() - df.min()
+    column_ranges = column_ranges.replace(0, 1)
+
+    # Generate noise
+    noise = np.random.uniform(
+        -noise_ratio, noise_ratio, size=(degen_rows.sum(), df.shape[1])
+    )
+    noise_df = pd.DataFrame(noise, columns=df.columns, index=df.index[degen_rows])
+
+    # Scale noise by column ranges and add it to the original dataframe
+    noise_df = noise_df * column_ranges
+    df.loc[degen_rows] += noise_df
+
+    return df
+
+
 def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
