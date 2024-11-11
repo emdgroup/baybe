@@ -7,7 +7,6 @@ can be applied to discrete search spaces.
 :maxdepth: 1
 
 Product/Sum <prodsum_constraints>
-Mixture <mixture_constraints>
 Custom <custom_constraints>
 Exclusion <exclusion_constraints>
 Dependency <dependency_constraints>

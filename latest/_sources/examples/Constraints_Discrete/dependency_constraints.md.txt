@@ -90,6 +90,12 @@ constraint = DiscreteDependenciesConstraint(
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 ```
 
+    ________________________________________________________________________________
+    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
+    _smiles_to_mordred_features('C')
+    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
+
+
 
 ```python
 objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))

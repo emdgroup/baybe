@@ -165,20 +165,20 @@ print(results)
 ```
 
       Scenario  Monte_Carlo_Run  Iteration  Num_Experiments Target_1_Measurements  \
-    0    BayBE                0          0                1                 [4.0]   
+    0    BayBE                0          0                1                 [8.0]   
     1    BayBE                0          1                2                [16.0]   
-    2    BayBE                1          0                1                 [0.0]   
+    2    BayBE                1          0                1                 [8.0]   
     3    BayBE                1          1                2                [16.0]   
     
       Target_2_Measurements  Target_1_IterBest  Target_1_CumBest  \
-    0                [31.0]                4.0               4.0   
+    0               [127.0]                8.0               8.0   
     1               [511.0]               16.0              16.0   
-    2                [-1.0]                0.0               0.0   
+    2               [127.0]                8.0               8.0   
     3               [511.0]               16.0              16.0   
     
        Target_2_IterBest  Target_2_CumBest  
-    0               31.0              31.0  
-    1              511.0              31.0  
-    2               -1.0              -1.0  
-    3              511.0              -1.0  
+    0              127.0             127.0  
+    1              511.0             127.0  
+    2              127.0             127.0  
+    3              511.0             127.0  
 
