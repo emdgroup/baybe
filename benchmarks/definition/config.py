@@ -39,7 +39,9 @@ class BenchmarkConvergenceExperimentFunctionDefinition:
     description: str = field(validator=instance_of(str))
     """The description of the benchmark function."""
 
-    settings: ConvergenceExperimentSettings = field()
+    settings: ConvergenceExperimentSettings = field(
+        validator=instance_of(ConvergenceExperimentSettings)
+    )
     """The benchmark configuration."""
 
     best_possible_result: float | None = field(default=None)
