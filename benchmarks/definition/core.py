@@ -18,7 +18,7 @@ BenchmarkFunction = Callable[[BenchmarkSettings], DataFrame]
 
 
 @define
-class Benchmark(Generic[BenchmarkSettings]):
+class BenchmarkDefinition(Generic[BenchmarkSettings]):
     """Definition of a benchmark task."""
 
     identifier: UUID = field(validator=instance_of(UUID))
@@ -34,9 +34,7 @@ class Benchmark(Generic[BenchmarkSettings]):
     description: str = field(validator=instance_of(str))
     """The description of the benchmark callable."""
 
-    best_possible_result: float | None = field(
-        validator=instance_of((float, None)), default=None
-    )
+    best_possible_result: float | None = field(default=None)
     """The best possible result which can be achieved in the optimization process."""
 
     settings: BenchmarkSettings | None = field(default=None)

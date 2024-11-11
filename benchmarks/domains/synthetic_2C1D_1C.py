@@ -15,7 +15,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmarks.definition import Benchmark
+from benchmarks.definition import BenchmarkDefinition
 from benchmarks.definition.config import ConvergenceExperimentSettings
 
 if TYPE_CHECKING:
@@ -91,7 +91,7 @@ benchmark_config = ConvergenceExperimentSettings(
     n_mc_iterations=50,
 )
 
-benchmark = Benchmark(
+benchmark = BenchmarkDefinition(
     name="synthetic_2C1D_1C",
     settings=benchmark_config,
     identifier=UUID("4e131cb7-4de0-4900-b993-1d7d4a194532"),

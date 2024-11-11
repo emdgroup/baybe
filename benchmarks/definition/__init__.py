@@ -1,9 +1,9 @@
 """Benchmark task definitions."""
 
 from benchmarks.definition.config import ConvergenceExperimentSettings
-from benchmarks.definition.core import Benchmark
+from benchmarks.definition.core import BenchmarkDefinition
 
 __all__ = [
-    "Benchmark",
+    "BenchmarkDefinition",
     "ConvergenceExperimentSettings",
 ]
