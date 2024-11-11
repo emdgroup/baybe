@@ -6,9 +6,7 @@ from datetime import datetime, timedelta, timezone
 from attrs import define, field
 from attrs.validators import instance_of
 
-from benchmarks.definition.config import (
-    BenchmarkConvergenceExperimentFunctionDefinition,
-)
+from benchmarks.definition.config import BenchmarkExecutableBase
 from benchmarks.result.metadata import ResultMetadata
 from benchmarks.result.result import Result
 
@@ -21,8 +19,8 @@ class BenchmarkDefinition:
     """The unique identifier of the benchmark.
     Can be used to compare different runs of the same benchmark."""
 
-    benchmark_function_definition: BenchmarkConvergenceExperimentFunctionDefinition = (
-        field(validator=instance_of(BenchmarkConvergenceExperimentFunctionDefinition))
+    benchmark_function_definition: BenchmarkExecutableBase = field(
+        validator=instance_of(BenchmarkExecutableBase)
     )
     """The benchmark function definition which contains information about the callable
     holding the domain and further information about it."""

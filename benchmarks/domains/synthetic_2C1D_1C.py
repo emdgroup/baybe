@@ -16,7 +16,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import BenchmarkDefinition
 from benchmarks.definition.config import (
-    BenchmarkConvergenceExperimentFunctionDefinition,
+    BenchmarkExecutableBase,
     ConvergenceExperimentSettings,
 )
 
@@ -53,42 +53,45 @@ def lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
     )
 
 
-def benchmark_callable(scenario_config: ConvergenceExperimentSettings) -> DataFrame:
-    """Three Dimensional maximization comparsion with random and default recommender.
+class Synthetic2C1D1C(BenchmarkExecutableBase[ConvergenceExperimentSettings]):
+    """Three Dimensional maximization comparison with random and default recommender."""
 
-    Optimization benchmark with two continuous and one discrete input to
-    compare the random and the default recommander on a maximization task.
-    """
-    parameters = [
-        NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
-        NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
-        NumericalDiscreteParameter("z", (1, 2, 3, 4)),
-    ]
+    def __call__(self) -> DataFrame:
+        """3 Dimensional maximization comparison with random and default recommender.
 
-    objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
-    search_space = SearchSpace.from_product(parameters=parameters)
+        Optimization benchmark with two continuous and one discrete input to
+        compare the random and the default recommender on a maximization task.
+        """
+        parameters = [
+            NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
+            NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
+            NumericalDiscreteParameter("z", (1, 2, 3, 4)),
+        ]
 
-    scenarios: dict[str, Campaign] = {
-        "Random Recommender": Campaign(
-            searchspace=search_space,
-            recommender=RandomRecommender(),
-            objective=objective,
-        ),
-        "Default Recommender": Campaign(
-            searchspace=search_space,
-            objective=objective,
-        ),
-    }
+        objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
+        search_space = SearchSpace.from_product(parameters=parameters)
 
-    return simulate_scenarios(
-        scenarios,
-        lookup,
-        batch_size=scenario_config.batch_size,
-        n_doe_iterations=scenario_config.n_doe_iterations,
-        n_mc_iterations=scenario_config.n_mc_iterations,
-        impute_mode="error",
-        random_seed=scenario_config.random_seed,
-    )
+        scenarios: dict[str, Campaign] = {
+            "Random Recommender": Campaign(
+                searchspace=search_space,
+                recommender=RandomRecommender(),
+                objective=objective,
+            ),
+            "Default Recommender": Campaign(
+                searchspace=search_space,
+                objective=objective,
+            ),
+        }
+
+        return simulate_scenarios(
+            scenarios,
+            self.lookup,
+            batch_size=self.settings.batch_size,
+            n_doe_iterations=self.settings.n_doe_iterations,
+            n_mc_iterations=self.settings.n_mc_iterations,
+            impute_mode="error",
+            random_seed=self.settings.random_seed,
+        )
 
 
 benchmark_config = ConvergenceExperimentSettings(
@@ -97,15 +100,14 @@ benchmark_config = ConvergenceExperimentSettings(
     n_mc_iterations=50,
 )
 
-description = ""
-if lookup.__doc__ is not None:
-    description = lookup.__doc__
-
-benchmark_function_definition = BenchmarkConvergenceExperimentFunctionDefinition(
-    callable=benchmark_callable,
-    description=description,
+benchmark_function_definition = Synthetic2C1D1C(
     best_possible_result=4.09685,
     settings=benchmark_config,
+    lookup=lookup,
+    optimal_function_inputs=[
+        {"x": 1.610, "y": 1.571, "z": 3},
+        {"x": 1.610, "y": -4.712, "z": 3},
+    ],
 )
 
 benchmark = BenchmarkDefinition(
