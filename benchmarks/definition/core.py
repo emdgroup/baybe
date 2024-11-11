@@ -1,4 +1,4 @@
-"""Definition of the Benchmark class."""
+"""Benchmark definition functionality."""
 
 import time
 from collections.abc import Callable
@@ -19,21 +19,20 @@ BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
 
 @define
 class Benchmark(Generic[BenchmarkConfig]):
-    """A class to define a benchmark task."""
+    """Definition of a benchmark task."""
 
     identifier: UUID = field(validator=instance_of(UUID))
-    """The unique identifier of the benchmark running which can be set
-    to compare different executions of the same benchmark setting."""
+    """The unique identifier of the benchmark.
+    Can be used to compare different runs of the same benchmark."""
 
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
     callable: BenchmarkFunction = field(validator=is_callable())
-    """The function that executes the benchmark code and returns
-    the results as well as metadata."""
+    """The callable that executes the benchmark code and returns the result."""
 
     settings: BenchmarkConfig | None = field(default=None)
-    """The configuration for the benchmark settings."""
+    """The benchmark configuration."""
 
     @property
     def description(self) -> str:
@@ -43,22 +42,16 @@ class Benchmark(Generic[BenchmarkConfig]):
         return self.callable.__doc__
 
     def __call__(self) -> Result:
-        """Execute the benchmark.
-
-        The function will execute the benchmark
-        and return the result
-        """
+        """Execute the benchmark and return the result."""
         start_datetime = datetime.now(timezone.utc)
+
         start_sec = time.perf_counter()
         result = self.callable(self.settings)
         stop_sec = time.perf_counter()
 
-        time_delta_sec = start_sec - stop_sec
-
         metadata = ResultMetadata(
-            execution_time_sec=time_delta_sec,
+            execution_time_sec=start_sec - stop_sec,
             start_datetime=start_datetime,
         )
 
-        benchmark_result = Result(self.identifier, result, metadata)
-        return benchmark_result
+        return Result(self.identifier, result, metadata)

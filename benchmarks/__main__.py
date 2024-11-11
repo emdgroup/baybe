@@ -1,10 +1,10 @@
-"""Run the benchmarks."""
+"""Executes the benchmarking module."""
 
 from benchmarks.domains import BENCHMARKS
 
 
 def main():
-    """Run the performance test for the defined scenarios."""
+    """Run all benchmarks."""
     for benchmark in BENCHMARKS:
         benchmark()
 

@@ -1,4 +1,4 @@
-"""This module contains the configuration of a benchmark scenario."""
+"""Benchmark configurations."""
 
 from typing import TypeVar
 
@@ -13,10 +13,10 @@ BenchmarkConfig = TypeVar("BenchmarkConfig", bound="SerialMixin")
 
 @define(frozen=True)
 class RecommenderConvergenceAnalysis(SerialMixin):
-    """The configuration for the benchmark settings."""
+    """Benchmark configuration for recommender convergence analyses."""
 
     batch_size: int = field(validator=instance_of(int))
-    """The batch size for the benchmark."""
+    """The recommendation batch size."""
 
     n_doe_iterations: int = field(validator=instance_of(int))
     """The number of Design of Experiment iterations."""
@@ -29,5 +29,4 @@ class RecommenderConvergenceAnalysis(SerialMixin):
             instance_of(str), instance_of(RecommenderProtocol), instance_of(dict)
         )
     )
-    """The recommender to use for the benchmark.
-    The key is the name which will identify the recommenders campaign."""
+    """The recommenders to compare (keys act as labels in the benchmark result)."""

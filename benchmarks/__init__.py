@@ -1,4 +1,4 @@
-"""Benchmarking module for executing and comparing performance related tasks."""
+"""Benchmarking module for performance tracking."""
 
 from benchmarks.definition.core import Benchmark
 from benchmarks.result import Result

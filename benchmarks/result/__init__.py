@@ -1,4 +1,4 @@
-"""Results from the benchmarking classes."""
+"""Benchmark results."""
 
 from benchmarks.result.result import Result
 

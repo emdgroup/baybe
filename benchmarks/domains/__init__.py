@@ -1,4 +1,4 @@
-"""This module contains the benchmarks for the different domains of the benchmark."""
+"""Benchmark domains."""
 
 from benchmarks.definition import Benchmark
 from benchmarks.domains.synthetic_3 import benchmark_synthetic_3

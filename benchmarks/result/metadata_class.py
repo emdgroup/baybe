@@ -1,4 +1,4 @@
-"""This module contains the metadata of a benchmark result."""
+"""Benchmark result metadata."""
 
 from datetime import datetime
 
@@ -22,14 +22,14 @@ class ResultMetadata(SerialMixin):
     """The start datetime of the benchmark."""
 
     commit_hash: str = field(validator=instance_of(str), init=False)
-    """Current commit hash of the baybe package."""
+    """The commit hash of the used BayBE code."""
 
     baybe_version: str = field(default=baybe_package_version, init=False)
-    """The version of the baybe package."""
+    """The used BayBE version."""
 
     @commit_hash.default
     def _commit_hash_default(self) -> str:
-        """Commit hash of the baybe package."""
+        """Extract the git commit hash."""
         repo = git.Repo(search_parent_directories=True)
         sha = repo.head.object.hexsha
         return sha
