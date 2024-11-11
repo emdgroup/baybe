@@ -7,7 +7,7 @@ from uuid import UUID, uuid4
 
 import torch
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
 from benchmark.result.metadata_class import ResultMetadata
@@ -23,7 +23,7 @@ class Benchmark:
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    benchmark_function: BenchmarkFunction = field()
+    benchmark_function: BenchmarkFunction = field(validator=is_callable)
     """The function that executes the benchmark code and returns
     the results as well as metadata."""
 
@@ -37,15 +37,6 @@ class Benchmark:
         if self.benchmark_function.__doc__ is None:
             return ""
         return self.benchmark_function.__doc__
-
-    @benchmark_function.validator
-    def _validate_callable(
-        self, _: Any, value: Callable[[], tuple[DataFrame, dict[str, Any]]]
-    ) -> None:
-        if not callable(value):
-            raise ValueError(f"Callable must be a function, got {type(value)}")
-        if value.__doc__ is None:
-            raise ValueError("Callable must have a docstring")
 
     def run(self) -> Result:
         """Execute the benchmark.
