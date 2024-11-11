@@ -15,7 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import Benchmark
-from benchmarks.definition.config import BenchmarkScenarioSettings
+from benchmarks.definition.config import RecommenderConvergenceAnalysis
 
 
 def lookup_synthetic_3(z: int, x: float, y: float) -> float:
@@ -36,7 +36,7 @@ def lookup_synthetic_3(z: int, x: float, y: float) -> float:
 
 
 def synthetic_3(
-    scenario_config: BenchmarkScenarioSettings,
+    scenario_config: RecommenderConvergenceAnalysis,
 ) -> DataFrame:
     """Synthetic dataset.
 
@@ -79,7 +79,7 @@ def synthetic_3(
     )
 
 
-benchmark_config = BenchmarkScenarioSettings(
+benchmark_config = RecommenderConvergenceAnalysis(
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,

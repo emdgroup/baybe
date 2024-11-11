@@ -3,29 +3,28 @@
 import time
 from collections.abc import Callable
 from datetime import datetime
+from typing import Generic, TypeVar
 from uuid import UUID
 
 from attrs import define, field
 from attrs.validators import instance_of, is_callable
 from pandas import DataFrame
 
-from benchmarks.definition.config import BenchmarkScenarioSettings
 from benchmarks.result.metadata_class import ResultMetadata
 from benchmarks.result.result import Result
 
-BenchmarkFunction = Callable[[BenchmarkScenarioSettings], DataFrame]
+BenchmarkConfig = TypeVar("BenchmarkConfig")
+BenchmarkFunction = Callable[[BenchmarkConfig], DataFrame]
 
 
 @define
-class Benchmark:
+class Benchmark(Generic[BenchmarkConfig]):
     """A class to define a benchmark task."""
 
     name: str = field(validator=instance_of(str))
     """The name of the benchmark."""
 
-    settings: BenchmarkScenarioSettings = field(
-        validator=instance_of(BenchmarkScenarioSettings)
-    )
+    settings: BenchmarkConfig = field()
     """The configuration for the benchmark settings."""
 
     benchmark_callable: BenchmarkFunction = field(validator=is_callable())

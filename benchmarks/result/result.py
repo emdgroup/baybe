@@ -1,5 +1,8 @@
 """Basic result classes for benchmarking."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from attrs import define, field
@@ -8,8 +11,10 @@ from pandas import DataFrame
 
 from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
-from benchmarks.definition.config import BenchmarkScenarioSettings
 from benchmarks.result.metadata_class import ResultMetadata
+
+if TYPE_CHECKING:
+    from benchmarks.definition.core import BenchmarkConfig
 
 
 @define(frozen=True)
@@ -20,10 +25,8 @@ class Result(SerialMixin):
     """The unique identifier of the benchmark running which can be set
     to compare different executions of the same benchmark setting."""
 
-    settings: BenchmarkScenarioSettings = field(
-        validator=instance_of(BenchmarkScenarioSettings)
-    )
-    """Settings which were applied to the benchmark."""
+    settings: BenchmarkConfig = field()
+    """Settings about the benchmarking result."""
 
     benchmark_result: DataFrame = field(validator=instance_of(DataFrame))
     """The result of the benchmarked callable."""

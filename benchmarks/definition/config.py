@@ -8,7 +8,7 @@ from baybe.serialization.mixin import SerialMixin
 
 
 @define(frozen=True)
-class BenchmarkScenarioSettings(SerialMixin):
+class RecommenderConvergenceAnalysis(SerialMixin):
     """The configuration for the benchmark settings."""
 
     batch_size: int = field(validator=instance_of(int))
