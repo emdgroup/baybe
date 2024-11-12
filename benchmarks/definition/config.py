@@ -1,7 +1,9 @@
 """Benchmark configurations."""
 
-from abc import ABC, abstractmethod
+import time
+from abc import ABC
 from collections.abc import Callable
+from datetime import datetime, timedelta, timezone
 from typing import Any, Generic, TypeVar
 
 from attrs import define, field
@@ -9,6 +11,7 @@ from attrs.validators import instance_of
 from pandas import DataFrame
 
 from baybe.serialization.mixin import SerialMixin
+from benchmarks.result import Result, ResultMetadata
 
 
 @define(frozen=True)
@@ -17,6 +20,9 @@ class BenchmarkSettings(SerialMixin, ABC):
 
     random_seed: int = field(validator=instance_of(int), kw_only=True, default=1337)
     """The random seed for reproducibility."""
+
+
+BenchmarkSettingsType = TypeVar("BenchmarkSettingsType", bound=BenchmarkSettings)
 
 
 @define(frozen=True)
@@ -33,53 +39,65 @@ class ConvergenceExperimentSettings(BenchmarkSettings):
     """The number of Monte Carlo iterations."""
 
 
-FunctionSettings = TypeVar("FunctionSettings", bound=BenchmarkSettings)
-
-
 @define(frozen=True)
-class BenchmarkExecutableBase(ABC, Generic[FunctionSettings]):
+class Benchmark(Generic[BenchmarkSettingsType]):
     """The base class for a benchmark executable."""
 
-    settings: FunctionSettings = field()
+    settings: BenchmarkSettingsType = field()
     """The benchmark configuration."""
 
-    lookup: Callable | DataFrame = field()
+    function: Callable[[BenchmarkSettingsType], DataFrame] = field()
     """The lookup function or DataFrame for the benchmark."""
+
+    name: str = field(init=False)
+    """The name of the benchmark."""
 
     best_possible_result: float | None = field(default=None)
     """The best possible result which can be achieved in the optimization process."""
 
     optimal_function_inputs: list[dict[str, Any]] | None = field(default=None)
+    """An input that creates the best_possible_result."""
 
     @property
     def description(self) -> str:
         """The description of the benchmark function."""
-        if callable(self.lookup) and self.lookup.__doc__ is not None:
-            return self.lookup.__doc__
-        if self.__call__.__doc__ is not None:
-            return self.__call__.__doc__
-        return (
-            f"Best possible result: {self.best_possible_result} with"
-            + "the input(s): {self.optimal_function_inputs}"
+        if self.function.__doc__ is not None:
+            return self.function.__doc__
+        return "No description available."
+
+    @name.default
+    def _default_name(self):
+        return self.function.__name__
+
+    @name.validator
+    def _validate_name(self, _, value: str) -> None:
+        """Validate the name."""
+        LOWER_CASE_ALPHABETIC_CHARS = "abcdefghijklmnopqrstuvwxyz"
+        SAFE_CHARS = (
+            "0123456789"
+            + LOWER_CASE_ALPHABETIC_CHARS
+            + LOWER_CASE_ALPHABETIC_CHARS.upper()
+            + "!-_.()"
         )
 
-    @settings.validator
-    def _validate_settings(self, _, value: FunctionSettings) -> None:
-        """Validate the settings."""
-        if not isinstance(value, BenchmarkSettings):
+        if not all(char in SAFE_CHARS for char in value):
             raise ValueError(
-                f"Invalid settings '{value}'. Must be a BenchmarkSettings."
+                f"Invalid identifier '{value}'. "
+                f"Only the following characters are allowed: {SAFE_CHARS}"
             )
 
-    @lookup.validator
-    def _validate_lookup(self, _, value: Callable | DataFrame) -> None:
-        """Validate the lookup."""
-        if not callable(value) and not isinstance(value, DataFrame):
-            raise ValueError(
-                f"Invalid lookup '{value}'. Must be a Callable or DataFrame."
-            )
-
-    @abstractmethod
-    def __call__(self) -> DataFrame:
+    def __call__(self) -> Result:
         """Execute the benchmark and return the result."""
-        raise NotImplementedError
+        start_datetime = datetime.now(timezone.utc)
+        start_sec = time.perf_counter()
+        result = self.function(self.settings)
+        stop_sec = time.perf_counter()
+
+        duration = timedelta(seconds=stop_sec - start_sec)
+
+        metadata = ResultMetadata(
+            start_datetime=start_datetime,
+            duration=duration,
+        )
+
+        return Result(self.name, result, metadata)
