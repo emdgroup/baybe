@@ -314,11 +314,15 @@ class Campaign(SerialMixin):
         """
         exp_rep = self.searchspace.discrete.exp_rep
         index_name = exp_rep.index.name
+
+        # Identify points to be dropped
         points = pd.merge(
             exp_rep.reset_index(names="_df_index"), filter, how="left", indicator=True
         ).set_index("_df_index")
-        selector = "left_only" if anti else "both"
-        points = points[points["_merge"] == selector]
+        to_drop = points["_merge"] == ("both" if anti else "left_only")
+
+        # Drop the points
+        points.drop(index=points[to_drop].index, inplace=True)
         points.drop("_merge", axis=1, inplace=True)
         points.index.name = index_name
 
