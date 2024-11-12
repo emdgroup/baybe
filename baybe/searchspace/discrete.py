@@ -32,7 +32,7 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
-from baybe.utils.boolean import eq_dataframe
+from baybe.utils.boolean import eq_dataframe, strtobool
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
     fuzzy_row_match,
@@ -296,7 +296,7 @@ class SubspaceDiscrete(SerialMixin):
 
         try:
             # Check for manual deactivation of polars
-            if os.environ.get("BAYBE_DEACTIVATE_POLARS", None) is not None:
+            if not strtobool(os.environ.get("BAYBE_DEACTIVATE_POLARS", "False")):
                 raise OptionalImportError(
                     "Polars was deactivated manually via environment variable."
                 )
