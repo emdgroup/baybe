@@ -129,7 +129,10 @@ class SubspaceDiscrete(SerialMixin):
         constraints_df = pd.DataFrame(constraints_list)
 
         fields = [
-            to_string("Discrete Parameters", pretty_print_df(param_df)),
+            to_string(
+                "Discrete Parameters",
+                pretty_print_df(param_df, max_colwidth=None),
+            ),
             to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
             to_string("Constraints", pretty_print_df(constraints_df)),
             to_string("Computational Representation", pretty_print_df(self.comp_rep)),

@@ -89,7 +89,9 @@ class SubspaceContinuous(SerialMixin):
         nonlinear_df = pd.DataFrame(nonlin_constraints_list)
 
         fields = [
-            to_string("Continuous Parameters", pretty_print_df(param_df)),
+            to_string(
+                "Continuous Parameters", pretty_print_df(param_df, max_colwidth=None)
+            ),
             to_string("Linear Equality Constraints", pretty_print_df(lin_eq_df)),
             to_string("Linear Inequality Constraints", pretty_print_df(lin_ineq_df)),
             to_string("Non-linear Constraints", pretty_print_df(nonlinear_df)),
