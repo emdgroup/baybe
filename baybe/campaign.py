@@ -24,7 +24,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
-from baybe.searchspace._filtered import AnnotatedSubspaceDiscrete
+from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -384,20 +384,22 @@ class Campaign(SerialMixin):
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
         # Prepare the search space according to the current campaign state
-        annotated_searchspace = evolve(
+        mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
+        if not self.allow_repeated_recommendations:
+            mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
+        if not self.allow_recommending_already_measured:
+            mask_todrop |= self._searchspace_metadata[_MEASURED]
+        filtered_searchspace = evolve(
             self.searchspace,
-            discrete=AnnotatedSubspaceDiscrete.from_subspace(
-                self.searchspace.discrete,
-                metadata=self._searchspace_metadata,
-                allow_repeated_recommendations=self.allow_repeated_recommendations,
-                allow_recommending_already_measured=self.allow_recommending_already_measured,
+            discrete=FilteredSubspaceDiscrete.from_subspace(
+                self.searchspace.discrete, ~mask_todrop.to_numpy()
             ),
         )
 
         # Get the recommended search space entries
         rec = self.recommender.recommend(
             batch_size,
-            annotated_searchspace,
+            filtered_searchspace,
             self.objective,
             self._measurements_exp,
             pending_experiments,
