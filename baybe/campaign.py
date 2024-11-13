@@ -293,11 +293,11 @@ class Campaign(SerialMixin):
         anti: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
-        """Un-/exclude certain discrete points from the candidate set.
+        """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
             filter: A dataframe specifying the filtering mechanism to determine the
-                candidates subset to be un-/excluded. The subset is determined via a
+                candidates subset to be in-/excluded. The subset is determined via a
                 join (see ``anti`` argument for details) with the discrete space.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
