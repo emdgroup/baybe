@@ -159,7 +159,7 @@ def _get_botorch_acqf_class(
     )
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 def _add_deprecation_hook(hook):
     """Add deprecation warnings to the default hook.
 

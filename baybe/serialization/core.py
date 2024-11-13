@@ -161,7 +161,7 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     return converter.structure_attrs_fromdict(specs, cls)
 
 
-# Register custom un-/structure hooks
+# Register custom (un-)structure hooks
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())

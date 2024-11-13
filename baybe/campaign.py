@@ -482,7 +482,7 @@ def _drop_version(dict_: dict) -> dict:
     return dict_
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )

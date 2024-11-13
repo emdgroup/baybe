@@ -42,7 +42,7 @@ Besides functionality to perform a typical recommend-measure loop, BayBE's highl
 - ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
 - 📝 Fully typed and hypothesis-tested: Robust code base
-- 🔄 All objects are fully de-/serializable: Useful for storing results in databases or use in wrappers like APIs
+- 🔄 All objects are fully (de-)serializable: Useful for storing results in databases or use in wrappers like APIs
 
 
 ## ⚡ Quick Start
