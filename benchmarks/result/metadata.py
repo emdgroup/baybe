@@ -7,7 +7,6 @@ from attrs import define, field
 from attrs.validators import instance_of
 from cattrs.gen import make_dict_unstructure_fn
 
-from baybe import __version__ as baybe_package_version
 from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 
@@ -38,13 +37,9 @@ class ResultMetadata(SerialMixin):
     @last_published_baybe_version.default
     def _last_published_baybe_version_default(self) -> str:
         """Extract the BayBE version."""
-        POST_SUBVERSION_CONSTRUCTED = baybe_package_version.count(".") > 2
-        if POST_SUBVERSION_CONSTRUCTED:
-            CORE_BAYBE_VERSION = baybe_package_version[
-                : baybe_package_version.rfind(".")
-            ]
-            return CORE_BAYBE_VERSION
-        return baybe_package_version
+        repo = git.Repo(search_parent_directories=True)
+        latest_tag = repo.git.describe(tags=True, abbrev=0)
+        return latest_tag
 
 
 # Register un-/structure hooks
