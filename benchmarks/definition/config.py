@@ -47,7 +47,7 @@ class Benchmark(Generic[BenchmarkSettingsType]):
     """The benchmark configuration."""
 
     function: Callable[[BenchmarkSettingsType], DataFrame] = field()
-    """The lookup function or DataFrame for the benchmark."""
+    """The callable which contains the benchmarking logic."""
 
     name: str = field(init=False)
     """The name of the benchmark."""
