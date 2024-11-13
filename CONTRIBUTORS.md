@@ -28,3 +28,5 @@
   Bernoulli multi-armed bandit and Thompson sampling
 - Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
   `scikit-fingerprints` support
+- Fabian Liebig (Merck KGaA, Darmstadt, Germany):\
+  Benchmarking structure
