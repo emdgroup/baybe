@@ -24,19 +24,19 @@ class ResultMetadata(SerialMixin):
     commit_hash: str = field(validator=instance_of(str), init=False)
     """The commit hash of the used BayBE code."""
 
-    last_published_baybe_version: str = field(validator=instance_of(str), init=False)
-    """The used BayBE version."""
+    latest_baybe_tag: str = field(validator=instance_of(str), init=False)
+    """The latest BayBE tag reachable in the ancestor commit history."""
 
     @commit_hash.default
-    def _commit_hash_default(self) -> str:
+    def _default_commit_hash(self) -> str:
         """Extract the git commit hash."""
         repo = git.Repo(search_parent_directories=True)
         sha = repo.head.object.hexsha
         return sha
 
-    @last_published_baybe_version.default
-    def _last_published_baybe_version_default(self) -> str:
-        """Extract the BayBE version."""
+    @latest_baybe_tag.default
+    def _default_latest_baybe_tag(self) -> str:
+        """Extract the latest reachable BayBE tag."""
         repo = git.Repo(search_parent_directories=True)
         latest_tag = repo.git.describe(tags=True, abbrev=0)
         return latest_tag
