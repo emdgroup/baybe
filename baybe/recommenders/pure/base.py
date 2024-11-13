@@ -5,7 +5,7 @@ from abc import ABC
 from typing import ClassVar
 
 import pandas as pd
-from attrs import define, field
+from attrs import define
 from typing_extensions import override
 
 from baybe.exceptions import NotEnoughPointsLeftError
@@ -24,15 +24,8 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 class PureRecommender(ABC, RecommenderProtocol):
     """Abstract base class for all pure recommenders."""
 
-    # Class variables
     compatibility: ClassVar[SearchSpaceType]
     """Class variable reflecting the search space compatibility."""
-
-    # Object variables
-    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
-    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
-    the corresponding points will be removed from the candidates. This only has an
-    influence in discrete search spaces."""
 
     @override
     def recommend(
@@ -183,15 +176,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
 
         # Get discrete candidates
-        # Repeated recommendations are always allowed for hybrid spaces
-        # Pending experiments are excluded for discrete spaces unless configured
-        # differently.
-        dont_exclude_pending = (
-            is_hybrid_space or self.allow_recommending_pending_experiments
-        )
-        candidates_exp, _ = searchspace.discrete.get_candidates(
-            exclude=None if dont_exclude_pending else pending_experiments,
-        )
+        candidates_exp, _ = searchspace.discrete.get_candidates()
 
         # TODO: Introduce new flag to recommend batches larger than the search space
 
