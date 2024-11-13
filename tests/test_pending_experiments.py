@@ -28,7 +28,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
 
 # Repeated recommendations explicitly need to be allowed or the potential overlap will
 # be avoided trivially
-@pytest.mark.parametrize("allow_repeated_recommendations", [True])
+@pytest.mark.parametrize("allow_recommending_already_recommended", [True])
 @pytest.mark.parametrize("allow_recommending_already_measured", [True])
 @pytest.mark.parametrize(
     "parameter_names, recommender",

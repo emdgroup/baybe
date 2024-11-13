@@ -88,18 +88,17 @@ class Campaign(SerialMixin):
     )
     """The employed recommender"""
 
-    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
-    """Allow to make recommendations that were already recommended earlier.
+    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
+    """Allow to recommend experiments that were already measured earlier.
     This only has an influence in discrete search spaces."""
 
-    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
-    """Allow to make recommendations that were measured previously.
+    allow_recommending_already_recommended: bool = field(default=False, kw_only=True)
+    """Allow to recommend experiments that were already recommended earlier.
     This only has an influence in discrete search spaces."""
 
     allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
-    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
-    the corresponding points will be removed from the candidates. This only has an
-    influence in discrete search spaces."""
+    """Allow pending experiments to be part of the recommendations.
+    This only has an influence in discrete search spaces."""
 
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
@@ -385,7 +384,7 @@ class Campaign(SerialMixin):
 
         # Prepare the search space according to the current campaign state
         mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
-        if not self.allow_repeated_recommendations:
+        if not self.allow_recommending_already_recommended:
             mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
         if not self.allow_recommending_already_measured:
             mask_todrop |= self._searchspace_metadata[_MEASURED]
