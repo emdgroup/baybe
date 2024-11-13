@@ -585,7 +585,7 @@ def fixture_campaign(
     constraints,
     recommender,
     objective,
-    allow_repeated_recommendations,
+    allow_recommending_already_recommended,
     allow_recommending_already_measured,
 ):
     """Returns a campaign."""
@@ -595,7 +595,7 @@ def fixture_campaign(
         ),
         recommender=recommender,
         objective=objective,
-        allow_repeated_recommendations=allow_repeated_recommendations,
+        allow_recommending_already_recommended=allow_recommending_already_recommended,
         allow_recommending_already_measured=allow_recommending_already_measured,
     )
 
@@ -664,8 +664,8 @@ def fixture_default_surrogate_model(request, kernel):
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
-@pytest.fixture(name="allow_repeated_recommendations")
-def fixture_allow_repeated_recommendations():
+@pytest.fixture(name="allow_recommending_already_recommended")
+def fixture_allow_recommending_already_recommended():
     return False
 
 

@@ -80,7 +80,7 @@ CONFIG = str(
         },
         "switch_after": 1
     },
-    "allow_repeated_recommendations": false,
+    "allow_recommending_already_recommended": false,
     "allow_recommending_already_measured": false
 }
 """
@@ -147,7 +147,7 @@ INVALID_CONFIG = str(
                 "type": "GaussianProcessSurrogate"
             },
             "acquisition_function": "qEI",
-            "allow_repeated_recommendations": false,
+            "allow_recommending_already_recommended": false,
             "allow_recommending_already_measured": false
         }
     }

@@ -142,7 +142,7 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
             objective,
             recommender,
             # The same arm can be pulled several times:
-            allow_repeated_recommendations=True,
+            allow_recommending_already_recommended=True,
             allow_recommending_already_measured=True,
         )
 
