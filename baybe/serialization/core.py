@@ -3,6 +3,7 @@
 import base64
 import pickle
 from collections.abc import Callable
+from datetime import datetime, timedelta
 from typing import Any, TypeVar, get_type_hints
 
 import attrs
@@ -163,3 +164,9 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 # Register custom un-/structure hooks
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
+converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
+converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
+converter.register_structure_hook(
+    timedelta, lambda x, _: timedelta(seconds=float(x.removesuffix("s")))
+)

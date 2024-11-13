@@ -87,6 +87,7 @@ dev = [
     "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
+    "baybe[benchmarking]",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
@@ -138,6 +139,13 @@ polars = [
 
 simulation = [
     "xyzpy>=1.2.1",
+]
+
+benchmarking = [
+    "baybe[chem]",
+    "baybe[onnx]",
+    "baybe[simulation]",
+    "GitPython>=3.0.6", # GitPython<3.0.6 is necessary since older versions rely on a specific version of GitDB: https://github.com/gitpython-developers/GitPython/issues/983
 ]
 
 test = [

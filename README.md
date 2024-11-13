@@ -299,6 +299,7 @@ The available groups are:
 - `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/)
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
+- `benchmarking`: Required for running the benchmarking module.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
 
 ## 📡 Telemetry
