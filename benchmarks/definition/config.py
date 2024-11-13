@@ -10,6 +10,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
 
+from baybe.serialization.core import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
@@ -41,7 +42,7 @@ class ConvergenceExperimentSettings(BenchmarkSettings):
 
 
 @define(frozen=True)
-class Benchmark(Generic[BenchmarkSettingsType]):
+class Benchmark(SerialMixin, Generic[BenchmarkSettingsType]):
     """The base class for a benchmark executable."""
 
     settings: BenchmarkSettingsType = field()
@@ -88,3 +89,17 @@ class Benchmark(Generic[BenchmarkSettingsType]):
         )
 
         return Result(self.name, result, metadata)
+
+    @staticmethod
+    def serialize(benchmark: "Benchmark") -> dict:
+        """Serialize the benchmark."""
+        return {
+            "name": benchmark.name,
+            "settings": benchmark.settings.to_dict(),
+            "best_possible_result": benchmark.best_possible_result,
+            "optimal_function_inputs": benchmark.optimal_function_inputs,
+            "description": benchmark.description,
+        }
+
+
+converter.register_unstructure_hook(Benchmark, Benchmark.serialize)
