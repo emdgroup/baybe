@@ -67,24 +67,8 @@ class Benchmark(Generic[BenchmarkSettingsType]):
 
     @name.default
     def _default_name(self):
+        """Return the name of the benchmark function."""
         return self.function.__name__
-
-    @name.validator
-    def _validate_name(self, _, value: str) -> None:
-        """Validate the name."""
-        LOWER_CASE_ALPHABETIC_CHARS = "abcdefghijklmnopqrstuvwxyz"
-        SAFE_CHARS = (
-            "0123456789"
-            + LOWER_CASE_ALPHABETIC_CHARS
-            + LOWER_CASE_ALPHABETIC_CHARS.upper()
-            + "!-_.()"
-        )
-
-        if not all(char in SAFE_CHARS for char in value):
-            raise ValueError(
-                f"Invalid identifier '{value}'. "
-                f"Only the following characters are allowed: {SAFE_CHARS}"
-            )
 
     def __call__(self) -> Result:
         """Execute the benchmark and return the result."""
