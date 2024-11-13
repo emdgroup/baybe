@@ -66,29 +66,17 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_discrete_allow",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_continuous_allow",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_hybrid_allow",
         ),
         param(
