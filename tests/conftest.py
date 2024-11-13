@@ -674,35 +674,19 @@ def allow_recommending_already_measured():
     return True
 
 
-@pytest.fixture(name="allow_recommending_pending_experiments")
-def fixture_allow_recommending_pending_experiments():
-    return False
-
-
 @pytest.fixture(name="initial_recommender")
-def fixture_initial_recommender(
-    allow_recommending_pending_experiments,
-):
+def fixture_initial_recommender():
     """The default initial recommender to be used if not specified differently."""
-    return RandomRecommender(
-        allow_recommending_pending_experiments=allow_recommending_pending_experiments,
-    )
+    return RandomRecommender()
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(
-    initial_recommender,
-    surrogate_model,
-    acqf,
-    allow_recommending_pending_experiments,
-):
+def fixture_recommender(initial_recommender, surrogate_model, acqf):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
-            surrogate_model=surrogate_model,
-            acquisition_function=acqf,
-            allow_recommending_pending_experiments=allow_recommending_pending_experiments,
+            surrogate_model=surrogate_model, acquisition_function=acqf
         ),
     )
 
