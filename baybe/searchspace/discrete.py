@@ -598,29 +598,14 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
-    def get_candidates(
-        self, exclude: pd.DataFrame | None = None
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
-
-        Args:
-            exclude: Points in experimental representation that should be excluded as
-                candidates.
 
         Returns:
             The candidate parameter settings both in experimental and computational
             representation.
         """
-        # Filter the search space down to the candidates
-        mask_todrop = self._excluded.copy()
-
-        # Remove additional excludes
-        if exclude is not None:
-            mask_todrop |= pd.merge(self.exp_rep, exclude, indicator=True, how="left")[
-                "_merge"
-            ].eq("both")
-
-        return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
+        return self.exp_rep.loc[~self._excluded], self.comp_rep.loc[~self._excluded]
 
     def transform(
         self,

@@ -41,9 +41,7 @@ class AnnotatedSubspaceDiscrete(SubspaceDiscrete):
         )
 
     @override
-    def get_candidates(
-        self, exclude: pd.DataFrame | None = None
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         from baybe.campaign import _EXCLUDED, _MEASURED, _RECOMMENDED
 
         # Exclude parts marked by metadata
@@ -52,11 +50,5 @@ class AnnotatedSubspaceDiscrete(SubspaceDiscrete):
             mask_todrop |= self.metadata[_RECOMMENDED]
         if not self.allow_recommending_already_measured:
             mask_todrop |= self.metadata[_MEASURED]
-
-        # Remove additional excludes
-        if exclude is not None:
-            mask_todrop |= pd.merge(self.exp_rep, exclude, indicator=True, how="left")[
-                "_merge"
-            ].eq("both")
 
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
