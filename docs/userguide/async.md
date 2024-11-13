@@ -45,19 +45,19 @@ function with `pending_experiments` will result in an
 
 ```{admonition} Supported Recommenders
 :class: important
-For technical reasons, not every recommender is able to utilize `pending_experiments` in
-the same way. For instance,
+
+For technical reasons, not every recommender is able to make use of `pending_experiments`.
+For instance,
 [`BotorchRecommender`](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender)
-takes all pending experiments into account, even if they do not match exactly with any
-point in the search space. 
+takes all pending experiments into account, even if they do not match exactly with 
+points in the search space. 
+By contrast,
 [Non-predictive recommenders](baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender) like 
 [`SKLearnClusteringRecommender`](baybe.recommenders.pure.nonpredictive.clustering.SKLearnClusteringRecommender)s,
 [`RandomRecommender`](baybe.recommenders.pure.nonpredictive.sampling.RandomRecommender) or
 [`FPSRecommender`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender)
-only take pending points into consideration if the recommender flag
-[allow_recommending_pending_experiments](baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender.allow_recommending_pending_experiments)
-is set to `False`. In that case, the candidate space is stripped of pending experiments
-that are exact matches with the search space, i.e. they will not even be considered.
+do not consider `pending_experiments` at all and raise an
+{class}`~baybe.exceptions.UnusedObjectWarning` when such points are passed.
 ```
 
 Akin to `measurements` or `recommendations`, `pending_experiments` is a dataframe in
