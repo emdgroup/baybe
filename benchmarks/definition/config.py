@@ -11,6 +11,7 @@ from attrs.validators import instance_of
 from pandas import DataFrame
 
 from baybe.serialization.mixin import SerialMixin
+from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
 
 
@@ -73,9 +74,11 @@ class Benchmark(Generic[BenchmarkSettingsType]):
     def __call__(self) -> Result:
         """Execute the benchmark and return the result."""
         start_datetime = datetime.now(timezone.utc)
-        start_sec = time.perf_counter()
-        result = self.function(self.settings)
-        stop_sec = time.perf_counter()
+
+        with temporary_seed(self.settings.random_seed):
+            start_sec = time.perf_counter()
+            result = self.function(self.settings)
+            stop_sec = time.perf_counter()
 
         duration = timedelta(seconds=stop_sec - start_sec)
 
