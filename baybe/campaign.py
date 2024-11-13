@@ -96,6 +96,11 @@ class Campaign(SerialMixin):
     """Allow to make recommendations that were measured previously.
     This only has an influence in discrete search spaces."""
 
+    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
+    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
+    the corresponding points will be removed from the candidates. This only has an
+    influence in discrete search spaces."""
+
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
     """Metadata tracking the experimentation status of the search space."""
