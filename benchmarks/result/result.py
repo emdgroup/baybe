@@ -7,7 +7,7 @@ from attrs.validators import instance_of
 from pandas import DataFrame
 
 from baybe.serialization.mixin import SerialMixin
-from benchmarks.result.metadata import ResultMetadata
+from benchmarks.result import ResultMetadata
 
 
 @define(frozen=True)

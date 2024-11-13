@@ -14,7 +14,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmarks.definition.config import (
+from benchmarks.definition import (
     Benchmark,
     ConvergenceExperimentSettings,
 )
