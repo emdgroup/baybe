@@ -992,6 +992,7 @@
 <span class="kn">import</span> <span class="nn">base64</span>
 <span class="kn">import</span> <span class="nn">pickle</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">get_type_hints</span>
 
 <span class="kn">import</span> <span class="nn">attrs</span>
@@ -1167,6 +1168,12 @@
 <span class="c1"># Register custom un-/structure hooks</span>
 <span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">_unstructure_dataframe_hook</span><span class="p">)</span>
 <span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">_structure_dataframe_hook</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span><span class="n">datetime</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span><span class="n">timedelta</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span>
+    <span class="n">timedelta</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">removesuffix</span><span class="p">(</span><span class="s2">&quot;s&quot;</span><span class="p">)))</span>
+<span class="p">)</span>
 </pre></div>
         </article>
       </div>
