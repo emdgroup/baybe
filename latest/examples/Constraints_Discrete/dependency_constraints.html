@@ -1097,8 +1097,8 @@ Note that multiple dependencies have to be included in a single constraint objec
          Experimental Representation
                  Solv Switch1  ... FrameA  FrameB
             0      C1     off  ...      A       A
-            1      C1      on  ...      A       A
-            2   water      on  ...      A       A
+            1      C1     off  ...      A       A
+            2      C1     off  ...      A       B
             ..    ...     ...  ...    ...     ...
             32  water      on  ...      A       B
             33  water      on  ...      B       A
@@ -1115,8 +1115,8 @@ Note that multiple dependencies have to be included in a single constraint objec
          Computational Representation
                 Frac1  FrameA_A  ...  Switch2_left  Switch2_right
             0     0.0       1.0  ...           1.0            0.0
-            1     0.0       1.0  ...           1.0            0.0
-            2     0.0       1.0  ...           1.0            0.0
+            1     0.0       1.0  ...           0.0            1.0
+            2     0.0       1.0  ...           0.0            1.0
             ..    ...       ...  ...           ...            ...
             32  100.0       1.0  ...           0.0            1.0
             33  100.0       0.0  ...           0.0            1.0
