@@ -28,7 +28,7 @@ with exclude_sys_path(os.getcwd()):
     MORDRED_INSTALLED = find_spec("mordred") is not None
     ONNX_INSTALLED = find_spec("onnxruntime") is not None
     POLARS_INSTALLED = find_spec("polars") is not None
-    DIAGNOSTICS_INSTALLED = find_spec("shap") is not None
+    SHAP_INSTALLED = find_spec("shap") is not None
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None
     RDKIT_INSTALLED = find_spec("rdkit") is not None
@@ -46,6 +46,7 @@ TYPOS_INSTALLED = True
 
 # Package combinations
 CHEM_INSTALLED = MORDRED_INSTALLED and RDKIT_INSTALLED
+DIAGNOSTICS_INSTALLED = SHAP_INSTALLED
 LINT_INSTALLED = all(
     (
         FLAKE8_INSTALLED,
