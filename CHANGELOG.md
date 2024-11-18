@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Added SHAP analysis within the new `diagnostics` package.
+- `diagnostics` dependency group
+- SHAP explanations
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 
 ### Deprecations

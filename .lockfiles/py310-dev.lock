@@ -78,7 +78,9 @@ click==8.1.7
     #   pydoclint
     #   streamlit
 cloudpickle==3.0.0
-    # via dask
+    # via
+    #   dask
+    #   shap
 colorama==0.4.6
     # via
     #   click
@@ -329,6 +331,8 @@ linear-operator==0.5.2
     # via
     #   botorch
     #   gpytorch
+llvmlite==0.43.0
+    # via numba
 locket==1.0.0
     # via partd
 markdown-it-py==3.0.0
@@ -408,6 +412,8 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
+numba==0.60.0
+    # via shap
 numpy==1.26.4
     # via
     #   baybe (pyproject.toml)
@@ -421,6 +427,7 @@ numpy==1.26.4
     #   matplotlib
     #   mordredcommunity
     #   ngboost
+    #   numba
     #   onnx
     #   onnxconverter-common
     #   onnxruntime
@@ -435,6 +442,7 @@ numpy==1.26.4
     #   scikit-learn-extra
     #   scipy
     #   seaborn
+    #   shap
     #   streamlit
     #   types-seaborn
     #   xarray
@@ -544,6 +552,7 @@ packaging==24.1
     #   qtconsole
     #   qtpy
     #   setuptools-scm
+    #   shap
     #   sphinx
     #   streamlit
     #   tox
@@ -557,6 +566,7 @@ pandas==2.2.2
     #   hypothesis
     #   lifelines
     #   seaborn
+    #   shap
     #   streamlit
     #   xarray
     #   xyzpy
@@ -752,6 +762,7 @@ scikit-learn==1.5.1
     #   gpytorch
     #   ngboost
     #   scikit-learn-extra
+    #   shap
     #   skl2onnx
 scikit-learn-extra==0.3.0
     # via baybe (pyproject.toml)
@@ -767,6 +778,7 @@ scipy==1.14.0
     #   ngboost
     #   scikit-learn
     #   scikit-learn-extra
+    #   shap
 seaborn==0.13.2
     # via baybe (pyproject.toml)
 send2trash==1.8.3
@@ -776,6 +788,8 @@ setuptools==71.1.0
     #   jupyterlab
     #   setuptools-scm
 setuptools-scm==8.1.0
+    # via baybe (pyproject.toml)
+shap==0.46.0
     # via baybe (pyproject.toml)
 six==1.16.0
     # via
@@ -788,6 +802,8 @@ six==1.16.0
     #   rfc3339-validator
 skl2onnx==1.17.0
     # via baybe (pyproject.toml)
+slicer==0.0.8
+    # via shap
 smmap==5.0.1
     # via gitdb
 sniffio==1.3.1
@@ -901,6 +917,7 @@ tqdm==4.66.4
     # via
     #   ngboost
     #   pyro-ppl
+    #   shap
     #   xyzpy
 traitlets==5.14.3
     # via

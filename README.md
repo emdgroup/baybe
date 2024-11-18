@@ -296,7 +296,7 @@ The available groups are:
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
 - `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/)
-- `diagnostics`: Required for feature importance ranking via [SHAP](https://shap.readthedocs.io/)
+- `diagnostics`: Required for built-in model and campaign analysis, e.g. [SHAP](https://shap.readthedocs.io/)pip install uv
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
