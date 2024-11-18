@@ -601,3 +601,63 @@ def get_transform_objects(
         )
 
     return [p for p in objects if p.name in df]
+
+
+def filter_df(
+    df: pd.DataFrame, filter: pd.DataFrame, anti: bool = False
+) -> pd.DataFrame:
+    """Filter a dataframe based on a second dataframe defining filtering conditions.
+
+    Filtering is done via a join (see ``anti`` argument for details) between the
+    input dataframe and the filter dataframe.
+
+    Args:
+        df: The dataframe to be filtered.
+        filter: The dataframe defining the filtering conditions.
+        anti: If ``False``, the filter dataframe determines the rows to be kept
+            (i.e. selection via regular join). If ``True``, the filtering mechanism is
+            inverted so that the complement set of rows is kept (i.e. selection
+            via anti-join).
+
+    Returns:
+        A new dataframe containing the result of the filtering process.
+
+    Examples:
+        >>> df = pd.DataFrame(
+        ...         [[0, "a"], [0, "b"], [1, "a"], [1, "b"]],
+        ...         columns=["num", "cat"]
+        ... )
+        >>> df
+           num cat
+        0    0   a
+        1    0   b
+        2    1   a
+        3    1   b
+
+        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), anti=False)
+           num cat
+        0    0   a
+        1    0   b
+
+        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), anti=True)
+           num cat
+        2    1   a
+        3    1   b
+    """
+    # Remember original index name
+    index_name = df.index.name
+
+    # Identify rows to be dropped
+    out = pd.merge(
+        df.reset_index(names="_df_index"), filter, how="left", indicator=True
+    ).set_index("_df_index")
+    to_drop = out["_merge"] == ("both" if anti else "left_only")
+
+    # Drop the points
+    out.drop(index=out[to_drop].index, inplace=True)
+    out.drop("_merge", axis=1, inplace=True)
+
+    # Restore original index name
+    out.index.name = index_name
+
+    return out

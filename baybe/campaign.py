@@ -37,7 +37,7 @@ from baybe.telemetry import (
     telemetry_record_value,
 )
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import fuzzy_row_match
+from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
@@ -297,14 +297,13 @@ class Campaign(SerialMixin):
 
         Args:
             filter: A dataframe specifying the filtering mechanism to determine the
-                candidates subset to be in-/excluded. The subset is determined via a
-                join (see ``anti`` argument for details) with the discrete space.
+                candidates subset to be in-/excluded. For details, see
+                :func:`baybe.utils.dataframe.filter_df`.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
-            anti: If ``False``, the filter determines the points to be affected (i.e.
-                selection via regular join). If ``True``, the filtering mechanism is
-                inverted in that only the points passing the filter are unaffected (i.e.
-                selection via anti-join).
+            anti: Boolean flag deciding if the points specified by the filter or their
+                complement is to be kept. For details, see
+                :func:`baybe.utils.dataframe.filter_df`.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
@@ -312,19 +311,7 @@ class Campaign(SerialMixin):
         Returns:
             The discrete candidate set passing through the specified filter.
         """
-        exp_rep = self.searchspace.discrete.exp_rep
-        index_name = exp_rep.index.name
-
-        # Identify points to be dropped
-        points = pd.merge(
-            exp_rep.reset_index(names="_df_index"), filter, how="left", indicator=True
-        ).set_index("_df_index")
-        to_drop = points["_merge"] == ("both" if anti else "left_only")
-
-        # Drop the points
-        points.drop(index=points[to_drop].index, inplace=True)
-        points.drop("_merge", axis=1, inplace=True)
-        points.index.name = index_name
+        points = filter_df(self.searchspace.discrete.exp_rep, filter, anti)
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
