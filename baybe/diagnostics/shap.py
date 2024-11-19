@@ -105,6 +105,7 @@ def explanation(
             the campaign surrogate.
         ValueError: If the provided data does not have the same amount of parameters
             as the campaign.
+        ValueError: If the resulting explanation object has an invalid shape.
     """
     is_shap_explainer = not explainer_class.__module__.startswith(
         "shap.explainers.other."
@@ -147,9 +148,10 @@ def explanation(
     if computational_representation:
         data = campaign.searchspace.transform(pd.DataFrame(data))
 
-    """Get background data depending on the explainer."""
+    """Get background data regardless of the explainer."""
     bg_data = getattr(explainer_obj, "data", getattr(explainer_obj, "masker", None))
-    bg_data = getattr(bg_data, "data", bg_data)
+    if not isinstance(bg_data, (np.ndarray, pd.DataFrame)):
+        bg_data = getattr(bg_data, "data")
 
     # Type checking for mypy
     bg_data = bg_data if isinstance(bg_data, pd.DataFrame) else pd.DataFrame(bg_data)
@@ -161,6 +163,7 @@ def explanation(
             "parameters as the shap explainer background."
         )
 
+    data_array = np.array(data)
     if not is_shap_explainer:
         """Return attributions for non-SHAP explainers."""
         if explainer_class.__module__.endswith("maple"):
@@ -170,28 +173,32 @@ def explanation(
             )[0]
         else:
             attributions = explainer_obj.attributions(np.array(data))[0]
-        if computational_representation:
-            feature_names = campaign.searchspace.comp_rep_columns
-        else:
-            feature_names = campaign.searchspace.parameter_names
+        feature_names = (
+            campaign.searchspace.comp_rep_columns
+            if computational_representation
+            else campaign.searchspace.parameter_names
+        )
         explanations = shap.Explanation(
             values=attributions,
-            base_values=np.array(data),
-            data=np.array(data),
+            base_values=data_array,
+            data=data_array,
         )
         explanations.feature_names = list(feature_names)
         return explanations
-
-    shap_explanations = explainer_obj(np.array(data))
-    if len(shap_explanations.shape) == 2:
-        return shap_explanations
     else:
-        shap_explanations = explainer_obj(data)[:, :, 0]
+        explanations = explainer_obj(data_array)
 
-    return shap_explanations
+    if len(explanations.shape) == 2:
+        return explanations
+    if len(explanations.shape) == 3:
+        return explanations[:, :, 0]
+    raise ValueError(
+        "The Explanation has an invalid "
+        f"dimensionality of {len(explanations.shape)}."
+    )
 
 
-def plot_shap_scatter(explanation: shap.Explanation, **kwargs) -> None:
+def plot_shap_scatter(explanation: memoryview | shap.Explanation, **kwargs) -> None:
     """Plot the Shapley values using a scatter plot while leaving out string values.
 
     Args:
