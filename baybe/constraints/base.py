@@ -93,16 +93,27 @@ class DiscreteConstraint(Constraint, ABC):
     eval_during_modeling: ClassVar[bool] = False
     # See base class.
 
+    def get_valid(self, df: pd.DataFrame, /) -> pd.Index:
+        """Get the indices of dataframe entries that are valid under the constraint.
+
+        Args:
+            df: A dataframe where each row represents a parameter configuration.
+
+        Returns:
+            The dataframe indices of rows that fulfill the constraint.
+        """
+        invalid = self.get_invalid(df)
+        return df.index.drop(invalid)
+
     @abstractmethod
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
         """Get the indices of dataframe entries that are invalid under the constraint.
 
         Args:
-            data: A dataframe where each row represents a particular parameter
-                combination.
+            data: A dataframe where each row represents a parameter configuration.
 
         Returns:
-            The dataframe indices of rows where the constraint is violated.
+            The dataframe indices of rows that violate the constraint.
         """
 
     def get_invalid_polars(self) -> pl.Expr:

@@ -331,11 +331,10 @@ class Campaign(SerialMixin):
     ) -> pd.DataFrame:
         # Filter search space dataframe according to the given constraint
         df = self.searchspace.discrete.exp_rep
-        idx = constraint.get_invalid(df)
-        filtered = df.drop(index=idx)
+        idx = constraint.get_valid(df)
 
         # Determine the candidate subset to be toggled
-        points = df.drop(index=filtered.index) if anti else filtered
+        points = df.drop(index=idx) if anti else df.loc[idx]
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude

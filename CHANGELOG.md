@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `add_noise_to_perturb_degenerate_rows` utility
 - `benchmarks` subpackage for defining and running performance tests
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
+- `DiscreteConstraint.get_valid` to conveniently access valid candidates
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
