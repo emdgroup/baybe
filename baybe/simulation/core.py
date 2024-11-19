@@ -127,7 +127,9 @@ def simulate_experiment(
         # available in the lookup
         if impute_mode == "ignore":
             campaign.toggle_discrete_candidates(
-                lookup[[p.name for p in campaign.parameters]], exclude=True, anti=True
+                lookup[[p.name for p in campaign.parameters]],
+                exclude=True,
+                complement=True,
             )
 
         # Run the DOE loop

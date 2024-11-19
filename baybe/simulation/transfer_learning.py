@@ -77,7 +77,7 @@ def simulate_transfer_learning(
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
         campaign_task = deepcopy(campaign)
         campaign_task.toggle_discrete_candidates(
-            pd.DataFrame({task_param.name: [task]}), exclude=True, anti=True
+            pd.DataFrame({task_param.name: [task]}), exclude=True, complement=True
         )
 
         # Use all off-task data as training data

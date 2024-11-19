@@ -38,7 +38,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     assert model is not None, "Something went wrong during surrogate model extraction."
 
 
-@pytest.mark.parametrize("anti", [False, True], ids=["regular", "anti"])
+@pytest.mark.parametrize("complement", [False, True], ids=["regular", "complement"])
 @pytest.mark.parametrize("exclude", [True, False], ids=["exclude", "include"])
 @pytest.mark.parametrize(
     "constraint",
@@ -48,7 +48,7 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
     ],
     ids=["dataframe", "constraints"],
 )
-def test_candidate_toggling(constraint, exclude, anti):
+def test_candidate_toggling(constraint, exclude, complement):
     """Toggling discrete candidates updates the campaign metadata accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
@@ -62,11 +62,11 @@ def test_candidate_toggling(constraint, exclude, anti):
     campaign._searchspace_metadata[_EXCLUDED] = not exclude
 
     # Toggle the candidates
-    campaign.toggle_discrete_candidates(constraint, exclude, anti=anti)
+    campaign.toggle_discrete_candidates(constraint, exclude, complement=complement)
 
     # Extract row indices of candidates whose metadata should have been toggled
     matches = campaign.searchspace.discrete.exp_rep["a"] == 0
-    idx = matches.index[~matches] if anti else matches.index[matches]
+    idx = matches.index[~matches] if complement else matches.index[matches]
 
     # Assert that metadata is set correctly
     target = campaign._searchspace_metadata.loc[idx, _EXCLUDED]

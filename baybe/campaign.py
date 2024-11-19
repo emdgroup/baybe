@@ -293,7 +293,7 @@ class Campaign(SerialMixin):
         self,
         constraint: DiscreteConstraint | pd.DataFrame,
         exclude: bool,
-        anti: bool = False,
+        complement: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
         """In-/exclude certain discrete points in/from the candidate set.
@@ -306,9 +306,10 @@ class Campaign(SerialMixin):
                 for details.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
-            anti: Boolean flag deciding if the points specified by the filter or their
-                complement is to be kept. For details, see
-                :func:`~baybe.utils.dataframe.filter_df`.
+            complement: If ``False``, the filtering mechanism is used as is.
+                If ``True``, the filtering mechanism is inverted so that
+                the complement of the subset specified by the filter is toggled.
+                For details, see :func:`~baybe.utils.dataframe.filter_df`.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
@@ -327,7 +328,7 @@ class Campaign(SerialMixin):
         self,
         constraint: DiscreteConstraint,
         exclude: bool,
-        anti: bool = False,
+        complement: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
         # Filter search space dataframe according to the given constraint
@@ -335,7 +336,7 @@ class Campaign(SerialMixin):
         idx = constraint.get_valid(df)
 
         # Determine the candidate subset to be toggled
-        points = df.drop(index=idx) if anti else df.loc[idx].copy()
+        points = df.drop(index=idx) if complement else df.loc[idx].copy()
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
@@ -347,11 +348,11 @@ class Campaign(SerialMixin):
         self,
         constraint: pd.DataFrame,
         exclude: bool,
-        anti: bool = False,
+        complement: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
         # Determine the candidate subset to be toggled
-        points = filter_df(self.searchspace.discrete.exp_rep, constraint, anti)
+        points = filter_df(self.searchspace.discrete.exp_rep, constraint, complement)
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude

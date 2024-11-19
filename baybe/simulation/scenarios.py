@@ -226,7 +226,9 @@ def _simulate_groupby(
             for c in group.columns
             if c in campaign.searchspace.discrete.parameter_names
         ]
-        campaign_group.toggle_discrete_candidates(group[cols], exclude=True, anti=True)
+        campaign_group.toggle_discrete_candidates(
+            group[cols], exclude=True, complement=True
+        )
 
         # Run the group simulation
         try:
