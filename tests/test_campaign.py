@@ -41,14 +41,14 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("complement", [False, True], ids=["regular", "complement"])
 @pytest.mark.parametrize("exclude", [True, False], ids=["exclude", "include"])
 @pytest.mark.parametrize(
-    "constraint",
+    "constraints",
     [
         pd.DataFrame({"a": [0]}),
-        DiscreteExcludeConstraint(["a"], [SubSelectionCondition([1])]),
+        [DiscreteExcludeConstraint(["a"], [SubSelectionCondition([1])])],
     ],
     ids=["dataframe", "constraints"],
 )
-def test_candidate_toggling(constraint, exclude, complement):
+def test_candidate_toggling(constraints, exclude, complement):
     """Toggling discrete candidates updates the campaign metadata accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
@@ -62,7 +62,7 @@ def test_candidate_toggling(constraint, exclude, complement):
     campaign._searchspace_metadata[_EXCLUDED] = not exclude
 
     # Toggle the candidates
-    campaign.toggle_discrete_candidates(constraint, exclude, complement=complement)
+    campaign.toggle_discrete_candidates(constraints, exclude, complement=complement)
 
     # Extract row indices of candidates whose metadata should have been toggled
     matches = campaign.searchspace.discrete.exp_rep["a"] == 0

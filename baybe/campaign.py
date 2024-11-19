@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import gc
 import json
-from functools import singledispatchmethod
+from collections.abc import Collection
+from functools import reduce, singledispatchmethod
 from typing import TYPE_CHECKING
 
 import cattrs
@@ -291,7 +292,7 @@ class Campaign(SerialMixin):
     @singledispatchmethod
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        constraint: DiscreteConstraint | pd.DataFrame,
+        constraints: Collection[DiscreteConstraint] | pd.DataFrame,
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
@@ -299,9 +300,9 @@ class Campaign(SerialMixin):
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
-            constraint: A filtering mechanism determining the candidates subset to be
-                in-/excluded. Can be either a
-                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.
+            constraints: A filtering mechanism determining the candidates subset to be
+                in-/excluded. Can be either a collection of
+                :class:`~baybe.constraints.base.DiscreteConstraint`s or a dataframe.
                 For the latter, see :func:`~baybe.utils.dataframe.filter_df`
                 for details.
             exclude: If ``True``, the specified candidates are excluded.
@@ -320,20 +321,22 @@ class Campaign(SerialMixin):
         """
         raise NotImplementedError(
             f"Candidate toggling is not implemented for constraint specifications of "
-            f"type {type(constraint)}."
+            f"type {type(constraints)}."
         )
 
-    @toggle_discrete_candidates.register
+    @toggle_discrete_candidates.register(Collection)
     def _(
         self,
-        constraint: DiscreteConstraint,
+        constraints: Collection[DiscreteConstraint],
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
         # Filter search space dataframe according to the given constraint
         df = self.searchspace.discrete.exp_rep
-        idx = constraint.get_valid(df)
+        idx = reduce(
+            lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
+        )
 
         # Determine the candidate subset to be toggled
         points = df.drop(index=idx) if complement else df.loc[idx].copy()
@@ -346,13 +349,13 @@ class Campaign(SerialMixin):
     @toggle_discrete_candidates.register
     def _(
         self,
-        constraint: pd.DataFrame,
+        constraints: pd.DataFrame,
         exclude: bool,
         complement: bool = False,
         dry_run: bool = False,
     ) -> pd.DataFrame:
         # Determine the candidate subset to be toggled
-        points = filter_df(self.searchspace.discrete.exp_rep, constraint, complement)
+        points = filter_df(self.searchspace.discrete.exp_rep, constraints, complement)
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
