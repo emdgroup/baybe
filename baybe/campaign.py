@@ -314,7 +314,8 @@ class Campaign(SerialMixin):
                 Useful for setting up the correct filtering mechanism.
 
         Returns:
-            The discrete candidate set passing through the specified filter.
+            A new dataframe containing the  discrete candidate set passing through the
+            specified filter.
         """
         raise NotImplementedError(
             f"Candidate toggling is not implemented for constraint specifications of "
@@ -334,7 +335,7 @@ class Campaign(SerialMixin):
         idx = constraint.get_valid(df)
 
         # Determine the candidate subset to be toggled
-        points = df.drop(index=idx) if anti else df.loc[idx]
+        points = df.drop(index=idx) if anti else df.loc[idx].copy()
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
