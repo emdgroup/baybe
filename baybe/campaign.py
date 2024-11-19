@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
+from functools import singledispatchmethod
 from typing import TYPE_CHECKING
 
 import cattrs
@@ -14,6 +15,7 @@ from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -286,9 +288,10 @@ class Campaign(SerialMixin):
         )
         self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
-    def toggle_discrete_candidates(
+    @singledispatchmethod
+    def toggle_discrete_candidates(  # noqa: DOC501
         self,
-        filter: pd.DataFrame,
+        constraint: DiscreteConstraint | pd.DataFrame,
         exclude: bool,
         anti: bool = False,
         dry_run: bool = False,
@@ -296,14 +299,16 @@ class Campaign(SerialMixin):
         """In-/exclude certain discrete points in/from the candidate set.
 
         Args:
-            filter: A dataframe specifying the filtering mechanism to determine the
-                candidates subset to be in-/excluded. For details, see
-                :func:`baybe.utils.dataframe.filter_df`.
+            constraint: A filtering mechanism determining the candidates subset to be
+                in-/excluded. Can be either a
+                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.
+                For the latter, see :func:`~baybe.utils.dataframe.filter_df`
+                for details.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
             anti: Boolean flag deciding if the points specified by the filter or their
                 complement is to be kept. For details, see
-                :func:`baybe.utils.dataframe.filter_df`.
+                :func:`~baybe.utils.dataframe.filter_df`.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
@@ -311,7 +316,42 @@ class Campaign(SerialMixin):
         Returns:
             The discrete candidate set passing through the specified filter.
         """
-        points = filter_df(self.searchspace.discrete.exp_rep, filter, anti)
+        raise NotImplementedError(
+            f"Candidate toggling is not implemented for constraint specifications of "
+            f"type {type(constraint)}."
+        )
+
+    @toggle_discrete_candidates.register
+    def _(
+        self,
+        constraint: DiscreteConstraint,
+        exclude: bool,
+        anti: bool = False,
+        dry_run: bool = False,
+    ) -> pd.DataFrame:
+        # Filter search space dataframe according to the given constraint
+        df = self.searchspace.discrete.exp_rep
+        idx = constraint.get_invalid(df)
+        filtered = df.drop(index=idx)
+
+        # Determine the candidate subset to be toggled
+        points = df.drop(index=filtered.index) if anti else filtered
+
+        if not dry_run:
+            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+
+        return points
+
+    @toggle_discrete_candidates.register
+    def _(
+        self,
+        constraint: pd.DataFrame,
+        exclude: bool,
+        anti: bool = False,
+        dry_run: bool = False,
+    ) -> pd.DataFrame:
+        # Determine the candidate subset to be toggled
+        points = filter_df(self.searchspace.discrete.exp_rep, constraint, anti)
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude

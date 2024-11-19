@@ -5,6 +5,8 @@ import pytest
 from pytest import param
 
 from baybe.campaign import _EXCLUDED, Campaign
+from baybe.constraints.conditions import SubSelectionCondition
+from baybe.constraints.discrete import DiscreteExcludeConstraint
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace.discrete import SubspaceDiscrete
 
@@ -38,7 +40,15 @@ def test_get_surrogate(campaign, n_iterations, batch_size):
 
 @pytest.mark.parametrize("anti", [False, True], ids=["regular", "anti"])
 @pytest.mark.parametrize("exclude", [True, False], ids=["exclude", "include"])
-def test_candidate_toggling(exclude, anti):
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        pd.DataFrame({"a": [0]}),
+        DiscreteExcludeConstraint(["a"], [SubSelectionCondition([1])]),
+    ],
+    ids=["dataframe", "constraints"],
+)
+def test_candidate_toggling(constraint, exclude, anti):
     """Toggling discrete candidates updates the campaign metadata accordingly."""
     subspace = SubspaceDiscrete.from_product(
         [
@@ -52,7 +62,7 @@ def test_candidate_toggling(exclude, anti):
     campaign._searchspace_metadata[_EXCLUDED] = not exclude
 
     # Toggle the candidates
-    campaign.toggle_discrete_candidates(pd.DataFrame({"a": [0]}), exclude, anti=anti)
+    campaign.toggle_discrete_candidates(constraint, exclude, anti=anti)
 
     # Extract row indices of candidates whose metadata should have been toggled
     matches = campaign.searchspace.discrete.exp_rep["a"] == 0
