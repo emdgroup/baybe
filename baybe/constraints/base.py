@@ -115,6 +115,7 @@ class DiscreteConstraint(Constraint, ABC):
         Returns:
             The dataframe indices of rows that violate the constraint.
         """
+        # TODO: Should switch backends (pandas/polars/...) behind the scenes
 
     def get_invalid_polars(self) -> pl.Expr:
         """Translate the constraint to Polars expression identifying undesired rows.
