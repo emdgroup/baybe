@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from functools import reduce
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import Attribute, Factory, define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -54,6 +54,38 @@ _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 
+def _make_allow_flag_default_factory(
+    default: bool,
+) -> Callable[[Campaign], bool | None]:
+    """Make a default factory for allow_* flags."""
+
+    def default_allow_flag(campaign: Campaign) -> bool | None:
+        """Attrs-compatible default factory for allow_* flags."""
+        if campaign.searchspace.type is SearchSpaceType.DISCRETE:
+            return default
+        return None
+
+    return default_allow_flag
+
+
+def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -> None:
+    """Attrs-compatible validator for context-aware validation of allow_* flags."""
+    match campaign.searchspace.type:
+        case SearchSpaceType.DISCRETE:
+            if not isinstance(value, bool):
+                raise ValueError(
+                    f"For search spaces of '{SearchSpaceType.DISCRETE}', "
+                    f"'{attribute.name}' must be a Boolean."
+                )
+        case _:
+            if value is not None:
+                raise ValueError(
+                    f"For search spaces of type other than "
+                    f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' must be 'None' "
+                    f"since the flag is meaningless in such contexts.",
+                )
+
+
 @define
 class Campaign(SerialMixin):
     """Main class for interaction with BayBE.
@@ -88,17 +120,35 @@ class Campaign(SerialMixin):
     )
     """The employed recommender"""
 
-    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
+    allow_recommending_already_measured: bool = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=True), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
     """Allow to recommend experiments that were already measured earlier.
-    This only has an influence in discrete search spaces."""
+    Can only be set for discrete search spaces."""
 
-    allow_recommending_already_recommended: bool = field(default=False, kw_only=True)
+    allow_recommending_already_recommended: bool = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=False), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
     """Allow to recommend experiments that were already recommended earlier.
-    This only has an influence in discrete search spaces."""
+    Can only be set for discrete search spaces."""
 
-    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
+    allow_recommending_pending_experiments: bool = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=False), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
     """Allow pending experiments to be part of the recommendations.
-    This only has an influence in discrete search spaces."""
+    Can only be set for discrete search spaces."""
 
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
