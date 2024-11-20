@@ -39,6 +39,7 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
+from baybe.utils.basic import is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
@@ -324,7 +325,9 @@ class Campaign(SerialMixin):
             # Determine the candidate subset to be toggled
             points = filter_df(df, constraints, complement)
 
-        elif isinstance(constraints, Collection):
+        elif isinstance(constraints, Collection) and is_all_instance(
+            constraints, DiscreteConstraint
+        ):
             # Filter the search space dataframe according to the given constraint
             idx = reduce(
                 lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
