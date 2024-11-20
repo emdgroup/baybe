@@ -459,9 +459,7 @@ class SubspaceContinuous(SerialMixin):
         # We start with the general constraints before going to interpoint constraints
         for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
             if not c.is_interpoint:
-                param_indices, coefficients, rhs = c.to_botorch(
-                    self.parameters, batch_size=batch_size
-                )
+                param_indices, coefficients, rhs = c.to_botorch(self.parameters)
                 for b in range(batch_size):
                     botorch_tuple = (
                         param_indices + b * num_of_params,

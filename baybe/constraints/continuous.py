@@ -113,7 +113,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         self,
         parameters: Sequence[NumericalContinuousParameter],
         idx_offset: int = 0,
-        batch_size: int = 1,
+        batch_size: int | None = None,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
