@@ -18,9 +18,7 @@ import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.constraints import (
-    ContinuousLinearConstraint,
-)
+from baybe.constraints import ContinuousLinearConstraint
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
