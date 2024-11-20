@@ -380,10 +380,7 @@ class SubspaceContinuous(SerialMixin):
         )
         return self.sample_uniform(n_points)
 
-    def sample_uniform(
-        self,
-        batch_size: int = 1,
-    ) -> pd.DataFrame:
+    def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
 
         Args:
