@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import json
 from collections.abc import Collection
-from functools import reduce, singledispatchmethod
+from functools import reduce
 from typing import TYPE_CHECKING
 
 import cattrs
@@ -289,7 +289,6 @@ class Campaign(SerialMixin):
         )
         self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
-    @singledispatchmethod
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
         constraints: Collection[DiscreteConstraint] | pd.DataFrame,
@@ -319,43 +318,26 @@ class Campaign(SerialMixin):
             A new dataframe containing the  discrete candidate set passing through the
             specified filter.
         """
-        raise NotImplementedError(
-            f"Candidate toggling is not implemented for constraint specifications of "
-            f"type {type(constraints)}."
-        )
-
-    @toggle_discrete_candidates.register(Collection)
-    def _(
-        self,
-        constraints: Collection[DiscreteConstraint],
-        exclude: bool,
-        complement: bool = False,
-        dry_run: bool = False,
-    ) -> pd.DataFrame:
-        # Filter search space dataframe according to the given constraint
         df = self.searchspace.discrete.exp_rep
-        idx = reduce(
-            lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
-        )
 
-        # Determine the candidate subset to be toggled
-        points = df.drop(index=idx) if complement else df.loc[idx].copy()
+        if isinstance(constraints, pd.DataFrame):
+            # Determine the candidate subset to be toggled
+            points = filter_df(df, constraints, complement)
 
-        if not dry_run:
-            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+        elif isinstance(constraints, Collection):
+            # Filter the search space dataframe according to the given constraint
+            idx = reduce(
+                lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
+            )
 
-        return points
+            # Determine the candidate subset to be toggled
+            points = df.drop(index=idx) if complement else df.loc[idx].copy()
 
-    @toggle_discrete_candidates.register
-    def _(
-        self,
-        constraints: pd.DataFrame,
-        exclude: bool,
-        complement: bool = False,
-        dry_run: bool = False,
-    ) -> pd.DataFrame:
-        # Determine the candidate subset to be toggled
-        points = filter_df(self.searchspace.discrete.exp_rep, constraints, complement)
+        else:
+            raise TypeError(
+                "Candidate toggling is not implemented for the given type of "
+                "constraint specifications."
+            )
 
         if not dry_run:
             self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
