@@ -414,11 +414,6 @@ class SubspaceContinuous(SerialMixin):
         if not self.is_constrained:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
-        if self.has_interpoint_constraints:
-            return self._sample_from_polytope_with_interpoint_constraints(
-                batch_size, self.comp_rep_bounds.values
-            )
-
         # If there are neither cardinality nor interpoint constraints, we sample
         # directly from the polytope
         if len(self.constraints_cardinality) == 0:
@@ -434,12 +429,12 @@ class SubspaceContinuous(SerialMixin):
 
         return pd.DataFrame(points, columns=self.parameter_names)
 
-    def _sample_from_polytope_with_interpoint_constraints(
+    def _sample_from_polytope(
         self,
         batch_size: int,
         bounds: np.ndarray,
     ) -> pd.DataFrame:
-        """Draw uniform random samples from a polytope with interpoint constraints."""
+        """Draw uniform random samples from a polytope."""
         # If the space has interpoint constraints, we need to sample from a larger
         # searchspace that models the batch size via additional dimension. This is
         # necessary since `get_polytope_samples` cannot handle interpoint constraints,
@@ -500,25 +495,6 @@ class SubspaceContinuous(SerialMixin):
             inequality_constraints=ineq_constraints,
         )
         points = points.reshape(batch_size, points.shape[-1] // batch_size)
-        return pd.DataFrame(points, columns=self.parameter_names)
-
-    def _sample_from_polytope(
-        self, batch_size: int, bounds: np.ndarray
-    ) -> pd.DataFrame:
-        """Draw uniform random samples from a polytope."""
-        import torch
-        from botorch.utils.sampling import get_polytope_samples
-
-        points = get_polytope_samples(
-            n=batch_size,
-            bounds=torch.from_numpy(bounds),
-            equality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_eq
-            ],
-            inequality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
-            ],
-        )
         return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope_with_cardinality_constraints(
