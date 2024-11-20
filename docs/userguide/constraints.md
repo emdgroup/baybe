@@ -79,6 +79,28 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
+#### Interpoint constraints
+
+The constraints discussed so far all belong to the class of so called "intrapoint constraints".
+That is, they impose conditions on each individual point of a batch.
+In contrast to this, interpoint constraints do so **across** the points of the batch.
+That is, an interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
+``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
+
+They can be defined by using the `interpoint` keyword of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+class as follows:
+```python
+from baybe.constraints import ContinuousLinearConstraint
+
+ContinuousLinearConstraint(
+    parameters=["x_1", "x_2"],
+    operator="<=",
+    coefficients=[1.0, 1.0],
+    rhs=1,
+    interpoint=True,
+)
+```
+
 ## Conditions
 Conditions are elements used within discrete constraints.
 While discrete constraints can operate on one or multiple parameters, a condition
