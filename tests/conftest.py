@@ -580,14 +580,7 @@ def fixture_default_constraint_selection():
 
 
 @pytest.fixture(name="campaign")
-def fixture_campaign(
-    parameters,
-    constraints,
-    recommender,
-    objective,
-    allow_recommending_already_recommended,
-    allow_recommending_already_measured,
-):
+def fixture_campaign(parameters, constraints, recommender, objective):
     """Returns a campaign."""
     return Campaign(
         searchspace=SearchSpace.from_product(
@@ -595,8 +588,6 @@ def fixture_campaign(
         ),
         recommender=recommender,
         objective=objective,
-        allow_recommending_already_recommended=allow_recommending_already_recommended,
-        allow_recommending_already_measured=allow_recommending_already_measured,
     )
 
 
@@ -662,16 +653,6 @@ def fixture_default_surrogate_model(request, kernel):
     if hasattr(request, "param") and request.param == "onnx":
         return request.getfixturevalue("onnx_surrogate")
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
-
-
-@pytest.fixture(name="allow_recommending_already_recommended")
-def fixture_allow_recommending_already_recommended():
-    return False
-
-
-@pytest.fixture(name="allow_recommending_already_measured")
-def allow_recommending_already_measured():
-    return True
 
 
 @pytest.fixture(name="initial_recommender")
