@@ -11,6 +11,22 @@ from baybe._optional.diagnostics import shap
 from baybe.utils.dataframe import to_tensor
 
 
+def _get_explainer_feature_len(explainer: shap.Explainer) -> int:
+    """Get dimensionality of explainer background data.
+
+    Args:
+        explainer: The explainer object as implemented in the SHAP package.
+
+    Returns:
+        The dimensionality of the background data.
+    """
+    bg_data = getattr(explainer, "data", getattr(explainer, "masker", None))
+    if not isinstance(bg_data, pd.DataFrame):
+        bg_data = getattr(bg_data, "data")
+
+    return bg_data.shape[1]
+
+
 def explainer(
     campaign: Campaign,
     explainer_class: shap.Explainer = shap.KernelExplainer,
@@ -148,31 +164,22 @@ def explanation(
     if computational_representation:
         data = campaign.searchspace.transform(pd.DataFrame(data))
 
-    """Get background data regardless of the explainer."""
-    bg_data = getattr(explainer_obj, "data", getattr(explainer_obj, "masker", None))
-    if not isinstance(bg_data, (np.ndarray, pd.DataFrame)):
-        bg_data = getattr(bg_data, "data")
-
     # Type checking for mypy
-    bg_data = bg_data if isinstance(bg_data, pd.DataFrame) else pd.DataFrame(bg_data)
     assert isinstance(data, pd.DataFrame)
 
-    if not bg_data.shape[1] == data.shape[1]:
+    if not _get_explainer_feature_len(explainer_obj) == data.shape[1]:
         raise ValueError(
             "The provided data does not have the same amount of "
             "parameters as the shap explainer background."
         )
 
-    data_array = np.array(data)
     if not is_shap_explainer:
         """Return attributions for non-SHAP explainers."""
         if explainer_class.__module__.endswith("maple"):
             """Additional argument for maple to increase comparability to SHAP."""
-            attributions = explainer_obj.attributions(
-                np.array(data), multiply_by_input=True
-            )[0]
+            attributions = explainer_obj.attributions(data, multiply_by_input=True)[0]
         else:
-            attributions = explainer_obj.attributions(np.array(data))[0]
+            attributions = explainer_obj.attributions(data)[0]
         feature_names = (
             campaign.searchspace.comp_rep_columns
             if computational_representation
@@ -180,13 +187,13 @@ def explanation(
         )
         explanations = shap.Explanation(
             values=attributions,
-            base_values=data_array,
-            data=data_array,
+            base_values=data,
+            data=data,
         )
         explanations.feature_names = list(feature_names)
         return explanations
     else:
-        explanations = explainer_obj(data_array)
+        explanations = explainer_obj(data)
 
     if len(explanations.shape) == 2:
         return explanations

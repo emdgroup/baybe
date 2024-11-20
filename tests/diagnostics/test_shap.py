@@ -16,21 +16,25 @@ from tests.conftest import run_iterations
 pytestmark = pytest.mark.skipif(
     not DIAGNOSTICS_INSTALLED, reason="Optional diagnostics dependency not installed."
 )
+
 if DIAGNOSTICS_INSTALLED:
     import shap
 
     from baybe import diagnostics as diag
 
-    EXCLUDED_EXPLAINER_KEYWORDS = ["Tree", "GPU", "Gradient", "Sampling", "Deep"]
+EXCLUDED_EXPLAINER_KEYWORDS = ["Tree", "GPU", "Gradient", "Sampling", "Deep"]
 
-    def _has_required_init_parameters(cls):
-        """Helper function checks if initializer has required standard parameters."""
-        required_parameters = ["self", "model", "data"]
-        init_signature = inspect.signature(cls.__init__)
-        parameters = list(init_signature.parameters.keys())
-        return parameters[:3] == required_parameters
 
-    non_shap_explainers = [
+def _has_required_init_parameters(cls):
+    """Helper function checks if initializer has required standard parameters."""
+    REQUIRED_PARAMETERS = ["self", "model", "data"]
+    init_signature = inspect.signature(cls.__init__)
+    parameters = list(init_signature.parameters.keys())
+    return parameters[:3] == REQUIRED_PARAMETERS
+
+
+non_shap_explainers = (
+    [
         param(explainer, id=f"{cls_name}")
         for cls_name in shap.explainers.other.__all__
         if _has_required_init_parameters(
@@ -38,12 +42,19 @@ if DIAGNOSTICS_INSTALLED:
         )
         and all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
     ]
+    if DIAGNOSTICS_INSTALLED
+    else []
+)
 
-    shap_explainers = [
+shap_explainers = (
+    [
         param(getattr(shap.explainers, cls_name), id=f"{cls_name}")
         for cls_name in shap.explainers.__all__
         if all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
     ]
+    if DIAGNOSTICS_INSTALLED
+    else []
+)
 
 valid_hybrid_bayesian_recommenders = [
     param(TwoPhaseMetaRecommender(recommender=cls()), id=f"{cls.__name__}")
@@ -125,8 +136,8 @@ def test_shapley_with_measurements(campaign, explainer_cls, use_comp_rep):
 )
 def test_non_shapley_explainers(campaign, explainer_cls):
     """Test the explain functionalities with the non-SHAP explainer MAPLE."""
-    run_iterations(campaign, n_iterations=2, batch_size=1)
-
+    """Test the non-SHAP explainer in computational representation."""
+    _test_explainer(campaign, explainer_cls, use_comp_rep=True)
     """Ensure that an error is raised if non-computational representation
         is used with a non-Kernel SHAP explainer."""
     with pytest.raises(
@@ -141,6 +152,3 @@ def test_non_shapley_explainers(campaign, explainer_cls):
             computational_representation=False,
             explainer_class=explainer_cls,
         )
-
-    """Test the non-SHAP explainer in computational representation."""
-    _test_explainer(campaign, explainer_cls, use_comp_rep=True)
