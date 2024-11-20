@@ -51,10 +51,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     )
     """Flag for defining an interpoint constraint.
 
-    An interpoint constraint is a constraint that is defined over full batches. That
-    is, and interpoint constraint of the form ``param_1 + 2*param_2 <=2`` means that
-    the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
-    must not exceed 2.
+    While intra-point constraints impose conditions on each individual point of a batch,
+    interpoint constraints do so **across** the points of the batch. That is, an
+    interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
+    ``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
     """
 
     @coefficients.validator
