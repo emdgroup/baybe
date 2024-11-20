@@ -1,8 +1,8 @@
 """Module for persisting benchmarking results."""
 
 from benchmarks.persistence.persistence import (
-    create_persistence_object,
+    persistence_object_factory,
     persister_factory,
 )
 
-__all__ = ["persister_factory", "create_persistence_object"]
+__all__ = ["persister_factory", "persistence_object_factory"]

@@ -12,31 +12,25 @@ from baybe.serialization.core import (
     _unstructure_dataframe_hook,
 )
 
-benchmarking_converter = cattrs.GenConverter(unstruct_collection_overrides={set: list})
+converter = cattrs.GenConverter(unstruct_collection_overrides={set: list})
 """The converter for benchmarking objects."""
 
-benchmarking_converter.register_unstructure_hook(
-    pd.DataFrame, _unstructure_dataframe_hook
-)
-benchmarking_converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
-benchmarking_converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
-benchmarking_converter.register_structure_hook(
-    datetime, lambda x, _: datetime.fromisoformat(x)
-)
-benchmarking_converter.register_unstructure_hook(
-    timedelta, lambda x: f"{x.total_seconds()}s"
-)
-benchmarking_converter.register_structure_hook(
+converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
+converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
+converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
+converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
+converter.register_structure_hook(
     timedelta, lambda x, _: timedelta(seconds=float(x.removesuffix("s")))
 )
 
 
 class Serializable:
-    """Decorator to add serialization methods to a class."""
+    """Mixin class providing serialization methods."""
 
     def to_dict(self) -> dict[str, Any]:
         """Create an object's dictionary representation."""
-        return benchmarking_converter.unstructure(self)
+        return converter.unstructure(self)
 
     def to_json(self) -> str:
         """Create an object's JSON representation.

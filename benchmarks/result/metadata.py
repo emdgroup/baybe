@@ -7,12 +7,11 @@ from attrs import define, field
 from attrs.validators import instance_of
 from cattrs.gen import make_dict_unstructure_fn
 
-from baybe.serialization.core import converter
-from baybe.serialization.mixin import SerialMixin
+from benchmarks.serialization import Serializable, converter
 
 
 @define(frozen=True)
-class ResultMetadata(SerialMixin):
+class ResultMetadata(Serializable):
     """The metadata of a benchmark result."""
 
     start_datetime: datetime = field(validator=instance_of(datetime))

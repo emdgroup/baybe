@@ -1,7 +1,8 @@
-"""Classes for persisting results to a S3-Bucket."""
+"""Classes for persisting benchmark results."""
 
 import json
 import os
+from pathlib import Path
 from typing import Protocol
 
 import boto3
@@ -11,6 +12,8 @@ from attrs.validators import instance_of
 from git import Repo
 
 from benchmarks import Benchmark, Result
+
+MODULE_IS_RUNNING_IN_THE_PIPELINE = "GITHUB_RUN_ID" in os.environ
 
 
 class PersistenceObjectInterface(Protocol):
@@ -23,21 +26,15 @@ class PersistenceObjectInterface(Protocol):
             The path of the result object.
         """
 
-    def get_object(self) -> dict:
-        """Construct the object to be persisted.
-
-        Returns:
-            The object to be persisted.
-        """
-
 
 class PersistenceHandlingInterface(Protocol):
     """Interface for persisting experiment results."""
 
-    def write_object(self, object: PersistenceObjectInterface) -> None:
-        """Store the result of a benchmark.
+    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
+        """Store a JSON serializable dict according to the path.
 
         Args:
+            path: The path of the object to be persisted
             object: The object to be persisted.
         """
 
@@ -70,9 +67,10 @@ class S3PersistenceObjectCreator:
 
     @_workflow_run_identifier.default
     def _default_workflow_id(self) -> str:
-        if "GITHUB_RUN_ID" not in os.environ:
-            raise ValueError("The environment variable GITHUB_RUN_ID is not set.")
-        return os.environ["GITHUB_RUN_ID"]
+        """Get the workflow run identifier."""
+        if MODULE_IS_RUNNING_IN_THE_PIPELINE:
+            return os.environ["GITHUB_RUN_ID"]
+        raise ValueError("The environment variable GITHUB_RUN_ID is not set.")
 
     def get_full_file_path(self) -> str:
         """Construct the path of a result object.
@@ -91,14 +89,6 @@ class S3PersistenceObjectCreator:
         )
         return bucket_path_key
 
-    def get_object(self) -> dict:
-        """Construct the object to be persisted.
-
-        Returns:
-            The object to be persisted.
-        """
-        return self._result.to_dict() | self._benchmark.to_dict()
-
 
 @define
 class S3PersistenceHandler:
@@ -111,23 +101,24 @@ class S3PersistenceHandler:
     """The boto3 session object. This will load the respective credentials
     from the environment variables within the container."""
 
-    def write_object(self, object: PersistenceObjectInterface) -> None:
-        """Store the result of a benchmark.
+    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
+        """Store a JSON serializable dict according to the path.
 
-        This method will store the result of a benchmark in an S3 bucket.
+        This method will store an JSON serializable dict in an S3 bucket.
         The S3-key of the Java Script Notation Object will be the experiment identifier,
         the branch, the BayBE-version, the start datetime, the commit hash and the
         workflow run identifier.
 
         Args:
+            path: The path of the object to be persisted
             object: The object to be persisted.
         """
         client = self._object_session.client("s3")
 
         client.put_object(
             Bucket=self._bucket_name,
-            Key=object.get_full_file_path(),
-            Body=json.dumps(object.get_object()),
+            Key=path.get_full_file_path(),
+            Body=json.dumps(object),
             ContentType="application/json",
         )
 
@@ -171,34 +162,24 @@ class LocalFileSystemObjectCreator:
         Returns:
             The path of the result object.
         """
-        return f"{self._path}/{self._filename}"
-
-    def get_object(self) -> dict:
-        """Construct the object to be persisted.
-
-        Returns:
-            The object to be persisted.
-        """
-        return self._result.to_dict() | self._benchmark.to_dict()
+        return Path(f"{self._path}/{self._filename}").resolve().as_posix()
 
 
 @define
 class LocalFileSystemPersistenceHandler:
     """Class for persisting experiment results in an S3 bucket."""
 
-    def write_object(self, object: PersistenceObjectInterface) -> None:
-        """Store the result of a benchmark.
+    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
+        """Store a JSON serializable dict according to the path.
 
-        This method will store the result of a benchmark in an S3 bucket.
-        The key of the object will be the experiment identifier, the branch, the
-        BayBE-version, the start datetime, the commit hash and the workflow
-        run identifier.
+        This method will store an JSON serializable dict in a local file system.
 
         Args:
+            path: The path of the object to be persisted
             object: The object to be persisted.
         """
-        with open(object.get_full_file_path(), "w") as file:
-            json.dump(object.get_object(), file)
+        with open(path.get_full_file_path(), "w") as file:
+            json.dump(object, file)
 
 
 def persister_factory() -> PersistenceHandlingInterface:
@@ -207,12 +188,12 @@ def persister_factory() -> PersistenceHandlingInterface:
     Returns:
         The persistence handler.
     """
-    if "GITHUB_RUN_ID" in os.environ:
+    if MODULE_IS_RUNNING_IN_THE_PIPELINE:
         return S3PersistenceHandler()
     return LocalFileSystemPersistenceHandler()
 
 
-def create_persistence_object(
+def persistence_object_factory(
     benchmark: Benchmark, result: Result
 ) -> PersistenceObjectInterface:
     """Create a persistence object.
@@ -224,6 +205,6 @@ def create_persistence_object(
     Returns:
         The persistence object.
     """
-    if "GITHUB_RUN_ID" in os.environ:
+    if MODULE_IS_RUNNING_IN_THE_PIPELINE:
         return S3PersistenceObjectCreator(benchmark, result)
     return LocalFileSystemObjectCreator(benchmark, result)
