@@ -234,7 +234,10 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        # TODO Interpoint constraints are not yet enabled in hybrid search spaces
+        if searchspace.continuous.has_interpoint_constraints:
+            raise NotImplementedError(
+                "Interpoint constraints are not available in hybrid spaces."
+            )
 
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
