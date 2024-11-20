@@ -83,9 +83,6 @@ class SubspaceContinuous(SerialMixin):
         nonlin_constraints_list = [
             constr.summary() for constr in self.constraints_nonlin
         ]
-        nonlin_constraints_list = [
-            constr.summary() for constr in self.constraints_nonlin
-        ]
 
         param_df = pd.DataFrame(param_list)
         lin_eq_df = pd.DataFrame(eq_constraints_list)
