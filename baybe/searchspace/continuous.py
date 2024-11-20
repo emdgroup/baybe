@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Collection, Sequence
-from itertools import chain, repeat
+from itertools import chain
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
@@ -448,9 +448,6 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
-        from baybe.utils.numerical import DTypeFloatNumpy
-        from baybe.utils.torch import DTypeFloatTorch
-
         # The number of parameters is needed at some places for adjusting indices
         num_of_params = len(self.parameters)
 
@@ -480,13 +477,13 @@ class SubspaceContinuous(SerialMixin):
                     for param in c.parameters
                     for batch in range(batch_size)
                 ]
-                coefficients_list = list(
-                    chain(*zip(*repeat(c.coefficients, batch_size)))
+                _, coefficients, rhs = c.to_botorch(
+                    parameters=self.parameters, batch_size=batch_size
                 )
                 botorch_tuple = (
                     torch.tensor(param_indices_list),
-                    torch.tensor(coefficients_list, dtype=DTypeFloatTorch),
-                    np.asarray(c.rhs, dtype=DTypeFloatNumpy).item(),
+                    coefficients,
+                    rhs,
                 )
                 if c.is_eq:
                     eq_constraints.append(botorch_tuple)
