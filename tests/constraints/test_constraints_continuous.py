@@ -70,7 +70,6 @@ def test_inequality3(campaign, n_iterations, batch_size):
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size):
     """Test single parameter interpoint equality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -84,7 +83,6 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_size):
     """Test single parameter interpoint inequality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -98,7 +96,6 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_size):
     """Test interpoint equality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -114,7 +111,6 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_inequality_multiple_parameters(campaign, n_iterations, batch_size):
     """Test interpoint inequality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -132,7 +128,6 @@ def test_interpoint_inequality_multiple_parameters(campaign, n_iterations, batch
 @pytest.mark.parametrize(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
     """Test mixing interpoint and normal inequality constraints."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
