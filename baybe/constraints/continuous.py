@@ -9,7 +9,7 @@ from itertools import chain, repeat
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import in_
+from attr.validators import in_, instance_of
 from attrs import define, field
 
 from baybe.constraints.base import (
@@ -46,7 +46,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
 
-    is_interpoint: bool = field(default=False)
+    is_interpoint: bool = field(default=False, validator=instance_of(bool))
     """Flag for defining an interpoint constraint.
 
     An interpoint constraint is a constraint that is defined over full batches. That
