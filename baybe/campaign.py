@@ -302,7 +302,7 @@ class Campaign(SerialMixin):
         Args:
             constraints: A filtering mechanism determining the candidates subset to be
                 in-/excluded. Can be either a collection of
-                :class:`~baybe.constraints.base.DiscreteConstraint`s or a dataframe.
+                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.
                 For the latter, see :func:`~baybe.utils.dataframe.filter_df`
                 for details.
             exclude: If ``True``, the specified candidates are excluded.
