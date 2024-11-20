@@ -1097,8 +1097,8 @@ the disk cache, change:</p>
 </div>
 <p>you can turn off disk caching entirely.</p>
 </section>
-<section id="floating-point-precision">
-<h2>Floating Point Precision<a class="headerlink" href="#floating-point-precision" title="Link to this heading">¶</a></h2>
+<section id="experimental-floating-point-precision">
+<h2>EXPERIMENTAL: Floating Point Precision<a class="headerlink" href="#experimental-floating-point-precision" title="Link to this heading">¶</a></h2>
 <p>In general, double precision is recommended because numerical stability during optimization
 can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.</p>
@@ -1108,11 +1108,12 @@ i.e. search spaces with continuous parameters, more than optimization without gr
 <li><p><code class="docutils literal notranslate"><span class="pre">BAYBE_TORCH_USE_SINGLE_PRECISION</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
 </ul>
 <div class="warning admonition">
-<p class="admonition-title">Continuous Constraints in Single Precision</p>
-<p>Currently, due to explicit casting in BoTorch,
-<a class="reference internal" href="../_autosummary/baybe.constraints.base.ContinuousConstraint.html#baybe.constraints.base.ContinuousConstraint" title="baybe.constraints.base.ContinuousConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">ContinuousConstraint</span></code></span></a>s do not support
-single precision and cannot be used if the corresponding environment variables are
-activated.</p>
+<p class="admonition-title">Experimental feature only!</p>
+<p>Currently, it cannot be guaranteed that all calculations will be performed in single precision,
+even when setting the aforementioned variables. The reason is that there are several code snippets
+within <code class="docutils literal notranslate"><span class="pre">BoTorch</span></code> that transform single precision variables to double precision variables.
+Consequently, this feature is currently only available as an <em>experimental</em> feature.
+We are however actively working on fully enabling single precision.</p>
 </div>
 </section>
 </section>
@@ -1177,7 +1178,7 @@ activated.</p>
 <li><a class="reference internal" href="#telemetry">Telemetry</a></li>
 <li><a class="reference internal" href="#polars">Polars</a></li>
 <li><a class="reference internal" href="#disk-caching">Disk Caching</a></li>
-<li><a class="reference internal" href="#floating-point-precision">Floating Point Precision</a></li>
+<li><a class="reference internal" href="#experimental-floating-point-precision">EXPERIMENTAL: Floating Point Precision</a></li>
 </ul>
 </li>
 </ul>
