@@ -445,7 +445,7 @@ class SubspaceContinuous(SerialMixin):
         """Draw uniform random samples from a polytope with interpoint constraints."""
         # If the space has interpoint constraints, we need to sample from a larger
         # searchspace that models the batch size via additional dimension. This is
-        # necessary since `get_polytope_samples` cannot handle inter-point constraints,
+        # necessary since `get_polytope_samples` cannot handle interpoint constraints,
         # see https://github.com/pytorch/botorch/issues/2468
 
         import torch
