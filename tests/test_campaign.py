@@ -15,6 +15,7 @@ from baybe.parameters.numerical import (
 )
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.utils.basic import UNSPECIFIED
 
 from .conftest import run_iterations
 
@@ -95,11 +96,13 @@ def test_candidate_toggling(constraints, exclude, complement):
     [SearchSpaceType.DISCRETE, SearchSpaceType.CONTINUOUS],
     ids=lambda x: x.name,
 )
-@pytest.mark.parametrize("value", [True, None])
+@pytest.mark.parametrize("value", [True, param(UNSPECIFIED, id=repr(UNSPECIFIED))])
 def test_setting_allow_flags(flag, space_type, value):
     """Passed allow_* flags are rejected if incompatible with the search space type."""
     kwargs = {flag: value}
-    expect_error = (space_type is SearchSpaceType.DISCRETE) != (value is not None)
+    expect_error = (space_type is SearchSpaceType.DISCRETE) != (
+        value is not UNSPECIFIED
+    )
 
     if space_type is SearchSpaceType.DISCRETE:
         parameter = NumericalDiscreteParameter("p", [0, 1])

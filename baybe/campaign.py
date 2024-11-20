@@ -39,7 +39,7 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils.basic import is_all_instance
+from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
@@ -56,14 +56,14 @@ _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 def _make_allow_flag_default_factory(
     default: bool,
-) -> Callable[[Campaign], bool | None]:
+) -> Callable[[Campaign], bool | UnspecifiedType]:
     """Make a default factory for allow_* flags."""
 
-    def default_allow_flag(campaign: Campaign) -> bool | None:
+    def default_allow_flag(campaign: Campaign) -> bool | UnspecifiedType:
         """Attrs-compatible default factory for allow_* flags."""
         if campaign.searchspace.type is SearchSpaceType.DISCRETE:
             return default
-        return None
+        return UNSPECIFIED
 
     return default_allow_flag
 
@@ -78,10 +78,10 @@ def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -
                     f"'{attribute.name}' must be a Boolean."
                 )
         case _:
-            if value is not None:
+            if value is not UNSPECIFIED:
                 raise ValueError(
                     f"For search spaces of type other than "
-                    f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' must be 'None' "
+                    f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' cannot be set "
                     f"since the flag is meaningless in such contexts.",
                 )
 
@@ -120,7 +120,7 @@ class Campaign(SerialMixin):
     )
     """The employed recommender"""
 
-    allow_recommending_already_measured: bool = field(
+    allow_recommending_already_measured: bool | UnspecifiedType = field(
         default=Factory(
             _make_allow_flag_default_factory(default=True), takes_self=True
         ),
@@ -130,7 +130,7 @@ class Campaign(SerialMixin):
     """Allow to recommend experiments that were already measured earlier.
     Can only be set for discrete search spaces."""
 
-    allow_recommending_already_recommended: bool = field(
+    allow_recommending_already_recommended: bool | UnspecifiedType = field(
         default=Factory(
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
@@ -140,7 +140,7 @@ class Campaign(SerialMixin):
     """Allow to recommend experiments that were already recommended earlier.
     Can only be set for discrete search spaces."""
 
-    allow_recommending_pending_experiments: bool = field(
+    allow_recommending_pending_experiments: bool | UnspecifiedType = field(
         default=Factory(
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
@@ -433,22 +433,25 @@ class Campaign(SerialMixin):
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
         # Prepare the search space according to the current campaign state
-        mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
-        if not self.allow_recommending_already_recommended:
-            mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
-        if not self.allow_recommending_already_measured:
-            mask_todrop |= self._searchspace_metadata[_MEASURED]
-        filtered_searchspace = evolve(
-            self.searchspace,
-            discrete=FilteredSubspaceDiscrete.from_subspace(
-                self.searchspace.discrete, ~mask_todrop.to_numpy()
-            ),
-        )
+        if self.searchspace.type is SearchSpaceType.DISCRETE:
+            mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
+            if not self.allow_recommending_already_recommended:
+                mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
+            if not self.allow_recommending_already_measured:
+                mask_todrop |= self._searchspace_metadata[_MEASURED]
+            searchspace = evolve(
+                self.searchspace,
+                discrete=FilteredSubspaceDiscrete.from_subspace(
+                    self.searchspace.discrete, ~mask_todrop.to_numpy()
+                ),
+            )
+        else:
+            searchspace = self.searchspace
 
         # Get the recommended search space entries
         rec = self.recommender.recommend(
             batch_size,
-            filtered_searchspace,
+            searchspace,
             self.objective,
             self._measurements_exp,
             pending_experiments,
