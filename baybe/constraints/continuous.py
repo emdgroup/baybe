@@ -143,6 +143,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             coefficients = self.coefficients
             torch_indices = torch.tensor(param_indices)
         else:
+            assert (
+                batch_size is not None
+            ), "No batch_size set but using interpoint constraints"
             param_index = {name: param_names.index(name) for name in self.parameters}
             param_indices_interpoint = [
                 (batch, param_index[name] + idx_offset)
