@@ -46,7 +46,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
 
-    is_interpoint: bool = field(default=False, validator=instance_of(bool))
+    is_interpoint: bool = field(
+        alias="interpoint", default=False, validator=instance_of(bool)
+    )
     """Flag for defining an interpoint constraint.
 
     An interpoint constraint is a constraint that is defined over full batches. That
