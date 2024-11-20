@@ -17,6 +17,7 @@ from baybe.recommenders import (
     PAMClusteringRecommender,
     TwoPhaseMetaRecommender,
 )
+from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
 from baybe.utils.random import temporary_seed
@@ -26,10 +27,6 @@ _continuous_params = ["Conti_finite1", "Conti_finite2", "Conti_finite3"]
 _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2"]
 
 
-# Repeated recommendations explicitly need to be allowed or the potential overlap will
-# be avoided trivially
-@pytest.mark.parametrize("allow_recommending_already_recommended", [True])
-@pytest.mark.parametrize("allow_recommending_already_measured", [True])
 @pytest.mark.parametrize(
     "parameter_names, recommender",
     [
@@ -99,6 +96,12 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
 def test_pending_points(campaign, batch_size):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
+
+    # Repeated recommendations explicitly need to be allowed or the potential overlap
+    # will be avoided trivially
+    if campaign.searchspace.type == SearchSpaceType.DISCRETE:
+        campaign.allow_recommending_already_recommended = True
+        campaign.allow_recommending_already_measured = True
 
     # Perform a fake first iteration
     rec = campaign.recommend(batch_size)
