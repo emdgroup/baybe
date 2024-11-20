@@ -307,10 +307,9 @@ class Campaign(SerialMixin):
                 for details.
             exclude: If ``True``, the specified candidates are excluded.
                 If ``False``, the candidates are considered for recommendation.
-            complement: If ``False``, the filtering mechanism is used as is.
-                If ``True``, the filtering mechanism is inverted so that
-                the complement of the subset specified by the filter is toggled.
-                For details, see :func:`~baybe.utils.dataframe.filter_df`.
+            complement: If ``True``, the filtering mechanism is inverted so that
+                the complement of the candidate subset specified by the filter is
+                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.
             dry_run: If ``True``, the target subset is only extracted but not
                 affected. If ``False``, the candidate set is updated correspondingly.
                 Useful for setting up the correct filtering mechanism.
