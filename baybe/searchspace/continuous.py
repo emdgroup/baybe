@@ -289,7 +289,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def is_constrained(self) -> bool:
-        """Return whether the subspace is constrained in any way."""
+        """Boolean flag indicating whether the subspace is constrained in any way."""
         return any(
             (
                 self.constraints_lin_eq,
@@ -300,7 +300,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def has_interpoint_constraints(self) -> bool:
-        """Return whether or not the space has any interpoint constraints."""
+        """Boolean flag indicating whether the space has any interpoint constraints."""
         return any(
             c.is_interpoint for c in self.constraints_lin_eq + self.constraints_lin_ineq
         )
