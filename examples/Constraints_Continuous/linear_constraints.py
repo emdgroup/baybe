@@ -156,17 +156,17 @@ print(
 
 inter_constraints = [
     ContinuousLinearConstraint(
-        parameters=["x_1"], operator=">=", coefficients=[1], rhs=2.5, is_interpoint=True
+        parameters=["x_1"], operator=">=", coefficients=[1], rhs=2.5, interpoint=True
     ),
     ContinuousLinearConstraint(
-        parameters=["x_2"], operator="=", coefficients=[1], rhs=5, is_interpoint=True
+        parameters=["x_2"], operator="=", coefficients=[1], rhs=5, interpoint=True
     ),
     ContinuousLinearConstraint(
         parameters=["x_3", "x_4"],
         operator=">=",
         coefficients=[2, -1],
         rhs=5,
-        is_interpoint=True,
+        interpoint=True,
     ),
 ]
 
