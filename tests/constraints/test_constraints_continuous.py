@@ -72,7 +72,7 @@ def test_inequality3(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size):
-    """Test single parameter inter-point equality constraint."""
+    """Test single parameter interpoint equality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
@@ -86,7 +86,7 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_size):
-    """Test single parameter inter-point inequality constraint."""
+    """Test single parameter interpoint inequality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
@@ -100,7 +100,7 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_size):
-    """Test inter-point equality constraint involving multiple parameters."""
+    """Test interpoint equality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
@@ -116,7 +116,7 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 def test_interpoint_inequality_multiple_parameters(campaign, n_iterations, batch_size):
-    """Test inter-point inequality constraint involving multiple parameters."""
+    """Test interpoint inequality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)

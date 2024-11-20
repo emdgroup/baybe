@@ -141,13 +141,13 @@ print(
 )
 
 
-### Using inter-point constraints
+### Using interpoint constraints
 
-# It is also possible to require inter-point constraints which constraint the value of
+# It is also possible to require interpoint constraints which constraint the value of
 # a single parameter across a full batch.
 # Since these constraints require information about the batch size, they are not used
 # during the creation of the search space but handed over to the `recommend` call.
-# This example models the following inter-point constraints and combines them also
+# This example models the following interpoint constraints and combines them also
 # with regular constraints.
 # 1. The sum of `x_1` across all batches needs to be >= 2.5.
 # 2. The sum of `x_2` across all batches needs to be exactly 5.
@@ -191,7 +191,7 @@ for k in range(N_ITERATIONS):
 
     rec["Target"] = target_values
     inter_campaign.add_measurements(rec)
-    # Check inter-point constraints
+    # Check interpoint constraints
     assert rec["x_1"].sum() >= 2.5 - TOLERANCE
     assert np.isclose(rec["x_2"].sum(), 5)
     assert 2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE

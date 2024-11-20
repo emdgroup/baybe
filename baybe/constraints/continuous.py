@@ -49,8 +49,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     is_interpoint: bool = field(default=False, validator=instance_of(bool))
     """Flag for defining an interpoint constraint.
 
-    An inter-point constraint is a constraint that is defined over full batches. That
-    is, and inter-point constraint of the form ``param_1 + 2*param_2 <=2`` means that
+    An interpoint constraint is a constraint that is defined over full batches. That
+    is, and interpoint constraint of the form ``param_1 + 2*param_2 <=2`` means that
     the sum of ``param2`` plus two times the sum of ``param_2`` across the full batch
     must not exceed 2.
     """
