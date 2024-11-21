@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
+- `allow_repeated_recommendations` has been renamed to 
+  `allow_recommending_already_recommended` (now available for `Campaign` instead of
+  recommenders)
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
@@ -30,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search spaces are now stateless, preventing unintended side effects that could lead to
   incorrect candidate sets when reused in different optimization contexts
 - `qNIPV` not working with single `MIN` targets
+- `allow_*` flags are now context-aware, i.e. setting them in a context where they are
+  irrelevant now raises an error instead of passing silently
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
@@ -44,6 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
 - The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
   exclusively handled by the `Campaign` class.
+- Passing `allow_*` flags to recommenders is no longer supported since the necessary
+  metadata required for the flags is no longer available at that level. The
+  functionality has been taken over by `Campaign`, which is now the only stateful class.
 
 ## [0.11.3] - 2024-11-06
 ### Fixed
