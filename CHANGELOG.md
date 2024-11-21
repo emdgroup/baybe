@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
   wrong number of recommendations being returned
 - `ContinuousConstraint`s can now be used in single point precision
+- Search spaces are now stateless, preventing unintended side effects that could lead to
+  incorrect candidate sets when reused in different optimization contexts 
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
