@@ -441,6 +441,16 @@ class Campaign(SerialMixin):
                 mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
             if not self.allow_recommending_already_measured:
                 mask_todrop |= self._searchspace_metadata[_MEASURED]
+            if (
+                not self.allow_recommending_pending_experiments
+                and pending_experiments is not None
+            ):
+                mask_todrop |= pd.merge(
+                    self.searchspace.discrete.exp_rep,
+                    pending_experiments,
+                    indicator=True,
+                    how="left",
+                )["_merge"].eq("both")
             searchspace = evolve(
                 self.searchspace,
                 discrete=FilteredSubspaceDiscrete.from_subspace(
