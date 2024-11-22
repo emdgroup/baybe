@@ -18,7 +18,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import OptionalImportError
+from baybe.exceptions import DeprecationError, OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
@@ -35,7 +35,6 @@ from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
 from baybe.utils.dataframe import (
     df_drop_single_value_columns,
-    fuzzy_row_match,
     get_transform_objects,
     pretty_print_df,
 )
@@ -47,8 +46,6 @@ if TYPE_CHECKING:
     import polars as pl
 
     from baybe.searchspace.core import SearchSpace
-
-_METADATA_COLUMNS = ["was_recommended", "was_measured", "dont_recommend"]
 
 
 @define(kw_only=True)
@@ -102,8 +99,9 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
-    metadata: pd.DataFrame = field(eq=eq_dataframe)
-    """The metadata."""
+    # TODO: remove when refactoring active values mechanism
+    _excluded: pd.Series = field(init=False, eq=eq_dataframe)
+    """Temporary workaround for handling inactive ``TaskParameter`` values."""
 
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
@@ -130,33 +128,12 @@ class SubspaceDiscrete(SerialMixin):
         param_df = pd.DataFrame(param_list)
         constraints_df = pd.DataFrame(constraints_list)
 
-        # Get summary information from metadata
-        was_recommended_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[0]]])
-        was_measured_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[1]]])
-        dont_recommend_count = len(self.metadata[self.metadata[_METADATA_COLUMNS[2]]])
-        metadata_count = len(self.metadata)
-
-        metadata_fields = [
-            to_string(
-                f"{_METADATA_COLUMNS[0]}",
-                f"{was_recommended_count}/{metadata_count}",
-                single_line=True,
-            ),
-            to_string(
-                f"{_METADATA_COLUMNS[1]}",
-                f"{was_measured_count}/{metadata_count}",
-                single_line=True,
-            ),
-            to_string(
-                f"{_METADATA_COLUMNS[2]}",
-                f"{dont_recommend_count}/{metadata_count}",
-                single_line=True,
-            ),
-        ]
         fields = [
-            to_string("Discrete Parameters", pretty_print_df(param_df)),
+            to_string(
+                "Discrete Parameters",
+                pretty_print_df(param_df, max_colwidth=None),
+            ),
             to_string("Experimental Representation", pretty_print_df(self.exp_rep)),
-            to_string("Meta Data", *metadata_fields),
             to_string("Constraints", pretty_print_df(constraints_df)),
             to_string("Computational Representation", pretty_print_df(self.comp_rep)),
         ]
@@ -177,45 +154,10 @@ class SubspaceDiscrete(SerialMixin):
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
 
-    @metadata.default
-    def _default_metadata(self) -> pd.DataFrame:
-        """Create the default metadata."""
-        # If the discrete search space is empty, explicitly return an empty dataframe
-        # instead of simply using a zero-length index. Otherwise, the Boolean dtype
-        # would be lost during a serialization roundtrip as there would be no
-        # data available that allows to determine the type, causing subsequent
-        # equality checks to fail.
-        # TODO: verify if this is still required
-        if self.is_empty:
-            return pd.DataFrame(columns=_METADATA_COLUMNS)
-
-        # TODO [16605]: Redesign metadata handling
-        # Exclude inactive tasks from search
-        df = pd.DataFrame(False, columns=_METADATA_COLUMNS, index=self.exp_rep.index)
-        off_task_idxs = ~self._on_task_configurations()
-        df.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
-        return df
-
-    @metadata.validator
-    def _validate_metadata(  # noqa: DOC101, DOC103
-        self, _: Any, metadata: pd.DataFrame
-    ) -> None:
-        """Validate the metadata.
-
-        Raises:
-            ValueError: If the provided metadata allows testing parameter configurations
-                for inactive tasks.
-        """
-        # We first check whether there are actually any parameters that need to be
-        # checked.
-        if self.is_empty:
-            return
-        off_task_idxs = ~self._on_task_configurations()
-        if not metadata.loc[off_task_idxs.values, "dont_recommend"].all():  # type: ignore
-            raise ValueError(
-                "Inconsistent instructions given: The provided metadata allows "
-                "testing parameter configurations for inactive tasks."
-            )
+    @_excluded.default
+    def _default_excluded(self) -> pd.Series:
+        """Exclude inactive tasks from search."""
+        return ~self._on_task_configurations()
 
     @comp_rep.default
     def _default_comp_rep(self) -> pd.DataFrame:
@@ -233,13 +175,6 @@ class SubspaceDiscrete(SerialMixin):
         )
 
         return comp_rep
-
-    def __attrs_post_init__(self) -> None:
-        # TODO [16605]: Redesign metadata handling
-        if self.is_empty:
-            return
-        off_task_idxs = ~self._on_task_configurations()
-        self.metadata.loc[off_task_idxs.values, "dont_recommend"] = True  # type: ignore
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -264,7 +199,6 @@ class SubspaceDiscrete(SerialMixin):
         return SubspaceDiscrete(
             parameters=[],
             exp_rep=pd.DataFrame(),
-            metadata=pd.DataFrame(columns=_METADATA_COLUMNS),
         )
 
     @classmethod
@@ -587,6 +521,18 @@ class SubspaceDiscrete(SerialMixin):
         )
 
     @property
+    def metadata(self) -> pd.DataFrame:
+        """Deprecated!"""
+        from baybe.campaign import Campaign
+
+        raise DeprecationError(
+            f"Search spaces no longer carry any metadata to avoid stateful behavior. "
+            f"Metadata is now exclusively tracked by the `{Campaign.__name__}` class. "
+            f"To dynamically exclude discrete candidates from the search space, "
+            f"use its `{Campaign.toggle_discrete_candidates.__name__}` method."
+        )
+
+    @property
     def is_empty(self) -> bool:
         """Return whether this subspace is empty."""
         return len(self.parameters) == 0
@@ -652,27 +598,6 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
-    def mark_as_measured(
-        self,
-        measurements: pd.DataFrame,
-        numerical_measurements_must_be_within_tolerance: bool,
-    ) -> None:
-        """Mark the given elements of the space as measured.
-
-        Args:
-            measurements: A dataframe containing parameter settings that should be
-                marked as measured.
-            numerical_measurements_must_be_within_tolerance: See
-                :func:`baybe.utils.dataframe.fuzzy_row_match`.
-        """
-        idxs_matched = fuzzy_row_match(
-            self.exp_rep,
-            measurements,
-            self.parameters,
-            numerical_measurements_must_be_within_tolerance,
-        )
-        self.metadata.loc[idxs_matched, "was_measured"] = True
-
     def get_candidates(
         self,
         allow_repeated_recommendations: bool = False,
@@ -698,11 +623,7 @@ class SubspaceDiscrete(SerialMixin):
             representation.
         """
         # Filter the search space down to the candidates
-        mask_todrop = self.metadata["dont_recommend"].copy()
-        if not allow_repeated_recommendations:
-            mask_todrop |= self.metadata["was_recommended"]
-        if not allow_recommending_already_measured:
-            mask_todrop |= self.metadata["was_measured"]
+        mask_todrop = self._excluded.copy()
 
         # Remove additional excludes
         if exclude is not None:

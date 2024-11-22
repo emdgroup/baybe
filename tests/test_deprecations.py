@@ -21,12 +21,16 @@ from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
 )
 from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
@@ -271,3 +275,12 @@ def test_deprecated_encodings(deprecated, replacement):
             patched.assert_called_once_with(**{"fp_size": 1024, "radius": 4})
         else:
             patched.assert_called_once()
+
+
+def test_migrated_metadata_attribute():
+    """Accessing the migrated metadata search space attribute raises an error."""
+    with pytest.raises(DeprecationError, match="no longer carry any metadata"):
+        subspace = SubspaceDiscrete.from_parameter(
+            NumericalDiscreteParameter("p", [0, 1])
+        )
+        subspace.metadata

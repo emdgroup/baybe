@@ -402,7 +402,7 @@ Find a detailed example [here](../../examples/Constraints_Discrete/custom_constr
 
 ```{warning}
 Due to the arbitrary nature of code and dependencies that can be used in the
-`DiscreteCustomConstraint`, de-/serializability cannot be guaranteed. As a consequence,
+`DiscreteCustomConstraint`, (de-)serializability cannot be guaranteed. As a consequence,
 using a `DiscreteCustomConstraint` results in an error if you attempt to serialize
 the corresponding object or higher-level objects containing it.
 ```

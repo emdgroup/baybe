@@ -76,11 +76,9 @@ def simulate_transfer_learning(
         # off-task configurations from the candidates list
         # TODO: Reconsider if deepcopies are required once [16605] is resolved
         campaign_task = deepcopy(campaign)
-        off_task_mask = campaign.searchspace.discrete.exp_rep[task_param.name] != task
-        # TODO [16605]: Avoid direct manipulation of metadata
-        campaign_task.searchspace.discrete.metadata.loc[
-            off_task_mask.values, "dont_recommend"
-        ] = True
+        campaign_task.toggle_discrete_candidates(
+            pd.DataFrame({task_param.name: [task]}), exclude=True, complement=True
+        )
 
         # Use all off-task data as training data
         df_train = lookup[lookup[task_param.name] != task]
