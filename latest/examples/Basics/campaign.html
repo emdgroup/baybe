@@ -1084,13 +1084,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent               Base                        Ligand  \
-271         DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-51   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+197  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
+1      Butyl Ester      Cesium acetate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration  
-271         90.0          0.100  
-51         120.0          0.057  
+     Concentration  
+197          0.153  
+1            0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1103,13 +1103,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent               Base                        Ligand  \
-271         DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-51   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+197  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
+1      Butyl Ester      Cesium acetate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration      yield  
-271         90.0          0.100  30.941290  
-51         120.0          0.057   9.622321  
+     Concentration      yield  
+197          0.153  31.156267  
+1            0.100   9.142467  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

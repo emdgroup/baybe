@@ -134,5 +134,5 @@ recommendation = recommender.recommend(batch_size=3, searchspace=searchspace)
 
     Recommender type: RandomRecommender
     Search space parameters: ['Concentration', 'Temperature']
-    Consumed time of RandomRecommender: 0.002137825000090743
+    Consumed time of RandomRecommender: 0.0015591979999953764
 
