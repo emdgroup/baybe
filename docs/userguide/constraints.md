@@ -79,13 +79,16 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
-#### Interpoint constraints
+### Interpoint constraints
 
 The constraints discussed so far all belong to the class of so called "intrapoint constraints".
 That is, they impose conditions on each individual point of a batch.
 In contrast to this, interpoint constraints do so **across** the points of the batch.
 That is, an interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
 ``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
+A possible relevant constraint might be that only 100ml of a given solvent are available for 
+a full batch, but there is no limit for the amount of solvent to use for a single experiment
+within that batch.
 
 They can be defined by using the `interpoint` keyword of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 class as follows:
