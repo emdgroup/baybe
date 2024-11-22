@@ -3,7 +3,7 @@
 For more details, see https://emdgroup.github.io/baybe/stable/userguide/envvars.html#telemetry
 """
 
-from baybe.telemetry.telemetry import (
+from baybe.telemetry.api import (
     TELEM_LABELS,
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_HOSTNAME,
