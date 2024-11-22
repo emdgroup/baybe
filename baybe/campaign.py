@@ -310,6 +310,9 @@ class Campaign(SerialMixin):
         elif isinstance(constraints, Collection) and is_all_instance(
             constraints, DiscreteConstraint
         ):
+            # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
+            #   automatically choosing the appropriate backend (polars/pandas/...)
+
             # Filter the search space dataframe according to the given constraint
             idx = reduce(
                 lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
