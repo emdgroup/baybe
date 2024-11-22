@@ -106,14 +106,14 @@ for k in range(N_ITERATIONS):
     # Check interpoint constraints
 
     print(
-        "Is the sum of `x_1` across all batches needs at least >= 2.5?",
+        "The sum of `x_1` across all batches is at least >= 2.5",
         rec["x_1"].sum() >= 2.5 - TOLERANCE,
     )
     print(
-        "Is the sum of `x_2` across all batches exactly 5?",
+        "The sum of `x_2` across all batches is exactly 5",
         np.isclose(rec["x_2"].sum(), 5),
     )
     print(
-        "Is the sum of `2*x_3` minus the sum of `x_4` across all batches at least >= 5?",
+        "The sum of `2*x_3` minus the sum of `x_4` across all batches is at least >= 5",
         2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE,
     )
