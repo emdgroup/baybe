@@ -6,7 +6,6 @@ import os
 import socket
 import warnings
 from collections.abc import Sequence
-from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -98,26 +97,6 @@ if is_enabled():
 
     # Test endpoint URL
     try:
-        # Parse endpoint URL
-        _endpoint_url_parsed = urlparse(_endpoint_url)
-        _endpoint_hostname = _endpoint_url_parsed.hostname
-        _endpoint_port = _endpoint_url_parsed.port if _endpoint_url_parsed.port else 80
-        try:
-            _TIMEOUT_S = float(
-                os.environ.get(
-                    VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT,
-                    DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT,
-                )
-            )
-        except (ValueError, TypeError):
-            warnings.warn(
-                f"WARNING: Value passed for environment variable "
-                f"{VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT} is not a valid floating point "
-                f"number. Using default of {DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT}.",
-                UserWarning,
-            )
-            _TIMEOUT_S = float(DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT)
-
         # Send a test request. If there is no internet connection or a firewall is
         # present this will throw an error and telemetry will be deactivated.
         if strtobool(
