@@ -89,7 +89,7 @@ campaign = Campaign(
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
-BATCH_SIZE = 4 if SMOKE_TEST else 5
+BATCH_SIZE = 2 if SMOKE_TEST else 3
 N_ITERATIONS = 2 if SMOKE_TEST else 3
 
 for k in range(N_ITERATIONS):
