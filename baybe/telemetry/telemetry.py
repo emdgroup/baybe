@@ -43,6 +43,17 @@ TELEM_LABELS = {
     "NAKED_INITIAL_MEASUREMENTS": "count_naked-initial-measurements-added",
 }
 
+
+def is_enabled() -> bool:
+    """Tell whether telemetry currently is enabled.
+
+    Telemetry can be disabled by setting the respective environment variable.
+    """
+    return strtobool(
+        os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)
+    )
+
+
 # Attempt telemetry import
 try:
     from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
@@ -55,23 +66,13 @@ try:
 except ImportError:
     # Failed telemetry install/import should not fail baybe, so telemetry is being
     # disabled in that case
-    if strtobool(os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)):
+    if is_enabled():
         warnings.warn(
             "Opentelemetry could not be imported, potentially it is not installed. "
             "Disabling baybe telemetry.",
             UserWarning,
         )
     os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
-
-
-def is_enabled() -> bool:
-    """Tell whether telemetry currently is enabled.
-
-    Telemetry can be disabled by setting the respective environment variable.
-    """
-    return strtobool(
-        os.environ.get(VARNAME_TELEMETRY_ENABLED, DEFAULT_TELEMETRY_ENABLED)
-    )
 
 
 # Attempt telemetry initialization
