@@ -66,7 +66,7 @@ def test_candidate_toggling(constraints, exclude, complement):
 
     # Extract row indices of candidates whose metadata should have been toggled
     matches = campaign.searchspace.discrete.exp_rep["a"] == 0
-    idx = matches.index[~matches] if complement else matches.index[matches]
+    idx = matches.index[~matches if complement else matches]
 
     # Assert that metadata is set correctly
     target = campaign._searchspace_metadata.loc[idx, _EXCLUDED]
