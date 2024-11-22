@@ -185,12 +185,12 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_eq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
@@ -234,6 +234,11 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
+        if searchspace.continuous.has_interpoint_constraints:
+            raise NotImplementedError(
+                "Interpoint constraints are not available in hybrid spaces."
+            )
+
         # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.is_mc:
             raise IncompatibleAcquisitionFunctionError(

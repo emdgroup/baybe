@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example for a traditional mixture
 - `add_noise_to_perturb_degenerate_rows` utility
 - `benchmarks` subpackage for defining and running performance tests
+- Continuous interpoint constraints via new `is_interpoint` attribute
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
