@@ -256,9 +256,13 @@ class Campaign(SerialMixin):
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self._mark_as_measured(
-                data, numerical_measurements_must_be_within_tolerance
+            idxs_matched = fuzzy_row_match(
+                self.searchspace.discrete.exp_rep,
+                data,
+                self.parameters,
+                numerical_measurements_must_be_within_tolerance,
             )
+            self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
@@ -268,27 +272,6 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
-
-    def _mark_as_measured(
-        self,
-        measurements: pd.DataFrame,
-        numerical_measurements_must_be_within_tolerance: bool,
-    ) -> None:
-        """Mark the given elements of the discrete subspace as measured.
-
-        Args:
-            measurements: A dataframe containing parameter configurations to be
-                marked as measured.
-            numerical_measurements_must_be_within_tolerance: See
-                :func:`baybe.utils.dataframe.fuzzy_row_match`.
-        """
-        idxs_matched = fuzzy_row_match(
-            self.searchspace.discrete.exp_rep,
-            measurements,
-            self.parameters,
-            numerical_measurements_must_be_within_tolerance,
-        )
-        self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
