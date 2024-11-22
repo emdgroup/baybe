@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1083,32 +1085,40 @@ Note that multiple dependencies have to be included in a single constraint objec
    Meta Data
       Batches done: 0
       Fits done: 0
+      Discrete Subspace Meta Data
+         Recommended: 0/35
+         Measured: 0/35
+         Excluded: 0/35
    SearchSpace
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                  Name             Type  Num_Values         Encoding
-            0    Frac1  NumericalDis...           3             None
-            1   FrameA  CategoricalP...           2  CategoricalE...
-            2   FrameB  CategoricalP...           2  CategoricalE...
-            3     Solv  SubstancePar...           2  SubstanceEnc...
-            4  Switch1  CategoricalP...           2  CategoricalE...
-            5  Switch2  CategoricalP...           2  CategoricalE...
-         Experimental Representation
-                 Solv Switch1  ... FrameA  FrameB
-            0      C1     off  ...      A       A
-            1      C1     off  ...      A       A
-            2      C1     off  ...      A       B
-            ..    ...     ...  ...    ...     ...
-            32  water      on  ...      A       B
-            33  water      on  ...      B       A
-            34  water      on  ...      B       B
-            
-            [35 rows x 6 columns]
-         Meta Data
-            was_recommended: 0/35
-            was_measured: 0/35
-            dont_recommend: 0/35
+                  Name                        Type  Num_Values
+</pre></div>
+</div>
+<p>Encoding
+0    Frac1  NumericalDiscreteParameter           3
+None
+1   FrameA        CategoricalParameter           2
+CategoricalEncoding.OHE
+2   FrameB        CategoricalParameter           2
+CategoricalEncoding.OHE
+3     Solv          SubstanceParameter           2
+SubstanceEncoding.MORDRED
+4  Switch1        CategoricalParameter           2
+CategoricalEncoding.OHE
+5  Switch2        CategoricalParameter           2
+CategoricalEncoding.OHE
+Experimental Representation
+Solv Switch1  … FrameA  FrameB
+0      C1     off  …      A       A
+1      C1     off  …      A       A
+2      C1     off  …      A       B
+..    …     …  …    …     …
+32  water      on  …      A       B
+33  water      on  …      B       A
+34  water      on  …      B       B</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [35 rows x 6 columns]
          Constraints
                           Type Affected_Paramet
             0  DiscreteDepe...  [Switch1, Sw...

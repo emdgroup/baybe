@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1007,7 +1009,7 @@
 
 <span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="n">DISCRETE_CONSTRAINTS_FILTERING_ORDER</span><span class="p">,</span> <span class="n">validate_constraints</span>
 <span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">DiscreteConstraint</span>
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">OptionalImportError</span>
+<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">DeprecationError</span><span class="p">,</span> <span class="n">OptionalImportError</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">CategoricalParameter</span><span class="p">,</span>
     <span class="n">NumericalDiscreteParameter</span><span class="p">,</span>
@@ -1024,7 +1026,6 @@
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">eq_dataframe</span><span class="p">,</span> <span class="n">strtobool</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">df_drop_single_value_columns</span><span class="p">,</span>
-    <span class="n">fuzzy_row_match</span><span class="p">,</span>
     <span class="n">get_transform_objects</span><span class="p">,</span>
     <span class="n">pretty_print_df</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1036,8 +1037,6 @@
     <span class="kn">import</span> <span class="nn">polars</span> <span class="k">as</span> <span class="nn">pl</span>
 
     <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-
-<span class="n">_METADATA_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;was_recommended&quot;</span><span class="p">,</span> <span class="s2">&quot;was_measured&quot;</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="MemorySize">
@@ -1096,8 +1095,9 @@
     <span class="n">exp_rep</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The experimental representation of the subspace.&quot;&quot;&quot;</span>
 
-    <span class="n">metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The metadata.&quot;&quot;&quot;</span>
+    <span class="c1"># TODO: remove when refactoring active values mechanism</span>
+    <span class="n">_excluded</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Temporary workaround for handling inactive ``TaskParameter`` values.&quot;&quot;&quot;</span>
 
     <span class="n">empty_encoding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag encoding whether an empty encoding is used.&quot;&quot;&quot;</span>
@@ -1124,33 +1124,12 @@
         <span class="n">param_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">param_list</span><span class="p">)</span>
         <span class="n">constraints_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">constraints_list</span><span class="p">)</span>
 
-        <span class="c1"># Get summary information from metadata</span>
-        <span class="n">was_recommended_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">0</span><span class="p">]]])</span>
-        <span class="n">was_measured_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">1</span><span class="p">]]])</span>
-        <span class="n">dont_recommend_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">2</span><span class="p">]]])</span>
-        <span class="n">metadata_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
-
-        <span class="n">metadata_fields</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">to_string</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">was_recommended_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">metadata_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">to_string</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">was_measured_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">metadata_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">to_string</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_METADATA_COLUMNS</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dont_recommend_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">metadata_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">]</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Discrete Parameters&quot;</span><span class="p">,</span> <span class="n">pretty_print_df</span><span class="p">(</span><span class="n">param_df</span><span class="p">)),</span>
+            <span class="n">to_string</span><span class="p">(</span>
+                <span class="s2">&quot;Discrete Parameters&quot;</span><span class="p">,</span>
+                <span class="n">pretty_print_df</span><span class="p">(</span><span class="n">param_df</span><span class="p">,</span> <span class="n">max_colwidth</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span>
+            <span class="p">),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Experimental Representation&quot;</span><span class="p">,</span> <span class="n">pretty_print_df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">)),</span>
-            <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Meta Data&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">metadata_fields</span><span class="p">),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Constraints&quot;</span><span class="p">,</span> <span class="n">pretty_print_df</span><span class="p">(</span><span class="n">constraints_df</span><span class="p">)),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Computational Representation&quot;</span><span class="p">,</span> <span class="n">pretty_print_df</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">comp_rep</span><span class="p">)),</span>
         <span class="p">]</span>
@@ -1171,45 +1150,10 @@
                 <span class="s2">&quot;This is not allowed, as it can lead to hard-to-detect bugs.&quot;</span>
             <span class="p">)</span>
 
-    <span class="nd">@metadata</span><span class="o">.</span><span class="n">default</span>
-    <span class="k">def</span> <span class="nf">_default_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the default metadata.&quot;&quot;&quot;</span>
-        <span class="c1"># If the discrete search space is empty, explicitly return an empty dataframe</span>
-        <span class="c1"># instead of simply using a zero-length index. Otherwise, the Boolean dtype</span>
-        <span class="c1"># would be lost during a serialization roundtrip as there would be no</span>
-        <span class="c1"># data available that allows to determine the type, causing subsequent</span>
-        <span class="c1"># equality checks to fail.</span>
-        <span class="c1"># TODO: verify if this is still required</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">_METADATA_COLUMNS</span><span class="p">)</span>
-
-        <span class="c1"># TODO [16605]: Redesign metadata handling</span>
-        <span class="c1"># Exclude inactive tasks from search</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">_METADATA_COLUMNS</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="n">off_task_idxs</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_task_configurations</span><span class="p">()</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">off_task_idxs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># type: ignore</span>
-        <span class="k">return</span> <span class="n">df</span>
-
-    <span class="nd">@metadata</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_metadata</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the metadata.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the provided metadata allows testing parameter configurations</span>
-<span class="sd">                for inactive tasks.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># We first check whether there are actually any parameters that need to be</span>
-        <span class="c1"># checked.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="n">off_task_idxs</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_task_configurations</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">off_task_idxs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Inconsistent instructions given: The provided metadata allows &quot;</span>
-                <span class="s2">&quot;testing parameter configurations for inactive tasks.&quot;</span>
-            <span class="p">)</span>
+    <span class="nd">@_excluded</span><span class="o">.</span><span class="n">default</span>
+    <span class="k">def</span> <span class="nf">_default_excluded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Exclude inactive tasks from search.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_task_configurations</span><span class="p">()</span>
 
     <span class="nd">@comp_rep</span><span class="o">.</span><span class="n">default</span>
     <span class="k">def</span> <span class="nf">_default_comp_rep</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -1227,13 +1171,6 @@
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">comp_rep</span>
-
-    <span class="k">def</span> <span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># TODO [16605]: Redesign metadata handling</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="n">off_task_idxs</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_task_configurations</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">off_task_idxs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># type: ignore</span>
 
 <div class="viewcode-block" id="SubspaceDiscrete.to_searchspace">
 <a class="viewcode-back" href="../../../_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.to_searchspace">[docs]</a>
@@ -1263,7 +1200,6 @@
         <span class="k">return</span> <span class="n">SubspaceDiscrete</span><span class="p">(</span>
             <span class="n">parameters</span><span class="o">=</span><span class="p">[],</span>
             <span class="n">exp_rep</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span>
-            <span class="n">metadata</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">_METADATA_COLUMNS</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 
@@ -1599,6 +1535,18 @@
 
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">baybe.campaign</span> <span class="kn">import</span> <span class="n">Campaign</span>
+
+        <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Search spaces no longer carry any metadata to avoid stateful behavior. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Metadata is now exclusively tracked by the `</span><span class="si">{</span><span class="n">Campaign</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">` class. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;To dynamically exclude discrete candidates from the search space, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;use its `</span><span class="si">{</span><span class="n">Campaign</span><span class="o">.</span><span class="n">toggle_discrete_candidates</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">` method.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return whether this subspace is empty.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
@@ -1667,30 +1615,6 @@
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SubspaceDiscrete.mark_as_measured">
-<a class="viewcode-back" href="../../../_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.mark_as_measured">[docs]</a>
-    <span class="k">def</span> <span class="nf">mark_as_measured</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-        <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark the given elements of the space as measured.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            measurements: A dataframe containing parameter settings that should be</span>
-<span class="sd">                marked as measured.</span>
-<span class="sd">            numerical_measurements_must_be_within_tolerance: See</span>
-<span class="sd">                :func:`baybe.utils.dataframe.fuzzy_row_match`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">idxs_matched</span> <span class="o">=</span> <span class="n">fuzzy_row_match</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span>
-            <span class="n">measurements</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-            <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idxs_matched</span><span class="p">,</span> <span class="s2">&quot;was_measured&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
-
-
 <div class="viewcode-block" id="SubspaceDiscrete.get_candidates">
 <a class="viewcode-back" href="../../../_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates">[docs]</a>
     <span class="k">def</span> <span class="nf">get_candidates</span><span class="p">(</span>
@@ -1718,11 +1642,7 @@
 <span class="sd">            representation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Filter the search space down to the candidates</span>
-        <span class="n">mask_todrop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;dont_recommend&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_repeated_recommendations</span><span class="p">:</span>
-            <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;was_recommended&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_recommending_already_measured</span><span class="p">:</span>
-            <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;was_measured&quot;</span><span class="p">]</span>
+        <span class="n">mask_todrop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excluded</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="c1"># Remove additional excludes</span>
         <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

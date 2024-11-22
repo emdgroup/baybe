@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1084,13 +1086,9 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent                Base         Ligand  Temperature  \
-197  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-1      Butyl Ester      Cesium acetate  (t-Bu)PhCPhos         90.0   
-
-     Concentration  
-197          0.153  
-1            0.100  
+           Solvent                Base     Ligand  Temperature  Concentration
+206  Butyornitrile  Potassium pivalate  BrettPhos        120.0          0.153
+339       p-Xylene      Cesium acetate  BrettPhos        120.0          0.057
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1103,13 +1101,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base         Ligand  Temperature  \
-197  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-1      Butyl Ester      Cesium acetate  (t-Bu)PhCPhos         90.0   
+           Solvent                Base     Ligand  Temperature  Concentration  \
+206  Butyornitrile  Potassium pivalate  BrettPhos        120.0          0.153   
+339       p-Xylene      Cesium acetate  BrettPhos        120.0          0.057   
 
-     Concentration      yield  
-197          0.153  31.156267  
-1            0.100   9.142467  
+         yield  
+206  18.308736  
+339   5.636656  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

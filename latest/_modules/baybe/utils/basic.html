@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -993,7 +995,7 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeGuard</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">has</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
@@ -1018,6 +1020,16 @@
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a representation of the placeholder.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s2">&quot;&lt;dummy&gt;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="is_all_instance">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html#baybe.utils.basic.is_all_instance">[docs]</a>
+<span class="k">def</span> <span class="nf">is_all_instance</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">t</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">Collection</span><span class="p">[</span><span class="n">_T</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Typeguard to check if all elements in a collection are of a certain type.&quot;&quot;&quot;</span>
+    <span class="c1"># IMPROVE: Ideally, the collection type should itself be abstracted away using a</span>
+    <span class="c1">#   generic container type, but unclear how to achieve this with the typing system.</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span></div>
 
 
 

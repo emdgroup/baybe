@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1015,16 +1017,19 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory" title="baybe.utils.basic.hilberts_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hilberts_factory</span></code></a>(factory)</p></td>
 <td><p>Provide an infinite stream of the factory's products.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.match_attributes.html#baybe.utils.basic.match_attributes" title="baybe.utils.basic.match_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_attributes</span></code></a>(object, callable_, /[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.is_all_instance.html#baybe.utils.basic.is_all_instance" title="baybe.utils.basic.is_all_instance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_all_instance</span></code></a>(x, t, /)</p></td>
+<td><p>Typeguard to check if all elements in a collection are of a certain type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.match_attributes.html#baybe.utils.basic.match_attributes" title="baybe.utils.basic.match_attributes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_attributes</span></code></a>(object, callable_, /[, ...])</p></td>
 <td><p>Find the attributes of an object that match with a given callable signature.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.refers_to.html#baybe.utils.basic.refers_to" title="baybe.utils.basic.refers_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refers_to</span></code></a>(cls, name_or_abbr, /)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.refers_to.html#baybe.utils.basic.refers_to" title="baybe.utils.basic.refers_to"><code class="xref py py-obj docutils literal notranslate"><span class="pre">refers_to</span></code></a>(cls, name_or_abbr, /)</p></td>
 <td><p>Check if the given name or abbreviation refers to the specified class.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.register_hooks.html#baybe.utils.basic.register_hooks" title="baybe.utils.basic.register_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_hooks</span></code></a>(target[, pre_hooks, post_hooks])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.register_hooks.html#baybe.utils.basic.register_hooks" title="baybe.utils.basic.register_hooks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_hooks</span></code></a>(target[, pre_hooks, post_hooks])</p></td>
 <td><p>Register custom hooks with a given target callable.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.basic.to_tuple.html#baybe.utils.basic.to_tuple" title="baybe.utils.basic.to_tuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tuple</span></code></a>(x)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.basic.to_tuple.html#baybe.utils.basic.to_tuple" title="baybe.utils.basic.to_tuple"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tuple</span></code></a>(x)</p></td>
 <td><p>Convert any sequence into a tuple.</p></td>
 </tr>
 </tbody>

@@ -19,6 +19,7 @@ DiscreteSumConstraint
       ~DiscreteSumConstraint.from_json
       ~DiscreteSumConstraint.get_invalid
       ~DiscreteSumConstraint.get_invalid_polars
+      ~DiscreteSumConstraint.get_valid
       ~DiscreteSumConstraint.summary
       ~DiscreteSumConstraint.to_dict
       ~DiscreteSumConstraint.to_json

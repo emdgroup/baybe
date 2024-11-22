@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1006,7 +1008,9 @@ and this project adheres to <a class="reference external" href="https://semver.o
 <li><p><code class="docutils literal notranslate"><span class="pre">allow_missing</span></code> and <code class="docutils literal notranslate"><span class="pre">allow_extra</span></code> keyword arguments to <code class="docutils literal notranslate"><span class="pre">Objective.transform</span></code></p></li>
 <li><p>Example for a traditional mixture</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">add_noise_to_perturb_degenerate_rows</span></code> utility</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">benchmarks</span></code> subpackage for defining and running performance tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">benchmarks</span></code> subpackage for defining and running performance tests
+– <code class="docutils literal notranslate"><span class="pre">Campaign.toggle_discrete_candidates</span></code> to dynamically in-/exclude discrete candidates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">DiscreteConstraint.get_valid</span></code> to conveniently access valid candidates</p></li>
 </ul>
 </section>
 <section id="changed">
@@ -1028,6 +1032,8 @@ compatible with <code class="docutils literal notranslate"><span class="pre">str
 <li><p>Rare bug arising from degenerate <code class="docutils literal notranslate"><span class="pre">SubstanceParameter.comp_df</span></code> rows that caused
 wrong number of recommendations being returned</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">ContinuousConstraint</span></code>s can now be used in single point precision</p></li>
+<li><p>Search spaces are now stateless, preventing unintended side effects that could lead to
+incorrect candidate sets when reused in different optimization contexts</p></li>
 </ul>
 </section>
 <section id="deprecations">
@@ -1043,6 +1049,8 @@ possible. The data must now be passed as a series as first positional argument.<
 <li><p><code class="docutils literal notranslate"><span class="pre">SubstanceEncoding</span></code> value <code class="docutils literal notranslate"><span class="pre">MORGAN_FP</span></code>. As a replacement, <code class="docutils literal notranslate"><span class="pre">ECFP</span></code> with 1024 bits and
 radius of 4 can be used.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SubstanceEncoding</span></code> value <code class="docutils literal notranslate"><span class="pre">RDKIT</span></code>. As a replacement, <code class="docutils literal notranslate"><span class="pre">RDKIT2DDESCRIPTORS</span></code> can be used.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">metadata</span></code> attribute of <code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete</span></code> no longer exists. Metadata is now
+exclusively handled by the <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> class.</p></li>
 </ul>
 </section>
 </section>
@@ -1402,7 +1410,7 @@ parameter configurations</p></li>
 <li><p>Simulation no longer fails for targets in <code class="docutils literal notranslate"><span class="pre">MATCH</span></code> mode</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">closest_element</span></code> now works for array-like input of all kinds</p></li>
 <li><p>Structuring concrete subclasses no longer requires providing an explicit <code class="docutils literal notranslate"><span class="pre">type</span></code> field</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">_target(s)</span></code> attributes of <code class="docutils literal notranslate"><span class="pre">Objectives</span></code> are now de-/serialized without leading
+<li><p><code class="docutils literal notranslate"><span class="pre">_target(s)</span></code> attributes of <code class="docutils literal notranslate"><span class="pre">Objectives</span></code> are now (de-)serialized without leading
 underscore to support user-friendly serialization strings</p></li>
 <li><p>Telemetry does not execute any code if it was disabled</p></li>
 <li><p>Running simulations no longer alters the states of the global random number generators</p></li>
@@ -1612,7 +1620,7 @@ attributes of <code class="docutils literal notranslate"><span class="pre">Recom
 <li><p><code class="docutils literal notranslate"><span class="pre">mypy</span></code> for targets and intervals</p></li>
 <li><p>Tests for code blocks in README and user guides</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">hypothesis</span></code> strategies and roundtrip tests for targets, intervals, and dataframes</p></li>
-<li><p>De-/serialization of target subclasses via base class</p></li>
+<li><p>(De-)serialization of target subclasses via base class</p></li>
 <li><p>Docs building check now part of CI</p></li>
 <li><p>Automatic formatting checks for code examples in documentation</p></li>
 <li><p>Deserialization of classes with classmethod constructors can now be customized
@@ -1643,7 +1651,7 @@ by providing an optional <code class="docutils literal notranslate"><span class=
 <li><p>Use pydoclint as flake8 plugin and not as a stand-alone linter</p></li>
 <li><p>Margins in documentation for desktop and mobile version</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Interval</span></code>s can now also be deserialized from a bounds iterable</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete</span></code> and <code class="docutils literal notranslate"><span class="pre">SubspaceContinuous</span></code> now have de-/serialization methods</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SubspaceDiscrete</span></code> and <code class="docutils literal notranslate"><span class="pre">SubspaceContinuous</span></code> now have (de-)serialization methods</p></li>
 </ul>
 </section>
 <section id="id59">

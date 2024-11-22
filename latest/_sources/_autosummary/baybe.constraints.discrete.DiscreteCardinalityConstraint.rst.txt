@@ -19,6 +19,7 @@ DiscreteCardinalityConstraint
       ~DiscreteCardinalityConstraint.from_json
       ~DiscreteCardinalityConstraint.get_invalid
       ~DiscreteCardinalityConstraint.get_invalid_polars
+      ~DiscreteCardinalityConstraint.get_valid
       ~DiscreteCardinalityConstraint.summary
       ~DiscreteCardinalityConstraint.to_dict
       ~DiscreteCardinalityConstraint.to_json

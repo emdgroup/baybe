@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -997,7 +999,6 @@
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="kn">from</span> <span class="nn">baybe.campaign</span> <span class="kn">import</span> <span class="n">Campaign</span>
@@ -1214,15 +1215,14 @@
         <span class="c1"># off-group configurations from the candidates list</span>
         <span class="c1"># TODO: Reconsider if deepcopies are required once [16605] is resolved</span>
         <span class="n">campaign_group</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">campaign</span><span class="p">)</span>
-        <span class="c1"># TODO: Implement SubspaceDiscrete.__len__</span>
-        <span class="n">off_group_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">),</span> <span class="n">fill_value</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">parameter_names</span>
+        <span class="p">]</span>
+        <span class="n">campaign_group</span><span class="o">.</span><span class="n">toggle_discrete_candidates</span><span class="p">(</span>
+            <span class="n">group</span><span class="p">[</span><span class="n">cols</span><span class="p">],</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">complement</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-        <span class="n">off_group_idx</span><span class="p">[</span><span class="n">group</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="c1"># TODO [16605]: Avoid direct manipulation of metadata</span>
-        <span class="n">campaign_group</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
-            <span class="n">off_group_idx</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span>
-        <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Run the group simulation</span>
         <span class="k">try</span><span class="p">:</span>

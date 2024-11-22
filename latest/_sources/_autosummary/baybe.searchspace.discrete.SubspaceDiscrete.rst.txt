@@ -25,7 +25,6 @@ SubspaceDiscrete
       ~SubspaceDiscrete.from_simplex
       ~SubspaceDiscrete.get_candidates
       ~SubspaceDiscrete.get_parameters_by_name
-      ~SubspaceDiscrete.mark_as_measured
       ~SubspaceDiscrete.to_dict
       ~SubspaceDiscrete.to_json
       ~SubspaceDiscrete.to_searchspace
@@ -41,13 +40,13 @@ SubspaceDiscrete
    
       ~SubspaceDiscrete.parameters
       ~SubspaceDiscrete.exp_rep
-      ~SubspaceDiscrete.metadata
       ~SubspaceDiscrete.empty_encoding
       ~SubspaceDiscrete.constraints
       ~SubspaceDiscrete.comp_rep
       ~SubspaceDiscrete.comp_rep_bounds
       ~SubspaceDiscrete.comp_rep_columns
       ~SubspaceDiscrete.is_empty
+      ~SubspaceDiscrete.metadata
       ~SubspaceDiscrete.parameter_names
    
    

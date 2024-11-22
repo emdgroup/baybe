@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1116,21 +1118,12 @@
 
         <span class="c1"># For impute_mode &#39;ignore&#39;, do not recommend space entries that are not</span>
         <span class="c1"># available in the lookup</span>
-        <span class="c1"># TODO [16605]: Avoid direct manipulation of metadata</span>
         <span class="k">if</span> <span class="n">impute_mode</span> <span class="o">==</span> <span class="s2">&quot;ignore&quot;</span><span class="p">:</span>
-            <span class="n">exp_rep</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span>
-            <span class="n">lookup_configurations</span> <span class="o">=</span> <span class="n">lookup</span><span class="p">[</span>
-                <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">campaign</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span>
-            <span class="p">]</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
-            <span class="n">missing_inds</span> <span class="o">=</span> <span class="n">exp_rep</span><span class="o">.</span><span class="n">index</span><span class="p">[</span>
-                <span class="n">exp_rep</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">lookup_configurations</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span>
-                    <span class="s2">&quot;_merge&quot;</span>
-                <span class="p">]</span>
-                <span class="o">==</span> <span class="s2">&quot;left_only&quot;</span>
-            <span class="p">]</span>
-            <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
-                <span class="n">missing_inds</span><span class="p">,</span> <span class="s2">&quot;dont_recommend&quot;</span>
-            <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">campaign</span><span class="o">.</span><span class="n">toggle_discrete_candidates</span><span class="p">(</span>
+                <span class="n">lookup</span><span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">campaign</span><span class="o">.</span><span class="n">parameters</span><span class="p">]],</span>
+                <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">complement</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="c1"># Run the DOE loop</span>
         <span class="n">limit</span> <span class="o">=</span> <span class="n">n_doe_iterations</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>

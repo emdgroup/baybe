@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1022,13 +1024,16 @@ a single constraint.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_invalid_polars" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.get_invalid_polars"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_invalid_polars</span></code></a>()</p></td>
 <td><p>Translate the constraint to Polars expression identifying undesired rows.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.summary" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_valid" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.get_valid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_valid</span></code></a>(df, /)</p></td>
+<td><p>Get the indices of dataframe entries that are valid under the constraint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.summary" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a>()</p></td>
 <td><p>Return a custom summarization of the constraint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_dict" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_dict" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_json" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_json" title="baybe.constraints.discrete.DiscreteDependenciesConstraint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
 </tbody>
@@ -1120,14 +1125,13 @@ a single constraint.</p>
 <dd><p>Get the indices of dataframe entries that are invalid under the constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – A dataframe where each row represents a particular parameter
-combination.</p>
+<dd class="field-odd"><p><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – A dataframe where each row represents a parameter configuration.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Index</span></code></a></span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The dataframe indices of rows where the constraint is violated.</p>
+<dd class="field-odd"><p>The dataframe indices of rows that violate the constraint.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1146,6 +1150,23 @@ combination.</p>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – If the constraint class does not have a Polars
     implementation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.constraints.discrete.DiscreteDependenciesConstraint.get_valid">
+<span class="sig-name descname"><span class="pre">get_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_valid" title="Link to this definition">¶</a></dt>
+<dd><p>Get the indices of dataframe entries that are valid under the constraint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – A dataframe where each row represents a parameter configuration.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Index.html#pandas.Index" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Index</span></code></a></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The dataframe indices of rows that fulfill the constraint.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1315,6 +1336,7 @@ This should not be changed by the user but by other constraints using the class.
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.from_json"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_invalid"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.get_invalid()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_invalid_polars"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.get_invalid_polars()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_valid"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.get_valid()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.summary"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.summary()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_dict"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.constraints.discrete.DiscreteDependenciesConstraint.to_json"><code class="docutils literal notranslate"><span class="pre">DiscreteDependenciesConstraint.to_json()</span></code></a></li>

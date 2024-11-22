@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1217,15 +1219,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-300           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-131  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-91     Butyl Ester  Potassium pivalate                     BrettPhos   
+         Solvent                Base         Ligand  Temperature  \
+60   Butyl Ester   Potassium acetate  (t-Bu)PhCPhos        120.0   
+298         DMAc  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+243         DMAc     Cesium pivalate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration  
-300        105.0          0.057  
-131        105.0          0.153  
-91          90.0          0.100  
+     Concentration  
+60           0.057  
+298          0.100  
+243          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1234,15 +1236,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-300           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-131  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-91     Butyl Ester  Potassium pivalate                     BrettPhos   
+         Solvent                Base         Ligand  Temperature  \
+60   Butyl Ester   Potassium acetate  (t-Bu)PhCPhos        120.0   
+298         DMAc  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+243         DMAc     Cesium pivalate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration      yield  
-300        105.0          0.057  18.633743  
-131        105.0          0.153   1.206196  
-91          90.0          0.100  17.013879  
+     Concentration      yield  
+60           0.057   1.921251  
+298          0.100   6.976540  
+243          0.057  10.667779  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

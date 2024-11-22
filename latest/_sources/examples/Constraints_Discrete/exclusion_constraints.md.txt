@@ -149,15 +149,24 @@ print(campaign)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/1150
+             Measured: 0/1150
+             Excluded: 0/1150
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                       Name             Type  Num_Values         Encoding
-                0  Pressure  NumericalDis...           4             None
-                1      Solv  SubstancePar...           8  SubstanceEnc...
-                2     Speed  CategoricalP...           5  CategoricalE...
-                3      Temp  NumericalDis...          15             None
+                       Name                        Type  Num_Values
+Encoding
+                0  Pressure  NumericalDiscreteParameter           4
+None
+                1      Solv          SubstanceParameter           8
+SubstanceEncoding.RDKIT
+                2     Speed        CategoricalParameter           5
+CategoricalEncoding.INT
+                3      Temp  NumericalDiscreteParameter          15
+None
              Experimental Representation
                        Solv      Speed     Temp  Pressure
                 0        C1       fast  100.000       1.0
@@ -169,10 +178,6 @@ print(campaign)
                 1149  water  very slow  200.000      10.0
                 
                 [1150 rows x 4 columns]
-             Meta Data
-                was_recommended: 0/1150
-                was_measured: 0/1150
-                dont_recommend: 0/1150
              Constraints
                               Type Affected_Paramet
                 0  DiscreteExcl...     [Temp, Solv]

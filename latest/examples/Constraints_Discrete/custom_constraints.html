@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1124,30 +1126,36 @@ warnings.warn(</p>
    Meta Data
       Batches done: 0
       Fits done: 0
+      Discrete Subspace Meta Data
+         Recommended: 0/450
+         Measured: 0/450
+         Excluded: 0/450
    SearchSpace
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                        Name             Type  Num_Values         Encoding
-            0  Concentration  NumericalDis...           4             None
-            1        Solvent  SubstancePar...           8  SubstanceEnc...
-            2          Speed  CategoricalP...           5  CategoricalE...
-            3    Temperature  NumericalDis...           3             None
-         Experimental Representation
-                Solvent      Speed  Temperature  Concentration
-            0        C1       fast        100.0            1.0
-            1        C1       fast        100.0            2.0
-            2        C1       fast        100.0            5.0
-            ..      ...        ...          ...            ...
-            447   water  very slow        200.0            1.0
-            448   water  very slow        200.0            2.0
-            449   water  very slow        200.0            5.0
-            
-            [450 rows x 4 columns]
-         Meta Data
-            was_recommended: 0/450
-            was_measured: 0/450
-            dont_recommend: 0/450
+                        Name                        Type  Num_Values
+</pre></div>
+</div>
+<p>Encoding
+0  Concentration  NumericalDiscreteParameter           4
+None
+1        Solvent          SubstanceParameter           8
+SubstanceEncoding.RDKIT
+2          Speed        CategoricalParameter           5
+CategoricalEncoding.INT
+3    Temperature  NumericalDiscreteParameter           3
+None
+Experimental Representation
+Solvent      Speed  Temperature  Concentration
+0        C1       fast        100.0            1.0
+1        C1       fast        100.0            2.0
+2        C1       fast        100.0            5.0
+..      …        …          …            …
+447   water  very slow        200.0            1.0
+448   water  very slow        200.0            2.0
+449   water  very slow        200.0            5.0</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [450 rows x 4 columns]
          Constraints
                           Type Affected_Paramet
             0  DiscreteCust...  [Concentrati...

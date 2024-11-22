@@ -161,7 +161,7 @@ This requirement can be disabled using the method's
 
 ## Serialization
 
-Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be de-/serialized 
+Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 
 using their [`from_json`](baybe.serialization.mixin.SerialMixin.from_json)/
 [`to_json`](baybe.serialization.mixin.SerialMixin.to_json) methods, which 
 allow to convert between Python objects and their corresponding representation in JSON 

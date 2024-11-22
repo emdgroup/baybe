@@ -125,7 +125,7 @@ recommender = TwoPhaseMetaRecommender(
   enables the utilization of *arbitrary* iterables to select recommender.
 
   ```{warning}
-  Due to the arbitrary nature of iterables that can be used, de-/serializability cannot
+  Due to the arbitrary nature of iterables that can be used, (de-)serializability cannot
   be guaranteed. As a consequence, using a `StreamingSequentialMetaRecommender` results
   in an error if you attempt to serialize the corresponding object or higher-level
   objects containing it.

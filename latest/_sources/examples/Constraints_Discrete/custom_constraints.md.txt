@@ -152,15 +152,24 @@ print(campaign)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/450
+             Measured: 0/450
+             Excluded: 0/450
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                            Name             Type  Num_Values         Encoding
-                0  Concentration  NumericalDis...           4             None
-                1        Solvent  SubstancePar...           8  SubstanceEnc...
-                2          Speed  CategoricalP...           5  CategoricalE...
-                3    Temperature  NumericalDis...           3             None
+                            Name                        Type  Num_Values
+Encoding
+                0  Concentration  NumericalDiscreteParameter           4
+None
+                1        Solvent          SubstanceParameter           8
+SubstanceEncoding.RDKIT
+                2          Speed        CategoricalParameter           5
+CategoricalEncoding.INT
+                3    Temperature  NumericalDiscreteParameter           3
+None
              Experimental Representation
                     Solvent      Speed  Temperature  Concentration
                 0        C1       fast        100.0            1.0
@@ -172,10 +181,6 @@ print(campaign)
                 449   water  very slow        200.0            5.0
                 
                 [450 rows x 4 columns]
-             Meta Data
-                was_recommended: 0/450
-                was_measured: 0/450
-                dont_recommend: 0/450
              Constraints
                               Type Affected_Paramet
                 0  DiscreteCust...  [Concentrati...

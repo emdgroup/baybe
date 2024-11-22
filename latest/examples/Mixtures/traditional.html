@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1099,16 +1101,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  16.292613  13.324873     0.508353     3.912140  48.904707  17.057315
-1  19.870392   8.120743     0.199585     2.495015  52.080740  17.233525
-2   0.465657  13.870565     1.452450     2.468026  12.682458  69.060844
-3  17.897709  12.300022     1.019282     3.842758  33.055669  31.884560
-4   9.796269   2.684725     2.409723     0.053890  52.609671  32.445722
-5  18.283844   5.980053     2.140465     0.227969  13.970163  59.397505
-6  13.347953   2.125311     1.936514     0.356838  50.125691  32.107693
-7  10.039600   4.532694     1.269246     0.159582  68.990269  15.008610
-8   7.641578   2.695624     2.732133     0.930891  75.293906  10.705868
-9   5.868449   5.934324     1.099340     2.346259  28.193900  56.557728
+0  11.215615  16.105601     1.950699     1.657726  16.830076  52.240282
+1  19.306108   8.755423     0.343060     4.548835  45.515882  21.530692
+2   7.553243  18.904528     3.009225     1.282625  30.706919  38.543460
+3  14.136418   6.756707     2.854737     0.237860  62.159592  13.854687
+4   5.410557  19.856069     2.689515     0.609745  47.351928  24.082187
+5   9.280573   8.370783     1.172394     0.940544  35.318565  44.917141
+6   8.874293   8.610684     1.228084     2.076731  30.660020  48.550187
+7  11.682184   2.840817     1.484294     0.928029  10.862937  72.201739
+8  10.236283  15.193473     2.017582     0.162830  23.602852  48.786979
+9  18.766134   9.937250     1.333033     2.842833  53.417648  13.703102
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1123,16 +1125,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    29.617485            4.420493
-1  100.0    27.991135            2.694600
-2  100.0    14.336222            3.920476
-3  100.0    30.197731            4.862041
-4  100.0    12.480995            2.463613
-5  100.0    24.263897            2.368435
-6  100.0    15.473264            2.293351
-7  100.0    14.572294            1.428828
-8  100.0    10.337202            3.663024
-9  100.0    11.802773            3.445599
+0  100.0    27.321216            3.608425
+1  100.0    28.061531            4.891895
+2  100.0    26.457771            4.291850
+3  100.0    20.893125            3.092596
+4  100.0    25.266626            3.299260
+5  100.0    17.651356            2.112938
+6  100.0    17.484977            3.304816
+7  100.0    14.523001            2.412322
+8  100.0    25.429757            2.180413
+9  100.0    28.703384            4.175866
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

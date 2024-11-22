@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1524,9 +1526,9 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html#baybe.utils.dataframe.pretty_print_df">[docs]</a>
 <span class="k">def</span> <span class="nf">pretty_print_df</span><span class="p">(</span>
     <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
-    <span class="n">max_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
-    <span class="n">max_colwidth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+    <span class="n">max_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="n">max_columns</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">max_colwidth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
     <span class="n">precision</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a dataframe into a pretty/readable format.</span>
@@ -1619,6 +1621,69 @@
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">objects</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="filter_df">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html#baybe.utils.dataframe.filter_df">[docs]</a>
+<span class="k">def</span> <span class="nf">filter_df</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">filter</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">complement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter a dataframe based on a second dataframe defining filtering conditions.</span>
+
+<span class="sd">    Filtering is done via a join (see ``complement`` argument for details) between the</span>
+<span class="sd">    input dataframe and the filter dataframe.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df: The dataframe to be filtered.</span>
+<span class="sd">        filter: The dataframe defining the filtering conditions.</span>
+<span class="sd">        complement: If ``False``, the filter dataframe determines the rows to be kept</span>
+<span class="sd">            (i.e. selection via regular join). If ``True``, the filtering mechanism is</span>
+<span class="sd">            inverted so that the complement set of rows is kept (i.e. selection</span>
+<span class="sd">            via anti-join).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A new dataframe containing the result of the filtering process.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; df = pd.DataFrame(</span>
+<span class="sd">        ...         [[0, &quot;a&quot;], [0, &quot;b&quot;], [1, &quot;a&quot;], [1, &quot;b&quot;]],</span>
+<span class="sd">        ...         columns=[&quot;num&quot;, &quot;cat&quot;]</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; df</span>
+<span class="sd">           num cat</span>
+<span class="sd">        0    0   a</span>
+<span class="sd">        1    0   b</span>
+<span class="sd">        2    1   a</span>
+<span class="sd">        3    1   b</span>
+
+<span class="sd">        &gt;&gt;&gt; filter_df(df, pd.DataFrame([0], columns=[&quot;num&quot;]), complement=False)</span>
+<span class="sd">           num cat</span>
+<span class="sd">        0    0   a</span>
+<span class="sd">        1    0   b</span>
+
+<span class="sd">        &gt;&gt;&gt; filter_df(df, pd.DataFrame([0], columns=[&quot;num&quot;]), complement=True)</span>
+<span class="sd">           num cat</span>
+<span class="sd">        2    1   a</span>
+<span class="sd">        3    1   b</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Remember original index name</span>
+    <span class="n">index_name</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="c1"># Identify rows to be dropped</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="s2">&quot;_df_index&quot;</span><span class="p">),</span> <span class="nb">filter</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;_df_index&quot;</span><span class="p">)</span>
+    <span class="n">to_drop</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="s2">&quot;_merge&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="p">(</span><span class="s2">&quot;both&quot;</span> <span class="k">if</span> <span class="n">complement</span> <span class="k">else</span> <span class="s2">&quot;left_only&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Drop the points</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">out</span><span class="p">[</span><span class="n">to_drop</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;_merge&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Restore original index name</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">index_name</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>
         </article>

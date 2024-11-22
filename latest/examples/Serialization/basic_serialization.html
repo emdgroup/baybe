@@ -841,6 +841,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -878,6 +879,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1066,29 +1068,34 @@ Campaign
    Meta Data
       Batches done: 0
       Fits done: 0
+      Discrete Subspace Meta Data
+         Recommended: 0/90
+         Measured: 0/90
+         Excluded: 0/90
    SearchSpace
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                          Name             Type  Num_Values         Encoding
-            0      Granularity  CategoricalP...           3  CategoricalE...
-            1    Pressure[bar]  NumericalDis...           3             None
-            2  Temperature[...  NumericalDis...          10             None
-         Experimental Representation
-               Granularity  Pressure[bar]  Temperature[degr
-            0       coarse            1.0          100.000 
-            1       coarse            1.0          111.111 
-            2       coarse            1.0          122.222 
-            ..         ...            ...              ... 
-            87      medium           10.0          177.778 
-            88      medium           10.0          188.889 
-            89      medium           10.0          200.000 
-            
-            [90 rows x 3 columns]
-         Meta Data
-            was_recommended: 0/90
-            was_measured: 0/90
-            dont_recommend: 0/90
+                                Name                        Type  Num_Values
+</pre></div>
+</div>
+<p>Encoding
+0            Granularity        CategoricalParameter           3
+CategoricalEncoding.OHE
+1          Pressure[bar]  NumericalDiscreteParameter           3
+None
+2  Temperature[degree_C]  NumericalDiscreteParameter          10
+None
+Experimental Representation
+Granularity  Pressure[bar]  Temperature[degr
+0       coarse            1.0          100.000
+1       coarse            1.0          111.111
+2       coarse            1.0          122.222
+..         …            …              …
+87      medium           10.0          177.778
+88      medium           10.0          188.889
+89      medium           10.0          200.000</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [90 rows x 3 columns]
          Constraints
             Empty DataFrame
             Columns: []
@@ -1156,29 +1163,34 @@ Campaign
    Meta Data
       Batches done: 0
       Fits done: 0
+      Discrete Subspace Meta Data
+         Recommended: 0/90
+         Measured: 0/90
+         Excluded: 0/90
    SearchSpace
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                          Name             Type  Num_Values         Encoding
-            0      Granularity  CategoricalP...           3  CategoricalE...
-            1    Pressure[bar]  NumericalDis...           3             None
-            2  Temperature[...  NumericalDis...          10             None
-         Experimental Representation
-               Granularity  Pressure[bar]  Temperature[degr
-            0       coarse            1.0          100.000 
-            1       coarse            1.0          111.111 
-            2       coarse            1.0          122.222 
-            ..         ...            ...              ... 
-            87      medium           10.0          177.778 
-            88      medium           10.0          188.889 
-            89      medium           10.0          200.000 
-            
-            [90 rows x 3 columns]
-         Meta Data
-            was_recommended: 0/90
-            was_measured: 0/90
-            dont_recommend: 0/90
+                                Name                        Type  Num_Values
+</pre></div>
+</div>
+<p>Encoding
+0            Granularity        CategoricalParameter           3
+CategoricalEncoding.OHE
+1          Pressure[bar]  NumericalDiscreteParameter           3
+None
+2  Temperature[degree_C]  NumericalDiscreteParameter          10
+None
+Experimental Representation
+Granularity  Pressure[bar]  Temperature[degr
+0       coarse            1.0          100.000
+1       coarse            1.0          111.111
+2       coarse            1.0          122.222
+..         …            …              …
+87      medium           10.0          177.778
+88      medium           10.0          188.889
+89      medium           10.0          200.000</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [90 rows x 3 columns]
          Constraints
             Empty DataFrame
             Columns: []

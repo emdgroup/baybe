@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -1090,6 +1092,21 @@
     <span class="n">eval_during_modeling</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="c1"># See base class.</span>
 
+<div class="viewcode-block" id="DiscreteConstraint.get_valid">
+<a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_valid">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of dataframe entries that are valid under the constraint.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            df: A dataframe where each row represents a parameter configuration.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The dataframe indices of rows that fulfill the constraint.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_invalid</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">invalid</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="DiscreteConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid">[docs]</a>
     <span class="nd">@abstractmethod</span>
@@ -1097,13 +1114,13 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of dataframe entries that are invalid under the constraint.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data: A dataframe where each row represents a particular parameter</span>
-<span class="sd">                combination.</span>
+<span class="sd">            data: A dataframe where each row represents a parameter configuration.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            The dataframe indices of rows where the constraint is violated.</span>
+<span class="sd">            The dataframe indices of rows that violate the constraint.</span>
 <span class="sd">        &quot;&quot;&quot;</span></div>
 
+        <span class="c1"># TODO: Should switch backends (pandas/polars/...) behind the scenes</span>
 
 <div class="viewcode-block" id="DiscreteConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid_polars">[docs]</a>

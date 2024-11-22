@@ -107,17 +107,28 @@ print(campaign)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/35
+             Measured: 0/35
+             Excluded: 0/35
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                      Name             Type  Num_Values         Encoding
-                0    Frac1  NumericalDis...           3             None
-                1   FrameA  CategoricalP...           2  CategoricalE...
-                2   FrameB  CategoricalP...           2  CategoricalE...
-                3     Solv  SubstancePar...           2  SubstanceEnc...
-                4  Switch1  CategoricalP...           2  CategoricalE...
-                5  Switch2  CategoricalP...           2  CategoricalE...
+                      Name                        Type  Num_Values
+Encoding
+                0    Frac1  NumericalDiscreteParameter           3
+None
+                1   FrameA        CategoricalParameter           2
+CategoricalEncoding.OHE
+                2   FrameB        CategoricalParameter           2
+CategoricalEncoding.OHE
+                3     Solv          SubstanceParameter           2
+SubstanceEncoding.MORDRED
+                4  Switch1        CategoricalParameter           2
+CategoricalEncoding.OHE
+                5  Switch2        CategoricalParameter           2
+CategoricalEncoding.OHE
              Experimental Representation
                      Solv Switch1  ... FrameA  FrameB
                 0      C1     off  ...      A       A
@@ -129,10 +140,6 @@ print(campaign)
                 34  water      on  ...      B       B
                 
                 [35 rows x 6 columns]
-             Meta Data
-                was_recommended: 0/35
-                was_measured: 0/35
-                dont_recommend: 0/35
              Constraints
                               Type Affected_Paramet
                 0  DiscreteDepe...  [Switch1, Sw...

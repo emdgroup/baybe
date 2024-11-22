@@ -19,6 +19,7 @@ DiscreteExcludeConstraint
       ~DiscreteExcludeConstraint.from_json
       ~DiscreteExcludeConstraint.get_invalid
       ~DiscreteExcludeConstraint.get_invalid_polars
+      ~DiscreteExcludeConstraint.get_valid
       ~DiscreteExcludeConstraint.summary
       ~DiscreteExcludeConstraint.to_dict
       ~DiscreteExcludeConstraint.to_json

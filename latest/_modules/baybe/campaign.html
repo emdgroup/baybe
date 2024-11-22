@@ -840,6 +840,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.group_duplicate_values.html">baybe.utils.basic.group_duplicate_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.hilberts_factory.html">baybe.utils.basic.hilberts_factory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.is_all_instance.html">baybe.utils.basic.is_all_instance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.match_attributes.html">baybe.utils.basic.match_attributes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.refers_to.html">baybe.utils.basic.refers_to</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
@@ -877,6 +878,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
@@ -993,16 +995,19 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span> <span class="nn">cattrs</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">attrs.converters</span> <span class="kn">import</span> <span class="n">optional</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
+<span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">DiscreteConstraint</span>
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibilityError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">to_objective</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">Parameter</span>
@@ -1010,6 +1015,7 @@
 <span class="kn">from</span> <span class="nn">baybe.recommenders.meta.base</span> <span class="kn">import</span> <span class="n">MetaRecommender</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.meta.sequential</span> <span class="kn">import</span> <span class="n">TwoPhaseMetaRecommender</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.pure.bayesian.base</span> <span class="kn">import</span> <span class="n">BayesianRecommender</span>
+<span class="kn">from</span> <span class="nn">baybe.searchspace._annotated</span> <span class="kn">import</span> <span class="n">AnnotatedSubspaceDiscrete</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SearchSpace</span><span class="p">,</span>
     <span class="n">SearchSpaceType</span><span class="p">,</span>
@@ -1024,11 +1030,19 @@
     <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">,</span>
     <span class="n">telemetry_record_value</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">is_all_instance</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">eq_dataframe</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">filter_df</span><span class="p">,</span> <span class="n">fuzzy_row_match</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.plotting</span> <span class="kn">import</span> <span class="n">to_string</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
+
+<span class="c1"># Metadata columns</span>
+<span class="n">_RECOMMENDED</span> <span class="o">=</span> <span class="s2">&quot;recommended&quot;</span>
+<span class="n">_MEASURED</span> <span class="o">=</span> <span class="s2">&quot;measured&quot;</span>
+<span class="n">_EXCLUDED</span> <span class="o">=</span> <span class="s2">&quot;excluded&quot;</span>
+<span class="n">_METADATA_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="n">_RECOMMENDED</span><span class="p">,</span> <span class="n">_MEASURED</span><span class="p">,</span> <span class="n">_EXCLUDED</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="Campaign">
@@ -1068,6 +1082,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The employed recommender&quot;&quot;&quot;</span>
 
     <span class="c1"># Metadata</span>
+    <span class="n">_searchspace_metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Metadata tracking the experimentation status of the search space.&quot;&quot;&quot;</span>
+
     <span class="n">n_batches_done</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The number of already processed batches.&quot;&quot;&quot;</span>
 
@@ -1085,11 +1102,44 @@
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The cached recommendations.&quot;&quot;&quot;</span>
 
+    <span class="nd">@_searchspace_metadata</span><span class="o">.</span><span class="n">default</span>
+    <span class="k">def</span> <span class="nf">_default_searchspace_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a fresh metadata object.&quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="kc">False</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="n">_METADATA_COLUMNS</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">_EXCLUDED</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">_excluded</span>
+        <span class="k">return</span> <span class="n">df</span>
+
     <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">recommended_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_RECOMMENDED</span><span class="p">])</span>
+        <span class="n">measured_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_MEASURED</span><span class="p">])</span>
+        <span class="n">excluded_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_EXCLUDED</span><span class="p">])</span>
+        <span class="n">n_elements</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">)</span>
+        <span class="n">searchspace_fields</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">to_string</span><span class="p">(</span>
+                <span class="s2">&quot;Recommended:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">recommended_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_elements</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">to_string</span><span class="p">(</span>
+                <span class="s2">&quot;Measured:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">measured_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_elements</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">to_string</span><span class="p">(</span>
+                <span class="s2">&quot;Excluded:&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">excluded_count</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_elements</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
         <span class="n">metadata_fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Batches done&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_batches_done</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Fits done&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fits_done</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Discrete Subspace Meta Data&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">searchspace_fields</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="n">metadata</span> <span class="o">=</span> <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Meta Data&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">metadata_fields</span><span class="p">)</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="p">]</span>
@@ -1195,13 +1245,6 @@
                     <span class="sa">f</span><span class="s2">&quot; the provided dataframe.&quot;</span>
                 <span class="p">)</span>
 
-        <span class="c1"># Update meta data</span>
-        <span class="c1"># TODO: refactor responsibilities</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">,</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">mark_as_measured</span><span class="p">(</span>
-                <span class="n">data</span><span class="p">,</span> <span class="n">numerical_measurements_must_be_within_tolerance</span>
-            <span class="p">)</span>
-
         <span class="c1"># Read in measurements and add them to the database</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_batches_done</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">to_insert</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1212,6 +1255,16 @@
             <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="p">,</span> <span class="n">to_insert</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
 
+        <span class="c1"># Update metadata</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">,</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">):</span>
+            <span class="n">idxs_matched</span> <span class="o">=</span> <span class="n">fuzzy_row_match</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span>
+                <span class="n">data</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
+                <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idxs_matched</span><span class="p">,</span> <span class="n">_MEASURED</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
         <span class="c1"># Telemetry</span>
         <span class="n">telemetry_record_value</span><span class="p">(</span><span class="n">TELEM_LABELS</span><span class="p">[</span><span class="s2">&quot;COUNT_ADD_RESULTS&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">(</span>
@@ -1220,6 +1273,68 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
             <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">,</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Campaign.toggle_discrete_candidates">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.toggle_discrete_candidates">[docs]</a>
+    <span class="k">def</span> <span class="nf">toggle_discrete_candidates</span><span class="p">(</span>  <span class="c1"># noqa: DOC501</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">constraints</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">DiscreteConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">complement</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">dry_run</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;In-/exclude certain discrete points in/from the candidate set.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            constraints: A filtering mechanism determining the candidates subset to be</span>
+<span class="sd">                in-/excluded. Can be either a collection of</span>
+<span class="sd">                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.</span>
+<span class="sd">                For the latter, see :func:`~baybe.utils.dataframe.filter_df`</span>
+<span class="sd">                for details.</span>
+<span class="sd">            exclude: If ``True``, the specified candidates are excluded.</span>
+<span class="sd">                If ``False``, the candidates are considered for recommendation.</span>
+<span class="sd">            complement: If ``True``, the filtering mechanism is inverted so that</span>
+<span class="sd">                the complement of the candidate subset specified by the filter is</span>
+<span class="sd">                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.</span>
+<span class="sd">            dry_run: If ``True``, the target subset is only extracted but not</span>
+<span class="sd">                affected. If ``False``, the candidate set is updated correspondingly.</span>
+<span class="sd">                Useful for setting up the correct filtering mechanism.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A new dataframe containing the  discrete candidate set passing through the</span>
+<span class="sd">            specified filter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="c1"># Determine the candidate subset to be toggled</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="n">filter_df</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">complement</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Collection</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_all_instance</span><span class="p">(</span>
+            <span class="n">constraints</span><span class="p">,</span> <span class="n">DiscreteConstraint</span>
+        <span class="p">):</span>
+            <span class="c1"># TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,</span>
+            <span class="c1">#   automatically choosing the appropriate backend (polars/pandas/...)</span>
+
+            <span class="c1"># Filter the search space dataframe according to the given constraint</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_valid</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">constraints</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Determine the candidate subset to be toggled</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span> <span class="k">if</span> <span class="n">complement</span> <span class="k">else</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Candidate toggling is not implemented for the given type of &quot;</span>
+                <span class="s2">&quot;constraint specifications.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">points</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">_EXCLUDED</span><span class="p">]</span> <span class="o">=</span> <span class="n">exclude</span>
+
+        <span class="k">return</span> <span class="n">points</span></div>
 
 
 <div class="viewcode-block" id="Campaign.recommend">
@@ -1262,10 +1377,18 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">n_fits_done</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="o">.</span><span class="n">fillna</span><span class="p">({</span><span class="s2">&quot;FitNr&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fits_done</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+        <span class="c1"># Prepare the search space according to the current campaign state</span>
+        <span class="n">annotated_searchspace</span> <span class="o">=</span> <span class="n">evolve</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+            <span class="n">discrete</span><span class="o">=</span><span class="n">AnnotatedSubspaceDiscrete</span><span class="o">.</span><span class="n">from_subspace</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
         <span class="c1"># Get the recommended search space entries</span>
         <span class="n">rec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span>
             <span class="n">batch_size</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+            <span class="n">annotated_searchspace</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="p">,</span>
             <span class="n">pending_experiments</span><span class="p">,</span>
@@ -1273,6 +1396,10 @@
 
         <span class="c1"># Cache the recommendations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Update metadata</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">,</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">rec</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">_RECOMMENDED</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Telemetry</span>
         <span class="n">telemetry_record_value</span><span class="p">(</span><span class="n">TELEM_LABELS</span><span class="p">[</span><span class="s2">&quot;COUNT_RECOMMEND&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
@@ -1371,7 +1498,7 @@
     <span class="k">return</span> <span class="n">dict_</span>
 
 
-<span class="c1"># Register de-/serialization hooks</span>
+<span class="c1"># Register (un-)structure hooks</span>
 <span class="n">unstructure_hook</span> <span class="o">=</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">make_dict_unstructure_fn</span><span class="p">(</span>
     <span class="n">Campaign</span><span class="p">,</span> <span class="n">converter</span><span class="p">,</span> <span class="n">_cattrs_include_init_false</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>

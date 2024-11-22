@@ -24,6 +24,7 @@ Campaign
       ~Campaign.recommend
       ~Campaign.to_dict
       ~Campaign.to_json
+      ~Campaign.toggle_discrete_candidates
       ~Campaign.validate_config
    
    
