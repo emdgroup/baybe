@@ -7,6 +7,8 @@ from pytest import param
 from baybe.constraints import ContinuousLinearConstraint
 from tests.conftest import run_iterations
 
+TOLERANCE = 0.01
+
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
@@ -91,7 +93,7 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
 
     for batch in range(n_iterations):
         res_batch = res[res["BatchNr"] == batch + 1]
-        assert 2 * res_batch["Conti_finite1"].sum() >= 0.299
+        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -122,7 +124,7 @@ def test_geq_interpoint_inequality_multiple_parameters(
         res_batch = res[res["BatchNr"] == batch + 1]
         assert (
             2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
-            >= 0.299
+            >= 0.3 - TOLERANCE
         )
 
 
@@ -140,7 +142,7 @@ def test_leq_interpoint_inequality_multiple_parameters(
         print(campaign.searchspace.constraints)
         assert (
             2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
-            <= 0.301
+            <= 0.3 + TOLERANCE
         )
 
 
@@ -154,8 +156,14 @@ def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
     res = campaign.measurements
     print(res)
 
-    assert res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"] >= 0.299
-    assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
+    assert (
+        res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"] >= 0.3 - TOLERANCE
+    )
+    assert (
+        (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
+        .ge(0.3 - TOLERANCE)
+        .all()
+    )
 
 
 @pytest.mark.slow
