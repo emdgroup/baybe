@@ -146,7 +146,7 @@ jobs:
           tox -e audit-${{ matrix.py-version.tox }}
 
   coretest:
-    needs: [typecheck, audit]
+    needs: [typecheck]
     strategy:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'} ]
@@ -168,7 +168,7 @@ jobs:
           tox -e coretest-${{ matrix.py-version.tox }}
 
   fulltest:
-    needs: [typecheck, audit]
+    needs: [typecheck]
     strategy:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'}, {semantic: '3.12', tox: 'py312'} ]
