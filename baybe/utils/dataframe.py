@@ -511,7 +511,7 @@ def pretty_print_df(
     df: pd.DataFrame,
     max_rows: int = 6,
     max_columns: int = 4,
-    max_colwidth: int = 16,
+    max_colwidth: int = 14,
     precision: int = 3,
 ) -> str:
     """Convert a dataframe into a pretty/readable format.
