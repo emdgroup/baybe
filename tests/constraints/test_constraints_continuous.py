@@ -156,9 +156,10 @@ def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
     res = campaign.measurements
     print(res)
 
-    assert (
-        res.at[0, "Conti_finite1"] + 3.0 * res.at[1, "Conti_finite1"] >= 0.3 - TOLERANCE
-    )
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
+
     assert (
         (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
         .ge(0.3 - TOLERANCE)
