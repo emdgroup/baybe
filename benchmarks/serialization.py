@@ -33,9 +33,5 @@ class Serializable:
         return converter.unstructure(self)
 
     def to_json(self) -> str:
-        """Create an object's JSON representation.
-
-        Returns:
-            The JSON representation as a string.
-        """
+        """Create an object's JSON representation."""
         return json.dumps(self.to_dict())

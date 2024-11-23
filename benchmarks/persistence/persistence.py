@@ -2,6 +2,8 @@
 
 import json
 import os
+from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Protocol
 
@@ -9,202 +11,222 @@ import boto3
 import boto3.session
 from attr import define, field
 from attrs.validators import instance_of
+from boto3.session import Session
 from git import Repo
+from typing_extensions import override
 
 from benchmarks import Benchmark, Result
 
-MODULE_IS_RUNNING_IN_THE_PIPELINE = "GITHUB_RUN_ID" in os.environ
+PERSIST_DATA_TO_S3_BUCKET = "BAYBE_BENCHMARKING_PERSISTENCE_PATH" in os.environ
 
 
-class PersistenceObjectInterface(Protocol):
-    """Interface for constructing the path of a result object."""
+class PathStrategy(Enum):
+    """The way a path extension is constructed."""
 
-    def get_full_file_path(self) -> str:
-        """Construct the path of a result object.
+    HIERARCHICAL = "HIERARCHICAL"
+    """Hierarchical path construction using folders."""
 
-        Returns:
-            The path of the result object.
-        """
-
-
-class PersistenceHandlingInterface(Protocol):
-    """Interface for persisting experiment results."""
-
-    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
-        """Store a JSON serializable dict according to the path.
-
-        Args:
-            path: The path of the object to be persisted
-            object: The object to be persisted.
-        """
+    FLAT = "FLAT"
+    """Flat path construction using a file name only."""
 
 
 @define
-class S3PersistenceObjectCreator:
-    """Class for creating the path of a result object."""
+class PathConstructor:
+    """A class to construct the hierarchical path of a result object.
 
-    _benchmark: Benchmark = field(validator=instance_of(Benchmark))
-    """The benchmark for which the result is stored."""
+    This class is used to encapsulate the construction of a respective path depending
+    on where the object should be stored. Since different storage backends have
+    different requirements for the path, and some like the used S3 Bucket
+    not even support folders, the path uses its variables to construct the path
+    in the order of the variables with a separator depending on the strategy.
+    For compatibility reasons, the path is sanitized to only contain the following
+    allowed characters:
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
+    """
 
-    _result: Result = field(validator=instance_of(Result))
-    """The result of the benchmark."""
+    benchmark_name: str = field(validator=instance_of(str))
+    """The name of the benchmark for which the path should be constructed."""
 
-    _branch: str = field(validator=instance_of(str), init=False)
-    """The branch of the BayBE library from which the workflow was started."""
+    branch: str = field(validator=instance_of(str), init=False)
+    """The branch currently checked out."""
 
-    _workflow_run_identifier: str = field(validator=instance_of(str), init=False)
-    """The identifier of the workflow run."""
+    latest_baybe_tag: str = field(validator=instance_of(str))
+    """The latest BayBE version tag."""
 
-    @_branch.default
+    execution_date_time: datetime = field(validator=instance_of(datetime))
+    """The date and time when the benchmark was executed."""
+
+    commit_hash: str = field(validator=instance_of(str))
+    """The hash of the commit currently checked out."""
+
+    @branch.default
     def _default_branch(self) -> str:
         repo = Repo(search_parent_directories=True)
         current_branch = repo.active_branch.name
-        S3_PATH_FORBIDDEN_CHARACTERS = ["/", "\\"]
-        sanitized_branch = ""
-        for char in S3_PATH_FORBIDDEN_CHARACTERS:
-            sanitized_branch = current_branch.replace(char, "-")
-        return sanitized_branch
+        return current_branch
 
-    @_workflow_run_identifier.default
-    def _default_workflow_id(self) -> str:
-        """Get the workflow run identifier."""
-        if MODULE_IS_RUNNING_IN_THE_PIPELINE:
-            return os.environ["GITHUB_RUN_ID"]
-        raise ValueError("The environment variable GITHUB_RUN_ID is not set.")
+    def _string_sanitizer(self, string: str) -> str:
+        """Replace disallowed characters for filesystems in the given string."""
+        ALLOWED_CHARS = (
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
+        )
+        return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
-    def get_full_file_path(self) -> str:
+    def get_path(self, strategy: PathStrategy) -> str:
         """Construct the path of a result object.
 
+        Creates the path depending on the chosen strategy by concatenating
+        the experiment identifier, the branch, the BayBE version,
+        the start date (without time information) and the commit hash.
+
+        Args:
+            strategy: The strategy to construct the path.
+
         Returns:
-            The path of the result object.
+            The path to persist the object. Can be a file name or
+            a folder path as a string.
         """
-        experiment_identifier = self._benchmark.name
-        metadata = self._result.metadata
-        file_usable_date = metadata.start_datetime.strftime("%Y-%m-%d")
-        bucket_path_key = (
-            f"{experiment_identifier}/{self._branch}/{metadata.latest_baybe_tag}/"
-            + f"{file_usable_date}/"
-            + f"{metadata.commit_hash}/{self._workflow_run_identifier}/"
-            + "result.json"
-        )
-        return bucket_path_key
+        separator = "/" if strategy is PathStrategy.HIERARCHICAL else "_"
+
+        file_usable_date = self.execution_date_time.strftime("%Y-%m-%d")
+        components = [
+            self.benchmark_name,
+            self.branch,
+            self.latest_baybe_tag,
+            file_usable_date,
+            self.commit_hash,
+        ]
+
+        sanitized_components = [
+            self._string_sanitizer(component) for component in components
+        ]
+        path = separator.join(sanitized_components) + separator + "result.json"
+
+        return path
+
+
+class ObjectWriter(Protocol):
+    """Interface for interacting with storage."""
+
+    def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
+        """Store a JSON serializable dict according to the path.
+
+        If the respective object exists, it will be overwritten.
+
+        Args:
+            object: The object to be persisted.
+            path_constructor: The PathConstructor to create the path for the object.
+        """
 
 
 @define
-class S3PersistenceHandler:
-    """Class for persisting experiment results in an S3 bucket."""
+class S3ObjectWriter(ObjectWriter):
+    """Class for persisting objects in an S3 bucket."""
 
     _bucket_name: str = field(validator=instance_of(str), init=False)
     """The name of the S3 bucket where the results are stored."""
-
-    _object_session = boto3.session.Session()
+    _object_session: Session = field(factory=boto3.session.Session)
     """The boto3 session object. This will load the respective credentials
     from the environment variables within the container."""
 
-    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
+    @_bucket_name.default
+    def _default_bucket_name(self) -> str:
+        """Get the bucket name from the environment variables."""
+        if not PERSIST_DATA_TO_S3_BUCKET:
+            raise ValueError(
+                "No S3 bucket name provided. Please provide the "
+                + "bucket name by setting the environment variable "
+                + "BAYBE_BENCHMARKING_PERSISTENCE_PATH."
+            )
+        return os.environ["BAYBE_BENCHMARKING_PERSISTENCE_PATH"]
+
+    @override
+    def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
         """Store a JSON serializable dict according to the path.
 
         This method will store an JSON serializable dict in an S3 bucket.
-        The S3-key of the Java Script Notation Object will be the experiment identifier,
-        the branch, the BayBE-version, the start datetime, the commit hash and the
-        workflow run identifier.
+        The S3-key of the Java Script Notation Object will be created by
+        the path object. I the key already exists, it will be overwritten.
 
         Args:
-            path: The path of the object to be persisted
             object: The object to be persisted.
+            path_constructor: The PathConstructor to create the path for the object.
+
         """
         client = self._object_session.client("s3")
 
         client.put_object(
             Bucket=self._bucket_name,
-            Key=path.get_full_file_path(),
+            Key=path_constructor.get_path(strategy=PathStrategy.HIERARCHICAL),
             Body=json.dumps(object),
             ContentType="application/json",
         )
 
 
 @define
-class LocalFileSystemObjectCreator:
-    """Class for creating the path of a result object."""
+class LocalFileSystemObjectWriter(ObjectWriter):
+    """Class for persisting JSON serializable dicts locally."""
 
-    _benchmark: Benchmark = field(validator=instance_of(Benchmark))
-    """The benchmark for which the result is stored."""
+    folder_path_prefix: Path = field(validator=instance_of(Path), default=Path("."))
+    """The prefix of the folder path where the results are stored.
+    The filename will be created automatically and create or override the
+    file under this path. The file path must exist."""
 
-    _result: Result = field(validator=instance_of(Result))
-    """The result of the benchmark."""
-
-    _path: str = field(validator=instance_of(str))
-    """The path where the result is stored."""
-
-    _filename: str = field(validator=instance_of(str))
-    """The filename of the result object."""
-
-    @_path.default
-    def _default_bucket_name(self) -> str:
-        ENVIRONMENT_NOT_SET = "BAYBE_BENCHMARK_PERSISTENCE_PATH" not in os.environ
-        if ENVIRONMENT_NOT_SET:
-            return "./"
-        return os.environ["BAYBE_BENCHMARK_PERSISTENCE_PATH"]
-
-    @_filename.default
-    def _default_filename(self) -> str:
-        experiment_identifier = self._benchmark.name
-        metadata = self._result.metadata
-        file_usable_date = metadata.start_datetime.strftime("%Y-%m-%d")
-        return (
-            f"{experiment_identifier}_{metadata.latest_baybe_tag}"
-            + f"_{file_usable_date}_{metadata.commit_hash}.json"
-        )
-
-    def get_full_file_path(self) -> str:
-        """Construct the path of a result object.
-
-        Returns:
-            The path of the result object.
-        """
-        return Path(f"{self._path}/{self._filename}").resolve().as_posix()
-
-
-@define
-class LocalFileSystemPersistenceHandler:
-    """Class for persisting experiment results in an S3 bucket."""
-
-    def write_object(self, path: PersistenceObjectInterface, object: dict) -> None:
+    @override
+    def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
         """Store a JSON serializable dict according to the path.
 
         This method will store an JSON serializable dict in a local file system.
+        If the respective file exists, it will be overwritten.
 
         Args:
-            path: The path of the object to be persisted
             object: The object to be persisted.
+            path_constructor: The PathConstructor to create the path for the object.
+
+
+        Raises:
+            FileNotFoundError: If the folder path prefix does not exist.
         """
-        with open(path.get_full_file_path(), "w") as file:
+        if not self.folder_path_prefix.exists():
+            raise FileNotFoundError(
+                f"The folder path {self.folder_path_prefix.resolve()} does not exist."
+            )
+        path_object = self.folder_path_prefix.joinpath(
+            Path(path_constructor.get_path(strategy=PathStrategy.FLAT))
+        )
+        with open(path_object.resolve(), "w") as file:
             json.dump(object, file)
 
 
-def persister_factory() -> PersistenceHandlingInterface:
+def make_object_writer() -> ObjectWriter:
     """Create a persistence handler based on the environment variables.
 
     Returns:
         The persistence handler.
     """
-    if MODULE_IS_RUNNING_IN_THE_PIPELINE:
-        return S3PersistenceHandler()
-    return LocalFileSystemPersistenceHandler()
+    if PERSIST_DATA_TO_S3_BUCKET:
+        return S3ObjectWriter()
+    return LocalFileSystemObjectWriter()
 
 
-def persistence_object_factory(
-    benchmark: Benchmark, result: Result
-) -> PersistenceObjectInterface:
-    """Create a persistence object.
+def make_path_constructor(benchmark: Benchmark, result: Result) -> PathConstructor:
+    """Create a PathConstructor.
 
     Args:
         benchmark: The benchmark for which the result is stored.
         result: The result of the benchmark.
 
     Returns:
-        The persistence object.
+        The persistence path builder.
     """
-    if MODULE_IS_RUNNING_IN_THE_PIPELINE:
-        return S3PersistenceObjectCreator(benchmark, result)
-    return LocalFileSystemObjectCreator(benchmark, result)
+    benchmark_name = benchmark.name
+    start_datetime = result.metadata.start_datetime
+    commit_hash = result.metadata.commit_hash
+    latest_baybe_tag = result.metadata.latest_baybe_tag
+
+    return PathConstructor(
+        benchmark_name=benchmark_name,
+        latest_baybe_tag=latest_baybe_tag,
+        commit_hash=commit_hash,
+        execution_date_time=start_datetime,
+    )

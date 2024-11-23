@@ -42,7 +42,7 @@ jobs:
     needs: add-runner
     runs-on: self-hosted
     env:
-      BAYBE_PERFORMANCE_PERSISTANCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
+      BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
     steps:
       - uses: actions/checkout@v4
         with:
