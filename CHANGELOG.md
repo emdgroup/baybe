@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wrong number of recommendations being returned
 - `ContinuousConstraint`s can now be used in single point precision
 - Search spaces are now stateless, preventing unintended side effects that could lead to
-  incorrect candidate sets when reused in different optimization contexts 
+  incorrect candidate sets when reused in different optimization contexts
+- `qNIPV` not working with single `MIN` targets
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
