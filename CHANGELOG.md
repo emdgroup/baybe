@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `benchmarks` subpackage for defining and running performance tests
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
+- Persistence capability for Benchmarking Results on a AWS S3 bucket from a manual pipeline run
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
