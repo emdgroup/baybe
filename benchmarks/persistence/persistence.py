@@ -17,7 +17,8 @@ from typing_extensions import override
 
 from benchmarks import Benchmark, Result
 
-PERSIST_DATA_TO_S3_BUCKET = "BAYBE_BENCHMARKING_PERSISTENCE_PATH" in os.environ
+VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
+PERSIST_DATA_TO_S3_BUCKET = VARNAME_BENCHMARKING_PERSISTENCE_PATH in os.environ
 
 
 class PathStrategy(Enum):
@@ -135,11 +136,11 @@ class S3ObjectWriter(ObjectWriter):
         """Get the bucket name from the environment variables."""
         if not PERSIST_DATA_TO_S3_BUCKET:
             raise ValueError(
-                "No S3 bucket name provided. Please provide the "
-                + "bucket name by setting the environment variable "
-                + "BAYBE_BENCHMARKING_PERSISTENCE_PATH."
+                f"No S3 bucket name provided. Please provide the "
+                f"bucket name by setting the environment variable "
+                f"'{VARNAME_BENCHMARKING_PERSISTENCE_PATH}'."
             )
-        return os.environ["BAYBE_BENCHMARKING_PERSISTENCE_PATH"]
+        return os.environ[VARNAME_BENCHMARKING_PERSISTENCE_PATH]
 
     @override
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
