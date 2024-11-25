@@ -31,7 +31,7 @@ jobs:
 
       - name: Execute Lambda function
         run: |
-          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "L", "repository": "${{ github.repository }}" }'  response.json
+          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "XL", "repository": "${{ github.repository }}" }'  response.json
           cat response.json
           if ! grep -q '"statusCode": 200' response.json; then
             echo "Lambda function failed. statusCode is not 200."
