@@ -7,11 +7,11 @@ from attrs.validators import instance_of
 from pandas import DataFrame
 
 from benchmarks.result import ResultMetadata
-from benchmarks.serialization import Serializable
+from benchmarks.serialization import BenchmarkSerialization
 
 
 @define(frozen=True)
-class Result(Serializable):
+class Result(BenchmarkSerialization):
     """A single result of the benchmarking."""
 
     benchmark_identifier: str = field(validator=instance_of(str))

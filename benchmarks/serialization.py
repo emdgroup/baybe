@@ -25,7 +25,7 @@ converter.register_structure_hook(
 )
 
 
-class Serializable:
+class BenchmarkSerialization:
     """Mixin class providing serialization methods."""
 
     def to_dict(self) -> dict[str, Any]:

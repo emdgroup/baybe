@@ -7,11 +7,11 @@ from attrs import define, field
 from attrs.validators import instance_of
 from cattrs.gen import make_dict_unstructure_fn
 
-from benchmarks.serialization import Serializable, converter
+from benchmarks.serialization import BenchmarkSerialization, converter
 
 
 @define(frozen=True)
-class ResultMetadata(Serializable):
+class ResultMetadata(BenchmarkSerialization):
     """The metadata of a benchmark result."""
 
     start_datetime: datetime = field(validator=instance_of(datetime))

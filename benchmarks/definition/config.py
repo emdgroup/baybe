@@ -13,11 +13,11 @@ from pandas import DataFrame
 
 from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
-from benchmarks.serialization import Serializable, converter
+from benchmarks.serialization import BenchmarkSerialization, converter
 
 
 @define(frozen=True)
-class BenchmarkSettings(ABC, Serializable):
+class BenchmarkSettings(ABC, BenchmarkSerialization):
     """Benchmark configuration for recommender analyses."""
 
     random_seed: int = field(validator=instance_of(int), kw_only=True, default=1337)
@@ -42,7 +42,7 @@ class ConvergenceExperimentSettings(BenchmarkSettings):
 
 
 @define(frozen=True)
-class Benchmark(Generic[BenchmarkSettingsType], Serializable):
+class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     """The base class for a benchmark executable."""
 
     settings: BenchmarkSettingsType = field()

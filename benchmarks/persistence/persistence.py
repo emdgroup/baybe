@@ -20,6 +20,9 @@ from benchmarks import Benchmark, Result
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
 PERSIST_DATA_TO_S3_BUCKET = VARNAME_BENCHMARKING_PERSISTENCE_PATH in os.environ
 
+VARNAME_GITHUB_CI = "CI"
+RUNS_ON_GITHUB_CI = VARNAME_GITHUB_CI in os.environ
+
 
 class PathStrategy(Enum):
     """The way a path extension is constructed."""
@@ -106,7 +109,7 @@ class PathConstructor:
         return Path(path)
 
 
-class ObjectWriter(Protocol):
+class ObjectStorage(Protocol):
     """Interface for interacting with storage."""
 
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
@@ -121,7 +124,7 @@ class ObjectWriter(Protocol):
 
 
 @define
-class S3ObjectWriter(ObjectWriter):
+class S3ObjectStorage(ObjectStorage):
     """Class for persisting objects in an S3 bucket."""
 
     _bucket_name: str = field(validator=instance_of(str), init=False)
@@ -168,7 +171,7 @@ class S3ObjectWriter(ObjectWriter):
 
 
 @define
-class LocalFileSystemObjectWriter(ObjectWriter):
+class LocalFileSystemObjectStorage(ObjectStorage):
     """Class for persisting JSON serializable dicts locally."""
 
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
@@ -202,15 +205,15 @@ class LocalFileSystemObjectWriter(ObjectWriter):
             json.dump(object, file)
 
 
-def make_object_writer() -> ObjectWriter:
+def make_object_writer() -> ObjectStorage:
     """Create a persistence handler based on the environment variables.
 
     Returns:
         The persistence handler.
     """
-    if PERSIST_DATA_TO_S3_BUCKET:
-        return S3ObjectWriter()
-    return LocalFileSystemObjectWriter()
+    if not RUNS_ON_GITHUB_CI:
+        return LocalFileSystemObjectStorage()
+    return S3ObjectStorage()
 
 
 def make_path_constructor(benchmark: Benchmark, result: Result) -> PathConstructor:
