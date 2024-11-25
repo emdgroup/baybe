@@ -116,7 +116,7 @@ class ObjectWriter(Protocol):
 
         Args:
             object: The object to be persisted.
-            path_constructor: The PathConstructor to create the path for the object.
+            path_constructor: The path constructor creating the path for the object.
         """
 
 
@@ -152,7 +152,7 @@ class S3ObjectWriter(ObjectWriter):
 
         Args:
             object: The object to be persisted.
-            path_constructor: The PathConstructor to create the path for the object.
+            path_constructor: The path constructor creating the path for the object.
 
         """
         client = self._object_session.client("s3")
@@ -185,7 +185,7 @@ class LocalFileSystemObjectWriter(ObjectWriter):
 
         Args:
             object: The object to be persisted.
-            path_constructor: The PathConstructor to create the path for the object.
+            path_constructor: The path constructor creating the path for the object.
 
 
         Raises:
@@ -214,14 +214,14 @@ def make_object_writer() -> ObjectWriter:
 
 
 def make_path_constructor(benchmark: Benchmark, result: Result) -> PathConstructor:
-    """Create a PathConstructor.
+    """Create a path constructor.
 
     Args:
         benchmark: The benchmark for which the result is stored.
         result: The result of the benchmark.
 
     Returns:
-        The persistence path builder.
+        The persistence path constructor.
     """
     benchmark_name = benchmark.name
     start_datetime = result.metadata.start_datetime
