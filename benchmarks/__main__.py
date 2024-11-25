@@ -10,8 +10,7 @@ from benchmarks.persistence import (
     S3ObjectStorage,
 )
 
-VARNAME_GITHUB_CI = "CI"
-RUNS_ON_GITHUB_CI = VARNAME_GITHUB_CI in os.environ
+RUNS_IN_CI = "CI" in os.environ
 
 
 def main():
@@ -21,11 +20,7 @@ def main():
         path_constructor = PathConstructor.from_benchmark_and_result(benchmark, result)
         persist_dict = benchmark.to_dict() | result.to_dict()
 
-        if not RUNS_ON_GITHUB_CI:
-            object_storage = LocalFileObjectStorage()
-        else:
-            object_storage = S3ObjectStorage()
-
+        object_storage = S3ObjectStorage() if RUNS_IN_CI else LocalFileObjectStorage()
         object_storage.write_json(persist_dict, path_constructor)
 
 
