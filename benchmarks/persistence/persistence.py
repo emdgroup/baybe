@@ -37,7 +37,7 @@ class PathConstructor:
     This class is used to encapsulate the construction of a respective path depending
     on where the object should be stored. Since different storage backends have
     different requirements for the path, and some like the used S3 Bucket
-    not even support folders, the path uses its variables to construct the path
+    do not support folders, the path uses its variables to construct the path
     in the order of the variables with a separator depending on the strategy.
     For compatibility reasons, the path is sanitized to only contain the following
     allowed characters:
