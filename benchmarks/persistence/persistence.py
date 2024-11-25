@@ -72,7 +72,7 @@ class PathConstructor:
         )
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
-    def get_path(self, strategy: PathStrategy) -> str:
+    def get_path(self, strategy: PathStrategy) -> Path:
         """Construct the path of a result object.
 
         Creates the path depending on the chosen strategy by concatenating
@@ -102,7 +102,7 @@ class PathConstructor:
         ]
         path = separator.join(sanitized_components) + separator + "result.json"
 
-        return path
+        return Path(path)
 
 
 class ObjectWriter(Protocol):
@@ -125,6 +125,7 @@ class S3ObjectWriter(ObjectWriter):
 
     _bucket_name: str = field(validator=instance_of(str), init=False)
     """The name of the S3 bucket where the results are stored."""
+
     _object_session: Session = field(factory=boto3.session.Session)
     """The boto3 session object. This will load the respective credentials
     from the environment variables within the container."""
@@ -155,9 +156,11 @@ class S3ObjectWriter(ObjectWriter):
         """
         client = self._object_session.client("s3")
 
+        key = path_constructor.get_path(strategy=PathStrategy.HIERARCHICAL)
+
         client.put_object(
             Bucket=self._bucket_name,
-            Key=path_constructor.get_path(strategy=PathStrategy.HIERARCHICAL),
+            Key=key.as_posix(),
             Body=json.dumps(object),
             ContentType="application/json",
         )
@@ -192,7 +195,7 @@ class LocalFileSystemObjectWriter(ObjectWriter):
                 f"The folder path {self.folder_path_prefix.resolve()} does not exist."
             )
         path_object = self.folder_path_prefix.joinpath(
-            Path(path_constructor.get_path(strategy=PathStrategy.FLAT))
+            path_constructor.get_path(strategy=PathStrategy.FLAT)
         )
         with open(path_object.resolve(), "w") as file:
             json.dump(object, file)
