@@ -20,9 +20,6 @@ from benchmarks import Benchmark, Result
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
 PERSIST_DATA_TO_S3_BUCKET = VARNAME_BENCHMARKING_PERSISTENCE_PATH in os.environ
 
-VARNAME_GITHUB_CI = "CI"
-RUNS_ON_GITHUB_CI = VARNAME_GITHUB_CI in os.environ
-
 
 class PathStrategy(Enum):
     """The way a path extension is constructed."""
@@ -75,6 +72,31 @@ class PathConstructor:
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
         )
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
+
+    @classmethod
+    def from_benchmark_and_result(
+        cls: "PathConstructor", benchmark: Benchmark, result: Result
+    ) -> "PathConstructor":
+        """Create a path constructor from benchmark and result.
+
+        Args:
+            benchmark: The benchmark for which the result is stored.
+            result: The result of the benchmark.
+
+        Returns:
+            The persistence path constructor.
+        """
+        benchmark_name = benchmark.name
+        start_datetime = result.metadata.start_datetime
+        commit_hash = result.metadata.commit_hash
+        latest_baybe_tag = result.metadata.latest_baybe_tag
+
+        return PathConstructor(
+            benchmark_name=benchmark_name,
+            latest_baybe_tag=latest_baybe_tag,
+            commit_hash=commit_hash,
+            execution_date_time=start_datetime,
+        )
 
     def get_path(self, strategy: PathStrategy) -> Path:
         """Construct the path of a result object.
@@ -171,7 +193,7 @@ class S3ObjectStorage(ObjectStorage):
 
 
 @define
-class LocalFileSystemObjectStorage(ObjectStorage):
+class LocalFileObjectStorage(ObjectStorage):
     """Class for persisting JSON serializable dicts locally."""
 
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
@@ -203,37 +225,3 @@ class LocalFileSystemObjectStorage(ObjectStorage):
         )
         with open(path_object.resolve(), "w") as file:
             json.dump(object, file)
-
-
-def make_object_writer() -> ObjectStorage:
-    """Create a persistence handler based on the environment variables.
-
-    Returns:
-        The persistence handler.
-    """
-    if not RUNS_ON_GITHUB_CI:
-        return LocalFileSystemObjectStorage()
-    return S3ObjectStorage()
-
-
-def make_path_constructor(benchmark: Benchmark, result: Result) -> PathConstructor:
-    """Create a path constructor.
-
-    Args:
-        benchmark: The benchmark for which the result is stored.
-        result: The result of the benchmark.
-
-    Returns:
-        The persistence path constructor.
-    """
-    benchmark_name = benchmark.name
-    start_datetime = result.metadata.start_datetime
-    commit_hash = result.metadata.commit_hash
-    latest_baybe_tag = result.metadata.latest_baybe_tag
-
-    return PathConstructor(
-        benchmark_name=benchmark_name,
-        latest_baybe_tag=latest_baybe_tag,
-        commit_hash=commit_hash,
-        execution_date_time=start_datetime,
-    )
