@@ -20,11 +20,10 @@ from typing_extensions import override
 from benchmarks import Benchmark, Result
 
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
-PERSIST_DATA_TO_S3_BUCKET = VARNAME_BENCHMARKING_PERSISTENCE_PATH in os.environ
 
 
 class PathStrategy(Enum):
-    """The way a path extension is constructed."""
+    """Specifies the way a file path is constructed."""
 
     HIERARCHICAL = "HIERARCHICAL"
     """Hierarchical path construction using folders."""
@@ -35,16 +34,17 @@ class PathStrategy(Enum):
 
 @define
 class PathConstructor:
-    """A class to construct the hierarchical path of a result object.
+    """A class to construct the file path of a result object.
 
-    This class is used to encapsulate the construction of a respective path depending
+    The class encapsulates the construction of a file path depending
     on where the object should be stored. Since different storage backends have
-    different requirements for the path, and some like the used S3 Bucket
+    different requirements for the path, and some like the used S3 bucket
     do not support folders, the path uses its variables to construct the path
     in the order of the variables with a separator depending on the strategy.
-    For compatibility reasons, the path is sanitized to only contain the following
+
+    For compatibility reasons, the path is sanitized to contain only the following
     allowed characters:
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
     """
 
     benchmark_name: str = field(validator=instance_of(str))
@@ -68,7 +68,7 @@ class PathConstructor:
         current_branch = repo.active_branch.name
         return current_branch
 
-    def _string_sanitizer(self, string: str) -> str:
+    def _sanitize_string(self, string: str) -> str:
         """Replace disallowed characters for filesystems in the given string."""
         ALLOWED_CHARS = (
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
@@ -82,11 +82,11 @@ class PathConstructor:
         """Create a path constructor from benchmark and result.
 
         Args:
-            benchmark: The benchmark for which the result is stored.
+            benchmark: The benchmark for which the result is to be stored.
             result: The result of the benchmark.
 
         Returns:
-            The persistence path constructor.
+            The path constructor.
         """
         benchmark_name = benchmark.name
         start_datetime = result.metadata.start_datetime
@@ -126,7 +126,7 @@ class PathConstructor:
         ]
 
         sanitized_components = [
-            self._string_sanitizer(component) for component in components
+            self._sanitize_string(component) for component in components
         ]
         path = separator.join(sanitized_components) + separator + "result.json"
 
@@ -137,7 +137,7 @@ class ObjectStorage(Protocol):
     """Interface for interacting with storage."""
 
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
-        """Store a JSON serializable dict according to the path.
+        """Store a JSON serializable dictionary according to the path.
 
         If the respective object exists, it will be overwritten.
 
@@ -152,16 +152,16 @@ class S3ObjectStorage(ObjectStorage):
     """Class for persisting objects in an S3 bucket."""
 
     _bucket_name: str = field(validator=instance_of(str), init=False)
-    """The name of the S3 bucket where the results are stored."""
+    """The name of the S3 bucket where the objects are stored."""
 
     _object_session: Session = field(factory=boto3.session.Session)
-    """The boto3 session object. This will load the respective credentials
-    from the environment variables within the container."""
+    """The boto3 session object. Loads the required credentials
+    from environment variables."""
 
     @_bucket_name.default
     def _default_bucket_name(self) -> str:
         """Get the bucket name from the environment variables."""
-        if not PERSIST_DATA_TO_S3_BUCKET:
+        if VARNAME_BENCHMARKING_PERSISTENCE_PATH not in os.environ:
             raise ValueError(
                 f"No S3 bucket name provided. Please provide the "
                 f"bucket name by setting the environment variable "
@@ -171,11 +171,10 @@ class S3ObjectStorage(ObjectStorage):
 
     @override
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
-        """Store a JSON serializable dict according to the path.
+        """Store a JSON serializable dictionary in an S3 bucket.
 
-        This method will store an JSON serializable dict in an S3 bucket.
-        The S3-key of the Java Script Notation Object will be created by
-        the path object. I the key already exists, it will be overwritten.
+        The S3-key of the Java Script Notation Object is created from
+        the path object. If the key already exists, it will be overwritten.
 
         Args:
             object: The object to be persisted.
@@ -196,18 +195,15 @@ class S3ObjectStorage(ObjectStorage):
 
 @define
 class LocalFileObjectStorage(ObjectStorage):
-    """Class for persisting JSON serializable dicts locally."""
+    """Class for persisting objects locally."""
 
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
-    """The prefix of the folder path where the results are stored.
-    The filename will be created automatically and create or override the
-    file under this path. The file path must exist."""
+    """The prefix of the folder path where the results are stored."""
 
     @override
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
-        """Store a JSON serializable dict according to the path.
+        """Store a JSON serializable dictionary in the local file system.
 
-        This method will store an JSON serializable dict in a local file system.
         If the respective file exists, it will be overwritten.
 
         Args:
@@ -220,7 +216,7 @@ class LocalFileObjectStorage(ObjectStorage):
         """
         if not self.folder_path_prefix.exists():
             raise FileNotFoundError(
-                f"The folder path {self.folder_path_prefix.resolve()} does not exist."
+                f"The folder path '{self.folder_path_prefix.resolve()}' does not exist."
             )
         path_object = self.folder_path_prefix.joinpath(
             path_constructor.get_path(strategy=PathStrategy.FLAT)
