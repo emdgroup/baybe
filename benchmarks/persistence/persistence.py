@@ -170,7 +170,7 @@ class S3ObjectWriter(ObjectWriter):
 class LocalFileSystemObjectWriter(ObjectWriter):
     """Class for persisting JSON serializable dicts locally."""
 
-    folder_path_prefix: Path = field(validator=instance_of(Path), default=Path("."))
+    folder_path_prefix: Path = field(converter=Path, default=Path("."))
     """The prefix of the folder path where the results are stored.
     The filename will be created automatically and create or override the
     file under this path. The file path must exist."""
