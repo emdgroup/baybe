@@ -1,5 +1,7 @@
 """Classes for persisting benchmark results."""
 
+from __future__ import annotations
+
 import json
 import os
 from datetime import datetime
@@ -75,8 +77,8 @@ class PathConstructor:
 
     @classmethod
     def from_benchmark_and_result(
-        cls: "PathConstructor", benchmark: Benchmark, result: Result
-    ) -> "PathConstructor":
+        cls, benchmark: Benchmark, result: Result
+    ) -> PathConstructor:
         """Create a path constructor from benchmark and result.
 
         Args:
