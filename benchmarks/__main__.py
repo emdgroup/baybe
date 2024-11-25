@@ -17,7 +17,7 @@ def main():
     """Run all benchmarks."""
     for benchmark in BENCHMARKS:
         result = benchmark()
-        path_constructor = PathConstructor.from_benchmark_and_result(benchmark, result)
+        path_constructor = PathConstructor.from_result(result)
         persist_dict = benchmark.to_dict() | result.to_dict()
 
         object_storage = S3ObjectStorage() if RUNS_IN_CI else LocalFileObjectStorage()

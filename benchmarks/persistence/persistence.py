@@ -14,10 +14,9 @@ import boto3.session
 from attr import define, field
 from attrs.validators import instance_of
 from boto3.session import Session
-from git import Repo
 from typing_extensions import override
 
-from benchmarks import Benchmark, Result
+from benchmarks import Result
 
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
 
@@ -39,34 +38,27 @@ class PathConstructor:
     The class encapsulates the construction of a file path depending
     on where the object should be stored. Since different storage backends have
     different requirements for the path, and some like the used S3 bucket
-    do not support folders, the path uses its variables to construct the path
-    in the order of the variables with a separator depending on the strategy.
+    do not support folders, this class uses its variables
+    to construct a `Path` object depending on the strategy.
 
-    For compatibility reasons, the path is sanitized to contain only the following
-    allowed characters:
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
+    For compatibility reasons, the path is sanitized to contain only
+    lower and upper case letters, digits as well as the symbols '.' and '-'"
     """
 
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark for which the path should be constructed."""
 
-    branch: str = field(validator=instance_of(str), init=False)
-    """The branch currently checked out."""
+    branch: str = field(validator=instance_of(str))
+    """The branch checked out at benchmark execution time."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
-    """The latest BayBE version tag."""
+    """The latest BayBE version tag existing at benchmark execution time."""
 
     execution_date_time: datetime = field(validator=instance_of(datetime))
     """The date and time when the benchmark was executed."""
 
     commit_hash: str = field(validator=instance_of(str))
-    """The hash of the commit currently checked out."""
-
-    @branch.default
-    def _default_branch(self) -> str:
-        repo = Repo(search_parent_directories=True)
-        current_branch = repo.active_branch.name
-        return current_branch
+    """The hash of the commit checked out at benchmark execution time."""
 
     def _sanitize_string(self, string: str) -> str:
         """Replace disallowed characters for filesystems in the given string."""
@@ -76,28 +68,27 @@ class PathConstructor:
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
     @classmethod
-    def from_benchmark_and_result(
-        cls, benchmark: Benchmark, result: Result
-    ) -> PathConstructor:
-        """Create a path constructor from benchmark and result.
+    def from_result(cls, result: Result) -> PathConstructor:
+        """Create a path constructor from result.
 
         Args:
-            benchmark: The benchmark for which the result is to be stored.
             result: The result of the benchmark.
 
         Returns:
             The path constructor.
         """
-        benchmark_name = benchmark.name
+        benchmark_name = result.benchmark_identifier
         start_datetime = result.metadata.start_datetime
         commit_hash = result.metadata.commit_hash
         latest_baybe_tag = result.metadata.latest_baybe_tag
+        branch = result.metadata.branch
 
         return PathConstructor(
             benchmark_name=benchmark_name,
             latest_baybe_tag=latest_baybe_tag,
             commit_hash=commit_hash,
             execution_date_time=start_datetime,
+            branch=branch,
         )
 
     def get_path(self, strategy: PathStrategy) -> Path:
@@ -137,7 +128,7 @@ class ObjectStorage(Protocol):
     """Interface for interacting with storage."""
 
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
-        """Store a JSON serializable dictionary according to the path.
+        """Store a JSON serializable dictionary according to the path_constructor.
 
         If the respective object exists, it will be overwritten.
 
@@ -173,13 +164,12 @@ class S3ObjectStorage(ObjectStorage):
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
         """Store a JSON serializable dictionary in an S3 bucket.
 
-        The S3-key of the Java Script Notation Object is created from
-        the path object. If the key already exists, it will be overwritten.
+        The S3-key of the JSON is created from
+        the path_constructor. If the key already exists, it will be overwritten.
 
         Args:
             object: The object to be persisted.
             path_constructor: The path constructor creating the path for the object.
-
         """
         client = self._object_session.client("s3")
 
@@ -200,6 +190,14 @@ class LocalFileObjectStorage(ObjectStorage):
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
     """The prefix of the folder path where the results are stored."""
 
+    @folder_path_prefix.validator
+    def _folder_path_prefix_validator(self, _, folder_path_prefix: Path) -> None:
+        """Validate the existence of the path."""
+        if not folder_path_prefix.exists():
+            raise FileNotFoundError(
+                f"The folder path '{folder_path_prefix.resolve()}' does not exist."
+            )
+
     @override
     def write_json(self, object: dict, path_constructor: PathConstructor) -> None:
         """Store a JSON serializable dictionary in the local file system.
@@ -209,15 +207,7 @@ class LocalFileObjectStorage(ObjectStorage):
         Args:
             object: The object to be persisted.
             path_constructor: The path constructor creating the path for the object.
-
-
-        Raises:
-            FileNotFoundError: If the folder path prefix does not exist.
         """
-        if not self.folder_path_prefix.exists():
-            raise FileNotFoundError(
-                f"The folder path '{self.folder_path_prefix.resolve()}' does not exist."
-            )
         path_object = self.folder_path_prefix.joinpath(
             path_constructor.get_path(strategy=PathStrategy.FLAT)
         )
