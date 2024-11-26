@@ -52,10 +52,10 @@ def telemetry_record_value(instrument_name: str, value: int | float) -> None:
         instrument_name: The label under which this statistic is logged.
         value: The value of the statistic to be logged.
     """
-    from baybe.telemetry._telemetry import _submit_scalar_value
-
     if is_enabled():
-        _submit_scalar_value(instrument_name, value)
+        from baybe.telemetry._telemetry import transmission_queue
+
+        transmission_queue.put((instrument_name, value))
 
 
 def telemetry_record_recommended_measurement_percentage(
@@ -85,9 +85,9 @@ def telemetry_record_recommended_measurement_percentage(
             a match within the parameter tolerance. If ``False``, the closest match
             is considered, irrespective of the distance.
     """
-    from baybe.telemetry._telemetry import _submit_scalar_value
-
     if is_enabled():
+        from baybe.telemetry._telemetry import transmission_queue
+
         if len(cached_recommendation) > 0:
             recommended_measurements_percentage = (
                 len(
@@ -101,12 +101,11 @@ def telemetry_record_recommended_measurement_percentage(
                 / len(cached_recommendation)
                 * 100.0
             )
-            _submit_scalar_value(
-                TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
-                recommended_measurements_percentage,
+            transmission_queue.put(
+                (
+                    TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
+                    recommended_measurements_percentage,
+                )
             )
         else:
-            _submit_scalar_value(
-                TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"],
-                1,
-            )
+            transmission_queue.put((TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"], 1))

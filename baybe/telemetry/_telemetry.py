@@ -7,6 +7,7 @@ import hashlib
 import os
 import socket
 import warnings
+from queue import Queue
 from typing import TYPE_CHECKING, Any
 
 from attrs import define, field, fields
@@ -122,7 +123,28 @@ class TelemetryTools:
         self._is_initialized = True
 
 
+class CloseableQueue(Queue):
+    """A queue that can be shut down, ignoring incoming items thereafter."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._closed = False
+
+    def close(self):
+        """Remove all queue elements and prevent new ones from being added."""
+        with self.mutex:
+            self._closed = True
+            self.queue.clear()
+
+    @override
+    def put(self, item, block=True, timeout=None):
+        if self._closed:
+            return
+        super().put(item, block, timeout)
+
+
 tools = TelemetryTools()
+transmission_queue = CloseableQueue()
 
 # Attempt telemetry initialization
 if is_enabled():
@@ -149,7 +171,7 @@ if is_enabled():
                 f"{type(ex).__name__}, {ex}",
                 UserWarning,
             )
-        os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
+        transmission_queue.close()
 else:
     pass
 
