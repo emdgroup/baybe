@@ -40,6 +40,23 @@ DEFAULT_TELEMETRY_VPN_CHECK = "true"
 DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
 
 
+try:
+    DEFAULT_TELEMETRY_USERNAME = (
+        hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
+    )
+except ModuleNotFoundError:
+    # `getpass.getuser()`` does not work on Windows if all the environment variables
+    # it checks are empty. Since there is no way of inferring the username in this case,
+    # we use a fallback.
+    DEFAULT_TELEMETRY_USERNAME = "UNKNOWN"
+
+DEFAULT_TELEMETRY_HOSTNAME = (
+    hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
+)
+
+ENDPOINT_URL = os.environ.get(VARNAME_TELEMETRY_ENDPOINT, DEFAULT_TELEMETRY_ENDPOINT)
+
+
 @define
 class TelemetryTools:
     _is_initialized: bool = False
@@ -91,7 +108,7 @@ class TelemetryTools:
         )
         self.reader = PeriodicExportingMetricReader(
             exporter=OTLPMetricExporter(
-                endpoint=_endpoint_url,
+                endpoint=ENDPOINT_URL,
                 insecure=True,
             )
         )
@@ -109,25 +126,6 @@ tools = TelemetryTools()
 
 # Attempt telemetry initialization
 if is_enabled():
-    # Assign default user and machine name
-    try:
-        DEFAULT_TELEMETRY_USERNAME = (
-            hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
-        )
-    except ModuleNotFoundError:
-        # getpass.getuser() does not work on Windows if all the environment variables
-        # it checks are empty. Since then there is no way of inferring the username, we
-        # use UNKNOWN as fallback.
-        DEFAULT_TELEMETRY_USERNAME = "UNKNOWN"
-
-    DEFAULT_TELEMETRY_HOSTNAME = (
-        hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
-    )
-
-    _endpoint_url = os.environ.get(
-        VARNAME_TELEMETRY_ENDPOINT, DEFAULT_TELEMETRY_ENDPOINT
-    )
-
     # Test endpoint URL
     try:
         # Send a test request. If there is no internet connection or a firewall is
@@ -146,15 +144,14 @@ if is_enabled():
             # This warning is only printed for developers to make them aware of
             # potential issues
             warnings.warn(
-                f"WARNING: BayBE Telemetry endpoint {_endpoint_url} cannot be reached. "
+                f"WARNING: BayBE Telemetry endpoint {ENDPOINT_URL} cannot be reached. "
                 "Disabling telemetry. The exception encountered was: "
                 f"{type(ex).__name__}, {ex}",
                 UserWarning,
             )
         os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 else:
-    DEFAULT_TELEMETRY_USERNAME = "UNKNOWN"
-    DEFAULT_TELEMETRY_HOSTNAME = "UNKNOWN"
+    pass
 
 
 def get_user_details() -> dict[str, str]:
