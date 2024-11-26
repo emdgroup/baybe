@@ -39,8 +39,6 @@ DEFAULT_TELEMETRY_ENDPOINT = (
 )
 DEFAULT_TELEMETRY_VPN_CHECK = "true"
 DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
-
-
 try:
     DEFAULT_TELEMETRY_USERNAME = (
         hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
@@ -50,12 +48,15 @@ except ModuleNotFoundError:
     # it checks are empty. Since there is no way of inferring the username in this case,
     # we use a fallback.
     DEFAULT_TELEMETRY_USERNAME = "UNKNOWN"
-
 DEFAULT_TELEMETRY_HOSTNAME = (
     hashlib.sha256(socket.gethostname().encode()).hexdigest().upper()[:10]
 )
 
+# Derived constants
 ENDPOINT_URL = os.environ.get(VARNAME_TELEMETRY_ENDPOINT, DEFAULT_TELEMETRY_ENDPOINT)
+TELEMETRY_VPN_CHECK = strtobool(
+    os.environ.get(VARNAME_TELEMETRY_VPN_CHECK, DEFAULT_TELEMETRY_VPN_CHECK)
+)
 
 
 @define
@@ -143,19 +144,12 @@ class CloseableQueue(Queue):
         super().put(item, block, timeout)
 
 
-tools = TelemetryTools()
-transmission_queue = CloseableQueue()
-
-# Attempt telemetry initialization
-if is_enabled():
-    # Test endpoint URL
+def test_connection() -> None:
+    """Close the transmission queue if the telemetry endpoint is unreachable."""
     try:
         # Send a test request. If there is no internet connection or a firewall is
         # present this will throw an error and telemetry will be deactivated.
-        if strtobool(
-            os.environ.get(VARNAME_TELEMETRY_VPN_CHECK, DEFAULT_TELEMETRY_VPN_CHECK)
-        ):
-            socket.gethostbyname("verkehrsnachrichten.merck.de")
+        socket.gethostbyname("verkehrsnachrichten.merck.de")
 
     except Exception as ex:
         # Catching broad exception here and disabling telemetry in that case to avoid
@@ -172,8 +166,6 @@ if is_enabled():
                 UserWarning,
             )
         transmission_queue.close()
-else:
-    pass
 
 
 def get_user_details() -> dict[str, str]:
@@ -207,3 +199,10 @@ def _submit_scalar_value(instrument_name: str, value: int | float) -> None:
         )
         tools.instruments[instrument_name] = histogram
     histogram.record(value, get_user_details())
+
+
+tools = TelemetryTools()
+transmission_queue = CloseableQueue()
+
+if is_enabled() and TELEMETRY_VPN_CHECK:
+    test_connection()
