@@ -118,6 +118,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                     additional_params["objective"] = LinearMCObjective(
                         torch.tensor([-1.0])
                     )
+                elif issubclass(acqf_cls, bo_acqf.qNegIntegratedPosteriorVariance):
+                    # qNIPV is valid but does not require any adjusted params
+                    pass
                 else:
                     raise ValueError(
                         f"Unsupported acquisition function type: {acqf_cls}."
