@@ -1113,6 +1113,9 @@
                     <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinearMCObjective</span><span class="p">(</span>
                         <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>
                     <span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">):</span>
+                    <span class="c1"># qNIPV is valid but does not require any adjusted params</span>
+                    <span class="k">pass</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">&quot;Unsupported acquisition function type: </span><span class="si">{</span><span class="n">acqf_cls</span><span class="si">}</span><span class="s2">.&quot;</span>
