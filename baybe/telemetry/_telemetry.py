@@ -132,6 +132,11 @@ class CloseableQueue(Queue):
         super().__init__(*args, **kwargs)
         self._closed = False
 
+    @property
+    def is_closed(self) -> bool:
+        """Boolean value indicating if the queue is closed."""
+        return self._closed
+
     def close(self):
         """Remove all queue elements and prevent new ones from being added."""
         with self.mutex:
@@ -212,7 +217,9 @@ def submit_scalar_value(instrument_name: str, value: int | float) -> None:
 
 tools = TelemetryTools()
 transmission_queue = CloseableQueue()
-Thread(target=transmit_events, args=(transmission_queue,), daemon=True).start()
 
 if is_enabled() and TELEMETRY_VPN_CHECK:
     test_connection()
+
+if not transmission_queue.is_closed:
+    Thread(target=transmit_events, args=(transmission_queue,), daemon=True).start()
