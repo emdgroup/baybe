@@ -11,13 +11,13 @@ from typing import TYPE_CHECKING, Any
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import Attribute, Factory, define, evolve, field
+from attrs import Attribute, Factory, define, evolve, field, fields
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -461,13 +461,43 @@ class Campaign(SerialMixin):
             searchspace = self.searchspace
 
         # Get the recommended search space entries
-        rec = self.recommender.recommend(
-            batch_size,
-            searchspace,
-            self.objective,
-            self._measurements_exp,
-            pending_experiments,
-        )
+        try:
+            rec = self.recommender.recommend(
+                batch_size,
+                searchspace,
+                self.objective,
+                self._measurements_exp,
+                pending_experiments,
+            )
+        except NotEnoughPointsLeftError as ex:
+            # Aliases for code compactness
+            f = fields(Campaign)
+            ok_m = self.allow_recommending_already_measured
+            ok_r = self.allow_recommending_already_recommended
+            ok_p = self.allow_recommending_pending_experiments
+            ok_m_name = f.allow_recommending_already_measured.name
+            ok_r_name = f.allow_recommending_already_recommended.name
+            ok_p_name = f.allow_recommending_pending_experiments.name
+            no_blocked_pending_points = ok_p or (pending_experiments is None)
+
+            # If there are no candidate restrictions to be relaxed
+            if ok_m and ok_r and no_blocked_pending_points:
+                raise ex
+
+            # Otherwise, extract possible relaxations
+            solution = [
+                f"'{name}=True'"
+                for name, value in [
+                    (ok_m_name, ok_m),
+                    (ok_r_name, ok_r),
+                    (ok_p_name, no_blocked_pending_points),
+                ]
+                if not value
+            ]
+            message = solution[0] if len(solution) == 1 else " and/or ".join(solution)
+            raise NotEnoughPointsLeftError(
+                f"{str(ex)} Consider setting {message}."
+            ) from ex
 
         # Cache the recommendations
         self._cached_recommendation = rec.copy()
