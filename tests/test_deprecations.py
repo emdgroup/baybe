@@ -305,10 +305,11 @@ def test_deprecated_meta_recommender_methods():
         "allow_recommending_pending_experiments",
     ],
 )
-def test_migrated_allow_flags(flag):
+@pytest.mark.parametrize("recommender_cls", [RandomRecommender, BotorchRecommender])
+def test_migrated_allow_flags(flag, recommender_cls):
     """Passing and accessing the migrated 'allow_*' flags raises an error."""
     with pytest.raises(DeprecationError, match=r"Passing 'allow_\*' flags"):
-        RandomRecommender(**{flag: True})
+        recommender_cls(**{flag: True})
 
     with pytest.raises(DeprecationError, match=f"The attribute '{flag}' is no longer"):
-        getattr(RandomRecommender(), flag)
+        getattr(recommender_cls(), flag)
