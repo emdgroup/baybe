@@ -8,6 +8,7 @@ import os
 import socket
 import warnings
 from queue import Queue
+from threading import Thread
 from typing import TYPE_CHECKING, Any
 
 from attrs import define, field, fields
@@ -144,6 +145,14 @@ class CloseableQueue(Queue):
         super().put(item, block, timeout)
 
 
+def transmit_events(queue: Queue) -> None:
+    """Transmit the telemetry events waiting in the given queue."""
+    while True:
+        event = queue.get()
+        submit_scalar_value(*event)
+        queue.task_done()
+
+
 def test_connection() -> None:
     """Close the transmission queue if the telemetry endpoint is unreachable."""
     try:
@@ -188,7 +197,7 @@ def get_user_details() -> dict[str, str]:
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
 
 
-def _submit_scalar_value(instrument_name: str, value: int | float) -> None:
+def submit_scalar_value(instrument_name: str, value: int | float) -> None:
     """See :func:`baybe.telemetry.telemetry_record_value`."""
     if instrument_name in tools.instruments:
         histogram = tools.instruments[instrument_name]
@@ -203,6 +212,7 @@ def _submit_scalar_value(instrument_name: str, value: int | float) -> None:
 
 tools = TelemetryTools()
 transmission_queue = CloseableQueue()
+Thread(target=transmit_events, args=(transmission_queue,), daemon=True).start()
 
 if is_enabled() and TELEMETRY_VPN_CHECK:
     test_connection()
