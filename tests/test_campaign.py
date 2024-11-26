@@ -96,7 +96,9 @@ def test_candidate_toggling(constraints, exclude, complement):
     [SearchSpaceType.DISCRETE, SearchSpaceType.CONTINUOUS],
     ids=lambda x: x.name,
 )
-@pytest.mark.parametrize("value", [True, param(UNSPECIFIED, id=repr(UNSPECIFIED))])
+@pytest.mark.parametrize(
+    "value", [True, False, param(UNSPECIFIED, id=repr(UNSPECIFIED))]
+)
 def test_setting_allow_flags(flag, space_type, value):
     """Passed allow_* flags are rejected if incompatible with the search space type."""
     kwargs = {flag: value}
