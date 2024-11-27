@@ -32,14 +32,12 @@ if TYPE_CHECKING:
 # Telemetry environment variable names
 VARNAME_TELEMETRY_ENDPOINT = "BAYBE_TELEMETRY_ENDPOINT"
 VARNAME_TELEMETRY_VPN_CHECK = "BAYBE_TELEMETRY_VPN_CHECK"
-VARNAME_TELEMETRY_VPN_CHECK_TIMEOUT = "BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT"
 
 # Telemetry settings defaults
 DEFAULT_TELEMETRY_ENDPOINT = (
     "https://public.telemetry.baybe.p.uptimize.merckgroup.com:4317"
 )
 DEFAULT_TELEMETRY_VPN_CHECK = "true"
-DEFAULT_TELEMETRY_VPN_CHECK_TIMEOUT = "0.5"
 try:
     DEFAULT_TELEMETRY_USERNAME = (
         hashlib.sha256(getpass.getuser().upper().encode()).hexdigest().upper()[:10]
