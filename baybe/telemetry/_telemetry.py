@@ -178,6 +178,7 @@ def daemon_task() -> None:
     """The telemetry logic to be executed in the daemon thread."""  # noqa
     # Telemetry is inactive
     if not is_enabled():
+        transmission_queue.close()
         return
 
     # Telemetry is active but the endpoint is not reachable
