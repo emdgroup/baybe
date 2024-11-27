@@ -158,28 +158,42 @@ def transmit_events(queue: Queue) -> None:
         queue.task_done()
 
 
-def test_connection() -> None:
-    """Close the transmission queue if the telemetry endpoint is unreachable."""
+def test_connection() -> Exception | None:
+    """Check if the telemetry endpoint is reachable."""
     try:
         # Send a test request. If there is no internet connection or a firewall is
         # present this will throw an error and telemetry will be deactivated.
         socket.gethostbyname("verkehrsnachrichten.merck.de")
+        return None
 
     except Exception as ex:
         # Catching broad exception here and disabling telemetry in that case to avoid
         # any telemetry timeouts or interference for the user in case of unexpected
         # errors. Possible ones are for instance ``socket.gaierror`` in case the user
         # has no internet connection.
+        return ex
+
+
+def daemon_task() -> None:
+    # Telemetry inactive
+    if not is_enabled():
+        return
+
+    # Telemetry inactive but endpoint not reachable
+    if TELEMETRY_VPN_CHECK and (ex := test_connection()) is not None:
         if os.environ.get(VARNAME_TELEMETRY_USERNAME, "").startswith("DEV_"):
-            # This warning is only printed for developers to make them aware of
-            # potential issues
+            # Only printed for developers to make them aware of potential issues
             warnings.warn(
                 f"WARNING: BayBE Telemetry endpoint {ENDPOINT_URL} cannot be reached. "
-                "Disabling telemetry. The exception encountered was: "
+                f"Disabling telemetry. The exception encountered was: "
                 f"{type(ex).__name__}, {ex}",
                 UserWarning,
             )
         transmission_queue.close()
+        return
+
+    # If everything is ready for transmission, process the incoming events
+    transmit_events(transmission_queue)
 
 
 def get_user_details() -> dict[str, str]:
@@ -217,9 +231,4 @@ def submit_scalar_value(instrument_name: str, value: int | float) -> None:
 
 tools = TelemetryTools()
 transmission_queue = CloseableQueue()
-
-if is_enabled() and TELEMETRY_VPN_CHECK:
-    test_connection()
-
-if not transmission_queue.is_closed:
-    Thread(target=transmit_events, args=(transmission_queue,), daemon=True).start()
+Thread(target=daemon_task).start()
