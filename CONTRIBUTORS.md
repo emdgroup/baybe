@@ -29,4 +29,4 @@
 - Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
   `scikit-fingerprints` support
 - Fabian Liebig (Merck KGaA, Darmstadt, Germany):\
-  Benchmarking structure
+  Benchmarking structure and persistence capabilities for benchmarking results

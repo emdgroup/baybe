@@ -6,12 +6,12 @@ from attrs import define, field
 from attrs.validators import instance_of
 from pandas import DataFrame
 
-from baybe.serialization.mixin import SerialMixin
 from benchmarks.result import ResultMetadata
+from benchmarks.serialization import BenchmarkSerialization
 
 
 @define(frozen=True)
-class Result(SerialMixin):
+class Result(BenchmarkSerialization):
     """A single result of the benchmarking."""
 
     benchmark_identifier: str = field(validator=instance_of(str))

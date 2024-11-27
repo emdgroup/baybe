@@ -8,15 +8,16 @@ from typing import Any, Generic, TypeVar
 
 from attrs import define, field
 from attrs.validators import instance_of
+from cattr.gen import make_dict_unstructure_fn, override
 from pandas import DataFrame
 
-from baybe.serialization.mixin import SerialMixin
 from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
+from benchmarks.serialization import BenchmarkSerialization, converter
 
 
 @define(frozen=True)
-class BenchmarkSettings(SerialMixin, ABC):
+class BenchmarkSettings(ABC, BenchmarkSerialization):
     """Benchmark configuration for recommender analyses."""
 
     random_seed: int = field(validator=instance_of(int), kw_only=True, default=1337)
@@ -41,7 +42,7 @@ class ConvergenceExperimentSettings(BenchmarkSettings):
 
 
 @define(frozen=True)
-class Benchmark(Generic[BenchmarkSettingsType]):
+class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     """The base class for a benchmark executable."""
 
     settings: BenchmarkSettingsType = field()
@@ -88,3 +89,15 @@ class Benchmark(Generic[BenchmarkSettingsType]):
         )
 
         return Result(self.name, result, metadata)
+
+
+# Register un-/structure hooks
+converter.register_unstructure_hook(
+    Benchmark,
+    lambda o: dict(
+        {"description": o.description},
+        **make_dict_unstructure_fn(Benchmark, converter, function=override(omit=True))(
+            o
+        ),
+    ),
+)

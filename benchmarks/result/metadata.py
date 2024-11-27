@@ -7,12 +7,11 @@ from attrs import define, field
 from attrs.validators import instance_of
 from cattrs.gen import make_dict_unstructure_fn
 
-from baybe.serialization.core import converter
-from baybe.serialization.mixin import SerialMixin
+from benchmarks.serialization import BenchmarkSerialization, converter
 
 
 @define(frozen=True)
-class ResultMetadata(SerialMixin):
+class ResultMetadata(BenchmarkSerialization):
     """The metadata of a benchmark result."""
 
     start_datetime: datetime = field(validator=instance_of(datetime))
@@ -26,6 +25,16 @@ class ResultMetadata(SerialMixin):
 
     latest_baybe_tag: str = field(validator=instance_of(str), init=False)
     """The latest BayBE tag reachable in the ancestor commit history."""
+
+    branch: str = field(validator=instance_of(str), init=False)
+    """The branch currently checked out."""
+
+    @branch.default
+    def _default_branch(self) -> str:
+        """Set the current checkout branch."""
+        repo = git.Repo(search_parent_directories=True)
+        current_branch = repo.active_branch.name
+        return current_branch
 
     @commit_hash.default
     def _default_commit_hash(self) -> str:
