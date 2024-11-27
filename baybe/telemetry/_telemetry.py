@@ -82,7 +82,7 @@ class TelemetryTools:
             try:
                 self._initialize()
             except Exception:
-                if is_enabled():
+                if is_enabled() and user_is_developer():
                     warnings.warn(
                         "Opentelemetry could not be imported. Potentially it is "
                         "not installed. Disabling BayBE telemetry.",
@@ -183,7 +183,7 @@ def daemon_task() -> None:
 
     # Telemetry is active but the endpoint is not reachable
     if TELEMETRY_VPN_CHECK and (ex := test_connection()) is not None:
-        if os.environ.get(VARNAME_TELEMETRY_USERNAME, "").startswith("DEV_"):
+        if user_is_developer():
             # Only printed for developers to make them aware of potential issues
             warnings.warn(
                 f"WARNING: BayBE Telemetry endpoint '{ENDPOINT_URL}' cannot be "
@@ -216,6 +216,11 @@ def get_user_details() -> dict[str, str]:
     )
 
     return {"host": hostname_hash, "user": username_hash, "version": __version__}
+
+
+def user_is_developer() -> bool:
+    """Determine if the user is a developer."""
+    return os.environ.get(VARNAME_TELEMETRY_USERNAME, "").startswith("DEV_")
 
 
 def submit_scalar_value(instrument_name: str, value: int | float) -> None:
