@@ -221,7 +221,7 @@ def submit_scalar_value(instrument_name: str, value: int | float) -> None:
     if instrument_name in tools.instruments:
         histogram = tools.instruments[instrument_name]
     else:
-        histogram = tools.meter.create_histogram(
+        histogram = tools.meter.create_histogram(  # type: ignore[union-attr]
             instrument_name,
             description=f"Histogram for instrument {instrument_name}",
         )
