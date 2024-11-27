@@ -5,13 +5,13 @@ import warnings
 from abc import ABC
 
 import pandas as pd
-from attrs import define, fields
+from attrs import define
 from typing_extensions import override
 
 from baybe.exceptions import UnusedObjectWarning
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
-from baybe.searchspace.core import SearchSpace, SearchSpaceType
+from baybe.searchspace.core import SearchSpace
 
 
 @define
@@ -41,16 +41,10 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"consider any objectives, meaning that the argument is ignored.",
                 UnusedObjectWarning,
             )
-        if (pending_experiments is not None) and (
-            self.allow_recommending_pending_experiments
-            or searchspace.type is not SearchSpaceType.DISCRETE
-        ):
+        if pending_experiments is not None:
             warnings.warn(
                 f"Pending experiments were provided but the selected recommender "
-                f"'{self.__class__.__name__}' only utilizes this information for "
-                f"purely discrete spaces and "
-                f"{fields(self.__class__).allow_recommending_pending_experiments.name}"
-                f"=False.",
+                f"'{self.__class__.__name__}' does not use this information.",
                 UnusedObjectWarning,
             )
         return super().recommend(
@@ -58,7 +52,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
             searchspace=searchspace,
             objective=objective,
             measurements=measurements,
-            pending_experiments=pending_experiments,
+            pending_experiments=None,
         )
 
 

@@ -29,6 +29,7 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
 )
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
@@ -284,3 +285,21 @@ def test_migrated_metadata_attribute():
             NumericalDiscreteParameter("p", [0, 1])
         )
         subspace.metadata
+
+
+@pytest.mark.parametrize(
+    "flag",
+    [
+        "allow_repeated_recommendations",
+        "allow_recommending_already_measured",
+        "allow_recommending_pending_experiments",
+    ],
+)
+@pytest.mark.parametrize("recommender_cls", [RandomRecommender, BotorchRecommender])
+def test_migrated_allow_flags(flag, recommender_cls):
+    """Passing and accessing the migrated 'allow_*' flags raises an error."""
+    with pytest.raises(DeprecationError, match=r"Passing 'allow_\*' flags"):
+        recommender_cls(**{flag: True})
+
+    with pytest.raises(DeprecationError, match=f"The attribute '{flag}' is no longer"):
+        getattr(recommender_cls(), flag)

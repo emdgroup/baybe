@@ -316,7 +316,5 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("batch_size", [1])
 @pytest.mark.parametrize("target_names", [["Target_binary"]])
-@pytest.mark.parametrize("allow_repeated_recommendations", [True])
-@pytest.mark.parametrize("allow_recommending_already_measured", [True])
 def test_multi_armed_bandit(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
