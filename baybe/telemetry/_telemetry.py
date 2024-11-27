@@ -60,8 +60,10 @@ TELEMETRY_VPN_CHECK = strtobool(
 
 @define
 class TelemetryTools:
+    """Class for lazy-initialization of telemetry objects."""
+
     _is_initialized: bool = False
-    """Boolean flag for lazy initialization."""
+    """Boolean flag indicating if initialization is completed."""
 
     # Telemetry objects
     instruments: dict[str, Histogram] = field(factory=dict)
@@ -72,16 +74,17 @@ class TelemetryTools:
 
     @override
     def __getattribute__(self, name: str, /) -> Any:
+        """Lazily initialize telemetry objects upon first access."""
         if name not in [
             (fields(TelemetryTools)).instruments.name,
-            self._lazy_initialize.__name__,
+            self._initialize.__name__,
         ]:
             try:
-                self._lazy_initialize()
+                self._initialize()
             except Exception:
                 if is_enabled():
                     warnings.warn(
-                        "Opentelemetry could not be imported, potentially it is "
+                        "Opentelemetry could not be imported. Potentially it is "
                         "not installed. Disabling BayBE telemetry.",
                         UserWarning,
                     )
@@ -89,8 +92,8 @@ class TelemetryTools:
 
         return super().__getattribute__(name)
 
-    def _lazy_initialize(self) -> None:
-        """Lazily initialize the telemetry objects upon first access."""
+    def _initialize(self) -> None:
+        """Initialize the telemetry objects."""
         if self._is_initialized:
             return
 
@@ -159,31 +162,31 @@ def transmit_events(queue: Queue) -> None:
 def test_connection() -> Exception | None:
     """Check if the telemetry endpoint is reachable."""
     try:
-        # Send a test request. If there is no internet connection or a firewall is
-        # present this will throw an error and telemetry will be deactivated.
+        # Send a test request. If the request fails (e.g. no connection, outside
+        # VPN, or firewall) this will throw an error.
         socket.gethostbyname("verkehrsnachrichten.merck.de")
         return None
 
     except Exception as ex:
-        # Catching broad exception here and disabling telemetry in that case to avoid
-        # any telemetry timeouts or interference for the user in case of unexpected
-        # errors. Possible ones are for instance ``socket.gaierror`` in case the user
+        # Catching broad exception here to avoid interference for the user.
+        # Possible errors are for instance ``socket.gaierror`` in case the user
         # has no internet connection.
         return ex
 
 
 def daemon_task() -> None:
-    # Telemetry inactive
+    """The telemetry logic to be executed in the daemon thread."""  # noqa
+    # Telemetry is inactive
     if not is_enabled():
         return
 
-    # Telemetry inactive but endpoint not reachable
+    # Telemetry is active but the endpoint is not reachable
     if TELEMETRY_VPN_CHECK and (ex := test_connection()) is not None:
         if os.environ.get(VARNAME_TELEMETRY_USERNAME, "").startswith("DEV_"):
             # Only printed for developers to make them aware of potential issues
             warnings.warn(
-                f"WARNING: BayBE Telemetry endpoint {ENDPOINT_URL} cannot be reached. "
-                f"Disabling telemetry. The exception encountered was: "
+                f"WARNING: BayBE Telemetry endpoint '{ENDPOINT_URL}' cannot be "
+                f"reached. Disabling telemetry. The exception encountered was: "
                 f"{type(ex).__name__}, {ex}",
                 UserWarning,
             )
@@ -215,7 +218,7 @@ def get_user_details() -> dict[str, str]:
 
 
 def submit_scalar_value(instrument_name: str, value: int | float) -> None:
-    """See :func:`baybe.telemetry.telemetry_record_value`."""
+    """See :func:`baybe.telemetry.api.telemetry_record_value`."""
     if instrument_name in tools.instruments:
         histogram = tools.instruments[instrument_name]
     else:
