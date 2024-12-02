@@ -10,7 +10,7 @@ from typing_extensions import override
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.utils.basic import to_tuple
-from baybe.utils.dataframe import get_transform_objects
+from baybe.utils.dataframe import transform_target_columns
 
 
 @define(frozen=True, slots=False)
@@ -70,14 +70,6 @@ class ParetoObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Extract the relevant part of the dataframe
-        targets = get_transform_objects(
+        return transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        transformed = df[[t.name for t in targets]].copy()
-
-        # Transform all targets individually
-        for target in self.targets:
-            transformed[target.name] = target.transform(df[target.name])
-
-        return transformed
