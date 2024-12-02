@@ -18,7 +18,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, to_tuple
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.dataframe import pretty_print_df, transform_target_columns
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
@@ -172,15 +172,10 @@ class DesirabilityObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Extract the relevant part of the dataframe
-        targets = get_transform_objects(
+        # Transform all targets individually
+        transformed = transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        transformed = df[[t.name for t in targets]].copy()
-
-        # Transform all targets individually
-        for target in self.targets:
-            transformed[target.name] = target.transform(df[target.name])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
