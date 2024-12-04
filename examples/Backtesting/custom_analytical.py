@@ -1,124 +1,110 @@
-## Example for full simulation loop using a custom analytical test function
+## Optimizing a Custom Black-Box Function
 
-# This example shows a simulation loop for a single target with a custom test function as lookup.
-# That is, we perform several Monte Carlo runs with several iterations.
-# In addition, we also store and display the results.
+# This example demonstrates how to optimize a custom black-box function:
+# * We create a black-box callable and define the corresponding optimization scope,
+# * set up optimization strategies,
+# * and compare the resulting trajectories.
 
-# This example assumes some basic familiarity with using BayBE and how to use BoTorch test
-# functions in discrete searchspaces.
-# For further details, we thus refer to
-# - [`campaign`](./../Basics/campaign.md) for a basic example on how to use BayBE and
-# - [here](./../Searchspaces/continuous_space_custom_function.md) for how to use a custom function.
-
-### Necessary imports for this example
+### Imports
 
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
-from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import (
-    BotorchRecommender,
-    RandomRecommender,
-    TwoPhaseMetaRecommender,
-)
+from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.simulation import simulate_scenarios
+from baybe.simulation import label_columns, simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.plotting import create_example_plots
 
-### Parameters for a full simulation loop
+### Settings
 
-# For the full simulation, we need to define some additional parameters.
-# These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
-
-# The parameter `POINTS_PER_DIM` controls the number of points per dimension.
-# Note that the searchspace will have `POINTS_PER_DIM**DIMENSION` many points.
+# Before we start, let us collect a few general settings for the example:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 5
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
-DIMENSION = 4
-BOUNDS = [(-2, 2), (-2, 2), (-2, 2), (-2, 2)]
-POINTS_PER_DIM = 3 if SMOKE_TEST else 10
+BATCH_SIZE = 1
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 20
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 30
+DIMENSION = 1 if SMOKE_TEST else 10
+BOUNDS = (-1, 1)
 
-### Defining the test function
+### Defining the Optimization Problem
 
-# See [here](./../Searchspaces/continuous_space_custom_function.md) for details.
-
-
-def sum_of_squares(*x: float) -> float:
-    """Calculate the sum of squares."""
-    res = 0
-    for y in x:
-        res += y**2
-    return res
-
-
-### Creating the searchspace and the objective
-
-# As we expect it to be the most common use case, we construct a purely discrete space here.
-# Details on how to adjust this for other spaces can be found in the searchspace examples.
+# Now, we can define the scope of our optimization problem. Our goal is to optimize
+# a high-dimensional quadratic function on a bounded input domain. We first define
+# the corresponding inputs and output of the function:
 
 parameters = [
-    NumericalDiscreteParameter(
-        name=f"x_{k+1}",
-        values=list(np.linspace(*BOUNDS[k], POINTS_PER_DIM)),
-        tolerance=0.01,
-    )
-    for k in range(DIMENSION)
+    NumericalContinuousParameter(name=f"x_{k}", bounds=BOUNDS) for k in range(DIMENSION)
 ]
+target = NumericalTarget(name="Target", mode="MIN")
+
+
+# Based on the above, we construct the black-box callable to be optimized.
+# Using the {func}`~baybe.simulation.lookup.label_columns` decorator, we can easily map
+# the columns of the raw input/output arrays to our parameter and target objects, which
+# creates the required dataframe-based lookup for the optimization loop:
+
+
+@label_columns([p.name for p in parameters], [target.name])
+def sum_of_squares(x: np.ndarray, /) -> np.ndarray:
+    """Calculate the sum of squares."""
+    return (x**2).sum(axis=1, keepdims=True)
+
+
+# What remains is to construct the search space and objective for the optimization:
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+objective = target.to_objective()
 
-### Constructing campaigns for the simulation loop
+### Creating the Campaigns
 
-# To simplify adjusting the example for other recommenders, we construct some recommender objects.
-# For details on recommender objects, we refer to [`recommenders`](./../Basics/recommenders.md).
+# We consider two optimization scenarios, each represented by its own campaign:
+# * Optimization using the default recommender
+# * A baseline using randomly generated recommendations
 
-seq_greedy_EI_recommender = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(acquisition_function="qEI"),
-)
-random_recommender = TwoPhaseMetaRecommender(recommender=RandomRecommender())
-
-# We now create one campaign per recommender.
-
-seq_greedy_EI_campaign = Campaign(
+default_campaign = Campaign(
     searchspace=searchspace,
-    recommender=seq_greedy_EI_recommender,
     objective=objective,
 )
 random_campaign = Campaign(
     searchspace=searchspace,
-    recommender=random_recommender,
     objective=objective,
+    recommender=RandomRecommender(),
 )
 
-### Performing the simulation loop
+### Running the Optimization Loop
 
-# We can now use the `simulate_scenarios` function to simulate a full experiment.
-# Note that this function enables to run multiple scenarios by a single function call.
-# For this, it is necessary to define a dictionary mapping scenario names to campaigns.
+# Next, we simulate both scenarios using the
+# {func}`~baybe.simulation.scenarios.simulate_scenarios` utility,
+# which automatically executes several Monte Carlo simulations for each campaign:
 
 scenarios = {
-    "Sequential greedy EI": seq_greedy_EI_campaign,
-    "Random": random_campaign,
+    "Default Recommender": default_campaign,
+    "Random Recommender": random_campaign,
 }
 results = simulate_scenarios(
     scenarios,
     sum_of_squares,
-    batch_size=3,
+    batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
-# The following lines plot the results and save the plot in run_analytical.png
+### Plotting the Results
 
-sns.lineplot(data=results, x="Num_Experiments", y="Target_CumBest", hue="Scenario")
-plt.gcf().set_size_inches(24, 8)
-plt.savefig("./run_analytical.png")
+# Finally, we compare the trajectories of the campaigns:
+
+ax = sns.lineplot(
+    data=results,
+    marker="o",
+    markersize=10,
+    x="Num_Experiments",
+    y="Target_CumBest",
+    hue="Scenario",
+)
+create_example_plots(ax=ax, base_name="custom_analytical")
