@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import logging
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from typing import Literal
 
 import numpy as np
@@ -138,3 +139,41 @@ def _look_up_targets_from_dataframe(
 
     # Add the lookup values
     queries.loc[:, target_names] = np.asarray(all_match_vals)
+
+
+def label_columns(
+    input_labels: Sequence[str], output_labels: Sequence[str]
+) -> Callable:
+    """Create a decorator for labeling the inputs and outputs of array-based callables.
+
+    The decorator transforms a callable designed to work with unlabelled arrays such
+    that it can operate with dataframes instead. The original callable is expected to
+    accept and return two-dimensional arrays. When decorated, the callable accepts and
+    returns dataframes whose columns are mapped to the corresponding arrays based on the
+    specified label sequences.
+
+    Args:
+        input_labels: The sequence of input labels mapping the columns of the input
+            dataframe to columns of the input array in the specified order.
+        output_labels: The sequence of output labels mapping the columns of the output
+            dataframe to columns of the output array in the specified order.
+
+    Returns:
+        The decorator for the given input and output labels.
+    """
+
+    def decorator(
+        fn: Callable[[np.ndarray], np.ndarray],
+    ) -> Callable[[pd.DataFrame], pd.DataFrame]:
+        """Turn an array-based callable into a dataframe-based callable."""
+
+        @functools.wraps(fn)
+        def wrapper(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Translate to/from an array-based callable using dataframes."""
+            array_in = df[input_labels].to_numpy()
+            array_out = fn(array_in)
+            return pd.DataFrame(array_out, columns=output_labels, index=df.index)
+
+        return wrapper
+
+    return decorator
