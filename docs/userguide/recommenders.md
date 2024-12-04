@@ -53,15 +53,11 @@ for various acquisition functions.
   `n_restarts` and `n_raw_samples` keywords. For details, please refer
   to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
  
-  An example on using this recommender in a hybrid space can be found
-  [here](./../../examples/Backtesting/hybrid).
-
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**
   can be applied to all search spaces, but is intended to be used in hybrid spaces.
   This recommender combines individual recommenders for the continuous and the discrete
   subspaces. It independently optimizes each subspace and consolidates the best results
-  to generate a candidate for the original hybrid space. An example on using this
-  recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
+  to generate a candidate for the original hybrid space. 
 
 ### Clustering Recommenders
 
