@@ -643,7 +643,24 @@ def filter_df(
            num cat
         2    1   a
         3    1   b
+
+        >>> filter_df(df, pd.DataFrame(), complement=True)
+           num cat
+        0    0   a
+        1    0   b
+        2    1   a
+        3    1   b
+
+        >>> filter_df(df, pd.DataFrame(), complement=False)
+        Empty DataFrame
+        Columns: [num, cat]
+        Index: []
+
     """
+    # Handle special case of empty filter
+    if filter.empty:
+        return df if complement else pd.DataFrame(columns=df.columns)
+
     # Remember original index name
     index_name = df.index.name
 
