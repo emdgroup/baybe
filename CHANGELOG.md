@@ -5,14 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Breaking Changes 
+- Lookup callables for simulation are now expected to accept/return dataframes with
+  the corresponding parameter/target column labels
+
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
 - `add_noise_to_perturb_degenerate_rows` utility
 - `benchmarks` subpackage for defining and running performance tests
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
+- `filter_df` utility for filtering dataframe content
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `label_columns` decorator utility for convenient creation of lookup callables
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
