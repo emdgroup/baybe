@@ -10,10 +10,11 @@ from pandas import DataFrame
 
 from baybe.campaign import Campaign
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget, TargetMode
+from baybe.simulation.lookup import label_columns
+from baybe.targets import NumericalTarget
 from benchmarks.definition import (
     Benchmark,
     ConvergenceExperimentSettings,
@@ -23,8 +24,9 @@ if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
 
 
-def _lookup(z: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+def _lookup(arr: np.ndarray, /) -> np.ndarray:
     """Lookup that is used internally in the callable for the benchmark."""
+    x, y, z = np.array_split(arr, 3, axis=1)
     try:
         assert np.all(-2 * pi <= x) and np.all(x <= 2 * pi)
         assert np.all(-2 * pi <= y) and np.all(y <= 2 * pi)
@@ -60,24 +62,26 @@ def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
         NumericalDiscreteParameter("z", (1, 2, 3, 4)),
     ]
 
-    objective = NumericalTarget(name="target", mode=TargetMode.MAX).to_objective()
-    search_space = SearchSpace.from_product(parameters=parameters)
+    target = NumericalTarget(name="target", mode="MAX")
+    searchspace = SearchSpace.from_product(parameters=parameters)
 
     scenarios: dict[str, Campaign] = {
         "Random Recommender": Campaign(
-            searchspace=search_space,
+            searchspace=searchspace,
             recommender=RandomRecommender(),
-            objective=objective,
+            objective=target,
         ),
         "Default Recommender": Campaign(
-            searchspace=search_space,
-            objective=objective,
+            searchspace=searchspace,
+            objective=target,
         ),
     }
 
+    lookup = label_columns([p.name for p in parameters], [target.name])(_lookup)
+
     return simulate_scenarios(
         scenarios,
-        _lookup,
+        lookup,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
         n_mc_iterations=settings.n_mc_iterations,
@@ -116,7 +120,9 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=(10, 10))
     for i, z in enumerate(Z):
         ax: Axes3D = fig.add_subplot(2, 2, i + 1, projection="3d")
-        t_mesh = _lookup(np.asarray(z), x_mesh, y_mesh)
+        t_mesh = _lookup(
+            np.c_[x_mesh.ravel(), y_mesh.ravel(), np.repeat(z, x_mesh.size)]
+        ).reshape(x_mesh.shape)
         ax.plot_surface(x_mesh, y_mesh, t_mesh)
         plt.title(f"{z=}")
 
