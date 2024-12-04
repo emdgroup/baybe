@@ -23,7 +23,7 @@ from baybe.utils.random import temporary_seed
 
 def simulate_experiment(
     campaign: Campaign,
-    lookup: pd.DataFrame | Callable | None = None,
+    lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None = None,
     /,
     *,
     batch_size: int = 1,
@@ -85,8 +85,6 @@ def simulate_experiment(
         * for each target a column ``{targetname}_Measurements``:
           The individual measurements obtained for the respective target and iteration
     """
-    # TODO: Due to the "..." operator, sphinx does not render this properly. Might
-    #   want to investigate in the future.
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
     if campaign.objective is None:
