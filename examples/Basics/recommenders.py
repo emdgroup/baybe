@@ -84,7 +84,7 @@ available_acq_functions = [
 #   - If a larger value is chosen, only those that allow batching.
 #       That is, 'q'-variants of the acquisition functions must be chosen.
 
-# The default he acquisition function is q-Expected Improvement.
+# The default acquisition function is q-Expected Improvement.
 
 ACQ_FUNCTION = "qEI"
 
