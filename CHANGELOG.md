@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   incorrect candidate sets when reused in different optimization contexts
 - `qNIPV` not working with single `MIN` targets
 
+### Removed
+- `botorch_function_wrapper` utility for creating lookup callables
+
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
   possible. The dataframe must now be passed as positional argument.
