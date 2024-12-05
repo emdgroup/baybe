@@ -4,6 +4,7 @@ import gc
 import math
 from typing import ClassVar
 
+import cattrs
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
@@ -314,6 +315,20 @@ class qThompsonSampling(qSimpleRegret):
     @classproperty
     def supports_batching(cls) -> bool:
         return False
+
+
+########################################################################################
+### Hypervolume Improvement
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    ref_point: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...])
+    )
+    """The reference point for computing the hypervolume improvement."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
