@@ -172,7 +172,9 @@ def _get_botorch_acqf_class(
     import botorch
 
     for cls in baybe_acqf_cls.mro():
-        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
+        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False) or getattr(
+            botorch.acquisition.multi_objective, cls.__name__, False
+        ):
             if is_abstract(acqf_cls):
                 continue
             return acqf_cls  # type: ignore
