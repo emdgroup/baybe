@@ -17,6 +17,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
@@ -150,6 +151,12 @@ class AcquisitionFunction(ABC, SerialMixin):
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.max().item()
+                    )
+            case ParetoObjective():
+                if any(t.mode is not TargetMode.MAX for t in objective.targets):
+                    raise NotImplementedError(
+                        "Pareto optimization currently supports maximization "
+                        "targets only."
                     )
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
