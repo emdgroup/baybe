@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import logging
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from typing import Literal
 
 import numpy as np
@@ -19,7 +20,7 @@ _logger = logging.getLogger(__name__)
 def look_up_targets(
     queries: pd.DataFrame,
     targets: Collection[Target],
-    lookup: pd.DataFrame | Callable | None,
+    lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -70,7 +71,7 @@ def look_up_targets(
     if lookup is None:
         add_fake_measurements(queries, targets)
     elif isinstance(lookup, Callable):
-        _look_up_targets_from_callable(queries, targets, lookup)
+        _look_up_targets_from_callable(queries, lookup)
     elif isinstance(lookup, pd.DataFrame):
         _look_up_targets_from_dataframe(queries, targets, lookup, impute_mode)
     else:
@@ -78,33 +79,12 @@ def look_up_targets(
 
 
 def _look_up_targets_from_callable(
-    queries: pd.DataFrame,
-    targets: Collection[Target],
-    lookup: Callable,
+    queries: pd.DataFrame, lookup: Callable[[pd.DataFrame], pd.DataFrame]
 ) -> None:
     """Look up target values by querying a callable."""
-    # TODO: Currently, the alignment of return values to targets is based on the
-    #   column ordering, which is not robust. Instead, the callable should return
-    #   a dataframe with properly labeled columns.
-
-    # Since the return of a lookup function is a tuple, the following code stores
-    # tuples of floats in a single column with label 0:
-    measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
-    # We transform this column to a DataFrame in which there is an individual
-    # column for each of the targets....
-    split_target_columns = pd.DataFrame(
-        measured_targets[0].to_list(), index=measured_targets.index
-    )
-    # ... and assign this to measured_targets in order to have one column per target
-    measured_targets[split_target_columns.columns] = split_target_columns
-    if measured_targets.shape[1] != len(targets):
-        raise AssertionError(
-            "If you use an analytical function as lookup, make sure "
-            "the configuration has the right amount of targets "
-            "specified."
-        )
-    for k_target, target in enumerate(targets):
-        queries[target.name] = measured_targets.iloc[:, k_target]
+    df_targets = lookup(queries)
+    for col in df_targets:
+        queries[col] = df_targets[col]
 
 
 def _look_up_targets_from_dataframe(
@@ -159,3 +139,41 @@ def _look_up_targets_from_dataframe(
 
     # Add the lookup values
     queries.loc[:, target_names] = np.asarray(all_match_vals)
+
+
+def label_columns(
+    input_labels: Sequence[str], output_labels: Sequence[str]
+) -> Callable:
+    """Create a decorator for labeling the inputs and outputs of array-based callables.
+
+    The decorator transforms a callable designed to work with unlabelled arrays such
+    that it can operate with dataframes instead. The original callable is expected to
+    accept and return two-dimensional arrays. When decorated, the callable accepts and
+    returns dataframes whose columns are mapped to the corresponding arrays based on the
+    specified label sequences.
+
+    Args:
+        input_labels: The sequence of input labels mapping the columns of the input
+            dataframe to columns of the input array in the specified order.
+        output_labels: The sequence of output labels mapping the columns of the output
+            dataframe to columns of the output array in the specified order.
+
+    Returns:
+        The decorator for the given input and output labels.
+    """
+
+    def decorator(
+        fn: Callable[[np.ndarray], np.ndarray],
+    ) -> Callable[[pd.DataFrame], pd.DataFrame]:
+        """Turn an array-based callable into a dataframe-based callable."""
+
+        @functools.wraps(fn)
+        def wrapper(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Translate to/from an array-based callable using dataframes."""
+            array_in = df[input_labels].to_numpy()
+            array_out = fn(array_in)
+            return pd.DataFrame(array_out, columns=output_labels, index=df.index)
+
+        return wrapper
+
+    return decorator
