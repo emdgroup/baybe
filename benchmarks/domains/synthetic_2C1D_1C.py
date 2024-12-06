@@ -64,16 +64,17 @@ def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
 
     target = NumericalTarget(name="target", mode="MAX")
     searchspace = SearchSpace.from_product(parameters=parameters)
+    objective = target.to_objective()
 
     scenarios: dict[str, Campaign] = {
         "Random Recommender": Campaign(
             searchspace=searchspace,
             recommender=RandomRecommender(),
-            objective=target,
+            objective=objective,
         ),
         "Default Recommender": Campaign(
             searchspace=searchspace,
-            objective=target,
+            objective=objective,
         ),
     }
 
