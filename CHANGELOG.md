@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `diagnostics` dependency group
+- `insights` dependency group
 - SHAP explanations
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 

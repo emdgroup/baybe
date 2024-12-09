@@ -81,7 +81,7 @@ onnx = [
 
 dev = [
     "baybe[chem]",
-    "baybe[diagnostics]",
+    "baybe[insights]",
     "baybe[docs]",
     "baybe[examples]",
     "baybe[lint]",
@@ -90,13 +90,13 @@ dev = [
     "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
-    "baybe[diagnostics]",
+    "baybe[insights]",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
 ]
 
-diagnostics = [
+insights = [
     "shap>=0.46.0",
     "lime>=0.2.0.1"
 ]

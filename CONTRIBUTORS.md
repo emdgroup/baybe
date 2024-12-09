@@ -27,4 +27,4 @@
 - Julian Streibel (Merck Life Science KGaA, Darmstadt, Germany):\
   Bernoulli multi-armed bandit and Thompson sampling
 - Alexander Wieczorek (Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland):\
-  SHAP explainers for diagnoatics
+  SHAP explainers for insights
