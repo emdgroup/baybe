@@ -113,7 +113,7 @@ class NumericalTarget(Target, SerialMixin):
     def _validate_transformation(  # noqa: DOC101, DOC103
         self, _: Any, value: TargetTransformation | None
     ) -> None:
-        """Validate that the given transformation is compatible with the specified mode.
+        """Validate compatability between transformation, bounds and the mode.
 
         Raises:
             ValueError: If a target transformation was provided for an unbounded
