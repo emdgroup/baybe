@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a boolean array indicating where ``x`` and ``y`` are not close.
+    """Return a Boolean array indicating where ``x`` and ``y`` are not close.
 
     The counterpart to ``numpy.isclose``.
 
@@ -43,7 +43,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
         atol: The absolute tolerance parameter.
 
     Returns:
-        A boolean array of where ``x`` and ``y`` are not equal within the
+        A Boolean array of where ``x`` and ``y`` are not equal within the
         given tolerances.
 
     """
@@ -51,7 +51,7 @@ def _is_not_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.nd
 
 
 def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarray:
-    """Return a boolean array indicating where ``x`` and ``y`` are close.
+    """Return a Boolean array indicating where ``x`` and ``y`` are close.
 
     The equivalent to :func:``numpy.isclose``.
     Using ``numpy.isclose`` with Polars dataframes results in this error:
@@ -64,7 +64,7 @@ def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarra
         atol: The absolute tolerance parameter.
 
     Returns:
-        A boolean array of where ``x`` and ``y`` are equal within the
+        A Boolean array of where ``x`` and ``y`` are equal within the
         given tolerances.
 
     """
@@ -107,7 +107,7 @@ class Condition(ABC, SerialMixin):
             data: A series containing parameter values.
 
         Returns:
-            A boolean series indicating which elements satisfy the condition.
+            A Boolean series indicating which elements satisfy the condition.
         """
 
     @abstractmethod

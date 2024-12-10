@@ -167,14 +167,18 @@ def test_invalid_encoding_substance_parameter():
 @pytest.mark.parametrize(
     "data",
     [
-        param(pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]), id="nan"),
-        param(pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]), id="infinity"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), id="duplicates"),
-        param(pd.DataFrame([[1, 2]], index=["A"]), id="only_one_value"),
-        param(pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), id="zero_variance"),
+        param(pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]), id="contains_nan"),
+        param(pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]), id="contains_inf"),
+        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), id="duplicate_idxs"),
+        param(pd.DataFrame([[1, 2]], index=["A"]), id="wrong_label_number"),
+        param(pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), id="zero_var_col"),
         param(pd.DataFrame([[1, 2], [3, "a"]], index=["A", "B"]), id="wrong_type"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), id="not_a_string"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), id="empty_string"),
+        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), id="non_string_idx"),
+        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), id="empty_string_idx"),
+        param(
+            pd.DataFrame([[1, 2], [1, 2], [3, 4]], index=["A", "B", "C"]),
+            id="duplicate_rows",
+        ),
     ],
 )
 def test_invalid_data_custom_parameter(data):

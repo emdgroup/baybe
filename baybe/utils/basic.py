@@ -4,7 +4,7 @@ import functools
 import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, TypeGuard, TypeVar
 
 from attrs import asdict, has
 from typing_extensions import override
@@ -27,6 +27,13 @@ class Dummy:
     def __repr__(self):
         """Return a representation of the placeholder."""
         return "<dummy>"
+
+
+def is_all_instance(x: Collection[Any], t: type[_T], /) -> TypeGuard[Collection[_T]]:
+    """Typeguard to check if all elements in a collection are of a certain type."""
+    # IMPROVE: Ideally, the collection type should itself be abstracted away using a
+    #   generic container type, but unclear how to achieve this with the typing system.
+    return all(isinstance(y, t) for y in x)
 
 
 def get_subclasses(cls: _C, recursive: bool = True, abstract: bool = False) -> list[_C]:

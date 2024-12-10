@@ -32,7 +32,7 @@ class KernelFactory(Protocol):
         ...
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
 converter.register_unstructure_hook(KernelFactory, unstructure_base)
 

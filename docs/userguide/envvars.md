@@ -16,7 +16,7 @@ set ENVAR_NAME=my_value
 ```
 Note that variables set in this manner are interpreted as text, but converted internally
 to the needed format. See for instance the [`strtobool`](baybe.utils.boolean.strtobool) 
-converter for values that can be set so BayBE can interpret them as booleans.
+converter for values that can be set so BayBE can interpret them as Booleans.
 
 It is also possible to set environment variables in Python:
 ```python
@@ -82,7 +82,8 @@ during this process, and thus might be beneficial for very large search spaces.
 
 Since this is still somewhat experimental, you might want to deactivate Polars without
 changing the Python environment. To do so, you can set the environment variable 
-`BAYBE_DEACTIVATE_POLARS` to any value.
+`BAYBE_DEACTIVATE_POLARS` to any truthy value accepted by
+[`strtobool`](baybe.utils.boolean.strtobool).
 
 
 ## Disk Caching
@@ -103,19 +104,20 @@ BAYBE_CACHE_DIR=""
 ```
 you can turn off disk caching entirely.
 
-## Floating Point Precision
+## EXPERIMENTAL: Floating Point Precision
 In general, double precision is recommended because numerical stability during optimization
 can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.
 
-If you still want to use single precision, you can set the following boolean variables:
+If you still want to use single precision, you can set the following Boolean variables:
 - `BAYBE_NUMPY_USE_SINGLE_PRECISION` (defaults to `False`)
 - `BAYBE_TORCH_USE_SINGLE_PRECISION` (defaults to `False`)
 
-```{admonition} Continuous Constraints in Single Precision
+```{admonition} Experimental feature only!
 :class: warning
-Currently, due to explicit casting in BoTorch, 
-[`ContinuousConstraint`](baybe.constraints.base.ContinuousConstraint)s do not support
-single precision and cannot be used if the corresponding environment variables are
-activated.
+Currently, it cannot be guaranteed that all calculations will be performed in single precision,
+even when setting the aforementioned variables. The reason is that there are several code snippets
+within `BoTorch` that transform single precision variables to double precision variables.
+Consequently, this feature is currently only available as an *experimental* feature.
+We are however actively working on fully enabling single precision.
 ```

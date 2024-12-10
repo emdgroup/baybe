@@ -346,7 +346,7 @@ class DiscreteCustomConstraint(DiscreteConstraint):
     # object variables
     validator: Callable[[pd.DataFrame], pd.Series] = field()
     """A user-defined function modeling the validation of the constraint. The expected
-    return is a pandas series with boolean entries True/False for search space elements
+    return is a pandas series with Boolean entries True/False for search space elements
     you want to keep/remove."""
 
     @override

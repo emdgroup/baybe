@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import gc
 import json
+from collections.abc import Collection
+from functools import reduce
 from typing import TYPE_CHECKING
 
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -21,6 +24,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.searchspace._annotated import AnnotatedSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -35,11 +39,19 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
+from baybe.utils.basic import is_all_instance
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
+
+# Metadata columns
+_RECOMMENDED = "recommended"
+_MEASURED = "measured"
+_EXCLUDED = "excluded"
+_METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
 
 @define
@@ -77,6 +89,9 @@ class Campaign(SerialMixin):
     """The employed recommender"""
 
     # Metadata
+    _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
+    """Metadata tracking the experimentation status of the search space."""
+
     n_batches_done: int = field(default=0, init=False)
     """The number of already processed batches."""
 
@@ -94,11 +109,44 @@ class Campaign(SerialMixin):
     )
     """The cached recommendations."""
 
+    @_searchspace_metadata.default
+    def _default_searchspace_metadata(self) -> pd.DataFrame:
+        """Create a fresh metadata object."""
+        df = pd.DataFrame(
+            False,
+            index=self.searchspace.discrete.exp_rep.index,
+            columns=_METADATA_COLUMNS,
+        )
+        df.loc[:, _EXCLUDED] = self.searchspace.discrete._excluded
+        return df
+
     @override
     def __str__(self) -> str:
+        recommended_count = sum(self._searchspace_metadata[_RECOMMENDED])
+        measured_count = sum(self._searchspace_metadata[_MEASURED])
+        excluded_count = sum(self._searchspace_metadata[_EXCLUDED])
+        n_elements = len(self._searchspace_metadata)
+        searchspace_fields = [
+            to_string(
+                "Recommended:",
+                f"{recommended_count}/{n_elements}",
+                single_line=True,
+            ),
+            to_string(
+                "Measured:",
+                f"{measured_count}/{n_elements}",
+                single_line=True,
+            ),
+            to_string(
+                "Excluded:",
+                f"{excluded_count}/{n_elements}",
+                single_line=True,
+            ),
+        ]
         metadata_fields = [
             to_string("Batches done", self.n_batches_done, single_line=True),
             to_string("Fits done", self.n_fits_done, single_line=True),
+            to_string("Discrete Subspace Meta Data", *searchspace_fields),
         ]
         metadata = to_string("Meta Data", *metadata_fields)
         fields = [metadata, self.searchspace, self.objective, self.recommender]
@@ -196,13 +244,6 @@ class Campaign(SerialMixin):
                     f" the provided dataframe."
                 )
 
-        # Update meta data
-        # TODO: refactor responsibilities
-        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
-            self.searchspace.discrete.mark_as_measured(
-                data, numerical_measurements_must_be_within_tolerance
-            )
-
         # Read in measurements and add them to the database
         self.n_batches_done += 1
         to_insert = data.copy()
@@ -213,6 +254,16 @@ class Campaign(SerialMixin):
             [self._measurements_exp, to_insert], axis=0, ignore_index=True
         )
 
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            idxs_matched = fuzzy_row_match(
+                self.searchspace.discrete.exp_rep,
+                data,
+                self.parameters,
+                numerical_measurements_must_be_within_tolerance,
+            )
+            self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
+
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
@@ -221,6 +272,65 @@ class Campaign(SerialMixin):
             self.parameters,
             numerical_measurements_must_be_within_tolerance,
         )
+
+    def toggle_discrete_candidates(  # noqa: DOC501
+        self,
+        constraints: Collection[DiscreteConstraint] | pd.DataFrame,
+        exclude: bool,
+        complement: bool = False,
+        dry_run: bool = False,
+    ) -> pd.DataFrame:
+        """In-/exclude certain discrete points in/from the candidate set.
+
+        Args:
+            constraints: A filtering mechanism determining the candidates subset to be
+                in-/excluded. Can be either a collection of
+                :class:`~baybe.constraints.base.DiscreteConstraint` or a dataframe.
+                For the latter, see :func:`~baybe.utils.dataframe.filter_df`
+                for details.
+            exclude: If ``True``, the specified candidates are excluded.
+                If ``False``, the candidates are considered for recommendation.
+            complement: If ``True``, the filtering mechanism is inverted so that
+                the complement of the candidate subset specified by the filter is
+                toggled. For details, see :func:`~baybe.utils.dataframe.filter_df`.
+            dry_run: If ``True``, the target subset is only extracted but not
+                affected. If ``False``, the candidate set is updated correspondingly.
+                Useful for setting up the correct filtering mechanism.
+
+        Returns:
+            A new dataframe containing the  discrete candidate set passing through the
+            specified filter.
+        """
+        df = self.searchspace.discrete.exp_rep
+
+        if isinstance(constraints, pd.DataFrame):
+            # Determine the candidate subset to be toggled
+            points = filter_df(df, constraints, complement)
+
+        elif isinstance(constraints, Collection) and is_all_instance(
+            constraints, DiscreteConstraint
+        ):
+            # TODO: Should be taken over by upcoming `SubspaceDiscrete.filter` method,
+            #   automatically choosing the appropriate backend (polars/pandas/...)
+
+            # Filter the search space dataframe according to the given constraint
+            idx = reduce(
+                lambda x, y: x.intersection(y), (c.get_valid(df) for c in constraints)
+            )
+
+            # Determine the candidate subset to be toggled
+            points = df.drop(index=idx) if complement else df.loc[idx].copy()
+
+        else:
+            raise TypeError(
+                "Candidate toggling is not implemented for the given type of "
+                "constraint specifications."
+            )
+
+        if not dry_run:
+            self._searchspace_metadata.loc[points.index, _EXCLUDED] = exclude
+
+        return points
 
     def recommend(
         self,
@@ -260,10 +370,18 @@ class Campaign(SerialMixin):
             self.n_fits_done += 1
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
+        # Prepare the search space according to the current campaign state
+        annotated_searchspace = evolve(
+            self.searchspace,
+            discrete=AnnotatedSubspaceDiscrete.from_subspace(
+                self.searchspace.discrete, self._searchspace_metadata
+            ),
+        )
+
         # Get the recommended search space entries
         rec = self.recommender.recommend(
             batch_size,
-            self.searchspace,
+            annotated_searchspace,
             self.objective,
             self._measurements_exp,
             pending_experiments,
@@ -271,6 +389,10 @@ class Campaign(SerialMixin):
 
         # Cache the recommendations
         self._cached_recommendation = rec.copy()
+
+        # Update metadata
+        if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
+            self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
@@ -361,7 +483,7 @@ def _drop_version(dict_: dict) -> dict:
     return dict_
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )

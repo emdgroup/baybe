@@ -16,7 +16,7 @@ from baybe.constraints import (
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
-from baybe.parameters import SubstanceEncoding, TaskParameter
+from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
@@ -224,20 +224,6 @@ class SearchSpace(SerialMixin):
         if not self.discrete.is_empty and not self.continuous.is_empty:
             return SearchSpaceType.HYBRID
         raise RuntimeError("This line should be impossible to reach.")
-
-    @property
-    def contains_mordred(self) -> bool:
-        """Indicates if any of the discrete parameters uses ``MORDRED`` encoding."""
-        return any(
-            p.encoding is SubstanceEncoding.MORDRED for p in self.discrete.parameters
-        )
-
-    @property
-    def contains_rdkit(self) -> bool:
-        """Indicates if any of the discrete parameters uses ``RDKIT`` encoding."""
-        return any(
-            p.encoding is SubstanceEncoding.RDKIT for p in self.discrete.parameters
-        )
 
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:

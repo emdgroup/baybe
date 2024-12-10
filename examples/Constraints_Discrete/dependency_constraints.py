@@ -28,7 +28,7 @@ from baybe.utils.dataframe import add_fake_measurements
 ### Experiment setup
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-FRAC_RESOLUTION = 3 if SMOKE_TEST else 7
+RESOLUTION = 3 if SMOKE_TEST else 7
 
 dict_solvent = {
     "water": "O",
@@ -38,7 +38,7 @@ solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(
-    name="Frac1", values=list(np.linspace(0, 100, FRAC_RESOLUTION)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
 frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
@@ -82,7 +82,7 @@ for kIter in range(N_ITERATIONS):
     print("## ASSERTS ##")
     print(
         f"Number entries with both switches on "
-        f"(expected {7*len(dict_solvent)*2*2}): ",
+        f"(expected {RESOLUTION*len(dict_solvent)*2*2}): ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
             & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
@@ -97,7 +97,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         f"Number entries with Switch2 off "
-        f"(expected {7*len(dict_solvent)}):"
+        f"(expected {RESOLUTION*len(dict_solvent)}):"
         f"      ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")

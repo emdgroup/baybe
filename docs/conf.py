@@ -246,6 +246,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
+    "skfp": ("https://scikit-fingerprints.github.io/scikit-fingerprints/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "sklearn_extra": ("https://scikit-learn-extra.readthedocs.io/en/stable", None),
     "numpy": ("https://numpy.org/doc/stable/", None),

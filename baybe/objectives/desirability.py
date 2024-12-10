@@ -4,7 +4,6 @@ import gc
 import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
-from typing import TypeGuard
 
 import cattrs
 import numpy as np
@@ -18,18 +17,11 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
-
-
-def _is_all_numerical_targets(
-    x: tuple[Target, ...], /
-) -> TypeGuard[tuple[NumericalTarget, ...]]:
-    """Typeguard helper function."""
-    return all(isinstance(y, NumericalTarget) for y in x)
 
 
 def scalarize(
@@ -94,7 +86,7 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
-        if not _is_all_numerical_targets(targets):
+        if not is_all_instance(targets, NumericalTarget):
             raise TypeError(
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."

@@ -140,7 +140,13 @@ def substance_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     data = draw(substance_data())
     decorrelate = draw(decorrelations)
-    encoding = draw(st.sampled_from(SubstanceEncoding))
+
+    # Ignore deprecated encodings
+    encodings = list(SubstanceEncoding)
+    encodings.remove(SubstanceEncoding.MORGAN_FP)
+    encodings.remove(SubstanceEncoding.RDKIT)
+    encoding = draw(st.sampled_from(encodings))
+
     return SubstanceParameter(
         name=name, data=data, decorrelate=decorrelate, encoding=encoding
     )

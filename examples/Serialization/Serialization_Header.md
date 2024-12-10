@@ -1,3 +1,3 @@
 # Serialization
 
-These examples demonstrate BayBE's de-/serialization capabilities.
+These examples demonstrate BayBE's (de-)serialization capabilities.
