@@ -116,8 +116,15 @@ class NumericalTarget(Target, SerialMixin):
         """Validate that the given transformation is compatible with the specified mode.
 
         Raises:
+            ValueError: If a target transformation was provided for an unbounded
+                target.
             ValueError: If the target transformation and mode are not compatible.
         """
+        if (value is not None) and (not self.bounds.is_bounded):
+            raise ValueError(
+                f"You specified a transformation for target '{self.name}', but "
+                f"did not specify any bounds."
+            )
         if (value is not None) and (value not in _VALID_TRANSFORMATIONS[self.mode]):
             raise ValueError(
                 f"You specified bounds for target '{self.name}', but your "
