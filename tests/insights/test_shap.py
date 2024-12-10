@@ -1,6 +1,5 @@
 """Tests for insights subpackage."""
 
-import inspect
 from unittest import mock
 
 import pandas as pd
@@ -24,43 +23,13 @@ if INSIGHTS_INSTALLED:
     from baybe import insights
     from baybe.insights.shap import SHAPInsight
 
-    DEFAULT_SHAP_PLOTS = insights.SHAPInsight.DEFAULT_SHAP_PLOTS
+    default_shap_plots = SHAPInsight.DEFAULT_SHAP_PLOTS
+    shap_explainers, non_shap_explainers = (
+        SHAPInsight.SHAP_EXPLAINERS,
+        SHAPInsight.NON_SHAP_EXPLAINERS,
+    )
 else:
-    DEFAULT_SHAP_PLOTS = []
-
-EXCLUDED_EXPLAINER_KEYWORDS = ["Tree", "GPU", "Gradient", "Sampling", "Deep"]
-
-
-def _has_required_init_parameters(cls):
-    """Helper function checks if initializer has required standard parameters."""
-    REQUIRED_PARAMETERS = ["self", "model", "data"]
-    init_signature = inspect.signature(cls.__init__)
-    parameters = list(init_signature.parameters.keys())
-    return parameters[:3] == REQUIRED_PARAMETERS
-
-
-non_shap_explainers = (
-    [
-        param(explainer, id=f"{cls_name}")
-        for cls_name in shap.explainers.other.__all__
-        if _has_required_init_parameters(
-            explainer := getattr(shap.explainers.other, cls_name)
-        )
-        and all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
-    ]
-    if INSIGHTS_INSTALLED
-    else []
-)
-
-shap_explainers = (
-    [
-        param(getattr(shap.explainers, cls_name), id=f"{cls_name}")
-        for cls_name in shap.explainers.__all__
-        if all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
-    ]
-    if INSIGHTS_INSTALLED
-    else []
-)
+    default_shap_plots, shap_explainers, non_shap_explainers = [], [], []
 
 valid_hybrid_bayesian_recommenders = [
     param(TwoPhaseMetaRecommender(recommender=cls()), id=f"{cls.__name__}")
@@ -79,7 +48,10 @@ def _test_shap_insights(campaign, explainer_cls, use_comp_rep, is_shap):
             computational_representation=use_comp_rep,
         )
         assert isinstance(shap_insights, insights.SHAPInsight)
-        assert isinstance(shap_insights.explainer, explainer_cls)
+        assert isinstance(
+            shap_insights.explainer,
+            SHAPInsight.ALL_EXPLAINERS[explainer_cls],
+        )
         assert shap_insights._is_shap_explainer == is_shap
         shap_explanation = shap_insights.explanation
         assert isinstance(shap_explanation, shap.Explanation)
@@ -89,17 +61,15 @@ def _test_shap_insights(campaign, explainer_cls, use_comp_rep, is_shap):
             match="The provided data does not have the same "
             "amount of parameters as the shap explainer background.",
         ):
-            shap_insights = SHAPInsight.from_campaign(
-                campaign,
-                explainer_class=explainer_cls,
-                explained_data=df,
-            )
+            shap_insights._init_explanation(df)
     except TypeError as e:
         if (
             "The selected explainer class does not support the campaign surrogate."
             in str(e)
         ):
             pass
+        else:
+            raise e
     except NotImplementedError as e:
         if (
             "The selected explainer class does not support experimental "
@@ -111,6 +81,8 @@ def _test_shap_insights(campaign, explainer_cls, use_comp_rep, is_shap):
             and not isinstance(explainer_cls, shap.explainers.KernelExplainer)
         ):
             pass
+        else:
+            raise e
 
 
 @pytest.mark.slow
@@ -148,7 +120,7 @@ def test_non_shapley_explainers(campaign, explainer_cls):
 @pytest.mark.parametrize("recommender", valid_hybrid_bayesian_recommenders)
 @pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
 @pytest.mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
-@pytest.mark.parametrize("plot_type", DEFAULT_SHAP_PLOTS)
+@pytest.mark.parametrize("plot_type", default_shap_plots)
 @pytest.mark.parametrize(
     "parameter_names",
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"]],
