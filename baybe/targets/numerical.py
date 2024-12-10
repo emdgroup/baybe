@@ -155,6 +155,11 @@ class NumericalTarget(Target, SerialMixin):
         assert isinstance(series, pd.Series)
         # <<<<<<<<<< Deprecation
 
+        # If no bounds are provided, then the transformation returns the original
+        # bounds
+        if not self.bounds.is_bounded:
+            return series.copy()
+
         # When a transformation is specified, apply it
         if self.transformation is not None:
             func = _get_target_transformation(
