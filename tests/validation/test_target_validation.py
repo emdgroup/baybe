@@ -58,8 +58,8 @@ def test_binary_target_invalid_values(choices, error, match):
 @pytest.mark.parametrize(
     ("mode", "transformation"),
     [
-        param("MIN", "LINEAR"),
-        param("MAX", "LINEAR"),
+        param("MIN", "LINEAR", id="linear_for_min"),
+        param("MAX", "LINEAR", id="linear_for_max"),
     ],
 )
 def test_providing_transformation_without_bounds(mode, transformation):
