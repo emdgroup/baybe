@@ -56,16 +56,12 @@ def test_binary_target_invalid_values(choices, error, match):
 
 
 @pytest.mark.parametrize(
-    ("mode", "transformation"),
-    [
-        param("MIN", "LINEAR", id="linear_for_min"),
-        param("MAX", "LINEAR", id="linear_for_max"),
-    ],
+    "mode",
+    ["MIN", "MAX"],
 )
-def test_providing_transformation_without_bounds(mode, transformation):
+def test_providing_transformation_without_bounds(mode):
+    """Providing a transformation without bounds raises an error."""
     with pytest.raises(ValueError, match="but did not specify any bounds."):
         NumericalTarget(
-            name="transforamtion_without_bounds",
-            mode=mode,
-            transformation=transformation,
+            name="transformation_without_bounds", mode=mode, transformation="LINEAR"
         )
