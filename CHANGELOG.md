@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `qNIPV` not working with single `MIN` targets
 - Passing a `TargetTransformation` without passing `bounds` when createing a 
   `NumericalTarget` now raises an error
+- Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
+  between constraints and dropped parameters yielding empty parameter sets
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer

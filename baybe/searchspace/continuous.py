@@ -298,10 +298,14 @@ class SubspaceContinuous(SerialMixin):
         return SubspaceContinuous(
             parameters=[p for p in self.parameters if p.name not in parameter_names],
             constraints_lin_eq=[
-                c._drop_parameters(parameter_names) for c in self.constraints_lin_eq
+                c._drop_parameters(parameter_names)
+                for c in self.constraints_lin_eq
+                if set(c.parameters) - set(parameter_names)
             ],
             constraints_lin_ineq=[
-                c._drop_parameters(parameter_names) for c in self.constraints_lin_ineq
+                c._drop_parameters(parameter_names)
+                for c in self.constraints_lin_ineq
+                if set(c.parameters) - set(parameter_names)
             ],
         )
 
