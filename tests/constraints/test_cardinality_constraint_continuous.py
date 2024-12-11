@@ -175,7 +175,7 @@ def test_empty_constraints_after_cardinality_constraint():
     """Constraints that have no more parameters left due to activated
     cardinality constraints do not cause crashes."""  # noqa
 
-    N_PARAMETERS = 4
+    N_PARAMETERS = 2
 
     parameters = [
         NumericalContinuousParameter(name=f"x_{i+1}", bounds=(0, 1))
@@ -200,5 +200,5 @@ def test_empty_constraints_after_cardinality_constraint():
             min_cardinality=1,
         ),
     ]
-    searchspace = SearchSpace.from_product(parameters, constraints)
-    searchspace.continuous.sample_uniform(1)
+    subspace = SubspaceContinuous.from_product(parameters, constraints)
+    subspace.sample_uniform(1)
