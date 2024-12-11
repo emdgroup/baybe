@@ -1038,6 +1038,8 @@ incorrect candidate sets when reused in different optimization contexts</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">qNIPV</span></code> not working with single <code class="docutils literal notranslate"><span class="pre">MIN</span></code> targets</p></li>
 <li><p>Passing a <code class="docutils literal notranslate"><span class="pre">TargetTransformation</span></code> without passing <code class="docutils literal notranslate"><span class="pre">bounds</span></code> when createing a
 <code class="docutils literal notranslate"><span class="pre">NumericalTarget</span></code> now raises an error</p></li>
+<li><p>Crash when using <code class="docutils literal notranslate"><span class="pre">ContinuousCardinalityConstraint</span></code> caused by an unintended interplay
+between constraints and dropped parameters yielding empty parameter sets</p></li>
 </ul>
 </section>
 <section id="deprecations">

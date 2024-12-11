@@ -1086,13 +1086,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent                Base                        Ligand  \
-60   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-318         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent             Base                        Ligand  \
+365       p-Xylene  Cesium pivalate                     BrettPhos   
+156  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration  
-60         120.0          0.057  
-318        105.0          0.057  
+365        105.0          0.153  
+156        105.0          0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1105,13 +1105,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-60   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-318         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent             Base                        Ligand  \
+365       p-Xylene  Cesium pivalate                     BrettPhos   
+156  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration     yield  
-60         120.0          0.057  5.458533  
-318        105.0          0.057  8.704748  
+365        105.0          0.153  2.463500  
+156        105.0          0.057  0.656694  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
