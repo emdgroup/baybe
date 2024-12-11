@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Search spaces are now stateless, preventing unintended side effects that could lead to
   incorrect candidate sets when reused in different optimization contexts
 - `qNIPV` not working with single `MIN` targets
-- Passing a `TargetTransformation` without passing `bounds` when createing a 
+- Passing a `TargetTransformation` without passing `bounds` when creating a 
   `NumericalTarget` now raises an error
 - Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
   between constraints and dropped parameters yielding empty parameter sets
