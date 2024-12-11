@@ -4,6 +4,6 @@ These examples demonstrate how to use custom pre-trained [ONNX](https://onnx.ai)
 ```{toctree}
 :maxdepth: 1
 
-Surrogate Params<surrogate_params>
 Custom Pretrained<custom_pretrained>
+Surrogate Params<surrogate_params>
 ```
