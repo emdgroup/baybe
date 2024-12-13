@@ -92,7 +92,7 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 
 
 def activate_parameter(
-    parameter: NumericalContinuousParameter, threshold: float
+    parameter: NumericalContinuousParameter,
 ) -> NumericalContinuousParameter:
     """Activates a given parameter by moving its bounds away from zero.
 
@@ -104,7 +104,6 @@ def activate_parameter(
 
     Args:
         parameter: The parameter to be activated.
-        threshold: The threshold for a parameter to be considered active.
 
     Returns:
         A copy of the parameter with adjusted bounds.
@@ -117,22 +116,23 @@ def activate_parameter(
     upper = parameter.bounds.upper
 
     def in_inactive_range(x: float, /) -> bool:
-        return -threshold <= x <= threshold
+        return -parameter.near_zero_threshold <= x <= parameter.near_zero_threshold
 
     # Upper bound is in inactive range
-    if lower < -threshold and in_inactive_range(upper):
-        return evolve(parameter, bounds=(lower, -threshold))
+    if lower < -parameter.near_zero_threshold and in_inactive_range(upper):
+        return evolve(parameter, bounds=(lower, -parameter.near_zero_threshold))
 
     # Lower bound is in inactive range
-    if upper > threshold and in_inactive_range(lower):
-        return evolve(parameter, bounds=(threshold, upper))
+    if upper > parameter.near_zero_threshold and in_inactive_range(lower):
+        return evolve(parameter, bounds=(parameter.near_zero_threshold, upper))
 
     # Both bounds in inactive range
     if in_inactive_range(lower) and in_inactive_range(upper):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
             f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
-            f"inactive range [-{threshold}, {threshold}]."
+            f"inactive range [-{parameter.near_zero_threshold},"
+            f" {parameter.near_zero_threshold}]."
         )
 
     # Both bounds separated from inactive range

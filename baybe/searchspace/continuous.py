@@ -366,7 +366,7 @@ class SubspaceContinuous(SerialMixin):
             if p.name in inactive_parameter_names:
                 p_adjusted = _FixedNumericalContinuousParameter(name=p.name, value=0.0)
             elif p.name in active_parameter_names:
-                p_adjusted = activate_parameter(p, threshold)
+                p_adjusted = activate_parameter(p)
             else:
                 p_adjusted = p
             adjusted_parameters.append(p_adjusted)
