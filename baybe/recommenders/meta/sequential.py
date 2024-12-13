@@ -49,8 +49,11 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """The recommender used by the meta recommender after the switch."""
 
     switch_after: int = field(default=1)
-    """The number of experiments after which the recommender is switched for the next
-    requested batch."""
+    """The number of experiments required for the recommender to switch."""
+
+    remain_switched: bool = False
+    """Determines if the recommender should remain switched even if the number of
+    experiments falls below the threshold value in subsequent calls."""
 
     @override
     def select_recommender(
