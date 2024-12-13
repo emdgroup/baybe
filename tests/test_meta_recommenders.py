@@ -16,23 +16,35 @@ from tests.conftest import select_recommender
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
 
 
-def test_twophase_meta_recommender():
-    """The recommender switches the recommender at the requested point."""
+@pytest.mark.parametrize("remain_switched", [False, True])
+def test_twophase_meta_recommender(remain_switched):
+    """The recommender switches the recommender at the requested point and
+    remains / reverts the switch depending on the configuration."""  # noqa
+    # Cross the switching point forwards and backwards
+    switch_after = 3
+    training_sizes = [2, 3, 2]
+
+    # Recommender objects
     initial_recommender = RandomRecommender()
     subsequent_recommender = RandomRecommender()
-    switch_after = 3
     recommender = TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=subsequent_recommender,
         switch_after=switch_after,
+        remain_switched=remain_switched,
     )
-    for training_size in range(6):
-        rec = select_recommender(recommender, training_size)
+
+    # Query the meta recommender
+    switch_point_passed = False
+    for n_data in training_sizes:
+        rec = select_recommender(recommender, n_data)
         target = (
-            initial_recommender
-            if training_size < switch_after
-            else subsequent_recommender
+            subsequent_recommender
+            if (n_data >= switch_after) or (switch_point_passed and remain_switched)
+            else initial_recommender
         )
+        if not switch_point_passed and n_data >= switch_after:
+            switch_point_passed = True
         assert rec is target
 
 
