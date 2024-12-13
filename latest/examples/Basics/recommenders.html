@@ -1095,8 +1095,8 @@ The following acquisition functions are generally available.</p>
 <li><p>If a larger value is chosen, only those that allow batching.
 That is, ‘q’-variants of the acquisition functions must be chosen.</p></li>
 </ul>
-<p>The default he acquisition function is q-Expected Improvement.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ACQ_FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;qEI&quot;</span>
+<p>The default acquisition function is q-Log Expected Improvement.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ACQ_FUNCTION</span> <span class="o">=</span> <span class="s2">&quot;qLogEI&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -1142,7 +1142,7 @@ Therefore one does not need to specify all of them to create a recommender objec
             GaussianProcessSurrogate
                Supports Transfer Learning: True
                Kernel factory: DefaultKernelFactory()
-         Acquisition function: qExpectedImprovement()
+         Acquisition function: qLogExpectedImprovement()
          Compatibility: SearchSpaceType.HYBRID
          Sequential continuous: False
          Hybrid sampler: None
@@ -1219,10 +1219,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent             Base         Ligand  Temperature  Concentration
-12   Butyl Ester   Cesium acetate      BrettPhos        105.0          0.057
-248         DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153
-44   Butyl Ester  Cesium pivalate      BrettPhos        120.0          0.153
+        Solvent               Base                        Ligand  Temperature  \
+55  Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos         90.0   
+48  Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+4   Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos        105.0   
+
+    Concentration  
+55          0.100  
+48          0.057  
+4           0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1231,15 +1236,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent             Base         Ligand  Temperature  Concentration  \
-12   Butyl Ester   Cesium acetate      BrettPhos        105.0          0.057   
-248         DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153   
-44   Butyl Ester  Cesium pivalate      BrettPhos        120.0          0.153   
+        Solvent               Base                        Ligand  Temperature  \
+55  Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos         90.0   
+48  Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+4   Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos        105.0   
 
-         yield  
-12    4.081841  
-248  27.981630  
-44   29.246986  
+    Concentration      yield  
+55          0.100  26.268857  
+48          0.057  24.724293  
+4           0.100   4.104348  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

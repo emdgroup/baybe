@@ -113,11 +113,11 @@ Note that the availability of the acquisition functions might depend on the
   - If a larger value is chosen, only those that allow batching.
       That is, 'q'-variants of the acquisition functions must be chosen.
 
-The default he acquisition function is q-Expected Improvement.
+The default acquisition function is q-Log Expected Improvement.
 
 
 ```python
-ACQ_FUNCTION = "qEI"
+ACQ_FUNCTION = "qLogEI"
 ```
 
 ## Other parameters
@@ -169,7 +169,7 @@ print(recommender)
                 GaussianProcessSurrogate
                    Supports Transfer Learning: True
                    Kernel factory: DefaultKernelFactory()
-             Acquisition function: qExpectedImprovement()
+             Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: False
              Hybrid sampler: None
@@ -266,10 +266,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent             Base         Ligand  Temperature  Concentration
-    12   Butyl Ester   Cesium acetate      BrettPhos        105.0          0.057
-    248         DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153
-    44   Butyl Ester  Cesium pivalate      BrettPhos        120.0          0.153
+            Solvent               Base                        Ligand  Temperature  \
+    55  Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos         90.0   
+    48  Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+    4   Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos        105.0   
+    
+        Concentration  
+    55          0.100  
+    48          0.057  
+    4           0.100  
 
 
 
@@ -282,15 +287,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent             Base         Ligand  Temperature  Concentration  \
-    12   Butyl Ester   Cesium acetate      BrettPhos        105.0          0.057   
-    248         DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153   
-    44   Butyl Ester  Cesium pivalate      BrettPhos        120.0          0.153   
+            Solvent               Base                        Ligand  Temperature  \
+    55  Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos         90.0   
+    48  Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine        105.0   
+    4   Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos        105.0   
     
-             yield  
-    12    4.081841  
-    248  27.981630  
-    44   29.246986  
+        Concentration      yield  
+    55          0.100  26.268857  
+    48          0.057  24.724293  
+    4           0.100   4.104348  
 
 
 
