@@ -82,6 +82,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
             to_string("Initial recommender", self.initial_recommender),
             to_string("Recommender", self.recommender),
             to_string("Switch after", self.switch_after, single_line=True),
+            to_string("Remain switched", self.remain_switched, single_line=True),
+            to_string("Has switched", self._has_switched, single_line=True),
         ]
         return to_string(self.__class__.__name__, *fields)
 
