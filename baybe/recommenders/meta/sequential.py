@@ -55,6 +55,9 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """Determines if the recommender should remain switched even if the number of
     experiments falls below the threshold value in subsequent calls."""
 
+    _has_switched: bool = False
+    """Indicates if the switch has already occurred."""
+
     @override
     def select_recommender(
         self,
@@ -64,11 +67,14 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        return (
-            self.recommender
-            if (measurements is not None) and (len(measurements) >= self.switch_after)
-            else self.initial_recommender
-        )
+        n_data = len(measurements) if measurements is not None else 0
+        if (n_data >= self.switch_after) or (
+            self._has_switched and self.remain_switched
+        ):
+            self._has_switched = True
+            return self.recommender
+
+        return self.initial_recommender
 
     @override
     def __str__(self) -> str:
