@@ -115,19 +115,16 @@ def activate_parameter(
     lower = parameter.bounds.lower
     upper = parameter.bounds.upper
 
-    def in_inactive_range(x: float, /) -> bool:
-        return -parameter.near_zero_threshold <= x <= parameter.near_zero_threshold
-
-    # Upper bound is in inactive range
-    if lower < -parameter.near_zero_threshold and in_inactive_range(upper):
+    # Upper bound is in near-zero range
+    if lower <= -parameter.near_zero_threshold and parameter.is_near_zero(upper):
         return evolve(parameter, bounds=(lower, -parameter.near_zero_threshold))
 
-    # Lower bound is in inactive range
-    if upper > parameter.near_zero_threshold and in_inactive_range(lower):
+    # Lower bound is in near-zero range
+    if upper > parameter.near_zero_threshold and parameter.is_near_zero(lower):
         return evolve(parameter, bounds=(parameter.near_zero_threshold, upper))
 
     # Both bounds in inactive range
-    if in_inactive_range(lower) and in_inactive_range(upper):
+    if parameter.is_near_zero(lower) and parameter.is_near_zero(upper):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
             f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
