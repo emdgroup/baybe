@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
+import warnings
 from collections.abc import Collection, Iterable
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -19,6 +20,7 @@ from baybe.constraints import ContinuousCardinalityConstraint
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
+    MinimumCardinalityViolatedWarning,
 )
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
@@ -28,6 +30,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.utils.cardinality_constraints import is_min_cardinality_fulfilled
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
@@ -283,7 +286,19 @@ class BotorchRecommender(BayesianRecommender):
             for inactive_parameters in iterator
         )
 
-        return self._optimize_continuous_subspaces(subspaces, batch_size)
+        points, acqf_value = self._optimize_continuous_subspaces(subspaces, batch_size)
+
+        # Check if any minimum cardinality constraints are violated
+        if not is_min_cardinality_fulfilled(
+            subspace_continuous,
+            pd.DataFrame(points, columns=subspace_continuous.parameter_names),
+        ):
+            warnings.warn(
+                "Minimum cardinality constraints are not guaranteed.",
+                MinimumCardinalityViolatedWarning,
+            )
+
+        return points, acqf_value
 
     def _recommend_continuous_without_cardinality_constraints(
         self,
