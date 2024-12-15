@@ -517,11 +517,14 @@ class SubspaceContinuous(SerialMixin):
             # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
+            # TODO: active parameters must be guaranteed non-zero!
             # Remove the inactive parameters from the search space
             subspace_without_cardinality_constraint = self._drop_parameters(
                 inactive_params_sample
             )
 
+            # TODO: Replace ValueError with customized erorr. See
+            #  https://github.com/pytorch/botorch/pull/2652
             # Sample from the reduced space
             try:
                 sample = subspace_without_cardinality_constraint.sample_uniform(1)
