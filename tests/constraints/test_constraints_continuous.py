@@ -1,5 +1,7 @@
 """Test for imposing continuous constraints."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -102,13 +104,19 @@ def test_cardinality_constraint(recommender):
         objective = None
         measurements = None
 
-    recommendation = recommender.recommend(
-        BATCH_SIZE, searchspace, objective, measurements
-    )
+    with warnings.catch_warnings(record=True) as w:
+        recommendation = recommender.recommend(
+            BATCH_SIZE, searchspace, objective, measurements
+        )
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        recommendation, MIN_CARDINALITY, MAX_CARDINALITY, BATCH_SIZE
+        recommendation,
+        MIN_CARDINALITY,
+        MAX_CARDINALITY,
+        BATCH_SIZE,
+        tuple(parameters),
+        w,
     )
 
 

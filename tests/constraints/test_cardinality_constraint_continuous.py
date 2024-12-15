@@ -1,6 +1,8 @@
 """Tests for the continuous cardinality constraint."""
 
+import warnings
 from itertools import combinations_with_replacement
+from warnings import WarningMessage
 
 import numpy as np
 import pandas as pd
@@ -12,6 +14,7 @@ from baybe.constraints.continuous import (
 )
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
+from baybe.utils.cardinality_constraints import count_near_zeros
 
 
 def _validate_cardinality_constrained_batch(
@@ -19,7 +22,8 @@ def _validate_cardinality_constrained_batch(
     min_cardinality: int,
     max_cardinality: int,
     batch_size: int,
-    threshold: float = 0.0,
+    parameters: tuple[NumericalContinuousParameter],
+    captured_warnings: list[WarningMessage | None],
 ):
     """Validate that a cardinality-constrained batch fulfills the necessary conditions.
 
@@ -28,11 +32,20 @@ def _validate_cardinality_constrained_batch(
         min_cardinality: Minimum required cardinality.
         max_cardinality: Maximum allowed cardinality.
         batch_size: Requested batch size.
-        threshold: Threshold for checking whether a value is treated as zero.
+        parameters: A list of parameters for which recommendations are provided.
+        captured_warnings: A list of captured warnings.
     """
-    # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(~np.isclose(batch, 0.0, atol=threshold), axis=1)
-    assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
+    # Assert that the maximum cardinality constraint is fulfilled
+    n_nonzeros = len(parameters) - count_near_zeros(parameters, batch)
+    assert np.all(n_nonzeros <= max_cardinality)
+
+    # Check whether the minimum cardinality constraint is fulfilled
+    is_min_cardinality_fulfilled = np.all(n_nonzeros >= min_cardinality)
+
+    # A warning must be raised when the minimum cardinality constraint is not fulfilled
+    if not is_min_cardinality_fulfilled:
+        w_message = "Minimum cardinality constraints are not guaranteed."
+        assert any(str(w.message) == w_message for w in captured_warnings)
 
     # Assert that we obtain as many samples as requested
     assert batch.shape[0] == batch_size
@@ -81,11 +94,13 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
     )
 
     subspace = SubspaceContinuous(parameters=parameters, constraints_nonlin=constraints)
-    samples = subspace.sample_uniform(BATCH_SIZE)
+
+    with warnings.catch_warnings(record=True) as w:
+        samples = subspace.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        samples, min_cardinality, max_cardinality, BATCH_SIZE
+        samples, min_cardinality, max_cardinality, BATCH_SIZE, parameters, w
     )
 
 
@@ -131,11 +146,17 @@ def test_polytope_sampling_with_cardinality_constraint():
     ]
     searchspace = SearchSpace.from_product(parameters, constraints)
 
-    samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
+    with warnings.catch_warnings(record=True) as w:
+        samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        samples[params_cardinality], MIN_CARDINALITY, MAX_CARDINALITY, BATCH_SIZE
+        samples[params_cardinality],
+        MIN_CARDINALITY,
+        MAX_CARDINALITY,
+        BATCH_SIZE,
+        tuple(p for p in parameters if p.name in params_cardinality),
+        w,
     )
 
     # Assert that linear equality constraint is fulfilled
