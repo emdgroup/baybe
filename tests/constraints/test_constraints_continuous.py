@@ -7,6 +7,8 @@ from pytest import param
 from baybe.constraints import ContinuousLinearConstraint
 from tests.conftest import run_iterations
 
+TOLERANCE = 0.01
+
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
@@ -66,6 +68,103 @@ def test_inequality3(campaign, n_iterations, batch_size):
     print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).le(0.301).all()
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
+def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size):
+    """Test single parameter interpoint equality constraint."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert np.isclose(res_batch["Conti_finite1"].sum(), 0.3)
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
+def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_size):
+    """Test single parameter interpoint inequality constraint."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
+def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_size):
+    """Test interpoint equality constraint involving multiple parameters."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert np.isclose(
+            res_batch["Conti_finite1"].sum() + res_batch["Conti_finite2"].sum(), 0.3
+        )
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
+def test_geq_interpoint_inequality_multiple_parameters(
+    campaign, n_iterations, batch_size
+):
+    """Test geq-interpoint inequality constraint involving multiple parameters."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert (
+            2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
+            >= 0.3 - TOLERANCE
+        )
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize("constraint_names", [["InterConstraint_5"]])
+def test_leq_interpoint_inequality_multiple_parameters(
+    campaign, n_iterations, batch_size
+):
+    """Test leq-interpoint inequality constraint involving multiple parameters."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        print(campaign.searchspace.constraints)
+        assert (
+            2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
+            <= 0.3 + TOLERANCE
+        )
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize(
+    "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
+)
+def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
+    """Test mixing interpoint and normal inequality constraints."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+    print(res)
+
+    for batch in range(n_iterations):
+        res_batch = res[res["BatchNr"] == batch + 1]
+        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
+
+    assert (
+        (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
+        .ge(0.3 - TOLERANCE)
+        .all()
+    )
 
 
 @pytest.mark.slow
