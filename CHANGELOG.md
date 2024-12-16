@@ -45,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `NumericalTarget` now raises an error
 - Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
   between constraints and dropped parameters yielding empty parameter sets
->>>>>>> main
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
