@@ -74,7 +74,7 @@ random_campaign = Campaign(
     recommender=RandomRecommender(),
 )
 
-### Running the Optimization Loop
+### Running the Simulation Loop
 
 # Next, we simulate both scenarios using the
 # {func}`~baybe.simulation.scenarios.simulate_scenarios` utility,
