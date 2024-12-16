@@ -685,7 +685,9 @@ def filter_df(
 
 def label_input_and_output_columns(
     input_labels: Sequence[str], output_labels: Sequence[str], use_torch: bool = False
-) -> Callable:
+) -> Callable[
+    [Callable[[_ArrayLike], _ArrayLike]], Callable[[pd.DataFrame], pd.DataFrame]
+]:
     """Create a decorator for labeling the inputs and outputs of array-based callables.
 
     The decorator transforms a callable designed to work with unlabelled arrays such
