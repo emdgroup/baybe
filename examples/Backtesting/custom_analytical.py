@@ -29,7 +29,7 @@ SMOKE_TEST = "SMOKE_TEST" in os.environ
 BATCH_SIZE = 1
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 20
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 30
-DIMENSION = 1 if SMOKE_TEST else 10
+DIMENSION = 2 if SMOKE_TEST else 10
 BOUNDS = (-1, 1)
 
 ### Defining the Optimization Problem
