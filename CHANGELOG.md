@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   optimization behavior in the presence of multiple subspaces
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
+- Attribute `near_zero_threshold` and utility `is_near_zero` to 
+  `NumericalContinuousParameter`
+- Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
+  cardinality is violated in `BotorchRecommender`
+- Utilities `count_near_zeros` and `is_min_cardinality_fulfilled`
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
