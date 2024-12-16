@@ -4,7 +4,10 @@ from collections.abc import Collection
 from itertools import combinations
 
 from baybe.constraints.base import Constraint
-from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.continuous import (
+    ContinuousCardinalityConstraint,
+    ContinuousConstraint,
+)
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
 )
@@ -98,3 +101,25 @@ def validate_cardinality_constraints_are_nonoverlapping(
                 f"cannot share the same parameters. Found the following overlapping "
                 f"parameter sets: {s1}, {s2}."
             )
+
+
+def validate_no_interpoint_and_cardinality_constraints(
+    constraints: Collection[ContinuousConstraint],
+):
+    """Validate that cardinality and interpoint constraints are not used together.
+
+    This is a current limitation in our code and might be enabled in the future.
+
+    Args:
+        constraints: A collection of continuous constraints.
+
+    Raises:
+        ValueError: If there are both interpoint and cardinality constraints.
+    """
+    if any(c.is_interpoint for c in constraints) and any(
+        isinstance(c, ContinuousCardinalityConstraint) for c in constraints
+    ):
+        raise ValueError(
+            f"Cconstraints of type `{ContinuousCardinalityConstraint.__name__}` "
+            "cannot be used together with interpoint constraints."
+        )
