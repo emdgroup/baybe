@@ -104,6 +104,12 @@ ContinuousLinearConstraint(
 )
 ```
 
+```{admonition} Mixing interpoint and cardinality constraints
+:class: note
+Currently, BayBE does not support to use both interpoint and cardinality constraints
+within the same search space.
+```
+
 ## Conditions
 Conditions are elements used within discrete constraints.
 While discrete constraints can operate on one or multiple parameters, a condition
