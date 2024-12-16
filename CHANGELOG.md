@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `filter_df` utility for filtering dataframe content
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
-- `label_columns` decorator utility for convenient creation of lookup callables
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the

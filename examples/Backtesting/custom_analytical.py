@@ -9,14 +9,14 @@
 
 import os
 
-import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from baybe import Campaign
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
-from baybe.simulation import label_columns, simulate_scenarios
+from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.plotting import create_example_plots
 
@@ -44,16 +44,13 @@ parameters = [
 target = NumericalTarget(name="Target", mode="MIN")
 
 
-# Based on the above, we construct the black-box callable to be optimized.
-# Using the {func}`~baybe.simulation.lookup.label_columns` decorator, we can easily map
-# the columns of the raw input/output arrays to our parameter and target objects, which
-# creates the required dataframe-based lookup for the optimization loop:
+# Based on the above, we construct the black-box callable to be optimized, which
+# provides the lookup mechanism for closing the optimization loop:
 
 
-@label_columns([p.name for p in parameters], [target.name])
-def sum_of_squares(x: np.ndarray, /) -> np.ndarray:
+def blackbox(df: pd.DataFrame, /) -> pd.DataFrame:
     """Calculate the sum of squares."""
-    return (x**2).sum(axis=1, keepdims=True)
+    return (df[[p.name for p in parameters]] ** 2).sum(axis=1).to_frame(target.name)
 
 
 # What remains is to construct the search space and objective for the optimization:
@@ -89,7 +86,7 @@ scenarios = {
 }
 results = simulate_scenarios(
     scenarios,
-    sum_of_squares,
+    blackbox,
     batch_size=BATCH_SIZE,
     n_doe_iterations=N_DOE_ITERATIONS,
     n_mc_iterations=N_MC_ITERATIONS,

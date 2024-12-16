@@ -16,12 +16,10 @@ applied context:
 """
 
 from baybe.simulation.core import simulate_experiment
-from baybe.simulation.lookup import label_columns
 from baybe.simulation.scenarios import simulate_scenarios
 from baybe.simulation.transfer_learning import simulate_transfer_learning
 
 __all__ = [
-    "label_columns",
     "simulate_experiment",
     "simulate_scenarios",
     "simulate_transfer_learning",
