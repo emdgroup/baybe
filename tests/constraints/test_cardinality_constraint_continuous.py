@@ -12,8 +12,11 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
+from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.cardinality_constraints import count_near_zeros
 
 
@@ -172,3 +175,63 @@ def test_polytope_sampling_with_cardinality_constraint():
         .ge(rhs_inequality - TOLERANCE)
         .all()
     )
+
+
+def test_min_cardinality_warning():
+    """Providing candidates violating minimum cardinality constraint raises a
+    warning.
+    """  # noqa
+    N_PARAMETERS = 2
+    MIN_CARDINALITY = 2
+    MAX_CARDINALITY = 2
+    BATCH_SIZE = 20
+
+    lower_bound = -0.5
+    upper_bound = 0.5
+    stepsize = 0.05
+    parameters = [
+        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(lower_bound, upper_bound))
+        for i in range(N_PARAMETERS)
+    ]
+
+    constraints = [
+        ContinuousCardinalityConstraint(
+            parameters=[p.name for p in parameters],
+            max_cardinality=MAX_CARDINALITY,
+            min_cardinality=MIN_CARDINALITY,
+        ),
+    ]
+
+    searchspace = SearchSpace.from_product(parameters, constraints)
+    objective = NumericalTarget("t", "MAX").to_objective()
+
+    # Create a scenario in which
+    # - The optimum of the target function is at the origin
+    # - The Botorch recommender is likely to provide candidates at the origin,
+    # which violates the minimum cardinality constraint.
+    def custom_target(x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+        """A custom target function with maximum at the origin."""
+        return -abs(x1) - abs(x2)
+
+    def prepare_measurements() -> pd.DataFrame:
+        """Prepare measurements."""
+        x1 = np.arange(lower_bound, upper_bound + stepsize, stepsize)
+        # Exclude 0 from the array
+        X1, X2 = np.meshgrid(x1[abs(x1) > stepsize / 2], x1[abs(x1) > stepsize / 2])
+
+        return pd.DataFrame(
+            {
+                "x_1": X1.flatten(),
+                "x_2": X2.flatten(),
+                "t": custom_target(X1.flatten(), X2.flatten()),
+            }
+        )
+
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        BotorchRecommender().recommend(
+            BATCH_SIZE, searchspace, objective, prepare_measurements()
+        )
+        assert any(
+            issubclass(w.category, MinimumCardinalityViolatedWarning)
+            for w in captured_warnings
+        )

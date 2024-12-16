@@ -112,7 +112,7 @@ class NumericalContinuousParameter(ContinuousParameter):
     bounds: Interval = field(default=None, converter=convert_bounds)
     """The bounds of the parameter."""
 
-    near_zero_threshold: float = field(default=1e-8, converter=float)
+    near_zero_threshold: float = field(default=1e-5, converter=float)
     """A threshold for determining if the value is considered near-zero."""
 
     @bounds.validator
