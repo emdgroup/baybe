@@ -20,6 +20,7 @@ from baybe.constraints import (
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
     validate_cardinality_constraints_are_nonoverlapping,
+    validate_no_interpoint_and_cardinality_constraints,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
@@ -174,6 +175,7 @@ class SubspaceContinuous(SerialMixin):
     ) -> SubspaceContinuous:
         """See :class:`baybe.searchspace.core.SearchSpace`."""
         constraints = constraints or []
+        validate_no_interpoint_and_cardinality_constraints(constraints)
         return SubspaceContinuous(
             parameters=[p for p in parameters if p.is_continuous],  # type:ignore[misc]
             constraints_lin_eq=[  # type:ignore[attr-misc]
