@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import functools
 import logging
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Literal, TypeVar, overload
 
 import numpy as np
@@ -21,6 +22,8 @@ if TYPE_CHECKING:
     from baybe.targets.base import Target
 
     _T = TypeVar("_T", bound=Parameter | Target)
+    _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
+
 
 # Logging
 _logger = logging.getLogger(__name__)
@@ -678,3 +681,47 @@ def filter_df(
     out.index.name = index_name
 
     return out
+
+
+def label_input_and_output_columns(
+    input_labels: Sequence[str], output_labels: Sequence[str], use_torch: bool = False
+) -> Callable:
+    """Create a decorator for labeling the inputs and outputs of array-based callables.
+
+    The decorator transforms a callable designed to work with unlabelled arrays such
+    that it can operate with dataframes instead. The original callable is expected to
+    accept and return two-dimensional arrays. When decorated, the callable accepts and
+    returns dataframes whose columns are mapped to the corresponding arrays based on the
+    specified label sequences.
+
+    Args:
+        input_labels: The sequence of labels for the input columns.
+        output_labels: The sequence of labels for the output columns.
+        use_torch: Flag indicating if the callable is to be called with a numpy array
+            or with a torch tensor.
+
+    Returns:
+        The decorator for the given input and output labels.
+    """
+
+    def decorator(
+        fn: Callable[[_ArrayLike], _ArrayLike], /
+    ) -> Callable[[pd.DataFrame], pd.DataFrame]:
+        """Turn an array-based callable into a dataframe-based callable."""
+
+        @functools.wraps(fn)
+        def wrapper(df: pd.DataFrame, /) -> pd.DataFrame:
+            """Translate to/from an array-based callable using dataframes."""
+            array_in = df[list(input_labels)].to_numpy()
+            if use_torch:
+                import torch
+
+                with torch.no_grad():
+                    array_out = fn(torch.from_numpy(array_in)).numpy()
+            else:
+                array_out = fn(array_in)
+            return pd.DataFrame(array_out, columns=list(output_labels), index=df.index)
+
+        return wrapper
+
+    return decorator
