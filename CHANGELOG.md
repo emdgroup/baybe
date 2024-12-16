@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
+  cardinality is violated in `BotorchRecommender`
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of multiple subspaces
+- Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
+  in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
+- Attribute `near_zero_threshold` and utility `is_near_zero` to 
+  `NumericalContinuousParameter`
+- Utilities `count_near_zeros` and `is_min_cardinality_fulfilled`
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the

@@ -1,6 +1,8 @@
 """Tests for the continuous cardinality constraint."""
 
+import warnings
 from itertools import combinations_with_replacement
+from warnings import WarningMessage
 
 import numpy as np
 import pandas as pd
@@ -10,36 +12,58 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
-from baybe.parameters import NumericalContinuousParameter
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.exceptions import MinimumCardinalityViolatedWarning
+from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.cardinality_constraints import count_near_zeros
 
 
-def _validate_samples(
-    samples: pd.DataFrame, max_cardinality: int, min_cardinality: int, batch_size: int
+def _validate_cardinality_constrained_batch(
+    batch: pd.DataFrame,
+    min_cardinality: int,
+    max_cardinality: int,
+    batch_size: int,
+    parameters: tuple[NumericalContinuousParameter],
+    captured_warnings: list[WarningMessage | None],
 ):
-    """Validate if cardinality-constrained samples fulfill the necessary conditions.
-
-    Conditions to check:
-    * Cardinality is in requested range
-    * The batch contains right number of samples
-    * The samples are free of duplicates (except all zeros)
+    """Validate that a cardinality-constrained batch fulfills the necessary conditions.
 
     Args:
-        samples: Samples to check
-        max_cardinality: Maximum allowed cardinality
-        min_cardinality: Minimum required cardinality
-        batch_size: Requested batch size
+        batch: Batch to validate.
+        min_cardinality: Minimum required cardinality.
+        max_cardinality: Maximum allowed cardinality.
+        batch_size: Requested batch size.
+        parameters: A list of parameters for which recommendations are provided.
+        captured_warnings: A list of captured warnings.
     """
-    # Assert that cardinality constraint is fulfilled
-    n_nonzero = np.sum(~np.isclose(samples, 0.0), axis=1)
-    assert np.all(n_nonzero >= min_cardinality) and np.all(n_nonzero <= max_cardinality)
+    # Assert that the maximum cardinality constraint is fulfilled
+    n_nonzeros = len(parameters) - count_near_zeros(parameters, batch)
+    assert np.all(n_nonzeros <= max_cardinality)
+
+    # Check whether the minimum cardinality constraint is fulfilled
+    is_min_cardinality_fulfilled = np.all(n_nonzeros >= min_cardinality)
+
+    # A warning must be raised when the minimum cardinality constraint is not fulfilled
+    if not is_min_cardinality_fulfilled:
+        w_message = "Minimum cardinality constraints are not guaranteed."
+        assert any(str(w.message) == w_message for w in captured_warnings)
 
     # Assert that we obtain as many samples as requested
-    assert len(samples) == batch_size
+    assert batch.shape[0] == batch_size
 
-    # If there are duplicates, they must all come from the case cardinality = 0
-    assert np.all(samples[samples.duplicated()] == 0.0)
+    # Sanity check: If all recommendations in the batch are identical, something is
+    # fishy – unless the cardinality is 0, in which case the entire batch must contain
+    # zeros. Technically, the probability of getting such a degenerate batch
+    # is not zero, hence this is not a strict requirement. However, in earlier BoTorch
+    # versions, this simply happened due to a bug in their sampler:
+    # https://github.com/pytorch/botorch/issues/2351
+    # We thus include this check as a safety net for catching regressions. If it
+    # turns out the check fails because we observe degenerate batches as actual
+    # recommendations, we need to invent something smarter.
+    if len(unique_row := batch.drop_duplicates()) == 1:
+        assert (unique_row.iloc[0] == 0.0).all() and (max_cardinality == 0)
 
 
 # Combinations of cardinalities to be tested
@@ -73,10 +97,14 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
     )
 
     subspace = SubspaceContinuous(parameters=parameters, constraints_nonlin=constraints)
-    samples = subspace.sample_uniform(BATCH_SIZE)
 
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    _validate_samples(samples, max_cardinality, min_cardinality, BATCH_SIZE)
+    with warnings.catch_warnings(record=True) as w:
+        samples = subspace.sample_uniform(BATCH_SIZE)
+
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        samples, min_cardinality, max_cardinality, BATCH_SIZE, parameters, w
+    )
 
 
 def test_polytope_sampling_with_cardinality_constraint():
@@ -121,11 +149,17 @@ def test_polytope_sampling_with_cardinality_constraint():
     ]
     searchspace = SearchSpace.from_product(parameters, constraints)
 
-    samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
+    with warnings.catch_warnings(record=True) as w:
+        samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
 
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    _validate_samples(
-        samples[params_cardinality], MAX_CARDINALITY, MIN_CARDINALITY, BATCH_SIZE
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        samples[params_cardinality],
+        MIN_CARDINALITY,
+        MAX_CARDINALITY,
+        BATCH_SIZE,
+        tuple(p for p in parameters if p.name in params_cardinality),
+        w,
     )
 
     # Assert that linear equality constraint is fulfilled
@@ -143,32 +177,64 @@ def test_polytope_sampling_with_cardinality_constraint():
     )
 
 
-@pytest.mark.parametrize(
-    "parameter_names", [["Conti_finite1", "Conti_finite2", "Conti_finite3"]]
-)
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_5"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_random_recommender_with_cardinality_constraint(
-    parameters: list[NumericalContinuousParameter],
-    constraints: list[ContinuousCardinalityConstraint],
-    batch_size: int,
-):
-    """Recommendations generated by a `RandomRecommender` under a cardinality constraint
-    have the expected number of nonzero elements."""  # noqa
+def test_min_cardinality_warning():
+    """Providing candidates violating minimum cardinality constraint raises a
+    warning.
+    """  # noqa
+    N_PARAMETERS = 2
+    MIN_CARDINALITY = 2
+    MAX_CARDINALITY = 2
+    BATCH_SIZE = 20
 
-    searchspace = SearchSpace.from_product(
-        parameters=parameters, constraints=constraints
-    )
-    recommender = RandomRecommender()
-    recommendations = recommender.recommend(
-        searchspace=searchspace,
-        batch_size=batch_size,
-    )
+    lower_bound = -0.5
+    upper_bound = 0.5
+    stepsize = 0.05
+    parameters = [
+        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(lower_bound, upper_bound))
+        for i in range(N_PARAMETERS)
+    ]
 
-    # Assert that conditions listed in_validate_samples() are fulfilled
-    _validate_samples(
-        recommendations, max_cardinality=2, min_cardinality=1, batch_size=batch_size
-    )
+    constraints = [
+        ContinuousCardinalityConstraint(
+            parameters=[p.name for p in parameters],
+            max_cardinality=MAX_CARDINALITY,
+            min_cardinality=MIN_CARDINALITY,
+        ),
+    ]
+
+    searchspace = SearchSpace.from_product(parameters, constraints)
+    objective = NumericalTarget("t", "MAX").to_objective()
+
+    # Create a scenario in which
+    # - The optimum of the target function is at the origin
+    # - The Botorch recommender is likely to provide candidates at the origin,
+    # which violates the minimum cardinality constraint.
+    def custom_target(x1: np.ndarray, x2: np.ndarray) -> np.ndarray:
+        """A custom target function with maximum at the origin."""
+        return -abs(x1) - abs(x2)
+
+    def prepare_measurements() -> pd.DataFrame:
+        """Prepare measurements."""
+        x1 = np.arange(lower_bound, upper_bound + stepsize, stepsize)
+        # Exclude 0 from the array
+        X1, X2 = np.meshgrid(x1[abs(x1) > stepsize / 2], x1[abs(x1) > stepsize / 2])
+
+        return pd.DataFrame(
+            {
+                "x_1": X1.flatten(),
+                "x_2": X2.flatten(),
+                "t": custom_target(X1.flatten(), X2.flatten()),
+            }
+        )
+
+    with warnings.catch_warnings(record=True) as captured_warnings:
+        BotorchRecommender().recommend(
+            BATCH_SIZE, searchspace, objective, prepare_measurements()
+        )
+        assert any(
+            issubclass(w.category, MinimumCardinalityViolatedWarning)
+            for w in captured_warnings
+        )
 
 
 def test_empty_constraints_after_cardinality_constraint():
