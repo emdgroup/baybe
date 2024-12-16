@@ -58,6 +58,7 @@ class CustomDiscreteParameter(DiscreteParameter):
             ValueError: If the dataframe contains ``NaN``.
             ValueError: If the dataframe index contains duplicates.
             ValueError: If the dataframe contains columns with only one unique value.
+            ValueError: If the dataframe contains duplicated rows.
         """
         if value.select_dtypes("number").shape[1] != value.shape[1]:
             raise ValueError(
@@ -88,6 +89,13 @@ class CustomDiscreteParameter(DiscreteParameter):
             raise ValueError(
                 f"The custom dataframe for parameter {self.name} has columns "
                 "that contain only a single value and hence carry no information."
+            )
+        if value.duplicated().any():
+            raise ValueError(
+                f"The custom dataframe for parameter {self.name} has duplicated rows. "
+                f"This is not supported because it can lead to ambiguous computational "
+                f"representations of candidate points. Please ensure all labels have a "
+                f"unique numerical representation."
             )
 
     @override

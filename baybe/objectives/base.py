@@ -60,7 +60,7 @@ def to_objective(x: Target | Objective, /) -> Objective:
     return x if isinstance(x, Objective) else x.to_objective()
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 converter.register_structure_hook(Objective, structure_objective)
 converter.register_unstructure_hook(
     Objective,

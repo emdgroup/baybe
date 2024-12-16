@@ -77,7 +77,7 @@ Targets are used in nearly all [examples](../../examples/examples).
 ```{important}
 At the moment, BayBE's only option for targets is the `NumericalTarget`.
 This enables many use cases due to the real-valued nature of most measurements.
-But it can also be used to model categorial targets if they are ordinal.
+But it can also be used to model categorical targets if they are ordinal.
 For example: If your experimental outcome is a categorical ranking into "bad",
 "mediocre" and "good", you could use a NumericalTarget with bounds (1, 3), where the
 categories correspond to values 1, 2 and 3 respectively.

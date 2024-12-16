@@ -96,7 +96,7 @@ objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX
 # First let us create three campaigns that each use a different chemical encoding to
 # treat substances.
 
-substance_encodings = ["MORDRED", "RDKIT", "MORGAN_FP"]
+substance_encodings = ["MORDRED", "RDKIT2DDESCRIPTORS", "ECFP"]
 scenarios = {
     encoding: Campaign(
         searchspace=SearchSpace.from_product(

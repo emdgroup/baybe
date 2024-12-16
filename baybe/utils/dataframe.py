@@ -360,6 +360,55 @@ def df_uncorrelated_features(
     return data
 
 
+def add_noise_to_perturb_degenerate_rows(
+    df: pd.DataFrame, noise_ratio: float = 0.001
+) -> pd.DataFrame:
+    """Add noise to degenerate rows to make them numerically distinguishable.
+
+    Note that the dataframe is changed in-place and also returned. The dataframe is
+    left untouched if no rows are degenerate.
+
+    Args:
+        df: The dataframe to be modified.
+        noise_ratio: The magnitude of generated uniform noise relative to the
+            min-max range of values for each column.
+
+    Returns:
+        The modified dataframe.
+
+    Raises:
+        TypeError: If the provided dataframe has non-numerical content.
+    """
+    # Find degenerate rows, exit if there are none
+    degen_rows = df.duplicated(keep=False)
+    if not degen_rows.any():
+        return df
+
+    # Assert that the input is purely numerical
+    if any(df[col].dtype.kind not in "iufb" for col in df.columns):
+        raise TypeError(
+            f"'{add_noise_to_perturb_degenerate_rows.__name__}' only supports purely "
+            f"numerical dataframes."
+        )
+
+    # Find the min-max range for each column. Constant columns will be assigned a range
+    # of 1 as fallback as otherwise they would be left untouched
+    column_ranges = df.max() - df.min()
+    column_ranges = column_ranges.replace(0, 1)
+
+    # Generate noise
+    noise = np.random.uniform(
+        -noise_ratio, noise_ratio, size=(degen_rows.sum(), df.shape[1])
+    )
+    noise_df = pd.DataFrame(noise, columns=df.columns, index=df.index[degen_rows])
+
+    # Scale noise by column ranges and add it to the original dataframe
+    noise_df = noise_df * column_ranges
+    df.loc[degen_rows] += noise_df
+
+    return df
+
+
 def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
@@ -460,9 +509,9 @@ def fuzzy_row_match(
 
 def pretty_print_df(
     df: pd.DataFrame,
-    max_rows: int = 6,
-    max_columns: int = 4,
-    max_colwidth: int = 16,
+    max_rows: int | None = 6,
+    max_columns: int | None = 4,
+    max_colwidth: int | None = 16,
     precision: int = 3,
 ) -> str:
     """Convert a dataframe into a pretty/readable format.
@@ -552,3 +601,63 @@ def get_transform_objects(
         )
 
     return [p for p in objects if p.name in df]
+
+
+def filter_df(
+    df: pd.DataFrame, filter: pd.DataFrame, complement: bool = False
+) -> pd.DataFrame:
+    """Filter a dataframe based on a second dataframe defining filtering conditions.
+
+    Filtering is done via a join (see ``complement`` argument for details) between the
+    input dataframe and the filter dataframe.
+
+    Args:
+        df: The dataframe to be filtered.
+        filter: The dataframe defining the filtering conditions.
+        complement: If ``False``, the filter dataframe determines the rows to be kept
+            (i.e. selection via regular join). If ``True``, the filtering mechanism is
+            inverted so that the complement set of rows is kept (i.e. selection
+            via anti-join).
+
+    Returns:
+        A new dataframe containing the result of the filtering process.
+
+    Examples:
+        >>> df = pd.DataFrame(
+        ...         [[0, "a"], [0, "b"], [1, "a"], [1, "b"]],
+        ...         columns=["num", "cat"]
+        ... )
+        >>> df
+           num cat
+        0    0   a
+        1    0   b
+        2    1   a
+        3    1   b
+
+        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), complement=False)
+           num cat
+        0    0   a
+        1    0   b
+
+        >>> filter_df(df, pd.DataFrame([0], columns=["num"]), complement=True)
+           num cat
+        2    1   a
+        3    1   b
+    """
+    # Remember original index name
+    index_name = df.index.name
+
+    # Identify rows to be dropped
+    out = pd.merge(
+        df.reset_index(names="_df_index"), filter, how="left", indicator=True
+    ).set_index("_df_index")
+    to_drop = out["_merge"] == ("both" if complement else "left_only")
+
+    # Drop the points
+    out.drop(index=out[to_drop].index, inplace=True)
+    out.drop("_merge", axis=1, inplace=True)
+
+    # Restore original index name
+    out.index.name = index_name
+
+    return out

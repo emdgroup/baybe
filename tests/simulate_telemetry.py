@@ -97,7 +97,7 @@ for k in range(randint(2, 3)):
     add_fake_measurements(dat, campaign.targets)
     campaign.add_measurements(dat)
 
-# Fake User1a - Adds recommenations before calling recommend
+# Fake User1a - Adds recommendations before calling recommend
 print("Fake User1a")
 os.environ[VARNAME_TELEMETRY_USERNAME] = "FAKE_USER_1a"
 campaign = Campaign(**config)

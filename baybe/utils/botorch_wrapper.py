@@ -3,6 +3,8 @@
 import torch
 from botorch.test_functions import SyntheticTestFunction
 
+from baybe.utils.torch import DTypeFloatTorch
+
 
 def botorch_function_wrapper(test_function: SyntheticTestFunction):
     """Turn a BoTorch test function into a format accepted by lookup in simulations.
@@ -19,7 +21,7 @@ def botorch_function_wrapper(test_function: SyntheticTestFunction):
 
     def wrapper(*x: float) -> float:
         # Cast the provided list of floats to a tensor.
-        x_tensor = torch.tensor(x)
+        x_tensor = torch.tensor(x, dtype=DTypeFloatTorch)
         result = test_function.forward(x_tensor)
         # We do not need to return a tuple here.
         return float(result)

@@ -1,4 +1,4 @@
-"""Functions implementing boolean checks."""
+"""Functions implementing Boolean checks."""
 
 from abc import ABC
 from typing import Any
@@ -45,7 +45,7 @@ def strtobool(val: str) -> bool:
         The ``bool`` value of the corresponding string representation.
 
     Raises:
-        ValueError: If ``val`` cannot be evaluated to a suitable boolean value.
+        ValueError: If ``val`` cannot be evaluated to a suitable Boolean value.
     """
     if val.lower() in ("y", "yes", "t", "true", "on", "1"):
         return True

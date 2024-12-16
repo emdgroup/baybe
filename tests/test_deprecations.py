@@ -1,10 +1,13 @@
 """Deprecation tests."""
 
 import warnings
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from pytest import param
 
+from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.constraints import (
     ContinuousLinearConstraint,
@@ -17,12 +20,17 @@ from baybe.objective import Objective as OldObjective
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.enum import SubstanceEncoding
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
 )
 from baybe.searchspace.continuous import SubspaceContinuous
+from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
@@ -237,3 +245,42 @@ def test_target_transform_interface():
         numerical.transform(data=pd.DataFrame(columns=["num"]))
     with pytest.warns(DeprecationWarning):
         binary.transform(data=pd.DataFrame(columns=["bin"]))
+
+
+@pytest.mark.parametrize(
+    ("deprecated", "replacement"),
+    [
+        param(SubstanceEncoding.MORGAN_FP, "ECFPFingerprint", id="morgan"),
+        param(SubstanceEncoding.RDKIT, "RDKit2DDescriptorsFingerprint", id="rdkit"),
+    ],
+)
+@pytest.mark.skipif(
+    not CHEM_INSTALLED, reason="Optional chem dependency not installed."
+)
+def test_deprecated_encodings(deprecated, replacement):
+    """Deprecated encoding raises a warning and uses correct replacement."""
+    import skfp.fingerprints
+
+    from baybe.utils.chemistry import smiles_to_fingerprint_features
+
+    path = f"skfp.fingerprints.{replacement}"
+
+    with patch(path, wraps=getattr(skfp.fingerprints, replacement)) as patched:
+        # Assert warning
+        with pytest.warns(DeprecationWarning):
+            smiles_to_fingerprint_features(["C"], deprecated)
+
+        # Check that equivalent is used instead of deprecated encoding
+        if deprecated is SubstanceEncoding.MORGAN_FP:
+            patched.assert_called_once_with(**{"fp_size": 1024, "radius": 4})
+        else:
+            patched.assert_called_once()
+
+
+def test_migrated_metadata_attribute():
+    """Accessing the migrated metadata search space attribute raises an error."""
+    with pytest.raises(DeprecationError, match="no longer carry any metadata"):
+        subspace = SubspaceDiscrete.from_parameter(
+            NumericalDiscreteParameter("p", [0, 1])
+        )
+        subspace.metadata

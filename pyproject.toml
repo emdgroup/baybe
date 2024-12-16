@@ -21,7 +21,7 @@ classifiers = [
 ]
 keywords = [
     "Active Learning",
-    "Bayesian Optmization",
+    "Bayesian Optimization",
     "Design of Experiments",
     "DOE",
     "Optimization",
@@ -38,7 +38,6 @@ dependencies = [
     "ngboost>=0.3.12,<1",
     "numpy>=1.24.1,<2",
     "pandas>=1.4.2,<3",
-    "protobuf<=3.20.3,<4",
     "scikit-learn>=1.1.1,<2",
     "scikit-learn-extra>=0.3.0,<1",
     "scipy>=1.10.1,<2",
@@ -69,8 +68,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 
 [project.optional-dependencies]
 chem = [
-    "rdkit>=2022.3.4",
-    "mordredcommunity>=1.2.0",
+    "scikit-fingerprints>=1.7.0",
 ]
 
 onnx = [
@@ -89,6 +87,7 @@ dev = [
     "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
+    "baybe[benchmarking]",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
@@ -97,13 +96,13 @@ dev = [
 docs = [
     "baybe[examples]", # docs cannot be built without running examples
     "furo>=2023.09.10",
-    "jupyter>=1.0.0",
-    "jupytext>=1.16.1",
-    "myst-parser>=2.0.0",
-    "sphinx>=7.1.1",
-    "sphinx-autodoc-typehints>=1.24.0",
+    "jupyter>=1.1.1",
+    "jupytext>=1.16.4",
+    "myst-parser>=4.0.0",
+    "sphinx>=8.0.2",
+    "sphinx-autodoc-typehints>=2.4.4",
     "sphinx-copybutton==0.5.2",
-    "sphinxcontrib-bibtex>=2.6.2 ",
+    "sphinxcontrib-bibtex>=2.6.2",
 ]
 
 examples = [
@@ -140,6 +139,14 @@ polars = [
 
 simulation = [
     "xyzpy>=1.2.1",
+]
+
+benchmarking = [
+    "baybe[chem]",
+    "baybe[onnx]",
+    "baybe[simulation]",
+    "boto3>=1.0.0,<2",
+    "GitPython>=3.0.6,<4", # GitPython<3.0.6 is necessary since older versions rely on a specific version of GitDB: https://github.com/gitpython-developers/GitPython/issues/983
 ]
 
 test = [

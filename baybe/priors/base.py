@@ -39,7 +39,7 @@ class Prior(ABC, SerialMixin):
         return prior_cls(*args, **kwargs)
 
 
-# Register de-/serialization hooks
+# Register (un-)structure hooks
 converter.register_structure_hook(Prior, get_base_structure_hook(Prior))
 converter.register_unstructure_hook(Prior, unstructure_base)
 

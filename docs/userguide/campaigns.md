@@ -68,7 +68,7 @@ rec = campaign.recommend(batch_size=3)
 Calling the function returns a `DataFrame` with `batch_size` many rows, each
 representing a particular parameter configuration from the campaign's search space.
 Thus, the following might be a `DataFrame` returned by `recommend` in a search space
-with the three parameters `Categorial_1`, `Categorical_2` and `Num_disc_1`:
+with the three parameters `Categorical_1`, `Categorical_2` and `Num_disc_1`:
 
 |    | Categorical_1   | Categorical_2   |   Num_disc_1 |
 |---:|:----------------|:----------------|-------------:|
@@ -161,7 +161,7 @@ This requirement can be disabled using the method's
 
 ## Serialization
 
-Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be de-/serialized 
+Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 
 using their [`from_json`](baybe.serialization.mixin.SerialMixin.from_json)/
 [`to_json`](baybe.serialization.mixin.SerialMixin.to_json) methods, which 
 allow to convert between Python objects and their corresponding representation in JSON 

@@ -47,6 +47,12 @@ blinker==1.8.2
     # via streamlit
 boolean-py==4.0
     # via license-expression
+boto3==1.35.68
+    # via baybe (pyproject.toml)
+botocore==1.35.68
+    # via
+    #   boto3
+    #   s3transfer
 botorch==0.11.3
     # via baybe (pyproject.toml)
 cachecontrol==0.14.0
@@ -103,6 +109,8 @@ cyclonedx-python-lib==7.5.1
     # via pip-audit
 dask==2024.7.1
     # via xyzpy
+datasketch==1.6.5
+    # via scikit-fingerprints
 debugpy==1.8.2
     # via ipykernel
 decorator==5.1.1
@@ -116,6 +124,8 @@ deprecated==1.2.14
     #   opentelemetry-api
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
+descriptastorus==2.6.1
+    # via scikit-fingerprints
 distlib==0.3.8
     # via virtualenv
 docstring-parser-fork==0.0.9
@@ -126,6 +136,8 @@ docutils==0.21.2
     #   pybtex-docutils
     #   sphinx
     #   sphinxcontrib-bibtex
+e3fp==1.2.5
+    # via scikit-fingerprints
 et-xmlfile==1.1.0
     # via openpyxl
 exceptiongroup==1.2.2
@@ -143,6 +155,7 @@ fastjsonschema==2.20.0
 filelock==3.15.4
     # via
     #   cachecontrol
+    #   huggingface-hub
     #   torch
     #   tox
     #   triton
@@ -160,6 +173,7 @@ fqdn==1.5.1
 fsspec==2024.6.1
     # via
     #   dask
+    #   huggingface-hub
     #   torch
 funcy==1.17
     # via
@@ -167,14 +181,16 @@ funcy==1.17
     #   funcy-stubs
 funcy-stubs==0.1.1
     # via baybe (pyproject.toml)
-furo==2024.7.18
+furo==2024.8.6
     # via baybe (pyproject.toml)
 future==1.0.0
     # via autograd
 gitdb==4.0.11
     # via gitpython
 gitpython==3.1.43
-    # via streamlit
+    # via
+    #   baybe (pyproject.toml)
+    #   streamlit
 googleapis-common-protos==1.63.2
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -199,6 +215,8 @@ httpcore==1.0.5
     # via httpx
 httpx==0.27.0
     # via jupyterlab
+huggingface-hub==0.25.1
+    # via scikit-fingerprints
 humanfriendly==10.0
     # via coloredlogs
 hypothesis==6.108.4
@@ -228,7 +246,6 @@ ipykernel==6.29.5
     #   jupyter
     #   jupyter-console
     #   jupyterlab
-    #   qtconsole
 ipython==8.26.0
     # via
     #   ipykernel
@@ -253,9 +270,14 @@ jinja2==3.1.4
     #   pydeck
     #   sphinx
     #   torch
+jmespath==1.0.1
+    # via
+    #   boto3
+    #   botocore
 joblib==1.4.2
     # via
     #   baybe (pyproject.toml)
+    #   scikit-fingerprints
     #   scikit-learn
     #   xyzpy
 json5==0.9.25
@@ -270,7 +292,7 @@ jsonschema==4.23.0
     #   nbformat
 jsonschema-specifications==2023.12.1
     # via jsonschema
-jupyter==1.0.0
+jupyter==1.1.1
     # via baybe (pyproject.toml)
 jupyter-client==8.6.2
     # via
@@ -278,7 +300,6 @@ jupyter-client==8.6.2
     #   jupyter-console
     #   jupyter-server
     #   nbclient
-    #   qtconsole
 jupyter-console==6.6.3
     # via jupyter
 jupyter-core==5.7.2
@@ -291,7 +312,6 @@ jupyter-core==5.7.2
     #   nbclient
     #   nbconvert
     #   nbformat
-    #   qtconsole
 jupyter-events==0.10.0
     # via jupyter-server
 jupyter-lsp==2.2.5
@@ -306,7 +326,9 @@ jupyter-server==2.14.2
 jupyter-server-terminals==0.5.3
     # via jupyter-server
 jupyterlab==4.2.4
-    # via notebook
+    # via
+    #   jupyter
+    #   notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
 jupyterlab-server==2.27.3
@@ -315,7 +337,7 @@ jupyterlab-server==2.27.3
     #   notebook
 jupyterlab-widgets==3.0.11
     # via ipywidgets
-jupytext==1.16.3
+jupytext==1.16.4
     # via baybe (pyproject.toml)
 kiwisolver==1.4.5
     # via matplotlib
@@ -329,6 +351,8 @@ linear-operator==0.5.2
     # via
     #   botorch
     #   gpytorch
+llvmlite==0.43.0
+    # via numba
 locket==1.0.0
     # via partd
 markdown-it-py==3.0.0
@@ -363,8 +387,10 @@ mistune==3.0.2
     # via nbconvert
 mkl==2021.4.0 ; platform_system == 'Windows'
     # via torch
+mmh3==5.0.1
+    # via e3fp
 mordredcommunity==2.0.6
-    # via baybe (pyproject.toml)
+    # via scikit-fingerprints
 mpmath==1.3.0
     # via
     #   botorch
@@ -378,7 +404,7 @@ mypy==1.11.0
     # via baybe (pyproject.toml)
 mypy-extensions==1.0.0
     # via mypy
-myst-parser==3.0.1
+myst-parser==4.0.0
     # via baybe (pyproject.toml)
 nbclient==0.10.0
     # via nbconvert
@@ -408,6 +434,8 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
+numba==0.60.0
+    # via scikit-fingerprints
 numpy==1.26.4
     # via
     #   baybe (pyproject.toml)
@@ -415,12 +443,16 @@ numpy==1.26.4
     #   autograd
     #   botorch
     #   contourpy
+    #   datasketch
+    #   descriptastorus
+    #   e3fp
     #   formulaic
     #   h5py
     #   lifelines
     #   matplotlib
     #   mordredcommunity
     #   ngboost
+    #   numba
     #   onnx
     #   onnxconverter-common
     #   onnxruntime
@@ -431,6 +463,7 @@ numpy==1.26.4
     #   pydeck
     #   pyro-ppl
     #   rdkit
+    #   scikit-fingerprints
     #   scikit-learn
     #   scikit-learn-extra
     #   scipy
@@ -526,6 +559,7 @@ packaging==24.1
     #   altair
     #   dask
     #   h5netcdf
+    #   huggingface-hub
     #   ipykernel
     #   jupyter-server
     #   jupyterlab
@@ -541,8 +575,6 @@ packaging==24.1
     #   plotly
     #   pyproject-api
     #   pytest
-    #   qtconsole
-    #   qtpy
     #   setuptools-scm
     #   sphinx
     #   streamlit
@@ -556,10 +588,14 @@ pandas==2.2.2
     #   formulaic
     #   hypothesis
     #   lifelines
+    #   pandas-flavor
+    #   scikit-fingerprints
     #   seaborn
     #   streamlit
     #   xarray
     #   xyzpy
+pandas-flavor==0.6.0
+    # via descriptastorus
 pandas-stubs==2.2.2.240603
     # via
     #   baybe (pyproject.toml)
@@ -609,7 +645,6 @@ prompt-toolkit==3.0.47
     #   jupyter-console
 protobuf==3.20.3
     # via
-    #   baybe (pyproject.toml)
     #   googleapis-common-protos
     #   onnx
     #   onnxconverter-common
@@ -652,7 +687,6 @@ pygments==2.18.0
     #   ipython
     #   jupyter-console
     #   nbconvert
-    #   qtconsole
     #   rich
     #   sphinx
 pyparsing==3.1.2
@@ -676,6 +710,7 @@ pytest-cov==5.0.0
 python-dateutil==2.9.0.post0
     # via
     #   arrow
+    #   botocore
     #   jupyter-client
     #   matplotlib
     #   pandas
@@ -695,6 +730,7 @@ pywinpty==2.0.13 ; os_name == 'nt'
 pyyaml==6.0.1
     # via
     #   dask
+    #   huggingface-hub
     #   jupyter-events
     #   jupytext
     #   myst-parser
@@ -706,15 +742,11 @@ pyzmq==26.0.3
     #   jupyter-client
     #   jupyter-console
     #   jupyter-server
-    #   qtconsole
-qtconsole==5.5.2
-    # via jupyter
-qtpy==2.4.1
-    # via qtconsole
 rdkit==2024.3.3
     # via
-    #   baybe (pyproject.toml)
+    #   descriptastorus
     #   mordredcommunity
+    #   scikit-fingerprints
 referencing==0.35.1
     # via
     #   jsonschema
@@ -723,6 +755,7 @@ referencing==0.35.1
 requests==2.32.3
     # via
     #   cachecontrol
+    #   huggingface-hub
     #   jupyterlab-server
     #   opentelemetry-exporter-otlp-proto-http
     #   pip-audit
@@ -746,11 +779,16 @@ rpds-py==0.19.0
     #   referencing
 ruff==0.5.2
     # via baybe (pyproject.toml)
+s3transfer==0.10.4
+    # via boto3
+scikit-fingerprints==1.9.0
+    # via baybe (pyproject.toml)
 scikit-learn==1.5.1
     # via
     #   baybe (pyproject.toml)
     #   gpytorch
     #   ngboost
+    #   scikit-fingerprints
     #   scikit-learn-extra
     #   skl2onnx
 scikit-learn-extra==0.3.0
@@ -760,13 +798,19 @@ scipy==1.14.0
     #   baybe (pyproject.toml)
     #   autograd-gamma
     #   botorch
+    #   datasketch
+    #   descriptastorus
+    #   e3fp
     #   formulaic
     #   gpytorch
     #   lifelines
     #   linear-operator
     #   ngboost
+    #   scikit-fingerprints
     #   scikit-learn
     #   scikit-learn-extra
+sdaxen-python-utilities==0.1.5
+    # via e3fp
 seaborn==0.13.2
     # via baybe (pyproject.toml)
 send2trash==1.8.3
@@ -788,6 +832,8 @@ six==1.16.0
     #   rfc3339-validator
 skl2onnx==1.17.0
     # via baybe (pyproject.toml)
+smart-open==7.0.5
+    # via e3fp
 smmap==5.0.1
     # via gitdb
 sniffio==1.3.1
@@ -802,7 +848,7 @@ sortedcontainers==2.4.0
     #   hypothesis
 soupsieve==2.5
     # via beautifulsoup4
-sphinx==7.4.7
+sphinx==8.1.3
     # via
     #   baybe (pyproject.toml)
     #   furo
@@ -811,7 +857,7 @@ sphinx==7.4.7
     #   sphinx-basic-ng
     #   sphinx-copybutton
     #   sphinxcontrib-bibtex
-sphinx-autodoc-typehints==2.2.3
+sphinx-autodoc-typehints==2.5.0
     # via baybe (pyproject.toml)
 sphinx-basic-ng==1.0.0b2
     # via furo
@@ -899,8 +945,10 @@ tox-uv==1.9.1
     # via baybe (pyproject.toml)
 tqdm==4.66.4
     # via
+    #   huggingface-hub
     #   ngboost
     #   pyro-ppl
+    #   scikit-fingerprints
     #   xyzpy
 traitlets==5.14.3
     # via
@@ -918,7 +966,6 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-    #   qtconsole
 triton==2.3.1 ; python_full_version < '3.12' and platform_machine == 'x86_64' and platform_system == 'Linux'
     # via torch
 typeguard==2.13.3
@@ -940,6 +987,7 @@ typing-extensions==4.12.2
     #   cattrs
     #   formulaic
     #   funcy-stubs
+    #   huggingface-hub
     #   ipython
     #   mypy
     #   opentelemetry-sdk
@@ -950,7 +998,9 @@ tzdata==2024.1
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.2.2
-    # via requests
+    # via
+    #   botocore
+    #   requests
 uv==0.3.0
     # via
     #   baybe (pyproject.toml)
@@ -978,8 +1028,11 @@ wrapt==1.16.0
     # via
     #   deprecated
     #   formulaic
+    #   smart-open
 xarray==2024.6.0
-    # via xyzpy
+    # via
+    #   pandas-flavor
+    #   xyzpy
 xyzpy==1.2.1
     # via baybe (pyproject.toml)
 zipp==3.19.2

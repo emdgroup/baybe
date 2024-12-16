@@ -7,16 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- Example for a traditional mixture
+- `add_noise_to_perturb_degenerate_rows` utility
+- `benchmarks` subpackage for defining and running performance tests
+– `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
+- `DiscreteConstraint.get_valid` to conveniently access valid candidates
+- Functionality for persisting benchmarking results on S3 from a manual pipeline run
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
+  cardinality is violated in `BotorchRecommender`
 - Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
   optimization behavior in the presence of multiple subspaces
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
 - Attribute `near_zero_threshold` and utility `is_near_zero` to 
   `NumericalContinuousParameter`
-- Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
-  cardinality is violated in `BotorchRecommender`
 - Utilities `count_near_zeros` and `is_min_cardinality_fulfilled`
+
+### Changed
+- `SubstanceParameter` encodings are now computed exclusively with the
+  `scikit-fingerprints` package, granting access to all fingerprints available therein
+- Example for slot-based mixtures has been revised and grouped together with the new 
+  traditional mixture example
+- Memory caching is now non-verbose
+- `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
+- De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
+  compatible with `strtobool`
+
+### Fixed
+- Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
+  wrong number of recommendations being returned
+- `ContinuousConstraint`s can now be used in single point precision
+- Search spaces are now stateless, preventing unintended side effects that could lead to
+  incorrect candidate sets when reused in different optimization contexts
+- `qNIPV` not working with single `MIN` targets
+- Passing a `TargetTransformation` without passing `bounds` when creating a 
+  `NumericalTarget` now raises an error
+- Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
+  between constraints and dropped parameters yielding empty parameter sets
+>>>>>>> main
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
@@ -26,6 +55,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_transform_parameters` has been replaced with `get_transform_objects`
 - Passing a dataframe via the `data` argument to `Target.transform` is no longer
   possible. The data must now be passed as a series as first positional argument.
+- `SubstanceEncoding` value `MORGAN_FP`. As a replacement, `ECFP` with 1024 bits and
+  radius of 4 can be used.
+- `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
+- The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
+  exclusively handled by the `Campaign` class.
+
+## [0.11.3] - 2024-11-06
+### Fixed
+- `protobuf` dependency issue, version pin was removed
 
 ## [0.11.2] - 2024-10-11
 ### Added
@@ -286,7 +324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simulation no longer fails for targets in `MATCH` mode
 - `closest_element` now works for array-like input of all kinds
 - Structuring concrete subclasses no longer requires providing an explicit `type` field
-- `_target(s)` attributes of `Objectives` are now de-/serialized without leading
+- `_target(s)` attributes of `Objectives` are now (de-)serialized without leading
   underscore to support user-friendly serialization strings
 - Telemetry does not execute any code if it was disabled
 - Running simulations no longer alters the states of the global random number generators
@@ -424,7 +462,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `mypy` for targets and intervals
 - Tests for code blocks in README and user guides
 - `hypothesis` strategies and roundtrip tests for targets, intervals, and dataframes
-- De-/serialization of target subclasses via base class
+- (De-)serialization of target subclasses via base class
 - Docs building check now part of CI
 - Automatic formatting checks for code examples in documentation
 - Deserialization of classes with classmethod constructors can now be customized
@@ -449,7 +487,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use pydoclint as flake8 plugin and not as a stand-alone linter
 - Margins in documentation for desktop and mobile version
 - `Interval`s can now also be deserialized from a bounds iterable
-- `SubspaceDiscrete` and `SubspaceContinuous` now have de-/serialization methods
+- `SubspaceDiscrete` and `SubspaceContinuous` now have (de-)serialization methods
 
 ### Removed
 - Conda install instructions and version badge
