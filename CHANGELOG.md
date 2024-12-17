@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
+- All arguments to `MetaRecommender.select_recommender` are now optional
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
