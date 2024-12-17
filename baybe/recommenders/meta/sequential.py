@@ -61,7 +61,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     @override
     def select_recommender(
         self,
-        batch_size: int,
+        batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
@@ -146,7 +146,7 @@ class SequentialMetaRecommender(MetaRecommender):
     @override
     def select_recommender(
         self,
-        batch_size: int,
+        batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
@@ -236,7 +236,7 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     @override
     def select_recommender(
         self,
-        batch_size: int,
+        batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,

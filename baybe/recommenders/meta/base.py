@@ -31,8 +31,8 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     @abstractmethod
     def select_recommender(
         self,
-        batch_size: int,
-        searchspace: SearchSpace,
+        batch_size: int | None = None,
+        searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
