@@ -11,6 +11,7 @@ from baybe.recommenders import (
     StreamingSequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
+from baybe.recommenders.meta.adaptive import BatchSizeControlledMetaRecommender
 from tests.conftest import select_recommender
 
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
@@ -117,3 +118,13 @@ def test_streaming_sequential_meta_recommender(recommenders):
         # Selection with smaller training size raises an error
         with pytest.raises(RuntimeError):
             select_recommender(meta_recommender, training_size - 1)
+
+
+def test_batch_size_controlled_meta_recommender():
+    """The recommender retrieves the right recommender for the requested batch size."""
+    thresholds = [2, 5]
+    meta_recommender = BatchSizeControlledMetaRecommender(RECOMMENDERS, thresholds)
+    for i, threshold in enumerate(thresholds):
+        assert meta_recommender.select_recommender(threshold - 1) is RECOMMENDERS[i]
+        assert meta_recommender.select_recommender(threshold) is RECOMMENDERS[i + 1]
+        assert meta_recommender.select_recommender(threshold + 1) is RECOMMENDERS[i + 1]
