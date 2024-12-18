@@ -6,7 +6,7 @@ from typing import Any
 
 import cattrs
 import pandas as pd
-from attrs import define, field
+from attrs import define
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
@@ -21,12 +21,6 @@ from baybe.serialization.core import get_base_structure_hook
 @define
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
-
-    _current_recommender: PureRecommender | None = field(default=None, init=False)
-    """The current recommender."""
-
-    _used_recommender_ids: set[int] = field(factory=set, init=False)
-    """Set of ids from recommenders that were used by this meta recommender."""
 
     @abstractmethod
     def select_recommender(
@@ -43,56 +37,6 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         on the method arguments.
         """
 
-    def get_current_recommender(self) -> PureRecommender:
-        """Get the current recommender, if available."""
-        if self._current_recommender is None:
-            raise RuntimeError(
-                f"No recommendation has been requested from the "
-                f"'{self.__class__.__name__}' yet. Because the recommender is a "
-                f"'{MetaRecommender.__name__}', this means no actual recommender has "
-                f"been selected so far. The recommender will be available after the "
-                f"next '{self.recommend.__name__}' call."
-            )
-        return self._current_recommender
-
-    def get_next_recommender(
-        self,
-        batch_size: int,
-        searchspace: SearchSpace,
-        objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
-        """Get the recommender for the next recommendation.
-
-        Returns the next recommender in row that has not yet been used for generating
-        recommendations. In case of multiple consecutive calls, this means that
-        the same recommender instance is returned until its :meth:`recommend` method
-        is called.
-
-        See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
-        on the method arguments.
-        """
-        # Check if the stored recommender instance can be returned
-        if (
-            self._current_recommender is not None
-            and id(self._current_recommender) not in self._used_recommender_ids
-        ):
-            recommender = self._current_recommender
-
-        # Otherwise, fetch the next recommender waiting in row
-        else:
-            recommender = self.select_recommender(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
-            )
-            self._current_recommender = recommender
-
-        return recommender
-
     @override
     def recommend(
         self,
@@ -103,7 +47,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
-        recommender = self.get_next_recommender(
+        recommender = self.select_recommender(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
@@ -123,15 +67,12 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             }
         )
 
-        recommendations = recommender.recommend(
+        return recommender.recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             pending_experiments=pending_experiments,
             **optional_args,
         )
-        self._used_recommender_ids.add(id(recommender))
-
-        return recommendations
 
 
 # Register (un-)structure hooks
