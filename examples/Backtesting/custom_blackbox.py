@@ -11,7 +11,6 @@ import os
 
 import pandas as pd
 import seaborn as sns
-
 from baybe import Campaign
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import RandomRecommender
@@ -104,4 +103,4 @@ ax = sns.lineplot(
     y="Target_CumBest",
     hue="Scenario",
 )
-create_example_plots(ax=ax, base_name="custom_analytical")
+create_example_plots(ax=ax, base_name="custom_blackbox")
