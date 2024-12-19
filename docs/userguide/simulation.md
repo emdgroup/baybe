@@ -16,7 +16,7 @@ Thus, "simulation" means investigating what experimental trajectory we would hav
 ## The Lookup Mechanism
 
 BayBE's simulation package enables a wide range of use cases and can even be used for "oracle predictions".
-This is made possible through the flexible use of `lookup` mechanisms, which act as the loop-closing element of an optimization loop.
+This is made possible through the flexible use of lookup mechanisms, which act as the loop-closing element of an optimization loop.
 
 Lookups can be provided in a variety of ways, by using fixed data sets, analytical functions, or any other form of black-box callable.
 In all cases, their role is the same: to retrieve target values for parameter configurations suggested by the recommendation engine.
@@ -24,7 +24,7 @@ In all cases, their role is the same: to retrieve target values for parameter co
 ### Using a `Callable`
 
 Using a `Callable` is the most general way to provide a lookup mechanism.
-Any callable is a suitable lookup as long as it accepts a dataframe containing parameter configurations and returns the corresponding target values.
+Any `Callable` is a suitable lookup as long as it accepts a dataframe containing parameter configurations and returns the corresponding target values.
 More specifically:
 - The input is expected to be a dataframe whose column names contain the parameter names and whose rows represent valid parameter configurations.
 - The returned output must be a dataframe whose column names contain the target names and whose rows represent valid target values.
@@ -85,9 +85,9 @@ lookup = pd.DataFrame.from_records(
 )
 ```
 
-Ideally, all possible parameter combinations should be measured and represented in the data frame to ensure that a backtesting simulation produces a realistic performance assessment.
+Ideally, all possible parameter combinations should be measured and represented in the dataframe to ensure that a backtesting simulation produces a realistic performance assessment.
 However, this is an unrealistic assumption for most applications because search spaces are oftentimes exceedingly large.
-As a consequence, it may well be the case that a provided dataframe contains the measurements of only some parameter configurations while the majority of combinations is not present.
+As a consequence, it may well be the case that a provided dataframe contains the measurements of only some parameter configurations while the majority of combinations is not present (like in the example above).
 
 For this situation, BayBE offers several ways to handle such "missing" targets. 
 The behavior is configured using the `impute_mode` keyword of the respective simulation function, which offers the following options for handling missing values:
