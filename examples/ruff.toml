@@ -1,0 +1,4 @@
+[lint]
+extend-ignore = [
+    "D401",  # In the documentation, imperative mood can be a bit too restrictive
+    ]

@@ -82,6 +82,7 @@ extensions = [
     "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx_copybutton",  # Copy button for code blocks
     "sphinxcontrib.bibtex",  # Bibtex support
+    "sphinx_paramlinks",  # Links to arguments of callables
 ]
 bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
