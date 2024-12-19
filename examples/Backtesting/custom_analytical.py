@@ -49,7 +49,7 @@ target = NumericalTarget(name="Target", mode="MIN")
 
 
 def blackbox(df: pd.DataFrame, /) -> pd.DataFrame:
-    """Calculate the sum of squares."""
+    """A callable whose internal logic is unknown to the algorithm."""
     return (df[[p.name for p in parameters]] ** 2).sum(axis=1).to_frame(target.name)
 
 

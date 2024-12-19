@@ -7,7 +7,9 @@ line-length = 88 # Maximum line length
         # Error regarding too long lines
         "E501",
         # Missing module docstrings
-        "D100"
+        "D100",
+        # In the documentation, imperative mood can be a bit too restrictive
+        "D401",
 ]
 "baybe/utils/__init__.py" = ["F401","F403"]
 "baybe/strategies/__init__.py" = ["F401"]
