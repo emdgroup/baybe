@@ -85,18 +85,15 @@ lookup = pd.DataFrame.from_records(
 )
 ```
 
-Ideally, all possible parameter combinations should be measured and represented in the dataframe to ensure that a backtesting simulation produces a realistic performance assessment.
+```{admonition} Missing Lookup Values
+:class: tip
+Ideally, all possible parameter combinations should be measured and represented in the dataframe to ensure that a backtesting simulation produces a realistic assessment of performance.
 However, this is an unrealistic assumption for most applications because search spaces are oftentimes exceedingly large.
 As a consequence, it may well be the case that a provided dataframe contains the measurements of only some parameter configurations while the majority of combinations is not present (like in the example above).
-
-For this situation, BayBE offers several ways to handle such "missing" targets. 
-The behavior is configured using the `impute_mode` keyword of the respective simulation function, which offers the following options for handling missing values:
-- ``"error"``: An error will be thrown.
-- ``"worst"``: Imputation uses the worst available value for each target.
-- ``"best"``: Imputation uses the best available value for each target.
-- ``"mean"``: Imputation uses the mean value for each target.
-- ``"random"``: A random row will be used as lookup.
-- ``"ignore"``: The search space is stripped before recommendations are made so that unmeasured experiments will not be recommended.
+To address this issue, BayBE provides various methods for managing these “missing” targets,
+which can be configured using the {paramref}`~baybe.simulation.lookup.look_up_targets.impute_mode`
+keyword of the respective simulation function.
+```
 
 ### Using `None`
 
