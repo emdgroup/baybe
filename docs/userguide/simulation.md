@@ -34,10 +34,9 @@ An example might look like this:
 ```python
 import pandas as pd
 
-from baybe.targets import NumericalTarget
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-
+from baybe.targets import NumericalTarget
 
 searchspace = SearchSpace.from_product(
     [
@@ -47,12 +46,11 @@ searchspace = SearchSpace.from_product(
 )
 objective = NumericalTarget("t1", "MAX").to_objective()
 
+
 def lookup(df: pd.DataFrame) -> pd.DataFrame:
     """Map parameter configurations to target values."""
-    return pd.DataFrame(
-        {"t1": df["p1"] ** 2, "t2": df[["p1", "p2"]].sum(axis=1)},
-        index=df.index,
-    )
+    return pd.DataFrame({"t1": df["p1"] ** 2}, index=df.index)
+
 
 lookup(searchspace.continuous.sample_uniform(10))
 ```
