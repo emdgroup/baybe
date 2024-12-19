@@ -82,7 +82,7 @@ def _look_up_targets_from_callable(
 ) -> None:
     """Look up target values by querying a callable."""
     df_targets = lookup(queries)
-    queries[df_targets.columns] = df_targets
+    queries[df_targets.columns] = df_targets.values
 
 
 def _look_up_targets_from_dataframe(
