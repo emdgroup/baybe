@@ -607,7 +607,7 @@ def get_transform_objects(
 
 
 def filter_df(
-    df: pd.DataFrame, filter: pd.DataFrame, complement: bool = False
+    df: pd.DataFrame, /, to_keep: pd.DataFrame, complement: bool = False
 ) -> pd.DataFrame:
     """Filter a dataframe based on a second dataframe defining filtering conditions.
 
@@ -616,9 +616,11 @@ def filter_df(
 
     Args:
         df: The dataframe to be filtered.
-        filter: The dataframe defining the filtering conditions.
+        to_keep: The dataframe defining the filtering conditions. By default
+            (see ``complement`` argument), it defines the rows to be kept in the sense
+            of an inner join.
         complement: If ``False``, the filter dataframe determines the rows to be kept
-            (i.e. selection via regular join). If ``True``, the filtering mechanism is
+            (i.e. selection via inner join). If ``True``, the filtering mechanism is
             inverted so that the complement set of rows is kept (i.e. selection
             via anti-join).
 
@@ -661,7 +663,7 @@ def filter_df(
 
     """
     # Handle special case of empty filter
-    if filter.empty:
+    if to_keep.empty:
         return df if complement else pd.DataFrame(columns=df.columns)
 
     # Remember original index name
@@ -669,7 +671,7 @@ def filter_df(
 
     # Identify rows to be dropped
     out = pd.merge(
-        df.reset_index(names="_df_index"), filter, how="left", indicator=True
+        df.reset_index(names="_df_index"), to_keep, how="left", indicator=True
     ).set_index("_df_index")
     to_drop = out["_merge"] == ("both" if complement else "left_only")
 
