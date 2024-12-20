@@ -35,7 +35,6 @@ from scipy.stats import gaussian_kde
 from baybe.acquisition import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
-from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
     BotorchRecommender,
@@ -46,8 +45,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
 from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 ```
@@ -148,7 +146,6 @@ With all preparations completed, we can set up the campaign:
 
 ```python
 test_function = Hartmann(dim=DIMENSION)
-wrapped_function = botorch_function_wrapper(test_function=test_function)
 ```
 
 
@@ -165,7 +162,8 @@ discrete_params = [
 
 ```python
 searchspace = SearchSpace.from_product(parameters=discrete_params)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
 campaign = Campaign(
     searchspace=searchspace,
     recommender=recommender,
@@ -177,11 +175,18 @@ Now, we perform a couple of experimental iterations with the active hook:
 
 
 ```python
+lookup = arrays_to_dataframes(
+    [p.name for p in discrete_params], [target.name], use_torch=True
+)(test_function)
+```
+
+
+```python
 for i in range(N_DOE_ITERATIONS):
-    recommendation = campaign.recommend(BATCH_SIZE)
-    target_values = recommendation.apply(lambda x: wrapped_function(*x.values), axis=1)
-    recommendation["Target"] = target_values
-    campaign.add_measurements(recommendation)
+    recommendation = campaign.recommend(batch_size=BATCH_SIZE)
+    lookup_values = lookup(recommendation)
+    measurements = pd.concat([recommendation, lookup_values], axis=1)
+    campaign.add_measurements(measurements)
 ```
 
 ## Plotting the Results

@@ -10,6 +10,7 @@
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
     
@@ -298,10 +299,9 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Searchspaces/Searchspaces.html">Searchspaces</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Searchspaces</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Searchspaces/continuous_space_botorch_function.html">Continuous Space Botorch Function</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Searchspaces/hybrid_space.html">Hybrid Space</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Searchspaces/discrete_space.html">Discrete Space</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Searchspaces/continuous_space_custom_function.html">Continuous Space Custom Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Searchspaces/continuous_space.html">Continuous Space</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Constraints Discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -353,12 +353,9 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Backtesting/Backtesting.html">Backtesting</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Backtesting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../Backtesting/impute_mode.html">Impute Mode</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/custom_analytical.html">Custom Analytical</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/hybrid.html">Hybrid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Backtesting/custom_blackbox.html">Custom Blackbox</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Backtesting/full_initial_data.html">Full Initial Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/multi_target.html">Multi Target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Backtesting/full_lookup.html">Full Lookup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/botorch_analytical.html">Botorch Analytical</a></li>
 </ul>
 </li>
 </ul>
@@ -856,26 +853,23 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.botorch_wrapper.html">baybe.utils.botorch_wrapper</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.botorch_wrapper</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.botorch_wrapper.botorch_function_wrapper.html">baybe.utils.botorch_wrapper.botorch_function_wrapper</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.fraction_to_float.html">baybe.utils.conversion.fraction_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.conversion.nonstring_to_tuple.html">baybe.utils.conversion.nonstring_to_tuple</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -886,18 +880,18 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><div class="visually-hidden">Toggle navigation of baybe.utils.interval</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.interval</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.convert_bounds.html">baybe.utils.interval.convert_bounds</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.use_fallback_constructor_hook.html">baybe.utils.interval.use_fallback_constructor_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.Interval.html">Interval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.interval.InfiniteIntervalError.html">baybe.utils.interval.InfiniteIntervalError</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><div class="visually-hidden">Toggle navigation of baybe.utils.memory</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><div class="visually-hidden">Toggle navigation of baybe.utils.memory</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.memory.bytes_to_human_readable.html">baybe.utils.memory.bytes_to_human_readable</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><div class="visually-hidden">Toggle navigation of baybe.utils.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><div class="visually-hidden">Toggle navigation of baybe.utils.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION.html">baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.DTypeFloatNumpy.html">baybe.utils.numerical.DTypeFloatNumpy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.DTypeFloatONNX.html">baybe.utils.numerical.DTypeFloatONNX</a></li>
@@ -906,33 +900,33 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.numerical.geom_mean.html">baybe.utils.numerical.geom_mean</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.plotting.html">baybe.utils.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><div class="visually-hidden">Toggle navigation of baybe.utils.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.plotting.html">baybe.utils.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><div class="visually-hidden">Toggle navigation of baybe.utils.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.plotting.create_example_plots.html">baybe.utils.plotting.create_example_plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.plotting.indent.html">baybe.utils.plotting.indent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.plotting.to_string.html">baybe.utils.plotting.to_string</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><div class="visually-hidden">Toggle navigation of baybe.utils.random</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><div class="visually-hidden">Toggle navigation of baybe.utils.random</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.random.set_random_seed.html">baybe.utils.random.set_random_seed</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.random.temporary_seed.html">baybe.utils.random.temporary_seed</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><div class="visually-hidden">Toggle navigation of baybe.utils.sampling_algorithms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><div class="visually-hidden">Toggle navigation of baybe.utils.sampling_algorithms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.sampling_algorithms.farthest_point_sampling.html">baybe.utils.sampling_algorithms.farthest_point_sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.sampling_algorithms.sample_numerical_df.html">baybe.utils.sampling_algorithms.sample_numerical_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.sampling_algorithms.DiscreteSamplingMethod.html">DiscreteSamplingMethod</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><div class="visually-hidden">Toggle navigation of baybe.utils.scaling</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><div class="visually-hidden">Toggle navigation of baybe.utils.scaling</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.scaling.ColumnTransformer.html">ColumnTransformer</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-123" name="toctree-checkbox-123" role="switch" type="checkbox"/><label for="toctree-checkbox-123"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.finite_float.html">baybe.utils.validation.finite_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
@@ -999,8 +993,7 @@
 <h1>Example for constraints in a hybrid searchspace<a class="headerlink" href="#example-for-constraints-in-a-hybrid-searchspace" title="Link to this heading">¶</a></h1>
 <p>Example for optimizing a synthetic test functions in a hybrid space with one
 constraint in the discrete subspace and one constraint in the continuous subspace.
-All test functions that are available in BoTorch are also available here and wrapped
-via the <code class="docutils literal notranslate"><span class="pre">botorch_function_wrapper</span></code>.
+All test functions that are available in BoTorch are also available here.
 This example assumes some basic familiarity with using BayBE.
 We thus refer to <a class="reference internal" href="../Basics/campaign.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">campaign</span></code></span></a> for a basic example.
 Also, there is a large overlap with other examples with regards to using the test
@@ -1010,6 +1003,7 @@ details on this aspect.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Rastrigin</span>
 </pre></div>
 </div>
@@ -1019,11 +1013,10 @@ details on this aspect.</p>
     <span class="n">DiscreteSumConstraint</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span><span class="p">,</span> <span class="n">NumericalDiscreteParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.botorch_wrapper</span> <span class="kn">import</span> <span class="n">botorch_function_wrapper</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">arrays_to_dataframes</span>
 </pre></div>
 </div>
 </section>
@@ -1048,7 +1041,6 @@ If you make it too large, constraints might not be satisfied anywhere.</p>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">BOUNDS</span> <span class="o">=</span> <span class="n">TestFunction</span><span class="o">.</span><span class="n">bounds</span>
-<span class="n">WRAPPED_FUNCTION</span> <span class="o">=</span> <span class="n">botorch_function_wrapper</span><span class="p">(</span><span class="n">test_function</span><span class="o">=</span><span class="n">TestFunction</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -1094,7 +1086,16 @@ We use the data of the test function to deduce bounds and number of parameters.<
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">searchspace</span> <span class="o">=</span> <span class="n">SearchSpace</span><span class="o">.</span><span class="n">from_product</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
-<span class="n">objective</span> <span class="o">=</span> <span class="n">SingleTargetObjective</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Target&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MIN&quot;</span><span class="p">))</span>
+<span class="n">target</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Target&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MIN&quot;</span><span class="p">)</span>
+<span class="n">objective</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to_objective</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="wrap-the-test-function-as-a-dataframe-based-lookup-callable">
+<h2>Wrap the test function as a dataframe-based lookup callable<a class="headerlink" href="#wrap-the-test-function-as-a-dataframe-based-lookup-callable" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lookup</span> <span class="o">=</span> <span class="n">arrays_to_dataframes</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">],</span> <span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">use_torch</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)(</span><span class="n">TestFunction</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -1110,17 +1111,11 @@ We use the data of the test function to deduce bounds and number of parameters.<
 <span class="n">N_ITERATIONS</span> <span class="o">=</span> <span class="mi">2</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_ITERATIONS</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_ITERATIONS</span><span class="p">):</span>
     <span class="n">recommendation</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">BATCH_SIZE</span><span class="p">)</span>
-
-    <span class="c1"># target value are looked up via the botorch wrapper</span>
-    <span class="n">target_values</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">recommendation</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-        <span class="n">target_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">WRAPPED_FUNCTION</span><span class="p">(</span><span class="o">*</span><span class="n">row</span><span class="o">.</span><span class="n">to_list</span><span class="p">()))</span>
-
-    <span class="n">recommendation</span><span class="p">[</span><span class="s2">&quot;Target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_values</span>
-
-    <span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
+    <span class="n">lookup_values</span> <span class="o">=</span> <span class="n">lookup</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
+    <span class="n">measurements</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">lookup_values</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">### Verify the constraints</span>
@@ -1214,6 +1209,7 @@ We use the data of the test function to deduce bounds and number of parameters.<
 <li><a class="reference internal" href="#necessary-imports-for-this-example">Necessary imports for this example</a></li>
 <li><a class="reference internal" href="#defining-the-test-function">Defining the test function</a></li>
 <li><a class="reference internal" href="#creating-the-searchspace-and-the-objective">Creating the searchspace and the objective</a></li>
+<li><a class="reference internal" href="#wrap-the-test-function-as-a-dataframe-based-lookup-callable">Wrap the test function as a dataframe-based lookup callable</a></li>
 <li><a class="reference internal" href="#construct-the-campaign-and-run-some-iterations">Construct the campaign and run some iterations</a></li>
 </ul>
 </li>

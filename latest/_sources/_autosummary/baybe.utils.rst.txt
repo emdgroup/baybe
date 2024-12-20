@@ -35,8 +35,6 @@ baybe.utils
 
    boolean
 
-   botorch_wrapper
-
    chemistry
 
    conversion

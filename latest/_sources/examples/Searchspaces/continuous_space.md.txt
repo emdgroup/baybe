@@ -1,0 +1,87 @@
+# Creating Continuous Search Spaces
+
+This example illustrates several ways to create continuous spaces space.
+
+## Imports
+
+
+```python
+import numpy as np
+```
+
+
+```python
+from baybe.parameters import NumericalContinuousParameter
+from baybe.searchspace import SearchSpace, SubspaceContinuous
+```
+
+## Settings
+
+We begin by defining the continuous parameters that span our space:
+
+
+```python
+DIMENSION = 4
+BOUNDS = (-1, 1)
+```
+
+
+```python
+parameters = [
+    NumericalContinuousParameter(name=f"x_{k+1}", bounds=BOUNDS)
+    for k in range(DIMENSION)
+]
+```
+
+From these parameter objects, we can now construct a continuous subspace.
+Let us draw some samples from it and verify that they are within the bounds:
+
+
+```python
+subspace = SubspaceContinuous(parameters)
+samples = subspace.sample_uniform(10)
+print(samples)
+assert np.all(samples >= BOUNDS[0]) and np.all(samples <= BOUNDS[1])
+```
+
+            x_1       x_2       x_3       x_4
+    0 -0.338737  0.120292  0.605327 -0.473937
+    1 -0.705866 -0.621174 -0.693795  0.284510
+    2 -0.206965 -0.399933  0.141555 -0.696073
+    3 -0.408676 -0.060086  0.055840 -0.474604
+    4  0.138473 -0.356156 -0.248687 -0.725217
+    5  0.080993 -0.547259  0.845718  0.930985
+    6  0.564060  0.279120 -0.159598 -0.201917
+    7 -0.817753  0.789918  0.208200  0.908014
+    8  0.343617  0.235958  0.120201  0.492254
+    9  0.336986 -0.596802  0.038783 -0.158671
+
+
+There are several ways we can turn the above objects into a search space.
+This provides a lot of flexibility depending on the context:
+
+
+```python
+# Using conversion:
+searchspace1 = SubspaceContinuous(parameters).to_searchspace()
+```
+
+
+```python
+# Explicit attribute assignment via the regular search space constructor:
+searchspace2 = SearchSpace(continuous=SubspaceContinuous(parameters))
+```
+
+
+```python
+# Using an alternative search space constructor:
+searchspace3 = SearchSpace.from_product(parameters=parameters)
+```
+
+No matter which version we choose, we can be sure that the resulting search space
+objects are equivalent:
+
+
+```python
+assert searchspace1 == searchspace2 == searchspace3
+```

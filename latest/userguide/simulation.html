@@ -10,6 +10,7 @@
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -298,10 +299,9 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Searchspaces/Searchspaces.html">Searchspaces</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Searchspaces</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/continuous_space_botorch_function.html">Continuous Space Botorch Function</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/hybrid_space.html">Hybrid Space</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/discrete_space.html">Discrete Space</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/continuous_space_custom_function.html">Continuous Space Custom Function</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Searchspaces/continuous_space.html">Continuous Space</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Constraints Discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -353,12 +353,9 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Backtesting/Backtesting.html">Backtesting</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Backtesting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/impute_mode.html">Impute Mode</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/custom_analytical.html">Custom Analytical</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/hybrid.html">Hybrid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/custom_blackbox.html">Custom Blackbox</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/full_initial_data.html">Full Initial Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/multi_target.html">Multi Target</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/full_lookup.html">Full Lookup</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Backtesting/botorch_analytical.html">Botorch Analytical</a></li>
 </ul>
 </li>
 </ul>
@@ -856,26 +853,23 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.botorch_wrapper.html">baybe.utils.botorch_wrapper</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.botorch_wrapper</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.botorch_wrapper.botorch_function_wrapper.html">baybe.utils.botorch_wrapper.botorch_function_wrapper</a></li>
-</ul>
-</li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.chemistry</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><div class="visually-hidden">Toggle navigation of baybe.utils.conversion</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.fraction_to_float.html">baybe.utils.conversion.fraction_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.nonstring_to_tuple.html">baybe.utils.conversion.nonstring_to_tuple</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><div class="visually-hidden">Toggle navigation of baybe.utils.dataframe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -886,18 +880,18 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><div class="visually-hidden">Toggle navigation of baybe.utils.interval</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><div class="visually-hidden">Toggle navigation of baybe.utils.interval</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.convert_bounds.html">baybe.utils.interval.convert_bounds</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.use_fallback_constructor_hook.html">baybe.utils.interval.use_fallback_constructor_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.Interval.html">Interval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.InfiniteIntervalError.html">baybe.utils.interval.InfiniteIntervalError</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><div class="visually-hidden">Toggle navigation of baybe.utils.memory</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><div class="visually-hidden">Toggle navigation of baybe.utils.memory</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.memory.bytes_to_human_readable.html">baybe.utils.memory.bytes_to_human_readable</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><div class="visually-hidden">Toggle navigation of baybe.utils.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><div class="visually-hidden">Toggle navigation of baybe.utils.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION.html">baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.DTypeFloatNumpy.html">baybe.utils.numerical.DTypeFloatNumpy</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.DTypeFloatONNX.html">baybe.utils.numerical.DTypeFloatONNX</a></li>
@@ -906,33 +900,33 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.geom_mean.html">baybe.utils.numerical.geom_mean</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.plotting.html">baybe.utils.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><div class="visually-hidden">Toggle navigation of baybe.utils.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.plotting.html">baybe.utils.plotting</a><input class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><div class="visually-hidden">Toggle navigation of baybe.utils.plotting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.plotting.create_example_plots.html">baybe.utils.plotting.create_example_plots</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.plotting.indent.html">baybe.utils.plotting.indent</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.plotting.to_string.html">baybe.utils.plotting.to_string</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><div class="visually-hidden">Toggle navigation of baybe.utils.random</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><div class="visually-hidden">Toggle navigation of baybe.utils.random</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.random.set_random_seed.html">baybe.utils.random.set_random_seed</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html">baybe.utils.random.temporary_seed</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><div class="visually-hidden">Toggle navigation of baybe.utils.sampling_algorithms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><div class="visually-hidden">Toggle navigation of baybe.utils.sampling_algorithms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.farthest_point_sampling.html">baybe.utils.sampling_algorithms.farthest_point_sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.sample_numerical_df.html">baybe.utils.sampling_algorithms.sample_numerical_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.DiscreteSamplingMethod.html">DiscreteSamplingMethod</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><div class="visually-hidden">Toggle navigation of baybe.utils.scaling</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><div class="visually-hidden">Toggle navigation of baybe.utils.scaling</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.ColumnTransformer.html">ColumnTransformer</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-123" name="toctree-checkbox-123" role="switch" type="checkbox"/><label for="toctree-checkbox-123"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.finite_float.html">baybe.utils.validation.finite_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
@@ -997,7 +991,7 @@
         <article role="main" id="furo-main-content">
           <section class="tex2jax_ignore mathjax_ignore" id="simulation">
 <h1>Simulation<a class="headerlink" href="#simulation" title="Link to this heading">¶</a></h1>
-<p>BayBE offers multiple functionalities to “simulate” experimental campaigns with a given lookup mechanism. This user guide briefly introduces how to use the methods available in our <a class="reference internal" href="../_autosummary/baybe.simulation.html#module-baybe.simulation" title="baybe.simulation"><span class="xref myst py py-mod">simulation submodule</span></a>.</p>
+<p>BayBE offers multiple functionalities to “simulate” experimental campaigns with a given lookup mechanism. This user guide briefly introduces how to use the methods available in our <a class="reference internal" href="../_autosummary/baybe.simulation.html#module-baybe.simulation" title="baybe.simulation"><span class="xref myst py py-mod">simulation subpackage</span></a>.</p>
 <p>For a wide variety of applications of this functionality, we refer to the corresponding <a class="reference internal" href="../examples/Backtesting/Backtesting.html"><span class="doc std std-doc">examples</span></a>.</p>
 <section id="terminology-what-do-we-mean-by-simulation">
 <h2>Terminology: What do we mean by “Simulation”?<a class="headerlink" href="#terminology-what-do-we-mean-by-simulation" title="Link to this heading">¶</a></h2>
@@ -1008,36 +1002,110 @@ Thus, “simulation” means investigating what experimental trajectory we would
 <li><p>It can refer to the simulation of an <em>actual</em> DOE loop, i.e., recommending experiments and retrieving the corresponding measurements, where the loop closure is realized in the form of a callable (black-box) function that can be queried during the optimization to provide target values. Such a callable could for instance be a simple analytical function or a numerical solver of a set of differential equations that describe a physical system.</p></li>
 </ol>
 </section>
-<section id="the-lookup-functionality">
-<h2>The Lookup Functionality<a class="headerlink" href="#the-lookup-functionality" title="Link to this heading">¶</a></h2>
-<p>In BayBE, the simulation submodule allows a wide range of use cases and can even be used for “oracle predictions”.
-This is enabled by the proper use of the <code class="docutils literal notranslate"><span class="pre">lookup</span></code> functionality, which allows to either use fixed data sets, analytical functions, and general callbacks for retrieving target function values.</p>
-<p>All functions require a <code class="docutils literal notranslate"><span class="pre">lookup</span></code> which is used to close the loop and return target values for points in the search space.
-It can be provided in the form of a dataframe or a <code class="docutils literal notranslate"><span class="pre">Callable</span></code>.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Technically, the <code class="docutils literal notranslate"><span class="pre">lookup</span></code> can also be <code class="docutils literal notranslate"><span class="pre">None</span></code>. This results in the simulation producing random results which is not discussed further.</p>
-</div>
-<section id="using-a-dataframe">
-<h3>Using a Dataframe<a class="headerlink" href="#using-a-dataframe" title="Link to this heading">¶</a></h3>
-<p>When choosing a dataframe, it needs to contain parameter combinations and their target results.
-To make sure that the backtest produces a realistic assessment of the performance, all possible parameter combinations should be measured and present in the dataframe.
-However, this is an unrealistic assumption for most applications as it is typically not the case that all possible parameter combinations have been measured prior to the optimization.
-As a consequence, it might well be the case that a provided dataframe contains the measurements of only some parameter configurations while a majority of combinations is not present.
-For this case, BayBE offers different ways of handling such “missing” values.
-This behavior is configured using the <code class="docutils literal notranslate"><span class="pre">impute_mode</span></code> keyword and provides the following possible choices:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;error&quot;</span></code>: An error will be thrown.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;worst&quot;</span></code>: Imputation uses the worst available value for each target.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;best&quot;</span></code>: Imputation uses the best available value for each target.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;mean&quot;</span></code>: Imputation uses the mean value for each target.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;random&quot;</span></code>: A random row will be used as lookup.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&quot;ignore&quot;</span></code>: The search space is stripped before recommendations are made so that unmeasured experiments will not be recommended.</p></li>
-</ul>
-</section>
+<section id="the-lookup-mechanism">
+<h2>The Lookup Mechanism<a class="headerlink" href="#the-lookup-mechanism" title="Link to this heading">¶</a></h2>
+<p>BayBE’s simulation package enables a wide range of use cases and can even be used for “oracle predictions”.
+This is made possible through the flexible use of lookup mechanisms, which act as the loop-closing element of an optimization loop.</p>
+<p>Lookups can be provided in a variety of ways, by using fixed data sets, analytical functions, or any other form of black-box callable.
+In all cases, their role is the same: to retrieve target values for parameter configurations suggested by the recommendation engine.</p>
 <section id="using-a-callable">
 <h3>Using a <code class="docutils literal notranslate"><span class="pre">Callable</span></code><a class="headerlink" href="#using-a-callable" title="Link to this heading">¶</a></h3>
-<p>The <code class="docutils literal notranslate"><span class="pre">Callable</span></code> needs to return the target values for any given parameter combination. The only requirement that BayBE imposes on using a <code class="docutils literal notranslate"><span class="pre">Callable</span></code> as a lookup mechanism is thus that it returns either a float or a tuple of floats and to accept an arbitrary number of floats as input.</p>
+<p>Using a <code class="docutils literal notranslate"><span class="pre">Callable</span></code> is the most general way to provide a lookup mechanism.
+Any <code class="docutils literal notranslate"><span class="pre">Callable</span></code> is a suitable lookup as long as it accepts a dataframe containing parameter configurations and returns the corresponding target values.
+More specifically:</p>
+<ul class="simple">
+<li><p>The input is expected to be a dataframe whose column names contain the parameter names and whose rows represent valid parameter configurations.</p></li>
+<li><p>The returned output must be a dataframe whose column names contain the target names and whose rows represent valid target values.</p></li>
+<li><p>The indices of the input and output dataframes must match.</p></li>
+</ul>
+<p>An example might look like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
+<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
+
+<span class="n">searchspace</span> <span class="o">=</span> <span class="n">SearchSpace</span><span class="o">.</span><span class="n">from_product</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">NumericalContinuousParameter</span><span class="p">(</span><span class="s2">&quot;p1&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+        <span class="n">NumericalContinuousParameter</span><span class="p">(</span><span class="s2">&quot;p2&quot;</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">objective</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="s2">&quot;t1&quot;</span><span class="p">,</span> <span class="s2">&quot;MAX&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_objective</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map parameter configurations to target values.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;t1&quot;</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;p1&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+
+<span class="n">lookup</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">continuous</span><span class="o">.</span><span class="n">sample_uniform</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Array-Based Callables</p>
+<p>If you already have a lookup callable available in an array-based format (for instance,
+if your lookup values are generated using third-party code that works with array inputs
+and outputs), you can effortlessly convert this callable into the required
+dataframe-based format by applying our
+<a class="reference internal" href="../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html#baybe.utils.dataframe.arrays_to_dataframes" title="baybe.utils.dataframe.arrays_to_dataframes"><code class="xref py py-func docutils literal notranslate"><span class="pre">arrays_to_dataframes()</span></code></a> decorator.</p>
+<p>For example, the above lookup can be equivalently created as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">arrays_to_dataframes</span>
+
+
+<span class="nd">@arrays_to_dataframes</span><span class="p">([</span><span class="s2">&quot;p1&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;t1&quot;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The same lookup function in array logic.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">array</span><span class="o">**</span><span class="mi">2</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="using-a-dataframe">
+<h3>Using a Dataframe<a class="headerlink" href="#using-a-dataframe" title="Link to this heading">¶</a></h3>
+<p>When dealing with discrete search spaces, it is also possible to provide the lookup values in a tabular representation using a dataframe.
+To be a valid lookup, the dataframe must have columns corresponding to all parameters and targets in the modeled domain.</p>
+<p>An example might look as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span>
+<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
+
+<span class="n">searchspace</span> <span class="o">=</span> <span class="n">SearchSpace</span><span class="o">.</span><span class="n">from_product</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">NumericalDiscreteParameter</span><span class="p">(</span><span class="s2">&quot;p1&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+        <span class="n">NumericalDiscreteParameter</span><span class="p">(</span><span class="s2">&quot;p2&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">]),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">objective</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="s2">&quot;t&quot;</span><span class="p">,</span> <span class="s2">&quot;MAX&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_objective</span><span class="p">()</span>
+
+<span class="n">lookup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;p1&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;p2&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="mi">23</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;p1&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;p2&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;p1&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;p2&quot;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">,</span> <span class="s2">&quot;t&quot;</span><span class="p">:</span> <span class="mi">56</span><span class="p">},</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Missing Lookup Values</p>
+<p>Ideally, all possible parameter combinations should be measured and represented in the dataframe to ensure that a backtesting simulation produces a realistic assessment of performance.
+However, this is an unrealistic assumption for most applications because search spaces are oftentimes exceedingly large.
+As a consequence, it may well be the case that a provided dataframe contains the measurements of only some parameter configurations while the majority of combinations is not present (like in the example above).
+To address this issue, BayBE provides various methods for managing these “missing” targets,
+which can be configured using the <a class="reference internal" href="../_autosummary/baybe.simulation.lookup.look_up_targets.html#baybe.simulation.lookup.look_up_targets.params.impute_mode" title="baybe.simulation.lookup.look_up_targets"><code class="xref py py-paramref docutils literal notranslate"><span class="pre">impute_mode</span></code></a>
+keyword of the respective simulation function.</p>
+</div>
+</section>
+<section id="using-none">
+<h3>Using <code class="docutils literal notranslate"><span class="pre">None</span></code><a class="headerlink" href="#using-none" title="Link to this heading">¶</a></h3>
+<p>When testing code, it can sometimes be helpful to have an “arbitrary” lookup mechanism available without having to craft a custom one.
+An example of when this is useful is when evaluating the actual lookup is too expensive and results in too long turnaround times (for instance, when the lookup is implemented by running complex code such as a computer simulation).
+In these situations, using <code class="docutils literal notranslate"><span class="pre">None</span></code> as lookup can save valuable development time, which invokes the <a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements" title="baybe.utils.dataframe.add_fake_measurements"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_fake_measurements()</span></code></a> utility behind the scenes to generate random target values for any given domain.</p>
 </section>
 </section>
 <section id="simulating-a-single-experiment">
@@ -1060,7 +1128,7 @@ It runs a single execution of a DoE loop for either a specific number of iterati
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>This function returns a dataframe that contains the results. For details on the columns of this dataframe as well as the dataframes returned by the other functions discussed here, we refer to the documentation of the submodule <a class="reference internal" href="../_autosummary/baybe.simulation.html#module-baybe.simulation" title="baybe.simulation"><span class="xref myst py py-mod">here</span></a>.</p>
+<p>This function returns a dataframe that contains the results. For details on the columns of this dataframe as well as the dataframes returned by the other functions discussed here, we refer to the documentation of the subpackage <a class="reference internal" href="../_autosummary/baybe.simulation.html#module-baybe.simulation" title="baybe.simulation"><span class="xref myst py py-mod">here</span></a>.</p>
 </section>
 <section id="simulating-multiple-scenarios">
 <h2>Simulating Multiple Scenarios<a class="headerlink" href="#simulating-multiple-scenarios" title="Link to this heading">¶</a></h2>
@@ -1177,9 +1245,10 @@ In addition to the keyword arguments available for <code class="docutils literal
             <ul>
 <li><a class="reference internal" href="#">Simulation</a><ul>
 <li><a class="reference internal" href="#terminology-what-do-we-mean-by-simulation">Terminology: What do we mean by “Simulation”?</a></li>
-<li><a class="reference internal" href="#the-lookup-functionality">The Lookup Functionality</a><ul>
-<li><a class="reference internal" href="#using-a-dataframe">Using a Dataframe</a></li>
+<li><a class="reference internal" href="#the-lookup-mechanism">The Lookup Mechanism</a><ul>
 <li><a class="reference internal" href="#using-a-callable">Using a <code class="docutils literal notranslate"><span class="pre">Callable</span></code></a></li>
+<li><a class="reference internal" href="#using-a-dataframe">Using a Dataframe</a></li>
+<li><a class="reference internal" href="#using-none">Using <code class="docutils literal notranslate"><span class="pre">None</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#simulating-a-single-experiment">Simulating a Single Experiment</a></li>

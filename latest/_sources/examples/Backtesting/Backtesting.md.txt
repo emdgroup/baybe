@@ -6,10 +6,7 @@ These examples demonstrate BayBE's
 :maxdepth: 1
 
 Impute Mode<impute_mode>
-Custom Analytical<custom_analytical>
-Hybrid<hybrid>
+Custom Blackbox<custom_blackbox>
 Full Initial Data<full_initial_data>
-Multi Target<multi_target>
 Full Lookup<full_lookup>
-Botorch Analytical<botorch_analytical>
 ```

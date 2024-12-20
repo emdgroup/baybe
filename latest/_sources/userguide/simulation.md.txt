@@ -1,6 +1,6 @@
 # Simulation
 
-BayBE offers multiple functionalities to "simulate" experimental campaigns with a given lookup mechanism. This user guide briefly introduces how to use the methods available in our [simulation submodule](baybe.simulation).
+BayBE offers multiple functionalities to "simulate" experimental campaigns with a given lookup mechanism. This user guide briefly introduces how to use the methods available in our [simulation subpackage](baybe.simulation).
 
 For a wide variety of applications of this functionality, we refer to the corresponding [examples](../../examples/Backtesting/Backtesting).
 
@@ -13,36 +13,118 @@ Thus, "simulation" means investigating what experimental trajectory we would hav
 
 2. It can refer to the simulation of an *actual* DOE loop, i.e., recommending experiments and retrieving the corresponding measurements, where the loop closure is realized in the form of a callable (black-box) function that can be queried during the optimization to provide target values. Such a callable could for instance be a simple analytical function or a numerical solver of a set of differential equations that describe a physical system.
 
-## The Lookup Functionality
+## The Lookup Mechanism
 
-In BayBE, the simulation submodule allows a wide range of use cases and can even be used for "oracle predictions".
-This is enabled by the proper use of the `lookup` functionality, which allows to either use fixed data sets, analytical functions, and general callbacks for retrieving target function values. 
+BayBE's simulation package enables a wide range of use cases and can even be used for "oracle predictions".
+This is made possible through the flexible use of lookup mechanisms, which act as the loop-closing element of an optimization loop.
 
-All functions require a `lookup` which is used to close the loop and return target values for points in the search space.
-It can be provided in the form of a dataframe or a `Callable`.
-
-```{note}
-Technically, the `lookup` can also be `None`. This results in the simulation producing random results which is not discussed further.
-```
-
-### Using a Dataframe
-
-When choosing a dataframe, it needs to contain parameter combinations and their target results.
-To make sure that the backtest produces a realistic assessment of the performance, all possible parameter combinations should be measured and present in the dataframe.
-However, this is an unrealistic assumption for most applications as it is typically not the case that all possible parameter combinations have been measured prior to the optimization.
-As a consequence, it might well be the case that a provided dataframe contains the measurements of only some parameter configurations while a majority of combinations is not present.
-For this case, BayBE offers different ways of handling such "missing" values. 
-This behavior is configured using the `impute_mode` keyword and provides the following possible choices:
-- ``"error"``: An error will be thrown.
-- ``"worst"``: Imputation uses the worst available value for each target.
-- ``"best"``: Imputation uses the best available value for each target.
-- ``"mean"``: Imputation uses the mean value for each target.
-- ``"random"``: A random row will be used as lookup.
-- ``"ignore"``: The search space is stripped before recommendations are made so that unmeasured experiments will not be recommended.
+Lookups can be provided in a variety of ways, by using fixed data sets, analytical functions, or any other form of black-box callable.
+In all cases, their role is the same: to retrieve target values for parameter configurations suggested by the recommendation engine.
 
 ### Using a `Callable`
 
-The `Callable` needs to return the target values for any given parameter combination. The only requirement that BayBE imposes on using a `Callable` as a lookup mechanism is thus that it returns either a float or a tuple of floats and to accept an arbitrary number of floats as input.
+Using a `Callable` is the most general way to provide a lookup mechanism.
+Any `Callable` is a suitable lookup as long as it accepts a dataframe containing parameter configurations and returns the corresponding target values.
+More specifically:
+- The input is expected to be a dataframe whose column names contain the parameter names and whose rows represent valid parameter configurations.
+- The returned output must be a dataframe whose column names contain the target names and whose rows represent valid target values.
+- The indices of the input and output dataframes must match.
+
+An example might look like this:
+```python
+import pandas as pd
+
+from baybe.parameters import NumericalContinuousParameter
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+
+searchspace = SearchSpace.from_product(
+    [
+        NumericalContinuousParameter("p1", [0, 1]),
+        NumericalContinuousParameter("p2", [-1, 1]),
+    ]
+)
+objective = NumericalTarget("t1", "MAX").to_objective()
+
+
+def lookup(df: pd.DataFrame) -> pd.DataFrame:
+    """Map parameter configurations to target values."""
+    return pd.DataFrame({"t1": df["p1"] ** 2}, index=df.index)
+
+
+lookup(searchspace.continuous.sample_uniform(10))
+```
+
+````{admonition} Array-Based Callables
+:class: tip
+If you already have a lookup callable available in an array-based format (for instance,
+if your lookup values are generated using third-party code that works with array inputs
+and outputs), you can effortlessly convert this callable into the required
+dataframe-based format by applying our
+{func}`~baybe.utils.dataframe.arrays_to_dataframes` decorator. 
+
+For example, the above lookup can be equivalently created as follows:
+```python
+import numpy as np
+
+from baybe.utils.dataframe import arrays_to_dataframes
+
+
+@arrays_to_dataframes(["p1"], ["t1"])
+def lookup(array: np.ndarray) -> np.ndarray:
+    """The same lookup function in array logic."""
+    return array**2
+```
+
+````
+
+
+### Using a Dataframe
+
+When dealing with discrete search spaces, it is also possible to provide the lookup values in a tabular representation using a dataframe.
+To be a valid lookup, the dataframe must have columns corresponding to all parameters and targets in the modeled domain. 
+
+An example might look as follows:
+```python
+import pandas as pd
+
+from baybe.parameters import NumericalDiscreteParameter
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+
+searchspace = SearchSpace.from_product(
+    [
+        NumericalDiscreteParameter("p1", [0, 1, 2, 3]),
+        NumericalDiscreteParameter("p2", [1, 10, 100, 1000]),
+    ]
+)
+objective = NumericalTarget("t", "MAX").to_objective()
+
+lookup = pd.DataFrame.from_records(
+    [
+        {"p1": 0, "p2": 100, "t": 23},
+        {"p1": 2, "p2": 10, "t": 5},
+        {"p1": 3, "p2": 1000, "t": 56},
+    ]
+)
+```
+
+```{admonition} Missing Lookup Values
+:class: tip
+Ideally, all possible parameter combinations should be measured and represented in the dataframe to ensure that a backtesting simulation produces a realistic assessment of performance.
+However, this is an unrealistic assumption for most applications because search spaces are oftentimes exceedingly large.
+As a consequence, it may well be the case that a provided dataframe contains the measurements of only some parameter configurations while the majority of combinations is not present (like in the example above).
+To address this issue, BayBE provides various methods for managing these “missing” targets,
+which can be configured using the {paramref}`~baybe.simulation.lookup.look_up_targets.impute_mode`
+keyword of the respective simulation function.
+```
+
+### Using `None`
+
+When testing code, it can sometimes be helpful to have an "arbitrary" lookup mechanism available without having to craft a custom one.
+An example of when this is useful is when evaluating the actual lookup is too expensive and results in too long turnaround times (for instance, when the lookup is implemented by running complex code such as a computer simulation).
+In these situations, using `None` as lookup can save valuable development time, which invokes the {func}`~baybe.utils.dataframe.add_fake_measurements` utility behind the scenes to generate random target values for any given domain.
+
 
 ## Simulating a Single Experiment
 
@@ -67,7 +149,7 @@ results = simulate_experiment(
 )
 ~~~
 
-This function returns a dataframe that contains the results. For details on the columns of this dataframe as well as the dataframes returned by the other functions discussed here, we refer to the documentation of the submodule [here](baybe.simulation).
+This function returns a dataframe that contains the results. For details on the columns of this dataframe as well as the dataframes returned by the other functions discussed here, we refer to the documentation of the subpackage [here](baybe.simulation).
 
 ## Simulating Multiple Scenarios
 
