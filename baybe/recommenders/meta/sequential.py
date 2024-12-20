@@ -197,9 +197,9 @@ class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
     """Defines what shall happen when the last recommender in the sequence has been
     consumed but additional recommender changes are triggered:
 
-        * ``"raise"``: An error is raised.
-        * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
-        * ``"cycle"``: The selection restarts from the beginning of the sequence.
+    * ``"raise"``: An error is raised.
+    * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
+    * ``"cycle"``: The selection restarts from the beginning of the sequence.
     """
 
     @override
@@ -233,9 +233,15 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
     """A meta recommender that switches between recommenders from an iterable.
 
     Similar to :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
-    but without explicit list conversion. Consequently, it supports arbitrary
-    iterables, possibly of infinite length. The downside is that serialization is not
-    supported.
+    but without explicit list conversion. This enables a number of advanced use cases:
+
+    * It supports arbitrary iterables, allowing to configure recommender sequences
+      of infinite length. This is useful when the total number of iterations unknown
+      in advance.
+    * It can be used to adaptively adjust the recommender sequence based on the
+      latest context available outside the class, by modifying the iterable on the fly.
+
+    The downside is that serialization is not supported.
 
     Raises:
         NoRecommendersLeftError: If more recommenders are requested than there are
