@@ -112,6 +112,9 @@ class NumericalContinuousParameter(ContinuousParameter):
     bounds: Interval = field(default=None, converter=convert_bounds)
     """The bounds of the parameter."""
 
+    near_zero_threshold: float = field(default=1e-5, converter=float)
+    """A threshold for determining if the value is considered near-zero."""
+
     @bounds.validator
     def _validate_bounds(self, _: Any, value: Interval) -> None:  # noqa: DOC101, DOC103
         """Validate bounds.
@@ -148,6 +151,54 @@ class NumericalContinuousParameter(ContinuousParameter):
             Upper_Bound=self.bounds.upper,
         )
         return param_dict
+
+    def is_near_zero(self, item: float) -> bool:
+        """Return whether an item is near-zero.
+
+        Important:
+            Value in the open interval (-near_zero_threshold, near_zero_threshold)
+            will be treated as near_zero.
+
+        Args:
+            item: The value to be checked.
+
+        Returns:
+            ``True`` if the value is near-zero, ``False`` otherwise.
+        """
+        return abs(item) < self.near_zero_threshold
+
+
+@define(frozen=True, slots=False)
+class _FixedNumericalContinuousParameter(ContinuousParameter):
+    """Parameter class for fixed numerical parameters."""
+
+    is_numeric: ClassVar[bool] = True
+    # See base class.
+
+    value: float = field(converter=float)
+    """The fixed value of the parameter."""
+
+    @property
+    def bounds(self) -> Interval:
+        """The value of the parameter as a degenerate interval."""
+        return Interval(self.value, self.value)
+
+    @override
+    def is_in_range(self, item: float) -> bool:
+        return item == self.value
+
+    @override
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        return (self.name,)
+
+    @override
+    def summary(self) -> dict:
+        return dict(
+            Name=self.name,
+            Type=self.__class__.__name__,
+            Value=self.value,
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
