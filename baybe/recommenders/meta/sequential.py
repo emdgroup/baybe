@@ -4,6 +4,7 @@
 # mypy: disable-error-code="arg-type"
 
 import gc
+from abc import abstractmethod
 from collections.abc import Iterable, Iterator
 from typing import Literal
 
@@ -89,71 +90,27 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
 
 @define
-class SequentialMetaRecommender(MetaRecommender):
-    """A meta recommender that uses a pre-defined sequence of recommenders.
-
-    A new recommender is taken from the sequence whenever at least one new measurement
-    is available, until all recommenders are exhausted. More precisely, a recommender
-    change is triggered whenever the size of the training dataset increases; the
-    actual content of the dataset is ignored.
-
-    Note:
-        The provided sequence of recommenders will be internally pre-collected into a
-        list. If this is not acceptable, consider using
-        :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`
-        instead.
-
-    Raises:
-        RuntimeError: If the training dataset size decreased compared to the previous
-            call.
-        NoRecommendersLeftError: If more recommenders are requested than there are
-            recommenders available and ``mode="raise"``.
-    """
-
-    # Exposed
-    recommenders: list[PureRecommender] = field(
-        converter=list, validator=deep_iterable(instance_of(PureRecommender))
-    )
-    """A finite-length sequence of recommenders to be used. For infinite-length
-    iterables, see
-    :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`."""
-
-    mode: Literal["raise", "reuse_last", "cyclic"] = field(
-        default="raise",
-        validator=in_(("raise", "reuse_last", "cyclic")),
-    )
-    """Defines what shall happen when the last recommender in the sequence has been
-    consumed but additional recommender changes are triggered:
-
-        * ``"raise"``: An error is raised.
-        * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
-        * ``"cycle"``: The selection restarts from the beginning of the sequence.
-    """
-
-    # Private
+class _BaseSequentialMetaRecommender(MetaRecommender):
     # TODO: These should **not** be exposed via the constructor but the workaround
     #   is currently needed for correct (de-)serialization. A proper approach would be
     #   to not set them via the constructor but through a custom hook in combination
     #   with `_cattrs_include_init_false=True`. However, the way
     #   `get_base_structure_hook` is currently designed prevents such a hook from
     #   taking action.
-    _step: int = field(default=0, alias="_step")
+    _step: int = field(default=0, alias="_step", kw_only=True)
     """An index pointing to the current position in the recommender sequence."""
 
-    _was_used: bool = field(default=False)
+    _was_used: bool = field(default=False, alias="_was_used", kw_only=True)
     """Boolean flag indicating if the current recommender has been used."""
 
-    _n_last_measurements: int = field(default=0, alias="_n_last_measurements")
+    _n_last_measurements: int = field(
+        default=0, alias="_n_last_measurements", kw_only=True
+    )
     """The number of measurements available at the last successful recommend call."""
 
+    @abstractmethod
     def _get_recommender_at_current_step(self) -> PureRecommender:
         """Get the recommender at the current sequence position."""
-        idx = self._step
-        if self.mode == "reuse_last":
-            idx = min(idx, len(self.recommenders) - 1)
-        elif self.mode == "cyclic":
-            idx %= len(self.recommenders)
-        return self.recommenders[idx]
 
     @override
     def select_recommender(
@@ -182,15 +139,7 @@ class SequentialMetaRecommender(MetaRecommender):
         # Move on to the next recommender
         self._step += 1
         self._was_used = False
-        try:
-            return self._get_recommender_at_current_step()
-        except IndexError as ex:
-            raise NoRecommendersLeftError(
-                f"A total of {self._step+1} recommender(s) was/were requested but the "
-                f"provided sequence contains only {self._step} element(s). "
-                f"Add more recommenders or adjust the "
-                f"'{fields(SequentialMetaRecommender).mode.name}' attribute."
-            ) from ex
+        return self._get_recommender_at_current_step()
 
     @override
     def recommend(
@@ -211,6 +160,65 @@ class SequentialMetaRecommender(MetaRecommender):
 
         return recommendation
 
+
+@define
+class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
+    """A meta recommender that uses a pre-defined sequence of recommenders.
+
+    A new recommender is taken from the sequence whenever at least one new measurement
+    is available, until all recommenders are exhausted. More precisely, a recommender
+    change is triggered whenever the size of the training dataset increases; the
+    actual content of the dataset is ignored.
+
+    Note:
+        The provided sequence of recommenders will be internally pre-collected into a
+        list. If this is not acceptable, consider using
+        :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`
+        instead.
+
+    Raises:
+        RuntimeError: If the training dataset size decreased compared to the previous
+            call.
+        NoRecommendersLeftError: If more recommenders are requested than there are
+            recommenders available and ``mode="raise"``.
+    """
+
+    recommenders: list[PureRecommender] = field(
+        converter=list, validator=deep_iterable(instance_of(PureRecommender))
+    )
+    """A finite-length sequence of recommenders to be used. For infinite-length
+    iterables, see
+    :class:`baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender`."""
+
+    mode: Literal["raise", "reuse_last", "cyclic"] = field(
+        default="raise",
+        validator=in_(("raise", "reuse_last", "cyclic")),
+    )
+    """Defines what shall happen when the last recommender in the sequence has been
+    consumed but additional recommender changes are triggered:
+
+        * ``"raise"``: An error is raised.
+        * ``"reuse_last"``: The last recommender in the sequence is used indefinitely.
+        * ``"cycle"``: The selection restarts from the beginning of the sequence.
+    """
+
+    @override
+    def _get_recommender_at_current_step(self) -> PureRecommender:
+        idx = self._step
+        if self.mode == "reuse_last":
+            idx = min(idx, len(self.recommenders) - 1)
+        elif self.mode == "cyclic":
+            idx %= len(self.recommenders)
+        try:
+            return self.recommenders[idx]
+        except IndexError as ex:
+            raise NoRecommendersLeftError(
+                f"A total of {self._step+1} recommender(s) was/were requested but "
+                f"the provided sequence contains only {self._step} element(s). "
+                f"Add more recommenders or adjust the "
+                f"'{fields(SequentialMetaRecommender).mode.name}' attribute."
+            ) from ex
+
     @override
     def __str__(self) -> str:
         fields = [
@@ -221,7 +229,7 @@ class SequentialMetaRecommender(MetaRecommender):
 
 
 @define
-class StreamingSequentialMetaRecommender(MetaRecommender):
+class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
     """A meta recommender that switches between recommenders from an iterable.
 
     Similar to :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
@@ -234,17 +242,8 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
             recommenders available.
     """
 
-    # Exposed
     recommenders: Iterable[PureRecommender] = field()
     """An iterable providing the recommenders to be used."""
-
-    # Private
-    # TODO: See :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
-    _step: int = field(init=False, default=-1)
-    """Counts how often the recommender has already been switched."""
-
-    _n_last_measurements: int = field(init=False, default=-1)
-    """The number of measurements that were available at the last call."""
 
     _iterator: Iterator = field(init=False)
     """The iterator used to traverse the recommenders."""
@@ -252,50 +251,30 @@ class StreamingSequentialMetaRecommender(MetaRecommender):
     _last_recommender: PureRecommender | None = field(init=False, default=None)
     """The recommender returned from the last call."""
 
+    _step_of_last_recommender: int = field(init=False, default=-1)
+    """The position of the latest recommender fetched from the iterable."""
+
     @_iterator.default
     def default_iterator(self):
         """Initialize the recommender iterator."""
         return iter(self.recommenders)
 
     @override
-    def select_recommender(
-        self,
-        batch_size: int | None = None,
-        searchspace: SearchSpace | None = None,
-        objective: Objective | None = None,
-        measurements: pd.DataFrame | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
-        use_last = True
-        n_data = len(measurements) if measurements is not None else 0
-
-        # If the training dataset size has increased, move to the next recommender
-        if n_data > self._n_last_measurements:
-            self._step += 1
-            use_last = False
-
-        # If the training dataset size has decreased, something went wrong
-        elif n_data < self._n_last_measurements:
-            raise RuntimeError(
-                f"The training dataset size decreased from {self._n_last_measurements} "
-                f"to {n_data} since the last function call, which indicates that "
-                f"'{self.__class__.__name__}' was not used as intended."
-            )
-
-        # Get the recommender
-        try:
-            if not use_last:
+    def _get_recommender_at_current_step(self) -> PureRecommender:
+        if self._step != self._step_of_last_recommender:
+            try:
                 self._last_recommender = next(self._iterator)
-        except StopIteration as ex:
-            raise NoRecommendersLeftError(
-                f"A total of {self._step+1} recommender(s) was/were requested but the "
-                f"provided iterator provided only {self._step} element(s)."
-            ) from ex
+            except StopIteration as ex:
+                raise NoRecommendersLeftError(
+                    f"A total of {self._step+1} recommender(s) was/were requested but "
+                    f"the provided iterator provided only {self._step} element(s). "
+                ) from ex
+            self._step_of_last_recommender = self._step
 
-        # Remember the training dataset size for the next call
-        self._n_last_measurements = n_data
+        # By now, the first recommender has been fetched
+        assert self._last_recommender is not None
 
-        return self._last_recommender  # type: ignore[return-value]
+        return self._last_recommender
 
     @override
     def __str__(self) -> str:

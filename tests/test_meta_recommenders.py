@@ -8,10 +8,10 @@ from baybe.recommenders import (
     FPSRecommender,
     RandomRecommender,
     SequentialMetaRecommender,
-    StreamingSequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
 from baybe.recommenders.meta.adaptive import BatchSizeControlledMetaRecommender
+from baybe.recommenders.meta.sequential import StreamingSequentialMetaRecommender
 from tests.conftest import select_recommender
 
 RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
@@ -49,10 +49,27 @@ def test_twophase_meta_recommender(remain_switched):
         assert rec is target
 
 
-@pytest.mark.parametrize("mode", ["raise", "reuse_last", "cyclic"])
-def test_sequential_meta_recommender(mode):
+@pytest.mark.parametrize(
+    ("cls", "mode"),
+    [
+        (SequentialMetaRecommender, "raise"),
+        (SequentialMetaRecommender, "reuse_last"),
+        (SequentialMetaRecommender, "cyclic"),
+        (StreamingSequentialMetaRecommender, None),
+    ],
+)
+def test_sequential_meta_recommender(cls, mode):
     """The recommender provides its recommenders in the right order."""
-    meta_recommender = SequentialMetaRecommender(recommenders=RECOMMENDERS, mode=mode)
+    # Create meta recommender
+    if cls == SequentialMetaRecommender:
+        meta_recommender = SequentialMetaRecommender(
+            recommenders=RECOMMENDERS, mode=mode
+        )
+    else:
+        meta_recommender = StreamingSequentialMetaRecommender(
+            recommenders=(r for r in RECOMMENDERS)  # <-- generator comprehension
+        )
+
     training_size = 0
 
     # First iteration over provided recommender sequence
@@ -85,6 +102,10 @@ def test_sequential_meta_recommender(mode):
         ):
             select_recommender(meta_recommender, training_size - 1)
 
+    # For streaming recommenders, no second iteration is possible
+    if cls == StreamingSequentialMetaRecommender:
+        return
+
     # Second iteration over provided recommender sequence
     for cycled in RECOMMENDERS:
         training_size += 1
@@ -106,34 +127,6 @@ def test_sequential_meta_recommender(mode):
 
         # Pretend the recommender was used
         meta_recommender._was_used = True
-
-
-@pytest.mark.parametrize(
-    "recommenders",
-    [
-        RECOMMENDERS,  # list
-        (rec for rec in RECOMMENDERS),  # generator
-    ],
-)
-def test_streaming_sequential_meta_recommender(recommenders):
-    """The recommender provides its recommenders in the right order."""
-    meta_recommender = StreamingSequentialMetaRecommender(recommenders=recommenders)
-    training_size = 0
-
-    for reference in RECOMMENDERS:
-        training_size += 1
-
-        # The returned recommender coincides with what was put in
-        recommender = select_recommender(meta_recommender, training_size)
-        assert recommender is reference
-
-        # Selection with unchanged training size yields again the same recommender
-        recommender = select_recommender(meta_recommender, training_size)
-        assert recommender is reference
-
-        # Selection with smaller training size raises an error
-        with pytest.raises(RuntimeError):
-            select_recommender(meta_recommender, training_size - 1)
 
 
 def test_batch_size_controlled_meta_recommender():
