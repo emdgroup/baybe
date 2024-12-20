@@ -55,6 +55,30 @@ def lookup(df: pd.DataFrame) -> pd.DataFrame:
 lookup(searchspace.continuous.sample_uniform(10))
 ```
 
+````{admonition} Array-Based Callables
+:class: tip
+If you already have a lookup callable available in an array-based format (for instance,
+if your lookup values are generated using third-party code that works with array inputs
+and outputs), you can effortlessly convert this callable into the required
+dataframe-based format by applying our
+{func}`~baybe.utils.dataframe.arrays_to_dataframes` decorator. 
+
+For example, the above lookup can be equivalently created as follows:
+```python
+import numpy as np
+
+from baybe.utils.dataframe import arrays_to_dataframes
+
+
+@arrays_to_dataframes(["p1"], ["t1"])
+def lookup(array: np.ndarray) -> np.ndarray:
+    """The same lookup function in array logic."""
+    return array**2
+```
+
+````
+
+
 ### Using a Dataframe
 
 When dealing with discrete search spaces, it is also possible to provide the lookup values in a tabular representation using a dataframe.
