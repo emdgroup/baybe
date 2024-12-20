@@ -21,7 +21,7 @@ from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import label_input_and_output_columns
+from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.plotting import create_example_plots
 
 ### Settings
@@ -96,7 +96,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # noise. The used model is of course not aware of this relationship but needs to infer
 # it from the data gathered during the optimization process.
 
-wrapper = label_input_and_output_columns(
+wrapper = arrays_to_dataframes(
     [p.name for p in discrete_params], [target.name], use_torch=True
 )
 

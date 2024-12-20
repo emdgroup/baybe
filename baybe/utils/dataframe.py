@@ -683,13 +683,17 @@ def filter_df(
     return out
 
 
-def label_input_and_output_columns(
-    input_labels: Sequence[str], output_labels: Sequence[str], use_torch: bool = False
+def arrays_to_dataframes(
+    input_labels: Sequence[str],
+    output_labels: Sequence[str],
+    /,
+    use_torch: bool = False,
 ) -> Callable[
     [Callable[[_ArrayLike], _ArrayLike]], Callable[[pd.DataFrame], pd.DataFrame]
 ]:
-    """Create a decorator for labeling the inputs and outputs of array-based callables.
+    """Make a decorator for labeling the input/output columns of array-based callables.
 
+    Useful for creating parameter-to-target lookups from array-based logic.
     The decorator transforms a callable designed to work with unlabelled arrays such
     that it can operate with dataframes instead. The original callable is expected to
     accept and return two-dimensional arrays. When decorated, the callable accepts and

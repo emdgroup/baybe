@@ -37,7 +37,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
-from baybe.utils.dataframe import label_input_and_output_columns, to_tensor
+from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
 from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 
@@ -141,7 +141,7 @@ campaign = Campaign(
 
 # Now, we perform a couple of experimental iterations with the active hook:
 
-lookup = label_input_and_output_columns(
+lookup = arrays_to_dataframes(
     [p.name for p in discrete_params], [target.name], use_torch=True
 )(test_function)
 

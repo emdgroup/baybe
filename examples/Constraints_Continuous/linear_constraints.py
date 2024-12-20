@@ -22,7 +22,7 @@ from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import label_input_and_output_columns
+from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function
 
@@ -79,7 +79,7 @@ objective = target.to_objective()
 
 ### Wrap the test function as a dataframe-based lookup callable
 
-lookup = label_input_and_output_columns(
+lookup = arrays_to_dataframes(
     [p.name for p in parameters], [target.name], use_torch=True
 )(TestFunction)
 

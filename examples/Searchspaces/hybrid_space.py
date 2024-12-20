@@ -18,7 +18,7 @@ from baybe.parameters import NumericalContinuousParameter, NumericalDiscretePara
 from baybe.recommenders import NaiveHybridSpaceRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import label_input_and_output_columns
+from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function and the hybrid dimensions
 
@@ -104,7 +104,7 @@ objective = target.to_objective()
 
 ### Wrap the test function as a dataframe-based lookup callable
 
-lookup = label_input_and_output_columns(
+lookup = arrays_to_dataframes(
     searchspace.parameter_names, [target.name], use_torch=True
 )(TestFunction)
 

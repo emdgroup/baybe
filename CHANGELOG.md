@@ -16,8 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `benchmarks` subpackage for defining and running performance tests
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
 - `filter_df` utility for filtering dataframe content
-- `label_input_and_output_columns` decorator to create lookups from array-based
-  callables
+- `arrays_to_dataframes` decorator to create lookups from array-based callables
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
 

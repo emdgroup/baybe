@@ -13,7 +13,7 @@ from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import label_input_and_output_columns
+from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function
 
@@ -89,7 +89,7 @@ recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
 
-lookup = label_input_and_output_columns(
+lookup = arrays_to_dataframes(
     [p.name for p in parameters], [target.name], use_torch=True
 )(TestFunction)
 
