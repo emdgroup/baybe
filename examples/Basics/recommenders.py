@@ -116,10 +116,6 @@ recommender = TwoPhaseMetaRecommender(
 
 print(recommender)
 
-# Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
-# Their meaning and how to use and define it are explained in the hybrid backtesting example.
-# We thus refer to [`hybrid`](./../Backtesting/hybrid.md) for details on these.
-
 ### Example Searchspace and objective parameters
 
 # We use the same data used in the [`campaign`](./campaign.md) example.
