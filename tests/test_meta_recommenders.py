@@ -50,30 +50,43 @@ def test_twophase_meta_recommender(remain_switched):
 
 
 @pytest.mark.parametrize("mode", ["raise", "reuse_last", "cyclic"])
-@pytest.mark.parametrize("recommenders", [RECOMMENDERS])
-def test_sequential_meta_recommender(recommenders, mode):
+def test_sequential_meta_recommender(mode):
     """The recommender provides its recommenders in the right order."""
-    meta_recommender = SequentialMetaRecommender(recommenders=recommenders, mode=mode)
+    meta_recommender = SequentialMetaRecommender(recommenders=RECOMMENDERS, mode=mode)
     training_size = 0
 
     # First iteration over provided recommender sequence
-    for reference in recommenders:
+    for reference in RECOMMENDERS:
         training_size += 1
 
         # The returned recommender coincides with what was put in
         recommender = select_recommender(meta_recommender, training_size)
         assert recommender is reference
 
+        # If the current recommender was not used (by recommending via the meta
+        # recommender), a subsequent call returns the same recommender
+        recommender = select_recommender(meta_recommender, training_size + 1)
+        assert recommender is reference
+
+        # Pretend the previous data size increase did not happen
+        meta_recommender._n_last_measurements = training_size
+
+        # Pretend the recommender was used
+        meta_recommender._was_used = True
+
         # Selection with unchanged training size yields again the same recommender
         recommender = select_recommender(meta_recommender, training_size)
         assert recommender is reference
 
         # Selection with smaller training size raises an error
-        with pytest.raises(RuntimeError):
+        with pytest.raises(
+            RuntimeError,
+            match=f"decreased from {training_size} to {training_size-1}",
+        ):
             select_recommender(meta_recommender, training_size - 1)
 
     # Second iteration over provided recommender sequence
-    for cycled in recommenders:
+    for cycled in RECOMMENDERS:
         training_size += 1
 
         if mode == "raise":
@@ -84,12 +97,15 @@ def test_sequential_meta_recommender(recommenders, mode):
         elif mode == "reuse_last":
             # The last recommender is selected repeatedly
             recommender = select_recommender(meta_recommender, training_size)
-            assert recommender == recommenders[-1]
+            assert recommender == RECOMMENDERS[-1]
 
         elif mode == "cyclic":
             # The selection restarts from the first recommender
             recommender = select_recommender(meta_recommender, training_size)
             assert recommender == cycled
+
+        # Pretend the recommender was used
+        meta_recommender._was_used = True
 
 
 @pytest.mark.parametrize(

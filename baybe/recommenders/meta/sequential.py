@@ -8,7 +8,7 @@ from collections.abc import Iterable, Iterator
 from typing import Literal
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, in_, instance_of
 from typing_extensions import override
 
@@ -137,11 +137,23 @@ class SequentialMetaRecommender(MetaRecommender):
     #   with `_cattrs_include_init_false=True`. However, the way
     #   `get_base_structure_hook` is currently designed prevents such a hook from
     #   taking action.
-    _step: int = field(default=-1, alias="_step")
-    """Counts how often the recommender has already been switched."""
+    _step: int = field(default=0, alias="_step")
+    """An index pointing to the current position in the recommender sequence."""
 
-    _n_last_measurements: int = field(default=-1, alias="_n_last_measurements")
-    """The number of measurements that were available at the last call."""
+    _was_used: bool = field(default=False)
+    """Boolean flag indicating if the current recommender has been used."""
+
+    _n_last_measurements: int = field(default=0, alias="_n_last_measurements")
+    """The number of measurements available at the last successful recommend call."""
+
+    def _get_recommender_at_current_step(self) -> PureRecommender:
+        """Get the recommender at the current sequence position."""
+        idx = self._step
+        if self.mode == "reuse_last":
+            idx = min(idx, len(self.recommenders) - 1)
+        elif self.mode == "cyclic":
+            idx %= len(self.recommenders)
+        return self.recommenders[idx]
 
     @override
     def select_recommender(
@@ -152,40 +164,52 @@ class SequentialMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> PureRecommender:
-        n_data = len(measurements) if measurements is not None else 0
-
-        # If the training dataset size has increased, move to the next recommender
-        if n_data > self._n_last_measurements:
-            self._step += 1
-
         # If the training dataset size has decreased, something went wrong
-        elif n_data < self._n_last_measurements:
+        if (
+            n_data := len(measurements) if measurements is not None else 0
+        ) < self._n_last_measurements:
             raise RuntimeError(
                 f"The training dataset size decreased from {self._n_last_measurements} "
                 f"to {n_data} since the last function call, which indicates that "
                 f"'{self.__class__.__name__}' was not used as intended."
             )
 
-        # Get the right index for the "next" recommender
-        idx = self._step
-        if self.mode == "reuse_last":
-            idx = min(idx, len(self.recommenders) - 1)
-        elif self.mode == "cyclic":
-            idx %= len(self.recommenders)
+        # Check conditions if the next recommender in sequence is required
+        more_data = n_data > self._n_last_measurements
+        if (not self._was_used) or (not more_data):
+            return self._get_recommender_at_current_step()
 
-        # Get the recommender
+        # Move on to the next recommender
+        self._step += 1
+        self._was_used = False
         try:
-            recommender = self.recommenders[idx]
+            return self._get_recommender_at_current_step()
         except IndexError as ex:
             raise NoRecommendersLeftError(
                 f"A total of {self._step+1} recommender(s) was/were requested but the "
-                f"provided sequence contains only {self._step} element(s)."
+                f"provided sequence contains only {self._step} element(s). "
+                f"Add more recommenders or adjust the "
+                f"'{fields(SequentialMetaRecommender).mode.name}' attribute."
             ) from ex
 
-        # Remember the training dataset size for the next call
-        self._n_last_measurements = n_data
+    @override
+    def recommend(
+        self,
+        batch_size: int,
+        searchspace: SearchSpace,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.DataFrame:
+        recommendation = super().recommend(
+            batch_size, searchspace, objective, measurements, pending_experiments
+        )
+        self._was_used = True
 
-        return recommender
+        # Remember the training dataset size for the next call
+        self._n_last_measurements = len(measurements) if measurements is not None else 0
+
+        return recommendation
 
     @override
     def __str__(self) -> str:
