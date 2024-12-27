@@ -45,7 +45,7 @@ def _test_shap_insights(campaign, explainer_cls, use_comp_rep, is_shap):
         shap_insights = SHAPInsight.from_campaign(
             campaign,
             explainer_class=explainer_cls,
-            computational_representation=use_comp_rep,
+            use_comp_rep=use_comp_rep,
         )
         assert isinstance(shap_insights, insights.SHAPInsight)
         assert isinstance(
@@ -63,24 +63,17 @@ def _test_shap_insights(campaign, explainer_cls, use_comp_rep, is_shap):
         ):
             shap_insights._init_explanation(df)
     except TypeError as e:
-        if (
-            "The selected explainer class does not support the campaign surrogate."
-            in str(e)
-        ):
-            pass
+        if "The selected explainer class" in str(e):
+            pytest.xfail("Unsupported model/explainer combination")
         else:
             raise e
     except NotImplementedError as e:
         if (
-            "The selected explainer class does not support experimental "
-            "representation. Switch to computational representation or "
-            "use a different explainer (e.g. the default "
-            "shap.KernelExplainer)."
-            in str(e)
+            "The selected explainer class" in str(e)
             and not use_comp_rep
             and not isinstance(explainer_cls, shap.explainers.KernelExplainer)
         ):
-            pass
+            pytest.xfail("Exp. rep. not supported")
         else:
             raise e
 
@@ -131,7 +124,7 @@ def test_shap_insight_plots(campaign, use_comp_rep, plot_type):
     run_iterations(campaign, n_iterations=2, batch_size=1)
     shap_insights = SHAPInsight.from_campaign(
         campaign,
-        computational_representation=use_comp_rep,
+        use_comp_rep=use_comp_rep,
     )
     with mock.patch("matplotlib.pyplot.show"):
         shap_insights.plot(plot_type)

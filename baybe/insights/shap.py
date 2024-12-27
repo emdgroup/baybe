@@ -1,12 +1,13 @@
-"""SHAP utilities."""
+"""SHAP insights."""
 
 import inspect
 import numbers
 import warnings
-from typing import Any, override
+from typing import Any
 
 import numpy as np
 import pandas as pd
+from typing_extensions import override
 
 from baybe import Campaign
 from baybe._optional.insights import shap
@@ -35,8 +36,7 @@ class SHAPInsight(Insight):
         """Get explainer maps for SHAP and non-SHAP explainers.
 
         Returns:
-            tuple[dict[str, type[shap.Explainer]], dict[str, type[shap.Explainer]]]:
-              The explainer maps for SHAP and non-SHAP explainers.
+            The explainer maps for SHAP and non-SHAP explainers.
         """
         EXCLUDED_EXPLAINER_KEYWORDS = ["Tree", "GPU", "Gradient", "Sampling", "Deep"]
 
@@ -74,10 +74,10 @@ class SHAPInsight(Insight):
         bg_data: pd.DataFrame,
         explained_data: pd.DataFrame | None = None,
         explainer_class: shap.Explainer | str = "KernelExplainer",
-        computational_representation: bool = False,
+        use_comp_rep: bool = False,
     ):
         super().__init__(surrogate_model)
-        self._computational_representation = computational_representation
+        self._use_comp_rep = use_comp_rep
         explainer_cls = (
             explainer_class
             if not isinstance(explainer_class, str)
@@ -99,7 +99,7 @@ class SHAPInsight(Insight):
         campaign: Campaign,
         explained_data: pd.DataFrame | None = None,
         explainer_class: shap.Explainer | str = "KernelExplainer",
-        computational_representation: bool = False,
+        use_comp_rep: bool = False,
     ):
         """Create a SHAP insight from a campaign.
 
@@ -108,25 +108,29 @@ class SHAPInsight(Insight):
             explained_data: The data set to be explained. If None,
                 all measurements from the campaign are used.
             explainer_class: The explainer class to be used for the computation.
-            computational_representation:
-                Whether to use the computational representation.
+            use_comp_rep:
+                Whether to analyze the model in computational representation
+                (experimental representation otherwise).
 
         Returns:
-            SHAPInsight: The SHAP insight object.
+            The SHAP insight object.
 
         Raises:
             ValueError: If the campaign does not contain any measurements.
         """
         if campaign.measurements.empty:
-            raise ValueError("The campaign does not contain any measurements.")
+            raise ValueError(
+                f"The campaign does not contain any measurements. A {cls.__name__} "
+                f"assumes there is mandatory background data in the form of "
+                f"measurements as part of the campaign."
+            )
         data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
+
         return cls(
             campaign.get_surrogate(),
-            bg_data=campaign.searchspace.transform(data)
-            if computational_representation
-            else data,
+            bg_data=campaign.searchspace.transform(data) if use_comp_rep else data,
             explainer_class=explainer_class,
-            computational_representation=computational_representation,
+            use_comp_rep=use_comp_rep,
             explained_data=explained_data,
         )
 
@@ -140,7 +144,7 @@ class SHAPInsight(Insight):
         bg_data: pd.DataFrame,
         explained_data: pd.DataFrame | None = None,
         explainer_class: shap.Explainer | str = "KernelExplainer",
-        computational_representation: bool = False,
+        use_comp_rep: bool = False,
     ):
         """Create a SHAP insight from a recommender.
 
@@ -153,11 +157,12 @@ class SHAPInsight(Insight):
             explained_data: The data set to be explained. If None,
                 the background data set is used.
             explainer_class: The explainer class.
-            computational_representation:
-                Whether to use the computational representation.
+            use_comp_rep:
+                Whether to analyze the model in computational representation
+                (experimental representation otherwise).
 
         Returns:
-            SHAPInsight: The SHAP insight object.
+            The SHAP insight object.
 
         Raises:
             ValueError: If the recommender has not implemented a "get_surrogate" method.
@@ -170,24 +175,22 @@ class SHAPInsight(Insight):
 
         return cls(
             surrogate_model,
-            bg_data=searchspace.transform(bg_data)
-            if computational_representation
-            else bg_data,
+            bg_data=searchspace.transform(bg_data) if use_comp_rep else bg_data,
             explained_data=explained_data,
             explainer_class=explainer_class,
-            computational_representation=computational_representation,
+            use_comp_rep=use_comp_rep,
         )
 
     def _init_explainer(
         self,
-        data: pd.DataFrame,
+        bg_data: pd.DataFrame,
         explainer_class: type[shap.Explainer] = shap.KernelExplainer,
         **kwargs,
     ) -> shap.Explainer:
-        """Create an explainer for the provided campaign.
+        """Create a SHAP explainer.
 
         Args:
-            data: The background data set.
+            bg_data: The background data set.
             explainer_class: The explainer class to be used.
             **kwargs: Additional keyword arguments to be passed to the explainer.
 
@@ -201,16 +204,16 @@ class SHAPInsight(Insight):
             TypeError: If the provided explainer class does not
                 support the campaign surrogate.
         """
-        if not self._is_shap_explainer and not self._computational_representation:
+        if not self._is_shap_explainer and not self._use_comp_rep:
             raise NotImplementedError(
                 "Experimental representation is not "
                 "supported for non-Kernel SHAP explainer."
             )
 
-        if data.empty:
+        if bg_data.empty:
             raise ValueError("The provided background data set is empty.")
 
-        if self._computational_representation:
+        if self._use_comp_rep:
 
             def model(x):
                 tensor = to_tensor(x)
@@ -220,41 +223,42 @@ class SHAPInsight(Insight):
         else:
 
             def model(x):
-                df = pd.DataFrame(x, columns=data.columns)
+                df = pd.DataFrame(x, columns=bg_data.columns)
                 output = self.surrogate.posterior(df).mean
 
                 return output.detach().numpy()
 
         try:
-            shap_explainer = explainer_class(model, data, **kwargs)
+            shap_explainer = explainer_class(model, bg_data, **kwargs)
             """Explain first two data points to ensure that the explainer is working."""
             if self._is_shap_explainer:
                 shap_explainer(self._bg_data.iloc[0:1])
         except shap.utils._exceptions.InvalidModelError:
             raise TypeError(
-                "The selected explainer class does not support the campaign surrogate."
+                f"The selected explainer class {explainer_class} does not support the "
+                f"provided surrogate model."
             )
         except TypeError as e:
-            if (
-                "not supported for the input types" in str(e)
-                and not self._computational_representation
-            ):
+            if "not supported for the input types" in str(e) and not self._use_comp_rep:
                 raise NotImplementedError(
-                    "The selected explainer class does not support experimental "
-                    "representation. Switch to computational representation "
-                    "or use a different explainer "
-                    "(e.g. the default shap.KernelExplainer)."
+                    f"The selected explainer class {explainer_class} does not support "
+                    f"the experimental representation. Switch to computational "
+                    f"representation or use a different explainer (e.g. the default "
+                    f"shap.KernelExplainer)."
                 )
+            else:
+                raise e
         return shap_explainer
 
     def _init_explanation(
         self,
-        data: pd.DataFrame | None = None,
+        explained_data: pd.DataFrame | None = None,
     ) -> shap.Explanation:
         """Compute the Shapley values based on the chosen explainer and data set.
 
         Args:
-            data: The data set for which the Shapley values should be computed.
+            explained_data: The data set for which the Shapley values should be
+                computed.
 
         Returns:
             shap.Explanation: The computed Shapley values.
@@ -263,35 +267,36 @@ class SHAPInsight(Insight):
             ValueError: If the provided data set does not have the same amount of
                 parameters as the SHAP explainer background
         """
-        if data is None:
-            data = self._bg_data
-        elif not self._bg_data.shape[1] == data.shape[1]:
+        if explained_data is None:
+            explained_data = self._bg_data
+        elif not self._bg_data.shape[1] == explained_data.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
                 "parameters as the shap explainer background."
             )
 
         # Type checking for mypy
-        assert isinstance(data, pd.DataFrame)
+        assert isinstance(explained_data, pd.DataFrame)
 
         if not self._is_shap_explainer:
-            """Return attributions for non-SHAP explainers."""
+            # Return attributions for non-SHAP explainers
             if self.explainer.__module__.endswith("maple"):
-                """Additional argument for maple to increase comparability to SHAP."""
+                # Additional argument for maple to increase comparability to SHAP
                 attributions = self.explainer.attributions(
-                    data, multiply_by_input=True
+                    explained_data, multiply_by_input=True
                 )[0]
             else:
-                attributions = self.explainer.attributions(data)[0]
+                attributions = self.explainer.attributions(explained_data)[0]
+
             explanations = shap.Explanation(
                 values=attributions,
                 base_values=self.explainer.model(self._bg_data).mean(),
-                data=data,
-                feature_names=data.columns.values,
+                data=explained_data,
+                feature_names=explained_data.columns.values,
             )
             return explanations
         else:
-            explanations = self.explainer(data)
+            explanations = self.explainer(explained_data)
 
         """Ensure that the explanation object is of the correct dimensionality."""
         if len(explanations.shape) == 2:
