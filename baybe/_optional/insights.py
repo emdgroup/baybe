@@ -1,4 +1,4 @@
-"""Optional import for insight subpackage."""
+"""Optional import for the insights subpackage."""
 
 from baybe.exceptions import OptionalImportError
 

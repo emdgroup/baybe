@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `insights` dependency group
-- SHAP explanations
+- Optional `insights` dependency group
+- SHAP explanations via the new `SHAPInsight` class
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
 - `add_noise_to_perturb_degenerate_rows` utility

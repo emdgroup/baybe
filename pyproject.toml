@@ -79,16 +79,15 @@ onnx = [
 
 dev = [
     "baybe[chem]",
-    "baybe[insights]",
     "baybe[docs]",
     "baybe[examples]",
+    "baybe[insights]",
     "baybe[lint]",
     "baybe[mypy]",
     "baybe[onnx]",
     "baybe[polars]",
     "baybe[simulation]",
     "baybe[test]",
-    "baybe[insights]",
     "baybe[benchmarking]",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
