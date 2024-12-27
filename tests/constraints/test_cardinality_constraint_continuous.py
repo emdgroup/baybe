@@ -169,3 +169,36 @@ def test_random_recommender_with_cardinality_constraint(
     _validate_samples(
         recommendations, max_cardinality=2, min_cardinality=1, batch_size=batch_size
     )
+
+
+def test_empty_constraints_after_cardinality_constraint():
+    """Constraints that have no more parameters left due to activated
+    cardinality constraints do not cause crashes."""  # noqa
+
+    N_PARAMETERS = 2
+
+    parameters = [
+        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(0, 1))
+        for i in range(N_PARAMETERS)
+    ]
+    constraints = [
+        ContinuousLinearConstraint(
+            parameters=["x_1"],
+            operator="=",
+            coefficients=[1.0],
+            rhs=0.3,
+        ),
+        ContinuousLinearConstraint(
+            parameters=["x_2"],
+            operator="<=",
+            coefficients=[1.0],
+            rhs=0.6,
+        ),
+        ContinuousCardinalityConstraint(
+            parameters=["x_1", "x_2"],
+            max_cardinality=1,
+            min_cardinality=1,
+        ),
+    ]
+    subspace = SubspaceContinuous.from_product(parameters, constraints)
+    subspace.sample_uniform(1)

@@ -84,9 +84,9 @@ available_acq_functions = [
 #   - If a larger value is chosen, only those that allow batching.
 #       That is, 'q'-variants of the acquisition functions must be chosen.
 
-# The default he acquisition function is q-Expected Improvement.
+# The default acquisition function is q-Log Expected Improvement.
 
-ACQ_FUNCTION = "qEI"
+ACQ_FUNCTION = "qLogEI"
 
 ### Other parameters
 
@@ -115,10 +115,6 @@ recommender = TwoPhaseMetaRecommender(
 )
 
 print(recommender)
-
-# Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
-# Their meaning and how to use and define it are explained in the hybrid backtesting example.
-# We thus refer to [`hybrid`](./../Backtesting/hybrid.md) for details on these.
 
 ### Example Searchspace and objective parameters
 

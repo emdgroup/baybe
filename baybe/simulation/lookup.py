@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 def look_up_targets(
     queries: pd.DataFrame,
     targets: Collection[Target],
-    lookup: pd.DataFrame | Callable | None,
+    lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
@@ -70,7 +70,7 @@ def look_up_targets(
     if lookup is None:
         add_fake_measurements(queries, targets)
     elif isinstance(lookup, Callable):
-        _look_up_targets_from_callable(queries, targets, lookup)
+        _look_up_targets_from_callable(queries, lookup)
     elif isinstance(lookup, pd.DataFrame):
         _look_up_targets_from_dataframe(queries, targets, lookup, impute_mode)
     else:
@@ -78,33 +78,11 @@ def look_up_targets(
 
 
 def _look_up_targets_from_callable(
-    queries: pd.DataFrame,
-    targets: Collection[Target],
-    lookup: Callable,
+    queries: pd.DataFrame, lookup: Callable[[pd.DataFrame], pd.DataFrame]
 ) -> None:
     """Look up target values by querying a callable."""
-    # TODO: Currently, the alignment of return values to targets is based on the
-    #   column ordering, which is not robust. Instead, the callable should return
-    #   a dataframe with properly labeled columns.
-
-    # Since the return of a lookup function is a tuple, the following code stores
-    # tuples of floats in a single column with label 0:
-    measured_targets = queries.apply(lambda x: lookup(*x.values), axis=1).to_frame()
-    # We transform this column to a DataFrame in which there is an individual
-    # column for each of the targets....
-    split_target_columns = pd.DataFrame(
-        measured_targets[0].to_list(), index=measured_targets.index
-    )
-    # ... and assign this to measured_targets in order to have one column per target
-    measured_targets[split_target_columns.columns] = split_target_columns
-    if measured_targets.shape[1] != len(targets):
-        raise AssertionError(
-            "If you use an analytical function as lookup, make sure "
-            "the configuration has the right amount of targets "
-            "specified."
-        )
-    for k_target, target in enumerate(targets):
-        queries[target.name] = measured_targets.iloc[:, k_target]
+    df_targets = lookup(queries)
+    queries[df_targets.columns] = df_targets.values
 
 
 def _look_up_targets_from_dataframe(

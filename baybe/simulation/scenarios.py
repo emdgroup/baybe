@@ -22,7 +22,7 @@ _DEFAULT_SEED = 1337
 
 def simulate_scenarios(
     scenarios: dict[Any, Campaign],
-    lookup: pd.DataFrame | Callable | None = None,
+    lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None = None,
     /,
     *,
     batch_size: int = 1,
@@ -161,7 +161,7 @@ def simulate_scenarios(
 
 def _simulate_groupby(
     campaign: Campaign,
-    lookup: pd.DataFrame | Callable[..., tuple[float, ...]] | None = None,
+    lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None = None,
     /,
     *,
     batch_size: int = 1,
