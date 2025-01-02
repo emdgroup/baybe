@@ -1,5 +1,7 @@
 """SHAP insights."""
 
+from __future__ import annotations
+
 import inspect
 import numbers
 import warnings
@@ -26,7 +28,14 @@ def _get_explainer_maps() -> (
     Returns:
         The maps for SHAP and non-SHAP explainers.
     """
-    EXCLUDED_EXPLAINER_KEYWORDS = ["Tree", "GPU", "Gradient", "Sampling", "Deep"]
+    EXCLUDED_EXPLAINER_KEYWORDS = [
+        "Tree",
+        "GPU",
+        "Gradient",
+        "Sampling",
+        "Deep",
+        "Linear",
+    ]
 
     def _has_required_init_parameters(cls):
         """Check if non-shap initializer has required standard parameters."""
@@ -115,7 +124,7 @@ class SHAPInsight(Insight):
         explained_data: pd.DataFrame | None = None,
         explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
         use_comp_rep: bool = False,
-    ):
+    ) -> SHAPInsight:
         """Create a SHAP insight from a campaign.
 
         Args:
@@ -161,7 +170,7 @@ class SHAPInsight(Insight):
         explained_data: pd.DataFrame | None = None,
         explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
         use_comp_rep: bool = False,
-    ):
+    ) -> SHAPInsight:
         """Create a SHAP insight from a recommender.
 
         Args:
