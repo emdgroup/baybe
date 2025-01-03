@@ -2,6 +2,7 @@
 
 import warnings
 
+import numpy as np
 import pandas as pd
 import pytest
 from pytest import param
@@ -160,6 +161,64 @@ def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
     add_parameter_noise(rec2, searchspace.parameters)
 
     with pytest.raises(IncompatibleAcquisitionFunctionError):
+        recommender.recommend(
+            batch_size,
+            searchspace,
+            objective,
+            measurements=rec1,
+            pending_experiments=rec2,
+        )
+
+
+@pytest.mark.parametrize(
+    "parameter_names, invalid_pending_value",
+    [
+        (["Categorical_1", "Num_disc_1"], "asd"),
+        (["Categorical_1", "Num_disc_1"], 1337),
+        (["Categorical_1", "Num_disc_1"], np.nan),
+        (["Num_disc_1", "Num_disc_2"], "asd"),
+        (["Num_disc_1", "Num_disc_2"], np.nan),
+        (["Custom_1", "Num_disc_2"], "asd"),
+        (["Custom_1", "Num_disc_2"], 1337),
+        (["Custom_1", "Num_disc_2"], np.nan),
+        (["Task", "Num_disc_1"], "asd"),
+        (["Task", "Num_disc_1"], 1337),
+        (["Task", "Num_disc_1"], np.nan),
+    ],
+    ids=[
+        "cat_param_invalid_value",
+        "cat_param_num",
+        "cat_param_nan",
+        "num_param_str",
+        "num_param_nan",
+        "custom_param_str",
+        "custom_param_num",
+        "custom_param_nan",
+        "task_param_invalid_value",
+        "task_param_num",
+        "task_param_nan",
+    ],
+)
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+def test_invalid_input(
+    searchspace,
+    recommender,
+    objective,
+    batch_size,
+    invalid_pending_value,
+    parameter_names,
+):
+    """Test exception raised for acqfs that don't support pending experiments."""
+    # Get recommendation and add a fake results
+    rec1 = recommender.recommend(batch_size, searchspace, objective)
+    add_fake_measurements(rec1, objective.targets)
+
+    # Create fake pending experiments
+    rec2 = rec1.copy()
+    rec2[parameter_names[0]] = invalid_pending_value
+
+    with pytest.raises((ValueError, TypeError), match="parameter"):
         recommender.recommend(
             batch_size,
             searchspace,
