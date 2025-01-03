@@ -17,6 +17,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
+from baybe.utils.validation import validate_parameter_input
 
 
 @define
@@ -122,6 +123,9 @@ class BayesianRecommender(PureRecommender, ABC):
 
         if isinstance(self._surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
+
+        if pending_experiments is not None:
+            validate_parameter_input(pending_experiments, searchspace.parameters)
 
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
