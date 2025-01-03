@@ -129,7 +129,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                         bo_surrogate.posterior(train_x).mean.max().item()
                     )
             case ChimeraObjective():
-                # TODO: for now minimization
+                # Minimize the Chimera merits
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.min().item()
