@@ -260,6 +260,11 @@ class SHAPInsight(Insight):
 
                 return output.detach().numpy()
 
+        # Handle special settings
+        if "Lime" in explainer_cls.__name__:
+            # Lime default mode is otherwise set to 'classification'
+            kwargs["mode"] = "regression"
+
         try:
             shap_explainer = explainer_cls(model, bg_data, **kwargs)
 
