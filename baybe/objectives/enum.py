@@ -11,3 +11,6 @@ class Scalarizer(Enum):
 
     GEOM_MEAN = "GEOM_MEAN"
     """Geometric mean."""
+
+    CHIMERA = "CHIMERA"
+    """Chimera scalarizer."""
