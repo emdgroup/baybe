@@ -240,14 +240,7 @@ def telemetry_record_recommended_measurement_percentage(
     if is_enabled():
         if len(cached_recommendation) > 0:
             recommended_measurements_percentage = (
-                len(
-                    fuzzy_row_match(
-                        cached_recommendation,
-                        measurements,
-                        parameters,
-                        numerical_measurements_must_be_within_tolerance,
-                    )
-                )
+                len(fuzzy_row_match(cached_recommendation, measurements, parameters))
                 / len(cached_recommendation)
                 * 100.0
             )

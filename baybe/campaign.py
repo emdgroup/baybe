@@ -44,6 +44,7 @@ from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
+from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
@@ -264,48 +265,24 @@ class Campaign(SerialMixin):
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
         a campaign flag determines if values that lie outside a specified tolerance
-        are accepted.
-        Note that this modifies the provided data in-place.
+        are accepted. Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input` and
+        :func:`baybe.utils.validation.validate_parameter_input`.
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
                 created via :func:`baybe.campaign.Campaign.recommend`.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
-
-        Raises:
-            ValueError: If one of the targets has missing values or NaNs in the provided
-                dataframe.
-            TypeError: If the target has non-numeric entries in the provided dataframe.
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self._cached_recommendation = pd.DataFrame()
 
-        # Check if all targets have valid values
-        for target in self.targets:
-            if data[target.name].isna().any():
-                raise ValueError(
-                    f"The target '{target.name}' has missing values or NaNs in the "
-                    f"provided dataframe. Missing target values are not supported."
-                )
-            if data[target.name].dtype.kind not in "iufb":
-                raise TypeError(
-                    f"The target '{target.name}' has non-numeric entries in the "
-                    f"provided dataframe. Non-numeric target values are not supported."
-                )
-
-        # Check if all targets have valid values
-        for param in self.parameters:
-            if data[param.name].isna().any():
-                raise ValueError(
-                    f"The parameter '{param.name}' has missing values or NaNs in the "
-                    f"provided dataframe. Missing parameter values are not supported."
-                )
-            if param.is_numerical and (data[param.name].dtype.kind not in "iufb"):
-                raise TypeError(
-                    f"The numerical parameter '{param.name}' has non-numeric entries in"
-                    f" the provided dataframe."
-                )
+        # Validate target and parameter input values
+        validate_target_input(data, self.targets)
+        validate_parameter_input(
+            data, self.parameters, numerical_measurements_must_be_within_tolerance
+        )
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -320,10 +297,7 @@ class Campaign(SerialMixin):
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             idxs_matched = fuzzy_row_match(
-                self.searchspace.discrete.exp_rep,
-                data,
-                self.parameters,
-                numerical_measurements_must_be_within_tolerance,
+                self.searchspace.discrete.exp_rep, data, self.parameters
             )
             self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 

@@ -416,15 +416,13 @@ def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
     parameters: Sequence[Parameter],
-    numerical_measurements_must_be_within_tolerance: bool,
 ) -> pd.Index:
     """Match row of the right dataframe to the rows of the left dataframe.
 
-    This is useful for validity checks and to automatically match measurements to
-    entries in the search space, e.g. to detect which ones have been measured.
-    For categorical parameters, there needs to be an exact match with any of the
-    allowed values. For numerical parameters, the user can decide via a flag
-    whether values outside the tolerance should be accepted.
+    This is useful for matching measurements to entries in the search space, e.g. to
+    detect which ones have been measured. For categorical parameters, there needs to be
+    an exact match with any of the allowed values. For numerical parameters, the user
+    can decide via a flag whether values outside the tolerance should be accepted.
 
     Args:
         left_df: The data that serves as lookup reference.
@@ -432,17 +430,12 @@ def fuzzy_row_match(
             dataframe.
         parameters: List of baybe parameter objects that are needed to identify
             potential tolerances.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            parameters are matched with the search space elements only if there is a
-            match within the parameter tolerance. If ``False``, the closest match is
-            considered, irrespective of the distance.
 
     Returns:
         The index of the matching rows in ``left_df``.
 
     Raises:
         ValueError: If some rows are present in the right but not in the left dataframe.
-        ValueError: If the input data has invalid values.
     """
     # Assert that all parameters appear in the given dataframe
     if not all(col in right_df.columns for col in left_df.columns):
@@ -451,30 +444,9 @@ def fuzzy_row_match(
             " in the left dataframe."
         )
 
-    inds_matched = []
-
     # Iterate over all input rows
+    inds_matched = []
     for ind, row in right_df.iterrows():
-        # Check if the row represents a valid input
-        valid = True
-        for param in parameters:
-            if param.is_numerical:
-                if numerical_measurements_must_be_within_tolerance:
-                    valid &= param.is_in_range(row[param.name])
-            else:
-                valid &= param.is_in_range(row[param.name])
-            if not valid:
-                raise ValueError(
-                    f"Input data on row with the index {row.name} has invalid "
-                    f"values in parameter '{param.name}'. "
-                    f"For categorical parameters, values need to exactly match a "
-                    f"valid choice defined in your config. "
-                    f"For numerical parameters, a match is accepted only if "
-                    f"the input value is within the specified tolerance/range. Set "
-                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                    f"to 'False' to disable this behavior."
-                )
-
         # Differentiate category-like and discrete numerical parameters
         cat_cols = [p.name for p in parameters if not p.is_numerical]
         num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
