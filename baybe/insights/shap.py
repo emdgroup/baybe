@@ -68,10 +68,10 @@ SHAP_EXPLAINERS, NON_SHAP_EXPLAINERS = _get_explainer_maps()
 ALL_EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
 SUPPORTED_SHAP_PLOTS = {
     "bar",
-    "scatter",
-    "heatmap",
-    "force",
     "beeswarm",
+    "force",
+    "heatmap",
+    "scatter",
 }
 
 
@@ -354,7 +354,7 @@ class SHAPInsight(Insight):
 
         Args:
             plot_type: The type of plot to be created. Supported types are:
-                "bar", "scatter", "heatmap", "force", "beeswarm".
+                "bar", "beeswarm", "force", "heatmap", "scatter".
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
         Raises:
@@ -370,7 +370,10 @@ class SHAPInsight(Insight):
             or (plot is None)
             or (not callable(plot))
         ):
-            raise ValueError(f"Invalid plot type: '{plot_type}'.")
+            raise ValueError(
+                f"Invalid plot type: '{plot_type}'. Available options: "
+                f"{SUPPORTED_SHAP_PLOTS}."
+            )
 
         plot(self.explanation, **kwargs)
 
