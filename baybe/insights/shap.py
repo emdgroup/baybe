@@ -9,6 +9,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from attrs import define, field
+from attrs.validators import instance_of, optional
 from typing_extensions import override
 
 from baybe import Campaign
@@ -82,10 +83,12 @@ class SHAPInsight(Insight):
     This also supports LIME and MAPLE explainers via ways provided by the shap module.
     """
 
-    background_data: pd.DataFrame = field()
+    background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used to build the explainer."""
 
-    explained_data: pd.DataFrame | None = field(default=None)
+    explained_data: pd.DataFrame | None = field(
+        default=None, validator=optional(instance_of(pd.DataFrame))
+    )
     """The data for which a SHAP explanation is generated."""
 
     explainer_cls: type[shap.Explainer] | str = field(
@@ -98,7 +101,7 @@ class SHAPInsight(Insight):
     available via 'shap.explainers.other'.
     """
 
-    use_comp_rep: bool = field(default=False)
+    use_comp_rep: bool = field(default=False, validator=instance_of(bool))
     """Flag for toggling in which representation the insight should be provided."""
 
     _explainer: shap.Explainer | None = field(default=None, init=False)
