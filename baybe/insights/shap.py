@@ -8,6 +8,7 @@ import warnings
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import Factory, define, field
 from attrs.validators import instance_of, optional
@@ -244,20 +245,23 @@ class SHAPInsight(Insight):
         if background_data.empty:
             raise ValueError("The provided background data set is empty.")
 
+        import torch
+
         if self.use_comp_rep:
 
-            def model(x):
+            def model(x: npt.ArrayLike) -> np.ndarray:
                 tensor = to_tensor(x)
-                output = self.surrogate._posterior_comp(tensor).mean
+                with torch.no_grad():
+                    output = self.surrogate._posterior_comp(tensor).mean
+                return output.numpy()
 
-                return output.detach().numpy()
         else:
 
-            def model(x):
+            def model(x: npt.ArrayLike) -> np.ndarray:
                 df = pd.DataFrame(x, columns=background_data.columns)
-                output = self.surrogate.posterior(df).mean
-
-                return output.detach().numpy()
+                with torch.no_grad():
+                    output = self.surrogate.posterior(df).mean
+                return output.numpy()
 
         # Handle special settings
         if "Lime" in explainer_cls.__name__:
