@@ -196,16 +196,7 @@ class SHAPInsight(Insight):
 
         Returns:
             The SHAP insight object.
-
-        Raises:
-            ValueError: If the recommender has not implemented a "get_surrogate" method.
         """
-        if not hasattr(recommender, "get_surrogate"):
-            raise ValueError(
-                f"The provided recommender does not provide a surrogate model. A "
-                f"'{cls.__name__}' needs a surrogate model and thus only works with "
-                f"model-based recommenders."
-            )
         surrogate_model = recommender.get_surrogate(
             searchspace, objective, measurements
         )
