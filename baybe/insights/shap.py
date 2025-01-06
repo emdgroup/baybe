@@ -82,7 +82,7 @@ class SHAPInsight(Insight):
     This also supports LIME and MAPLE explainers via ways provided by the shap module.
     """
 
-    bg_data: pd.DataFrame = field()
+    background_data: pd.DataFrame = field()
     """The background data set used to build the explainer."""
 
     explained_data: pd.DataFrame | None = field(default=None)
@@ -109,7 +109,7 @@ class SHAPInsight(Insight):
 
     def __attrs_post_init__(self):
         """Initialize the explainer."""
-        self._explainer = self._init_explainer(self.bg_data, self.explainer_cls)
+        self._explainer = self._init_explainer(self.background_data, self.explainer_cls)
 
     @property
     def uses_shap_explainer(self):
@@ -150,10 +150,11 @@ class SHAPInsight(Insight):
                 f"measurements as part of the campaign."
             )
         data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
+        background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
         return cls(
             campaign.get_surrogate(),
-            bg_data=campaign.searchspace.transform(data) if use_comp_rep else data,
+            background_data=background_data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
             explained_data=explained_data,
@@ -204,7 +205,7 @@ class SHAPInsight(Insight):
 
         return cls(
             surrogate_model,
-            bg_data=searchspace.transform(measurements)
+            background_data=searchspace.transform(measurements)
             if use_comp_rep
             else measurements,
             explained_data=explained_data,
@@ -214,14 +215,14 @@ class SHAPInsight(Insight):
 
     def _init_explainer(
         self,
-        bg_data: pd.DataFrame,
+        background_data: pd.DataFrame,
         explainer_cls: type[shap.Explainer] = shap.KernelExplainer,
         **kwargs,
     ) -> shap.Explainer:
         """Create a SHAP explainer.
 
         Args:
-            bg_data: The background data set.
+            background_data: The background data set.
             explainer_cls: The SHAP explainer class that is used to generate the
                 explanation.
             **kwargs: Additional keyword arguments to be passed to the explainer.
@@ -242,7 +243,7 @@ class SHAPInsight(Insight):
                 "explainer."
             )
 
-        if bg_data.empty:
+        if background_data.empty:
             raise ValueError("The provided background data set is empty.")
 
         if self.use_comp_rep:
@@ -255,7 +256,7 @@ class SHAPInsight(Insight):
         else:
 
             def model(x):
-                df = pd.DataFrame(x, columns=bg_data.columns)
+                df = pd.DataFrame(x, columns=background_data.columns)
                 output = self.surrogate.posterior(df).mean
 
                 return output.detach().numpy()
@@ -266,11 +267,11 @@ class SHAPInsight(Insight):
             kwargs["mode"] = "regression"
 
         try:
-            shap_explainer = explainer_cls(model, bg_data, **kwargs)
+            shap_explainer = explainer_cls(model, background_data, **kwargs)
 
             # Explain first two data points to ensure that the explainer is working
             if self.uses_shap_explainer:
-                shap_explainer(self.bg_data.iloc[0:1])
+                shap_explainer(self.background_data.iloc[0:1])
         except shap.utils._exceptions.InvalidModelError:
             raise TypeError(
                 f"The selected explainer class {explainer_cls} does not support the "
@@ -306,8 +307,8 @@ class SHAPInsight(Insight):
                 parameters as the SHAP explainer background
         """
         if explained_data is None:
-            explained_data = self.bg_data
-        elif not self.bg_data.shape[1] == explained_data.shape[1]:
+            explained_data = self.background_data
+        elif not self.background_data.shape[1] == explained_data.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
                 "parameters as the shap explainer background."
@@ -328,7 +329,7 @@ class SHAPInsight(Insight):
 
             explanations = shap.Explanation(
                 values=attributions,
-                base_values=self._explainer.model(self.bg_data).mean(),
+                base_values=self._explainer.model(self.background_data).mean(),
                 data=explained_data,
                 feature_names=explained_data.columns.values,
             )
@@ -392,8 +393,8 @@ class SHAPInsight(Insight):
         def is_not_numeric_column(col):
             return np.array([not isinstance(v, numbers.Number) for v in col]).any()
 
-        if np.ndim(self.bg_data) == 1:
-            if is_not_numeric_column(self.bg_data):
+        if np.ndim(self.background_data) == 1:
+            if is_not_numeric_column(self.background_data):
                 warnings.warn(
                     "Cannot plot scatter plot for the provided "
                     "explanation as it contains non-numeric values."
@@ -402,12 +403,12 @@ class SHAPInsight(Insight):
                 shap.plots.scatter(self.explanation)
         else:
             # Type checking for mypy
-            assert isinstance(self.bg_data, pd.DataFrame)
+            assert isinstance(self.background_data, pd.DataFrame)
 
-            mask = self.bg_data.iloc[0].apply(lambda x: not isinstance(x, str))
+            mask = self.background_data.iloc[0].apply(lambda x: not isinstance(x, str))
             number_enum = np.where(mask)[0].tolist()
 
-            if len(number_enum) < len(self.bg_data.iloc[0]):
+            if len(number_enum) < len(self.background_data.iloc[0]):
                 warnings.warn(
                     "Cannot plot SHAP scatter plot for all parameters as some contain "
                     "non-numeric values."
