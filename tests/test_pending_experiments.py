@@ -209,7 +209,7 @@ def test_invalid_input(
     invalid_pending_value,
     parameter_names,
 ):
-    """Test exception raised for acqfs that don't support pending experiments."""
+    """Test exception raised for invalid pending experiments input."""
     # Get recommendation and add a fake results
     rec1 = recommender.recommend(batch_size, searchspace, objective)
     add_fake_measurements(rec1, objective.targets)
