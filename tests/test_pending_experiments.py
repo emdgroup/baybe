@@ -22,7 +22,6 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import (
     add_parameter_noise,
-    create_fake_input,
 )
 from baybe.utils.random import temporary_seed
 
@@ -97,7 +96,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [8], ids=["grid8"])
-def test_pending_points(campaign, batch_size):
+def test_pending_points(campaign, batch_size, fake_measurements):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
 
@@ -108,8 +107,7 @@ def test_pending_points(campaign, batch_size):
         campaign.allow_recommending_already_measured = True
 
     # Add some initial measurements
-    rec = create_fake_input(campaign.parameters, campaign.targets, batch_size)
-    campaign.add_measurements(rec)
+    campaign.add_measurements(fake_measurements)
 
     # Get recommendations and set them as pending experiments while getting another set
     # Fix the random seed for each recommend call to limit influence of randomness in
@@ -131,7 +129,7 @@ def test_pending_points(campaign, batch_size):
 acqfs_non_pending = [
     a()
     for a in get_subclasses(AcquisitionFunction)
-    if (not a.supports_pending_experiments)
+    if not a.supports_pending_experiments
 ]
 
 
@@ -148,24 +146,23 @@ acqfs_non_pending = [
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
+def test_invalid_acqf(searchspace, objective, batch_size, acqf, fake_measurements):
     """Test exception raised for acqfs that don't support pending experiments."""
     recommender = TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(acquisition_function=acqf)
     )
 
     # Create fake measurements and pending experiments
-    rec1 = create_fake_input(searchspace.parameters, objective.targets, batch_size)
-    rec2 = rec1.copy()
-    add_parameter_noise(rec2, searchspace.parameters)
+    fake_pending_experiments = fake_measurements.copy()
+    add_parameter_noise(fake_pending_experiments, searchspace.parameters)
 
     with pytest.raises(IncompatibleAcquisitionFunctionError):
         recommender.recommend(
             batch_size,
             searchspace,
             objective,
-            measurements=rec1,
-            pending_experiments=rec2,
+            measurements=fake_measurements,
+            pending_experiments=fake_pending_experiments,
         )
 
 
@@ -207,18 +204,18 @@ def test_invalid_input(
     batch_size,
     invalid_pending_value,
     parameter_names,
+    fake_measurements,
 ):
     """Test exception raised for invalid pending experiments input."""
     # Create fake measurements and pending experiments
-    rec1 = create_fake_input(searchspace.parameters, objective.targets, batch_size)
-    rec2 = rec1.copy()
-    rec2[parameter_names[0]] = invalid_pending_value
+    fake_pending_experiments = fake_measurements.copy()
+    fake_pending_experiments[parameter_names[0]] = invalid_pending_value
 
     with pytest.raises((ValueError, TypeError), match="parameter"):
         recommender.recommend(
             batch_size,
             searchspace,
             objective,
-            measurements=rec1,
-            pending_experiments=rec2,
+            measurements=fake_measurements,
+            pending_experiments=fake_pending_experiments,
         )
