@@ -19,7 +19,10 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
+from baybe.utils.dataframe import (
+    add_parameter_noise,
+    create_fake_input,
+)
 from baybe.utils.random import temporary_seed
 
 _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]
@@ -116,9 +119,8 @@ def test_pending_points(campaign, batch_size):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
 
-    # Perform a fake first iteration
-    rec = campaign.recommend(batch_size)
-    add_fake_measurements(rec, campaign.targets)
+    # Add some initial measurements
+    rec = create_fake_input(campaign.parameters, campaign.targets, batch_size)
     campaign.add_measurements(rec)
 
     # Get recommendations and set them as pending experiments while getting another set
@@ -160,11 +162,8 @@ def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
         recommender=BotorchRecommender(acquisition_function=acqf)
     )
 
-    # Get recommendation and add a fake results
-    rec1 = recommender.recommend(batch_size, searchspace, objective)
-    add_fake_measurements(rec1, objective.targets)
-
-    # Create fake pending experiments
+    # Create fake measurements and pending experiments
+    rec1 = create_fake_input(searchspace.parameters, objective.targets, batch_size)
     rec2 = rec1.copy()
     add_parameter_noise(rec2, searchspace.parameters)
 
@@ -218,11 +217,8 @@ def test_invalid_input(
     parameter_names,
 ):
     """Test exception raised for invalid pending experiments input."""
-    # Get recommendation and add a fake results
-    rec1 = recommender.recommend(batch_size, searchspace, objective)
-    add_fake_measurements(rec1, objective.targets)
-
-    # Create fake pending experiments
+    # Create fake measurements and pending experiments
+    rec1 = create_fake_input(searchspace.parameters, objective.targets, batch_size)
     rec2 = rec1.copy()
     rec2[parameter_names[0]] = invalid_pending_value
 
