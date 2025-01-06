@@ -278,6 +278,55 @@ def add_parameter_noise(
     return data
 
 
+def create_fake_input(
+    parameters: Sequence[Parameter],
+    targets: Sequence[Target],
+    n_rows: int = 1,
+    **kwargs: dict,
+) -> pd.DataFrame:
+    """Create fake valid input for :meth:`baybe.campaign.Campaign.add_measurements`.
+
+    If noisy parameter values are desired, it is recommended to apply
+    :func:`baybe.utils.dataframe.add_parameter_noise` to the output of this function.
+
+    Args:
+        parameters: The parameters.
+        targets: The targets.
+        n_rows: Number of desired rows.
+        **kwargs: Additional arguments to be passed to
+            :func:`baybe.utils.dataframe.add_fake_measurements`.
+
+    Returns:
+        Dataframe corresponding to fake measurement input.
+
+    Raises:
+        ValueError: If less than one row was requested.
+    """
+    # Assert at least one fake entry is being generated
+    if n_rows < 1:
+        raise ValueError(
+            f"'{create_fake_input.__name__}' must at least create one row, but the "
+            f"requested number was: {n_rows}."
+        )
+
+    # Create fake parameter values from their definitions
+    content = {}
+    for p in parameters:
+        if p.is_discrete:
+            vals = np.random.choice(p.values, n_rows, replace=True)
+        else:
+            vals = np.random.uniform(p.bounds.lower, p.bounds.upper, n_rows)
+
+        content[p.name] = vals
+
+    data = pd.DataFrame.from_dict(content)
+
+    # Add fake target values
+    add_fake_measurements(data, targets, **kwargs)
+
+    return data
+
+
 def df_drop_single_value_columns(
     df: pd.DataFrame, lst_exclude: list = None
 ) -> pd.DataFrame:

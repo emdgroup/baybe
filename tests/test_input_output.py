@@ -8,7 +8,7 @@ from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_measurements
+from baybe.utils.dataframe import add_fake_measurements, create_fake_input
 
 
 @pytest.mark.parametrize(
@@ -43,10 +43,9 @@ from baybe.utils.dataframe import add_fake_measurements
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-def test_bad_parameter_input_value(campaign, bad_val):
+def test_bad_parameter_input_value(campaign, bad_val, batch_size):
     """Test attempting to read in an invalid parameter value."""
-    rec = campaign.recommend(batch_size=2)
-    add_fake_measurements(rec, campaign.targets)
+    rec = create_fake_input(campaign.parameters, campaign.targets, batch_size)
 
     # Add an invalid value
     rec[campaign.parameters[0].name].iloc[0] = bad_val
