@@ -118,6 +118,14 @@ class SHAPInsight(Insight):
     _explanation: shap.Explanation | None = field(default=None, init=False)
     """The explanation generated."""
 
+    @use_comp_rep.validator
+    def _validate_use_comp_rep(self, _, value: bool) -> None:
+        if not self.uses_shap_explainer and not value:
+            raise NotImplementedError(
+                "Experimental representation is not supported for non-Kernel SHAP "
+                "explainer."
+            )
+
     @property
     def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
@@ -229,18 +237,10 @@ class SHAPInsight(Insight):
             shap.Explainer: The created explainer object.
 
         Raises:
-            NotImplementedError: If the provided explainer class does
-                not support the experimental representation.
             ValueError: If the provided background data set is empty.
             TypeError: If the provided explainer class does not
                 support the campaign surrogate.
         """
-        if not self.uses_shap_explainer and not self.use_comp_rep:
-            raise NotImplementedError(
-                "Experimental representation is not supported for non-Kernel SHAP "
-                "explainer."
-            )
-
         if background_data.empty:
             raise ValueError("The provided background data set is empty.")
 
