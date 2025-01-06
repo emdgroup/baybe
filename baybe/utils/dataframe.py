@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from collections.abc import Callable, Collection, Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Literal, TypeVar, overload
 
 import numpy as np
@@ -70,7 +70,7 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
 
 def add_fake_measurements(
     data: pd.DataFrame,
-    targets: Collection[Target],
+    targets: Iterable[Target],
     good_reference_values: dict[str, list] | None = None,
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
@@ -279,8 +279,8 @@ def add_parameter_noise(
 
 
 def create_fake_input(
-    parameters: Sequence[Parameter],
-    targets: Sequence[Target],
+    parameters: Iterable[Parameter],
+    targets: Iterable[Target],
     n_rows: int = 1,
     **kwargs: dict,
 ) -> pd.DataFrame:

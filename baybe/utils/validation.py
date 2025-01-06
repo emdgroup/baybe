@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -75,7 +75,7 @@ non_inf_float = _make_restricted_float_validator(allow_nan=True, allow_inf=False
 """Validator for non-infinite floats."""
 
 
-def validate_target_input(data: pd.DataFrame, targets: Sequence[Target]) -> None:
+def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None:
     """Validate input dataframe columns corresponding to targets.
 
     Args:
@@ -119,7 +119,7 @@ def validate_target_input(data: pd.DataFrame, targets: Sequence[Target]) -> None
 
 def validate_parameter_input(
     data: pd.DataFrame,
-    parameters: Sequence[Parameter],
+    parameters: Iterable[Parameter],
     numerical_measurements_must_be_within_tolerance: bool = False,
 ) -> None:
     """Validate input dataframe columns corresponding to parameters.
