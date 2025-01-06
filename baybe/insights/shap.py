@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import numbers
 import warnings
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -91,7 +92,8 @@ class SHAPInsight(Insight):
     )
     """The data for which a SHAP explanation is generated."""
 
-    explainer_cls: type[shap.Explainer] | str = field(
+    # FIXME[typing]: https://github.com/python/mypy/issues/10998
+    explainer_cls: type[shap.Explainer] = field(  # type: ignore[assignment]
         default="KernelExplainer",
         converter=lambda x: ALL_EXPLAINERS[x] if isinstance(x, str) else x,
     )
@@ -115,7 +117,7 @@ class SHAPInsight(Insight):
         self._explainer = self._init_explainer(self.background_data, self.explainer_cls)
 
     @property
-    def uses_shap_explainer(self):
+    def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
         return not self.explainer_cls.__module__.startswith("shap.explainers.other.")
 
@@ -358,7 +360,7 @@ class SHAPInsight(Insight):
 
         return self._explanation
 
-    def plot(self, plot_type: str, **kwargs: dict) -> None:
+    def plot(self, plot_type: str, **kwargs: Any) -> None:
         """Plot the Shapley values using the provided plot type.
 
         Args:
@@ -386,7 +388,7 @@ class SHAPInsight(Insight):
 
         plot(self.explanation, **kwargs)
 
-    def _plot_shap_scatter(self, **kwargs: dict) -> None:
+    def _plot_shap_scatter(self, **kwargs: Any) -> None:
         """Plot the Shapley values as scatter plot while leaving out string values.
 
         Args:
