@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import Factory, define, field
 from attrs.validators import instance_of, optional
 from typing_extensions import override
 
@@ -106,15 +106,17 @@ class SHAPInsight(Insight):
     use_comp_rep: bool = field(default=False, validator=instance_of(bool))
     """Flag for toggling in which representation the insight should be provided."""
 
-    _explainer: shap.Explainer | None = field(default=None, init=False)
+    _explainer: shap.Explainer | None = field(
+        default=Factory(
+            lambda self: self._init_explainer(self.background_data, self.explainer_cls),
+            takes_self=True,
+        ),
+        init=False,
+    )
     """The explainer generated from the model and background data."""
 
     _explanation: shap.Explanation | None = field(default=None, init=False)
     """The explanation generated."""
-
-    def __attrs_post_init__(self):
-        """Initialize the explainer."""
-        self._explainer = self._init_explainer(self.background_data, self.explainer_cls)
 
     @property
     def uses_shap_explainer(self) -> bool:
