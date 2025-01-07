@@ -212,6 +212,22 @@ class SHAPInsight:
         return is_shap_explainer(self._explainer)
 
     @classmethod
+    def from_surrogate(
+        cls,
+        surrogate: Surrogate,
+        data: pd.DataFrame,
+        explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
+        use_comp_rep: bool = False,
+    ):
+        """Create a SHAP insight from a surrogate model."""
+        return cls(
+            surrogate,
+            background_data=data,
+            explainer_cls=explainer_cls,
+            use_comp_rep=use_comp_rep,
+        )
+
+    @classmethod
     def from_campaign(
         cls,
         campaign: Campaign,
@@ -243,9 +259,9 @@ class SHAPInsight:
         data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
         background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
-        return cls(
+        return cls.from_surrogate(
             campaign.get_surrogate(),
-            background_data=background_data,
+            background_data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
         )
@@ -280,11 +296,9 @@ class SHAPInsight:
             searchspace, objective, measurements
         )
 
-        return cls(
+        return cls.from_surrogate(
             surrogate_model,
-            background_data=searchspace.transform(measurements)
-            if use_comp_rep
-            else measurements,
+            searchspace.transform(measurements) if use_comp_rep else measurements,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
         )
