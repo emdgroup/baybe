@@ -350,8 +350,7 @@ class SHAPInsight:
             f"invalid dimensionality of {len(explanations.shape)}."
         )
 
-    @property
-    def explanation(self) -> shap.Explanation:
+    def explain(self) -> shap.Explanation:
         """Get the SHAP explanation object. Uses lazy evaluation."""
         if self._explanation is None:
             self._explanation = self._init_explanation()
@@ -396,7 +395,7 @@ class SHAPInsight:
                 f"{SUPPORTED_SHAP_PLOTS}."
             )
 
-        plot = plot_func(self.explanation, show=show, **kwargs)
+        plot = plot_func(self.explain(), show=show, **kwargs)
         if not show:
             return plot
         return None
@@ -423,7 +422,7 @@ class SHAPInsight:
                     "explanation as it contains non-numeric values."
                 )
             else:
-                plot = shap.plots.scatter(self.explanation, show=show, **kwargs)
+                plot = shap.plots.scatter(self.explain(), show=show, **kwargs)
         else:
             # Type checking for mypy
             assert isinstance(self.background_data, pd.DataFrame)
@@ -437,7 +436,7 @@ class SHAPInsight:
                     "non-numeric values."
                 )
             plot = shap.plots.scatter(
-                self.explanation[:, number_enum], show=show, **kwargs
+                self.explain()[:, number_enum], show=show, **kwargs
             )
 
         if not show:

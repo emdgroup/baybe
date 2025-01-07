@@ -61,7 +61,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         assert shap_insight.uses_shap_explainer == is_shap
 
         # Sanity check explanation
-        shap_explanation = shap_insight.explanation
+        shap_explanation = shap_insight.explain()
         assert isinstance(shap_explanation, shap.Explanation)
     except TypeError as e:
         if "The selected explainer class" in str(e):
@@ -138,11 +138,11 @@ def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
 
     run_iterations(campaign, n_iterations=n_iterations, batch_size=batch_size)
     shap_insight = SHAPInsight.from_campaign(campaign)
-    explanation_1 = shap_insight.explanation
+    explanation_1 = shap_insight.explain()
 
     run_iterations(campaign, n_iterations=n_iterations, batch_size=batch_size)
     shap_insight = SHAPInsight.from_campaign(campaign)
-    explanation_2 = shap_insight.explanation
+    explanation_2 = shap_insight.explain()
 
     assert explanation_1 != explanation_2, "SHAP explanations should not be identical."
 
