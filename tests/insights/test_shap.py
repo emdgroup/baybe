@@ -7,6 +7,7 @@ import pytest
 from pytest import mark
 
 from baybe._optional.info import SHAP_INSTALLED
+from baybe.campaign import Campaign
 from tests.conftest import run_iterations
 
 # File-wide parameterization settings
@@ -61,7 +62,10 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         assert shap_insight.uses_shap_explainer == is_shap
 
         # Sanity check explanation
-        shap_explanation = shap_insight.explain()
+        df = campaign.measurements[[p.name for p in campaign.parameters]]
+        if use_comp_rep:
+            df = campaign.searchspace.transform(df)
+        shap_explanation = shap_insight.explain(df)
         assert isinstance(shap_explanation, shap.Explanation)
     except TypeError as e:
         if "The selected explainer class" in str(e):
@@ -112,20 +116,23 @@ def test_invalid_explained_data(ongoing_campaign, explainer_cls, use_comp_rep):
         match="The provided data does not have the same amount of parameters as the "
         "shap explainer background.",
     ):
-        shap_insight._init_explanation(df)
+        shap_insight.explain(df)
 
 
 @mark.slow
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
 @mark.parametrize("plot_type", SUPPORTED_SHAP_PLOTS)
-def test_plots(ongoing_campaign, use_comp_rep, plot_type):
+def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     """Test the default SHAP plots."""
     shap_insight = SHAPInsight.from_campaign(
         ongoing_campaign,
         use_comp_rep=use_comp_rep,
     )
+    df = ongoing_campaign.measurements[[p.name for p in ongoing_campaign.parameters]]
+    if use_comp_rep:
+        df = ongoing_campaign.searchspace.transform(df)
     with mock.patch("matplotlib.pyplot.show"):
-        shap_insight.plot(plot_type)
+        shap_insight.plot(df, plot_type=plot_type)
 
 
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
@@ -138,11 +145,13 @@ def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
 
     run_iterations(campaign, n_iterations=n_iterations, batch_size=batch_size)
     shap_insight = SHAPInsight.from_campaign(campaign)
-    explanation_1 = shap_insight.explain()
+    df = campaign.measurements[[p.name for p in campaign.parameters]]
+    explanation_1 = shap_insight.explain(df)
 
     run_iterations(campaign, n_iterations=n_iterations, batch_size=batch_size)
     shap_insight = SHAPInsight.from_campaign(campaign)
-    explanation_2 = shap_insight.explain()
+    df = campaign.measurements[[p.name for p in campaign.parameters]]
+    explanation_2 = shap_insight.explain(df)
 
     assert explanation_1 != explanation_2, "SHAP explanations should not be identical."
 

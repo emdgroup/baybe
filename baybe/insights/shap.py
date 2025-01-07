@@ -11,7 +11,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from attrs import Factory, define, field
-from attrs.validators import instance_of, optional
+from attrs.validators import instance_of
 
 from baybe import Campaign
 from baybe._optional.insights import shap
@@ -89,11 +89,6 @@ class SHAPInsight:
     background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used to build the explainer."""
 
-    explained_data: pd.DataFrame | None = field(
-        default=None, validator=optional(instance_of(pd.DataFrame))
-    )
-    """The data for which a SHAP explanation is generated."""
-
     # FIXME[typing]: https://github.com/python/mypy/issues/10998
     explainer_cls: type[shap.Explainer] = field(  # type: ignore[assignment]
         default="KernelExplainer",
@@ -117,9 +112,6 @@ class SHAPInsight:
     )
     """The explainer generated from the model and background data."""
 
-    _explanation: shap.Explanation | None = field(default=None, init=False)
-    """The explanation generated."""
-
     @use_comp_rep.validator
     def _validate_use_comp_rep(self, _, value: bool) -> None:
         if not self.uses_shap_explainer and not value:
@@ -137,7 +129,6 @@ class SHAPInsight:
     def from_campaign(
         cls,
         campaign: Campaign,
-        explained_data: pd.DataFrame | None = None,
         explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
         use_comp_rep: bool = False,
     ) -> SHAPInsight:
@@ -145,8 +136,6 @@ class SHAPInsight:
 
         Args:
             campaign: The campaign which holds the recommender and model.
-            explained_data: The data set to be explained. If None, all measurements
-                from the campaign are used.
             explainer_cls: The SHAP explainer class that is used to generate the
                 explanation.
             use_comp_rep:
@@ -173,7 +162,6 @@ class SHAPInsight:
             background_data=background_data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
-            explained_data=explained_data,
         )
 
     @classmethod
@@ -183,7 +171,6 @@ class SHAPInsight:
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
-        explained_data: pd.DataFrame | None = None,
         explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
         use_comp_rep: bool = False,
     ) -> SHAPInsight:
@@ -195,8 +182,6 @@ class SHAPInsight:
             objective: The objective for the recommender.
             measurements: The background data set for Explainer.
                 This is used the measurement data set for the recommender.
-            explained_data: The data set to be explained. If None,
-                the background data set is used.
             explainer_cls: The explainer class.
             use_comp_rep:
                 Whether to analyze the model in computational representation
@@ -214,7 +199,6 @@ class SHAPInsight:
             background_data=searchspace.transform(measurements)
             if use_comp_rep
             else measurements,
-            explained_data=explained_data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
         )
@@ -290,15 +274,11 @@ class SHAPInsight:
                 raise e
         return shap_explainer
 
-    def _init_explanation(
-        self,
-        explained_data: pd.DataFrame | None = None,
-    ) -> shap.Explanation:
+    def explain(self, df: pd.DataFrame, /) -> shap.Explanation:
         """Compute the Shapley values based on the chosen explainer and data set.
 
         Args:
-            explained_data: The data set for which the Shapley values should be
-                computed.
+            df: The data set for which the Shapley values should be computed.
 
         Returns:
             shap.Explanation: The computed Shapley values.
@@ -307,9 +287,9 @@ class SHAPInsight:
             ValueError: If the provided data set does not have the same amount of
                 parameters as the SHAP explainer background
         """
-        if explained_data is None:
-            explained_data = self.background_data
-        elif not self.background_data.shape[1] == explained_data.shape[1]:
+        if df is None:
+            df = self.background_data
+        elif not self.background_data.shape[1] == df.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
                 "parameters as the shap explainer background."
@@ -322,21 +302,21 @@ class SHAPInsight:
             # Return attributions for non-SHAP explainers
             if self._explainer.__module__.endswith("maple"):
                 # Additional argument for maple to increase comparability to SHAP
-                attributions = self._explainer.attributions(
-                    explained_data, multiply_by_input=True
-                )[0]
+                attributions = self._explainer.attributions(df, multiply_by_input=True)[
+                    0
+                ]
             else:
-                attributions = self._explainer.attributions(explained_data)[0]
+                attributions = self._explainer.attributions(df)[0]
 
             explanations = shap.Explanation(
                 values=attributions,
                 base_values=self._explainer.model(self.background_data).mean(),
-                data=explained_data,
-                feature_names=explained_data.columns.values,
+                data=df,
+                feature_names=df.columns.values,
             )
             return explanations
         else:
-            explanations = self._explainer(explained_data)
+            explanations = self._explainer(df)
 
         # Reduce dimensionality of explanations to 2D in case
         # a 3D explanation is returned. This is the case for
@@ -350,17 +330,13 @@ class SHAPInsight:
             f"invalid dimensionality of {len(explanations.shape)}."
         )
 
-    def explain(self) -> shap.Explanation:
-        """Get the SHAP explanation object. Uses lazy evaluation."""
-        if self._explanation is None:
-            self._explanation = self._init_explanation()
-
-        return self._explanation
-
-    def plot(self, plot_type: str, **kwargs: dict) -> None | plt.Axes:
+    def plot(
+        self, df: pd.DataFrame, /, plot_type: str, **kwargs: dict
+    ) -> None | plt.Axes:
         """Plot the Shapley values using the provided plot type.
 
         Args:
+            df: The data for which the Shapley values shall be plotted.
             plot_type: The type of plot to be created. Supported types are:
                 "bar", "beeswarm", "force", "heatmap", "scatter".
             **kwargs: Additional keyword arguments to be passed to the plot function.
@@ -378,7 +354,7 @@ class SHAPInsight:
 
         # Special case for scatter plot
         if plot_type == "scatter":
-            plot = self._plot_shap_scatter(show=show, **kwargs)
+            plot = self._plot_shap_scatter(df, show=show, **kwargs)
             if not show:
                 return plot
             return None
@@ -395,15 +371,18 @@ class SHAPInsight:
                 f"{SUPPORTED_SHAP_PLOTS}."
             )
 
-        plot = plot_func(self.explain(), show=show, **kwargs)
+        plot = plot_func(self.explain(df), show=show, **kwargs)
         if not show:
             return plot
         return None
 
-    def _plot_shap_scatter(self, show: bool = True, **kwargs: dict) -> None | plt.Axes:
+    def _plot_shap_scatter(
+        self, df: pd.DataFrame, /, show: bool = True, **kwargs: dict
+    ) -> None | plt.Axes:
         """Plot the Shapley values as scatter plot while leaving out string values.
 
         Args:
+            df: The data for which the Shapley values shall be plotted.
             show: Whether to call plt.show() after plotting or not.
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
@@ -422,7 +401,7 @@ class SHAPInsight:
                     "explanation as it contains non-numeric values."
                 )
             else:
-                plot = shap.plots.scatter(self.explain(), show=show, **kwargs)
+                plot = shap.plots.scatter(self.explain(df), show=show, **kwargs)
         else:
             # Type checking for mypy
             assert isinstance(self.background_data, pd.DataFrame)
@@ -436,7 +415,7 @@ class SHAPInsight:
                     "non-numeric values."
                 )
             plot = shap.plots.scatter(
-                self.explain()[:, number_enum], show=show, **kwargs
+                self.explain(df)[:, number_enum], show=show, **kwargs
             )
 
         if not show:
