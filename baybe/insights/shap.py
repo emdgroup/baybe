@@ -8,8 +8,10 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import Factory, define, field
+from attrs.validators import instance_of, optional
 from typing_extensions import override
 
 from baybe import Campaign
@@ -82,13 +84,16 @@ class SHAPInsight(Insight):
     This also supports LIME and MAPLE explainers via ways provided by the shap module.
     """
 
-    bg_data: pd.DataFrame = field()
+    background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used to build the explainer."""
 
-    explained_data: pd.DataFrame | None = field(default=None)
+    explained_data: pd.DataFrame | None = field(
+        default=None, validator=optional(instance_of(pd.DataFrame))
+    )
     """The data for which a SHAP explanation is generated."""
 
-    explainer_cls: type[shap.Explainer] | str = field(
+    # FIXME[typing]: https://github.com/python/mypy/issues/10998
+    explainer_cls: type[shap.Explainer] = field(  # type: ignore[assignment]
         default="KernelExplainer",
         converter=lambda x: ALL_EXPLAINERS[x] if isinstance(x, str) else x,
     )
@@ -98,21 +103,31 @@ class SHAPInsight(Insight):
     available via 'shap.explainers.other'.
     """
 
-    use_comp_rep: bool = field(default=False)
+    use_comp_rep: bool = field(default=False, validator=instance_of(bool))
     """Flag for toggling in which representation the insight should be provided."""
 
-    _explainer: shap.Explainer | None = field(default=None, init=False)
+    _explainer: shap.Explainer | None = field(
+        default=Factory(
+            lambda self: self._init_explainer(self.background_data, self.explainer_cls),
+            takes_self=True,
+        ),
+        init=False,
+    )
     """The explainer generated from the model and background data."""
 
     _explanation: shap.Explanation | None = field(default=None, init=False)
     """The explanation generated."""
 
-    def __attrs_post_init__(self):
-        """Initialize the explainer."""
-        self._explainer = self._init_explainer(self.bg_data, self.explainer_cls)
+    @use_comp_rep.validator
+    def _validate_use_comp_rep(self, _, value: bool) -> None:
+        if not self.uses_shap_explainer and not value:
+            raise NotImplementedError(
+                "Experimental representation is not supported for non-Kernel SHAP "
+                "explainer."
+            )
 
     @property
-    def uses_shap_explainer(self):
+    def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
         return not self.explainer_cls.__module__.startswith("shap.explainers.other.")
 
@@ -150,10 +165,11 @@ class SHAPInsight(Insight):
                 f"measurements as part of the campaign."
             )
         data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
+        background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
         return cls(
             campaign.get_surrogate(),
-            bg_data=campaign.searchspace.transform(data) if use_comp_rep else data,
+            background_data=background_data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
             explained_data=explained_data,
@@ -188,23 +204,14 @@ class SHAPInsight(Insight):
 
         Returns:
             The SHAP insight object.
-
-        Raises:
-            ValueError: If the recommender has not implemented a "get_surrogate" method.
         """
-        if not hasattr(recommender, "get_surrogate"):
-            raise ValueError(
-                f"The provided recommender does not provide a surrogate model. A "
-                f"'{cls.__name__}' needs a surrogate model and thus only works with "
-                f"model-based recommenders."
-            )
         surrogate_model = recommender.get_surrogate(
             searchspace, objective, measurements
         )
 
         return cls(
             surrogate_model,
-            bg_data=searchspace.transform(measurements)
+            background_data=searchspace.transform(measurements)
             if use_comp_rep
             else measurements,
             explained_data=explained_data,
@@ -214,14 +221,14 @@ class SHAPInsight(Insight):
 
     def _init_explainer(
         self,
-        bg_data: pd.DataFrame,
+        background_data: pd.DataFrame,
         explainer_cls: type[shap.Explainer] = shap.KernelExplainer,
         **kwargs,
     ) -> shap.Explainer:
         """Create a SHAP explainer.
 
         Args:
-            bg_data: The background data set.
+            background_data: The background data set.
             explainer_cls: The SHAP explainer class that is used to generate the
                 explanation.
             **kwargs: Additional keyword arguments to be passed to the explainer.
@@ -230,35 +237,30 @@ class SHAPInsight(Insight):
             shap.Explainer: The created explainer object.
 
         Raises:
-            NotImplementedError: If the provided explainer class does
-                not support the experimental representation.
             ValueError: If the provided background data set is empty.
             TypeError: If the provided explainer class does not
                 support the campaign surrogate.
         """
-        if not self.uses_shap_explainer and not self.use_comp_rep:
-            raise NotImplementedError(
-                "Experimental representation is not supported for non-Kernel SHAP "
-                "explainer."
-            )
-
-        if bg_data.empty:
+        if background_data.empty:
             raise ValueError("The provided background data set is empty.")
+
+        import torch
 
         if self.use_comp_rep:
 
-            def model(x):
+            def model(x: npt.ArrayLike) -> np.ndarray:
                 tensor = to_tensor(x)
-                output = self.surrogate._posterior_comp(tensor).mean
+                with torch.no_grad():
+                    output = self.surrogate._posterior_comp(tensor).mean
+                return output.numpy()
 
-                return output.detach().numpy()
         else:
 
-            def model(x):
-                df = pd.DataFrame(x, columns=bg_data.columns)
-                output = self.surrogate.posterior(df).mean
-
-                return output.detach().numpy()
+            def model(x: npt.ArrayLike) -> np.ndarray:
+                df = pd.DataFrame(x, columns=background_data.columns)
+                with torch.no_grad():
+                    output = self.surrogate.posterior(df).mean
+                return output.numpy()
 
         # Handle special settings
         if "Lime" in explainer_cls.__name__:
@@ -266,11 +268,11 @@ class SHAPInsight(Insight):
             kwargs["mode"] = "regression"
 
         try:
-            shap_explainer = explainer_cls(model, bg_data, **kwargs)
+            shap_explainer = explainer_cls(model, background_data, **kwargs)
 
             # Explain first two data points to ensure that the explainer is working
             if self.uses_shap_explainer:
-                shap_explainer(self.bg_data.iloc[0:1])
+                shap_explainer(self.background_data.iloc[0:1])
         except shap.utils._exceptions.InvalidModelError:
             raise TypeError(
                 f"The selected explainer class {explainer_cls} does not support the "
@@ -306,8 +308,8 @@ class SHAPInsight(Insight):
                 parameters as the SHAP explainer background
         """
         if explained_data is None:
-            explained_data = self.bg_data
-        elif not self.bg_data.shape[1] == explained_data.shape[1]:
+            explained_data = self.background_data
+        elif not self.background_data.shape[1] == explained_data.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
                 "parameters as the shap explainer background."
@@ -328,7 +330,7 @@ class SHAPInsight(Insight):
 
             explanations = shap.Explanation(
                 values=attributions,
-                base_values=self._explainer.model(self.bg_data).mean(),
+                base_values=self._explainer.model(self.background_data).mean(),
                 data=explained_data,
                 feature_names=explained_data.columns.values,
             )
@@ -414,8 +416,8 @@ class SHAPInsight(Insight):
         def is_not_numeric_column(col):
             return np.array([not isinstance(v, numbers.Number) for v in col]).any()
 
-        if np.ndim(self.bg_data) == 1:
-            if is_not_numeric_column(self.bg_data):
+        if np.ndim(self.background_data) == 1:
+            if is_not_numeric_column(self.background_data):
                 warnings.warn(
                     "Cannot plot scatter plot for the provided "
                     "explanation as it contains non-numeric values."
@@ -424,12 +426,12 @@ class SHAPInsight(Insight):
                 plot = shap.plots.scatter(self.explanation, show=show, **kwargs)
         else:
             # Type checking for mypy
-            assert isinstance(self.bg_data, pd.DataFrame)
+            assert isinstance(self.background_data, pd.DataFrame)
 
-            mask = self.bg_data.iloc[0].apply(lambda x: not isinstance(x, str))
+            mask = self.background_data.iloc[0].apply(lambda x: not isinstance(x, str))
             number_enum = np.where(mask)[0].tolist()
 
-            if len(number_enum) < len(self.bg_data.iloc[0]):
+            if len(number_enum) < len(self.background_data.iloc[0]):
                 warnings.warn(
                     "Cannot plot SHAP scatter plot for all parameters as some contain "
                     "non-numeric values."
