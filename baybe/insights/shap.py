@@ -6,6 +6,7 @@ import inspect
 import numbers
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -69,7 +70,6 @@ ALL_EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
 SUPPORTED_SHAP_PLOTS = {
     "bar",
     "beeswarm",
-    "force",
     "heatmap",
     "scatter",
 }
@@ -336,7 +336,9 @@ class SHAPInsight(Insight):
         else:
             explanations = self._explainer(explained_data)
 
-        """Ensure that the explanation object is of the correct dimensionality."""
+        # Reduce dimensionality of explanations to 2D in case
+        # a 3D explanation is returned. This is the case for
+        # some explainers even if only one output is present.
         if len(explanations.shape) == 2:
             return explanations
         if len(explanations.shape) == 3:
@@ -354,7 +356,7 @@ class SHAPInsight(Insight):
 
         return self._explanation
 
-    def plot(self, plot_type: str, **kwargs: dict) -> None:
+    def plot(self, plot_type: str, **kwargs: dict) -> None | plt.Axes:
         """Plot the Shapley values using the provided plot type.
 
         Args:
@@ -362,32 +364,52 @@ class SHAPInsight(Insight):
                 "bar", "beeswarm", "force", "heatmap", "scatter".
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
+        Returns:
+            None | plt.Axes: The plot object if 'show' is set to False.
+
         Raises:
             ValueError: If the provided plot type is not supported.
         """
+        # Extract the 'show' argument from the kwargs
+        show = kwargs.pop("show", True)
+
+        plot = None
+
+        # Special case for scatter plot
         if plot_type == "scatter":
-            self._plot_shap_scatter(**kwargs)
+            plot = self._plot_shap_scatter(show=show, **kwargs)
+            if not show:
+                return plot
             return None
 
-        plot = getattr(shap.plots, plot_type, None)
+        # Cases for all other plots
+        plot_func = getattr(shap.plots, plot_type, None)
         if (
             (plot_type not in SUPPORTED_SHAP_PLOTS)
-            or (plot is None)
-            or (not callable(plot))
+            or (plot_func is None)
+            or (not callable(plot_func))
         ):
             raise ValueError(
                 f"Invalid plot type: '{plot_type}'. Available options: "
                 f"{SUPPORTED_SHAP_PLOTS}."
             )
 
-        plot(self.explanation, **kwargs)
+        plot = plot_func(self.explanation, show=show, **kwargs)
+        if not show:
+            return plot
+        return None
 
-    def _plot_shap_scatter(self, **kwargs: dict) -> None:
+    def _plot_shap_scatter(self, show: bool = True, **kwargs: dict) -> None | plt.Axes:
         """Plot the Shapley values as scatter plot while leaving out string values.
 
         Args:
+            show: Whether to call plt.show() after plotting or not.
             **kwargs: Additional keyword arguments to be passed to the plot function.
+
+        Returns:
+            None | plt.Axes: The plot object if 'show' is set to False.
         """
+        plot = None
 
         def is_not_numeric_column(col):
             return np.array([not isinstance(v, numbers.Number) for v in col]).any()
@@ -399,7 +421,7 @@ class SHAPInsight(Insight):
                     "explanation as it contains non-numeric values."
                 )
             else:
-                shap.plots.scatter(self.explanation)
+                plot = shap.plots.scatter(self.explanation, show=show, **kwargs)
         else:
             # Type checking for mypy
             assert isinstance(self.bg_data, pd.DataFrame)
@@ -412,4 +434,10 @@ class SHAPInsight(Insight):
                     "Cannot plot SHAP scatter plot for all parameters as some contain "
                     "non-numeric values."
                 )
-            shap.plots.scatter(self.explanation[:, number_enum], **kwargs)
+            plot = shap.plots.scatter(
+                self.explanation[:, number_enum], show=show, **kwargs
+            )
+
+        if not show:
+            return plot
+        return None
