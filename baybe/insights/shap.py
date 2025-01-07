@@ -213,16 +213,7 @@ class SHAPInsight:
 
         Returns:
             The SHAP insight object.
-
-        Raises:
-            ValueError: If the campaign does not contain any measurements.
         """
-        if campaign.measurements.empty:
-            raise ValueError(
-                f"The campaign does not contain any measurements. A '{cls.__name__}' "
-                f"assumes there is mandatory background data in the form of "
-                f"measurements as part of the campaign."
-            )
         data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
         background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
