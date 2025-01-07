@@ -18,7 +18,7 @@ from baybe._optional.insights import shap
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.utils.dataframe import to_tensor
 
 
@@ -76,6 +76,87 @@ SUPPORTED_SHAP_PLOTS = {
 }
 
 
+def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
+    """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
+    return not explainer_cls.__module__.startswith("shap.explainers.other.")
+
+
+def _make_explainer(
+    surrogate: Surrogate,
+    data: pd.DataFrame,
+    explainer_cls: type[shap.Explainer] = shap.KernelExplainer,
+    use_comp_rep: bool = False,
+    **kwargs,
+) -> shap.Explainer:
+    """Create a SHAP explainer.
+
+    Args:
+        surrogate: The surrogate to be explained.
+        data: The background data set.
+        explainer_cls: The SHAP explainer class that is used to generate the
+            explanation.
+        use_comp_rep: Whether to analyze the model in computational representation
+                (experimental representation otherwise).
+        **kwargs: Additional keyword arguments to be passed to the explainer.
+
+    Returns:
+        shap.Explainer: The created explainer object.
+
+    Raises:
+        ValueError: If the provided background data set is empty.
+        TypeError: If the provided explainer class does not
+            support the campaign surrogate.
+    """
+    if data.empty:
+        raise ValueError("The provided background data set is empty.")
+
+    import torch
+
+    if use_comp_rep:
+
+        def model(x: npt.ArrayLike) -> np.ndarray:
+            tensor = to_tensor(x)
+            with torch.no_grad():
+                output = surrogate._posterior_comp(tensor).mean
+            return output.numpy()
+
+    else:
+
+        def model(x: npt.ArrayLike) -> np.ndarray:
+            df = pd.DataFrame(x, columns=data.columns)
+            with torch.no_grad():
+                output = surrogate.posterior(df).mean
+            return output.numpy()
+
+    # Handle special settings
+    if "Lime" in explainer_cls.__name__:
+        # Lime default mode is otherwise set to 'classification'
+        kwargs["mode"] = "regression"
+
+    try:
+        shap_explainer = explainer_cls(model, data, **kwargs)
+
+        # Explain first two data points to ensure that the explainer is working
+        if is_shap_explainer(explainer_cls):
+            shap_explainer(data.iloc[0:1])
+    except shap.utils._exceptions.InvalidModelError:
+        raise TypeError(
+            f"The selected explainer class {explainer_cls} does not support the "
+            f"provided surrogate model."
+        )
+    except TypeError as e:
+        if "not supported for the input types" in str(e) and not use_comp_rep:
+            raise NotImplementedError(
+                f"The selected explainer class {explainer_cls} does not support "
+                f"the experimental representation. Switch to computational "
+                f"representation or use a different explainer (e.g. the default "
+                f"shap.KernelExplainer)."
+            )
+        else:
+            raise e
+    return shap_explainer
+
+
 @define
 class SHAPInsight:
     """Class for SHAP-based feature importance insights.
@@ -105,7 +186,12 @@ class SHAPInsight:
 
     _explainer: shap.Explainer | None = field(
         default=Factory(
-            lambda self: self._init_explainer(self.background_data, self.explainer_cls),
+            lambda self: _make_explainer(
+                self.surrogate,
+                self.background_data,
+                self.explainer_cls,
+                self.use_comp_rep,
+            ),
             takes_self=True,
         ),
         init=False,
@@ -123,7 +209,7 @@ class SHAPInsight:
     @property
     def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
-        return not self.explainer_cls.__module__.startswith("shap.explainers.other.")
+        return is_shap_explainer(self._explainer)
 
     @classmethod
     def from_campaign(
@@ -202,77 +288,6 @@ class SHAPInsight:
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
         )
-
-    def _init_explainer(
-        self,
-        background_data: pd.DataFrame,
-        explainer_cls: type[shap.Explainer] = shap.KernelExplainer,
-        **kwargs,
-    ) -> shap.Explainer:
-        """Create a SHAP explainer.
-
-        Args:
-            background_data: The background data set.
-            explainer_cls: The SHAP explainer class that is used to generate the
-                explanation.
-            **kwargs: Additional keyword arguments to be passed to the explainer.
-
-        Returns:
-            shap.Explainer: The created explainer object.
-
-        Raises:
-            ValueError: If the provided background data set is empty.
-            TypeError: If the provided explainer class does not
-                support the campaign surrogate.
-        """
-        if background_data.empty:
-            raise ValueError("The provided background data set is empty.")
-
-        import torch
-
-        if self.use_comp_rep:
-
-            def model(x: npt.ArrayLike) -> np.ndarray:
-                tensor = to_tensor(x)
-                with torch.no_grad():
-                    output = self.surrogate._posterior_comp(tensor).mean
-                return output.numpy()
-
-        else:
-
-            def model(x: npt.ArrayLike) -> np.ndarray:
-                df = pd.DataFrame(x, columns=background_data.columns)
-                with torch.no_grad():
-                    output = self.surrogate.posterior(df).mean
-                return output.numpy()
-
-        # Handle special settings
-        if "Lime" in explainer_cls.__name__:
-            # Lime default mode is otherwise set to 'classification'
-            kwargs["mode"] = "regression"
-
-        try:
-            shap_explainer = explainer_cls(model, background_data, **kwargs)
-
-            # Explain first two data points to ensure that the explainer is working
-            if self.uses_shap_explainer:
-                shap_explainer(self.background_data.iloc[0:1])
-        except shap.utils._exceptions.InvalidModelError:
-            raise TypeError(
-                f"The selected explainer class {explainer_cls} does not support the "
-                f"provided surrogate model."
-            )
-        except TypeError as e:
-            if "not supported for the input types" in str(e) and not self.use_comp_rep:
-                raise NotImplementedError(
-                    f"The selected explainer class {explainer_cls} does not support "
-                    f"the experimental representation. Switch to computational "
-                    f"representation or use a different explainer (e.g. the default "
-                    f"shap.KernelExplainer)."
-                )
-            else:
-                raise e
-        return shap_explainer
 
     def explain(self, df: pd.DataFrame, /) -> shap.Explanation:
         """Compute the Shapley values based on the chosen explainer and data set.
