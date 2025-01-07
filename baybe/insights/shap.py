@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-from attrs import Factory, define, field
+from attrs import define, field
 from attrs.validators import instance_of
 
 from baybe import Campaign
@@ -18,7 +18,7 @@ from baybe._optional.insights import shap
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate, SurrogateProtocol
+from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 
 
@@ -76,6 +76,11 @@ SUPPORTED_SHAP_PLOTS = {
 }
 
 
+def _convert_explainer_cls(x: type[shap.Explainer] | str) -> type[shap.Explainer]:
+    """Get an explainer class from an explainer class name (with class passthrough)."""
+    return ALL_EXPLAINERS[x] if isinstance(x, str) else x
+
+
 def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
     """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
     return not explainer_cls.__module__.startswith("shap.explainers.other.")
@@ -84,7 +89,7 @@ def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
 def _make_explainer(
     surrogate: Surrogate,
     data: pd.DataFrame,
-    explainer_cls: type[shap.Explainer] = shap.KernelExplainer,
+    explainer_cls: type[shap.Explainer] | str = shap.KernelExplainer,
     use_comp_rep: bool = False,
     **kwargs,
 ) -> shap.Explainer:
@@ -109,6 +114,8 @@ def _make_explainer(
     """
     if data.empty:
         raise ValueError("The provided background data set is empty.")
+
+    explainer_cls = _convert_explainer_cls(explainer_cls)
 
     import torch
 
@@ -164,52 +171,16 @@ class SHAPInsight:
     This also supports LIME and MAPLE explainers via ways provided by the shap module.
     """
 
-    surrogate: SurrogateProtocol = field()
-    """The surrogate model that is supposed bo be analyzed."""
+    explainer: shap.Explainer = field(validator=instance_of(shap.Explainer))
+    """The explainer instance."""
 
     background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used to build the explainer."""
 
-    # FIXME[typing]: https://github.com/python/mypy/issues/10998
-    explainer_cls: type[shap.Explainer] = field(  # type: ignore[assignment]
-        default="KernelExplainer",
-        converter=lambda x: ALL_EXPLAINERS[x] if isinstance(x, str) else x,
-    )
-    """The SHAP explainer class that is used to generate the explanation.
-
-    Some non-SHAP explainers, like MAPLE and LIME, are also supported if they are
-    available via 'shap.explainers.other'.
-    """
-
-    use_comp_rep: bool = field(default=False, validator=instance_of(bool))
-    """Flag for toggling in which representation the insight should be provided."""
-
-    _explainer: shap.Explainer | None = field(
-        default=Factory(
-            lambda self: _make_explainer(
-                self.surrogate,
-                self.background_data,
-                self.explainer_cls,
-                self.use_comp_rep,
-            ),
-            takes_self=True,
-        ),
-        init=False,
-    )
-    """The explainer generated from the model and background data."""
-
-    @use_comp_rep.validator
-    def _validate_use_comp_rep(self, _, value: bool) -> None:
-        if not self.uses_shap_explainer and not value:
-            raise NotImplementedError(
-                "Experimental representation is not supported for non-Kernel SHAP "
-                "explainer."
-            )
-
     @property
     def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
-        return is_shap_explainer(self._explainer)
+        return is_shap_explainer(type(self.explainer))
 
     @classmethod
     def from_surrogate(
@@ -220,12 +191,8 @@ class SHAPInsight:
         use_comp_rep: bool = False,
     ):
         """Create a SHAP insight from a surrogate model."""
-        return cls(
-            surrogate,
-            background_data=data,
-            explainer_cls=explainer_cls,
-            use_comp_rep=use_comp_rep,
-        )
+        explainer = _make_explainer(surrogate, data, explainer_cls, use_comp_rep)
+        return cls(explainer, data)
 
     @classmethod
     def from_campaign(
@@ -316,36 +283,31 @@ class SHAPInsight:
             ValueError: If the provided data set does not have the same amount of
                 parameters as the SHAP explainer background
         """
-        if df is None:
-            df = self.background_data
-        elif not self.background_data.shape[1] == df.shape[1]:
+        if not self.background_data.shape[1] == df.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
                 "parameters as the shap explainer background."
             )
 
-        # Type checking for mypy
-        assert self._explainer is not None
-
         if not self.uses_shap_explainer:
             # Return attributions for non-SHAP explainers
-            if self._explainer.__module__.endswith("maple"):
+            if self.explainer.__module__.endswith("maple"):
                 # Additional argument for maple to increase comparability to SHAP
-                attributions = self._explainer.attributions(df, multiply_by_input=True)[
+                attributions = self.explainer.attributions(df, multiply_by_input=True)[
                     0
                 ]
             else:
-                attributions = self._explainer.attributions(df)[0]
+                attributions = self.explainer.attributions(df)[0]
 
             explanations = shap.Explanation(
                 values=attributions,
-                base_values=self._explainer.model(self.background_data).mean(),
+                base_values=self.explainer.model(self.background_data).mean(),
                 data=df,
                 feature_names=df.columns.values,
             )
             return explanations
         else:
-            explanations = self._explainer(df)
+            explanations = self.explainer(df)
 
         # Reduce dimensionality of explanations to 2D in case
         # a 3D explanation is returned. This is the case for

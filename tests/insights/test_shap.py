@@ -56,7 +56,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         )
         assert isinstance(shap_insight, insights.SHAPInsight)
         assert isinstance(
-            shap_insight._explainer,
+            shap_insight.explainer,
             ALL_EXPLAINERS[explainer_cls],
         )
         assert shap_insight.uses_shap_explainer == is_shap
