@@ -12,14 +12,13 @@ import numpy.typing as npt
 import pandas as pd
 from attrs import Factory, define, field
 from attrs.validators import instance_of, optional
-from typing_extensions import override
 
 from baybe import Campaign
 from baybe._optional.insights import shap
-from baybe.insights.base import Insight
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
+from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.dataframe import to_tensor
 
 
@@ -78,11 +77,14 @@ SUPPORTED_SHAP_PLOTS = {
 
 
 @define
-class SHAPInsight(Insight):
+class SHAPInsight:
     """Class for SHAP-based feature importance insights.
 
     This also supports LIME and MAPLE explainers via ways provided by the shap module.
     """
+
+    surrogate: SurrogateProtocol = field()
+    """The surrogate model that is supposed bo be analyzed."""
 
     background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used to build the explainer."""
@@ -131,7 +133,6 @@ class SHAPInsight(Insight):
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
         return not self.explainer_cls.__module__.startswith("shap.explainers.other.")
 
-    @override
     @classmethod
     def from_campaign(
         cls,
@@ -175,7 +176,6 @@ class SHAPInsight(Insight):
             explained_data=explained_data,
         )
 
-    @override
     @classmethod
     def from_recommender(
         cls,
