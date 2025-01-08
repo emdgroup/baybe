@@ -21,6 +21,8 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 
+_DEFAULT_EXPLAINER_CLS = "KernelExplainer"
+
 
 def _get_explainer_maps() -> (
     tuple[dict[str, type[shap.Explainer]], dict[str, type[shap.Explainer]]]
@@ -89,7 +91,7 @@ def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
 def _make_explainer(
     surrogate: Surrogate,
     data: pd.DataFrame,
-    explainer_cls: type[shap.Explainer] | str = shap.KernelExplainer,
+    explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
     use_comp_rep: bool = False,
     **kwargs,
 ) -> shap.Explainer:
@@ -187,7 +189,7 @@ class SHAPInsight:
         cls,
         surrogate: Surrogate,
         data: pd.DataFrame,
-        explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
+        explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
         use_comp_rep: bool = False,
     ):
         """Create a SHAP insight from a surrogate model."""
@@ -198,7 +200,7 @@ class SHAPInsight:
     def from_campaign(
         cls,
         campaign: Campaign,
-        explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
+        explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
         use_comp_rep: bool = False,
     ) -> SHAPInsight:
         """Create a SHAP insight from a campaign.
