@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import inspect
-import numbers
 import warnings
+from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -313,93 +313,66 @@ class SHAPInsight:
         )
 
     def plot(
-        self, df: pd.DataFrame, /, plot_type: str, **kwargs: dict
-    ) -> None | plt.Axes:
+        self,
+        df: pd.DataFrame,
+        /,
+        plot_type: Literal["bar", "beeswarm", "force", "heatmap", "scatter"],
+        show: bool = True,
+        **kwargs: dict,
+    ) -> plt.Axes:
         """Plot the Shapley values using the provided plot type.
 
         Args:
             df: The data for which the Shapley values shall be plotted.
-            plot_type: The type of plot to be created. Supported types are:
-                "bar", "beeswarm", "force", "heatmap", "scatter".
+            plot_type: The type of plot to be created.
+            show: Boolean flag determining if the plot shall be rendered.
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
         Returns:
-            None | plt.Axes: The plot object if 'show' is set to False.
+            The plot object.
 
         Raises:
             ValueError: If the provided plot type is not supported.
         """
-        # Extract the 'show' argument from the kwargs
-        show = kwargs.pop("show", True)
-
-        plot = None
-
-        # Special case for scatter plot
         if plot_type == "scatter":
-            plot = self._plot_shap_scatter(df, show=show, **kwargs)
-            if not show:
-                return plot
-            return None
+            return self._plot_shap_scatter(df, show=show, **kwargs)
 
-        # Cases for all other plots
-        plot_func = getattr(shap.plots, plot_type, None)
-        if (
-            (plot_type not in SUPPORTED_SHAP_PLOTS)
-            or (plot_func is None)
-            or (not callable(plot_func))
-        ):
+        if plot_type not in SUPPORTED_SHAP_PLOTS:
             raise ValueError(
-                f"Invalid plot type: '{plot_type}'. Available options: "
-                f"{SUPPORTED_SHAP_PLOTS}."
+                f"Invalid plot type: '{plot_type}'. "
+                f"Available options: {SUPPORTED_SHAP_PLOTS}."
             )
+        plot_func = getattr(shap.plots, plot_type)
 
-        plot = plot_func(self.explain(df), show=show, **kwargs)
-        if not show:
-            return plot
-        return None
+        return plot_func(self.explain(df), show=show, **kwargs)
 
     def _plot_shap_scatter(
         self, df: pd.DataFrame, /, show: bool = True, **kwargs: dict
-    ) -> None | plt.Axes:
-        """Plot the Shapley values as scatter plot while leaving out string values.
+    ) -> plt.Axes:
+        """Plot the Shapley values as scatter plot while leaving out non-numeric values.
 
         Args:
             df: The data for which the Shapley values shall be plotted.
-            show: Whether to call plt.show() after plotting or not.
+            show: Boolean flag determining if the plot shall be rendered.
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
         Returns:
-            None | plt.Axes: The plot object if 'show' is set to False.
+            The plot object.
+
+        Raises:
+            ValueError: If no plot can be created because of non-numeric data.
         """
-        plot = None
-
-        def is_not_numeric_column(col):
-            return np.array([not isinstance(v, numbers.Number) for v in col]).any()
-
-        if np.ndim(self.background_data) == 1:
-            if is_not_numeric_column(self.background_data):
-                warnings.warn(
-                    "Cannot plot scatter plot for the provided "
-                    "explanation as it contains non-numeric values."
-                )
-            else:
-                plot = shap.plots.scatter(self.explain(df), show=show, **kwargs)
-        else:
-            # Type checking for mypy
-            assert isinstance(self.background_data, pd.DataFrame)
-
-            mask = self.background_data.iloc[0].apply(lambda x: not isinstance(x, str))
-            number_enum = np.where(mask)[0].tolist()
-
-            if len(number_enum) < len(self.background_data.iloc[0]):
-                warnings.warn(
-                    "Cannot plot SHAP scatter plot for all parameters as some contain "
-                    "non-numeric values."
-                )
-            plot = shap.plots.scatter(
-                self.explain(df)[:, number_enum], show=show, **kwargs
+        df_numeric = df.select_dtypes("number")
+        numeric_idx = df.columns.get_indexer(df_numeric.columns)
+        if df_numeric.empty:
+            raise ValueError(
+                "No SHAP scatter plot can be created since all features contain "
+                "non-numeric values."
             )
-
-        if not show:
-            return plot
-        return None
+        if non_numeric_cols := set(df.columns) - set(df_numeric.columns):
+            warnings.warn(
+                f"The following features are excluded from the SHAP scatter plot "
+                f"because their contain non-numeric values: {non_numeric_cols}",
+                UserWarning,
+            )
+        return shap.plots.scatter(self.explain(df)[:, numeric_idx], show=show, **kwargs)
