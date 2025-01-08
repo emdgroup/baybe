@@ -10,7 +10,7 @@ from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import in_
+from attr.validators import gt, in_, lt
 from attrs import define, field
 
 from baybe.constraints.base import (
@@ -19,6 +19,7 @@ from baybe.constraints.base import (
     ContinuousNonlinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.utils.interval import Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.validation import finite_float
 
@@ -140,6 +141,11 @@ class ContinuousCardinalityConstraint(
 ):
     """Class for continuous cardinality constraints."""
 
+    relative_threshold: float = field(
+        default=1e-2, converter=float, validator=[gt(0.0), lt(1.0)]
+    )
+    """A relative threshold for determining if the value is considered zero."""
+
     @property
     def n_inactive_parameter_combinations(self) -> int:
         """The number of possible inactive parameter combinations."""
@@ -197,6 +203,43 @@ class ContinuousCardinalityConstraint(
         ]
 
         return inactive_params
+
+    def get_threshold(self, parameter: NumericalContinuousParameter) -> Interval:
+        """Get the threshold values of a parameter.
+
+        This method calculates the thresholds based on the parameter's bounds
+        and the relative threshold.
+
+        Note:
+            Thresholds (lower, upper) are defined below:
+            * If lower < 0 and upper > 0, any value v with lower < v < upper are treated
+            zero;
+            * If lower = 0 and upper > 0, any value v with lower <= v < upper are
+            treated zero;
+            * If lower < 0 and upper = 0, any value v with lower < v <= upper are
+            treated zero.
+
+
+        Args:
+            parameter: The parameter object.
+
+        Returns:
+            The lower and upper thresholds.
+
+        Raises:
+            ValueError: when parameter_name is not present in parameter list of this
+                constraint.
+        """
+        if parameter.name not in self.parameters:
+            raise ValueError(
+                f"The given parameter with name: {parameter.name} cannot "
+                f"be found in the parameter list: {self.parameters}."
+            )
+
+        return Interval(
+            lower=self.relative_threshold * parameter.bounds.lower,
+            upper=self.relative_threshold * parameter.bounds.upper,
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
