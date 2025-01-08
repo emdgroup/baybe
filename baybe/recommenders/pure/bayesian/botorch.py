@@ -476,6 +476,11 @@ class BotorchRecommender(BayesianRecommender):
     ) -> tuple[Tensor, Tensor]:
         """Find the optimum candidates from multiple continuous subspaces.
 
+        **Important**: A subspace without a feasible solution will be ignored
+        silently, and no warning will be raised. This design is intentional to
+        accommodate recommendations with cardinality constraints. Please be mindful
+        of this behavior when invoking this method.
+
         Args:
             subspaces: The subspaces to consider for the optimization.
             batch_size: The number of points to be recommended.
@@ -495,6 +500,8 @@ class BotorchRecommender(BayesianRecommender):
                 points_all.append(p)
                 acqf_values_all.append(acqf)
 
+            # TODO: Replace ValueError with customized erorr. See
+            #  https://github.com/pytorch/botorch/pull/2652
             # The optimization problem may be infeasible in certain subspaces
             except ValueError:
                 pass
