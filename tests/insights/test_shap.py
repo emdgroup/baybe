@@ -132,7 +132,7 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     if use_comp_rep:
         df = ongoing_campaign.searchspace.transform(df)
     with mock.patch("matplotlib.pyplot.show"):
-        shap_insight.plot(df, plot_type=plot_type)
+        shap_insight.plot(plot_type, df)
 
 
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):

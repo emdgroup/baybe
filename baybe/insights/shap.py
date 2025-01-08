@@ -263,11 +263,12 @@ class SHAPInsight:
             use_comp_rep=use_comp_rep,
         )
 
-    def explain(self, df: pd.DataFrame, /) -> shap.Explanation:
+    def explain(self, df: pd.DataFrame | None = None, /) -> shap.Explanation:
         """Compute the Shapley values based on the chosen explainer and data set.
 
         Args:
             df: The data set for which the Shapley values should be computed.
+                By default, the background data of the explainer is used.
 
         Returns:
             shap.Explanation: The computed Shapley values.
@@ -276,6 +277,9 @@ class SHAPInsight:
             ValueError: If the provided data set does not have the same amount of
                 parameters as the SHAP explainer background
         """
+        if df is None:
+            df = self.background_data
+
         if not self.background_data.shape[1] == df.shape[1]:
             raise ValueError(
                 "The provided data does not have the same amount of "
@@ -316,17 +320,19 @@ class SHAPInsight:
 
     def plot(
         self,
-        df: pd.DataFrame,
-        /,
         plot_type: Literal["bar", "beeswarm", "force", "heatmap", "scatter"],
+        df: pd.DataFrame | None = None,
+        /,
+        *,
         show: bool = True,
         **kwargs: dict,
     ) -> plt.Axes:
         """Plot the Shapley values using the provided plot type.
 
         Args:
-            df: The data for which the Shapley values shall be plotted.
             plot_type: The type of plot to be created.
+            df: The data for which the Shapley values shall be plotted.
+                By default, the background data of the explainer is used.
             show: Boolean flag determining if the plot shall be rendered.
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
@@ -336,6 +342,9 @@ class SHAPInsight:
         Raises:
             ValueError: If the provided plot type is not supported.
         """
+        if df is None:
+            df = self.background_data
+
         if plot_type == "scatter":
             return self._plot_shap_scatter(df, show=show, **kwargs)
 
@@ -349,12 +358,13 @@ class SHAPInsight:
         return plot_func(self.explain(df), show=show, **kwargs)
 
     def _plot_shap_scatter(
-        self, df: pd.DataFrame, /, show: bool = True, **kwargs: dict
+        self, df: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
     ) -> plt.Axes:
         """Plot the Shapley values as scatter plot while leaving out non-numeric values.
 
         Args:
             df: The data for which the Shapley values shall be plotted.
+                By default, the background data of the explainer is used.
             show: Boolean flag determining if the plot shall be rendered.
             **kwargs: Additional keyword arguments to be passed to the plot function.
 
@@ -364,6 +374,9 @@ class SHAPInsight:
         Raises:
             ValueError: If no plot can be created because of non-numeric data.
         """
+        if df is None:
+            df = self.background_data
+
         df_numeric = df.select_dtypes("number")
         numeric_idx = df.columns.get_indexer(df_numeric.columns)
         if df_numeric.empty:
