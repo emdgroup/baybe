@@ -78,11 +78,6 @@ SUPPORTED_SHAP_PLOTS = {
 }
 
 
-def _convert_explainer_cls(x: type[shap.Explainer] | str) -> type[shap.Explainer]:
-    """Get an explainer class from an explainer class name (with class passthrough)."""
-    return ALL_EXPLAINERS[x] if isinstance(x, str) else x
-
-
 def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
     """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
     return not explainer_cls.__module__.startswith("shap.explainers.other.")
@@ -117,7 +112,8 @@ def _make_explainer(
     if data.empty:
         raise ValueError("The provided background data set is empty.")
 
-    explainer_cls = _convert_explainer_cls(explainer_cls)
+    if isinstance(explainer_cls, str):
+        explainer_cls = ALL_EXPLAINERS[explainer_cls]
 
     import torch
 
