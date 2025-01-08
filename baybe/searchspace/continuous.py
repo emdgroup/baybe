@@ -345,7 +345,6 @@ class SubspaceContinuous(SerialMixin):
     def _enforce_cardinality_constraints_via_assignment(
         self,
         inactive_parameter_names: Collection[str],
-        threshold: float = 1e-8,
     ) -> SubspaceContinuous:
         """Create a copy of the subspace with fixed inactive parameters.
 
@@ -356,7 +355,6 @@ class SubspaceContinuous(SerialMixin):
 
         Args:
             inactive_parameter_names: The names of the parameter to be inactivated.
-            threshold: The threshold for a parameter to be considered active.
 
         Returns:
             A new subspace with fixed inactive parameters and no cardinality
@@ -374,7 +372,13 @@ class SubspaceContinuous(SerialMixin):
             if p.name in inactive_parameter_names:
                 p_adjusted = _FixedNumericalContinuousParameter(name=p.name, value=0.0)
             elif p.name in active_parameter_names:
-                p_adjusted = activate_parameter(p)
+                # cardinality constraint object containing the current parameter
+                cardinality_constraint_with_p = [
+                    c for c in self.constraints_cardinality if p.name in c.parameters
+                ][0]
+                p_adjusted = activate_parameter(
+                    p, cardinality_constraint_with_p.get_threshold(p)
+                )
             else:
                 p_adjusted = p
             adjusted_parameters.append(p_adjusted)
