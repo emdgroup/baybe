@@ -17,33 +17,30 @@ from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.cardinality_constraints import count_near_zeros
+from baybe.utils.cardinality_constraints import is_cardinality_fulfilled
 
 
 def _validate_cardinality_constrained_batch(
+    subspace_continuous: SubspaceContinuous,
     batch: pd.DataFrame,
-    min_cardinality: int,
-    max_cardinality: int,
     batch_size: int,
-    parameters: tuple[NumericalContinuousParameter],
     captured_warnings: list[WarningMessage | None],
 ):
     """Validate that a cardinality-constrained batch fulfills the necessary conditions.
 
     Args:
+        subspace_continuous: The continuous subspace from which to recommend the points.
         batch: Batch to validate.
-        min_cardinality: Minimum required cardinality.
-        max_cardinality: Maximum allowed cardinality.
-        batch_size: Requested batch size.
-        parameters: A list of parameters for which recommendations are provided.
+        batch_size: The number of points to be recommended.
         captured_warnings: A list of captured warnings.
     """
     # Assert that the maximum cardinality constraint is fulfilled
-    n_nonzeros = len(parameters) - count_near_zeros(parameters, batch)
-    assert np.all(n_nonzeros <= max_cardinality)
+    assert is_cardinality_fulfilled(subspace_continuous, batch, "max")
 
     # Check whether the minimum cardinality constraint is fulfilled
-    is_min_cardinality_fulfilled = np.all(n_nonzeros >= min_cardinality)
+    is_min_cardinality_fulfilled = is_cardinality_fulfilled(
+        subspace_continuous, batch, "min"
+    )
 
     # A warning must be raised when the minimum cardinality constraint is not fulfilled
     if not is_min_cardinality_fulfilled:
@@ -62,8 +59,13 @@ def _validate_cardinality_constrained_batch(
     # We thus include this check as a safety net for catching regressions. If it
     # turns out the check fails because we observe degenerate batches as actual
     # recommendations, we need to invent something smarter.
+    max_cardinalities = [
+        c.max_cardinality for c in subspace_continuous.constraints_cardinality
+    ]
     if len(unique_row := batch.drop_duplicates()) == 1:
-        assert (unique_row.iloc[0] == 0.0).all() and (max_cardinality == 0)
+        assert (unique_row.iloc[0] == 0.0).all() and all(
+            max_cardinality == 0 for max_cardinality in max_cardinalities
+        )
 
 
 # Combinations of cardinalities to be tested
@@ -96,15 +98,15 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
         ),
     )
 
-    subspace = SubspaceContinuous(parameters=parameters, constraints_nonlin=constraints)
+    subspace_continous = SubspaceContinuous(
+        parameters=parameters, constraints_nonlin=constraints
+    )
 
     with warnings.catch_warnings(record=True) as w:
-        samples = subspace.sample_uniform(BATCH_SIZE)
+        samples = subspace_continous.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
-    _validate_cardinality_constrained_batch(
-        samples, min_cardinality, max_cardinality, BATCH_SIZE, parameters, w
-    )
+    _validate_cardinality_constrained_batch(subspace_continous, samples, BATCH_SIZE, w)
 
 
 def test_polytope_sampling_with_cardinality_constraint():
@@ -147,18 +149,16 @@ def test_polytope_sampling_with_cardinality_constraint():
             min_cardinality=MIN_CARDINALITY,
         ),
     ]
-    searchspace = SearchSpace.from_product(parameters, constraints)
+    subspace_continous = SubspaceContinuous.from_product(parameters, constraints)
 
     with warnings.catch_warnings(record=True) as w:
-        samples = searchspace.continuous.sample_uniform(BATCH_SIZE)
+        samples = subspace_continous.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        samples[params_cardinality],
-        MIN_CARDINALITY,
-        MAX_CARDINALITY,
+        subspace_continous,
+        samples,
         BATCH_SIZE,
-        tuple(p for p in parameters if p.name in params_cardinality),
         w,
     )
 

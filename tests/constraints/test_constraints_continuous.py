@@ -13,7 +13,7 @@ from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.searchspace.core import SearchSpace
+from baybe.searchspace import SearchSpace
 from baybe.targets.numerical import NumericalTarget
 from tests.conftest import run_iterations
 from tests.constraints.test_cardinality_constraint_continuous import (
@@ -111,11 +111,9 @@ def test_cardinality_constraint(recommender):
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
+        searchspace.continuous,
         recommendation,
-        MIN_CARDINALITY,
-        MAX_CARDINALITY,
         BATCH_SIZE,
-        tuple(parameters),
         w,
     )
 

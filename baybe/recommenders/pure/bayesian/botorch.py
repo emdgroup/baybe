@@ -30,7 +30,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.utils.cardinality_constraints import is_min_cardinality_fulfilled
+from baybe.utils.cardinality_constraints import is_cardinality_fulfilled
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
@@ -289,12 +289,13 @@ class BotorchRecommender(BayesianRecommender):
         points, acqf_value = self._optimize_continuous_subspaces(subspaces, batch_size)
 
         # Check if any minimum cardinality constraints are violated
-        if not is_min_cardinality_fulfilled(
+        if not is_cardinality_fulfilled(
             subspace_continuous,
             pd.DataFrame(points, columns=subspace_continuous.parameter_names),
+            "min",
         ):
             warnings.warn(
-                "Minimum cardinality constraints are not guaranteed.",
+                "At least one minimum cardinality constraint is violated.",
                 MinimumCardinalityViolatedWarning,
             )
 
