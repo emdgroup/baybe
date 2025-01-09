@@ -6,8 +6,17 @@ import pandas as pd
 import pytest
 from pytest import mark
 
+from baybe import insights
 from baybe._optional.info import SHAP_INSTALLED
+from baybe._optional.insights import shap
 from baybe.campaign import Campaign
+from baybe.insights.shap import (
+    NON_SHAP_EXPLAINERS,
+    SHAP_EXPLAINERS,
+    SHAP_PLOTS,
+    SHAPInsight,
+    _get_explainer_cls,
+)
 from tests.conftest import run_iterations
 
 # File-wide parameterization settings
@@ -27,23 +36,6 @@ pytestmark = [
 ]
 
 
-if SHAP_INSTALLED:
-    from baybe import insights
-    from baybe._optional.insights import shap
-    from baybe.insights.shap import (
-        ALL_EXPLAINERS,
-        NON_SHAP_EXPLAINERS,
-        SHAP_EXPLAINERS,
-        SUPPORTED_SHAP_PLOTS,
-        SHAPInsight,
-    )
-else:
-    ALL_EXPLAINERS = []
-    NON_SHAP_EXPLAINERS = []
-    SHAP_EXPLAINERS = []
-    SUPPORTED_SHAP_PLOTS = []
-
-
 def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
     """Helper function for general SHAP explainer tests."""
     # run_iterations(campaign, n_iterations=2, batch_size=5)
@@ -55,10 +47,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
             use_comp_rep=use_comp_rep,
         )
         assert isinstance(shap_insight, insights.SHAPInsight)
-        assert isinstance(
-            shap_insight.explainer,
-            ALL_EXPLAINERS[explainer_cls],
-        )
+        assert isinstance(shap_insight.explainer, _get_explainer_cls(explainer_cls))
         assert shap_insight.uses_shap_explainer == is_shap
 
         # Sanity check explanation
@@ -121,7 +110,7 @@ def test_invalid_explained_data(ongoing_campaign, explainer_cls, use_comp_rep):
 
 @mark.slow
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
-@mark.parametrize("plot_type", SUPPORTED_SHAP_PLOTS)
+@mark.parametrize("plot_type", SHAP_PLOTS)
 def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     """Test the default SHAP plots."""
     shap_insight = SHAPInsight.from_campaign(

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import inspect
 import warnings
 from typing import Literal
 
@@ -22,65 +21,30 @@ from baybe.surrogates.base import Surrogate
 from baybe.utils.dataframe import to_tensor
 
 _DEFAULT_EXPLAINER_CLS = "KernelExplainer"
-
-
-def _get_explainer_maps() -> (
-    tuple[dict[str, type[shap.Explainer]], dict[str, type[shap.Explainer]]]
-):
-    """Get maps for SHAP and non-SHAP explainers.
-
-    Returns:
-        The maps for SHAP and non-SHAP explainers.
-    """
-    EXCLUDED_EXPLAINER_KEYWORDS = [
-        "Tree",
-        "GPU",
-        "Gradient",
-        "Sampling",
-        "Deep",
-        "Linear",
-    ]
-
-    def _has_required_init_parameters(cls):
-        """Check if non-shap initializer has required standard parameters."""
-        REQUIRED_PARAMETERS = ["self", "model", "data"]
-
-        init_signature = inspect.signature(cls.__init__)
-        parameters = list(init_signature.parameters.keys())
-
-        return parameters[:3] == REQUIRED_PARAMETERS
-
-    shap_explainers = {
-        cls_name: getattr(shap.explainers, cls_name)
-        for cls_name in shap.explainers.__all__
-        if all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
-    }
-
-    non_shap_explainers = {
-        cls_name: explainer
-        for cls_name in shap.explainers.other.__all__
-        if _has_required_init_parameters(
-            explainer := getattr(shap.explainers.other, cls_name)
-        )
-        and all(x not in cls_name for x in EXCLUDED_EXPLAINER_KEYWORDS)
-    }
-
-    return shap_explainers, non_shap_explainers
-
-
-SHAP_EXPLAINERS, NON_SHAP_EXPLAINERS = _get_explainer_maps()
-ALL_EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
-SUPPORTED_SHAP_PLOTS = {
-    "bar",
-    "beeswarm",
-    "heatmap",
-    "scatter",
+SHAP_EXPLAINERS = {
+    "AdditiveExplainer",
+    "ExactExplainer",
+    "KernelExplainer",
+    "PartitionExplainer",
+    "PermutationExplainer",
 }
+NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
+EXPLAINERS = {*SHAP_EXPLAINERS, *NON_SHAP_EXPLAINERS}
+SHAP_PLOTS = {"bar", "beeswarm", "heatmap", "scatter"}
 
 
-def is_shap_explainer(explainer_cls: type[shap.Explainer]) -> bool:
+def _get_explainer_cls(name: str) -> type[shap.Explainer]:
+    """Retrieve the explainer class reference by name."""
+    if name in SHAP_EXPLAINERS:
+        return getattr(shap.explainers, name)
+    if name in NON_SHAP_EXPLAINERS:
+        return getattr(shap.explainers.other, name)
+    raise ValueError(f"Unknown SHAP explainer class '{name}'.")
+
+
+def is_shap_explainer(explainer: shap.Explainer) -> bool:
     """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
-    return not explainer_cls.__module__.startswith("shap.explainers.other.")
+    return type(explainer).__name__ in SHAP_EXPLAINERS
 
 
 def _make_explainer(
@@ -113,7 +77,7 @@ def _make_explainer(
         raise ValueError("The provided background data set is empty.")
 
     if isinstance(explainer_cls, str):
-        explainer_cls = ALL_EXPLAINERS[explainer_cls]
+        explainer_cls = _get_explainer_cls(explainer_cls)
 
     import torch
 
@@ -142,7 +106,7 @@ def _make_explainer(
         shap_explainer = explainer_cls(model, data, **kwargs)
 
         # Explain first two data points to ensure that the explainer is working
-        if is_shap_explainer(explainer_cls):
+        if is_shap_explainer(shap_explainer):
             shap_explainer(data.iloc[0:1])
     except shap.utils._exceptions.InvalidModelError:
         raise TypeError(
@@ -178,7 +142,7 @@ class SHAPInsight:
     @property
     def uses_shap_explainer(self) -> bool:
         """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
-        return is_shap_explainer(type(self.explainer))
+        return is_shap_explainer(self.explainer)
 
     @classmethod
     def from_surrogate(
@@ -344,10 +308,10 @@ class SHAPInsight:
         if plot_type == "scatter":
             return self._plot_shap_scatter(df, show=show, **kwargs)
 
-        if plot_type not in SUPPORTED_SHAP_PLOTS:
+        if plot_type not in SHAP_PLOTS:
             raise ValueError(
                 f"Invalid plot type: '{plot_type}'. "
-                f"Available options: {SUPPORTED_SHAP_PLOTS}."
+                f"Available options: {SHAP_PLOTS}."
             )
         plot_func = getattr(shap.plots, plot_type)
 
