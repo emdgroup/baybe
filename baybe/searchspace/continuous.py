@@ -416,8 +416,7 @@ class SubspaceContinuous(SerialMixin):
         if not self.is_constrained:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
-        # If there are neither cardinality nor interpoint constraints, we sample
-        # directly from the polytope
+        # If there are no cardinality constraints, we sample directly from the polytope
         if len(self.constraints_cardinality) == 0:
             return self._sample_from_polytope(batch_size, self.comp_rep_bounds.values)
 
@@ -450,7 +449,6 @@ class SubspaceContinuous(SerialMixin):
 
         eq_constraints, ineq_constraints = [], []
 
-        # We start with the general constraints before going to interpoint constraints
         for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
             if not c.is_interpoint:
                 param_indices, coefficients, rhs = c.to_botorch(self.parameters)
