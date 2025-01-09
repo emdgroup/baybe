@@ -39,7 +39,11 @@ def validate_constraints(  # noqa: DOC101, DOC103
     validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
     )
-    validate_no_interpoint_and_cardinality_constraints(constraints=constraints)
+    validate_no_interpoint_and_cardinality_constraints(
+        constraints=[
+            con for con in constraints if isinstance(con, ContinuousConstraint)
+        ]
+    )
 
     param_names_all = [p.name for p in parameters]
     param_names_discrete = [p.name for p in parameters if p.is_discrete]
