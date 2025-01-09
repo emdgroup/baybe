@@ -1,10 +1,9 @@
 """Baybe insights (optional)."""
 
-from baybe._optional.info import INSIGHTS_INSTALLED
-
-if INSIGHTS_INSTALLED:
-    from baybe.insights.shap import SHAPInsight
+from baybe.insights.shap import EXPLAINERS, SHAP_PLOTS, SHAPInsight
 
 __all__ = [
+    "EXPLAINERS",
+    "SHAP_PLOTS",
     "SHAPInsight",
 ]
