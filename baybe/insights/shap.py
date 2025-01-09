@@ -43,35 +43,31 @@ def _get_explainer_cls(name: str) -> type[shap.Explainer]:
 
 
 def is_shap_explainer(explainer: shap.Explainer) -> bool:
-    """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
+    """Indicate if the given explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
     return type(explainer).__name__ in SHAP_EXPLAINERS
 
 
-def _make_explainer(
+def make_explainer_for_surrogate(
     surrogate: Surrogate,
     data: pd.DataFrame,
     explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
     use_comp_rep: bool = False,
-    **kwargs,
 ) -> shap.Explainer:
-    """Create a SHAP explainer.
+    """Create a SHAP explainer for a given surrogate model.
 
     Args:
-        surrogate: The surrogate to be explained.
+        surrogate: The surrogate model to be explained.
         data: The background data set.
-        explainer_cls: The SHAP explainer class that is used to generate the
-            explanation.
-        use_comp_rep: Whether to analyze the model in computational representation
-                (experimental representation otherwise).
-        **kwargs: Additional keyword arguments to be passed to the explainer.
+        explainer_cls: The SHAP explainer class for generating the explanation.
+        use_comp_rep: Boolean flag specifying whether to explain the model's
+            experimental or computational representation.
 
     Returns:
-        shap.Explainer: The created explainer object.
+        The created explainer object.
 
     Raises:
         ValueError: If the provided background data set is empty.
-        TypeError: If the provided explainer class does not
-            support the campaign surrogate.
+        TypeError: If the provided explainer class is incompatible with the surrogate.
     """
     if data.empty:
         raise ValueError("The provided background data set is empty.")
@@ -97,10 +93,8 @@ def _make_explainer(
                 output = surrogate.posterior(df).mean
             return output.numpy()
 
-    # Handle special settings
-    if "Lime" in explainer_cls.__name__:
-        # Lime default mode is otherwise set to 'classification'
-        kwargs["mode"] = "regression"
+    # Handle special settings: Lime default mode is otherwise set to "classification"
+    kwargs = {"mode": "regression"} if explainer_cls.__name__ == "LimeTabular" else {}
 
     try:
         shap_explainer = explainer_cls(model, data, **kwargs)
@@ -130,18 +124,18 @@ def _make_explainer(
 class SHAPInsight:
     """Class for SHAP-based feature importance insights.
 
-    This also supports LIME and MAPLE explainers via ways provided by the shap module.
+    Also supports LIME and MAPLE explainers via the ``shap`` module.
     """
 
     explainer: shap.Explainer = field(validator=instance_of(shap.Explainer))
     """The explainer instance."""
 
     background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
-    """The background data set used to build the explainer."""
+    """The background data set used by the explainer."""
 
     @property
     def uses_shap_explainer(self) -> bool:
-        """Whether the explainer is a SHAP explainer or not (e.g. MAPLE, LIME)."""
+        """Indicates if a SHAP explainer is used or not (e.g. MAPLE, LIME)."""
         return is_shap_explainer(self.explainer)
 
     @classmethod
@@ -152,8 +146,13 @@ class SHAPInsight:
         explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
         use_comp_rep: bool = False,
     ):
-        """Create a SHAP insight from a surrogate model."""
-        explainer = _make_explainer(surrogate, data, explainer_cls, use_comp_rep)
+        """Create a SHAP insight from a campaign.
+
+        For details, see :func:`make_explainer_for_surrogate`.
+        """
+        explainer = make_explainer_for_surrogate(
+            surrogate, data, explainer_cls, use_comp_rep
+        )
         return cls(explainer, data)
 
     @classmethod
@@ -165,13 +164,12 @@ class SHAPInsight:
     ) -> SHAPInsight:
         """Create a SHAP insight from a campaign.
 
+        Uses the measurements of the campaign as background data.
+
         Args:
-            campaign: The campaign which holds the recommender and model.
-            explainer_cls: The SHAP explainer class that is used to generate the
-                explanation.
-            use_comp_rep:
-                Whether to analyze the model in computational representation
-                (experimental representation otherwise).
+            campaign: A campaign holding a recommender using a surrogate model.
+            explainer_cls: See :func:`make_explainer_for_surrogate.
+            use_comp_rep: See :func:`make_explainer_for_surrogate.
 
         Returns:
             The SHAP insight object.
@@ -198,16 +196,16 @@ class SHAPInsight:
     ) -> SHAPInsight:
         """Create a SHAP insight from a recommender.
 
+        Uses the provided measurements to train the surrogate and as background data for
+        the explainer.
+
         Args:
-            recommender: The model-based recommender.
+            recommender: A recommender using a surrogate model.
             searchspace: The searchspace for the recommender.
             objective: The objective for the recommender.
-            measurements: The background data set for Explainer.
-                This is used the measurement data set for the recommender.
-            explainer_cls: The explainer class.
-            use_comp_rep:
-                Whether to analyze the model in computational representation
-                (experimental representation otherwise).
+            measurements: The measurements for training the surrogate and the explainer.
+            explainer_cls: See :func:`make_explainer_for_surrogate.
+            use_comp_rep: See :func:`make_explainer_for_surrogate.
 
         Returns:
             The SHAP insight object.
@@ -224,18 +222,18 @@ class SHAPInsight:
         )
 
     def explain(self, df: pd.DataFrame | None = None, /) -> shap.Explanation:
-        """Compute the Shapley values based on the chosen explainer and data set.
+        """Compute a Shapley explanation for a given data set.
 
         Args:
-            df: The data set for which the Shapley values should be computed.
-                By default, the background data of the explainer is used.
+            df: The dataframe for which the Shapley values are to be computed.
+                By default, the background data set of the explainer is used.
 
         Returns:
-            shap.Explanation: The computed Shapley values.
+           The computed Shapley explanation.
 
         Raises:
-            ValueError: If the provided data set does not have the same amount of
-                parameters as the SHAP explainer background
+            ValueError: If the columns of the given dataframe cannot be aligned with the
+                columns of the explainer background dataframe.
         """
         if df is None:
             df = self.background_data
@@ -279,8 +277,8 @@ class SHAPInsight:
         if len(explanations.shape) == 3:
             return explanations[:, :, 0]
         raise RuntimeError(
-            f"The explanation obtained for {self.__class__.__name__} has an unexpected "
-            f"invalid dimensionality of {len(explanations.shape)}."
+            f"The explanation obtained for '{self.__class__.__name__}' has an "
+            f"unexpected dimensionality of {len(explanations.shape)}."
         )
 
     def plot(
@@ -296,10 +294,9 @@ class SHAPInsight:
 
         Args:
             plot_type: The type of plot to be created.
-            df: The data for which the Shapley values shall be plotted.
-                By default, the background data of the explainer is used.
-            show: Boolean flag determining if the plot shall be rendered.
-            **kwargs: Additional keyword arguments to be passed to the plot function.
+            df: See :meth:`explain`.
+            show: Boolean flag determining if the plot is to be rendered.
+            **kwargs: Additional keyword arguments passed to the plot function.
 
         Returns:
             The plot object.
@@ -325,19 +322,9 @@ class SHAPInsight:
     def _plot_shap_scatter(
         self, df: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
     ) -> plt.Axes:
-        """Plot the Shapley values as scatter plot while leaving out non-numeric values.
+        """Plot the Shapley values as scatter plot, ignoring non-numeric features.
 
-        Args:
-            df: The data for which the Shapley values shall be plotted.
-                By default, the background data of the explainer is used.
-            show: Boolean flag determining if the plot shall be rendered.
-            **kwargs: Additional keyword arguments to be passed to the plot function.
-
-        Returns:
-            The plot object.
-
-        Raises:
-            ValueError: If no plot can be created because of non-numeric data.
+        For details, see :meth:`explain`.
         """
         if df is None:
             df = self.background_data
@@ -352,7 +339,7 @@ class SHAPInsight:
         if non_numeric_cols := set(df.columns) - set(df_numeric.columns):
             warnings.warn(
                 f"The following features are excluded from the SHAP scatter plot "
-                f"because their contain non-numeric values: {non_numeric_cols}",
+                f"because they contain non-numeric values: {non_numeric_cols}",
                 UserWarning,
             )
         return shap.plots.scatter(self.explain(df)[:, numeric_idx], show=show, **kwargs)
