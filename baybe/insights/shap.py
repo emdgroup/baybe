@@ -174,7 +174,7 @@ class SHAPInsight:
         Returns:
             The SHAP insight object.
         """
-        data = campaign.measurements[[p.name for p in campaign.parameters]].copy()
+        data = campaign.measurements[[p.name for p in campaign.parameters]]
         background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
         return cls.from_surrogate(
