@@ -104,13 +104,11 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
     res = campaign.measurements
     print(res)
 
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        assert np.isclose(
-            res_batch["Conti_finite1"].sum() + res_batch["Conti_finite2"].sum(),
-            0.3,
-            atol=TOLERANCE,
-        )
+    res_grouped = res.groupby("BatchNr")
+    interpoint_result = (
+        res_grouped["Conti_finite1"].sum() + res_grouped["Conti_finite2"].sum()
+    )
+    assert np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -122,12 +120,13 @@ def test_geq_interpoint_inequality_multiple_parameters(
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        assert (
-            2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
-            >= 0.3 - TOLERANCE
-        )
+
+    res_grouped = res.groupby("BatchNr")
+    interpoint_result = (
+        2 * res_grouped["Conti_finite1"].sum() - res_grouped["Conti_finite2"].sum()
+    )
+    print(f"{interpoint_result=}")
+    assert interpoint_result.ge(0.3 - TOLERANCE).all()
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -139,13 +138,12 @@ def test_leq_interpoint_inequality_multiple_parameters(
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
     print(res)
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        print(campaign.searchspace.constraints)
-        assert (
-            2 * res_batch["Conti_finite1"].sum() - res_batch["Conti_finite2"].sum()
-            <= 0.3 + TOLERANCE
-        )
+
+    res_grouped = res.groupby("BatchNr")
+    interpoint_result = (
+        2 * res_grouped["Conti_finite1"].sum() - res_grouped["Conti_finite2"].sum()
+    )
+    assert interpoint_result.le(0.3 + TOLERANCE).all()
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -158,10 +156,8 @@ def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
     res = campaign.measurements
     print(res)
 
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
-
+    interpoint_result = 2 * res.groupby("BatchNr")["Conti_finite1"].sum()
+    assert interpoint_result.ge(0.3 - TOLERANCE).all()
     assert (
         (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"])
         .ge(0.3 - TOLERANCE)
