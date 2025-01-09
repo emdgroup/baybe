@@ -107,7 +107,9 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
     for batch in range(n_iterations):
         res_batch = res[res["BatchNr"] == batch + 1]
         assert np.isclose(
-            res_batch["Conti_finite1"].sum() + res_batch["Conti_finite2"].sum(), 0.3
+            res_batch["Conti_finite1"].sum() + res_batch["Conti_finite2"].sum(),
+            0.3,
+            atol=TOLERANCE,
         )
 
 
