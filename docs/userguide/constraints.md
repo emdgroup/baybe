@@ -79,7 +79,7 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
-### Interpoint constraints
+### Interpoint Constraints
 
 The constraints discussed so far all belong to the class of so called "intrapoint constraints".
 That is, they impose conditions on each individual point of a batch.
@@ -104,7 +104,7 @@ ContinuousLinearConstraint(
 )
 ```
 
-```{admonition} Mixing interpoint and cardinality constraints
+```{admonition} Mixing Interpoint and Cardinality Constraints
 :class: note
 Currently, BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
