@@ -55,7 +55,7 @@ parameters = [
 # This example models the following interpoint constraints:
 # 1. The sum of `x_1` across all batches needs to be >= 2.5.
 # 2. The sum of `x_2` across all batches needs to be exactly 5.
-# 3. The sum of `2*x_3` minus the sum of `x_4` across all batches needs to be >= 5.
+# 3. The sum of `2*x_3` minus the sum of `x_4` across all batches needs to be >= 2.5.
 
 
 inter_constraints = [
@@ -69,7 +69,7 @@ inter_constraints = [
         parameters=["x_3", "x_4"],
         operator=">=",
         coefficients=[2, -1],
-        rhs=5,
+        rhs=2.5,
         interpoint=True,
     ),
 ]
