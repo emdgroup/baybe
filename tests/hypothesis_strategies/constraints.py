@@ -236,12 +236,15 @@ def continuous_linear_constraints(
         )
     )
     rhs = draw(finite_floats())
+    is_interpoint = draw(st.booleans())
 
     # Optionally add the operator
     operators = operators or ["=", ">=", "<="]
     operator = draw(st.sampled_from(operators))
 
-    return ContinuousLinearConstraint(parameter_names, operator, coefficients, rhs)
+    return ContinuousLinearConstraint(
+        parameter_names, operator, coefficients, rhs, is_interpoint
+    )
 
 
 continuous_linear_equality_constraints = partial(
