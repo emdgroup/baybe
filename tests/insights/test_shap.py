@@ -6,8 +6,13 @@ import pandas as pd
 import pytest
 from pytest import mark
 
+from baybe._optional.info import INSIGHTS_INSTALLED
+
+if not INSIGHTS_INSTALLED:
+    pytest.skip("Optional insights package not installed.", allow_module_level=True)
+
+
 from baybe import insights
-from baybe._optional.info import SHAP_INSTALLED
 from baybe._optional.insights import shap
 from baybe.campaign import Campaign
 from baybe.insights.shap import (
@@ -21,7 +26,6 @@ from tests.conftest import run_iterations
 
 # File-wide parameterization settings
 pytestmark = [
-    mark.skipif(not SHAP_INSTALLED, reason="Optional shap package not installed."),
     mark.parametrize("n_grid_points", [5], ids=["g5"]),
     mark.parametrize("n_iterations", [2], ids=["i2"]),
     mark.parametrize("batch_size", [2], ids=["b2"]),

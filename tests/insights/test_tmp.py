@@ -5,6 +5,12 @@ import inspect
 import numpy as np
 import pandas as pd
 import pytest
+
+from baybe._optional.info import INSIGHTS_INSTALLED
+
+if not INSIGHTS_INSTALLED:
+    pytest.skip("Optional insights package not installed.", allow_module_level=True)
+
 import shap
 from shap.explainers import KernelExplainer
 
