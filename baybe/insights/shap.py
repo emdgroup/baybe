@@ -239,32 +239,37 @@ class SHAPInsight:
         """
         if df is None:
             df = self.background_data
-
-        if not self.background_data.shape[1] == df.shape[1]:
+        elif set(self.background_data.columns) != set(df.columns):
             raise ValueError(
-                "The provided data does not have the same amount of "
-                "parameters as the shap explainer background."
+                "The provided dataframe must have the same column names as used by "
+                "the explainer object."
             )
+
+        # Align columns with background data
+        df_aligned = df[self.background_data.columns]
 
         if not self.uses_shap_explainer:
             # Return attributions for non-SHAP explainers
             if self.explainer.__module__.endswith("maple"):
                 # Additional argument for maple to increase comparability to SHAP
-                attributions = self.explainer.attributions(df, multiply_by_input=True)[
-                    0
-                ]
+                attributions = self.explainer.attributions(
+                    df_aligned, multiply_by_input=True
+                )[0]
             else:
-                attributions = self.explainer.attributions(df)[0]
+                attributions = self.explainer.attributions(df_aligned)[0]
 
             explanations = shap.Explanation(
                 values=attributions,
                 base_values=self.explainer.model(self.background_data).mean(),
-                data=df,
-                feature_names=df.columns.values,
+                data=df_aligned,
+                feature_names=df_aligned.columns.values,
             )
-            return explanations
         else:
-            explanations = self.explainer(df)
+            explanations = self.explainer(df_aligned)
+
+        # Permute explanation object according to input column order
+        idx = self.background_data.columns.get_indexer(df.columns)
+        explanations = explanations[:, idx]
 
         # Reduce dimensionality of explanations to 2D in case
         # a 3D explanation is returned. This is the case for
