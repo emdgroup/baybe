@@ -136,7 +136,7 @@ class NumericalContinuousParameter(ContinuousParameter):
 
     @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:
+    def comp_rep_columns(self) -> tuple[str]:
         return (self.name,)
 
     @override
@@ -171,7 +171,7 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
 
     @override
     @property
-    def comp_rep_columns(self) -> tuple[str, ...]:
+    def comp_rep_columns(self) -> tuple[str]:
         return (self.name,)
 
     @override
