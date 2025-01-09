@@ -91,17 +91,18 @@ a full batch, but there is no limit for the amount of solvent to use for a singl
 within that batch.
 
 They can be defined by using the `interpoint` keyword of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
-class as follows:
+class. 
 ```python
 from baybe.constraints import ContinuousLinearConstraint
 
 ContinuousLinearConstraint(
-    parameters=["x_1", "x_2"],
+    parameters=["SolventUsed[ml]"],
     operator="<=",
-    coefficients=[1.0, 1.0],
-    rhs=1,
+    coefficients=[1.0],
+    rhs=100,
     interpoint=True,
 )
+
 ```
 
 ```{admonition} Mixing Interpoint and Cardinality Constraints
