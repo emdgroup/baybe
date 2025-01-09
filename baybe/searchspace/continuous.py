@@ -529,10 +529,16 @@ class SubspaceContinuous(SerialMixin):
             # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
-            # TODO: active parameters must be guaranteed non-zero!
-            # Remove the inactive parameters from the search space
-            subspace_without_cardinality_constraint = self._drop_parameters(
-                inactive_params_sample
+            # Remove the inactive parameters from the search space. In the first
+            # step, the active parameters get activated and inactive parameters are
+            # fixed to zero. The first step helps ensure active parameters stay
+            # non-zero, especially when one boundary is zero. The second step is
+            # optional and it helps reduce the parameter space with certain
+            # computational cost.
+            subspace_without_cardinality_constraint = (
+                self._enforce_cardinality_constraints_via_assignment(
+                    inactive_params_sample
+                )._drop_parameters(inactive_params_sample)
             )
 
             # TODO: Replace ValueError with customized erorr. See
