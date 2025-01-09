@@ -445,7 +445,7 @@ class SubspaceContinuous(SerialMixin):
         from botorch.utils.sampling import get_polytope_samples
 
         # The number of parameters is needed at some places for adjusting indices
-        num_of_params = len(self.parameters)
+        num_of_params = len(self.comp_rep_columns)
 
         eq_constraints, ineq_constraints = [], []
 
