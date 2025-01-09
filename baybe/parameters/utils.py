@@ -3,17 +3,15 @@
 from collections.abc import Callable, Collection
 from typing import Any, TypeVar
 
-import numpy as np
 import pandas as pd
 from attrs import evolve
 
 from baybe.parameters.base import Parameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    _FixedNumericalContinuousParameter,
+)
 from baybe.utils.interval import Interval
-
-# TODO: Check whether it has been defined in BayBE?
-SMALLEST_FLOAT32 = np.finfo(np.float32).tiny
-"""The smallest 32 bit float number."""
 
 _TParameter = TypeVar("_TParameter", bound=Parameter)
 
@@ -100,7 +98,7 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 def activate_parameter(
     parameter: NumericalContinuousParameter,
     thresholds: Interval,
-) -> NumericalContinuousParameter:
+) -> NumericalContinuousParameter | _FixedNumericalContinuousParameter:
     """Activates a given parameter by moving its bounds away from zero.
 
     Important:
@@ -111,7 +109,7 @@ def activate_parameter(
 
     Args:
         parameter: The parameter to be activated.
-        thresholds: The thresholds of the inactive region of the parameter.
+        thresholds: The thresholds of the inactive range of the parameter.
 
     Returns:
         A copy of the parameter with adjusted bounds.
@@ -125,39 +123,54 @@ def activate_parameter(
     upper_bound = parameter.bounds.upper
 
     if not thresholds.contains(0.0):
-        raise ValueError("The thresholds must cover zero.")
+        raise ValueError(
+            f"The thresholds must cover zero but ({thresholds.lower}, "
+            f"{thresholds.upper}) is given."
+        )
 
-    # When the lower/upper threshold is zero, it is slightly adjusted to and used as
-    # thresholf for checking the inactive range.
-    # Check ContinuousCardinalityConstraint.get_threshold(parameter) for the definition
-    # of threshold of inactive (near-zero) region.
-    lower_threshold_for_inactive_range = min(thresholds.lower, -SMALLEST_FLOAT32)
-    upper_threshold_for_inactive_range = max(thresholds.upper, SMALLEST_FLOAT32)
+    if not parameter.bounds.contains(0.0):
+        raise ValueError(
+            f"The parameter bounds must cover zero but "
+            f"({parameter.bounds.lower}, {parameter.bounds.upper}) is "
+            f"given."
+        )
 
     def in_inactive_range(x: float) -> bool:
         """Return true when x is within the inactive range."""
-        return (
-            lower_threshold_for_inactive_range < x < upper_threshold_for_inactive_range
-        )
+        if thresholds.lower == 0.0:
+            return thresholds.lower <= x < thresholds.upper
+        if thresholds.upper == 0.0:
+            return thresholds.lower < x <= thresholds.upper
+        return thresholds.lower < x < thresholds.upper
 
-    # When both bounds in inactive range
+    # Note: When both bounds in inactive range. This step must be checked first to catch
+    # all possible cases when a parameter cannot be activated.
     if in_inactive_range(lower_bound) and in_inactive_range(upper_bound):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
             f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
-            f"inactive range [-{lower_threshold_for_inactive_range},"
-            f" {upper_threshold_for_inactive_range}]."
+            f"inactive range ({thresholds.lower}, {thresholds.upper})."
         )
 
-    # When the upper bound is in near-zero range, reduce it to the lower threshold of
+    # When the upper bound is in inactive range, move it to the lower threshold of the
     # inactive region.
-    if lower_bound <= thresholds.lower and in_inactive_range(upper_bound):
+    if lower_bound < thresholds.lower and in_inactive_range(upper_bound):
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
-    # When the lower bound is in near-zero range, uplift it to the upper threshold of
+    if lower_bound == thresholds.lower and in_inactive_range(upper_bound):
+        return _FixedNumericalContinuousParameter(
+            name=parameter.name, value=thresholds.lower
+        )
+
+    # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
-    if upper_bound >= thresholds.upper and in_inactive_range(lower_bound):
+    if upper_bound > thresholds.upper and in_inactive_range(lower_bound):
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
+
+    if upper_bound == thresholds.upper and in_inactive_range(lower_bound):
+        return _FixedNumericalContinuousParameter(
+            name=parameter.name, value=thresholds.upper
+        )
 
     # Both bounds separated from inactive range
     return parameter
