@@ -270,12 +270,8 @@ def test_cardinality_constraints_with_overlapping_parameters():
         )
 
 
-def test_cardinality_and_interpoint_constraints():
-    """Using cardinality and interpoint constraints together raises an error."""
-    parameters = (
-        NumericalContinuousParameter("c1", (0, 1)),
-        NumericalContinuousParameter("c2", (0, 1)),
-    )
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+def test_cardinality_and_interpoint_constraints(parameters):
     with pytest.raises(
         ValueError, match="cannot be used together with interpoint constraints"
     ):
@@ -283,14 +279,14 @@ def test_cardinality_and_interpoint_constraints():
             parameters=parameters,
             constraints=(
                 ContinuousLinearConstraint(
-                    parameters=["c_1"],
+                    parameters=["Conti_finite1"],
                     coefficients=[1],
                     operator="=",
                     rhs=1,
                     interpoint=True,
                 ),
                 ContinuousCardinalityConstraint(
-                    parameters=["c1", "c2"],
+                    parameters=["Conti_finite1", "Conti_finite2"],
                     max_cardinality=1,
                 ),
             ),
