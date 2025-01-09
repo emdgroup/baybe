@@ -17,7 +17,6 @@
 
 import os
 
-import numpy as np
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -114,9 +113,9 @@ for k in range(N_ITERATIONS):
     )
     print(
         "The sum of `x_2` across all batches is exactly 5",
-        np.isclose(rec["x_2"].sum(), 5),
+        abs(rec["x_2"].sum() - 5) < TOLERANCE,
     )
     print(
-        "The sum of `2*x_3` minus the sum of `x_4` across all batches is at least >= 5",
+        "The sum of `2*x_3` minus the sum of `x_4` across all batches is at least >= 2.5",
         2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE,
     )
