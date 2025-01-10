@@ -15,8 +15,8 @@ from typing_extensions import override
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
-from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
@@ -43,10 +43,10 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         required when using the meta recommender with stateful recommenders.
     """
 
-    initial_recommender: PureRecommender = field(factory=RandomRecommender)
+    initial_recommender: RecommenderProtocol = field(factory=RandomRecommender)
     """The initial recommender used by the meta recommender."""
 
-    recommender: PureRecommender = field(factory=BotorchRecommender)
+    recommender: RecommenderProtocol = field(factory=BotorchRecommender)
     """The recommender used by the meta recommender after the switch."""
 
     switch_after: int = field(default=1)
@@ -67,7 +67,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
+    ) -> RecommenderProtocol:
         n_data = len(measurements) if measurements is not None else 0
         if (n_data >= self.switch_after) or (
             self._has_switched and self.remain_switched
@@ -111,7 +111,7 @@ class _BaseSequentialMetaRecommender(MetaRecommender):
     """The number of measurements available at the last successful recommend call."""
 
     @abstractmethod
-    def _get_recommender_at_current_step(self) -> PureRecommender:
+    def _get_recommender_at_current_step(self) -> RecommenderProtocol:
         """Get the recommender at the current sequence position."""
 
     @override
@@ -122,7 +122,7 @@ class _BaseSequentialMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
+    ) -> RecommenderProtocol:
         # If the training dataset size has decreased, something went wrong
         if (
             n_data := len(measurements) if measurements is not None else 0
@@ -185,8 +185,8 @@ class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
             recommenders available and ``mode="raise"``.
     """
 
-    recommenders: list[PureRecommender] = field(
-        converter=list, validator=deep_iterable(instance_of(PureRecommender))
+    recommenders: list[RecommenderProtocol] = field(
+        converter=list, validator=deep_iterable(instance_of(RecommenderProtocol))
     )
     """A finite-length sequence of recommenders to be used. For infinite-length
     iterables, see
@@ -205,7 +205,7 @@ class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
     """
 
     @override
-    def _get_recommender_at_current_step(self) -> PureRecommender:
+    def _get_recommender_at_current_step(self) -> RecommenderProtocol:
         idx = self._step
         if self.mode == "reuse_last":
             idx = min(idx, len(self.recommenders) - 1)
@@ -250,7 +250,7 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
             recommenders available.
     """
 
-    recommenders: Iterable[PureRecommender] = field()
+    recommenders: Iterable[RecommenderProtocol] = field()
     """An iterable providing the recommenders to be used."""
 
     _iterator: Iterator = field(
@@ -259,14 +259,14 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
     )
     """The iterator used to traverse the recommenders."""
 
-    _last_recommender: PureRecommender | None = field(init=False, default=None)
+    _last_recommender: RecommenderProtocol | None = field(init=False, default=None)
     """The recommender returned from the last call."""
 
     _step_of_last_recommender: int | None = field(init=False, default=None)
     """The position of the latest recommender fetched from the iterable."""
 
     @override
-    def _get_recommender_at_current_step(self) -> PureRecommender:
+    def _get_recommender_at_current_step(self) -> RecommenderProtocol:
         if self._step != self._step_of_last_recommender:
             try:
                 self._last_recommender = next(self._iterator)

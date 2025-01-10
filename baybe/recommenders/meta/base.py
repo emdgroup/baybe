@@ -11,7 +11,6 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
-from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
@@ -33,7 +32,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
+    ) -> RecommenderProtocol:
         """Select a pure recommender for the given experimentation context.
 
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details

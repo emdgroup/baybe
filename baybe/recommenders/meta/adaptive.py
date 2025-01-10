@@ -6,8 +6,8 @@ from attrs.validators import deep_iterable, instance_of
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
-from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace.core import SearchSpace
 from baybe.utils.interval import Partition
 
@@ -16,8 +16,8 @@ from baybe.utils.interval import Partition
 class BatchSizeControlledMetaRecommender(MetaRecommender):
     """A meta recommender that selects recommenders according to the batch size."""
 
-    recommenders: list[PureRecommender] = field(
-        converter=list, validator=deep_iterable(instance_of(PureRecommender))
+    recommenders: list[RecommenderProtocol] = field(
+        converter=list, validator=deep_iterable(instance_of(RecommenderProtocol))
     )
     """The recommenders for the individual batch size intervals."""
 
@@ -42,7 +42,7 @@ class BatchSizeControlledMetaRecommender(MetaRecommender):
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
+    ) -> RecommenderProtocol:
         if batch_size is None:
             raise ValueError("A batch size is required.")
         return self.recommenders[self.partition.get_interval_index(batch_size)]
