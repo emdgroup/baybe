@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `arrays_to_dataframes` decorator to create lookups from array-based callables
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `remain_switched` option to `TwoPhaseMetaRecommender`
+- `BatchSizeAdaptiveMetaRecommender` for selecting recommenders based on batch size
+- `is_stateful` class variable to `MetaRecommenders`
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
@@ -32,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
 - All arguments to `MetaRecommender.select_recommender` are now optional
+- `MetaRecommender`s can now be composed of other `MetaRecommender`s
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
