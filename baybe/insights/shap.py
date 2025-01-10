@@ -229,7 +229,7 @@ class SHAPInsight:
                 By default, the background data set of the explainer is used.
 
         Returns:
-           The computed Shapley explanation.
+            The computed Shapley explanation.
 
         Raises:
             ValueError: If the columns of the given dataframe cannot be aligned with the
