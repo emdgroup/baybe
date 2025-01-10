@@ -7,7 +7,6 @@ from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
@@ -17,7 +16,7 @@ from baybe._optional.insights import shap
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates.base import Surrogate
+from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.utils.dataframe import to_tensor
 
 _DEFAULT_EXPLAINER_CLS = "KernelExplainer"
@@ -79,7 +78,7 @@ def make_explainer_for_surrogate(
 
     if use_comp_rep:
 
-        def model(x: npt.ArrayLike) -> np.ndarray:
+        def model(x: np.ndarray) -> np.ndarray:
             tensor = to_tensor(x)
             with torch.no_grad():
                 output = surrogate._posterior_comp(tensor).mean
@@ -87,7 +86,7 @@ def make_explainer_for_surrogate(
 
     else:
 
-        def model(x: npt.ArrayLike) -> np.ndarray:
+        def model(x: np.ndarray) -> np.ndarray:
             df = pd.DataFrame(x, columns=data.columns)
             with torch.no_grad():
                 output = surrogate.posterior(df).mean
@@ -141,7 +140,7 @@ class SHAPInsight:
     @classmethod
     def from_surrogate(
         cls,
-        surrogate: Surrogate,
+        surrogate: SurrogateProtocol,
         data: pd.DataFrame,
         explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
         use_comp_rep: bool = False,
@@ -150,6 +149,12 @@ class SHAPInsight:
 
         For details, see :func:`make_explainer_for_surrogate`.
         """
+        if not isinstance(surrogate, Surrogate):
+            raise ValueError(
+                f"'{cls.__name__}.{cls.from_surrogate.__name__}' only accepts "
+                f"surrogate models of type '{Surrogate.__name__}' or its subclasses."
+            )
+
         explainer = make_explainer_for_surrogate(
             surrogate, data, explainer_cls, use_comp_rep
         )
