@@ -33,6 +33,10 @@ class IncompatibleExplainerError(IncompatibilityError):
     """An explainer is incompatible with the data it is presented."""
 
 
+class IncompatibleArgumentError(IncompatibilityError):
+    """An incompatible argument was passed to a callable."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations

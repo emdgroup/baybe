@@ -24,6 +24,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
@@ -460,14 +461,30 @@ class Campaign(SerialMixin):
         else:
             searchspace = self.searchspace
 
-        # Get the recommended search space entries
-        try:
-            rec = self.recommender.recommend(
+        # Pending experiments should not be passed to non-predictive recommenders
+        # to avoid complaints about unused arguments, so we need to know of what
+        # type the next recommender will be
+        recommender = self.recommender
+        if isinstance(recommender, MetaRecommender):
+            recommender = recommender.get_non_meta_recommender(
                 batch_size,
                 searchspace,
                 self.objective,
                 self._measurements_exp,
                 pending_experiments,
+            )
+        is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
+
+        # Get the recommended search space entries
+        try:
+            # NOTE: The `recommend` call must happen on `self.recommender` to update
+            #   potential inner states in case of meta recommenders!
+            rec = self.recommender.recommend(
+                batch_size,
+                searchspace,
+                self.objective,
+                self._measurements_exp,
+                None if is_nonpredictive else pending_experiments,
             )
         except NotEnoughPointsLeftError as ex:
             # Aliases for code compactness
