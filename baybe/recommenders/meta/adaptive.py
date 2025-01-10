@@ -13,7 +13,7 @@ from baybe.utils.interval import Partition
 
 
 @define
-class BatchSizeControlledMetaRecommender(MetaRecommender):
+class BatchSizeAdaptiveMetaRecommender(MetaRecommender):
     """A meta recommender that selects recommenders according to the batch size."""
 
     recommenders: list[RecommenderProtocol] = field(

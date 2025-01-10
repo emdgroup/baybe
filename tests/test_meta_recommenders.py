@@ -10,7 +10,7 @@ from baybe.recommenders import (
     SequentialMetaRecommender,
     TwoPhaseMetaRecommender,
 )
-from baybe.recommenders.meta.adaptive import BatchSizeControlledMetaRecommender
+from baybe.recommenders.meta.adaptive import BatchSizeAdaptiveMetaRecommender
 from baybe.recommenders.meta.sequential import StreamingSequentialMetaRecommender
 from tests.conftest import select_recommender
 
@@ -129,10 +129,10 @@ def test_sequential_meta_recommender(cls, mode):
         meta_recommender._was_used = True
 
 
-def test_batch_size_controlled_meta_recommender():
+def test_batch_size_adpative_meta_recommender():
     """The recommender retrieves the right recommender for the requested batch size."""
     thresholds = [2, 5]
-    meta_recommender = BatchSizeControlledMetaRecommender(RECOMMENDERS, thresholds)
+    meta_recommender = BatchSizeAdaptiveMetaRecommender(RECOMMENDERS, thresholds)
     for i, threshold in enumerate(thresholds):
         assert meta_recommender.select_recommender(threshold - 1) is RECOMMENDERS[i]
         assert meta_recommender.select_recommender(threshold) is RECOMMENDERS[i + 1]
