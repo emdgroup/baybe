@@ -485,6 +485,11 @@ def fuzzy_row_match(
 
     Raises:
         ValueError: If some rows are present in the right but not in the left dataframe.
+
+    Note:
+        This function assumes that the dataframes contain only allowed values as
+        specified in the parameter objects. No further validation to assert this is
+        done.
     """
     # Assert that all parameters appear in the given dataframe
     if not all(col in right_df.columns for col in left_df.columns):
