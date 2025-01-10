@@ -290,7 +290,7 @@ def test_migrated_metadata_attribute():
 def test_deprecated_meta_recommender_methods():
     """Calling the deprecated methods of meta recommender raises an error."""
     recommender = TwoPhaseMetaRecommender()
-    with pytest.raises(DeprecationError, match="has become obsolete"):
+    with pytest.raises(DeprecationError, match="has been deprecated."):
         recommender.get_current_recommender()
-    with pytest.raises(DeprecationError, match="has become obsolete"):
+    with pytest.raises(DeprecationError, match="has been deprecated"):
         recommender.get_next_recommender()

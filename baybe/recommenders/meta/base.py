@@ -4,7 +4,6 @@ import gc
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
-import cattrs
 import pandas as pd
 from attrs import define
 from typing_extensions import override
@@ -41,20 +40,46 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         on the method arguments.
         """
 
+    def get_inner_recommender(
+        self,
+        batch_size: int | None = None,
+        searchspace: SearchSpace | None = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> RecommenderProtocol:
+        """Follow the meta-recommender chain to the first non-meta recommender.
+
+        See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
+        on the method arguments.
+        """
+        recommender: MetaRecommender | RecommenderProtocol = self
+        while isinstance(recommender, MetaRecommender):
+            recommender = recommender.select_recommender(
+                batch_size, searchspace, objective, measurements, pending_experiments
+            )
+        return recommender
+
     def get_current_recommender(self) -> PureRecommender:
-        """Deprecated! Use :meth:`select_recommender` instead."""  # noqa: D401
+        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
+        instead.
+        """  # noqa
         raise DeprecationError(
-            f"'{MetaRecommender.__name__}.get_current_recommender' has become "
-            f"obsolete. Use "
-            f"'{MetaRecommender.__name__}.{self.select_recommender.__name__}' instead."
+            f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
+            f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
+            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"instead."
         )
 
     def get_next_recommender(self) -> PureRecommender:
-        """Deprecated! Use :meth:`select_recommender` instead."""  # noqa: D401
+        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
+        instead.
+        """  # noqa
         raise DeprecationError(
-            f"'{MetaRecommender.__name__}.get_next_recommender' has become "
-            f"obsolete. Use "
-            f"'{MetaRecommender.__name__}.{self.select_recommender.__name__}' instead."
+            f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
+            f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
+            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"instead."
         )
 
     @override
@@ -96,17 +121,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(
-    MetaRecommender,
-    lambda x: unstructure_base(
-        x,
-        # TODO: Remove once deprecation got expired:
-        overrides=dict(
-            allow_repeated_recommendations=cattrs.override(omit=True),
-            allow_recommending_already_measured=cattrs.override(omit=True),
-        ),
-    ),
-)
+converter.register_unstructure_hook(MetaRecommender, unstructure_base)
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )

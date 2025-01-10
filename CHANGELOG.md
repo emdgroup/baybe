@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `remain_switched` option to `TwoPhaseMetaRecommender`
 - `BatchSizeAdaptiveMetaRecommender` for selecting recommenders based on batch size
 - `is_stateful` class variable to `MetaRecommenders`
+- `get_inner_recommender` method to `MetaRecommender` for leaving the meta level
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
