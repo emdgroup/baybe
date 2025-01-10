@@ -6,7 +6,7 @@
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Literal
+from typing import ClassVar, Literal
 
 import pandas as pd
 from attrs import define, field, fields
@@ -91,6 +91,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
 @define
 class _BaseSequentialMetaRecommender(MetaRecommender):
+    is_stateful: ClassVar[bool] = True
+
     # TODO: These should **not** be exposed via the constructor but the workaround
     #   is currently needed for correct (de-)serialization. A proper approach would be
     #   to not set them via the constructor but through a custom hook in combination

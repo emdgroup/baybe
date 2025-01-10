@@ -2,7 +2,7 @@
 
 import gc
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
 import cattrs
 import pandas as pd
@@ -21,6 +21,9 @@ from baybe.serialization.core import get_base_structure_hook
 @define
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
+
+    is_stateful: ClassVar[bool] = False
+    """Boolean flag indicating if the meta recommender is stateful."""
 
     @abstractmethod
     def select_recommender(
