@@ -262,7 +262,7 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
     _last_recommender: PureRecommender | None = field(init=False, default=None)
     """The recommender returned from the last call."""
 
-    _step_of_last_recommender: int = field(init=False, default=-1)
+    _step_of_last_recommender: int | None = field(init=False, default=None)
     """The position of the latest recommender fetched from the iterable."""
 
     @override
