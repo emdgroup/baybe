@@ -91,6 +91,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
 @define
 class _BaseSequentialMetaRecommender(MetaRecommender):
+    """Base class for sequential meta recommenders."""
+
     is_stateful: ClassVar[bool] = True
 
     # TODO: These should **not** be exposed via the constructor but the workaround
