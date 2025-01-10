@@ -9,7 +9,7 @@ from collections.abc import Iterable, Iterator
 from typing import ClassVar, Literal
 
 import pandas as pd
-from attrs import define, field, fields
+from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, in_, instance_of
 from typing_extensions import override
 
@@ -253,7 +253,10 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
     recommenders: Iterable[PureRecommender] = field()
     """An iterable providing the recommenders to be used."""
 
-    _iterator: Iterator = field(init=False)
+    _iterator: Iterator = field(
+        init=False,
+        default=Factory(lambda self: iter(self.recommenders), takes_self=True),
+    )
     """The iterator used to traverse the recommenders."""
 
     _last_recommender: PureRecommender | None = field(init=False, default=None)
@@ -261,11 +264,6 @@ class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
 
     _step_of_last_recommender: int = field(init=False, default=-1)
     """The position of the latest recommender fetched from the iterable."""
-
-    @_iterator.default
-    def default_iterator(self):
-        """Initialize the recommender iterator."""
-        return iter(self.recommenders)
 
     @override
     def _get_recommender_at_current_step(self) -> PureRecommender:
