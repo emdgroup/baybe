@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
 - The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
   exclusively handled by the `Campaign` class.
+- `get_current_recommender` and `get_next_recommender` of `MetaRecommender` have become
+  obsolete and calling them is no longer possible
 
 ## [0.11.3] - 2024-11-06
 ### Fixed

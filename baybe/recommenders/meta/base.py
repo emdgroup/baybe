@@ -9,8 +9,10 @@ import pandas as pd
 from attrs import define
 from typing_extensions import override
 
+from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
+from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
@@ -38,6 +40,22 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
         on the method arguments.
         """
+
+    def get_current_recommender(self) -> PureRecommender:
+        """Deprecated! Use :meth:`select_recommender` instead."""  # noqa: D401
+        raise DeprecationError(
+            f"'{MetaRecommender.__name__}.get_current_recommender' has become "
+            f"obsolete. Use "
+            f"'{MetaRecommender.__name__}.{self.select_recommender.__name__}' instead."
+        )
+
+    def get_next_recommender(self) -> PureRecommender:
+        """Deprecated! Use :meth:`select_recommender` instead."""  # noqa: D401
+        raise DeprecationError(
+            f"'{MetaRecommender.__name__}.get_next_recommender' has become "
+            f"obsolete. Use "
+            f"'{MetaRecommender.__name__}.{self.select_recommender.__name__}' instead."
+        )
 
     @override
     def recommend(
