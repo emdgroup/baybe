@@ -178,7 +178,12 @@ class SHAPInsight:
 
         Returns:
             The SHAP insight object.
+
+        Raises:
+            ValueError: If the campaign does not contain any measurements.
         """
+        if campaign.measurements.empty:
+            raise ValueError("The campaign does not contain any measurements.")
         data = campaign.measurements[[p.name for p in campaign.parameters]]
         background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
@@ -264,15 +269,18 @@ class SHAPInsight:
             explanations = shap.Explanation(
                 values=attributions,
                 base_values=self.explainer.model(self.background_data).mean(),
-                data=df_aligned,
+                data=df_aligned.values,
                 feature_names=df_aligned.columns.values,
             )
         else:
             explanations = self.explainer(df_aligned)
 
-        # Permute explanation object according to input column order
+        # Permute explanation object data according to input column order.
+        # Do not do this for the base_values as it can be a scalar.
         idx = self.background_data.columns.get_indexer(df.columns)
-        explanations = explanations[:, idx]
+        for attr in ["values", "data"]:
+            setattr(explanations, attr, getattr(explanations, attr)[:, idx])
+        explanations.feature_names = [explanations.feature_names[i] for i in idx]
 
         # Reduce dimensionality of explanations to 2D in case
         # a 3D explanation is returned. This is the case for
