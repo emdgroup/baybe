@@ -1,4 +1,4 @@
-"""Baybe insights (optional)."""
+"""BayBE insights (optional)."""
 
 from baybe.insights.shap import EXPLAINERS, SHAP_PLOTS, SHAPInsight
 
