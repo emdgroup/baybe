@@ -107,7 +107,10 @@ class AcquisitionFunction(ABC, SerialMixin):
 
         # Add acquisition objective / best observed value
         match objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+            case (
+                SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN))
+                | ChimeraObjective()
+            ):
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.min().item()
@@ -127,12 +130,6 @@ class AcquisitionFunction(ABC, SerialMixin):
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.max().item()
-                    )
-            case ChimeraObjective():
-                # Minimize the Chimera merits
-                if "best_f" in signature_params:
-                    additional_params["best_f"] = (
-                        bo_surrogate.posterior(train_x).mean.min().item()
                     )
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
