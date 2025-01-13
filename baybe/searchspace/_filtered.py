@@ -14,15 +14,15 @@ from baybe.searchspace import SubspaceDiscrete
 class FilteredSubspaceDiscrete(SubspaceDiscrete):
     """A filtered search space representing a reduced candidate set."""
 
-    mask: npt.NDArray[np.bool_] = field(
+    mask_keep: npt.NDArray[np.bool_] = field(
         validator=instance_of(np.ndarray),
         kw_only=True,
         eq=cmp_using(eq=np.array_equal),
     )
-    """The filtering mask. ``True`` denote elements to be kept."""
+    """The filtering mask. ``True`` marks elements to be kept."""
 
-    @mask.validator
-    def _validate_mask(self, _, value) -> None:
+    @mask_keep.validator
+    def _validate_mask_keep(self, _, value) -> None:
         if not len(value) == len(self.exp_rep):
             raise ValueError("Filter mask must match the size of the space.")
         if not value.dtype == bool:
@@ -30,16 +30,16 @@ class FilteredSubspaceDiscrete(SubspaceDiscrete):
 
     @classmethod
     def from_subspace(
-        cls, subspace: SubspaceDiscrete, mask: npt.NDArray[np.bool_]
+        cls, subspace: SubspaceDiscrete, mask_keep: npt.NDArray[np.bool_]
     ) -> Self:
         """Filter an existing subspace."""
         return cls(
             **asdict(subspace, filter=lambda attr, _: attr.init, recurse=False),
-            mask=mask,
+            mask_keep=mask_keep,
         )
 
     @override
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         mask_todrop = self._excluded.copy()
-        mask_todrop |= ~self.mask
+        mask_todrop |= ~self.mask_keep
         return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
