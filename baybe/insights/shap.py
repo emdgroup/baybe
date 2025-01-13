@@ -145,7 +145,7 @@ class SHAPInsight:
         explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
         use_comp_rep: bool = False,
     ):
-        """Create a SHAP insight from a campaign.
+        """Create a SHAP insight from a surrogate.
 
         For details, see :func:`make_explainer_for_surrogate`.
         """
@@ -320,6 +320,7 @@ class SHAPInsight:
         if data is None:
             data = self.background_data
 
+        # Use custom scatter plot function to ignore non-numeric features
         if plot_type == "scatter":
             return self._plot_shap_scatter(data, show=show, **kwargs)
 
