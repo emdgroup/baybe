@@ -28,7 +28,7 @@ SHAP_EXPLAINERS = {
     "PermutationExplainer",
 }
 NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
-EXPLAINERS = {*SHAP_EXPLAINERS, *NON_SHAP_EXPLAINERS}
+EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
 SHAP_PLOTS = {"bar", "beeswarm", "heatmap", "scatter"}
 
 
