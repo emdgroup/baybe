@@ -42,7 +42,6 @@ pytestmark = [
 
 def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
     """Helper function for general SHAP explainer tests."""
-    # run_iterations(campaign, n_iterations=2, batch_size=5)
     try:
         # Sanity check explainer
         shap_insight = SHAPInsight.from_campaign(
