@@ -86,8 +86,7 @@ def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
 
 @mark.parametrize("explainer_cls", NON_SHAP_EXPLAINERS)
 def test_non_shap_explainers(ongoing_campaign, explainer_cls):
-    """Test the explain functionalities with the non-SHAP explainer MAPLE."""
-    """Test the non-SHAP explainer in computational representation."""
+    """Test the non-SHAP explainers in computational representation."""
     _test_shap_insight(
         ongoing_campaign, explainer_cls, use_comp_rep=True, is_shap=False
     )
