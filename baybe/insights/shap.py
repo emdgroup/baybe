@@ -224,9 +224,11 @@ class SHAPInsight:
             searchspace, objective, measurements
         )
 
+        data = measurements[[p.name for p in searchspace.parameters]]
+
         return cls.from_surrogate(
             surrogate_model,
-            searchspace.transform(measurements) if use_comp_rep else measurements,
+            searchspace.transform(data) if use_comp_rep else data,
             explainer_cls=explainer_cls,
             use_comp_rep=use_comp_rep,
         )
