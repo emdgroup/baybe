@@ -231,11 +231,11 @@ class SHAPInsight:
             use_comp_rep=use_comp_rep,
         )
 
-    def explain(self, df: pd.DataFrame | None = None, /) -> shap.Explanation:
+    def explain(self, data: pd.DataFrame | None = None, /) -> shap.Explanation:
         """Compute a Shapley explanation for a given data set.
 
         Args:
-            df: The dataframe for which the Shapley values are to be computed.
+            data: The dataframe for which the Shapley values are to be computed.
                 By default, the background data set of the explainer is used.
 
         Returns:
@@ -245,16 +245,16 @@ class SHAPInsight:
             ValueError: If the columns of the given dataframe cannot be aligned with the
                 columns of the explainer background dataframe.
         """
-        if df is None:
-            df = self.background_data
-        elif set(self.background_data.columns) != set(df.columns):
+        if data is None:
+            data = self.background_data
+        elif set(self.background_data.columns) != set(data.columns):
             raise ValueError(
                 "The provided dataframe must have the same column names as used by "
                 "the explainer object."
             )
 
         # Align columns with background data
-        df_aligned = df[self.background_data.columns]
+        df_aligned = data[self.background_data.columns]
 
         if not self.uses_shap_explainer:
             # Return attributions for non-SHAP explainers
@@ -277,7 +277,7 @@ class SHAPInsight:
 
         # Permute explanation object data according to input column order.
         # Do not do this for the base_values as it can be a scalar.
-        idx = self.background_data.columns.get_indexer(df.columns)
+        idx = self.background_data.columns.get_indexer(data.columns)
         for attr in ["values", "data"]:
             setattr(explanations, attr, getattr(explanations, attr)[:, idx])
         explanations.feature_names = [explanations.feature_names[i] for i in idx]
@@ -297,7 +297,7 @@ class SHAPInsight:
     def plot(
         self,
         plot_type: Literal["bar", "beeswarm", "force", "heatmap", "scatter"],
-        df: pd.DataFrame | None = None,
+        data: pd.DataFrame | None = None,
         /,
         *,
         show: bool = True,
@@ -307,7 +307,7 @@ class SHAPInsight:
 
         Args:
             plot_type: The type of plot to be created.
-            df: See :meth:`explain`.
+            data: See :meth:`explain`.
             show: Boolean flag determining if the plot is to be rendered.
             **kwargs: Additional keyword arguments passed to the plot function.
 
@@ -317,11 +317,11 @@ class SHAPInsight:
         Raises:
             ValueError: If the provided plot type is not supported.
         """
-        if df is None:
-            df = self.background_data
+        if data is None:
+            data = self.background_data
 
         if plot_type == "scatter":
-            return self._plot_shap_scatter(df, show=show, **kwargs)
+            return self._plot_shap_scatter(data, show=show, **kwargs)
 
         if plot_type not in SHAP_PLOTS:
             raise ValueError(
@@ -330,29 +330,31 @@ class SHAPInsight:
             )
         plot_func = getattr(shap.plots, plot_type)
 
-        return plot_func(self.explain(df), show=show, **kwargs)
+        return plot_func(self.explain(data), show=show, **kwargs)
 
     def _plot_shap_scatter(
-        self, df: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
+        self, data: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
     ) -> plt.Axes:
         """Plot the Shapley values as scatter plot, ignoring non-numeric features.
 
         For details, see :meth:`explain`.
         """
-        if df is None:
-            df = self.background_data
+        if data is None:
+            data = self.background_data
 
-        df_numeric = df.select_dtypes("number")
-        numeric_idx = df.columns.get_indexer(df_numeric.columns)
+        df_numeric = data.select_dtypes("number")
+        numeric_idx = data.columns.get_indexer(df_numeric.columns)
         if df_numeric.empty:
             raise ValueError(
                 "No SHAP scatter plot can be created since all features contain "
                 "non-numeric values."
             )
-        if non_numeric_cols := set(df.columns) - set(df_numeric.columns):
+        if non_numeric_cols := set(data.columns) - set(df_numeric.columns):
             warnings.warn(
                 f"The following features are excluded from the SHAP scatter plot "
                 f"because they contain non-numeric values: {non_numeric_cols}",
                 UserWarning,
             )
-        return shap.plots.scatter(self.explain(df)[:, numeric_idx], show=show, **kwargs)
+        return shap.plots.scatter(
+            self.explain(data)[:, numeric_idx], show=show, **kwargs
+        )
