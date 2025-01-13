@@ -9,7 +9,6 @@ from attrs import evolve
 from baybe.parameters.base import Parameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
-    _FixedNumericalContinuousParameter,
 )
 from baybe.utils.interval import Interval
 
@@ -98,7 +97,7 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 def activate_parameter(
     parameter: NumericalContinuousParameter,
     thresholds: Interval,
-) -> NumericalContinuousParameter | _FixedNumericalContinuousParameter:
+) -> NumericalContinuousParameter:
     """Activates a given parameter by moving its bounds away from zero.
 
     Important:
@@ -135,16 +134,21 @@ def activate_parameter(
             f"given."
         )
 
+    # Note that the definition on the boundary (lower/upper threshold) is vague.
+    # The value on the lower/upper boundary is determined as within inactive_range;
+    # while an activated parameter may take this boundary value (lower/upper
+    # threshold). We allow the misuse of boundary in the "in_inactive_range" and it
+    # is just an utils for checking condition. Ultimately, the "key" threshold
+    # boundary appears as a bound of the activated parameter and this is compatible
+    # with the thresholds defined in ContinuousCardinalityConstraint, as long as the
+    # "key" threshold boundary is not zero. The "key" threshold boundary is always
+    # non-zero when the thresholds are inferred from the bounds of this parameter.
+
     def in_inactive_range(x: float) -> bool:
         """Return true when x is within the inactive range."""
-        if thresholds.lower == 0.0:
-            return thresholds.lower <= x < thresholds.upper
-        if thresholds.upper == 0.0:
-            return thresholds.lower < x <= thresholds.upper
-        return thresholds.lower < x < thresholds.upper
+        return thresholds.lower <= x <= thresholds.upper
 
-    # Note: When both bounds in inactive range. This step must be checked first to catch
-    # all possible cases when a parameter cannot be activated.
+    # When both bounds in inactive range.
     if in_inactive_range(lower_bound) and in_inactive_range(upper_bound):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
@@ -157,20 +161,10 @@ def activate_parameter(
     if lower_bound < thresholds.lower and in_inactive_range(upper_bound):
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
-    if lower_bound == thresholds.lower and in_inactive_range(upper_bound):
-        return _FixedNumericalContinuousParameter(
-            name=parameter.name, value=thresholds.lower
-        )
-
     # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
     if upper_bound > thresholds.upper and in_inactive_range(lower_bound):
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
-
-    if upper_bound == thresholds.upper and in_inactive_range(lower_bound):
-        return _FixedNumericalContinuousParameter(
-            name=parameter.name, value=thresholds.upper
-        )
 
     # Both bounds separated from inactive range
     return parameter
