@@ -44,7 +44,14 @@ class ThresholdType(Enum):
 
 @define(frozen=True, slots=False)
 class ChimeraObjective(Objective):
-    """An objective scalarizing multiple targets using desirability values."""
+    """An objective scalarizing multiple targets using Chimera Merits.
+
+    This class implements the Chimera function for multi-objective optimization,
+    allowing users to establish a hierarchy of targets with thresholds. The score
+    is minimized.
+
+    For details, see: https://pubs.rsc.org/ko/content/articlelanding/2018/sc/c8sc02239a#!divAbstract
+    """
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
@@ -136,7 +143,7 @@ class ChimeraObjective(Objective):
         return np.exp(-np.logaddexp(0, arg))
 
     def _hard_heaviside(self, value: float) -> float:
-        return (value >= 0).astype(
+        return (value >= 0.0).astype(
             float
         )  # Pandas handles booleans as floats automatically
 
