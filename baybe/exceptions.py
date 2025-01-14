@@ -27,6 +27,10 @@ class IncompatibleAcquisitionFunctionError(IncompatibilityError):
     """An incompatible acquisition function was selected."""
 
 
+class IncompatibleArgumentError(IncompatibilityError):
+    """An incompatible argument was passed to a callable."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations

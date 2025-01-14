@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `arrays_to_dataframes` decorator to create lookups from array-based callables
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `remain_switched` option to `TwoPhaseMetaRecommender`
+- `BatchSizeAdaptiveMetaRecommender` for selecting recommenders based on batch size
+- `is_stateful` class variable to `MetaRecommenders`
+- `get_inner_recommender` method to `MetaRecommender` for leaving the meta level
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
@@ -29,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
+- All arguments to `MetaRecommender.select_recommender` are now optional
+- `MetaRecommender`s can now be composed of other `MetaRecommender`s
+- `allow_repeated_recommendations` has been renamed to 
+  `allow_recommending_already_recommended` 
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
@@ -41,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `NumericalTarget` now raises an error
 - Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
   between constraints and dropped parameters yielding empty parameter sets
+- `allow_*` flags are now context-aware, i.e. setting them in a context where they are
+  irrelevant now raises an error instead of passing silently
 
 ### Removed
 - `botorch_function_wrapper` utility for creating lookup callables
@@ -58,6 +68,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
 - The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
   exclusively handled by the `Campaign` class.
+- `get_current_recommender` and `get_next_recommender` of `MetaRecommender` have become
+  obsolete and calling them is no longer possible
+- Passing `allow_*` flags to recommenders is no longer supported since the necessary
+  metadata required for the flags is no longer available at that level. The
+  functionality has been taken over by `Campaign`.
 
 ## [0.11.3] - 2024-11-06
 ### Fixed

@@ -2,13 +2,13 @@
 
 import gc
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, ClassVar
 
-import cattrs
 import pandas as pd
-from attrs import define, field
+from attrs import define
 from typing_extensions import override
 
+from baybe.exceptions import DeprecationError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.pure.base import PureRecommender
@@ -22,76 +22,65 @@ from baybe.serialization.core import get_base_structure_hook
 class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
     """Abstract base class for all meta recommenders."""
 
-    _current_recommender: PureRecommender | None = field(default=None, init=False)
-    """The current recommender."""
-
-    _used_recommender_ids: set[int] = field(factory=set, init=False)
-    """Set of ids from recommenders that were used by this meta recommender."""
+    is_stateful: ClassVar[bool] = False
+    """Boolean flag indicating if the meta recommender is stateful."""
 
     @abstractmethod
     def select_recommender(
         self,
-        batch_size: int,
-        searchspace: SearchSpace,
+        batch_size: int | None = None,
+        searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
+    ) -> RecommenderProtocol:
         """Select a pure recommender for the given experimentation context.
 
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
         on the method arguments.
         """
 
-    def get_current_recommender(self) -> PureRecommender:
-        """Get the current recommender, if available."""
-        if self._current_recommender is None:
-            raise RuntimeError(
-                f"No recommendation has been requested from the "
-                f"'{self.__class__.__name__}' yet. Because the recommender is a "
-                f"'{MetaRecommender.__name__}', this means no actual recommender has "
-                f"been selected so far. The recommender will be available after the "
-                f"next '{self.recommend.__name__}' call."
-            )
-        return self._current_recommender
-
-    def get_next_recommender(
+    def get_inner_recommender(
         self,
-        batch_size: int,
-        searchspace: SearchSpace,
+        batch_size: int | None = None,
+        searchspace: SearchSpace | None = None,
         objective: Objective | None = None,
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> PureRecommender:
-        """Get the recommender for the next recommendation.
-
-        Returns the next recommender in row that has not yet been used for generating
-        recommendations. In case of multiple consecutive calls, this means that
-        the same recommender instance is returned until its :meth:`recommend` method
-        is called.
+    ) -> RecommenderProtocol:
+        """Follow the meta-recommender chain to the first non-meta recommender.
 
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
         on the method arguments.
         """
-        # Check if the stored recommender instance can be returned
-        if (
-            self._current_recommender is not None
-            and id(self._current_recommender) not in self._used_recommender_ids
-        ):
-            recommender = self._current_recommender
-
-        # Otherwise, fetch the next recommender waiting in row
-        else:
-            recommender = self.select_recommender(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
+        recommender: MetaRecommender | RecommenderProtocol = self
+        while isinstance(recommender, MetaRecommender):
+            recommender = recommender.select_recommender(
+                batch_size, searchspace, objective, measurements, pending_experiments
             )
-            self._current_recommender = recommender
-
         return recommender
+
+    def get_current_recommender(self) -> PureRecommender:
+        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
+        instead.
+        """  # noqa
+        raise DeprecationError(
+            f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
+            f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
+            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"instead."
+        )
+
+    def get_next_recommender(self) -> PureRecommender:
+        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
+        instead.
+        """  # noqa
+        raise DeprecationError(
+            f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
+            f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
+            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"instead."
+        )
 
     @override
     def recommend(
@@ -103,7 +92,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
-        recommender = self.get_next_recommender(
+        recommender = self.select_recommender(
             batch_size=batch_size,
             searchspace=searchspace,
             objective=objective,
@@ -123,29 +112,16 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             }
         )
 
-        recommendations = recommender.recommend(
+        return recommender.recommend(
             batch_size=batch_size,
             searchspace=searchspace,
             pending_experiments=pending_experiments,
             **optional_args,
         )
-        self._used_recommender_ids.add(id(recommender))
-
-        return recommendations
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(
-    MetaRecommender,
-    lambda x: unstructure_base(
-        x,
-        # TODO: Remove once deprecation got expired:
-        overrides=dict(
-            allow_repeated_recommendations=cattrs.override(omit=True),
-            allow_recommending_already_measured=cattrs.override(omit=True),
-        ),
-    ),
-)
+converter.register_unstructure_hook(MetaRecommender, unstructure_base)
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )

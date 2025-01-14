@@ -1,5 +1,7 @@
 """Tests features of the Campaign object."""
 
+from contextlib import nullcontext
+
 import pandas as pd
 import pytest
 from pytest import param
@@ -7,8 +9,13 @@ from pytest import param
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
-from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
+from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.utils.basic import UNSPECIFIED
 
 from .conftest import run_iterations
 
@@ -73,3 +80,36 @@ def test_candidate_toggling(constraints, exclude, complement):
     other = campaign._searchspace_metadata[_EXCLUDED].drop(index=idx)
     assert all(target == exclude)  # must contain the updated values
     assert all(other != exclude)  # must contain the original values
+
+
+@pytest.mark.parametrize(
+    "flag",
+    [
+        "allow_recommending_already_measured",
+        "allow_recommending_already_recommended",
+        "allow_recommending_pending_experiments",
+    ],
+    ids=lambda x: x.removeprefix("allow_recommending_"),
+)
+@pytest.mark.parametrize(
+    "space_type",
+    [SearchSpaceType.DISCRETE, SearchSpaceType.CONTINUOUS],
+    ids=lambda x: x.name,
+)
+@pytest.mark.parametrize(
+    "value", [True, False, param(UNSPECIFIED, id=repr(UNSPECIFIED))]
+)
+def test_setting_allow_flags(flag, space_type, value):
+    """Passed allow_* flags are rejected if incompatible with the search space type."""
+    kwargs = {flag: value}
+    expect_error = (space_type is SearchSpaceType.DISCRETE) != (
+        value is not UNSPECIFIED
+    )
+
+    if space_type is SearchSpaceType.DISCRETE:
+        parameter = NumericalDiscreteParameter("p", [0, 1])
+    else:
+        parameter = NumericalContinuousParameter("p", [0, 1])
+
+    with pytest.raises(ValueError) if expect_error else nullcontext():
+        Campaign(parameter, **kwargs)

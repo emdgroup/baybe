@@ -126,6 +126,8 @@ nitpick_ignore_regex = [
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
     (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
+    # Other
+    (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
 ]
 
 # Ignore the following links when checking inks for viability

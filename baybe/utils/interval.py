@@ -3,10 +3,13 @@
 import gc
 from collections.abc import Iterable
 from functools import singledispatchmethod
+from itertools import pairwise
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 import numpy as np
 from attrs import define, field
+from attrs.validators import min_len
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -147,6 +150,31 @@ def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
     if isinstance(value, dict):
         return converter.structure_attrs_fromdict(value, cls)
     return Interval.create(value)
+
+
+@define
+class Partition:
+    """A partition of the real number line into right-open intervals."""
+
+    thresholds: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]), validator=min_len(1)
+    )
+    """The thresholds separating the real number line into intervals."""
+
+    @thresholds.validator
+    def _validate_thresholds(self, _, value):
+        if not all(x < y for x, y in pairwise(value)):
+            raise ValueError("Thresholds must be strictly monotonically increasing.")
+
+    def get_interval_index(self, value: float, /) -> int:
+        """Return the index of the interval containing the given value."""
+        return next(
+            i for i, v in enumerate((*self.thresholds, float("inf"))) if value < v
+        )
+
+    def __len__(self) -> int:
+        """Return the number of intervals defined by the partition."""
+        return len(self.thresholds) + 1
 
 
 # Register structure hooks
