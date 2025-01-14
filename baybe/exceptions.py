@@ -29,6 +29,10 @@ class IncompatibleAcquisitionFunctionError(IncompatibilityError):
     """An incompatible acquisition function was selected."""
 
 
+class IncompatibleExplainerError(IncompatibilityError):
+    """An explainer is incompatible with the data it is presented."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations

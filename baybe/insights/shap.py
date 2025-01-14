@@ -10,9 +10,11 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
+from shap import KernelExplainer
 
 from baybe import Campaign
 from baybe._optional.insights import shap
+from baybe.exceptions import IncompatibleExplainerError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
@@ -74,6 +76,16 @@ def make_explainer_for_surrogate(
     if isinstance(explainer_cls, str):
         explainer_cls = _get_explainer_cls(explainer_cls)
 
+    if not (
+        data.select_dtypes(exclude="number").empty
+        or isinstance(explainer_cls, KernelExplainer)
+    ):
+        raise IncompatibleExplainerError(
+            f"The selected explainer class '{explainer_cls.__name__}' does not support "
+            f"categorical data. Switch to computational representation or use "
+            f"'{KernelExplainer.__name__}'."
+        )
+
     import torch
 
     if use_comp_rep:
@@ -95,23 +107,7 @@ def make_explainer_for_surrogate(
     # Handle special settings: Lime default mode is otherwise set to "classification"
     kwargs = {"mode": "regression"} if explainer_cls.__name__ == "LimeTabular" else {}
 
-    try:
-        shap_explainer = explainer_cls(model, data, **kwargs)
-
-        # Explain first two data points to ensure that the explainer is working
-        if is_shap_explainer(shap_explainer):
-            shap_explainer(data.iloc[0:1])
-    except TypeError as e:
-        if "not supported for the input types" in str(e) and not use_comp_rep:
-            raise NotImplementedError(
-                f"The selected explainer class {explainer_cls} does not support "
-                f"the experimental representation. Switch to computational "
-                f"representation or use a different explainer (e.g. the default "
-                f"shap.KernelExplainer)."
-            )
-        else:
-            raise e
-    return shap_explainer
+    return explainer_cls(model, data, **kwargs)
 
 
 @define
