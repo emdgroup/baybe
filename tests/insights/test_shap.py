@@ -1,10 +1,13 @@
 """Tests for insights subpackage."""
 
+import inspect
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 from pytest import mark
+from shap import KernelExplainer
 
 from baybe._optional.info import INSIGHTS_INSTALLED
 from baybe.exceptions import IncompatibleExplainerError
@@ -25,20 +28,45 @@ from baybe.insights.shap import (
 )
 from tests.conftest import run_iterations
 
-# File-wide parameterization settings
-pytestmark = [
-    mark.parametrize("n_grid_points", [5], ids=["g5"]),
-    mark.parametrize("n_iterations", [2], ids=["i2"]),
-    mark.parametrize("batch_size", [2], ids=["b2"]),
-    mark.parametrize(
-        "parameter_names",
-        [
-            ["Conti_finite1", "Conti_finite2"],
-            ["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"],
-        ],
-        ids=["conti_params", "hybrid_params"],
-    ),
-]
+
+@pytest.fixture
+def n_grid_points():
+    return 5
+
+
+@pytest.fixture
+def n_iterations():
+    return 2
+
+
+@pytest.fixture
+def batch_size():
+    return 2
+
+
+@pytest.fixture(
+    params=[
+        ["Conti_finite1", "Conti_finite2"],
+        ["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"],
+    ],
+    ids=["conti_params", "hybrid_params"],
+)
+def parameter_names(request):
+    return request.param
+
+
+def _has_required_init_parameters(cls: type[shap.Explainer]) -> bool:
+    """Check if non-shap initializer has required standard parameters."""
+    REQUIRED_PARAMETERS = ["self", "model", "data"]
+    init_signature = inspect.signature(cls.__init__)
+    parameters = list(init_signature.parameters.keys())
+    return parameters[:3] == REQUIRED_PARAMETERS
+
+
+@pytest.mark.parametrize("explainer_name", NON_SHAP_EXPLAINERS)
+def test_non_shap_signature(explainer_name):
+    """Non-SHAP explainers must have the required signature."""
+    assert _has_required_init_parameters(_get_explainer_cls(explainer_name))
 
 
 def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
@@ -147,3 +175,22 @@ def test_creation_from_recommender(ongoing_campaign):
         ongoing_campaign.measurements,
     )
     assert isinstance(shap_insight, insights.SHAPInsight)
+
+
+def test_column_permutation():
+    """Explaining data with permuted columns gives permuted explanations."""
+    N = 10
+
+    # Create insights object and test data
+    background_data = pd.DataFrame(np.random.random((N, 3)), columns=["x", "y", "z"])
+    explainer = KernelExplainer(lambda x: x, background_data)
+    insights = SHAPInsight(explainer, background_data)
+    df = pd.DataFrame(np.random.random((N, 3)), columns=["x", "y", "z"])
+
+    # Regular column order
+    ex1 = insights.explain(df)
+
+    # Permuted column order
+    ex2 = insights.explain(df[["z", "x", "y"]])[:, [1, 2, 0]]
+
+    assert np.array_equal(ex1.values, ex2.values)
