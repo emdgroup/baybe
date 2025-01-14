@@ -16,7 +16,7 @@ from baybe import Campaign
 from baybe._optional.insights import shap
 from baybe.exceptions import IncompatibleExplainerError
 from baybe.objectives.base import Objective
-from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
 from baybe.utils.dataframe import to_tensor
@@ -197,7 +197,7 @@ class SHAPInsight:
     @classmethod
     def from_recommender(
         cls,
-        recommender: BayesianRecommender,
+        recommender: RecommenderProtocol,
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame,
@@ -219,7 +219,17 @@ class SHAPInsight:
 
         Returns:
             The SHAP insight object.
+
+        Raises:
+            TypeError: If the recommender has no ``get_surrogate`` method.
         """
+        if not hasattr(recommender, "get_surrogate"):
+            raise TypeError(
+                f"The provided recommender does not provide a surrogate model. "
+                f"'{cls.__name__}' needs a surrogate model and thus only works with "
+                f"model-based recommenders."
+            )
+
         surrogate_model = recommender.get_surrogate(
             searchspace, objective, measurements
         )
