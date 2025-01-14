@@ -132,6 +132,15 @@ class SHAPInsight:
     background_data: pd.DataFrame = field(validator=instance_of(pd.DataFrame))
     """The background data set used by the explainer."""
 
+    @explainer.validator
+    def _validate_explainer(self, _, explainer: shap.Explainer) -> None:
+        """Validate the explainer type."""
+        if (name := explainer.__class__.__name__) not in EXPLAINERS:
+            raise ValueError(
+                f"The given explainer type must be one of {EXPLAINERS}. "
+                f"Given: '{name}'."
+            )
+
     @property
     def uses_shap_explainer(self) -> bool:
         """Indicates if a SHAP explainer is used or not (e.g. MAPLE, LIME)."""
