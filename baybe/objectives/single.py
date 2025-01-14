@@ -94,7 +94,7 @@ class SingleTargetObjective(Objective):
         if (
             isinstance(t := self._target, NumericalTarget)
             and t.mode is TargetMode.MIN
-            and self._target.bounds.is_bounded
+            and t.bounds.is_bounded
         ):
             out = -out
         return out
