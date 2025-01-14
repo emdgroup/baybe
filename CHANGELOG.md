@@ -41,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `NumericalTarget` now raises an error
 - Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
   between constraints and dropped parameters yielding empty parameter sets
-- Minimizing `NumericalTarget`s with transformations no longer maximizes the targets
+- Minimizing a single `NumericalTarget` with specified bounds/transformation via
+  `SingleTargetObjective` no longer erroneously maximizes it
 
 ### Removed
 - `botorch_function_wrapper` utility for creating lookup callables
