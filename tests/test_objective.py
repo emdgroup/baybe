@@ -102,7 +102,7 @@ def test_desirability_scalarization(values, scalarizer, weights, expected):
     ("mode", "bounds", "opt"),
     [("MIN", None, 0), ("MAX", None, 1), ("MIN", (0, 1), 0), ("MAX", (0, 1), 1)],
 )
-def test_single_objective_and_bounds(mode, bounds, opt):
+def test_single_objective(mode, bounds, opt):
     """Recommendations yield expected results with and without bounded objective."""
     searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
     objective = NumericalTarget("t", mode=mode, bounds=bounds).to_objective()
