@@ -114,7 +114,7 @@ def make_explainer_for_surrogate(
 class SHAPInsight:
     """Class for SHAP-based feature importance insights.
 
-    Also supports LIME and MAPLE explainers via the ``shap`` module.
+    Also supports LIME and MAPLE explainers via the ``shap`` package.
     """
 
     explainer: shap.Explainer = field(validator=instance_of(shap.Explainer))
@@ -172,7 +172,7 @@ class SHAPInsight:
         Uses the measurements of the campaign as background data.
 
         Args:
-            campaign: A campaign holding a recommender using a surrogate model.
+            campaign: A campaign using a surrogate-based recommender.
             explainer_cls: See :func:`make_explainer_for_surrogate`.
             use_comp_rep: See :func:`make_explainer_for_surrogate`.
 
