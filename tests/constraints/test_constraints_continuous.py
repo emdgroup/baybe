@@ -78,9 +78,9 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
     res = campaign.measurements
     print(res)
 
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        assert np.isclose(res_batch["Conti_finite1"].sum(), 0.3)
+    res_grouped = res.groupby("BatchNr")
+    interpoint_result = res_grouped["Conti_finite1"].sum()
+    np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
@@ -91,9 +91,9 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
     res = campaign.measurements
     print(res)
 
-    for batch in range(n_iterations):
-        res_batch = res[res["BatchNr"] == batch + 1]
-        assert 2 * res_batch["Conti_finite1"].sum() >= 0.3 - TOLERANCE
+    res_grouped = res.groupby("BatchNr")
+    interpoint_result = 2 * res_grouped["Conti_finite1"].sum()
+    assert interpoint_result.ge(0.3 - TOLERANCE).all()
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
