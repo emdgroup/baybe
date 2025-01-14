@@ -236,6 +236,8 @@ def continuous_linear_constraints(
         )
     )
     rhs = draw(finite_floats())
+    # TODO We will probably want to handle interpoint constraints differently
+    # in the future. This comment is to remind us of this.
     is_interpoint = draw(st.booleans())
 
     # Optionally add the operator
