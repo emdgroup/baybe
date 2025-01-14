@@ -261,15 +261,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent                Base                        Ligand  Temperature  \
-    405  p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
-    303      DMAc  Potassium pivalate                 (t-Bu)PhCPhos        120.0   
-    377  p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+             Solvent               Base                        Ligand  \
+    217         DMAc     Cesium acetate                 (t-Bu)PhCPhos   
+    71   Butyl Ester  Potassium acetate                     BrettPhos   
+    48   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration  
-    405          0.057  
-    303          0.057  
-    377          0.153  
+         Temperature  Concentration  
+    217         90.0          0.100  
+    71         120.0          0.153  
+    48         105.0          0.057  
 
 
 
@@ -282,15 +282,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent                Base                        Ligand  Temperature  \
-    405  p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
-    303      DMAc  Potassium pivalate                 (t-Bu)PhCPhos        120.0   
-    377  p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+             Solvent               Base                        Ligand  \
+    217         DMAc     Cesium acetate                 (t-Bu)PhCPhos   
+    71   Butyl Ester  Potassium acetate                     BrettPhos   
+    48   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration      yield  
-    405          0.057   0.164238  
-    303          0.057  10.890993  
-    377          0.153  16.987804  
+         Temperature  Concentration      yield  
+    217         90.0          0.100  30.483376  
+    71         120.0          0.153  14.627986  
+    48         105.0          0.057  17.169980  
 
 
 
