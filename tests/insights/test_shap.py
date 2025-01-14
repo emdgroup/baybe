@@ -59,18 +59,9 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
             df = campaign.searchspace.transform(df)
         shap_explanation = shap_insight.explain(df)
         assert isinstance(shap_explanation, shap.Explanation)
-    except TypeError as e:
+    except NotImplementedError as e:
         if "The selected explainer class" in str(e):
             pytest.xfail("Unsupported model/explainer combination")
-        else:
-            raise e
-    except NotImplementedError as e:
-        if (
-            "The selected explainer class" in str(e)
-            and not use_comp_rep
-            and not isinstance(explainer_cls, shap.explainers.KernelExplainer)
-        ):
-            pytest.xfail("Exp. rep. not supported")
         else:
             raise e
 

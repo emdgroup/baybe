@@ -101,11 +101,6 @@ def make_explainer_for_surrogate(
         # Explain first two data points to ensure that the explainer is working
         if is_shap_explainer(shap_explainer):
             shap_explainer(data.iloc[0:1])
-    except shap.utils._exceptions.InvalidModelError:
-        raise TypeError(
-            f"The selected explainer class {explainer_cls} does not support the "
-            f"provided surrogate model."
-        )
     except TypeError as e:
         if "not supported for the input types" in str(e) and not use_comp_rep:
             raise NotImplementedError(
