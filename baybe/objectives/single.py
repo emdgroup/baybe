@@ -91,7 +91,11 @@ class SingleTargetObjective(Objective):
         out = self._target.transform(target_data).to_frame()
 
         # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
-        if isinstance(t := self._target, NumericalTarget) and t.mode is TargetMode.MIN:
+        if (
+            isinstance(t := self._target, NumericalTarget)
+            and t.mode is TargetMode.MIN
+            and self._target.bounds.is_bounded
+        ):
             out = -out
         return out
 
