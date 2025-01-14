@@ -96,7 +96,7 @@ class.
 from baybe.constraints import ContinuousLinearConstraint
 
 ContinuousLinearConstraint(
-    parameters=["SolventUsed[ml]"],
+    parameters=["SolventAmount[ml]"],
     operator="<=",
     coefficients=[1.0],
     rhs=100,
