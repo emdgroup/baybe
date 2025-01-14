@@ -173,8 +173,8 @@ class SHAPInsight:
 
         Args:
             campaign: A campaign holding a recommender using a surrogate model.
-            explainer_cls: See :func:`make_explainer_for_surrogate.
-            use_comp_rep: See :func:`make_explainer_for_surrogate.
+            explainer_cls: See :func:`make_explainer_for_surrogate`.
+            use_comp_rep: See :func:`make_explainer_for_surrogate`.
 
         Returns:
             The SHAP insight object.
@@ -214,8 +214,8 @@ class SHAPInsight:
             searchspace: The searchspace for the recommender.
             objective: The objective for the recommender.
             measurements: The measurements for training the surrogate and the explainer.
-            explainer_cls: See :func:`make_explainer_for_surrogate.
-            use_comp_rep: See :func:`make_explainer_for_surrogate.
+            explainer_cls: See :func:`make_explainer_for_surrogate`.
+            use_comp_rep: See :func:`make_explainer_for_surrogate`.
 
         Returns:
             The SHAP insight object.
