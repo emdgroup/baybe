@@ -2,6 +2,8 @@
 
 
 ##### Warnings #####
+
+
 class UnusedObjectWarning(UserWarning):
     """
     A method or function was called with undesired arguments which indicates an
@@ -59,7 +61,7 @@ class NumericalUnderflowError(Exception):
     """A computation would lead to numerical underflow."""
 
 
-class OptionalImportError(Exception):
+class OptionalImportError(ImportError):
     """An attempt was made to import an optional but uninstalled dependency."""
 
 
