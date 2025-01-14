@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from pytest import mark
-from shap import KernelExplainer
 
 from baybe._optional.info import INSIGHTS_INSTALLED
 from baybe.exceptions import IncompatibleExplainerError
@@ -23,6 +22,7 @@ from baybe.insights.shap import (
     NON_SHAP_EXPLAINERS,
     SHAP_EXPLAINERS,
     SHAP_PLOTS,
+    KernelExplainer,
     SHAPInsight,
     _get_explainer_cls,
 )
