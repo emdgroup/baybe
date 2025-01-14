@@ -78,7 +78,7 @@ def make_explainer_for_surrogate(
 
     if not (
         data.select_dtypes(exclude="number").empty
-        or isinstance(explainer_cls, KernelExplainer)
+        or issubclass(explainer_cls, KernelExplainer)
     ):
         raise IncompatibleExplainerError(
             f"The selected explainer class '{explainer_cls.__name__}' does not support "
