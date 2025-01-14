@@ -52,6 +52,7 @@ def make_explainer_for_surrogate(
     surrogate: Surrogate,
     data: pd.DataFrame,
     explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
+    *,
     use_comp_rep: bool = False,
 ) -> shap.Explainer:
     """Create a SHAP explainer for a given surrogate model.
@@ -143,6 +144,7 @@ class SHAPInsight:
         surrogate: SurrogateProtocol,
         data: pd.DataFrame,
         explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
+        *,
         use_comp_rep: bool = False,
     ):
         """Create a SHAP insight from a surrogate.
@@ -156,7 +158,7 @@ class SHAPInsight:
             )
 
         explainer = make_explainer_for_surrogate(
-            surrogate, data, explainer_cls, use_comp_rep
+            surrogate, data, explainer_cls, use_comp_rep=use_comp_rep
         )
         return cls(explainer, data)
 
@@ -165,6 +167,7 @@ class SHAPInsight:
         cls,
         campaign: Campaign,
         explainer_cls: type[shap.Explainer] | str = _DEFAULT_EXPLAINER_CLS,
+        *,
         use_comp_rep: bool = False,
     ) -> SHAPInsight:
         """Create a SHAP insight from a campaign.
@@ -202,6 +205,7 @@ class SHAPInsight:
         objective: Objective,
         measurements: pd.DataFrame,
         explainer_cls: type[shap.Explainer] | str = "KernelExplainer",
+        *,
         use_comp_rep: bool = False,
     ) -> SHAPInsight:
         """Create a SHAP insight from a recommender.
