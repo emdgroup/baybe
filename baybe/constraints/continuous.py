@@ -128,6 +128,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         Returns:
             The tuple required by botorch.
+
+        Raises:
+            RuntimeError: When the constraint is an interpoint constraint but
+                batch_size is ``None``.
         """
         import torch
 
@@ -143,9 +147,11 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             coefficients = self.coefficients
             torch_indices = torch.tensor(param_indices)
         else:
-            assert (
-                batch_size is not None
-            ), "No batch_size set but using interpoint constraints"
+            if batch_size is None:
+                raise RuntimeError(
+                    "No `batch_size` set but using interpoint constraints."
+                    "This should nothappen and means that there is a bug in the code."
+                )
             param_index = {name: param_names.index(name) for name in self.parameters}
             param_indices_interpoint = [
                 (batch, param_index[name] + idx_offset)
