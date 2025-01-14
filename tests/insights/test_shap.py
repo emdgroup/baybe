@@ -78,7 +78,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
             use_comp_rep=use_comp_rep,
         )
     except IncompatibleExplainerError:
-        pytest.xfail("Unsupported model/explainer combination.")
+        pytest.skip("Unsupported model/explainer combination.")
 
     # Sanity check explainer
     assert isinstance(shap_insight, insights.SHAPInsight)
