@@ -137,6 +137,7 @@ docutils==0.21.2
     #   myst-parser
     #   pybtex-docutils
     #   sphinx
+    #   sphinx-paramlinks
     #   sphinxcontrib-bibtex
 e3fp==1.2.5
     # via scikit-fingerprints
@@ -890,12 +891,15 @@ sphinx==8.1.3
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
     #   sphinx-copybutton
+    #   sphinx-paramlinks
     #   sphinxcontrib-bibtex
 sphinx-autodoc-typehints==2.5.0
     # via baybe (pyproject.toml)
 sphinx-basic-ng==1.0.0b2
     # via furo
 sphinx-copybutton==0.5.2
+    # via baybe (pyproject.toml)
+sphinx-paramlinks==0.6.0
     # via baybe (pyproject.toml)
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
