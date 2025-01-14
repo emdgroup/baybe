@@ -219,7 +219,6 @@ class ContinuousCardinalityConstraint(
             * If lower < 0 and upper = 0, any value v with lower < v <= upper are
             treated zero.
 
-
         Args:
             parameter: The parameter object.
 
@@ -229,11 +228,17 @@ class ContinuousCardinalityConstraint(
         Raises:
             ValueError: when parameter_name is not present in parameter list of this
                 constraint.
+            ValueError: when parameter bounds do not cover zero.
         """
         if parameter.name not in self.parameters:
             raise ValueError(
                 f"The given parameter with name: {parameter.name} cannot "
                 f"be found in the parameter list: {self.parameters}."
+            )
+        if parameter.bounds.contains(0.0):
+            raise ValueError(
+                f"The bounds of the given parameter must cover zero but its bounds "
+                f"are ({parameter.bounds.lower}, {parameter.bounds.upper})."
             )
 
         return Interval(
