@@ -1,6 +1,7 @@
 # User Guide
 
 ```{toctree}
+Getting Recommendations <getting_recommendations>
 Campaigns <campaigns>
 Active Learning <active_learning>
 Asynchronous Workflows <async>
