@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Collection, Sequence
+from collections.abc import Collection, Iterator, Sequence
+from itertools import combinations
+from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import in_
+from attr.validators import gt, in_, lt
 from attrs import define, field
 
 from baybe.constraints.base import (
@@ -17,6 +19,7 @@ from baybe.constraints.base import (
     ContinuousNonlinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.utils.interval import Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.validation import finite_float
 
@@ -138,6 +141,31 @@ class ContinuousCardinalityConstraint(
 ):
     """Class for continuous cardinality constraints."""
 
+    relative_threshold: float = field(
+        default=1e-2, converter=float, validator=[gt(0.0), lt(1.0)]
+    )
+    """A relative threshold for determining if the value is considered zero."""
+
+    @property
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return sum(
+            comb(len(self.parameters), n_inactive_parameters)
+            for n_inactive_parameters in self._inactive_set_sizes()
+        )
+
+    def _inactive_set_sizes(self) -> range:
+        """Get all possible sizes of inactive parameter sets."""
+        return range(
+            len(self.parameters) - self.max_cardinality,
+            len(self.parameters) - self.min_cardinality + 1,
+        )
+
+    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible combinations of inactive parameters."""
+        for n_inactive_parameters in self._inactive_set_sizes():
+            yield from combinations(self.parameters, n_inactive_parameters)
+
     def sample_inactive_parameters(self, batch_size: int = 1) -> list[set[str]]:
         """Sample sets of inactive parameters according to the cardinality constraints.
 
@@ -175,6 +203,48 @@ class ContinuousCardinalityConstraint(
         ]
 
         return inactive_params
+
+    def get_threshold(self, parameter: NumericalContinuousParameter) -> Interval:
+        """Get the threshold values of a parameter.
+
+        This method calculates the thresholds based on the parameter's bounds
+        and the relative threshold.
+
+        Note:
+            Thresholds (lower, upper) are defined below:
+            * If lower < 0 and upper > 0, any value v with lower < v < upper are treated
+            zero;
+            * If lower = 0 and upper > 0, any value v with lower <= v < upper are
+            treated zero;
+            * If lower < 0 and upper = 0, any value v with lower < v <= upper are
+            treated zero.
+
+        Args:
+            parameter: The parameter object.
+
+        Returns:
+            The lower and upper thresholds.
+
+        Raises:
+            ValueError: when parameter_name is not present in parameter list of this
+                constraint.
+            ValueError: when parameter bounds do not cover zero.
+        """
+        if parameter.name not in self.parameters:
+            raise ValueError(
+                f"The given parameter with name: {parameter.name} cannot "
+                f"be found in the parameter list: {self.parameters}."
+            )
+        if parameter.bounds.contains(0.0):
+            raise ValueError(
+                f"The bounds of the given parameter must cover zero but its bounds "
+                f"are ({parameter.bounds.lower}, {parameter.bounds.upper})."
+            )
+
+        return Interval(
+            lower=self.relative_threshold * parameter.bounds.lower,
+            upper=self.relative_threshold * parameter.bounds.upper,
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
