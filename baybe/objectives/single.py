@@ -10,6 +10,8 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
+from baybe.targets.enum import TargetMode
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.plotting import to_string
 
@@ -86,7 +88,16 @@ class SingleTargetObjective(Objective):
 
         target_data = df[self._target.name].copy()
 
-        return self._target.transform(target_data).to_frame()
+        out = self._target.transform(target_data).to_frame()
+
+        # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
+        if (
+            isinstance(t := self._target, NumericalTarget)
+            and t.mode is TargetMode.MIN
+            and t.bounds.is_bounded
+        ):
+            out = -out
+        return out
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
