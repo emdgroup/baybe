@@ -268,3 +268,26 @@ def test_cardinality_constraints_with_overlapping_parameters():
                 ),
             ),
         )
+
+
+@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+def test_cardinality_and_interpoint_constraints(parameters):
+    with pytest.raises(
+        ValueError, match="cannot be used together with interpoint constraints"
+    ):
+        SubspaceContinuous.from_product(
+            parameters=parameters,
+            constraints=(
+                ContinuousLinearConstraint(
+                    parameters=["Conti_finite1"],
+                    coefficients=[1],
+                    operator="=",
+                    rhs=1,
+                    interpoint=True,
+                ),
+                ContinuousCardinalityConstraint(
+                    parameters=["Conti_finite1", "Conti_finite2"],
+                    max_cardinality=1,
+                ),
+            ),
+        )

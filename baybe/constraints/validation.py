@@ -4,7 +4,11 @@ from collections.abc import Collection
 from itertools import combinations
 
 from baybe.constraints.base import Constraint
-from baybe.constraints.continuous import ContinuousCardinalityConstraint
+from baybe.constraints.continuous import (
+    ContinuousCardinalityConstraint,
+    ContinuousConstraint,
+    ContinuousLinearConstraint,
+)
 from baybe.constraints.discrete import (
     DiscreteDependenciesConstraint,
 )
@@ -35,6 +39,11 @@ def validate_constraints(  # noqa: DOC101, DOC103
 
     validate_cardinality_constraints_are_nonoverlapping(
         [con for con in constraints if isinstance(con, ContinuousCardinalityConstraint)]
+    )
+    validate_no_interpoint_and_cardinality_constraints(
+        constraints=[
+            con for con in constraints if isinstance(con, ContinuousConstraint)
+        ]
     )
 
     param_names_all = [p.name for p in parameters]
@@ -98,3 +107,34 @@ def validate_cardinality_constraints_are_nonoverlapping(
                 f"cannot share the same parameters. Found the following overlapping "
                 f"parameter sets: {s1}, {s2}."
             )
+
+
+def validate_no_interpoint_and_cardinality_constraints(
+    constraints: Collection[ContinuousConstraint],
+):
+    """Validate that cardinality and interpoint constraints are not used together.
+
+    This is a current limitation in our code and might be enabled in the future.
+
+    Args:
+        constraints: A collection of continuous constraints.
+
+    Raises:
+        ValueError: If there are both interpoint and cardinality constraints.
+    """
+    # Check is a bit cumbersome since the is_interpoint field is currently defined
+    # for ContinouosLinearConstraint only as these are the only ones that can
+    # actually be interpoint.
+    has_interpoint = any(
+        c.is_interpoint
+        for c in constraints
+        if isinstance(c, ContinuousLinearConstraint)
+    )
+    has_cardinality = any(
+        isinstance(c, ContinuousCardinalityConstraint) for c in constraints
+    )
+    if has_interpoint and has_cardinality:
+        raise ValueError(
+            f"Cconstraints of type `{ContinuousCardinalityConstraint.__name__}` "
+            "cannot be used together with interpoint constraints."
+        )
