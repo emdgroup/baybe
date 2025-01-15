@@ -25,6 +25,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
     SequentialGreedyRecommender,
@@ -284,3 +285,12 @@ def test_migrated_metadata_attribute():
             NumericalDiscreteParameter("p", [0, 1])
         )
         subspace.metadata
+
+
+def test_deprecated_meta_recommender_methods():
+    """Calling the deprecated methods of meta recommender raises an error."""
+    recommender = TwoPhaseMetaRecommender()
+    with pytest.raises(DeprecationError, match="has been deprecated."):
+        recommender.get_current_recommender()
+    with pytest.raises(DeprecationError, match="has been deprecated"):
+        recommender.get_next_recommender()
