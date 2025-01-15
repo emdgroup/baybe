@@ -364,6 +364,9 @@ class Campaign(SerialMixin):
             A new dataframe containing the  discrete candidate set passing through the
             specified filter.
         """
+        # Clear cache
+        self._cached_recommendation = pd.DataFrame()
+
         df = self.searchspace.discrete.exp_rep
 
         if isinstance(constraints, pd.DataFrame):
