@@ -1043,6 +1043,8 @@ incorrect candidate sets when reused in different optimization contexts</p></li>
 <code class="docutils literal notranslate"><span class="pre">NumericalTarget</span></code> now raises an error</p></li>
 <li><p>Crash when using <code class="docutils literal notranslate"><span class="pre">ContinuousCardinalityConstraint</span></code> caused by an unintended interplay
 between constraints and dropped parameters yielding empty parameter sets</p></li>
+<li><p>Minimizing a single <code class="docutils literal notranslate"><span class="pre">NumericalTarget</span></code> with specified bounds/transformation via
+<code class="docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code> no longer erroneously maximizes it</p></li>
 </ul>
 </section>
 <section id="removed">

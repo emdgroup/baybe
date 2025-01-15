@@ -995,6 +995,8 @@
 
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
+<span class="kn">from</span> <span class="nn">baybe.targets.enum</span> <span class="kn">import</span> <span class="n">TargetMode</span>
+<span class="kn">from</span> <span class="nn">baybe.targets.numerical</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">get_transform_objects</span><span class="p">,</span> <span class="n">pretty_print_df</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.plotting</span> <span class="kn">import</span> <span class="n">to_string</span>
 
@@ -1075,7 +1077,16 @@
 
         <span class="n">target_data</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">target_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span></div>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">target_data</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+
+        <span class="c1"># TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">,</span> <span class="n">NumericalTarget</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span>
+            <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">is_bounded</span>
+        <span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="o">-</span><span class="n">out</span>
+        <span class="k">return</span> <span class="n">out</span></div>
 </div>
 
 
