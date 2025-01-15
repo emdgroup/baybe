@@ -14,6 +14,7 @@ Versions <https://emdgroup.github.io/baybe/versions>
 Readme <self>
 User Guide <userguide/userguide>
 Examples <examples/examples>
+FAQ <faq>
 ```
 
 ```{include} ../README.md
