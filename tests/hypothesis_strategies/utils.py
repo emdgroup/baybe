@@ -4,8 +4,9 @@ from enum import Enum, auto
 
 import hypothesis.extra.numpy as hnp
 import hypothesis.strategies as st
+import numpy as np
 
-from baybe.utils.interval import Interval
+from baybe.utils.interval import Interval, Partition
 
 from .basic import finite_floats
 
@@ -65,3 +66,12 @@ def intervals(
         raise RuntimeError("This line should be unreachable.")
 
     return Interval.create(bounds)
+
+
+partitions = st.builds(
+    Partition,
+    thresholds=st.lists(finite_floats(), min_size=1)
+    .map(sorted)
+    .filter(lambda x: np.all(np.diff(x) > 0)),
+)
+"""Generate :class:`baybe.utils.interval.Partition`."""
