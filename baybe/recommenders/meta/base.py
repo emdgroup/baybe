@@ -40,7 +40,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         on the method arguments.
         """
 
-    def get_inner_recommender(
+    def get_non_meta_recommender(
         self,
         batch_size: int | None = None,
         searchspace: SearchSpace | None = None,
@@ -48,7 +48,12 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> RecommenderProtocol:
-        """Follow the meta-recommender chain to the first non-meta recommender.
+        """Follow the meta-recommender chain to the selected non-meta recommender.
+
+        Recursively calls :meth:`MetaRecommender.select_recommender` until a
+        non-meta recommender is encountered, which is then returned.
+        Effectively, this extracts the recommender responsible for generating
+        the recommendations for the specified context.
 
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
         on the method arguments.
@@ -61,24 +66,24 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         return recommender
 
     def get_current_recommender(self) -> PureRecommender:
-        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
-        instead.
+        """Deprecated! Use :meth:`select_recommender` or
+        :meth:`get_non_meta_recommender` instead.
         """  # noqa
         raise DeprecationError(
             f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
             f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
-            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"'{MetaRecommender.__name__}.{self.get_non_meta_recommender.__name__}' "
             f"instead."
         )
 
     def get_next_recommender(self) -> PureRecommender:
-        """Deprecated! Use :meth:`select_recommender` or :meth:`get_inner_recommender`
-        instead.
+        """Deprecated! Use :meth:`select_recommender` or
+        :meth:`get_non_meta_recommender` instead.
         """  # noqa
         raise DeprecationError(
             f"'{MetaRecommender.__name__}.get_current_recommender' has been deprecated."
             f"Use '{MetaRecommender.__name__}.{self.select_recommender.__name__}' or "
-            f"'{MetaRecommender.__name__}.{self.get_inner_recommender.__name__}' "
+            f"'{MetaRecommender.__name__}.{self.get_non_meta_recommender.__name__}' "
             f"instead."
         )
 
