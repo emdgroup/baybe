@@ -52,6 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SingleTargetObjective` no longer erroneously maximizes it
 - Improvement-based Monte Carlo acquisition functions now use the correct
   reference value in minimization mode
+- The `polars` cross join for the Cartesian product now explicitly maintains row order,
+  yielding an equivalent result to the `pandas` version and fixing tests for `>=1.19.0`
 
 ### Removed
 - `botorch_function_wrapper` utility for creating lookup callables
