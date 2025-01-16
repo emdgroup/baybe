@@ -264,12 +264,12 @@ class StreamingSequentialMetaRecommender(BaseSequentialMetaRecommender):
     _last_recommender: RecommenderProtocol | None = field(init=False, default=None)
     """The recommender returned from the last call."""
 
-    _step_of_last_recommender: int | None = field(init=False, default=None)
+    _position_of_latest_recommender: int | None = field(init=False, default=None)
     """The position of the latest recommender fetched from the iterable."""
 
     @override
     def _get_recommender_at_current_step(self) -> RecommenderProtocol:
-        if self._step != self._step_of_last_recommender:
+        if self._step != self._position_of_latest_recommender:
             try:
                 self._last_recommender = next(self._iterator)
             except StopIteration as ex:
@@ -277,7 +277,7 @@ class StreamingSequentialMetaRecommender(BaseSequentialMetaRecommender):
                     f"A total of {self._step+1} recommender(s) was/were requested but "
                     f"the provided iterator provided only {self._step} element(s). "
                 ) from ex
-            self._step_of_last_recommender = self._step
+            self._position_of_latest_recommender = self._step
 
         # By now, the first recommender has been fetched
         assert self._last_recommender is not None
