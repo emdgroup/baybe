@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
 - `remain_switched` option to `TwoPhaseMetaRecommender`
 - `BatchSizeAdaptiveMetaRecommender` for selecting recommenders based on batch size
-- `is_stateful` class variable to `MetaRecommenders`
+- `is_stateful` class variable to `MetaRecommender`
 - `get_non_meta_recommender` method to `MetaRecommender`
 
 ### Changed

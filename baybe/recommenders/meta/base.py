@@ -48,7 +48,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> RecommenderProtocol:
-        """Follow the meta-recommender chain to the selected non-meta recommender.
+        """Follow the meta recommender chain to the selected non-meta recommender.
 
         Recursively calls :meth:`MetaRecommender.select_recommender` until a
         non-meta recommender is encountered, which is then returned.
