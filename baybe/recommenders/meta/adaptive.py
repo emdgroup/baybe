@@ -27,11 +27,19 @@ class BatchSizeAdaptiveMetaRecommender(MetaRecommender):
     """The partition mapping batch size intervals to recommenders. """
 
     @partition.validator
-    def _validate_partitioning(self, _, value):
-        if (lr := len(self.recommenders)) != (lp := len(value)):
+    def _validate_partitioning(self, _, partition: Partition):
+        if (lr := len(self.recommenders)) != (lp := len(partition)):
             raise ValueError(
                 f"The number of recommenders (given: {lr}) must be equal to the number "
                 f"of intervals defined by the partition (given: {lp})."
+            )
+        if (thres := partition.thresholds[0]) < 1:
+            raise ValueError(
+                f"The first interval of the specified partition ends at {thres}, "
+                f"which is irrelevant for a "
+                f"'{BatchSizeAdaptiveMetaRecommender.__name__}' since the minimum "
+                f"possible batch size is 1. Please provide a partition whose first "
+                f"interval includes 1."
             )
 
     @override
