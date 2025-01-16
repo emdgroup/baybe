@@ -14,7 +14,12 @@ from baybe.utils.interval import Partition
 
 @define
 class BatchSizeAdaptiveMetaRecommender(MetaRecommender):
-    """A meta recommender that selects recommenders according to the batch size."""
+    """A meta recommender that selects recommenders according to the batch size.
+
+    Recommender selection is done by grouping batch sizes into intervals using
+    a :class:`~baybe.utils.interval.Partition`, where each interval is mapped to a
+    specific recommender.
+    """
 
     recommenders: list[RecommenderProtocol] = field(
         converter=list, validator=deep_iterable(instance_of(RecommenderProtocol))
