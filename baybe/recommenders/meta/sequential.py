@@ -90,7 +90,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 
 
 @define
-class _BaseSequentialMetaRecommender(MetaRecommender):
+class BaseSequentialMetaRecommender(MetaRecommender):
     """Base class for sequential meta recommenders."""
 
     is_stateful: ClassVar[bool] = True
@@ -166,7 +166,7 @@ class _BaseSequentialMetaRecommender(MetaRecommender):
 
 
 @define
-class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
+class SequentialMetaRecommender(BaseSequentialMetaRecommender):
     """A meta recommender that uses a pre-defined sequence of recommenders.
 
     A new recommender is taken from the sequence whenever at least one new measurement
@@ -233,7 +233,7 @@ class SequentialMetaRecommender(_BaseSequentialMetaRecommender):
 
 
 @define
-class StreamingSequentialMetaRecommender(_BaseSequentialMetaRecommender):
+class StreamingSequentialMetaRecommender(BaseSequentialMetaRecommender):
     """A meta recommender that switches between recommenders from an iterable.
 
     Similar to :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`
