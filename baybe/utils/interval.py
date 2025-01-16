@@ -163,6 +163,8 @@ class Partition:
 
     @thresholds.validator
     def _validate_thresholds(self, _, value):
+        if not np.all(np.isfinite(value)):
+            raise ValueError("Thresholds must be finite.")
         if not all(x < y for x, y in pairwise(value)):
             raise ValueError("Thresholds must be strictly monotonically increasing.")
 
