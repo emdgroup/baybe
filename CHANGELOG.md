@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All arguments to `MetaRecommender.select_recommender` are now optional
 - `MetaRecommender`s can now be composed of other `MetaRecommender`s
 - `allow_repeated_recommendations` has been renamed to 
-  `allow_recommending_already_recommended` 
+  `allow_recommending_already_recommended` and is now `True` by default
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
