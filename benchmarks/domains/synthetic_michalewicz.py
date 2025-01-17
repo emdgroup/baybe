@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
 from numpy import pi, sin
@@ -17,6 +19,9 @@ from benchmarks.definition import (
     Benchmark,
     ConvergenceExperimentSettings,
 )
+
+if TYPE_CHECKING:
+    from mpl_toolkits.mplot3d import Axes3D
 
 
 def _lookup(arr: np.ndarray, /) -> np.ndarray:
@@ -94,7 +99,7 @@ benchmark_config = ConvergenceExperimentSettings(
     n_mc_iterations=20,
 )
 
-synthetic_michalewicz = Benchmark(
+synthetic_michalewicz_benchmark = Benchmark(
     function=synthetic_michalewicz,
     best_possible_result=-4.687658,
     settings=benchmark_config,
@@ -116,7 +121,7 @@ if __name__ == "__main__":
         + (np.sin(X2) * np.sin((2 * X2**2) / np.pi) ** 20)
     )
 
-    ax = plt.figure().add_subplot(projection="3d")
+    ax: Axes3D = plt.figure().add_subplot(projection="3d")
     surf = ax.plot_surface(X1, X2, Z, rstride=1, cstride=1, cmap=cm.jet, linewidth=0.1)
 
     ax.set_xlabel("x1", fontsize=10)
