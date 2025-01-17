@@ -377,7 +377,7 @@ class SubspaceContinuous(SerialMixin):
                     c for c in self.constraints_cardinality if p.name in c.parameters
                 ][0]
                 p_adjusted = activate_parameter(
-                    p, cardinality_constraint_with_p.get_threshold(p)
+                    p, cardinality_constraint_with_p.get_absolute_thresholds(p.bounds)
                 )
             else:
                 p_adjusted = p

@@ -204,46 +204,32 @@ class ContinuousCardinalityConstraint(
 
         return inactive_params
 
-    def get_threshold(self, parameter: NumericalContinuousParameter) -> Interval:
-        """Get the threshold values of a parameter.
+    def get_absolute_thresholds(self, bounds: Interval, /) -> Interval:
+        """Get the absolute thresholds for a given interval.
 
-        This method calculates the thresholds based on the parameter's bounds
-        and the relative threshold.
-
-        Note:
-            Thresholds (lower, upper) are defined below:
-            * If lower < 0 and upper > 0, any value v with lower < v < upper are treated
-            zero;
-            * If lower = 0 and upper > 0, any value v with lower <= v < upper are
-            treated zero;
-            * If lower < 0 and upper = 0, any value v with lower < v <= upper are
-            treated zero.
+        Turns the relative threshold of the constraint into absolute thresholds
+        for the considered interval. That is, for a given interval ``(a, b)`` with
+        ``a <= 0`` and ``b >= 0``, the method returns the interval ``(r*a, r*b)``,
+        where ``r`` is the relative threshold defined by the constraint.
 
         Args:
-            parameter: The parameter object.
+            bounds: The specified interval.
 
         Returns:
-            The lower and upper thresholds.
+            The absolute thresholds represented as an interval.
 
         Raises:
-            ValueError: when parameter_name is not present in parameter list of this
-                constraint.
-            ValueError: when parameter bounds do not cover zero.
+            ValueError: When the specified interval does not contain zero.
         """
-        if parameter.name not in self.parameters:
+        if not bounds.contains(0.0):
             raise ValueError(
-                f"The given parameter with name: {parameter.name} cannot "
-                f"be found in the parameter list: {self.parameters}."
-            )
-        if parameter.bounds.contains(0.0):
-            raise ValueError(
-                f"The bounds of the given parameter must cover zero but its bounds "
-                f"are ({parameter.bounds.lower}, {parameter.bounds.upper})."
+                f"The specified interval must contain zero. "
+                f"Given: {bounds.to_tuple()}."
             )
 
         return Interval(
-            lower=self.relative_threshold * parameter.bounds.lower,
-            upper=self.relative_threshold * parameter.bounds.upper,
+            lower=self.relative_threshold * bounds.lower,
+            upper=self.relative_threshold * bounds.upper,
         )
 
 

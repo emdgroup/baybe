@@ -94,7 +94,7 @@ def is_cardinality_fulfilled(
         parameters_in_c = subspace_continuous.get_parameters_by_name(c.parameters)
 
         # Thresholds of parameters that are related to the cardinality constraint
-        thresholds = tuple(c.get_threshold(p) for p in parameters_in_c)
+        thresholds = tuple(c.get_absolute_thresholds(p.bounds) for p in parameters_in_c)
 
         # Count the number of zeros
         n_zeros = count_zeros(thresholds, batch_related_to_c)
