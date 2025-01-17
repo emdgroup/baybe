@@ -109,7 +109,6 @@ if __name__ == "__main__":
     #  Visualization of the 2-dimensional variant
 
     import matplotlib.pyplot as plt
-    from matplotlib import cm
 
     X1 = np.linspace(0, pi, 50)
     X2 = np.linspace(0, pi, 50)
@@ -122,7 +121,7 @@ if __name__ == "__main__":
     )
 
     ax: Axes3D = plt.figure().add_subplot(projection="3d")
-    surf = ax.plot_surface(X1, X2, Z, rstride=1, cstride=1, cmap=cm.jet, linewidth=0.1)
+    surf = ax.plot_surface(X1, X2, Z)
 
     ax.set_xlabel("x1", fontsize=10)
     ax.set_ylabel("x2", fontsize=10)
