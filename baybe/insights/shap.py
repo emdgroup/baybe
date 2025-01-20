@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Literal
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -326,7 +326,7 @@ class SHAPInsight:
         *,
         show: bool = True,
         explanation_idx: int | None = None,
-        **kwargs: dict,
+        **kwargs: Any,
     ) -> plt.Axes:
         """Plot the Shapley values using the provided plot type.
 
@@ -376,7 +376,7 @@ class SHAPInsight:
         return plot_func(toplot, show=show, **kwargs)
 
     def _plot_shap_scatter(
-        self, data: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
+        self, data: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: Any
     ) -> plt.Axes:
         """Plot the Shapley values as scatter plot, ignoring non-numeric features.
 
