@@ -47,9 +47,18 @@ def batch_size():
 @pytest.fixture(
     params=[
         ["Conti_finite1", "Conti_finite2"],
-        ["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1"],
+        ["Num_disc_1", "Fraction_1"],
+        ["Num_disc_1", "Conti_finite1"],
+        ["Num_disc_1", "Categorical_1"],
+        ["Conti_finite1", "Categorical_1"],
     ],
-    ids=["conti_params", "hybrid_params"],
+    ids=[
+        "params_conti",
+        "params_disc_num",
+        "params_hybrid_num",
+        "params_disc_cat",
+        "params_hybrid_cat",
+    ],
 )
 def parameter_names(request):
     return request.param
