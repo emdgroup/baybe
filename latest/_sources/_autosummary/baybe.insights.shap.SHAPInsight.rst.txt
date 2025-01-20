@@ -1,0 +1,36 @@
+SHAPInsight
+===========
+
+.. currentmodule:: baybe.insights.shap
+
+.. autoclass:: SHAPInsight
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SHAPInsight.__init__
+      ~SHAPInsight.explain
+      ~SHAPInsight.from_campaign
+      ~SHAPInsight.from_recommender
+      ~SHAPInsight.from_surrogate
+      ~SHAPInsight.plot
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SHAPInsight.explainer
+      ~SHAPInsight.background_data
+      ~SHAPInsight.uses_shap_explainer
+   
+   

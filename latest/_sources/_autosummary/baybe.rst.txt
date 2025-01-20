@@ -37,6 +37,8 @@
 
    exceptions
 
+   insights
+
    kernels
 
    objective
