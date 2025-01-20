@@ -167,7 +167,7 @@ def fixture_batch_size(request):
 @pytest.fixture(
     params=[5, pytest.param(8, marks=pytest.mark.slow)],
     name="n_grid_points",
-    ids=["grid5", "grid8"],
+    ids=["g5", "g8"],
 )
 def fixture_n_grid_points(request):
     """Number of grid points used in e.g. the mixture tests.
@@ -591,6 +591,13 @@ def fixture_campaign(parameters, constraints, recommender, objective):
     )
 
 
+@pytest.fixture(name="ongoing_campaign")
+def fixture_ongoing_campaign(campaign, n_iterations, batch_size):
+    """Returns a campaign that already ran for several iterations."""
+    run_iterations(campaign, n_iterations, batch_size)
+    return campaign
+
+
 @pytest.fixture(name="searchspace")
 def fixture_searchspace(parameters, constraints):
     """Returns a searchspace."""
@@ -880,8 +887,6 @@ def fixture_default_onnx_surrogate(onnx_str) -> CustomONNXSurrogate:
 # Reusables
 
 
-# TODO consider turning this into a fixture returning a campaign after running some
-#  fake iterations
 @retry(
     stop=stop_after_attempt(5),
     retry=retry_any(

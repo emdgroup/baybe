@@ -30,3 +30,5 @@
   `scikit-fingerprints` support
 - Fabian Liebig (Merck KGaA, Darmstadt, Germany):\
   Benchmarking structure and persistence capabilities for benchmarking results
+- Alexander Wieczorek (Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland):\
+  SHAP explainers for insights
