@@ -31,7 +31,7 @@ SHAP_EXPLAINERS = {
 }
 NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
 EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
-SHAP_PLOTS = {"bar", "beeswarm", "heatmap", "scatter"}
+SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter"}
 
 
 def _get_explainer_cls(name: str) -> type[shap.Explainer]:
@@ -325,6 +325,7 @@ class SHAPInsight:
         /,
         *,
         show: bool = True,
+        explanation_idx: int | None = None,
         **kwargs: dict,
     ) -> plt.Axes:
         """Plot the Shapley values using the provided plot type.
@@ -333,6 +334,9 @@ class SHAPInsight:
             plot_type: The type of plot to be created.
             data: See :meth:`explain`.
             show: Boolean flag determining if the plot is to be rendered.
+            explanation_idx: Positional index of the data point that should be
+                explained. Only relevant for plot types that can only handle a single
+                data point.
             **kwargs: Additional keyword arguments passed to the plot function.
 
         Returns:
@@ -355,7 +359,21 @@ class SHAPInsight:
             )
         plot_func = getattr(shap.plots, plot_type)
 
-        return plot_func(self.explain(data), show=show, **kwargs)
+        # Handle plot types that only explain a single data point
+        if plot_type in {"force"}:
+            if explanation_idx is None:
+                warnings.warn(
+                    f"When using plot type  '{plot_type}', a 'explanation_idx' must be "
+                    f"chosen to identify a single data point that should be explained. "
+                    f"Choosing the first measurement at position 0."
+                )
+                explanation_idx = 0
+            toplot = self.explain(data.iloc[[explanation_idx]])
+            kwargs["matplotlib"] = True
+        else:
+            toplot = self.explain(data)
+
+        return plot_func(toplot, show=show, **kwargs)
 
     def _plot_shap_scatter(
         self, data: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: dict
