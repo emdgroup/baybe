@@ -34,7 +34,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> RecommenderProtocol:
-        """Select a pure recommender for the given experimentation context.
+        """Select a recommender for the given experimentation context.
 
         See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend` for details
         on the method arguments.
