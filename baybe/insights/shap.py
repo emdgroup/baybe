@@ -29,9 +29,16 @@ SHAP_EXPLAINERS = {
     "PartitionExplainer",
     "PermutationExplainer",
 }
+"""Supported SHAP explainer types for :class:`baybe.insights.shap.SHAPInsight`"""
+
 NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
+"""Supported non-SHAP explainer types for :class:`baybe.insights.shap.SHAPInsight`"""
+
 EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
+"""Supported explainer types for :class:`baybe.insights.shap.SHAPInsight`"""
+
 SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter"}
+"""Supported plot types for :meth:`baybe.insights.shap.SHAPInsight.plot`"""
 
 
 def _get_explainer_cls(name: str) -> type[shap.Explainer]:
