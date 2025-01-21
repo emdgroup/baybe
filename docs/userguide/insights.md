@@ -1,6 +1,8 @@
 # Insights
 In BayBE, insights provide a way of analyzing your experimental results beyond what is 
-required for the basic measure-recommend loop.
+required for the basic measure-recommend loop. Dependencies needed for insights are 
+optional and available by installing baybe with the respective dependency group, e.g. 
+via `pip install baybe[insights]`.
 
 ## Parameter Importance via SHAP
 [**SH**apley **A**dditive ex**P**lanations](https://shap.readthedocs.io/en/latest/index.html) 
