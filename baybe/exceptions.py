@@ -11,6 +11,10 @@ class UnusedObjectWarning(UserWarning):
     """
 
 
+class MinimumCardinalityViolatedWarning(UserWarning):
+    """Minimum cardinality constraints are violated."""
+
+
 ##### Exceptions #####
 
 
