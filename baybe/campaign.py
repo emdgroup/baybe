@@ -458,9 +458,9 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        pure_recommender: RecommenderProtocol
+        recommender: RecommenderProtocol
         if isinstance(self.recommender, MetaRecommender):
-            pure_recommender = self.recommender.select_recommender(
+            recommender = self.recommender.get_non_meta_recommender(
                 batch_size,
                 self.searchspace,
                 self.objective,
@@ -468,16 +468,16 @@ class Campaign(SerialMixin):
                 pending_experiments,
             )
         else:
-            pure_recommender = self.recommender
+            recommender = self.recommender
 
-        if isinstance(pure_recommender, BayesianRecommender):
-            return pure_recommender.get_surrogate(
+        if isinstance(recommender, BayesianRecommender):
+            return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
         else:
             raise RuntimeError(
                 f"The current recommender is of type "
-                f"'{pure_recommender.__class__.__name__}', which does not provide "
+                f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )
