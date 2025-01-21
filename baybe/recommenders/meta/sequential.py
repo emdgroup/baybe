@@ -10,7 +10,7 @@ from typing import ClassVar, Literal
 
 import pandas as pd
 from attrs import Factory, define, field, fields
-from attrs.validators import deep_iterable, in_, instance_of
+from attrs.validators import deep_iterable, ge, in_, instance_of
 from typing_extensions import override
 
 from baybe.exceptions import NoRecommendersLeftError
@@ -43,16 +43,20 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         required when using the meta recommender with stateful recommenders.
     """
 
-    initial_recommender: RecommenderProtocol = field(factory=RandomRecommender)
+    initial_recommender: RecommenderProtocol = field(
+        factory=RandomRecommender, validator=instance_of(RecommenderProtocol)
+    )
     """The initial recommender used by the meta recommender."""
 
-    recommender: RecommenderProtocol = field(factory=BotorchRecommender)
+    recommender: RecommenderProtocol = field(
+        factory=BotorchRecommender, validator=RecommenderProtocol
+    )
     """The recommender used by the meta recommender after the switch."""
 
-    switch_after: int = field(default=1)
+    switch_after: int = field(default=1, validator=[instance_of(int), ge(1)])
     """The number of experiments required for the recommender to switch."""
 
-    remain_switched: bool = field(default=False)
+    remain_switched: bool = field(default=False, validator=instance_of(bool))
     """Determines if the recommender should remain switched even if the number of
     experiments falls below the threshold value in subsequent calls."""
 
