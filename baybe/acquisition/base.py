@@ -16,6 +16,7 @@ from baybe.exceptions import (
     UnidentifiedSubclassError,
 )
 from baybe.objectives.base import Objective
+from baybe.objectives.chimera import ChimeraObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
@@ -129,6 +130,12 @@ class AcquisitionFunction(ABC, SerialMixin):
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.max().item()
+                    )
+            case ChimeraObjective():
+                # Minimize the Chimera merits
+                if "best_f" in signature_params:
+                    additional_params["best_f"] = (
+                        bo_surrogate.posterior(train_x).mean.min().item()
                     )
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
