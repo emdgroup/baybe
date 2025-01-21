@@ -4,6 +4,16 @@ required for the basic measure-recommend loop. Dependencies needed for insights 
 optional and available by installing baybe with the respective dependency group, e.g. 
 via `pip install baybe[insights]`.
 
+```{admonition} Examples On This Page
+:class: note
+In what follows, we show results from the same campaign also studied in the 
+[full lookup example](./../../examples/Backtesting/full_lookup). This aims at 
+maximizing the yield of a chemical reaction and involves 3 substance parameters and 2 
+numerical parameters (all 5 discrete). We randomly sampled 100 measurements from the 
+lookup table and added them to the campaign, providing a basis for creating a 
+`SHAPInsight`.
+```
+
 ## Parameter Importance via SHAP
 [**SH**apley **A**dditive ex**P**lanations](https://shap.readthedocs.io/en/latest/index.html) 
 are a popular way of interpreting models to gain insight into the importance of the 
@@ -18,10 +28,9 @@ be applied in designing future campaigns. The interface is provided by the
 While feature importance is a method well studied, it is generally applied in data 
 regimes where models are fed with plenty of data. However, in BO, we often operate in 
 the *low-to-no-data regime*, making feature importance interpretation potentially tricky. 
-We urge the users to consider this and be careful with their interpretations. As 
-possible avenue, we suggest a study, where the avaialble amount of data is 
-sub-sampled, and the obtained parameter importances are checked for convergence and
-consistency.
+We urge the users to consider this and be careful with their interpretations. For 
+instance, we suggest a study where the avaialble amount of data is sub-sampled, and the 
+obtained parameter importances are checked for convergence and consistency.
 ```
 
 ### Basic Usage
@@ -46,21 +55,13 @@ In these examples, `data` corresponds to the background data. In general, this w
 the measurements obtained during your experimental campaign (`from_campaign` 
 automatically infers the `measurements` from the `campaign` object).
 
-```{admonition} Results Shown Here
-:class: note
-In what follows, we show results from the campaign also studied in the 
-[full lookup example](./../../examples/Backtesting/full_lookup). This aims at 
-maximizing the yield of a chemical reaction and involves 3 substance parameters and 2 
-numerical parameters. We randomly sampled 100 measurements from the lookup table and 
-added them to the campaign, providing a basis for reating a `SHAPInsight`.
-```
-
 ### Plots
 After creating the insight, various methods are available to visualize the results. 
 ~~~python
 insight.plot("bar")
 ~~~
 ![SHAP_Bar_Exp_Rep](../_static/insights/shap_bar_exp_rep.svg)
+
 This result agrees well with the chemical intuition that ligands are the most important 
 reactants to activate the conversion resulting in higher yields.
 
@@ -83,9 +84,9 @@ insight.plot("force", explanation_index=3) # plots the force analysis of the fou
 ![SHAP_Force](../_static/insights/shap_force.svg)
 
 ### Explainers
-In general, SHAP is an exhaustive method testing many subsets of models features. In 
-practice, this means that the exhaustive algorithm (called `ExactExplainer`) is 
-unfeasible, and various approximate variants are available, see 
+In general, SHAP is an exhaustive method testing all combinations of features. This 
+exhaustive algorithm (called `ExactExplainer`) in practice is often unfeasible, and 
+various approximate variants are available, see 
 [supported explainers](baybe.insights.shap.EXPLAINERS). For details about their inner 
 mechanics, we refer to the [SHAP documentation](https://shap.readthedocs.io/en/latest/api.html#explainers).
 
