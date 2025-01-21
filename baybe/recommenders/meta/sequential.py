@@ -52,11 +52,17 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     switch_after: int = field(default=1)
     """The number of experiments required for the recommender to switch."""
 
-    remain_switched: bool = False
+    remain_switched: bool = field(default=False)
     """Determines if the recommender should remain switched even if the number of
     experiments falls below the threshold value in subsequent calls."""
 
-    _has_switched: bool = False
+    # TODO: These should **not** be exposed via the constructor but the workaround
+    #   is currently needed for correct (de-)serialization. A proper approach would be
+    #   to not set them via the constructor but through a custom hook in combination
+    #   with `_cattrs_include_init_false=True`. However, the way
+    #   `get_base_structure_hook` is currently designed prevents such a hook from
+    #   taking action.
+    _has_switched: bool = field(default=False, alias="_has_switched")
     """Indicates if the switch has already occurred."""
 
     @override
