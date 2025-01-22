@@ -403,9 +403,6 @@ class Campaign(SerialMixin):
     def posterior(self, candidates: pd.DataFrame) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
-        The predictive distribution is based on the surrogate model of the last used
-        recommender.
-
         Args:
             candidates: The candidate points in experimental recommendations.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
@@ -430,8 +427,18 @@ class Campaign(SerialMixin):
         with torch.no_grad():
             return surrogate.posterior(candidates)
 
-    def get_surrogate(self) -> SurrogateProtocol:
+    def get_surrogate(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> SurrogateProtocol:
         """Get the current surrogate model.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
 
         Raises:
             RuntimeError: If the current recommender does not provide a surrogate model.
@@ -451,20 +458,26 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        pure_recommender: RecommenderProtocol
+        recommender: RecommenderProtocol
         if isinstance(self.recommender, MetaRecommender):
-            pure_recommender = self.recommender.get_current_recommender()
+            recommender = self.recommender.get_non_meta_recommender(
+                batch_size,
+                self.searchspace,
+                self.objective,
+                self.measurements,
+                pending_experiments,
+            )
         else:
-            pure_recommender = self.recommender
+            recommender = self.recommender
 
-        if isinstance(pure_recommender, BayesianRecommender):
-            return pure_recommender.get_surrogate(
+        if isinstance(recommender, BayesianRecommender):
+            return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
         else:
             raise RuntimeError(
                 f"The current recommender is of type "
-                f"'{pure_recommender.__class__.__name__}', which does not provide "
+                f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )

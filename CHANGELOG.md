@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `arrays_to_dataframes` decorator to create lookups from array-based callables
 - `DiscreteConstraint.get_valid` to conveniently access valid candidates
 - Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `remain_switched` option to `TwoPhaseMetaRecommender`
+- `is_stateful` class variable to `MetaRecommender`
+- `get_non_meta_recommender` method to `MetaRecommender`
 
 ### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
@@ -31,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
+- All arguments to `MetaRecommender.select_recommender` are now optional
+- `MetaRecommender`s can now be composed of other `MetaRecommender`s
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
@@ -62,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
 - The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
   exclusively handled by the `Campaign` class.
+- `get_current_recommender` and `get_next_recommender` of `MetaRecommender` have become
+  obsolete and calling them is no longer possible
 
 ## [0.11.3] - 2024-11-06
 ### Fixed
