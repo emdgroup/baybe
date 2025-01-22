@@ -111,11 +111,12 @@ class AcquisitionFunction(ABC, SerialMixin):
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.min().item()
                     )
+                    if self.is_mc:
+                        additional_params["best_f"] *= -1.0
 
                 if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
                     additional_params["maximize"] = False
-                elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
-                    additional_params["best_f"] *= -1.0
+                elif self.is_mc:
                     additional_params["objective"] = LinearMCObjective(
                         torch.tensor([-1.0])
                     )
