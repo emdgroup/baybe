@@ -19,6 +19,7 @@ SequentialMetaRecommender
       ~SequentialMetaRecommender.from_json
       ~SequentialMetaRecommender.get_current_recommender
       ~SequentialMetaRecommender.get_next_recommender
+      ~SequentialMetaRecommender.get_non_meta_recommender
       ~SequentialMetaRecommender.recommend
       ~SequentialMetaRecommender.select_recommender
       ~SequentialMetaRecommender.to_dict
@@ -34,5 +35,6 @@ SequentialMetaRecommender
    
       ~SequentialMetaRecommender.recommenders
       ~SequentialMetaRecommender.mode
+      ~SequentialMetaRecommender.is_stateful
    
    

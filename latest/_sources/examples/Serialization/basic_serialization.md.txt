@@ -154,6 +154,8 @@ Temperature[degr
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
     
     
 
@@ -255,6 +257,8 @@ Temperature[degr
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
     
     
 

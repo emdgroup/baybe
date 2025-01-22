@@ -175,6 +175,8 @@ print(recommender)
              Hybrid sampler: None
              Sampling percentage: 1.0
        Switch after: 1
+       Remain switched: False
+       Has switched: False
 
 
 ## Example Searchspace and objective parameters
@@ -261,15 +263,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent             Base                        Ligand  \
-    141  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
-    329       p-Xylene   Cesium acetate                 (t-Bu)PhCPhos   
-    261           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    160  Butyornitrile     Cesium pivalate  Di-tert-butylphenylphosphine   
+    260           DMAc     Cesium pivalate                     BrettPhos   
+    425       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    141        120.0          0.057  
-    329        105.0          0.153  
-    261         90.0          0.057  
+    160        120.0          0.100  
+    260        120.0          0.153  
+    425         90.0          0.153  
 
 
 
@@ -282,15 +284,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent             Base                        Ligand  \
-    141  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
-    329       p-Xylene   Cesium acetate                 (t-Bu)PhCPhos   
-    261           DMAc  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    160  Butyornitrile     Cesium pivalate  Di-tert-butylphenylphosphine   
+    260           DMAc     Cesium pivalate                     BrettPhos   
+    425       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    141        120.0          0.057  16.198160  
-    329        105.0          0.153  25.651029  
-    261         90.0          0.057  28.305031  
+    160        120.0          0.100  18.107293  
+    260        120.0          0.153   9.708263  
+    425         90.0          0.153  15.318983  
 
 
 

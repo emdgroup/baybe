@@ -19,6 +19,7 @@ baybe.recommenders.meta.sequential
       :toctree:                                       
       :template: custom-class-template.rst              
    
+      BaseSequentialMetaRecommender
       SequentialMetaRecommender
       StreamingSequentialMetaRecommender
       TwoPhaseMetaRecommender

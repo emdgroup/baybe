@@ -6,6 +6,6 @@ can be applied to continuous and hybrid search spaces.
 ```{toctree}
 :maxdepth: 1
 
-Hybrid Space<hybrid_space>
 Linear <linear_constraints>
+Hybrid Space<hybrid_space>
 ```
