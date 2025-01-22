@@ -49,7 +49,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """The initial recommender used by the meta recommender."""
 
     recommender: RecommenderProtocol = field(
-        factory=BotorchRecommender, validator=RecommenderProtocol
+        factory=BotorchRecommender, validator=instance_of(RecommenderProtocol)
     )
     """The recommender used by the meta recommender after the switch."""
 
