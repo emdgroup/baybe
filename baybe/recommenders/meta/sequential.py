@@ -6,7 +6,7 @@
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import ClassVar, Literal
+from typing import Literal
 
 import pandas as pd
 from attrs import Factory, define, field, fields
@@ -70,6 +70,11 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """Indicates if the switch has already occurred."""
 
     @override
+    @property
+    def is_stateful(self) -> bool:
+        return self.remain_switched
+
+    @override
     def select_recommender(
         self,
         batch_size: int | None = None,
@@ -103,8 +108,6 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 class BaseSequentialMetaRecommender(MetaRecommender):
     """Base class for sequential meta recommenders."""
 
-    is_stateful: ClassVar[bool] = True
-
     # TODO: These should **not** be exposed via the constructor but the workaround
     #   is currently needed for correct (de-)serialization. A proper approach would be
     #   to not set them via the constructor but through a custom hook in combination
@@ -121,6 +124,11 @@ class BaseSequentialMetaRecommender(MetaRecommender):
         default=0, alias="_n_last_measurements", kw_only=True
     )
     """The number of measurements available at the last successful recommend call."""
+
+    @override
+    @property
+    def is_stateful(self) -> bool:
+        return True
 
     @abstractmethod
     def _get_recommender_at_current_step(self) -> RecommenderProtocol:
