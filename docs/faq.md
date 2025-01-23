@@ -1,6 +1,6 @@
 # FAQ
 
-**Do I need to create a campaign to get recommendations?**
+```{dropdown} Do I need to create a campaign to get recommendations?
 
 No, creating a campaign is not mandatory.
 BayBE offers two entry points for generating recommendations:
@@ -9,3 +9,4 @@ BayBE offers two entry points for generating recommendations:
 
 For more details on when to choose one method over the other,
 see [here](userguide/getting_recommendations).
+```
