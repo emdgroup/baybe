@@ -35,7 +35,7 @@ def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
     [
         a
         for a in get_subclasses(AcquisitionFunction)
-        if not issubclass(a, qKnowledgeGradient)
+        if not issubclass(a, qKnowledgeGradient)  # TODO: not yet clear how to handle
     ],
 )
 def test_minimization(acqf_cls):
