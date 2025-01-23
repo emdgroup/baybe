@@ -111,16 +111,18 @@ class AcquisitionFunction(ABC, SerialMixin):
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.min().item()
                     )
+                    if issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
+                        additional_params["best_f"] *= -1.0
 
                 if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
                     additional_params["maximize"] = False
+                elif issubclass(acqf_cls, bo_acqf.qNegIntegratedPosteriorVariance):
+                    # qNIPV is valid but does not require any adjusted params
+                    pass
                 elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
                     additional_params["objective"] = LinearMCObjective(
                         torch.tensor([-1.0])
                     )
-                elif issubclass(acqf_cls, bo_acqf.qNegIntegratedPosteriorVariance):
-                    # qNIPV is valid but does not require any adjusted params
-                    pass
                 else:
                     raise ValueError(
                         f"Unsupported acquisition function type: {acqf_cls}."

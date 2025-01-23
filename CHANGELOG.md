@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   between constraints and dropped parameters yielding empty parameter sets
 - Minimizing a single `NumericalTarget` with specified bounds/transformation via
   `SingleTargetObjective` no longer erroneously maximizes it
+- Improvement-based Monte Carlo acquisition functions now use the correct
+  reference value in minimization mode
 
 ### Removed
 - `botorch_function_wrapper` utility for creating lookup callables
