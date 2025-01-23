@@ -94,7 +94,7 @@ defines the set of candidate configurations that will be considered.
   For more details, see {meth}`baybe.campaign.Campaign.toggle_discrete_candidates`.
 
   ```{admonition} Trajectory-Based Control
-  :class: hint
+  :class: seealso
 
   {class}`~baybe.campaign.Campaign`s allow you to further control the candidate
   generation based on the experimental trajectory taken via their `allow_*` 
@@ -105,7 +105,9 @@ defines the set of candidate configurations that will be considered.
   :class: attention
 
   Currently, candidate exclusion at the {class}`~baybe.campaign.Campaign` level is
-  only possible for the discrete part of the underlying search space.
+  only possible for the discrete part of the underlying search space. To restrict
+  the continuous part of the search, use 
+  {class}`~baybe.constraints.base.ContinuousConstraint`s when creating the space.
   ```
 
 
