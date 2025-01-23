@@ -58,8 +58,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     ) -> pd.DataFrame:
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
-        if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
-            not isinstance(self.disc_recommender, NonPredictiveRecommender)
+        disc_is_bayesian = isinstance(self.disc_recommender, BayesianRecommender)
+        if not disc_is_bayesian and not isinstance(
+            self.disc_recommender, NonPredictiveRecommender
         ):
             raise NotImplementedError(
                 """The discrete recommender should be either a Bayesian or a
@@ -79,7 +80,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
-                pending_experiments=pending_experiments,
+                pending_experiments=pending_experiments if disc_is_bayesian else None,
             )
 
         # We are in a hybrid setting now
