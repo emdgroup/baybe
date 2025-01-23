@@ -108,6 +108,7 @@ docs = [
     "sphinx-autodoc-typehints>=2.4.4",
     "sphinx-copybutton==0.5.2",
     "sphinx-paramlinks==0.6.0",
+    "sphinx-design==0.6.1",
     "sphinxcontrib-bibtex>=2.6.2",
 ]
 
