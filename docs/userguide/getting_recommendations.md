@@ -12,7 +12,7 @@ assuming that a {class}`~baybe.searchspace.core.SearchSpace` object and optional
 
 BayBE offers two entry points for requesting recommendations:
 * (stateless)= 
-  **Recommenders (Stateless Request)**\
+  **Recommenders**\
   If a single (batch) recommendation is all you need, the most direct way to interact is
   to ask one of BayBE's recommenders for it, by calling its
   {meth}`~baybe.recommenders.base.RecommenderProtocol.recommend` method. To do so,
@@ -20,13 +20,24 @@ BayBE offers two entry points for requesting recommendations:
   BayBE in a completely *stateless* way since all relevant components are explicitly
   provided at call time.
 
+  ```{admonition} Meta Recommenders
+  :class: caution
+
+  A notable exception are {class}`~baybe.recommenders.meta.base.MetaRecommender`s
+  which, depending on their configuration, may be stateless only with respect
+  to the recommendation *context* but not the recommendation *mechanism*. More
+  specifically, meta recommenders may – by design – generate different recommendations
+  when confronted with an otherwise identical context twice, as indicated by their
+  {attr}`~baybe.recommenders.meta.base.MetaRecommender.is_stateful` property. 
+  ```
+
   For example, using the {class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`:
   ```python
   recommender = BotorchRecommender()
   recommendation = recommender.recommend(batch_size, searchspace, objective, measurements)
   ```
 * (stateful)= 
-  **Campaigns (Stateful Request)**\
+  **Campaigns**\
   By contrast, if you plan to run an extended series of experiments where you feed newly
   arriving measurements back to BayBE and ask for a refined experimental design,
   creating a {class}`~baybe.campaign.Campaign` object that tracks the experimentation
