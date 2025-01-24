@@ -37,7 +37,8 @@ The following provides a non-comprehensive overview:
 
 - 🛠️ Custom parameter encodings: Improve your campaign with domain knowledge
 - 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
-- 🎯 Single and multiple targets with min, max and match objectives
+- 🎯 Numerical and binary targets with min, max and match objectives
+- ⚖️  Multi-target support via Pareto optimization and desirability scalarization
 - 🔍 Insights: Easily analyze feature importance and model behavior
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
