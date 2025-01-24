@@ -792,12 +792,7 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
     # Cross-join parameters
     res = param_frames[0]
     for frame in param_frames[1:]:
-        # Note: We enforce row order to be consistent with the pandas output,
-        #   which simplifies testing. If speed ever becomes problematic, this
-        #   restriction could be removed.
-        res = res.join(
-            frame, how="cross", force_parallel=True, maintain_order="left_right"
-        )
+        res = res.join(frame, how="cross", force_parallel=True)
 
     return res
 
