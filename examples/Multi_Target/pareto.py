@@ -47,8 +47,8 @@ set_random_seed(1337)
 
 x0 = NumericalContinuousParameter("x0", (-1, 1))
 x1 = NumericalContinuousParameter("x1", (-1, 1))
-y0 = NumericalTarget("y0", "MAX")
-y1 = NumericalTarget("y1", "MAX")
+y0 = NumericalTarget("y0", "MIN")
+y1 = NumericalTarget("y1", "MIN")
 searchspace = SearchSpace.from_product([x0, x1])
 
 # With these definitions at hand, we can construct a multi-variate callable representing
@@ -60,7 +60,7 @@ def lookup(arr: np.ndarray) -> np.ndarray:
     """Compute root mean square values for different center points."""
     y0 = np.sqrt(np.sum((arr - CENTER_Y0) ** 2, axis=1))
     y1 = np.sqrt(np.sum((arr - CENTER_Y1) ** 2, axis=1))
-    return -np.c_[y0, y1]
+    return np.c_[y0, y1]
 
 
 ### Campaign Setup
