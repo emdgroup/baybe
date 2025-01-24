@@ -53,20 +53,81 @@ BayBE offers two entry points for requesting recommendations:
 
 
 ## Excluding Configurations
+When asking for recommendation, you often don't want to consider all possible
+combinations of parameter values (a.k.a. the full Cartesian product space) but you may
+want to exclude certain configurations that are known to be infeasible or undesirable.
+There are several ways to do this, including using BayBE's sophisticated [constraint
+machinery](userguide/constraints). Which approach is the right choice for you depends on
+whether you want to exclude configurations *permanently* or (in-)activate them
+*dynamically* during your experimentation cycle.
 
-Excluding certain parameter configurations from recommendation is generally done by
-adjusting the {class}`~baybe.searchspace.core.SearchSpace` object accordingly, which
-defines the set of candidate configurations that will be considered. 
+### Permanent Exclusion
+
+Permanently excluding certain parameter configurations from the recommendation is
+generally done by adjusting the {class}`~baybe.searchspace.core.SearchSpace` object
+accordingly, which defines the set of candidate configurations that will be considered.
+
+BayBE provides several ways to achieve this, which we'll illustrate by comparing against
+the following "full" search space:
+```python
+searchspace_full = TaskParameter("p", ["A", "B", "C"]).to_searchspace()
+```
+Depending on the specific needs and complexity of the filtering operation, one approach
+may be preferred over the other, but generally these mechanisms exist: 
+
+* Restricting individual parameter objects:
+  ```python
+  searchspace_reduced = TaskParameter(
+      "p", ["A", "B", "C"], active_values=["A", "B"]
+  ).to_searchspace()
+  ```
+
+  ```{admonition} Reduced
+  :class: caution
+  
+  Note that this is *not* the same as defining the parameter with a reduced set of
+  values `["A", "B"]` since in this case the value "C" would be undefined. This
+  makes adding measurements containing that value impossible.
+  ```
+
+* Specifying only a subset of configurations (discrete spaces only):
+  ```python
+  searchspace_reduced = SearchSpace.from_dataframe(
+      pd.DataFrame({"p": ["A", "B"]}),
+      parameters=[TaskParameter("p", ["A", "B", "C"])],
+  )
+  ```
+
+* Filtering the search space using constraints:
+  ```python
+  searchspace_reduced = SearchSpace.from_product(
+      parameters=[CategoricalParameter("p", ["A", "B", "C"])],
+      constraints=[DiscreteExcludeConstraint(["p"], [SubSelectionCondition(["C"])])],
+  )
+  ```
+
+* Using specialized constructors like 
+  {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex`.
+
+### Dynamic Exclusion
+
+Dynamic exclusion of candidates means to in-/exclude certain parameter configurations
+while you are already in the middle of your experimentation process. Here,
+we need to consider two different cases:
+
 * **Recommenders**\
-  The above means that, for [stateless queries](#stateless), you can simply pass a
-  different search space object to each call according to your needs:
+  Since recommender queries are [stateless](#stateless) with respect to the
+  experimental context, you can easily adjust your search space object for each query
+  as needed using any of the *permanent* exclusion methods. For example:
   ```python
   # Recommendation with full search space
   searchspace_full = CategoricalParameter("p", ["A", "B", "C"]).to_searchspace()
   recommender.recommend(batch_size, searchspace_full, objective, measurements)
 
   # Recommendation with reduced search space
-  searchspace_reduced = CategoricalParameter("p", ["A", "B"]).to_searchspace()
+  searchspace_reduced = TaskParameter(
+      "p", ["A", "B", "C"], active_values=["A", "B"]
+  ).to_searchspace()
   recommender.recommend(batch_size, searchspace_reduced, objective, measurements)
   ```
 
@@ -93,6 +154,14 @@ defines the set of candidate configurations that will be considered.
   {class}`~baybe.constraints.base.DiscreteConstraint` objects.
   For more details, see {meth}`baybe.campaign.Campaign.toggle_discrete_candidates`.
 
+    ```{admonition} Candidate Toggling vs. Applying Constraints
+  :class: attention
+
+  Currently, dynamic exclusion via toggling is only possible for discrete candidates.
+  To restrict the set of continuous candidates, use
+  {class}`~baybe.constraints.base.ContinuousConstraint`s when creating the space.
+  ```
+
   ```{admonition} Trajectory-Based Control
   :class: seealso
 
@@ -101,14 +170,6 @@ defines the set of candidate configurations that will be considered.
   {ref}`flags <userguide/campaigns:Candidate Control in Discrete Spaces>`.
   ```
 
-  ```{admonition} Continuous Constraints
-  :class: attention
-
-  Currently, candidate exclusion at the {class}`~baybe.campaign.Campaign` level is
-  only possible for the discrete part of the underlying search space. To restrict
-  the continuous part of the search, use 
-  {class}`~baybe.constraints.base.ContinuousConstraint`s when creating the space.
-  ```
 
 
 
