@@ -77,6 +77,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         """
         import botorch.acquisition as bo_acqf
         import torch
+        from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
         from botorch.acquisition.objective import LinearMCObjective
 
         from baybe.acquisition.acqfs import qThompsonSampling
@@ -153,11 +154,23 @@ class AcquisitionFunction(ABC, SerialMixin):
                         bo_surrogate.posterior(train_x).mean.max().item()
                     )
             case ParetoObjective():
-                if any(t.mode is not TargetMode.MAX for t in objective.targets):
+                if not all(
+                    isinstance(t, NumericalTarget)
+                    and t.mode in (TargetMode.MAX, TargetMode.MIN)
+                    for t in objective.targets
+                ):
                     raise NotImplementedError(
-                        "Pareto optimization currently supports maximization "
-                        "targets only."
+                        "Pareto optimization currently supports "
+                        "maximization/minimization targets only."
                     )
+                additional_params["objective"] = WeightedMCMultiOutputObjective(
+                    torch.tensor(
+                        [
+                            1.0 if t.mode is TargetMode.MAX else -1.0  # type: ignore[attr-defined]
+                            for t in objective.targets
+                        ]
+                    )
+                )
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
 
