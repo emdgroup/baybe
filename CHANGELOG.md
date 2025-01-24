@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compatible with `strtobool`
 - All arguments to `MetaRecommender.select_recommender` are now optional
 - `MetaRecommender`s can now be composed of other `MetaRecommender`s
+- For performance reasons, search space manipulation using `polars` is no longer
+  guaranteed to produce the same row order as the corresponding `pandas` operations
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
