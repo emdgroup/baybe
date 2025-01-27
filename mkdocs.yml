@@ -15,8 +15,19 @@ extra_css:
 nav:
   - Concepts:
     - userguide/serialization.md
+  - API Reference: reference/  
 
 markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+
+plugins:
+- search  
+- gen-files:
+    scripts:
+    - docs/scripts/gen_ref_pages.py
+- literate-nav:
+    nav_file: SUMMARY.md
+- section-index
+- mkdocstrings
