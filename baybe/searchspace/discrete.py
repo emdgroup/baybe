@@ -304,7 +304,7 @@ class SubspaceDiscrete(SerialMixin):
             lazy_df, mask_missing = _apply_constraint_filter_polars(
                 lazy_df, constraints
             )
-            df_records = lazy_df.collect(streaming=True).to_dicts()
+            df_records = lazy_df.collect().to_dicts()
             df = pd.DataFrame.from_records(df_records)
         except OptionalImportError:
             # Apply pandas product
