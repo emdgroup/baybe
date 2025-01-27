@@ -172,7 +172,7 @@ we need to consider two different cases:
   ```
   Note that you can alternatively toggle candidates by passing the appropriate
   {class}`~baybe.constraints.base.DiscreteConstraint` objects.
-  For more details, see {meth}`baybe.campaign.Campaign.toggle_discrete_candidates`.
+  For more details, see {meth}`~baybe.campaign.Campaign.toggle_discrete_candidates`.
 
     ```{admonition} Candidate Toggling vs. Applying Constraints
   :class: attention
