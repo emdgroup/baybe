@@ -100,6 +100,7 @@ insights = [
 
 docs = [
     "baybe[examples]", # docs cannot be built without running examples
+    "mkdocs-material==9.5.27",
 ]
 
 examples = [
