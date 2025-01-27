@@ -1,0 +1,37 @@
+MaternKernel
+============
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: MaternKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MaternKernel.__init__
+      ~MaternKernel.from_dict
+      ~MaternKernel.from_json
+      ~MaternKernel.to_dict
+      ~MaternKernel.to_factory
+      ~MaternKernel.to_gpytorch
+      ~MaternKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MaternKernel.nu
+      ~MaternKernel.lengthscale_prior
+      ~MaternKernel.lengthscale_initial_value
+   
+   

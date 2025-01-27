@@ -1,6 +1,0 @@
-baybe.utils.dataframe.filter\_df
-================================
-
-.. currentmodule:: baybe.utils.dataframe
-
-.. autofunction:: filter_df

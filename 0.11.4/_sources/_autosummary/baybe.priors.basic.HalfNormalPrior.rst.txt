@@ -1,0 +1,34 @@
+HalfNormalPrior
+===============
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: HalfNormalPrior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~HalfNormalPrior.__init__
+      ~HalfNormalPrior.from_dict
+      ~HalfNormalPrior.from_json
+      ~HalfNormalPrior.to_dict
+      ~HalfNormalPrior.to_gpytorch
+      ~HalfNormalPrior.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~HalfNormalPrior.scale
+   
+   

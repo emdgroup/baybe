@@ -1,0 +1,23 @@
+GaussianProcessPreset
+=====================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.core
+
+.. autoclass:: GaussianProcessPreset
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~GaussianProcessPreset.BAYBE
+   
+   

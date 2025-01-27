@@ -1,0 +1,34 @@
+HalfCauchyPrior
+===============
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: HalfCauchyPrior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~HalfCauchyPrior.__init__
+      ~HalfCauchyPrior.from_dict
+      ~HalfCauchyPrior.from_json
+      ~HalfCauchyPrior.to_dict
+      ~HalfCauchyPrior.to_gpytorch
+      ~HalfCauchyPrior.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~HalfCauchyPrior.scale
+   
+   

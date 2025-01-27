@@ -1,0 +1,23 @@
+Dummy
+=====
+
+.. currentmodule:: baybe.utils.basic
+
+.. autoclass:: Dummy
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Dummy.__init__
+   
+   
+
+   
+   
+   

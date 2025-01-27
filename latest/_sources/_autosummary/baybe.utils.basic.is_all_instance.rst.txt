@@ -1,6 +1,0 @@
-baybe.utils.basic.is\_all\_instance
-===================================
-
-.. currentmodule:: baybe.utils.basic
-
-.. autofunction:: is_all_instance

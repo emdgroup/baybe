@@ -1,0 +1,6 @@
+baybe.objectives.deprecation.structure\_objective
+=================================================
+
+.. currentmodule:: baybe.objectives.deprecation
+
+.. autofunction:: structure_objective

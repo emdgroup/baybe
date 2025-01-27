@@ -1,6 +1,0 @@
-baybe.utils.chemistry.get\_fingerprint\_class
-=============================================
-
-.. currentmodule:: baybe.utils.chemistry
-
-.. autofunction:: get_fingerprint_class

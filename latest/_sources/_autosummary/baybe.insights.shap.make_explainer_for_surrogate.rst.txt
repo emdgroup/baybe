@@ -1,6 +1,0 @@
-baybe.insights.shap.make\_explainer\_for\_surrogate
-===================================================
-
-.. currentmodule:: baybe.insights.shap
-
-.. autofunction:: make_explainer_for_surrogate

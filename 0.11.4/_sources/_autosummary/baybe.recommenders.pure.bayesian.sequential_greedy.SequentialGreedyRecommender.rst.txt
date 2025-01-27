@@ -1,0 +1,6 @@
+baybe.recommenders.pure.bayesian.sequential\_greedy.SequentialGreedyRecommender
+===============================================================================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.sequential_greedy
+
+.. autofunction:: SequentialGreedyRecommender

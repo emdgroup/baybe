@@ -1,0 +1,35 @@
+PosteriorStandardDeviation
+==========================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: PosteriorStandardDeviation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PosteriorStandardDeviation.__init__
+      ~PosteriorStandardDeviation.from_dict
+      ~PosteriorStandardDeviation.from_json
+      ~PosteriorStandardDeviation.to_botorch
+      ~PosteriorStandardDeviation.to_dict
+      ~PosteriorStandardDeviation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PosteriorStandardDeviation.maximize
+      ~PosteriorStandardDeviation.abbreviation
+   
+   

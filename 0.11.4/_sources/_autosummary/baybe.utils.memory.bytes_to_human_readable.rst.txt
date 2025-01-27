@@ -1,0 +1,6 @@
+baybe.utils.memory.bytes\_to\_human\_readable
+=============================================
+
+.. currentmodule:: baybe.utils.memory
+
+.. autofunction:: bytes_to_human_readable

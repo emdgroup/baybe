@@ -1,0 +1,6 @@
+baybe.utils.dataframe.df\_uncorrelated\_features
+================================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: df_uncorrelated_features

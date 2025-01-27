@@ -1,0 +1,6 @@
+baybe.utils.interval.InfiniteIntervalError
+==========================================
+
+.. currentmodule:: baybe.utils.interval
+
+.. autoexception:: InfiniteIntervalError

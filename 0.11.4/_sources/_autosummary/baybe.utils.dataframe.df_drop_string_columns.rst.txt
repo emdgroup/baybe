@@ -1,0 +1,6 @@
+baybe.utils.dataframe.df\_drop\_string\_columns
+===============================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: df_drop_string_columns

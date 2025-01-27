@@ -93,7 +93,7 @@ print(campaign, end="\n" * 3)
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 
                 1       coarse            1.0          111.111 
-                2         fine            1.0          100.000 
+                2       coarse            1.0          122.222 
                 ..         ...            ...              ... 
                 87      medium           10.0          177.778 
                 88      medium           10.0          188.889 
@@ -115,8 +115,8 @@ Temperature[degr
 100.000
                 1               1.0               0.0   ...            1.0
 111.111
-                2               0.0               1.0   ...            1.0
-100.000
+                2               1.0               0.0   ...            1.0
+122.222
                 ..              ...               ...   ...            ...
 ...
                 87              0.0               0.0   ...           10.0
@@ -190,7 +190,7 @@ print(campaign_recreate, end="\n" * 3)
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 
                 1       coarse            1.0          111.111 
-                2         fine            1.0          100.000 
+                2       coarse            1.0          122.222 
                 ..         ...            ...              ... 
                 87      medium           10.0          177.778 
                 88      medium           10.0          188.889 
@@ -212,8 +212,8 @@ Temperature[degr
 100.000
                 1               1.0               0.0   ...            1.0
 111.111
-                2               0.0               1.0   ...            1.0
-100.000
+                2               1.0               0.0   ...            1.0
+122.222
                 ..              ...               ...   ...            ...
 ...
                 87              0.0               0.0   ...           10.0
@@ -282,7 +282,7 @@ print(recommendation_orig)
     Recommendation from original object:
        Granularity  Pressure[bar]  Temperature[degree_C]
     0       coarse            1.0                  100.0
-    85        fine           10.0                  200.0
+    59        fine           10.0                  200.0
 
 
 
@@ -294,5 +294,5 @@ print(recommendation_recreate)
     Recommendation from recreated object:
        Granularity  Pressure[bar]  Temperature[degree_C]
     0       coarse            1.0                  100.0
-    85        fine           10.0                  200.0
+    59        fine           10.0                  200.0
 

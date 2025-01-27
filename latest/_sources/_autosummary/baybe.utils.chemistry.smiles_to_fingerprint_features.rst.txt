@@ -1,6 +1,0 @@
-baybe.utils.chemistry.smiles\_to\_fingerprint\_features
-=======================================================
-
-.. currentmodule:: baybe.utils.chemistry
-
-.. autofunction:: smiles_to_fingerprint_features

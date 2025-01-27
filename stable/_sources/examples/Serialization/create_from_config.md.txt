@@ -104,20 +104,6 @@ campaign. If the config is invalid an exception will be thrown.
 campaign = Campaign.from_config(CONFIG)
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCCC')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('COCOC')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCOCCOCCN')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
 We now perform a recommendation as usual and print it.
 
 
@@ -127,7 +113,7 @@ print(recommendation)
 ```
 
        Granularity  Pressure[bar]    Solvent
-    0       coarse            1.0  Solvent A
-    16        fine           10.0  Solvent B
-    32  ultra-fine            5.0  Solvent D
+    1       coarse            1.0  Solvent B
+    20        fine           10.0  Solvent A
+    31  ultra-fine            5.0  Solvent D
 

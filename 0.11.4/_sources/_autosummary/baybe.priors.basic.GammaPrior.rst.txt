@@ -1,0 +1,35 @@
+GammaPrior
+==========
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: GammaPrior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~GammaPrior.__init__
+      ~GammaPrior.from_dict
+      ~GammaPrior.from_json
+      ~GammaPrior.to_dict
+      ~GammaPrior.to_gpytorch
+      ~GammaPrior.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~GammaPrior.concentration
+      ~GammaPrior.rate
+   
+   

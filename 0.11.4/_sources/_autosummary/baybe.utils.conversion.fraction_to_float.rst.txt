@@ -1,0 +1,6 @@
+baybe.utils.conversion.fraction\_to\_float
+==========================================
+
+.. currentmodule:: baybe.utils.conversion
+
+.. autofunction:: fraction_to_float
