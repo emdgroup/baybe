@@ -82,7 +82,7 @@ may be preferred over the other, but generally these mechanisms exist:
   ).to_searchspace()
   ```
 
-  ```{admonition} Reduced
+  ```{admonition} Caution
   :class: caution
   
   Note that this is *not* the same as defining the parameter with a reduced set of
