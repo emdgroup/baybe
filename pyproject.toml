@@ -100,15 +100,6 @@ insights = [
 
 docs = [
     "baybe[examples]", # docs cannot be built without running examples
-    "furo>=2023.09.10",
-    "jupyter>=1.1.1",
-    "jupytext>=1.16.4",
-    "myst-parser>=4.0.0",
-    "sphinx>=8.0.2",
-    "sphinx-autodoc-typehints>=2.4.4",
-    "sphinx-copybutton==0.5.2",
-    "sphinx-paramlinks==0.6.0",
-    "sphinxcontrib-bibtex>=2.6.2",
 ]
 
 examples = [
