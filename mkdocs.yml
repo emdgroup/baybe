@@ -8,6 +8,12 @@ theme:
     scheme: slate
     primary: custom
     accent: custom
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
 
 extra_css:
   - stylesheets/extra.css
