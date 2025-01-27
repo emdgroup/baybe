@@ -4,3 +4,10 @@ repo_url: https://github.com/emdgroup/baybe/
 theme:
   name: material
   logo: assets/favicon.ico
+  palette:
+    scheme: slate
+    primary: custom
+    accent: custom
+
+extra_css:
+  - stylesheets/extra.css

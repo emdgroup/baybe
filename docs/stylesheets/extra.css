@@ -1,0 +1,13 @@
+:root {
+    --md-primary-fg-color:          #0f69af;
+    --md-primary-bg-color:          #ffdcb9;
+    --md-accent-fg-color:           #65bbca;
+}
+
+.md-content {
+    --md-typeset-a-color: #ffdcb9;
+  }
+  
+.md-sidebar {
+    --md-typeset-a-color: #ffdcb9;
+  }
