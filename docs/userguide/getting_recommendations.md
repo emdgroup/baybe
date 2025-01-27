@@ -155,8 +155,19 @@ we need to consider two different cases:
   # Recommendation with full search space
   campaign.recommend(batch_size)
 
-  # Recommendation with reduced search space
-  campaign.toggle_discrete_candidates(pd.DataFrame({"p": ["C"]}), exclude=True)
+  # Exclude *matching* rows
+  campaign.toggle_discrete_candidates(
+      pd.DataFrame({"p": ["C"]}),
+      exclude=True,
+  )
+  # Alternatively: Exclude *non-matching* rows
+  campaign.toggle_discrete_candidates(
+      pd.DataFrame({"p": ["A", "B"]}),
+      complement=True,
+      exclude=True,
+  )
+
+  # Recommend from reduced search space using altered candidate set
   campaign.recommend(batch_size)
   ```
   Note that you can alternatively toggle candidates by passing the appropriate
