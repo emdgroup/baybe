@@ -10,8 +10,7 @@ In what follows, we show results for the campaign studied in the
 [full lookup example](./../../examples/Backtesting/full_lookup), which aims at 
 maximizing the yield of a chemical reaction and involves three substance parameters and  
 two discrete numerical parameters. We randomly sample 100 measurements from the 
-lookup table and add them to the campaign, providing a basis for creating a 
-[`SHAPInsight`](baybe.insights.shap.SHAPInsight).
+lookup table and add them to the campaign, providing a basis for creating an insight.
 ```
 
 ## Parameter Importance via SHAP
@@ -34,7 +33,7 @@ the obtained parameter importances for convergence and consistency.
 ```
 
 ### Basic Usage
-[`SHAPInsight`](baybe.insights.shap.SHAPInsight) can be obtained in several ways:
+A [`SHAPInsight`](baybe.insights.shap.SHAPInsight) can be obtained in several ways:
 - From a [`Campaign`](baybe.campaign.Campaign) via 
   [`from_campaign`](baybe.insights.shap.SHAPInsight.from_campaign):
   ~~~python
@@ -57,7 +56,10 @@ experimental campaign (for instance, [`from_campaign`](baybe.insights.shap.SHAPI
 automatically extracts the `measurements` from the `campaign` object).
 
 ### Plots
-After creating the insight, various methods are available to visualize the results. 
+After creating the insight, various methods are available to visualize the results via 
+the [.plot](baybe.insights.shap.SHAPInsight.plot) 
+interface, please refer to [available SHAP plots](baybe.insights.shap.SHAP_PLOTS).
+
 ~~~python
 insight.plot("bar")
 ~~~
@@ -65,9 +67,6 @@ insight.plot("bar")
 
 This result agrees well with the chemical intuition that ligands are the most important 
 reactants to activate the conversion, resulting in higher yields.
-
-A subset of SHAP plots is available via the [.plot](baybe.insights.shap.SHAPInsight.plot) 
-interface, please refer to [available SHAP plots](baybe.insights.shap.SHAP_PLOTS).
 
 Such plots can also be created for data sets other than the background data that
 was used to generate the insight. If this is desired, pass your data frame as second 
@@ -114,11 +113,11 @@ Attempts to use other explainers will result in an
 
 A feature importance study can still be performed by looking at the computational 
 representation of the data points, activated by the `use_comp_rep` flag. Since all 
-entries in this representation are numeric by default, there are no limitations on the 
-explainer type used. A study of the computational representation might also be useful 
-if a deeper analysis of descriptors used is of interest to the user. In general, for 
-each non-numerical parameter in the experimental representation, there will be several 
-descriptors the computational representation: 
+entries in this representation are numeric by construction, there are no limitations on
+the explainer type used. A study of the computational representation might also be 
+useful if a deeper analysis of descriptors used is of interest to the user. In general, 
+for each non-numerical parameter in the experimental representation, there will be 
+several descriptors the computational representation: 
 ~~~python
 insight = SHAPInsight.from_campaign(campaign, use_comp_rep=True)
 insight.plot("bar")
