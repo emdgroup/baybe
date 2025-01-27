@@ -90,6 +90,15 @@ may be preferred over the other, but generally these mechanisms exist:
   makes adding measurements containing that value impossible.
   ```
 
+  ```{admonition} Experimental Feature
+  :class: warning
+
+  Specifying `active_values` is currently an experimental feature only
+  available to {class}`~baybe.parameters.categorical.TaskParameter`. 
+  It is likely that it will be made available for other categorical parameters in
+  the future.
+  ```
+
 * Specifying only a subset of configurations (discrete spaces only):
   ```python
   searchspace_reduced = SearchSpace.from_dataframe(
