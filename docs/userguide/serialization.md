@@ -348,7 +348,7 @@ assert searchspace == SearchSpace.from_json(searchspace_json)
 
 ### Dataframe deserialization
 
-When serializing BayBE objects, contained [`DataFrames`](pandas.DataFrame) are 
+When serializing BayBE objects, contained [`DataFrames`][pandas.DataFrame] are 
 automatically converted to a binary format in order to
 1. ensure that the involved data types are exactly restored after completing the roundtrip and
 2. decrease the size of the serialization string through compression.
@@ -363,7 +363,7 @@ While you can manually work around this additional conversion step using our
 a more elegant solution becomes apparent when noticing that [invoking alternative 
 constructors](#ALTERNATIVE_CONSTRUCTORS) also works for non-BayBE objects.
 In particular, this means you can resort to any dataframe constructor of your choice
-(such as {meth}`DataFrame.from_records <pandas.DataFrame.from_records>`)
+(such as [`DataFrame.from_records`][pandas.DataFrame.from_records])
 when defining your configuration, instead of having to work with compressed formats:
 
 ```python

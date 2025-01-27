@@ -38,3 +38,5 @@ plugins:
         options:
           extensions:
           - griffe_fieldz
+        import:
+        - https://pandas.pydata.org/docs/objects.inv
