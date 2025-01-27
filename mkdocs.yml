@@ -32,4 +32,9 @@ plugins:
 - literate-nav:
     nav_file: SUMMARY.md
 - section-index
-- mkdocstrings
+- mkdocstrings:
+    handlers:
+      python:
+        options:
+          extensions:
+          - griffe_fieldz

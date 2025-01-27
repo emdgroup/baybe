@@ -100,6 +100,7 @@ insights = [
 
 docs = [
     "baybe[examples]", # docs cannot be built without running examples
+    "griffe-fieldz==0.2.1",
     "mkdocs-gen-files==0.5.0",
     "mkdocs-literate-nav==0.6.1",
     "mkdocs-material==9.5.27",
