@@ -21,6 +21,8 @@ markdown_extensions:
   - admonition
   - pymdownx.details
   - pymdownx.superfences
+  - toc:
+      permalink: "#"
 
 plugins:
 - search  

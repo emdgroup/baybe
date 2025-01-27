@@ -21,7 +21,6 @@ Some of these workflows are demonstrated in the sections below.
     i.e., reassembling the corresponding Python object from its serialization string. 
     * With **roundtrip**, we refer to the successive execution of both steps.
 
-(JSON_SERIALIZATION)=
 ## JSON (de-)serialization
 Most BayBE objects can be conveniently serialized into an equivalent JSON 
 representation by calling their
@@ -58,7 +57,7 @@ between Python sessions by executing the deserializing step in a different conte
 than the serialization step.
 
 ## Deserialization from configuration strings
-The workflow described [above](#JSON_SERIALIZATION) most naturally applies to
+The workflow described [above](#json-de-serialization) most naturally applies to
 situations where we start inside the Python ecosystem and want to make an object
 leave the running session. 
 However, in many cases, we would like to kickstart the process from the other end and
@@ -78,7 +77,7 @@ easy:
 3. Pack them into a JSON string that mirrors the constructor signature
 
 Let's have a more detailed look, for instance, at the serialization string from
-the [above example](#JSON_SERIALIZATION), this time assuming we wanted to assemble
+the [above example](#json-de-serialization), this time assuming we wanted to assemble
 the string manually.
 For this purpose, we have a peek at the signature of the `__init__` method of
 [`CategoricalParameter`][baybe.parameters.categorical.CategoricalParameter]
@@ -189,7 +188,7 @@ parameter_json = """
 Unless you are aware of the specific purpose for which the string was created,
 calling one of the classes' constructors directly is impossible because you 
 simply do not know which one to chose.
-A similar situation arises with [nested objects](#NESTED_OBJECTS) because resorting to
+A similar situation arises with [nested objects](#nesting-objects) because resorting to
 an explicit constructor call of a hand-selected subclass is only possible at the
 highest level of the hierarchy, whereas the inner object types would remain unspecified.
 
@@ -247,7 +246,6 @@ acqf2 = AcquisitionFunction.from_json('{"type": "UCB"}')
 assert acqf1 == acqf2
 ```
 
-(NESTED_OBJECTS)=
 ### Nesting objects
 BayBE objects typically appear as part of a larger object hierarchy.
 For instance, a
