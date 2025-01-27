@@ -3,6 +3,7 @@
 BayBE is shipped with a sophisticated serialization engine that allows to unstructure
 its objects into basic types and seamlessly reassemble them afterward.
 This enables a variety of advanced workflows, such as:
+
 * Persisting objects for later use
 * Transmission and processing outside the Python ecosystem
 * Interaction with APIs and databases
@@ -10,16 +11,15 @@ This enables a variety of advanced workflows, such as:
 
 Some of these workflows are demonstrated in the sections below.
 
-```{admonition} Terminology
-:class: important
-* With **serialization**, we refer to the process of breaking down structured objects
-(such as [Campaigns](baybe.campaign.Campaign)) into their fundamental building blocks
-and subsequently converting these blocks into a format usable outside the Python
-ecosystem (called a "serialization string").
-* With **deserialization**, we accordingly refer to the inverse operation,
-i.e., reassembling the corresponding Python object from its serialization string. 
-* With **roundtrip**, we refer to the successive execution of both steps.
-```
+!!! info "Terminology"
+
+    * With **serialization**, we refer to the process of breaking down structured objects
+    (such as [Campaigns](baybe.campaign.Campaign)) into their fundamental building blocks
+    and subsequently converting these blocks into a format usable outside the Python
+    ecosystem (called a "serialization string").
+    * With **deserialization**, we accordingly refer to the inverse operation,
+    i.e., reassembling the corresponding Python object from its serialization string. 
+    * With **roundtrip**, we refer to the successive execution of both steps.
 
 (JSON_SERIALIZATION)=
 ## JSON (de-)serialization
@@ -30,19 +30,19 @@ The obtained JSON string can then be deserialized via the
 {meth}`from_json <baybe.serialization.mixin.SerialMixin.from_json>` method
 of the corresponding class, which yields an "equivalent copy" of the original object.
 
-```{admonition} Equivalent copies
-:class: important
-Roundtrip serialization is configured such that the obtained copy of an object
-is semantically equivalent to its original version and thus behaves identically.
-Note, however, that some objects contain non-persistent content (i.e., internal objects
-such as temporary data or cached computation results) that may be lost during a 
-serialization roundtrip.
-Because this content will be automatically recreated on the fly when needed,
-it is ignored for comparison with the `==` operator, enabling a semantically correct
-equality check.
-```
+!!! info "Equivalent copies"
+
+    Roundtrip serialization is configured such that the obtained copy of an object
+    is semantically equivalent to its original version and thus behaves identically.
+    Note, however, that some objects contain non-persistent content (i.e., internal objects
+    such as temporary data or cached computation results) that may be lost during a 
+    serialization roundtrip.
+    Because this content will be automatically recreated on the fly when needed,
+    it is ignored for comparison with the `==` operator, enabling a semantically correct
+    equality check.
 
 For example:
+
 ```python
 from baybe.parameters import CategoricalParameter
 
@@ -72,6 +72,7 @@ task. Of course, the underlying concepts can be mixed and matched arbitrarily.
 ### Basic string assembly
 Writing a configuration for a certain BayBE object in form of a serialization string is
 easy:
+
 1. Select your desired object class
 2. Identify the arguments expected by one of its constructors (see also [here](#ALTERNATIVE_CONSTRUCTORS))
 3. Pack them into a JSON string that mirrors the constructor signature
@@ -228,11 +229,11 @@ task_parameter_reconstructed = Parameter.from_json(task_parameter_json)
 assert task_parameter == task_parameter_reconstructed
 ```
 
-```{note} 
-When serializing an object that belongs to a class hierarchy, BayBE automatically
-injects the `type` field into the serialization string to enable frictionless deserialization
-at a later stage.
-```
+!!! note
+
+    When serializing an object that belongs to a class hierarchy, BayBE automatically
+    injects the `type` field into the serialization string to enable frictionless deserialization
+    at a later stage.
 
 ### Using abbreviations
 Classes that have an `abbreviation` class variable defined can be conveniently

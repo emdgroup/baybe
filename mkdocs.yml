@@ -15,3 +15,8 @@ extra_css:
 nav:
   - Concepts:
     - userguide/serialization.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
