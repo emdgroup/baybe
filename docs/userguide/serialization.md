@@ -14,7 +14,7 @@ Some of these workflows are demonstrated in the sections below.
 !!! info "Terminology"
 
     * With **serialization**, we refer to the process of breaking down structured objects
-    (such as [Campaigns](baybe.campaign.Campaign)) into their fundamental building blocks
+    (such as [`Campaigns`][baybe.campaign.Campaign]) into their fundamental building blocks
     and subsequently converting these blocks into a format usable outside the Python
     ecosystem (called a "serialization string").
     * With **deserialization**, we accordingly refer to the inverse operation,
@@ -25,9 +25,9 @@ Some of these workflows are demonstrated in the sections below.
 ## JSON (de-)serialization
 Most BayBE objects can be conveniently serialized into an equivalent JSON 
 representation by calling their
-{meth}`to_json <baybe.serialization.mixin.SerialMixin.to_json>` method.
+[`to_json`][baybe.serialization.mixin.SerialMixin.to_json] method.
 The obtained JSON string can then be deserialized via the 
-{meth}`from_json <baybe.serialization.mixin.SerialMixin.from_json>` method
+[`from_json`][baybe.serialization.mixin.SerialMixin.from_json] method
 of the corresponding class, which yields an "equivalent copy" of the original object.
 
 !!! info "Equivalent copies"
@@ -81,7 +81,7 @@ Let's have a more detailed look, for instance, at the serialization string from
 the [above example](#JSON_SERIALIZATION), this time assuming we wanted to assemble
 the string manually.
 For this purpose, we have a peek at the signature of the `__init__` method of
-{meth}`CategoricalParameter <baybe.parameters.categorical.CategoricalParameter.__init__>`
+[`CategoricalParameter`][baybe.parameters.categorical.CategoricalParameter]
 and notice that it has two required arguments, `name` and `values`.
 We specify these accordingly as separate fields in the JSON string:
 
@@ -137,7 +137,7 @@ Of course, these shortcuts can be analogously used inside a configuration string
 While the above holds generally true for all classes that have converters in place,
 providing a few specific example may help to convey the concept:
 
-* Since {class}`Intervals <baybe.utils.interval.Interval>` can be created _implicitly_,
+* Since [`Intervals`][baybe.utils.interval.Interval] can be created _implicitly_,
     it is enough the specify their bound values directly:
     ```python
     from baybe.targets import NumericalTarget
@@ -176,8 +176,8 @@ Instead, you oftentimes need to be able to process the incoming string dynamical
 
 For example, consider the following string, which perfectly mirrors the signatures of 
 both
-{meth}`CategoricalParameter <baybe.parameters.categorical.CategoricalParameter.__init__>` and 
-{meth}`TaskParameter <baybe.parameters.categorical.TaskParameter.__init__>`:
+[`CategoricalParameter`][baybe.parameters.categorical.CategoricalParameter] and 
+[`TaskParameter`][baybe.parameters.categorical.TaskParameter]:
 ```python
 parameter_json = """
 {
@@ -197,7 +197,7 @@ The problem can be easily circumvented using an explicit subclass resolution
 mechanism, i.e., by tagging the respective subclass in an additional `type` field that
 holds the class' name.
 This allows to deserialize the object from the corresponding base class instead 
-(i.e., {class}`Parameter <baybe.parameters.base.Parameter>` class in the example below),
+(i.e., [`Parameter`][baybe.parameters.base.Parameter] class in the example below),
 mirroring the flexibility of specifying subtypes to your configuration file:
 
 ```python
@@ -251,10 +251,10 @@ assert acqf1 == acqf2
 ### Nesting objects
 BayBE objects typically appear as part of a larger object hierarchy.
 For instance, a
-{class}`SearchSpace <baybe.searchspace.core.SearchSpace>` can hold one or several
-{class}`Parameters <baybe.parameters.base.Parameter>`, just like an
-{class}`Objective <baybe.objectives.base.Objective>` can hold one or several 
-{class}`Targets <baybe.targets.base.Target>`.
+[`SearchSpace`][baybe.searchspace.core.SearchSpace] can hold one or several
+[`Parameters`][baybe.parameters.base.Parameter], just like an
+[`Objective`][baybe.objectives.base.Objective] can hold one or several 
+[`Targets`][baybe.targets.base.Target].
 This hierarchical structure can be directly replicated in the serialization string:
 
 ```python
@@ -303,14 +303,14 @@ an object's attributes in their "canonical" form, which is often not the preferr
 approach.
 
 For instance, a search space is composed of two sub-components, a
-[discrete subspace](baybe.searchspace.discrete.SubspaceDiscrete)
-and a [continuous subspace](baybe.searchspace.continuous.SubspaceContinuous),
+[discrete subspace][baybe.searchspace.discrete.SubspaceDiscrete]
+and a [continuous subspace][baybe.searchspace.continuous.SubspaceContinuous],
 which are accordingly expected by the 
-[`SearchSpace`](baybe.searchspace.core.SearchSpace.__init__) constructor.
+[`SearchSpace`][baybe.searchspace.core.SearchSpace] constructor.
 However, instead of providing the two components directly, most users would more
 naturally invoke one of the alternative class methods available, such as
-{meth}`SearchSpace.from_product <baybe.searchspace.core.SearchSpace.from_product>` or 
-{meth}`SearchSpace.from_dataframe <baybe.searchspace.core.SearchSpace.from_dataframe>`.
+[`SearchSpace.from_product`][baybe.searchspace.core.SearchSpace.from_product] or 
+[`SearchSpace.from_dataframe`][baybe.searchspace.core.SearchSpace.from_dataframe].
 
 Using a serialization string, the same alternative routes can be triggered via the
 optional `constructor` field that allows specifying the initializer to be used for the
@@ -360,8 +360,8 @@ representation is not human-readable, which can be a challenge when working
 with configuration strings.
 
 While you can manually work around this additional conversion step using our
-{func}`serialize_dataframe <baybe.serialization.utils.serialize_dataframe>` and
-{func}`deserialize_dataframe <baybe.serialization.utils.deserialize_dataframe>` helpers,
+[`serialize_dataframe`][baybe.serialization.utils.serialize_dataframe] and
+[`deserialize_dataframe`][baybe.serialization.utils.deserialize_dataframe] helpers,
 a more elegant solution becomes apparent when noticing that [invoking alternative 
 constructors](#ALTERNATIVE_CONSTRUCTORS) also works for non-BayBE objects.
 In particular, this means you can resort to any dataframe constructor of your choice
