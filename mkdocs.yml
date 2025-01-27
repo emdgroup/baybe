@@ -11,3 +11,7 @@ theme:
 
 extra_css:
   - stylesheets/extra.css
+
+nav:
+  - Concepts:
+    - userguide/serialization.md
