@@ -32,10 +32,10 @@ BayBE offers two entry points for requesting recommendations:
   ```
 
   For example, using the {class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`:
-  ```python
+  ~~~python
   recommender = BotorchRecommender()
   recommendation = recommender.recommend(batch_size, searchspace, objective, measurements)
-  ```
+  ~~~
 * (stateful)= 
   **Campaigns**\
   By contrast, if you plan to run an extended series of experiments where you feed newly
@@ -43,12 +43,12 @@ BayBE offers two entry points for requesting recommendations:
   creating a {class}`~baybe.campaign.Campaign` object that tracks the experimentation
   progress is a better choice. This offers *stateful* way of interaction where
   the context is fully maintained by the campaign object:
-  ```python
+  ~~~python
   recommender = BotorchRecommender()
   campaign = Campaign(searchspace, objective, recommender)
   campaign.add_measurements(measurements)
   recommendation = campaign.recommend(batch_size)
-  ```
+  ~~~
   For more details, have a look at our [campaign user guide](/userguide/campaigns).
 
 
@@ -69,18 +69,18 @@ accordingly, which defines the set of candidate configurations that will be cons
 
 BayBE provides several ways to achieve this, which we'll illustrate by comparing against
 the following "full" search space:
-```python
+~~~python
 searchspace_full = TaskParameter("p", ["A", "B", "C"]).to_searchspace()
-```
+~~~
 Depending on the specific needs and complexity of the filtering operation, one approach
 may be preferred over the other, but generally these mechanisms exist: 
 
 * Restricting individual parameter objects:
-  ```python
+  ~~~python
   searchspace_reduced = TaskParameter(
       "p", ["A", "B", "C"], active_values=["A", "B"]
   ).to_searchspace()
-  ```
+  ~~~
 
   ```{admonition} Caution
   :class: caution
@@ -100,20 +100,20 @@ may be preferred over the other, but generally these mechanisms exist:
   ```
 
 * Specifying only a subset of configurations (discrete spaces only):
-  ```python
+  ~~~python
   searchspace_reduced = SearchSpace.from_dataframe(
       pd.DataFrame({"p": ["A", "B"]}),
       parameters=[TaskParameter("p", ["A", "B", "C"])],
   )
-  ```
+  ~~~
 
 * Filtering the search space using constraints:
-  ```python
+  ~~~python
   searchspace_reduced = SearchSpace.from_product(
       parameters=[CategoricalParameter("p", ["A", "B", "C"])],
       constraints=[DiscreteExcludeConstraint(["p"], [SubSelectionCondition(["C"])])],
   )
-  ```
+  ~~~
 
 * Using specialized constructors like 
   {meth}`~baybe.searchspace.discrete.SubspaceDiscrete.from_simplex`.
@@ -128,7 +128,7 @@ we need to consider two different cases:
   Since recommender queries are [stateless](#stateless) with respect to the
   experimental context, you can easily adjust your search space object for each query
   as needed using any of the *permanent* exclusion methods. For example:
-  ```python
+  ~~~python
   # Recommendation with full search space
   searchspace_full = CategoricalParameter("p", ["A", "B", "C"]).to_searchspace()
   recommender.recommend(batch_size, searchspace_full, objective, measurements)
@@ -138,7 +138,7 @@ we need to consider two different cases:
       "p", ["A", "B", "C"], active_values=["A", "B"]
   ).to_searchspace()
   recommender.recommend(batch_size, searchspace_reduced, objective, measurements)
-  ```
+  ~~~
 
 * **Campaigns**\
   Because the search space must be defined before a
@@ -148,7 +148,7 @@ we need to consider two different cases:
   {meth}`~baybe.campaign.Campaign.toggle_discrete_candidates` method that allows to
   dynamically enable or disable specific candidates while the campaign is running.
   The above example thus translates to:
-  ```python
+  ~~~python
   campaign = Campaign(searchspace_full, objective, measurements)
   campaign.add_measurements(measurements)
 
@@ -169,7 +169,7 @@ we need to consider two different cases:
 
   # Recommend from reduced search space using altered candidate set
   campaign.recommend(batch_size)
-  ```
+  ~~~
   Note that you can alternatively toggle candidates by passing the appropriate
   {class}`~baybe.constraints.base.DiscreteConstraint` objects.
   For more details, see {meth}`~baybe.campaign.Campaign.toggle_discrete_candidates`.
