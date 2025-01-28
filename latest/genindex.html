@@ -280,6 +280,7 @@
 <li class="toctree-l2"><a class="reference internal" href="userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="userguide/recommenders.html">Recommenders</a></li>
@@ -472,6 +473,10 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/baybe.insights.html">baybe.insights</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/baybe.insights.shap.html">baybe.insights.shap</a><input class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.is_shap_explainer.html">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -3295,6 +3300,8 @@
           <li><a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.from_recommender.params.explainer_cls">(baybe.insights.shap.SHAPInsight.from_recommender parameter)</a>, <a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.from_recommender.params.explainer_cls">[1]</a>
 </li>
         </ul></li>
+        <li><a href="_autosummary/baybe.insights.shap.EXPLAINERS.html#baybe.insights.shap.EXPLAINERS">EXPLAINERS (in module baybe.insights.shap)</a>
+</li>
         <li><a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.plot.params.explanation_index">explanation_index (baybe.insights.shap.SHAPInsight.plot parameter)</a>, <a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.plot.params.explanation_index">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition.to_polars.params.expr">expr (baybe.constraints.conditions.Condition.to_polars parameter)</a>, <a href="_autosummary/baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition.to_polars.params.expr">[1]</a>
@@ -4858,15 +4865,17 @@
         </ul></li>
         <li><a href="_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">noise_ratio (baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">[1]</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">noise_type (baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">[1]</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.exceptions.NoMCAcquisitionFunctionError.html#baybe.exceptions.NoMCAcquisitionFunctionError">NoMCAcquisitionFunctionError</a>
 </li>
         <li><a href="_autosummary/baybe.utils.validation.non_inf_float.html#baybe.utils.validation.non_inf_float">non_inf_float() (in module baybe.utils.validation)</a>
 </li>
         <li><a href="_autosummary/baybe.utils.validation.non_nan_float.html#baybe.utils.validation.non_nan_float">non_nan_float() (in module baybe.utils.validation)</a>
+</li>
+        <li><a href="_autosummary/baybe.insights.shap.NON_SHAP_EXPLAINERS.html#baybe.insights.shap.NON_SHAP_EXPLAINERS">NON_SHAP_EXPLAINERS (in module baybe.insights.shap)</a>
 </li>
         <li><a href="_autosummary/baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender.html#baybe.recommenders.pure.nonpredictive.base.NonPredictiveRecommender">NonPredictiveRecommender (class in baybe.recommenders.pure.nonpredictive.base)</a>
 </li>
@@ -5575,6 +5584,10 @@
         <li><a href="_autosummary/baybe.utils.random.set_random_seed.html#baybe.utils.random.set_random_seed">set_random_seed() (in module baybe.utils.random)</a>
 </li>
         <li><a href="_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending">set_X_pending() (baybe.acquisition.partial.PartialAcquisitionFunction method)</a>
+</li>
+        <li><a href="_autosummary/baybe.insights.shap.SHAP_EXPLAINERS.html#baybe.insights.shap.SHAP_EXPLAINERS">SHAP_EXPLAINERS (in module baybe.insights.shap)</a>
+</li>
+        <li><a href="_autosummary/baybe.insights.shap.SHAP_PLOTS.html#baybe.insights.shap.SHAP_PLOTS">SHAP_PLOTS (in module baybe.insights.shap)</a>
 </li>
         <li><a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight">SHAPInsight (class in baybe.insights.shap)</a>
 </li>

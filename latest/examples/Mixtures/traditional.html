@@ -282,6 +282,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/recommenders.html">Recommenders</a></li>
@@ -474,6 +475,10 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.html">baybe.insights</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.html">baybe.insights.shap</a><input class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.is_shap_explainer.html">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -1112,16 +1117,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  17.751098  16.579850     1.888791     0.740066   4.167451  58.872744
-1  12.950499  12.374492     2.536072     0.384807  34.284419  37.469711
-2  19.205950   3.830642     0.257192     0.820591  37.670160  38.215465
-3   6.297107  10.290982     3.154853     1.149357  24.941796  54.165905
-4   6.051523   9.302388     0.840005     0.279093  27.238634  56.288358
-5   5.433098  12.659794     1.539612     2.862623  45.931723  31.573150
-6  13.675834   1.831387     2.438106     0.762163  79.897622   1.394887
-7  14.102819   4.148178     0.700398     1.382424  14.416536  65.249645
-8  12.625085   7.130423     0.129649     0.353378  34.695194  45.066272
-9   5.162540   6.190869     1.314944     2.157662  74.696204  10.477781
+0  13.942523  12.093567     0.427376     4.085681  55.024154  14.426699
+1  19.619307   4.728505     1.548835     3.012633  36.943375  34.147346
+2  10.914799   3.808944     3.691145     1.297886  43.362681  36.924544
+3   6.671361  14.669148     0.654802     2.210216  31.411254  44.383220
+4   4.078907  17.060366     3.033170     1.055941  54.906705  19.864909
+5  12.378496   5.937578     1.657412     2.816745   0.083138  77.126631
+6   1.891354  15.655521     0.210207     3.585213  53.256061  25.401643
+7   6.655926   9.261009     2.012952     1.697625  35.755138  44.617350
+8   8.407465  11.363617     0.889490     1.531299  46.685858  31.122271
+9  18.431432   0.302893     1.182257     1.319548  24.248353  54.515517
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1136,16 +1141,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    34.330948            2.628857
-1  100.0    25.324991            2.920880
-2  100.0    23.036592            1.077783
-3  100.0    16.588089            4.304210
-4  100.0    15.353911            1.119097
-5  100.0    18.092892            4.402235
-6  100.0    15.507221            3.200269
-7  100.0    18.250997            2.082822
-8  100.0    19.755508            0.483026
-9  100.0    11.353409            3.472606
+0  100.0    26.036090            4.513057
+1  100.0    24.347811            4.561467
+2  100.0    14.723743            4.989031
+3  100.0    21.340509            2.865018
+4  100.0    21.139274            4.089112
+5  100.0    18.316074            4.474157
+6  100.0    17.546875            3.795421
+7  100.0    15.916935            3.710577
+8  100.0    19.771082            2.420789
+9  100.0    18.734325            2.501805
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

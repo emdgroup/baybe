@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.insights.shap.is_shap_explainer" href="baybe.insights.shap.is_shap_explainer.html" /><link rel="prev" title="baybe.insights" href="baybe.insights.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.insights.shap.SHAP_EXPLAINERS" href="baybe.insights.shap.SHAP_EXPLAINERS.html" /><link rel="prev" title="baybe.insights" href="baybe.insights.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.insights.shap - BayBE documentation</title>
@@ -282,6 +282,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/recommenders.html">Recommenders</a></li>
@@ -474,6 +475,10 @@
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="baybe.insights.html">baybe.insights</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.insights.shap</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.is_shap_explainer.html">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -1009,6 +1014,25 @@
           <section id="module-baybe.insights.shap">
 <span id="baybe-insights-shap"></span><h1>baybe.insights.shap<a class="headerlink" href="#module-baybe.insights.shap" title="Link to this heading">¶</a></h1>
 <p>SHAP insights.</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.insights.shap.SHAP_EXPLAINERS.html#baybe.insights.shap.SHAP_EXPLAINERS" title="baybe.insights.shap.SHAP_EXPLAINERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SHAP_EXPLAINERS</span></code></a></p></td>
+<td><p>Supported SHAP explainer types for <a class="reference internal" href="baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight" title="baybe.insights.shap.SHAPInsight"><code class="xref py py-class docutils literal notranslate"><span class="pre">baybe.insights.shap.SHAPInsight</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.insights.shap.NON_SHAP_EXPLAINERS.html#baybe.insights.shap.NON_SHAP_EXPLAINERS" title="baybe.insights.shap.NON_SHAP_EXPLAINERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NON_SHAP_EXPLAINERS</span></code></a></p></td>
+<td><p>Supported non-SHAP explainer types for <a class="reference internal" href="baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight" title="baybe.insights.shap.SHAPInsight"><code class="xref py py-class docutils literal notranslate"><span class="pre">baybe.insights.shap.SHAPInsight</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.insights.shap.EXPLAINERS.html#baybe.insights.shap.EXPLAINERS" title="baybe.insights.shap.EXPLAINERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EXPLAINERS</span></code></a></p></td>
+<td><p>Supported explainer types for <a class="reference internal" href="baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight" title="baybe.insights.shap.SHAPInsight"><code class="xref py py-class docutils literal notranslate"><span class="pre">baybe.insights.shap.SHAPInsight</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.insights.shap.SHAP_PLOTS.html#baybe.insights.shap.SHAP_PLOTS" title="baybe.insights.shap.SHAP_PLOTS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SHAP_PLOTS</span></code></a></p></td>
+<td><p>Supported plot types for <a class="reference internal" href="baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.plot" title="baybe.insights.shap.SHAPInsight.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.insights.shap.SHAPInsight.plot()</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
@@ -1039,12 +1063,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.insights.shap.is_shap_explainer.html">
+          <a class="next-page" href="baybe.insights.shap.SHAP_EXPLAINERS.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">baybe.insights.shap.is_shap_explainer</div>
+                <div class="title">baybe.insights.shap.SHAP_EXPLAINERS</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

@@ -5,6 +5,17 @@ baybe.insights.shap
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      SHAP_EXPLAINERS
+      NON_SHAP_EXPLAINERS
+      EXPLAINERS
+      SHAP_PLOTS
+   
    
 
    

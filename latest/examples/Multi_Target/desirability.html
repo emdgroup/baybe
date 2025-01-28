@@ -282,6 +282,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/recommenders.html">Recommenders</a></li>
@@ -474,6 +475,10 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.html">baybe.insights</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.html">baybe.insights.shap</a><input class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.is_shap_explainer.html">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -1229,21 +1234,21 @@ It also prints what happens to internal data.</p>
 Recommended measurements with fake measured results:
 
     Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-33     22        bad         2.0        -6.0   0.287675  45.977366  55.643948
-228    33   very bad         2.0        -9.0  96.044412  81.238185  53.688493
-271    33  very good         6.0        -1.0  44.238304  99.205644  52.108962
+78     22       good         8.0        -3.0  20.979860  84.124623  56.268923
+8      22         OK         3.0        -9.0  70.748852   9.675225  52.849430
+136    22  very good        10.0        -9.0  34.706785  31.777158  51.966556
 
 Internal measurement database with desirability values:
 
   Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    22        bad         2.0        -6.0   0.287675  45.977366  55.643948   
-1    33   very bad         2.0        -9.0  96.044412  81.238185  53.688493   
-2    33  very good         6.0        -1.0  44.238304  99.205644  52.108962   
+0    22       good         8.0        -3.0  20.979860  84.124623  56.268923   
+1    22         OK         3.0        -9.0  70.748852   9.675225  52.849430   
+2    22  very good        10.0        -9.0  34.706785  31.777158  51.966556   
 
    BatchNr  FitNr  Desirability  
-0        1    NaN      0.425920  
-1        1    NaN      0.686679  
-2        1    NaN      0.638998  
+0        1    NaN      0.347112  
+1        1    NaN      0.832216  
+2        1    NaN      0.761201  
 
 
 
@@ -1252,35 +1257,29 @@ Internal measurement database with desirability values:
 
 Recommended measurements with fake measured results:
 
-      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
-index                                                                  
-256      33  very good         2.0        -9.0  76.693383  75.204658   
-200      33       good         2.0        -9.0  88.225055  66.478901   
-229      33   very bad         2.0        -6.0  41.703361  81.537834   
-
-        Target_3  
-index             
-256    52.193618  
-200    56.092058  
-229    53.577031  
+      Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+index                                                                     
+32       22   bad         2.0        -9.0  48.069331  89.098687  55.605460
+16       22    OK         6.0        -9.0  12.241678  91.946131  53.624201
+9        22    OK         3.0        -6.0  19.967500  54.673975  52.167973
 
 Internal measurement database with desirability values:
 
   Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    22        bad         2.0        -6.0   0.287675  45.977366  55.643948   
-1    33   very bad         2.0        -9.0  96.044412  81.238185  53.688493   
-2    33  very good         6.0        -1.0  44.238304  99.205644  52.108962   
-3    33  very good         2.0        -9.0  76.693383  75.204658  52.193618   
-4    33       good         2.0        -9.0  88.225055  66.478901  56.092058   
-5    33   very bad         2.0        -6.0  41.703361  81.537834  53.577031   
+0    22       good         8.0        -3.0  20.979860  84.124623  56.268923   
+1    22         OK         3.0        -9.0  70.748852   9.675225  52.849430   
+2    22  very good        10.0        -9.0  34.706785  31.777158  51.966556   
+3    22        bad         2.0        -9.0  48.069331  89.098687  55.605460   
+4    22         OK         6.0        -9.0  12.241678  91.946131  53.624201   
+5    22         OK         3.0        -6.0  19.967500  54.673975  52.167973   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.425920  
-1        1    1.0      0.686679  
-2        1    1.0      0.638998  
-3        2    NaN      0.747926  
-4        2    NaN      0.529113  
-5        2    NaN      0.584861  
+0        1    1.0      0.347112  
+1        1    1.0      0.832216  
+2        1    1.0      0.761201  
+3        2    NaN      0.438000  
+4        2    NaN      0.501976  
+5        2    NaN      0.676756  
 
 
 #### ITERATION 3 ####
@@ -1289,39 +1288,39 @@ Recommended measurements with fake measured results:
 
       Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
 index                                                                  
-264      33  very good         4.0        -9.0  80.651647  26.808340   
-252      33  very good         1.0        -9.0  84.518265  49.164554   
-191      33        bad         8.0        -1.0   4.762724  74.817953   
+4        22         OK         2.0        -9.0  31.151438   3.110817   
+12       22         OK         4.0        -9.0   8.746997   0.385512   
+138      22  very good        10.0        -3.0  36.620898  43.985041   
 
         Target_3  
 index             
-264    55.722368  
-252    56.729752  
-191    53.197298  
+4      52.830100  
+12     55.611648  
+138    51.301715  
 
 Internal measurement database with desirability values:
 
   Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    22        bad         2.0        -6.0   0.287675  45.977366  55.643948   
-1    33   very bad         2.0        -9.0  96.044412  81.238185  53.688493   
-2    33  very good         6.0        -1.0  44.238304  99.205644  52.108962   
-3    33  very good         2.0        -9.0  76.693383  75.204658  52.193618   
-4    33       good         2.0        -9.0  88.225055  66.478901  56.092058   
-5    33   very bad         2.0        -6.0  41.703361  81.537834  53.577031   
-6    33  very good         4.0        -9.0  80.651647  26.808340  55.722368   
-7    33  very good         1.0        -9.0  84.518265  49.164554  56.729752   
-8    33        bad         8.0        -1.0   4.762724  74.817953  53.197298   
+0    22       good         8.0        -3.0  20.979860  84.124623  56.268923   
+1    22         OK         3.0        -9.0  70.748852   9.675225  52.849430   
+2    22  very good        10.0        -9.0  34.706785  31.777158  51.966556   
+3    22        bad         2.0        -9.0  48.069331  89.098687  55.605460   
+4    22         OK         6.0        -9.0  12.241678  91.946131  53.624201   
+5    22         OK         3.0        -6.0  19.967500  54.673975  52.167973   
+6    22         OK         2.0        -9.0  31.151438   3.110817  52.830100   
+7    22         OK         4.0        -9.0   8.746997   0.385512  55.611648   
+8    22  very good        10.0        -3.0  36.620898  43.985041  51.301715   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.425920  
-1        1    1.0      0.686679  
-2        1    1.0      0.638998  
-3        2    2.0      0.747926  
-4        2    2.0      0.529113  
-5        2    2.0      0.584861  
-6        3    NaN      0.619380  
-7        3    NaN      0.513241  
-8        3    NaN      0.548945  
+0        1    1.0      0.347112  
+1        1    1.0      0.832216  
+2        1    1.0      0.761201  
+3        2    2.0      0.438000  
+4        2    2.0      0.501976  
+5        2    2.0      0.676756  
+6        3    NaN      0.767271  
+7        3    NaN      0.536338  
+8        3    NaN      0.765279  
 </pre></div>
 </div>
 </section>

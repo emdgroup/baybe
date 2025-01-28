@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.insights.shap.make_explainer_for_surrogate" href="baybe.insights.shap.make_explainer_for_surrogate.html" /><link rel="prev" title="baybe.insights.shap" href="baybe.insights.shap.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.insights.shap.make_explainer_for_surrogate" href="baybe.insights.shap.make_explainer_for_surrogate.html" /><link rel="prev" title="baybe.insights.shap.SHAP_PLOTS" href="baybe.insights.shap.SHAP_PLOTS.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.insights.shap.is_shap_explainer - BayBE documentation</title>
@@ -282,6 +282,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/recommenders.html">Recommenders</a></li>
@@ -474,6 +475,10 @@
 </li>
 <li class="toctree-l2 current has-children"><a class="reference internal" href="baybe.insights.html">baybe.insights</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.insights.shap.html">baybe.insights.shap</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -1010,7 +1015,7 @@
 <h1>baybe.insights.shap.is_shap_explainer<a class="headerlink" href="#baybe-insights-shap-is-shap-explainer" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="baybe.insights.shap.is_shap_explainer">
-<span class="sig-prename descclassname"><span class="pre">baybe.insights.shap.</span></span><span class="sig-name descname"><span class="pre">is_shap_explainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Explainer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/insights/shap.html#is_shap_explainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.insights.shap.is_shap_explainer" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">baybe.insights.shap.</span></span><span class="sig-name descname"><span class="pre">is_shap_explainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">explainer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.Explainer.html#shap.Explainer" title="(in SHAP vlatest)"><span class="pre">Explainer</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/insights/shap.html#is_shap_explainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.insights.shap.is_shap_explainer" title="Link to this definition">¶</a></dt>
 <dd><p>Indicate if the given explainer is a SHAP explainer or not (e.g. MAPLE, LIME).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1035,14 +1040,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.insights.shap.html">
+          <a class="prev-page" href="baybe.insights.shap.SHAP_PLOTS.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">baybe.insights.shap</div>
+                <div class="title">baybe.insights.shap.SHAP_PLOTS</div>
                 
               </div>
             </a>

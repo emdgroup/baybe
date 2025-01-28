@@ -282,6 +282,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/envvars.html">Environment Vars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/recommenders.html">Recommenders</a></li>
@@ -474,6 +475,10 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.html">baybe.insights</a><input class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><div class="visually-hidden">Toggle navigation of baybe.insights</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.html">baybe.insights.shap</a><input class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><div class="visually-hidden">Toggle navigation of baybe.insights.shap</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_EXPLAINERS.html">baybe.insights.shap.SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.NON_SHAP_EXPLAINERS.html">baybe.insights.shap.NON_SHAP_EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.EXPLAINERS.html">baybe.insights.shap.EXPLAINERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAP_PLOTS.html">baybe.insights.shap.SHAP_PLOTS</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.is_shap_explainer.html">baybe.insights.shap.is_shap_explainer</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.make_explainer_for_surrogate.html">baybe.insights.shap.make_explainer_for_surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.insights.shap.SHAPInsight.html">SHAPInsight</a></li>
@@ -1097,13 +1102,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base                        Ligand  \
-171  Butyornitrile  Potassium acetate                     BrettPhos   
-188  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+           Solvent             Base                        Ligand  \
+374       p-Xylene  Cesium pivalate  Di-tert-butylphenylphosphine   
+147  Butyornitrile  Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration  
-171         90.0          0.057  
-188        120.0          0.153  
+374        105.0          0.153  
+147        105.0          0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1116,13 +1121,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-171  Butyornitrile  Potassium acetate                     BrettPhos   
-188  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+           Solvent             Base                        Ligand  \
+374       p-Xylene  Cesium pivalate  Di-tert-butylphenylphosphine   
+147  Butyornitrile  Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration      yield  
-171         90.0          0.057  32.433731  
-188        120.0          0.153   1.431489  
+374        105.0          0.153  12.209408  
+147        105.0          0.057  19.086301  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
