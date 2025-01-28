@@ -79,7 +79,9 @@ insight.plot("beeswarm", new_measurements)
 The `force` plot type requires the user to additionally select which single data point 
 they want to visualize by specifying the corresponding `explanation_index`:
 ~~~python
-insight.plot("force", explanation_index=3)  # plots the force analysis of the measurement at index 3
+insight.plot(
+    "force", explanation_index=3
+)  # plots the force analysis of the measurement at positional index 3
 ~~~
 ![SHAP_Force](../_static/insights/shap_force.svg)
 
@@ -92,7 +94,9 @@ mechanics, we refer to the [SHAP documentation](https://shap.readthedocs.io/en/l
 
 The explainer can be changed when creating the insight:
 ~~~python
-insight = SHAPInsight.from_campaign(campaign, explainer_cls="KernelExplainer")  # default explainer
+insight = SHAPInsight.from_campaign(
+    campaign, explainer_cls="KernelExplainer"
+)  # default explainer
 ~~~
 
 ### Experimental and Computational Representations
@@ -129,7 +133,9 @@ In addition to SHAP-based explainers, we also support
 [MAPLE](https://papers.nips.cc/paper_files/paper/2018/hash/b495ce63ede0f4efc9eec62cb947c162-Abstract.html) 
 variants. For example:
 ~~~python
-insight = SHAPInsight.from_campaign(campaign, explainer_cls="LimeTabular", use_comp_rep=True)
+insight = SHAPInsight.from_campaign(
+    campaign, explainer_cls="LimeTabular", use_comp_rep=True
+)
 insight.plot("bar")
 ~~~
 ![SHAP_Bar_Lime](../_static/insights/shap_bar_lime.svg)
