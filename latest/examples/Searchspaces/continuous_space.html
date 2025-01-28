@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1035,16 +1041,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0  0.346698 -0.730148 -0.313176 -0.196415
-1 -0.847918 -0.882797  0.246764  0.385795
-2  0.813380  0.144320  0.299437 -0.120905
-3 -0.481848 -0.378299  0.316317 -0.249648
-4 -0.010183 -0.639475 -0.754756  0.113706
-5  0.369617  0.872826 -0.560949  0.725474
-6  0.189426 -0.543365  0.017255 -0.482296
-7 -0.220608  0.653133  0.605592  0.022207
-8 -0.875163 -0.981507  0.364883 -0.570567
-9 -0.864365  0.751627 -0.004688 -0.839301
+0  0.282912  0.932091  0.553270  0.508312
+1 -0.264904  0.266914 -0.661674  0.584979
+2 -0.378365 -0.832265  0.280098 -0.929147
+3  0.495885  0.229326  0.892762 -0.872763
+4 -0.269802  0.650706 -0.544943  0.025374
+5  0.353911  0.510220 -0.490929  0.523831
+6 -0.300965 -0.323537 -0.060660 -0.932909
+7  0.413481 -0.533802 -0.331829 -0.733423
+8 -0.396195 -0.335003 -0.152619 -0.906395
+9 -0.327142 -0.799304  0.466605 -0.198727
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.
@@ -1144,5 +1150,6 @@ objects are equivalent:</p>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

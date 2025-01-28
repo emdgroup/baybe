@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Campaigns" href="campaigns.html" /><link rel="prev" title="BayBE — A Bayesian Back End for Design of Experiments" href="../index.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Getting Recommendations" href="getting_recommendations.html" /><link rel="prev" title="BayBE — A Bayesian Back End for Design of Experiments" href="../index.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>User Guide - BayBE documentation</title>
@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Readme</a></li>
 <li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1004,6 +1010,15 @@
 <h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_recommendations.html">Getting Recommendations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_recommendations.html#the-recommend-call">The <code class="docutils literal notranslate"><span class="pre">recommend</span></code> Call</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_recommendations.html#excluding-configurations">Excluding Configurations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="getting_recommendations.html#permanent-exclusion">Permanent Exclusion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_recommendations.html#dynamic-exclusion">Dynamic Exclusion</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="campaigns.html">Campaigns</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="campaigns.html#creating-a-campaign">Creating a campaign</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="campaigns.html#basic-creation">Basic creation</a></li>
@@ -1012,6 +1027,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="campaigns.html#getting-recommendations">Getting recommendations</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="campaigns.html#basics">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="campaigns.html#candidate-control-in-discrete-spaces">Candidate Control in Discrete Spaces</a></li>
 <li class="toctree-l3"><a class="reference internal" href="campaigns.html#caching-of-recommendations">Caching of recommendations</a></li>
 </ul>
 </li>
@@ -1177,12 +1193,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="campaigns.html">
+          <a class="next-page" href="getting_recommendations.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Campaigns</div>
+                <div class="title">Getting Recommendations</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -1227,6 +1243,7 @@
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     </body>

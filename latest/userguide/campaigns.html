@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Active Learning" href="active_learning.html" /><link rel="prev" title="User Guide" href="userguide.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Active Learning" href="active_learning.html" /><link rel="prev" title="Getting Recommendations" href="getting_recommendations.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Campaigns - BayBE documentation</title>
@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Readme</a></li>
 <li class="toctree-l1 current has-children"><a class="reference internal" href="userguide.html">User Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1141,6 +1147,21 @@ experimentation is feasible in the first place, or whether the given time budget
 even allows for sequential runs.</p>
 </div>
 </section>
+<section id="candidate-control-in-discrete-spaces">
+<h3>Candidate Control in Discrete Spaces<a class="headerlink" href="#candidate-control-in-discrete-spaces" title="Link to this heading">¶</a></h3>
+<p>For discrete search spaces, campaigns provide additional control over how the candidate
+set of recommendable points is built based on the trajectory the campaign has taken so
+far. This is done by setting the following Boolean flags:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code>:  Controls whether points that have already been
+measured can be recommended.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_already_recommended</span></code>: Controls whether previously recommended points can
+be recommended again.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code>: Controls whether points marked as
+<code class="docutils literal notranslate"><span class="pre">pending_experiments</span></code> can be recommended (see <a class="reference internal" href="async.html#pending-experiments"><span class="std std-ref">asynchronous
+workflows</span></a>).</p></li>
+</ul>
+</section>
 <section id="caching-of-recommendations">
 <h3>Caching of recommendations<a class="headerlink" href="#caching-of-recommendations" title="Link to this heading">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> object caches the last batch of recommendations returned, in order to
@@ -1264,14 +1285,14 @@ to have a look at the most suitable example.</p>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="userguide.html">
+          <a class="prev-page" href="getting_recommendations.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">User Guide</div>
+                <div class="title">Getting Recommendations</div>
                 
               </div>
             </a>
@@ -1313,6 +1334,7 @@ to have a look at the most suitable example.</p>
 </li>
 <li><a class="reference internal" href="#getting-recommendations">Getting recommendations</a><ul>
 <li><a class="reference internal" href="#basics">Basics</a></li>
+<li><a class="reference internal" href="#candidate-control-in-discrete-spaces">Candidate Control in Discrete Spaces</a></li>
 <li><a class="reference internal" href="#caching-of-recommendations">Caching of recommendations</a></li>
 </ul>
 </li>
@@ -1336,5 +1358,6 @@ to have a look at the most suitable example.</p>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

@@ -25,9 +25,9 @@ PureRecommender
 
    .. autosummary::
    
-      ~PureRecommender.compatibility
-      ~PureRecommender.allow_repeated_recommendations
       ~PureRecommender.allow_recommending_already_measured
       ~PureRecommender.allow_recommending_pending_experiments
+      ~PureRecommender.allow_repeated_recommendations
+      ~PureRecommender.compatibility
    
    

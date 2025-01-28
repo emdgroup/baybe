@@ -25,11 +25,11 @@ GaussianMixtureClusteringRecommender
 
    .. autosummary::
    
+      ~GaussianMixtureClusteringRecommender.allow_recommending_already_measured
+      ~GaussianMixtureClusteringRecommender.allow_recommending_pending_experiments
+      ~GaussianMixtureClusteringRecommender.allow_repeated_recommendations
       ~GaussianMixtureClusteringRecommender.compatibility
       ~GaussianMixtureClusteringRecommender.model_cluster_num_parameter_name
       ~GaussianMixtureClusteringRecommender.model_params
-      ~GaussianMixtureClusteringRecommender.allow_repeated_recommendations
-      ~GaussianMixtureClusteringRecommender.allow_recommending_already_measured
-      ~GaussianMixtureClusteringRecommender.allow_recommending_pending_experiments
    
    

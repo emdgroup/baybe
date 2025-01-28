@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="baybe.html">baybe</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1024,30 +1030,30 @@
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.compatibility" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compatibility</span></code></a></p></td>
-<td><p>Class variable reflecting the search space compatibility.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_cluster_num_parameter_name</span></code></a></p></td>
-<td><p>Class variable describing the name of the clustering parameter.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_params</span></code></a></p></td>
-<td><p>Optional model parameter that will be passed to the surrogate constructor.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_repeated_recommendations</span></code></a></p></td>
-<td><p>Allow to make recommendations that were already recommended earlier.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_already_measured" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_already_measured"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code></a></p></td>
-<td><p>Allow to make recommendations that were measured previously.</p></td>
+<td><p>Deprecated!</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_pending_experiments" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_pending_experiments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code></a></p></td>
-<td><p>Allow <cite>pending_experiments</cite> to be part of the recommendations.</p></td>
+<td><p>Deprecated!</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_repeated_recommendations</span></code></a></p></td>
+<td><p>Deprecated!</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.compatibility" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compatibility</span></code></a></p></td>
+<td><p>Class variable reflecting the search space compatibility.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_cluster_num_parameter_name</span></code></a></p></td>
+<td><p>Class variable describing the name of the clustering parameter.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params" title="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_params</span></code></a></p></td>
+<td><p>Optional model parameter that will be passed to the surrogate constructor.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_repeated_recommendations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_already_measured</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_pending_experiments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_repeated_recommendations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_already_measured</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_pending_experiments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Method generated by attrs for class KMeansClusteringRecommender.</p>
 <p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
 <dl class="field-list simple">
@@ -1086,26 +1092,22 @@ as individual rows.</p>
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_already_measured">
-<span class="sig-name descname"><span class="pre">allow_recommending_already_measured</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_already_measured" title="Link to this definition">¶</a></dt>
-<dd><p>Allow to make recommendations that were measured previously.
-This only has an influence in discrete search spaces.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allow_recommending_already_measured</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NoReturn" title="(in Python v3.13)"><span class="pre">NoReturn</span></a></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_already_measured" title="Link to this definition">¶</a></dt>
+<dd><p>Deprecated!</p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_pending_experiments">
-<span class="sig-name descname"><span class="pre">allow_recommending_pending_experiments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_pending_experiments" title="Link to this definition">¶</a></dt>
-<dd><p>Allow <cite>pending_experiments</cite> to be part of the recommendations. If set to <cite>False</cite>,
-the corresponding points will be removed from the candidates. This only has an
-influence in discrete search spaces.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allow_recommending_pending_experiments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NoReturn" title="(in Python v3.13)"><span class="pre">NoReturn</span></a></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_recommending_pending_experiments" title="Link to this definition">¶</a></dt>
+<dd><p>Deprecated!</p>
 </dd></dl>
 
-<dl class="py attribute">
+<dl class="py property">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations">
-<span class="sig-name descname"><span class="pre">allow_repeated_recommendations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations" title="Link to this definition">¶</a></dt>
-<dd><p>Allow to make recommendations that were already recommended earlier.
-This only has an influence in discrete search spaces.</p>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">allow_repeated_recommendations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.NoReturn" title="(in Python v3.13)"><span class="pre">NoReturn</span></a></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.allow_repeated_recommendations" title="Link to this definition">¶</a></dt>
+<dd><p>Deprecated!</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -1215,5 +1217,6 @@ This is initialized with reasonable default values for the derived child classes
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

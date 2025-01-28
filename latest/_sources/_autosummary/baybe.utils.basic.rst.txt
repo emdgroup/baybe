@@ -5,6 +5,14 @@ baybe.utils.basic
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      UNSPECIFIED
+   
    
 
    
@@ -36,6 +44,7 @@ baybe.utils.basic
       :template: custom-class-template.rst              
    
       Dummy
+      UnspecifiedType
       classproperty
    
    

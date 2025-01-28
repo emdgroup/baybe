@@ -25,9 +25,9 @@ RandomRecommender
 
    .. autosummary::
    
-      ~RandomRecommender.compatibility
-      ~RandomRecommender.allow_repeated_recommendations
       ~RandomRecommender.allow_recommending_already_measured
       ~RandomRecommender.allow_recommending_pending_experiments
+      ~RandomRecommender.allow_repeated_recommendations
+      ~RandomRecommender.compatibility
    
    

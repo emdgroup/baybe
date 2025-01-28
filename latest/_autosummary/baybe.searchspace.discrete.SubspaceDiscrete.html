@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="baybe.html">baybe</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1041,7 +1047,7 @@ parameter views.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.from_simplex" title="baybe.searchspace.discrete.SubspaceDiscrete.from_simplex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_simplex</span></code></a>(max_sum, simplex_parameters[, ...])</p></td>
 <td><p>Efficiently create discrete simplex subspaces.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates" title="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_candidates</span></code></a>([...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates" title="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_candidates</span></code></a>()</p></td>
 <td><p>Return the set of candidate parameter settings that can be tested.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.searchspace.discrete.SubspaceDiscrete.get_parameters_by_name" title="baybe.searchspace.discrete.SubspaceDiscrete.get_parameters_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_parameters_by_name</span></code></a>(names)</p></td>
@@ -1285,28 +1291,14 @@ is built up incrementally from the parameter sequence.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates">
-<span class="sig-name descname"><span class="pre">get_candidates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">allow_repeated_recommendations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_already_measured</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/searchspace/discrete.html#SubspaceDiscrete.get_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_candidates</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/searchspace/discrete.html#SubspaceDiscrete.get_candidates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates" title="Link to this definition">¶</a></dt>
 <dd><p>Return the set of candidate parameter settings that can be tested.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><span class="target" id="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates.params.allow_repeated_recommendations"></span><strong>allow_repeated_recommendations</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, parameter settings that have
-already been recommended in an earlier iteration are still considered
-valid candidates. This is relevant, for instance, when an earlier
-recommended parameter setting has not been measured by the user (for any
-reason) after the corresponding recommendation was made.</p></li>
-<li><p><span class="target" id="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates.params.allow_recommending_already_measured"></span><strong>allow_recommending_already_measured</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, parameters settings for
-which there are already target values available are still considered as
-valid candidates.</p></li>
-<li><p><span class="target" id="baybe.searchspace.discrete.SubspaceDiscrete.get_candidates.params.exclude"></span><strong>exclude</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]</span>) – Points in experimental representation that should be excluded as
-candidates.</p></li>
-</ul>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]</span></p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]</span></p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The candidate parameter settings both in experimental and computational
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The candidate parameter settings both in experimental and computational
 representation.</p>
 </dd>
 </dl>
@@ -1544,5 +1536,6 @@ from <code class="docutils literal notranslate"><span class="pre">exp_rep</span>
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

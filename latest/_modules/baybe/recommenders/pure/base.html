@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=259b2e4a" />
     
@@ -274,6 +275,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../userguide/async.html">Asynchronous Workflows</a></li>
@@ -359,6 +361,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -451,6 +454,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -843,6 +847,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -854,6 +859,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -998,19 +1004,24 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">NoReturn</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">NotEnoughPointsLeftError</span>
+<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">DeprecationError</span><span class="p">,</span> <span class="n">NotEnoughPointsLeftError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.base</span> <span class="kn">import</span> <span class="n">RecommenderProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.continuous</span> <span class="kn">import</span> <span class="n">SubspaceContinuous</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="n">SearchSpaceType</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.discrete</span> <span class="kn">import</span> <span class="n">SubspaceDiscrete</span>
+
+<span class="n">_DEPRECATION_ERROR_MESSAGE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;The attribute &#39;</span><span class="si">{}</span><span class="s2">&#39; is no longer available for recommenders. &quot;</span>
+    <span class="s2">&quot;All &#39;allow_*&#39; flags are now handled by `baybe.campaign.Campaign`.&quot;</span>
+<span class="p">)</span>
 
 
 <span class="c1"># TODO: Slots are currently disabled since they also block the monkeypatching necessary</span>
@@ -1022,23 +1033,63 @@
 <span class="k">class</span> <span class="nc">PureRecommender</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">RecommenderProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all pure recommenders.&quot;&quot;&quot;</span>
 
-    <span class="c1"># Class variables</span>
     <span class="n">compatibility</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">SearchSpaceType</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class variable reflecting the search space compatibility.&quot;&quot;&quot;</span>
 
-    <span class="c1"># Object variables</span>
-    <span class="n">allow_repeated_recommendations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to make recommendations that were already recommended earlier.</span>
-<span class="sd">    This only has an influence in discrete search spaces.&quot;&quot;&quot;</span>
+    <span class="n">_deprecated_allow_repeated_recommendations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_repeated_recommendations&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="s2">&quot;Deprecated! Now handled by :class:`baybe.campaign.Campaign`.&quot;</span>
 
-    <span class="n">allow_recommending_already_measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to make recommendations that were measured previously.</span>
-<span class="sd">    This only has an influence in discrete search spaces.&quot;&quot;&quot;</span>
+    <span class="n">_deprecated_allow_recommending_already_measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_recommending_already_measured&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="s2">&quot;Deprecated! Now handled by :class:`baybe.campaign.Campaign`.&quot;</span>
 
-    <span class="n">allow_recommending_pending_experiments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow `pending_experiments` to be part of the recommendations. If set to `False`,</span>
-<span class="sd">    the corresponding points will be removed from the candidates. This only has an</span>
-<span class="sd">    influence in discrete search spaces.&quot;&quot;&quot;</span>
+    <span class="n">_deprecated_allow_recommending_pending_experiments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;allow_recommending_pending_experiments&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="s2">&quot;Deprecated! Now handled by :class:`baybe.campaign.Campaign`.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__attrs_post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_deprecated_allow_repeated_recommendations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deprecated_allow_recommending_already_measured</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deprecated_allow_recommending_pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+                <span class="s2">&quot;Passing &#39;allow_*&#39; flags to recommenders is no longer supported. &quot;</span>
+                <span class="s2">&quot;These are now handled by `baybe.campaign.Campaign`. &quot;</span>
+                <span class="s2">&quot;(Note: &#39;allow_repeated_recommendations&#39; has been renamed to &quot;</span>
+                <span class="s2">&quot;&#39;allow_recommending_already_recommended&#39;.)&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_repeated_recommendations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+            <span class="n">_DEPRECATION_ERROR_MESSAGE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;allow_repeated_recommendations&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_recommending_already_measured</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+            <span class="n">_DEPRECATION_ERROR_MESSAGE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;allow_recommending_already_measured&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">allow_recommending_pending_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
+            <span class="n">_DEPRECATION_ERROR_MESSAGE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;allow_recommending_pending_experiments&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="PureRecommender.recommend">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.pure.base.PureRecommender.html#baybe.recommenders.pure.base.PureRecommender.recommend">[docs]</a>
@@ -1192,19 +1243,7 @@
         <span class="n">is_hybrid_space</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">HYBRID</span>
 
         <span class="c1"># Get discrete candidates</span>
-        <span class="c1"># Repeated recommendations are always allowed for hybrid spaces</span>
-        <span class="c1"># Pending experiments are excluded for discrete spaces unless configured</span>
-        <span class="c1"># differently.</span>
-        <span class="n">dont_exclude_pending</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">is_hybrid_space</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span>
-        <span class="p">)</span>
-        <span class="n">candidates_exp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">(</span>
-            <span class="n">allow_repeated_recommendations</span><span class="o">=</span><span class="n">is_hybrid_space</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_repeated_recommendations</span><span class="p">,</span>
-            <span class="n">allow_recommending_already_measured</span><span class="o">=</span><span class="n">is_hybrid_space</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span><span class="p">,</span>
-            <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">dont_exclude_pending</span> <span class="k">else</span> <span class="n">pending_experiments</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">candidates_exp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">()</span>
 
         <span class="c1"># TODO: Introduce new flag to recommend batches larger than the search space</span>
 
@@ -1213,10 +1252,7 @@
         <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_hybrid_space</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates_exp</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">batch_size</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">NotEnoughPointsLeftError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Using the current settings, there are fewer than </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="s2">&quot;possible data points left to recommend. This can happen &quot;</span>
-                <span class="s2">&quot;when all candidates have already been measured/recommended while &quot;</span>
-                <span class="s2">&quot;`allow_repeated_recommendations&#39;/&#39;allow_recommending_already_measured&#39; &quot;</span>  <span class="c1"># noqa: E501</span>
-                <span class="s2">&quot;are set to `False`.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;possible data points left to recommend.&quot;</span>
             <span class="p">)</span>
 
         <span class="c1"># Get recommendations</span>
@@ -1273,5 +1309,6 @@
     <script src="../../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

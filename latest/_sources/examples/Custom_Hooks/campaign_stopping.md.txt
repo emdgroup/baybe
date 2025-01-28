@@ -192,10 +192,7 @@ def stop_on_PI(
     botorch_acqf = acqf.to_botorch(
         self._surrogate_model, searchspace, objective, measurements
     )
-    _, candidates_comp_rep = searchspace.discrete.get_candidates(
-        allow_repeated_recommendations=self.allow_repeated_recommendations,
-        allow_recommending_already_measured=self.allow_recommending_already_measured,
-    )
+    _, candidates_comp_rep = searchspace.discrete.get_candidates()
     comp_rep_tensor = to_tensor(candidates_comp_rep).unsqueeze(1)
     acqf_values = botorch_acqf(comp_rep_tensor)
 

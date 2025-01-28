@@ -25,9 +25,9 @@ FPSRecommender
 
    .. autosummary::
    
-      ~FPSRecommender.compatibility
-      ~FPSRecommender.allow_repeated_recommendations
       ~FPSRecommender.allow_recommending_already_measured
       ~FPSRecommender.allow_recommending_pending_experiments
+      ~FPSRecommender.allow_repeated_recommendations
+      ~FPSRecommender.compatibility
    
    

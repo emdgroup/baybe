@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=259b2e4a" />
     
@@ -274,6 +275,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../userguide/async.html">Asynchronous Workflows</a></li>
@@ -359,6 +361,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -451,6 +454,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -843,6 +847,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -854,6 +859,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1622,40 +1628,14 @@
 
 <div class="viewcode-block" id="SubspaceDiscrete.get_candidates">
 <a class="viewcode-back" href="../../../_autosummary/baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete.get_candidates">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_candidates</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">allow_repeated_recommendations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">allow_recommending_already_measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">exclude</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">get_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the set of candidate parameter settings that can be tested.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            allow_repeated_recommendations: If ``True``, parameter settings that have</span>
-<span class="sd">                already been recommended in an earlier iteration are still considered</span>
-<span class="sd">                valid candidates. This is relevant, for instance, when an earlier</span>
-<span class="sd">                recommended parameter setting has not been measured by the user (for any</span>
-<span class="sd">                reason) after the corresponding recommendation was made.</span>
-<span class="sd">            allow_recommending_already_measured: If ``True``, parameters settings for</span>
-<span class="sd">                which there are already target values available are still considered as</span>
-<span class="sd">                valid candidates.</span>
-<span class="sd">            exclude: Points in experimental representation that should be excluded as</span>
-<span class="sd">                candidates.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The candidate parameter settings both in experimental and computational</span>
 <span class="sd">            representation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Filter the search space down to the candidates</span>
-        <span class="n">mask_todrop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excluded</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-
-        <span class="c1"># Remove additional excludes</span>
-        <span class="k">if</span> <span class="n">exclude</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span> <span class="n">exclude</span><span class="p">,</span> <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">)[</span>
-                <span class="s2">&quot;_merge&quot;</span>
-            <span class="p">]</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">mask_todrop</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_rep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">mask_todrop</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_rep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_excluded</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_rep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_excluded</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="SubspaceDiscrete.transform">
@@ -1954,5 +1934,6 @@
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

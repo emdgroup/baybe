@@ -26,10 +26,10 @@ SKLearnClusteringRecommender
    .. autosummary::
    
       ~SKLearnClusteringRecommender.model_params
-      ~SKLearnClusteringRecommender.compatibility
-      ~SKLearnClusteringRecommender.model_cluster_num_parameter_name
-      ~SKLearnClusteringRecommender.allow_repeated_recommendations
       ~SKLearnClusteringRecommender.allow_recommending_already_measured
       ~SKLearnClusteringRecommender.allow_recommending_pending_experiments
+      ~SKLearnClusteringRecommender.allow_repeated_recommendations
+      ~SKLearnClusteringRecommender.compatibility
+      ~SKLearnClusteringRecommender.model_cluster_num_parameter_name
    
    

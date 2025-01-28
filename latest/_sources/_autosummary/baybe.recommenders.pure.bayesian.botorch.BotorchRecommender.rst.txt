@@ -33,10 +33,10 @@ BotorchRecommender
       ~BotorchRecommender.n_raw_samples
       ~BotorchRecommender.acquisition_function
       ~BotorchRecommender.acquisition_function_cls
-      ~BotorchRecommender.compatibility
-      ~BotorchRecommender.surrogate_model
-      ~BotorchRecommender.allow_repeated_recommendations
       ~BotorchRecommender.allow_recommending_already_measured
       ~BotorchRecommender.allow_recommending_pending_experiments
+      ~BotorchRecommender.allow_repeated_recommendations
+      ~BotorchRecommender.compatibility
+      ~BotorchRecommender.surrogate_model
    
    

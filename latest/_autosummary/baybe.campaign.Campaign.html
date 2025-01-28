@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../userguide/async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1 current has-children"><a class="reference internal" href="baybe.html">baybe</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1023,7 +1029,7 @@ series of measurements and the iterative sequence of events involved.</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.__init__" title="baybe.campaign.Campaign.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(searchspace[, objective, recommender])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.__init__" title="baybe.campaign.Campaign.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(searchspace[, objective, ...])</p></td>
 <td><p>Method generated by attrs for class Campaign.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.add_measurements" title="baybe.campaign.Campaign.add_measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_measurements</span></code></a>(data[, ...])</p></td>
@@ -1075,19 +1081,28 @@ series of measurements and the iterative sequence of events involved.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.recommender" title="baybe.campaign.Campaign.recommender"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommender</span></code></a></p></td>
 <td><p>The employed recommender</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.n_batches_done" title="baybe.campaign.Campaign.n_batches_done"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_batches_done</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_measured" title="baybe.campaign.Campaign.allow_recommending_already_measured"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_recommending_already_measured</span></code></a></p></td>
+<td><p>Allow to recommend experiments that were already measured earlier.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_recommended" title="baybe.campaign.Campaign.allow_recommending_already_recommended"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_recommending_already_recommended</span></code></a></p></td>
+<td><p>Allow to recommend experiments that were already recommended earlier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_pending_experiments" title="baybe.campaign.Campaign.allow_recommending_pending_experiments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">allow_recommending_pending_experiments</span></code></a></p></td>
+<td><p>Allow pending experiments to be part of the recommendations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.n_batches_done" title="baybe.campaign.Campaign.n_batches_done"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_batches_done</span></code></a></p></td>
 <td><p>The number of already processed batches.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.n_fits_done" title="baybe.campaign.Campaign.n_fits_done"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_fits_done</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.n_fits_done" title="baybe.campaign.Campaign.n_fits_done"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_fits_done</span></code></a></p></td>
 <td><p>The number of fits already done.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.measurements" title="baybe.campaign.Campaign.measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">measurements</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.measurements" title="baybe.campaign.Campaign.measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">measurements</span></code></a></p></td>
 <td><p>The experimental data added to the Campaign.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.parameters" title="baybe.campaign.Campaign.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.parameters" title="baybe.campaign.Campaign.parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code></a></p></td>
 <td><p>The parameters of the underlying search space.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.targets" title="baybe.campaign.Campaign.targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">targets</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.targets" title="baybe.campaign.Campaign.targets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">targets</span></code></a></p></td>
 <td><p>The targets of the underlying objective.</p></td>
 </tr>
 </tbody>
@@ -1095,7 +1110,7 @@ series of measurements and the iterative sequence of events involved.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.campaign.Campaign.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">searchspace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete" title="baybe.searchspace.discrete.SubspaceDiscrete"><span class="pre">SubspaceDiscrete</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous" title="baybe.searchspace.continuous.SubspaceContinuous"><span class="pre">SubspaceContinuous</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace" title="baybe.searchspace.core.SearchSpace"><span class="pre">SearchSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.targets.base.Target.html#baybe.targets.base.Target" title="baybe.targets.base.Target"><span class="pre">Target</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><span class="pre">Objective</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recommender</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol" title="baybe.recommenders.base.RecommenderProtocol"><span class="pre">RecommenderProtocol</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.campaign.Campaign.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">searchspace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.discrete.SubspaceDiscrete.html#baybe.searchspace.discrete.SubspaceDiscrete" title="baybe.searchspace.discrete.SubspaceDiscrete"><span class="pre">SubspaceDiscrete</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.continuous.SubspaceContinuous.html#baybe.searchspace.continuous.SubspaceContinuous" title="baybe.searchspace.continuous.SubspaceContinuous"><span class="pre">SubspaceContinuous</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace" title="baybe.searchspace.core.SearchSpace"><span class="pre">SearchSpace</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.targets.base.Target.html#baybe.targets.base.Target" title="baybe.targets.base.Target"><span class="pre">Target</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><span class="pre">Objective</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recommender</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol" title="baybe.recommenders.base.RecommenderProtocol"><span class="pre">RecommenderProtocol</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_already_measured</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><span class="pre">UnspecifiedType</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_already_recommended</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><span class="pre">UnspecifiedType</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_recommending_pending_experiments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><span class="pre">UnspecifiedType</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">NOTHING</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.campaign.Campaign.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Method generated by attrs for class Campaign.</p>
 <p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
 <dl class="field-list simple">
@@ -1335,6 +1350,27 @@ specified filter.</p>
 </dl>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.allow_recommending_already_measured">
+<span class="sig-name descname"><span class="pre">allow_recommending_already_measured</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> <span class="pre">|</span> <a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnspecifiedType</span></code></a></em><a class="headerlink" href="#baybe.campaign.Campaign.allow_recommending_already_measured" title="Link to this definition">¶</a></dt>
+<dd><p>Allow to recommend experiments that were already measured earlier.
+Can only be set for discrete search spaces.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.allow_recommending_already_recommended">
+<span class="sig-name descname"><span class="pre">allow_recommending_already_recommended</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> <span class="pre">|</span> <a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnspecifiedType</span></code></a></em><a class="headerlink" href="#baybe.campaign.Campaign.allow_recommending_already_recommended" title="Link to this definition">¶</a></dt>
+<dd><p>Allow to recommend experiments that were already recommended earlier.
+Can only be set for discrete search spaces.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.allow_recommending_pending_experiments">
+<span class="sig-name descname"><span class="pre">allow_recommending_pending_experiments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a> <span class="pre">|</span> <a class="reference internal" href="baybe.utils.basic.UnspecifiedType.html#baybe.utils.basic.UnspecifiedType" title="baybe.utils.basic.UnspecifiedType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UnspecifiedType</span></code></a></em><a class="headerlink" href="#baybe.campaign.Campaign.allow_recommending_pending_experiments" title="Link to this definition">¶</a></dt>
+<dd><p>Allow pending experiments to be part of the recommendations.
+Can only be set for discrete search spaces.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="baybe.campaign.Campaign.measurements">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">measurements</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></em><a class="headerlink" href="#baybe.campaign.Campaign.measurements" title="Link to this definition">¶</a></dt>
@@ -1462,6 +1498,9 @@ a <a class="reference internal" href="baybe.searchspace.continuous.SubspaceConti
 <li><a class="reference internal" href="#baybe.campaign.Campaign.to_json"><code class="docutils literal notranslate"><span class="pre">Campaign.to_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates"><code class="docutils literal notranslate"><span class="pre">Campaign.toggle_discrete_candidates()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.validate_config"><code class="docutils literal notranslate"><span class="pre">Campaign.validate_config()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_measured"><code class="docutils literal notranslate"><span class="pre">Campaign.allow_recommending_already_measured</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_recommended"><code class="docutils literal notranslate"><span class="pre">Campaign.allow_recommending_already_recommended</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_pending_experiments"><code class="docutils literal notranslate"><span class="pre">Campaign.allow_recommending_pending_experiments</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.measurements"><code class="docutils literal notranslate"><span class="pre">Campaign.measurements</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.n_batches_done"><code class="docutils literal notranslate"><span class="pre">Campaign.n_batches_done</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.n_fits_done"><code class="docutils literal notranslate"><span class="pre">Campaign.n_fits_done</span></code></a></li>
@@ -1489,5 +1528,6 @@ a <a class="reference internal" href="baybe.searchspace.continuous.SubspaceConti
     <script src="../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

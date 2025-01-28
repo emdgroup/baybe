@@ -120,20 +120,6 @@ The default acquisition function is q-Log Expected Improvement.
 ACQ_FUNCTION = "qLogEI"
 ```
 
-## Other parameters
-
-Two other boolean hyperparameters can be specified when creating a recommender object.
-The first one allows the recommendation of points that were already recommended
-previously.
-The second one allows the recommendation of points that have already been measured.
-Per default, they are set to `True`.
-
-
-```python
-ALLOW_REPEATED_RECOMMENDATIONS = True
-ALLOW_RECOMMENDING_ALREADY_MEASURED = True
-```
-
 ## Creating the recommender object
 
 To create the recommender object, each parameter described above can be specified as
@@ -146,10 +132,7 @@ Therefore one does not need to specify all of them to create a recommender objec
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=BotorchRecommender(
-        surrogate_model=SURROGATE_MODEL,
-        acquisition_function=ACQ_FUNCTION,
-        allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
-        allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
+        surrogate_model=SURROGATE_MODEL, acquisition_function=ACQ_FUNCTION
     ),
 )
 ```
@@ -263,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent             Base                        Ligand  \
-    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-    110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
-    158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    130  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
+    361       p-Xylene     Cesium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    155         90.0          0.153  
-    110         90.0          0.153  
-    158        105.0          0.153  
+    318        105.0          0.057  
+    130        105.0          0.100  
+    361         90.0          0.100  
 
 
 
@@ -284,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent             Base                        Ligand  \
-    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-    110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
-    158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    130  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
+    361       p-Xylene     Cesium pivalate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    155         90.0          0.153  31.486378  
-    110         90.0          0.153  14.610760  
-    158        105.0          0.153  14.601033  
+    318        105.0          0.057  13.540251  
+    130        105.0          0.100   6.322105  
+    361         90.0          0.100  27.595632  
 
 
 

@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
     
@@ -275,6 +276,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
@@ -360,6 +362,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -452,6 +455,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -844,6 +848,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -855,6 +860,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1105,18 +1111,6 @@ That is, ‘q’-variants of the acquisition functions must be chosen.</p></li>
 </pre></div>
 </div>
 </section>
-<section id="other-parameters">
-<h2>Other parameters<a class="headerlink" href="#other-parameters" title="Link to this heading">¶</a></h2>
-<p>Two other boolean hyperparameters can be specified when creating a recommender object.
-The first one allows the recommendation of points that were already recommended
-previously.
-The second one allows the recommendation of points that have already been measured.
-Per default, they are set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ALLOW_REPEATED_RECOMMENDATIONS</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="n">ALLOW_RECOMMENDING_ALREADY_MEASURED</span> <span class="o">=</span> <span class="kc">True</span>
-</pre></div>
-</div>
-</section>
 <section id="creating-the-recommender-object">
 <h2>Creating the recommender object<a class="headerlink" href="#creating-the-recommender-object" title="Link to this heading">¶</a></h2>
 <p>To create the recommender object, each parameter described above can be specified as
@@ -1126,10 +1120,7 @@ Therefore one does not need to specify all of them to create a recommender objec
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recommender</span> <span class="o">=</span> <span class="n">TwoPhaseMetaRecommender</span><span class="p">(</span>
     <span class="n">initial_recommender</span><span class="o">=</span><span class="n">INITIAL_RECOMMENDER</span><span class="p">,</span>
     <span class="n">recommender</span><span class="o">=</span><span class="n">BotorchRecommender</span><span class="p">(</span>
-        <span class="n">surrogate_model</span><span class="o">=</span><span class="n">SURROGATE_MODEL</span><span class="p">,</span>
-        <span class="n">acquisition_function</span><span class="o">=</span><span class="n">ACQ_FUNCTION</span><span class="p">,</span>
-        <span class="n">allow_repeated_recommendations</span><span class="o">=</span><span class="n">ALLOW_REPEATED_RECOMMENDATIONS</span><span class="p">,</span>
-        <span class="n">allow_recommending_already_measured</span><span class="o">=</span><span class="n">ALLOW_RECOMMENDING_ALREADY_MEASURED</span><span class="p">,</span>
+        <span class="n">surrogate_model</span><span class="o">=</span><span class="n">SURROGATE_MODEL</span><span class="p">,</span> <span class="n">acquisition_function</span><span class="o">=</span><span class="n">ACQ_FUNCTION</span>
     <span class="p">),</span>
 <span class="p">)</span>
 </pre></div>
@@ -1222,15 +1213,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent             Base                        Ligand  \
-155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
-158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base                        Ligand  \
+318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+130  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
+361       p-Xylene     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration  
-155         90.0          0.153  
-110         90.0          0.153  
-158        105.0          0.153  
+318        105.0          0.057  
+130        105.0          0.100  
+361         90.0          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1239,15 +1230,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent             Base                        Ligand  \
-155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
-158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base                        Ligand  \
+318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+130  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
+361       p-Xylene     Cesium pivalate                     BrettPhos   
 
      Temperature  Concentration      yield  
-155         90.0          0.153  31.486378  
-110         90.0          0.153  14.610760  
-158        105.0          0.153  14.601033  
+318        105.0          0.057  13.540251  
+130        105.0          0.100   6.322105  
+361         90.0          0.100  27.595632  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
@@ -1316,7 +1307,6 @@ as follows.</p>
 <li><a class="reference internal" href="#available-recommenders-suitable-for-initial-recommendation">Available recommenders suitable for initial recommendation</a></li>
 <li><a class="reference internal" href="#available-surrogate-models">Available surrogate models</a></li>
 <li><a class="reference internal" href="#acquisition-function">Acquisition function</a></li>
-<li><a class="reference internal" href="#other-parameters">Other parameters</a></li>
 <li><a class="reference internal" href="#creating-the-recommender-object">Creating the recommender object</a></li>
 <li><a class="reference internal" href="#example-searchspace-and-objective-parameters">Example Searchspace and objective parameters</a></li>
 <li><a class="reference internal" href="#creating-the-campaign">Creating the campaign</a></li>
@@ -1337,5 +1327,6 @@ as follows.</p>
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

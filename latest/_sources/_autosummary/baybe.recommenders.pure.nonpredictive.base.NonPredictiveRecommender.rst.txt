@@ -25,9 +25,9 @@ NonPredictiveRecommender
 
    .. autosummary::
    
-      ~NonPredictiveRecommender.compatibility
-      ~NonPredictiveRecommender.allow_repeated_recommendations
       ~NonPredictiveRecommender.allow_recommending_already_measured
       ~NonPredictiveRecommender.allow_recommending_pending_experiments
+      ~NonPredictiveRecommender.allow_repeated_recommendations
+      ~NonPredictiveRecommender.compatibility
    
    

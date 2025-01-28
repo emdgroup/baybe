@@ -25,11 +25,11 @@ PAMClusteringRecommender
 
    .. autosummary::
    
+      ~PAMClusteringRecommender.allow_recommending_already_measured
+      ~PAMClusteringRecommender.allow_recommending_pending_experiments
+      ~PAMClusteringRecommender.allow_repeated_recommendations
       ~PAMClusteringRecommender.compatibility
       ~PAMClusteringRecommender.model_cluster_num_parameter_name
       ~PAMClusteringRecommender.model_params
-      ~PAMClusteringRecommender.allow_repeated_recommendations
-      ~PAMClusteringRecommender.allow_recommending_already_measured
-      ~PAMClusteringRecommender.allow_recommending_pending_experiments
    
    

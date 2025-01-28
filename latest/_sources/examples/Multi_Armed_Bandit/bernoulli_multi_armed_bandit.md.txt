@@ -174,11 +174,7 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     recommender = TwoPhaseMetaRecommender(
         initial_recommender=RandomRecommender(),
         recommender=BotorchRecommender(
-            surrogate_model=surrogate,
-            acquisition_function=acqf,
-            # The same arm can be pulled several times:
-            allow_repeated_recommendations=True,
-            allow_recommending_already_measured=True,
+            surrogate_model=surrogate, acquisition_function=acqf
         ),
     )
 
@@ -189,7 +185,14 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     for mc in range(N_MC_RUNS):
         searchspace = parameter.to_searchspace()
         objective = target.to_objective()
-        campaign = Campaign(searchspace, objective, recommender)
+        campaign = Campaign(
+            searchspace,
+            objective,
+            recommender,
+            # The same arm can be pulled several times:
+            allow_recommending_already_recommended=True,
+            allow_recommending_already_measured=True,
+        )
 
         for i in range(N_ITERATIONS):
             df = campaign.recommend(batch_size=1)

@@ -38,6 +38,9 @@ Campaign
       ~Campaign.searchspace
       ~Campaign.objective
       ~Campaign.recommender
+      ~Campaign.allow_recommending_already_measured
+      ~Campaign.allow_recommending_already_recommended
+      ~Campaign.allow_recommending_pending_experiments
       ~Campaign.n_batches_done
       ~Campaign.n_fits_done
       ~Campaign.measurements

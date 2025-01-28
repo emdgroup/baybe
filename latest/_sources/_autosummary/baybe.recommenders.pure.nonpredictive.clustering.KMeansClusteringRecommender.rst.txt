@@ -25,11 +25,11 @@ KMeansClusteringRecommender
 
    .. autosummary::
    
+      ~KMeansClusteringRecommender.allow_recommending_already_measured
+      ~KMeansClusteringRecommender.allow_recommending_pending_experiments
+      ~KMeansClusteringRecommender.allow_repeated_recommendations
       ~KMeansClusteringRecommender.compatibility
       ~KMeansClusteringRecommender.model_cluster_num_parameter_name
       ~KMeansClusteringRecommender.model_params
-      ~KMeansClusteringRecommender.allow_repeated_recommendations
-      ~KMeansClusteringRecommender.allow_recommending_already_measured
-      ~KMeansClusteringRecommender.allow_recommending_pending_experiments
    
    

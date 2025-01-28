@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
     <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=259b2e4a" />
     
@@ -274,6 +275,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../index.html">Readme</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../userguide/userguide.html">User Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of User Guide</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../userguide/getting_recommendations.html">Getting Recommendations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/campaigns.html">Campaigns</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../userguide/async.html">Asynchronous Workflows</a></li>
@@ -359,6 +361,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../_autosummary/baybe.html">baybe</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of baybe</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -451,6 +454,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html">baybe.exceptions.EmptySearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibilityError.html">baybe.exceptions.IncompatibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html">baybe.exceptions.IncompatibleAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html">baybe.exceptions.IncompatibleArgumentError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
@@ -843,6 +847,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><div class="visually-hidden">Toggle navigation of baybe.utils.basic</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.find_subclass.html">baybe.utils.basic.find_subclass</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_baseclasses.html">baybe.utils.basic.get_baseclasses</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.get_subclasses.html">baybe.utils.basic.get_subclasses</a></li>
@@ -854,6 +859,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
@@ -1000,27 +1006,28 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">import</span> <span class="nn">cattrs</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">Factory</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">evolve</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
 <span class="kn">from</span> <span class="nn">attrs.converters</span> <span class="kn">import</span> <span class="n">optional</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">DiscreteConstraint</span>
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibilityError</span>
+<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibilityError</span><span class="p">,</span> <span class="n">NotEnoughPointsLeftError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">to_objective</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.base</span> <span class="kn">import</span> <span class="n">RecommenderProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.meta.base</span> <span class="kn">import</span> <span class="n">MetaRecommender</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.meta.sequential</span> <span class="kn">import</span> <span class="n">TwoPhaseMetaRecommender</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.pure.bayesian.base</span> <span class="kn">import</span> <span class="n">BayesianRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace._annotated</span> <span class="kn">import</span> <span class="n">AnnotatedSubspaceDiscrete</span>
+<span class="kn">from</span> <span class="nn">baybe.recommenders.pure.nonpredictive.base</span> <span class="kn">import</span> <span class="n">NonPredictiveRecommender</span>
+<span class="kn">from</span> <span class="nn">baybe.searchspace._filtered</span> <span class="kn">import</span> <span class="n">FilteredSubspaceDiscrete</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">SearchSpace</span><span class="p">,</span>
     <span class="n">SearchSpaceType</span><span class="p">,</span>
@@ -1035,7 +1042,7 @@
     <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">,</span>
     <span class="n">telemetry_record_value</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">is_all_instance</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">UNSPECIFIED</span><span class="p">,</span> <span class="n">UnspecifiedType</span><span class="p">,</span> <span class="n">is_all_instance</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">eq_dataframe</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">filter_df</span><span class="p">,</span> <span class="n">fuzzy_row_match</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.plotting</span> <span class="kn">import</span> <span class="n">to_string</span>
@@ -1048,6 +1055,38 @@
 <span class="n">_MEASURED</span> <span class="o">=</span> <span class="s2">&quot;measured&quot;</span>
 <span class="n">_EXCLUDED</span> <span class="o">=</span> <span class="s2">&quot;excluded&quot;</span>
 <span class="n">_METADATA_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="n">_RECOMMENDED</span><span class="p">,</span> <span class="n">_MEASURED</span><span class="p">,</span> <span class="n">_EXCLUDED</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_make_allow_flag_default_factory</span><span class="p">(</span>
+    <span class="n">default</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Campaign</span><span class="p">],</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a default factory for allow_* flags.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">default_allow_flag</span><span class="p">(</span><span class="n">campaign</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attrs-compatible default factory for allow_* flags.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span>
+        <span class="k">return</span> <span class="n">UNSPECIFIED</span>
+
+    <span class="k">return</span> <span class="n">default_allow_flag</span>
+
+
+<span class="k">def</span> <span class="nf">_validate_allow_flag</span><span class="p">(</span><span class="n">campaign</span><span class="p">:</span> <span class="n">Campaign</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">Attribute</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Attrs-compatible validator for context-aware validation of allow_* flags.&quot;&quot;&quot;</span>
+    <span class="k">match</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;For search spaces of &#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39;, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; must be a Boolean.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">UNSPECIFIED</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;For search spaces of type other than &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39;, &#39;</span><span class="si">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; cannot be set &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;since the flag is meaningless in such contexts.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
 
 
 <div class="viewcode-block" id="Campaign">
@@ -1085,6 +1124,36 @@
         <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">RecommenderProtocol</span><span class="p">),</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The employed recommender&quot;&quot;&quot;</span>
+
+    <span class="n">allow_recommending_already_measured</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
+            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to recommend experiments that were already measured earlier.</span>
+<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
+
+    <span class="n">allow_recommending_already_recommended</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
+            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow to recommend experiments that were already recommended earlier.</span>
+<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
+
+    <span class="n">allow_recommending_pending_experiments</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
+            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Allow pending experiments to be part of the recommendations.</span>
+<span class="sd">    Can only be set for discrete search spaces.&quot;&quot;&quot;</span>
 
     <span class="c1"># Metadata</span>
     <span class="n">_searchspace_metadata</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>
@@ -1310,6 +1379,9 @@
 <span class="sd">            A new dataframe containing the  discrete candidate set passing through the</span>
 <span class="sd">            specified filter.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Clear cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
@@ -1383,21 +1455,87 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="o">.</span><span class="n">fillna</span><span class="p">({</span><span class="s2">&quot;FitNr&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_fits_done</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Prepare the search space according to the current campaign state</span>
-        <span class="n">annotated_searchspace</span> <span class="o">=</span> <span class="n">evolve</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
-            <span class="n">discrete</span><span class="o">=</span><span class="n">AnnotatedSubspaceDiscrete</span><span class="o">.</span><span class="n">from_subspace</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">:</span>
+            <span class="c1"># TODO: This implementation should at some point be hidden behind an</span>
+            <span class="c1">#   appropriate public interface, like `SubspaceDiscrete.filter()`</span>
+            <span class="n">mask_todrop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_EXCLUDED</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span><span class="p">:</span>
+                <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_RECOMMENDED</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span><span class="p">:</span>
+                <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="p">[</span><span class="n">_MEASURED</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span>
+                <span class="ow">and</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="n">mask_todrop</span> <span class="o">|=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span>
+                    <span class="n">pending_experiments</span><span class="p">,</span>
+                    <span class="n">indicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span>
+                <span class="p">)[</span><span class="s2">&quot;_merge&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">&quot;both&quot;</span><span class="p">)</span>
+            <span class="n">searchspace</span> <span class="o">=</span> <span class="n">evolve</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+                <span class="n">discrete</span><span class="o">=</span><span class="n">FilteredSubspaceDiscrete</span><span class="o">.</span><span class="n">from_subspace</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="p">,</span> <span class="o">~</span><span class="n">mask_todrop</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">searchspace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span>
+
+        <span class="c1"># Pending experiments should not be passed to non-predictive recommenders</span>
+        <span class="c1"># to avoid complaints about unused arguments, so we need to know of what</span>
+        <span class="c1"># type the next recommender will be</span>
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommender</span><span class="p">,</span> <span class="n">MetaRecommender</span><span class="p">):</span>
+            <span class="n">recommender</span> <span class="o">=</span> <span class="n">recommender</span><span class="o">.</span><span class="n">get_non_meta_recommender</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">searchspace</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="p">,</span>
+                <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">is_nonpredictive</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommender</span><span class="p">,</span> <span class="n">NonPredictiveRecommender</span><span class="p">)</span>
 
         <span class="c1"># Get the recommended search space entries</span>
-        <span class="n">rec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span>
-            <span class="n">batch_size</span><span class="p">,</span>
-            <span class="n">annotated_searchspace</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="p">,</span>
-            <span class="n">pending_experiments</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># NOTE: The `recommend` call must happen on `self.recommender` to update</span>
+            <span class="c1">#   potential inner states in case of meta recommenders!</span>
+            <span class="n">rec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">searchspace</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="p">,</span>
+                <span class="kc">None</span> <span class="k">if</span> <span class="n">is_nonpredictive</span> <span class="k">else</span> <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">NotEnoughPointsLeftError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c1"># Aliases for code compactness</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">Campaign</span><span class="p">)</span>
+            <span class="n">ok_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span>
+            <span class="n">ok_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span>
+            <span class="n">ok_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span>
+            <span class="n">ok_m_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_already_measured</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">ok_r_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_already_recommended</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">ok_p_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">allow_recommending_pending_experiments</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">no_blocked_pending_points</span> <span class="o">=</span> <span class="n">ok_p</span> <span class="ow">or</span> <span class="p">(</span><span class="n">pending_experiments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+
+            <span class="c1"># If there are no candidate restrictions to be relaxed</span>
+            <span class="k">if</span> <span class="n">ok_m</span> <span class="ow">and</span> <span class="n">ok_r</span> <span class="ow">and</span> <span class="n">no_blocked_pending_points</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ex</span>
+
+            <span class="c1"># Otherwise, extract possible relaxations</span>
+            <span class="n">solution</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=True&#39;&quot;</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">ok_m_name</span><span class="p">,</span> <span class="n">ok_m</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">ok_r_name</span><span class="p">,</span> <span class="n">ok_r</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">ok_p_name</span><span class="p">,</span> <span class="n">no_blocked_pending_points</span><span class="p">),</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span>
+            <span class="p">]</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="n">solution</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot; and/or &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NotEnoughPointsLeftError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span><span class="si">}</span><span class="s2"> Consider setting </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
 
         <span class="c1"># Cache the recommendations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1577,5 +1715,6 @@
     <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

@@ -28,10 +28,10 @@ BayesianRecommender
    
       ~BayesianRecommender.acquisition_function
       ~BayesianRecommender.acquisition_function_cls
-      ~BayesianRecommender.surrogate_model
-      ~BayesianRecommender.compatibility
-      ~BayesianRecommender.allow_repeated_recommendations
       ~BayesianRecommender.allow_recommending_already_measured
       ~BayesianRecommender.allow_recommending_pending_experiments
+      ~BayesianRecommender.allow_repeated_recommendations
+      ~BayesianRecommender.surrogate_model
+      ~BayesianRecommender.compatibility
    
    
