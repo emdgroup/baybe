@@ -83,6 +83,7 @@ extensions = [
     "sphinx_copybutton",  # Copy button for code blocks
     "sphinxcontrib.bibtex",  # Bibtex support
     "sphinx_paramlinks",  # Links to arguments of callables
+    "sphinx_design",  # For dropdowns etc
 ]
 bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
@@ -126,6 +127,8 @@ nitpick_ignore_regex = [
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
     (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
+    # Other
+    (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
 ]
 
 # Ignore the following links when checking inks for viability

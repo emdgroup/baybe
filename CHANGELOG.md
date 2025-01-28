@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MetaRecommender`s can now be composed of other `MetaRecommender`s
 - For performance reasons, search space manipulation using `polars` is no longer
   guaranteed to produce the same row order as the corresponding `pandas` operations
+- `allow_repeated_recommendations` has been renamed to 
+  `allow_recommending_already_recommended` and is now `True` by default
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
@@ -54,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SingleTargetObjective` no longer erroneously maximizes it
 - Improvement-based Monte Carlo acquisition functions now use the correct
   reference value in minimization mode
+- `allow_*` flags are now context-aware, i.e. setting them in a context where they are
+  irrelevant now raises an error instead of passing silently
 
 ### Removed
 - `botorch_function_wrapper` utility for creating lookup callables
@@ -73,6 +77,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exclusively handled by the `Campaign` class.
 - `get_current_recommender` and `get_next_recommender` of `MetaRecommender` have become
   obsolete and calling them is no longer possible
+- Passing `allow_*` flags to recommenders is no longer supported since the necessary
+  metadata required for the flags is no longer available at that level. The
+  functionality has been taken over by `Campaign`.
 
 ## [0.11.3] - 2024-11-06
 ### Fixed

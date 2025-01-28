@@ -88,16 +88,6 @@ available_acq_functions = [
 
 ACQ_FUNCTION = "qLogEI"
 
-### Other parameters
-
-# Two other boolean hyperparameters can be specified when creating a recommender object.
-# The first one allows the recommendation of points that were already recommended previously.
-# The second one allows the recommendation of points that have already been measured.
-# Per default, they are set to `True`.
-
-ALLOW_REPEATED_RECOMMENDATIONS = True
-ALLOW_RECOMMENDING_ALREADY_MEASURED = True
-
 ### Creating the recommender object
 
 # To create the recommender object, each parameter described above can be specified as follows.
@@ -107,10 +97,7 @@ ALLOW_RECOMMENDING_ALREADY_MEASURED = True
 recommender = TwoPhaseMetaRecommender(
     initial_recommender=INITIAL_RECOMMENDER,
     recommender=BotorchRecommender(
-        surrogate_model=SURROGATE_MODEL,
-        acquisition_function=ACQ_FUNCTION,
-        allow_repeated_recommendations=ALLOW_REPEATED_RECOMMENDATIONS,
-        allow_recommending_already_measured=ALLOW_RECOMMENDING_ALREADY_MEASURED,
+        surrogate_model=SURROGATE_MODEL, acquisition_function=ACQ_FUNCTION
     ),
 )
 

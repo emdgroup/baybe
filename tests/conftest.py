@@ -655,53 +655,19 @@ def fixture_default_surrogate_model(request, kernel):
     return GaussianProcessSurrogate(kernel_or_factory=kernel)
 
 
-@pytest.fixture(name="allow_repeated_recommendations")
-def fixture_allow_repeated_recommendations():
-    return False
-
-
-@pytest.fixture(name="allow_recommending_already_measured")
-def allow_recommending_already_measured():
-    return True
-
-
-@pytest.fixture(name="allow_recommending_pending_experiments")
-def fixture_allow_recommending_pending_experiments():
-    return False
-
-
 @pytest.fixture(name="initial_recommender")
-def fixture_initial_recommender(
-    allow_recommending_already_measured,
-    allow_repeated_recommendations,
-    allow_recommending_pending_experiments,
-):
+def fixture_initial_recommender():
     """The default initial recommender to be used if not specified differently."""
-    return RandomRecommender(
-        allow_repeated_recommendations=allow_repeated_recommendations,
-        allow_recommending_already_measured=allow_recommending_already_measured,
-        allow_recommending_pending_experiments=allow_recommending_pending_experiments,
-    )
+    return RandomRecommender()
 
 
 @pytest.fixture(name="recommender")
-def fixture_recommender(
-    initial_recommender,
-    surrogate_model,
-    acqf,
-    allow_repeated_recommendations,
-    allow_recommending_already_measured,
-    allow_recommending_pending_experiments,
-):
+def fixture_recommender(initial_recommender, surrogate_model, acqf):
     """The default recommender to be used if not specified differently."""
     return TwoPhaseMetaRecommender(
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
-            surrogate_model=surrogate_model,
-            acquisition_function=acqf,
-            allow_repeated_recommendations=allow_repeated_recommendations,
-            allow_recommending_already_measured=allow_recommending_already_measured,
-            allow_recommending_pending_experiments=allow_recommending_pending_experiments,
+            surrogate_model=surrogate_model, acquisition_function=acqf
         ),
     )
 
@@ -779,9 +745,7 @@ def fixture_default_config():
             },
             "recommender": {
                 "type": "BotorchRecommender",
-                "acquisition_function": "qEI",
-                "allow_repeated_recommendations": false,
-                "allow_recommending_already_measured": false
+                "acquisition_function": "qEI"
             },
             "switch_after": 1
         }

@@ -12,8 +12,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
 nonpredictive_recommenders = [
-    param(cls(allow_recommending_already_measured=True), id=cls.__name__)
-    for cls in get_subclasses(NonPredictiveRecommender)
+    param(cls(), id=cls.__name__) for cls in get_subclasses(NonPredictiveRecommender)
 ]
 
 p1 = NumericalDiscreteParameter("p1", [1, 2])
