@@ -55,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   between constraints and dropped parameters yielding empty parameter sets
 - Minimizing a single `NumericalTarget` with specified bounds/transformation via
   `SingleTargetObjective` no longer erroneously maximizes it
-- Improvement-based Monte Carlo acquisition functions now use the correct
-  reference value in minimization mode
 - `allow_*` flags are now context-aware, i.e. setting them in a context where they are
   irrelevant now raises an error instead of passing silently
 
@@ -81,6 +79,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Passing `allow_*` flags to recommenders is no longer supported since the necessary
   metadata required for the flags is no longer available at that level. The
   functionality has been taken over by `Campaign`.
+
+## [0.11.4] - 2025-01-27
+### Changed
+- Polars lazy streaming has been deactivated due to instabilities
+
+### Fixed
+- Improvement-based Monte Carlo acquisition functions now use the correct
+  reference value for single-target minimization
 
 ## [0.11.3] - 2024-11-06
 ### Fixed
