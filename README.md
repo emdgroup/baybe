@@ -1,9 +1,16 @@
-<div align="center">
-  <br/>
+---
+hide:
+  - navigation
+  # - toc
+---
+
+<div markdown="span" align="center">
+<br/>
 
 [![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/ci.yml)
 [![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/regular.yml)
 [![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/docs.yml)
+<br/>
 
 [![Supports Python](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supports%20Python&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
@@ -11,6 +18,7 @@
 [![Issues](https://img.shields.io/github/issues/emdgroup/baybe?style=flat-square&label=Issues&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/issues/)
 [![PRs](https://img.shields.io/github/issues-pr/emdgroup/baybe?style=flat-square&label=PRs&labelColor=96d7d2&color=ffdcb9)](https://github.com/emdgroup/baybe/pulls/)
 [![License](https://shields.io/badge/License-Apache%202.0-green.svg?style=flat-square&labelColor=96d7d2&color=ffdcb9)](http://www.apache.org/licenses/LICENSE-2.0)
+<br/>
 
 [![Logo](https://raw.githubusercontent.com/emdgroup/baybe/main/docs/_static/banner2.svg)](https://github.com/emdgroup/baybe/)
 
@@ -23,7 +31,10 @@
 &nbsp;•&nbsp;
 <a href="https://emdgroup.github.io/baybe/stable/misc/contributing_link.html">Contribute<a/>
 &nbsp;
+
 </div>
+
+---
 
 # BayBE — A Bayesian Back End for Design of Experiments
 

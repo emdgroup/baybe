@@ -19,6 +19,7 @@ extra_css:
   - stylesheets/extra.css
 
 nav:
+  - Readme: README.md
   - Concepts:
     - Serialization: userguide/serialization.md
   - API Reference: reference/  
@@ -26,6 +27,7 @@ nav:
 markdown_extensions:
   - admonition
   - pymdownx.details
+  - pymdownx.extra
   - pymdownx.superfences
   - toc:
       permalink: "#"
@@ -46,3 +48,11 @@ plugins:
           - griffe_fieldz
         import:
         - https://pandas.pydata.org/docs/objects.inv
+
+extra:
+  toc:
+    disable:
+      - README.md
+  navigation:
+    disable:
+      - README.md
