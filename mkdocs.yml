@@ -20,7 +20,7 @@ extra_css:
 
 nav:
   - Concepts:
-    - userguide/serialization.md
+    - Serialization: userguide/serialization.md
   - API Reference: reference/  
 
 markdown_extensions:
