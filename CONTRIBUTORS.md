@@ -1,34 +1,106 @@
 # Contributors
 
 ## Maintainers
-- Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
-- Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
-- Alexander Hopp (Merck KGaA, Darmstadt, Germany), [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
+- :octicons-person-16: &nbsp;  Martin Fitzner &nbsp; [:octicons-mail-24:](mailto:martin.fitzner@merckgroup.com) [:simple-github:](https://github.com/Scienfitz)
+  <br> :fontawesome-solid-city: &nbsp; Merck KGaA, Darmstadt, Germany
+- :octicons-person-16: &nbsp; Adrian Šošić &nbsp; [:octicons-mail-24:](mailto:adrian.sosic@merckgroup.com) [:simple-github:](https://github.com/AdrianSosic)
+  <br> :fontawesome-solid-city: &nbsp; Merck Life Science KGaA, Darmstadt, Germany 
+- :octicons-person-16: Alexander Hopp &nbsp; [:octicons-mail-24:](mailto:alexander.hopp@merckgroup.com) [:simple-github:](https://github.com/AVHopp)
+  <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
 
 ## Contributors
-- Alex Lee (EMD Electronics, Tempe, Arizona, USA):\
-  Work on surrogate models
-- Daniel Weber (Merck KGaA, Darmstadt, Germany):\
-  Telemetry prototype
-- Emeline Sola (during an internship at Merck KGaA, Darmstadt, Germany):\
-  Auto-documentation of the examples
-- Sourabh Agrawal (Sigma-Aldrich Chemicals Private Limited):\
-  Initial implementation of additional surrogate models and clustering methods
-- Julie Fang (Merck Life Science KGaA, Darmstadt, Germany):\
-  Farthest point sampling
-- Roya Javadi (Vector Institute, Toronto, Canada):\
-  Import optimization, Polars implementations
-- Sterling Baird (Acceleration Consortium, Toronto, Canada):\
-  Documentation and general feedback
-- Rim Rihana (Merck KGaA, Darmstadt, Germany):\
-  Human readable output for search spaces
-- Di Jin (Merck Life Science KGaA, Darmstadt, Germany):\
-  Cardinality constraints
-- Julian Streibel (Merck Life Science KGaA, Darmstadt, Germany):\
-  Bernoulli multi-armed bandit and Thompson sampling
-- Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
-  `scikit-fingerprints` support
-- Fabian Liebig (Merck KGaA, Darmstadt, Germany):\
-  Benchmarking structure and persistence capabilities for benchmarking results
-- Alexander Wieczorek (Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland):\
-  SHAP explainers for insights
+<div class="grid cards" markdown>
+
+-   :octicons-person-16: __Alex Lee__ 
+    <br> :fontawesome-solid-city: EMD Electronics, Tempe, Arizona, USA
+
+    ---
+
+    Work on surrogate models
+
+-   :octicons-person-16: __Daniel Weber__
+    <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
+
+    ---
+
+    Telemetry prototype
+
+-   :octicons-person-16: __Emeline Sola__
+    <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
+
+    ---
+
+    Auto-documentation of the examples
+
+-   :octicons-person-16: __Sourabh Agrawal__
+    <br> :fontawesome-solid-city: Sigma-Aldrich Chemicals Private Limited
+
+    ---
+
+    Initial implementation of additional surrogate models and clustering methods
+
+-   :octicons-person-16: __Julie Fang__
+    <br> :fontawesome-solid-city: Merck Life Science KGaA, Darmstadt, Germany
+
+    ---
+
+    Farthest point sampling
+
+-   :octicons-person-16: __Roya Javadi__
+    <br> :fontawesome-solid-city: Vector Institute, Toronto, Canada
+
+    ---
+
+    * Import optimization
+    * Polars implementations
+
+-   :octicons-person-16: __Sterling Baird__
+    <br> :fontawesome-solid-city: Acceleration Consortium, Toronto, Canada
+
+    ---
+
+    Documentation and general feedback
+
+-   :octicons-person-16: __Rim Rihana__
+    <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
+
+    ---
+
+    Human readable output for search spaces
+
+-   :octicons-person-16: __Di Jin__
+    <br> :fontawesome-solid-city: Merck Life Science KGaA, Darmstadt, Germany
+
+    ---
+
+    Cardinality constraints
+
+-   :octicons-person-16: __Julian Streibel__
+    <br> :fontawesome-solid-city: Merck Life Science KGaA, Darmstadt, Germany
+
+    ---
+
+    Bernoulli multi-armed bandit and Thompson sampling
+
+-   :octicons-person-16: __Karin Hrovatin__
+    <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
+
+    ---
+
+    `scikit-fingerprints` support
+
+-   :octicons-person-16: __Fabian Liebig__
+    <br> :fontawesome-solid-city: Merck KGaA, Darmstadt, Germany
+
+    ---
+
+    Benchmarking structure and persistence capabilities for benchmarking results
+
+-   :octicons-person-16: __Alexander Wieczorek__
+    <br> :fontawesome-solid-city: Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland
+
+    ---
+
+    SHAP explainers for insights
+
+</div>
