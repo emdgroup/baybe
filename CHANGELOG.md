@@ -4,17 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.12.0] - 2025-01-28
 ### Breaking Changes 
 - Lookup callables for simulation are now expected to accept/return dataframes with
   the corresponding parameter/target column labels
 
 ### Added
+- SHAP explanations via the new `SHAPInsight` class
 - Optional `insights` dependency group
 - Insights user guide
-- SHAP explanations via the new `SHAPInsight` class
-- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
+- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - `add_noise_to_perturb_degenerate_rows` utility
 - `benchmarks` subpackage for defining and running performance tests
 – `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
