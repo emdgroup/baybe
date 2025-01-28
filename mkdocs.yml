@@ -1,6 +1,7 @@
 site_name: BayBE
 site_url: https://emdgroup.github.io/baybe/
 repo_url: https://github.com/emdgroup/baybe/
+copyright: Copyright &copy; 2022-2025 Merck KGaA, Darmstadt, Germany
 theme:
   name: material
   logo: assets/favicon.ico
