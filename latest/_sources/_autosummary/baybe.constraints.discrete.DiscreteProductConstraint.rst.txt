@@ -19,6 +19,7 @@ DiscreteProductConstraint
       ~DiscreteProductConstraint.from_json
       ~DiscreteProductConstraint.get_invalid
       ~DiscreteProductConstraint.get_invalid_polars
+      ~DiscreteProductConstraint.get_valid
       ~DiscreteProductConstraint.summary
       ~DiscreteProductConstraint.to_dict
       ~DiscreteProductConstraint.to_json

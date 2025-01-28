@@ -1,6 +1,0 @@
-baybe.utils.chemistry.smiles\_to\_rdkit\_features
-=================================================
-
-.. currentmodule:: baybe.utils.chemistry
-
-.. autofunction:: smiles_to_rdkit_features

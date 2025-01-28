@@ -41,8 +41,6 @@ SearchSpace
       ~SearchSpace.comp_rep_columns
       ~SearchSpace.constraints
       ~SearchSpace.constraints_augmentable
-      ~SearchSpace.contains_mordred
-      ~SearchSpace.contains_rdkit
       ~SearchSpace.n_tasks
       ~SearchSpace.parameter_names
       ~SearchSpace.parameters

@@ -126,15 +126,10 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ```
 
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
-    [20:47:32] DEPRECATION WARNING: please use MorganGenerator
+    /home/runner/work/baybe/baybe/.tox/docs-py310/lib/python3.10/site-
+packages/baybe/utils/chemistry.py:126: DeprecationWarning: Substance encoding 'RDKIT' is
+deprecated and will be disabled in a future version. Use 'RDKIT2DDESCRIPTORS' instead.
+      warnings.warn(
 
 
 
@@ -154,18 +149,30 @@ print(campaign)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/864
+             Measured: 0/864
+             Excluded: 0/864
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                         Name             Type  Num_Values         Encoding
-                0   NumParam1  NumericalDis...           3             None
-                1   NumParam2  NumericalDis...           3             None
-                2   NumParam3  NumericalDis...           3             None
-                ..        ...              ...         ...              ...
-                5   NumParam6  NumericalDis...           3             None
-                6     Solvent  SubstancePar...           3  SubstanceEnc...
-                7       Speed  CategoricalP...           3  CategoricalE...
+                         Name                        Type  Num_Values
+Encoding
+                0   NumParam1  NumericalDiscreteParameter           3
+None
+                1   NumParam2  NumericalDiscreteParameter           3
+None
+                2   NumParam3  NumericalDiscreteParameter           3
+None
+                ..        ...                         ...         ...
+...
+                5   NumParam6  NumericalDiscreteParameter           3
+None
+                6     Solvent          SubstanceParameter           3
+SubstanceEncoding.RDKIT
+                7       Speed        CategoricalParameter           3
+CategoricalEncoding.INT
                 
                 [8 rows x 4 columns]
              Experimental Representation
@@ -179,24 +186,20 @@ print(campaign)
                 863   water  slow  ...      100.0        0.0
                 
                 [864 rows x 8 columns]
-             Meta Data
-                was_recommended: 0/864
-                was_measured: 0/864
-                dont_recommend: 0/864
              Constraints
                               Type Affected_Paramet
                 0  DiscreteSumC...  [NumParam1, ...
                 1  DiscreteSumC...  [NumParam5, ...
                 2  DiscreteProd...  [NumParam3, ...
              Computational Representation
-                     NumParam1  NumParam2  ...  Solvent_RDKIT_Ma  Speed
-                0          0.0        0.0  ...           -0.078     0.0
-                1          0.0        0.0  ...           -0.078     0.0
-                2          0.0        0.0  ...           -0.078     0.0
+                     NumParam1  NumParam2  ...  Solvent_RDKIT2DD  Speed
+                0          0.0        0.0  ...              1.0     0.0
+                1          0.0        0.0  ...              1.0     0.0
+                2          0.0        0.0  ...              1.0     0.0
                 ..         ...        ...  ...              ...     ...
-                861      100.0       50.0  ...           -0.412     2.0
-                862      100.0       50.0  ...           -0.412     2.0
-                863      100.0       50.0  ...           -0.412     2.0
+                861      100.0       50.0  ...              0.0     2.0
+                862      100.0       50.0  ...              0.0     2.0
+                863      100.0       50.0  ...              0.0     2.0
                 
                 [864 rows x 9 columns]
        Objective
@@ -222,6 +225,8 @@ print(campaign)
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
 
 
 ## Manual verification of the constraints

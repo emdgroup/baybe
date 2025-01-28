@@ -5,11 +5,8 @@ These examples demonstrate BayBE's
 ```{toctree}
 :maxdepth: 1
 
-Multi Target<multi_target>
-Custom Analytical<custom_analytical>
 Full Lookup<full_lookup>
-Botorch Analytical<botorch_analytical>
-Hybrid<hybrid>
 Full Initial Data<full_initial_data>
+Custom Blackbox<custom_blackbox>
 Impute Mode<impute_mode>
 ```

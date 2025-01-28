@@ -23,7 +23,7 @@ available within BayBE:
 In principle, the surrogate model does not need to be a persistent object during
 Bayesian optimization since each iteration performs a new fit anyway. However, for
 advanced study, such as investigating the posterior predictions, acquisition functions
-or feature importance, it can be useful to diretly extract the current surrogate model.
+or feature importance, it can be useful to directly extract the current surrogate model.
 
 For this, BayBE provides the ``get_surrogate`` method, which is available for the
 [``Campaign``](baybe.campaign.Campaign.get_surrogate) or for 

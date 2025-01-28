@@ -19,6 +19,7 @@ DiscreteNoLabelDuplicatesConstraint
       ~DiscreteNoLabelDuplicatesConstraint.from_json
       ~DiscreteNoLabelDuplicatesConstraint.get_invalid
       ~DiscreteNoLabelDuplicatesConstraint.get_invalid_polars
+      ~DiscreteNoLabelDuplicatesConstraint.get_valid
       ~DiscreteNoLabelDuplicatesConstraint.summary
       ~DiscreteNoLabelDuplicatesConstraint.to_dict
       ~DiscreteNoLabelDuplicatesConstraint.to_json

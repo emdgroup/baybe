@@ -14,4 +14,5 @@ Backtesting<Backtesting/Backtesting>
 Custom Hooks<Custom_Hooks/Custom_Hooks>
 Multi Armed Bandit<Multi_Armed_Bandit/Multi_Armed_Bandit>
 Transfer Learning<Transfer_Learning/Transfer_Learning>
+Mixtures<Mixtures/Mixtures>
 ```

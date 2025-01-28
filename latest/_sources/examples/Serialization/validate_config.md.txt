@@ -177,20 +177,6 @@ Campaign.validate_config(CONFIG)
 print("The first config seems valid.")
 ```
 
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCCCC')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('COCOC')
-    _______________________________________smiles_to_mordred_features - 0.0s, 0.0min
-    ________________________________________________________________________________
-    [Memory] Calling baybe.utils.chemistry._smiles_to_mordred_features...
-    _smiles_to_mordred_features('CCOCCOCCN')
-    _______________________________________smiles_to_mordred_features - 0.1s, 0.0min
-
-
     The first config seems valid.
 
 

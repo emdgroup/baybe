@@ -197,7 +197,7 @@ Without this constraint, combinations like below would be possible:
 | 3 | Octanol   | Octanol   | would be excluded                        |
 
 The usage of `DiscreteNoLabelDuplicatesConstraint` is part of the
-[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteLinkedParametersConstraint
 The [`DiscreteLinkedParametersConstraint`](baybe.constraints.discrete.DiscreteLinkedParametersConstraint)
@@ -367,7 +367,7 @@ DiscretePermutationInvarianceConstraint(
 ```
 
 The usage of `DiscretePermutationInvarianceConstraint` is also part of the
-[example on mixtures](../../examples/Constraints_Discrete/mixture_constraints).
+[example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
@@ -402,7 +402,7 @@ Find a detailed example [here](../../examples/Constraints_Discrete/custom_constr
 
 ```{warning}
 Due to the arbitrary nature of code and dependencies that can be used in the
-`DiscreteCustomConstraint`, de-/serializability cannot be guaranteed. As a consequence,
+`DiscreteCustomConstraint`, (de-)serializability cannot be guaranteed. As a consequence,
 using a `DiscreteCustomConstraint` results in an error if you attempt to serialize
 the corresponding object or higher-level objects containing it.
 ```

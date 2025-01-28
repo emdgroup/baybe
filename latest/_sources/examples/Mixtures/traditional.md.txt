@@ -1,0 +1,175 @@
+# Modeling a Mixture in Traditional Representation
+
+When modeling mixtures, we are often faced with a large set of ingredients to choose
+from. A common way to formalize this type of selection problem is to assign each
+ingredient its own numerical parameter representing the amount of the ingredient in
+the mixture. A sum constraint imposed on all parameters then ensures that the total
+amount of ingredients in the mix is always 100%. In addition, there could be other
+constraints, for instance, to impose further restrictions on individual subgroups of
+ingredients. In BayBE's language, we call this the *traditional mixture
+representation*.
+
+In this example, we demonstrate how to create a search space in this representation,
+using a simple mixture of up to six components, which are divided into three
+subgroups: solvents, bases and phase agents.
+
+```{admonition} Slot-based Representation
+:class: seealso
+For an alternative way to describe mixtures, see our
+[slot-based representation](/examples/Mixtures/slot_based.md).
+```
+
+## Imports
+
+
+```python
+import numpy as np
+import pandas as pd
+```
+
+
+```python
+from baybe.constraints import ContinuousLinearConstraint
+from baybe.parameters import NumericalContinuousParameter
+from baybe.recommenders import RandomRecommender
+from baybe.searchspace import SearchSpace
+```
+
+## Parameter Setup
+
+We start by creating lists containing our substance labels according to their
+subgroups:
+
+
+```python
+g1 = ["Solvent1", "Solvent2"]
+g2 = ["Base1", "Base2"]
+g3 = ["PhaseAgent1", "PhaseAgent2"]
+```
+
+Next, we create continuous parameters describing the substance amounts for each group.
+Here, the maximum amount for each substance depends on its group, i.e. we allow
+adding more of a solvent compared to a base or a phase agent:
+
+
+```python
+p_g1_amounts = [
+    NumericalContinuousParameter(name=f"{name}", bounds=(0, 80)) for name in g1
+]
+p_g2_amounts = [
+    NumericalContinuousParameter(name=f"{name}", bounds=(0, 20)) for name in g2
+]
+p_g3_amounts = [
+    NumericalContinuousParameter(name=f"{name}", bounds=(0, 5)) for name in g3
+]
+```
+
+## Constraints Setup
+
+Now, we set up our constraints. We start with the overall mixture constraint, ensuring
+the total of all ingredients is 100%:
+
+
+```python
+c_total_sum = ContinuousLinearConstraint(
+    parameters=g1 + g2 + g3,
+    operator="=",
+    coefficients=[1] * len(g1 + g2 + g3),
+    rhs=100,
+)
+```
+
+Additionally, we require bases make up at least 10% of the mixture:
+
+
+```python
+c_g2_min = ContinuousLinearConstraint(
+    parameters=g2,
+    operator=">=",
+    coefficients=[1] * len(g2),
+    rhs=10,
+)
+```
+
+By contrast, phase agents should make up no more than 5%:
+
+
+```python
+c_g3_max = ContinuousLinearConstraint(
+    parameters=g3,
+    operator="<=",
+    coefficients=[1] * len(g3),
+    rhs=5,
+)
+```
+
+## Search Space Creation
+
+Having both parameter and constraint definitions at hand, we can create our
+search space:
+
+
+```python
+searchspace = SearchSpace.from_product(
+    parameters=[*p_g1_amounts, *p_g2_amounts, *p_g3_amounts],
+    constraints=[c_total_sum, c_g2_min, c_g3_max],
+)
+```
+
+## Verification of Constraints
+
+To verify that the constraints imposed above are fulfilled, let us draw some
+random points from the search space:
+
+
+```python
+recommendations = RandomRecommender().recommend(batch_size=10, searchspace=searchspace)
+print(recommendations)
+```
+
+           Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
+    0  16.180956  14.505542     2.191935     0.577763  42.743367  23.800436
+    1  14.016956  18.765940     1.666502     1.048582  32.708776  31.793243
+    2  15.050669  13.499417     3.330173     1.301053  59.851808   6.966879
+    3  16.040840   1.464169     2.421722     2.333891  43.161896  34.577483
+    4  15.241552   7.395663     1.191226     3.214262  40.860665  32.096632
+    5   9.861096   2.912464     1.086430     2.282092  20.612124  63.245794
+    6  11.099509   9.378790     1.118041     0.691331  76.950253   0.762076
+    7  10.729064   7.684045     1.130903     0.037063  30.216313  50.202613
+    8  16.157398  12.313660     0.303930     3.127497  65.604239   2.493277
+    9   6.201888  17.749764     2.223533     1.594282  43.893851  28.336683
+
+
+Computing the respective row sums reveals the expected result:
+
+
+```python
+stats = pd.DataFrame(
+    {
+        "Total": recommendations.sum(axis=1),
+        "Total_Bases": recommendations[g2].sum(axis=1),
+        "Total_Phase_Agents": recommendations[g3].sum(axis=1),
+    }
+)
+print(stats)
+```
+
+       Total  Total_Bases  Total_Phase_Agents
+    0  100.0    30.686498            2.769699
+    1  100.0    32.782896            2.715085
+    2  100.0    28.550086            4.631226
+    3  100.0    17.505009            4.755612
+    4  100.0    22.637215            4.405488
+    5  100.0    12.773560            3.368522
+    6  100.0    20.478299            1.809372
+    7  100.0    18.413108            1.167966
+    8  100.0    28.471058            3.431426
+    9  100.0    23.951652            3.817814
+
+
+
+```python
+assert np.allclose(stats["Total"], 100)
+assert (stats["Total_Bases"] >= 10).all()
+assert (stats["Total_Phase_Agents"] <= 5).all()
+```

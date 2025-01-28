@@ -19,6 +19,18 @@ Install `baybe` into a clean environment without pre-existing
 packages. If you require other packages, try to install `baybe` first.
 ```
 
+### CPUs without AVX support – Installation of `polars`
+The package `polars` that can be installed as an optional dependency is only supported for
+CPUs with AVX support. As a consequence, you might not be able to install the optional dependency.
+This is in particular the case for M1 Macs, as these do not offer this support.
+
+```{admonition} Suggested Fix
+:class: tip
+Instead of `polars`, install `polars-lts-cpu`. BayBE will automatically detect the
+presence of `polars` and active its advanced machinery. For more details, we refer to the
+[polars installation guide](https://docs.pola.rs/user-guide/installation/).
+```
+
 ### Windows – Torch Problems
 Reports of crashes during runtime on Windows machines often stem from a faulty `torch`
 installation, e.g. wrongly installed CUDA-`torch` combinations. Errors look like

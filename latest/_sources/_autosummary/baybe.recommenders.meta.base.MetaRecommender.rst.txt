@@ -19,6 +19,7 @@ MetaRecommender
       ~MetaRecommender.from_json
       ~MetaRecommender.get_current_recommender
       ~MetaRecommender.get_next_recommender
+      ~MetaRecommender.get_non_meta_recommender
       ~MetaRecommender.recommend
       ~MetaRecommender.select_recommender
       ~MetaRecommender.to_dict
@@ -27,5 +28,11 @@ MetaRecommender
    
 
    
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MetaRecommender.is_stateful
    
    

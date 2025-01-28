@@ -26,6 +26,7 @@ baybe.exceptions
       EmptySearchSpaceError
       IncompatibilityError
       IncompatibleAcquisitionFunctionError
+      IncompatibleExplainerError
       IncompatibleSearchSpaceError
       InvalidSurrogateModelError
       InvalidTargetValueError

@@ -81,14 +81,22 @@ print(campaign, end="\n" * 3)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/90
+             Measured: 0/90
+             Excluded: 0/90
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                              Name             Type  Num_Values         Encoding
-                0      Granularity  CategoricalP...           3  CategoricalE...
-                1    Pressure[bar]  NumericalDis...           3             None
-                2  Temperature[...  NumericalDis...          10             None
+                                    Name                        Type  Num_Values
+Encoding
+                0            Granularity        CategoricalParameter           3
+CategoricalEncoding.OHE
+                1          Pressure[bar]  NumericalDiscreteParameter           3
+None
+                2  Temperature[degree_C]  NumericalDiscreteParameter          10
+None
              Experimental Representation
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 
@@ -100,10 +108,6 @@ print(campaign, end="\n" * 3)
                 89      medium           10.0          200.000 
                 
                 [90 rows x 3 columns]
-             Meta Data
-                was_recommended: 0/90
-                was_measured: 0/90
-                dont_recommend: 0/90
              Constraints
                 Empty DataFrame
                 Columns: []
@@ -150,6 +154,8 @@ Temperature[degr
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
     
     
 
@@ -178,14 +184,22 @@ print(campaign_recreate, end="\n" * 3)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/90
+             Measured: 0/90
+             Excluded: 0/90
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                              Name             Type  Num_Values         Encoding
-                0      Granularity  CategoricalP...           3  CategoricalE...
-                1    Pressure[bar]  NumericalDis...           3             None
-                2  Temperature[...  NumericalDis...          10             None
+                                    Name                        Type  Num_Values
+Encoding
+                0            Granularity        CategoricalParameter           3
+CategoricalEncoding.OHE
+                1          Pressure[bar]  NumericalDiscreteParameter           3
+None
+                2  Temperature[degree_C]  NumericalDiscreteParameter          10
+None
              Experimental Representation
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 
@@ -197,10 +211,6 @@ print(campaign_recreate, end="\n" * 3)
                 89      medium           10.0          200.000 
                 
                 [90 rows x 3 columns]
-             Meta Data
-                was_recommended: 0/90
-                was_measured: 0/90
-                dont_recommend: 0/90
              Constraints
                 Empty DataFrame
                 Columns: []
@@ -247,6 +257,8 @@ Temperature[degr
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
     
     
 

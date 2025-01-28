@@ -5,8 +5,7 @@ These examples demonstrate various ways to configure
 ```{toctree}
 :maxdepth: 1
 
-Continuous Space Botorch Function<continuous_space_botorch_function>
 Discrete Space<discrete_space>
 Hybrid Space<hybrid_space>
-Continuous Space Custom Function<continuous_space_custom_function>
+Continuous Space<continuous_space>
 ```

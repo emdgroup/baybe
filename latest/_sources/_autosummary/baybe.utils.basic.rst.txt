@@ -19,6 +19,7 @@ baybe.utils.basic
       get_subclasses
       group_duplicate_values
       hilberts_factory
+      is_all_instance
       match_attributes
       refers_to
       register_hooks

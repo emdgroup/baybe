@@ -107,17 +107,17 @@ available_acq_functions = [
 ]
 ```
 
-Note that the qvailability of the acquisition functions might depend on the
+Note that the availability of the acquisition functions might depend on the
 `batch_size`:
   - If `batch_size` is set to 1, all available acquisition functions can be chosen
   - If a larger value is chosen, only those that allow batching.
       That is, 'q'-variants of the acquisition functions must be chosen.
 
-The default he acquisition function is q-Expected Improvement.
+The default acquisition function is q-Log Expected Improvement.
 
 
 ```python
-ACQ_FUNCTION = "qEI"
+ACQ_FUNCTION = "qLogEI"
 ```
 
 ## Other parameters
@@ -169,18 +169,15 @@ print(recommender)
                 GaussianProcessSurrogate
                    Supports Transfer Learning: True
                    Kernel factory: DefaultKernelFactory()
-             Acquisition function: qExpectedImprovement()
+             Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: False
              Hybrid sampler: None
              Sampling percentage: 1.0
        Switch after: 1
+       Remain switched: False
+       Has switched: False
 
-
-Note that there are the additional keywords `hybrid_sampler` and `sampling_percentag`.
-Their meaning and how to use and define it are explained in the hybrid backtesting
-example.
-We thus refer to [`hybrid`](./../Backtesting/hybrid.md) for details on these.
 
 ## Example Searchspace and objective parameters
 
@@ -266,15 +263,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent                Base                        Ligand  Temperature  \
-    242      DMAc      Cesium acetate  Di-tert-butylphenylphosphine        120.0   
-    420  p-Xylene  Potassium pivalate                     BrettPhos        120.0   
-    335  p-Xylene      Cesium acetate                     BrettPhos         90.0   
+               Solvent             Base                        Ligand  \
+    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+    110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
+    158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration  
-    242          0.153  
-    420          0.057  
-    335          0.153  
+         Temperature  Concentration  
+    155         90.0          0.153  
+    110         90.0          0.153  
+    158        105.0          0.153  
 
 
 
@@ -287,15 +284,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent                Base                        Ligand  Temperature  \
-    242      DMAc      Cesium acetate  Di-tert-butylphenylphosphine        120.0   
-    420  p-Xylene  Potassium pivalate                     BrettPhos        120.0   
-    335  p-Xylene      Cesium acetate                     BrettPhos         90.0   
+               Solvent             Base                        Ligand  \
+    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
+    110  Butyornitrile   Cesium acetate                 (t-Bu)PhCPhos   
+    158  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
     
-         Concentration      yield  
-    242          0.153   9.312343  
-    420          0.057  29.388031  
-    335          0.153  10.689803  
+         Temperature  Concentration      yield  
+    155         90.0          0.153  31.486378  
+    110         90.0          0.153  14.610760  
+    158        105.0          0.153  14.601033  
 
 
 

@@ -19,6 +19,7 @@ DiscretePermutationInvarianceConstraint
       ~DiscretePermutationInvarianceConstraint.from_json
       ~DiscretePermutationInvarianceConstraint.get_invalid
       ~DiscretePermutationInvarianceConstraint.get_invalid_polars
+      ~DiscretePermutationInvarianceConstraint.get_valid
       ~DiscretePermutationInvarianceConstraint.summary
       ~DiscretePermutationInvarianceConstraint.to_dict
       ~DiscretePermutationInvarianceConstraint.to_json

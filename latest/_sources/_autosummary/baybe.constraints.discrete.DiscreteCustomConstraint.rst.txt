@@ -19,6 +19,7 @@ DiscreteCustomConstraint
       ~DiscreteCustomConstraint.from_json
       ~DiscreteCustomConstraint.get_invalid
       ~DiscreteCustomConstraint.get_invalid_polars
+      ~DiscreteCustomConstraint.get_valid
       ~DiscreteCustomConstraint.summary
       ~DiscreteCustomConstraint.to_dict
       ~DiscreteCustomConstraint.to_json

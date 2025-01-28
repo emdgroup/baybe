@@ -46,22 +46,22 @@ for various acquisition functions.
   spaces, as it does gradient-based optimization in the continuous part of the space
   while exhaustively evaluating configurations of the discrete subspace. You can customize this
   behavior to only sample a certain percentage of the discrete subspace via the
-  `sample_percentage` attribute and to choose different sampling algorithms via the
-  `hybrid_sampler` attribute.
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.sampling_percentage`
+  argument and to choose different sampling algorithms via the
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.hybrid_sampler`
+  argument.
 
   The gradient-based optimization part can also further be controlled by the
-  `n_restarts` and `n_raw_samples` keywords. For details, please refer
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_restarts` and
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_raw_samples`
+  arguments. For details, please refer
   to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
  
-  An example on using this recommender in a hybrid space can be found
-  [here](./../../examples/Backtesting/hybrid).
-
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**
   can be applied to all search spaces, but is intended to be used in hybrid spaces.
   This recommender combines individual recommenders for the continuous and the discrete
   subspaces. It independently optimizes each subspace and consolidates the best results
-  to generate a candidate for the original hybrid space. An example on using this
-  recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
+  to generate a candidate for the original hybrid space. 
 
 ### Clustering Recommenders
 
@@ -125,7 +125,7 @@ recommender = TwoPhaseMetaRecommender(
   enables the utilization of *arbitrary* iterables to select recommender.
 
   ```{warning}
-  Due to the arbitrary nature of iterables that can be used, de-/serializability cannot
+  Due to the arbitrary nature of iterables that can be used, (de-)serializability cannot
   be guaranteed. As a consequence, using a `StreamingSequentialMetaRecommender` results
   in an error if you attempt to serialize the corresponding object or higher-level
   objects containing it.

@@ -41,7 +41,7 @@ from baybe.utils.dataframe import add_fake_measurements
 
 ```python
 SMOKE_TEST = "SMOKE_TEST" in os.environ
-FRAC_RESOLUTION = 3 if SMOKE_TEST else 7
+RESOLUTION = 3 if SMOKE_TEST else 7
 ```
 
 
@@ -54,7 +54,7 @@ solvent = SubstanceParameter(name="Solv", data=dict_solvent, encoding="MORDRED")
 switch1 = CategoricalParameter(name="Switch1", values=["on", "off"])
 switch2 = CategoricalParameter(name="Switch2", values=["left", "right"])
 fraction1 = NumericalDiscreteParameter(
-    name="Frac1", values=list(np.linspace(0, 100, FRAC_RESOLUTION)), tolerance=0.2
+    name="Frac1", values=list(np.linspace(0, 100, RESOLUTION)), tolerance=0.2
 )
 frame1 = CategoricalParameter(name="FrameA", values=["A", "B"])
 frame2 = CategoricalParameter(name="FrameB", values=["A", "B"])
@@ -107,17 +107,28 @@ print(campaign)
        Meta Data
           Batches done: 0
           Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/35
+             Measured: 0/35
+             Excluded: 0/35
        SearchSpace
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                      Name             Type  Num_Values         Encoding
-                0    Frac1  NumericalDis...           3             None
-                1   FrameA  CategoricalP...           2  CategoricalE...
-                2   FrameB  CategoricalP...           2  CategoricalE...
-                3     Solv  SubstancePar...           2  SubstanceEnc...
-                4  Switch1  CategoricalP...           2  CategoricalE...
-                5  Switch2  CategoricalP...           2  CategoricalE...
+                      Name                        Type  Num_Values
+Encoding
+                0    Frac1  NumericalDiscreteParameter           3
+None
+                1   FrameA        CategoricalParameter           2
+CategoricalEncoding.OHE
+                2   FrameB        CategoricalParameter           2
+CategoricalEncoding.OHE
+                3     Solv          SubstanceParameter           2
+SubstanceEncoding.MORDRED
+                4  Switch1        CategoricalParameter           2
+CategoricalEncoding.OHE
+                5  Switch2        CategoricalParameter           2
+CategoricalEncoding.OHE
              Experimental Representation
                      Solv Switch1  ... FrameA  FrameB
                 0      C1     off  ...      A       A
@@ -129,10 +140,6 @@ print(campaign)
                 34  water      on  ...      B       B
                 
                 [35 rows x 6 columns]
-             Meta Data
-                was_recommended: 0/35
-                was_measured: 0/35
-                dont_recommend: 0/35
              Constraints
                               Type Affected_Paramet
                 0  DiscreteDepe...  [Switch1, Sw...
@@ -170,6 +177,8 @@ print(campaign)
                 Hybrid sampler: None
                 Sampling percentage: 1.0
           Switch after: 1
+          Remain switched: False
+          Has switched: False
 
 
 ## Manual verification of the constraints
@@ -186,7 +195,7 @@ for kIter in range(N_ITERATIONS):
     print("## ASSERTS ##")
     print(
         f"Number entries with both switches on "
-        f"(expected {7*len(dict_solvent)*2*2}): ",
+        f"(expected {RESOLUTION*len(dict_solvent)*2*2}): ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
             & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
@@ -201,7 +210,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         f"Number entries with Switch2 off "
-        f"(expected {7*len(dict_solvent)}):"
+        f"(expected {RESOLUTION*len(dict_solvent)}):"
         f"      ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
@@ -224,15 +233,15 @@ for kIter in range(N_ITERATIONS):
     
     #### ITERATION 1 ####
     ## ASSERTS ##
-    Number entries with both switches on (expected 56):  24
+    Number entries with both switches on (expected 24):  24
     Number entries with Switch1 off (expected 4):        4
-    Number entries with Switch2 off (expected 14):       6
+    Number entries with Switch2 off (expected 6):       6
     Number entries with both switches off (expected 1):  1
     
     #### ITERATION 2 ####
     ## ASSERTS ##
-    Number entries with both switches on (expected 56):  24
+    Number entries with both switches on (expected 24):  24
     Number entries with Switch1 off (expected 4):        4
-    Number entries with Switch2 off (expected 14):       6
+    Number entries with Switch2 off (expected 6):       6
     Number entries with both switches off (expected 1):  1
 

@@ -15,11 +15,11 @@ StreamingSequentialMetaRecommender
    .. autosummary::
    
       ~StreamingSequentialMetaRecommender.__init__
-      ~StreamingSequentialMetaRecommender.default_iterator
       ~StreamingSequentialMetaRecommender.from_dict
       ~StreamingSequentialMetaRecommender.from_json
       ~StreamingSequentialMetaRecommender.get_current_recommender
       ~StreamingSequentialMetaRecommender.get_next_recommender
+      ~StreamingSequentialMetaRecommender.get_non_meta_recommender
       ~StreamingSequentialMetaRecommender.recommend
       ~StreamingSequentialMetaRecommender.select_recommender
       ~StreamingSequentialMetaRecommender.to_dict
@@ -34,5 +34,6 @@ StreamingSequentialMetaRecommender
    .. autosummary::
    
       ~StreamingSequentialMetaRecommender.recommenders
+      ~StreamingSequentialMetaRecommender.is_stateful
    
    
