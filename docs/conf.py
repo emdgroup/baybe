@@ -256,6 +256,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
+    "shap": ("https://shap.readthedocs.io/en/latest/", None),
 }
 
 # --- Options for autodoc typehints and autodoc -------------------------------

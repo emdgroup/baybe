@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Optional `insights` dependency group
+- Insights user guide
 - SHAP explanations via the new `SHAPInsight` class
 - `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
 - Example for a traditional mixture
