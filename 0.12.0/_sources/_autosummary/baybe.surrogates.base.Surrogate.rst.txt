@@ -1,0 +1,36 @@
+Surrogate
+=========
+
+.. currentmodule:: baybe.surrogates.base
+
+.. autoclass:: Surrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Surrogate.__init__
+      ~Surrogate.fit
+      ~Surrogate.from_dict
+      ~Surrogate.from_json
+      ~Surrogate.posterior
+      ~Surrogate.to_botorch
+      ~Surrogate.to_dict
+      ~Surrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Surrogate.supports_transfer_learning
+   
+   

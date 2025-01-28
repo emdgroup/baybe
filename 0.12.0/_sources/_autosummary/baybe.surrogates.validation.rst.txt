@@ -1,0 +1,31 @@
+baybe.surrogates.validation
+===========================
+
+.. automodule:: baybe.surrogates.validation
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      get_model_params_validator
+      validate_custom_architecture_cls
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

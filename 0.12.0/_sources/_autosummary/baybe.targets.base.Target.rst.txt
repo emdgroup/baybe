@@ -1,0 +1,36 @@
+Target
+======
+
+.. currentmodule:: baybe.targets.base
+
+.. autoclass:: Target
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Target.__init__
+      ~Target.from_dict
+      ~Target.from_json
+      ~Target.summary
+      ~Target.to_dict
+      ~Target.to_json
+      ~Target.to_objective
+      ~Target.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Target.name
+   
+   

@@ -1,0 +1,37 @@
+BayesianLinearSurrogate
+=======================
+
+.. currentmodule:: baybe.surrogates.linear
+
+.. autoclass:: BayesianLinearSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BayesianLinearSurrogate.__init__
+      ~BayesianLinearSurrogate.fit
+      ~BayesianLinearSurrogate.from_dict
+      ~BayesianLinearSurrogate.from_json
+      ~BayesianLinearSurrogate.posterior
+      ~BayesianLinearSurrogate.to_botorch
+      ~BayesianLinearSurrogate.to_dict
+      ~BayesianLinearSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BayesianLinearSurrogate.model_params
+      ~BayesianLinearSurrogate.supports_transfer_learning
+   
+   

@@ -1,0 +1,30 @@
+baybe.objectives.deprecation
+============================
+
+.. automodule:: baybe.objectives.deprecation
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      structure_objective
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

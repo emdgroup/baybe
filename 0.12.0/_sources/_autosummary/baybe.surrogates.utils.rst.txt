@@ -1,0 +1,32 @@
+baybe.surrogates.utils
+======================
+
+.. automodule:: baybe.surrogates.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      batchify_ensemble_predictor
+      batchify_mean_var_prediction
+      catch_constant_targets
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

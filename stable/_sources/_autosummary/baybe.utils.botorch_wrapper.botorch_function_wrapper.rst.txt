@@ -1,6 +1,0 @@
-baybe.utils.botorch\_wrapper.botorch\_function\_wrapper
-=======================================================
-
-.. currentmodule:: baybe.utils.botorch_wrapper
-
-.. autofunction:: botorch_function_wrapper

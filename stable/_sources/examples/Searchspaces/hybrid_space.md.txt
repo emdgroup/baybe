@@ -14,18 +14,18 @@ directory.
 
 ```python
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 ```
 
 
 ```python
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import NaiveHybridSpaceRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import arrays_to_dataframes
 ```
 
 ## Defining the test function and the hybrid dimensions
@@ -98,7 +98,6 @@ if set(CONT_INDICES + DISC_INDICES) != set(range(DIMENSION)):
 
 ```python
 BOUNDS = TestFunction.bounds
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 ```
 
 ## Constructing the hybrid searchspace
@@ -140,7 +139,17 @@ disc_parameters = [
 
 ```python
 searchspace = SearchSpace.from_product(parameters=disc_parameters + cont_parameters)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
+```
+
+## Wrap the test function as a dataframe-based lookup callable
+
+
+```python
+lookup = arrays_to_dataframes(
+    searchspace.parameter_names, [target.name], use_torch=True
+)(TestFunction)
 ```
 
 ## Constructing hybrid recommenders
@@ -175,37 +184,27 @@ recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 ```
 
 Evaluate the test function.
-Note that we need iterate through the rows of the recommendation.
-Furthermore, we need to interpret the row as a list.
 
 
 ```python
-target_values = []
-for index, row in recommendation.iterrows():
-    target_values.append(WRAPPED_FUNCTION(*row.to_list()))
-```
-
-We add an additional column with the calculated target values.
-
-
-```python
-recommendation["Target"] = target_values
+lookup_values = lookup(recommendation)
+measurements = pd.concat([recommendation, lookup_values], axis=1)
 ```
 
 Here, we inform the campaign about our measurement.
 
 
 ```python
-campaign.add_measurements(recommendation)
+campaign.add_measurements(measurements)
 print("\n\nRecommended experiments with measured values: ")
-print(recommendation)
+print(measurements)
 ```
 
     
     
     Recommended experiments with measured values: 
          x_1   x_2   x_3       x_4       x_5       x_6      Target
-    8  -5.12  5.12  5.12 -5.094140  1.909023  0.468362  139.679947
-    23  5.12  0.00  5.12 -3.055127 -3.606410 -2.477289  124.665604
-    10  0.00 -5.12  0.00 -1.230475 -1.908317  5.095010   72.159256
+    23  5.12  0.00  5.12  1.144584 -3.209380  1.354192   98.707949
+    11  0.00 -5.12  5.12  1.343241  3.974455  4.095826  109.641922
+    9   0.00 -5.12 -5.12  1.841024 -4.633342  3.926633  120.447315
 

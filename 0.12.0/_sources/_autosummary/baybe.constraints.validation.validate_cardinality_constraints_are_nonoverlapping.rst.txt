@@ -1,0 +1,6 @@
+baybe.constraints.validation.validate\_cardinality\_constraints\_are\_nonoverlapping
+====================================================================================
+
+.. currentmodule:: baybe.constraints.validation
+
+.. autofunction:: validate_cardinality_constraints_are_nonoverlapping

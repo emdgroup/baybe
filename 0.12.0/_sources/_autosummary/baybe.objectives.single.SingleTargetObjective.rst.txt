@@ -1,0 +1,34 @@
+SingleTargetObjective
+=====================
+
+.. currentmodule:: baybe.objectives.single
+
+.. autoclass:: SingleTargetObjective
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SingleTargetObjective.__init__
+      ~SingleTargetObjective.from_dict
+      ~SingleTargetObjective.from_json
+      ~SingleTargetObjective.to_dict
+      ~SingleTargetObjective.to_json
+      ~SingleTargetObjective.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SingleTargetObjective.targets
+   
+   
