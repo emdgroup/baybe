@@ -1,0 +1,35 @@
+SKLearnClusteringRecommender
+============================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.clustering
+
+.. autoclass:: SKLearnClusteringRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SKLearnClusteringRecommender.__init__
+      ~SKLearnClusteringRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SKLearnClusteringRecommender.model_params
+      ~SKLearnClusteringRecommender.allow_recommending_already_measured
+      ~SKLearnClusteringRecommender.allow_recommending_pending_experiments
+      ~SKLearnClusteringRecommender.allow_repeated_recommendations
+      ~SKLearnClusteringRecommender.compatibility
+      ~SKLearnClusteringRecommender.model_cluster_num_parameter_name
+   
+   

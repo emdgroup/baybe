@@ -1142,7 +1142,7 @@
 
     <span class="n">allow_recommending_already_recommended</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">UnspecifiedType</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">Factory</span><span class="p">(</span>
-            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">_make_allow_flag_default_factory</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span> <span class="n">takes_self</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">),</span>
         <span class="n">validator</span><span class="o">=</span><span class="n">_validate_allow_flag</span><span class="p">,</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

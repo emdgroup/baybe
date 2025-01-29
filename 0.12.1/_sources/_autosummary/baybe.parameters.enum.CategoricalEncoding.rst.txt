@@ -1,0 +1,24 @@
+CategoricalEncoding
+===================
+
+.. currentmodule:: baybe.parameters.enum
+
+.. autoclass:: CategoricalEncoding
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CategoricalEncoding.OHE
+      ~CategoricalEncoding.INT
+   
+   

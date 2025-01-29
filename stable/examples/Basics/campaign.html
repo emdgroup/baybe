@@ -1097,9 +1097,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-      Solvent               Base         Ligand  Temperature  Concentration
-340  p-Xylene     Cesium acetate      BrettPhos        120.0            0.1
-385  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0            0.1
+           Solvent             Base                        Ligand  \
+136  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
+234           DMAc   Cesium acetate  Di-tert-butylphenylphosphine   
+
+     Temperature  Concentration  
+136         90.0          0.100  
+234         90.0          0.057  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1112,13 +1116,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-      Solvent               Base         Ligand  Temperature  Concentration  \
-340  p-Xylene     Cesium acetate      BrettPhos        120.0            0.1   
-385  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0            0.1   
+           Solvent             Base                        Ligand  \
+136  Butyornitrile  Cesium pivalate                 (t-Bu)PhCPhos   
+234           DMAc   Cesium acetate  Di-tert-butylphenylphosphine   
 
-        yield  
-340  25.50342  
-385   1.88055  
+     Temperature  Concentration      yield  
+136         90.0          0.100  26.239039  
+234         90.0          0.057  20.363200  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

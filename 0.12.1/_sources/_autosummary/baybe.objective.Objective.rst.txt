@@ -1,0 +1,6 @@
+baybe.objective.Objective
+=========================
+
+.. currentmodule:: baybe.objective
+
+.. autofunction:: Objective

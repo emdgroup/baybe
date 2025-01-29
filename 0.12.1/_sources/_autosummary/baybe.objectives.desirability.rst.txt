@@ -1,0 +1,38 @@
+baybe.objectives.desirability
+=============================
+
+.. automodule:: baybe.objectives.desirability
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      scalarize
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      DesirabilityObjective
+   
+   
+
+   
+   
+   
+
+
+

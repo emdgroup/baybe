@@ -1218,15 +1218,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base                        Ligand  \
-187  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-266           DMAc    Cesium pivalate  Di-tert-butylphenylphosphine   
-240           DMAc     Cesium acetate  Di-tert-butylphenylphosphine   
+           Solvent               Base         Ligand  Temperature  \
+378       p-Xylene  Potassium acetate  (t-Bu)PhCPhos         90.0   
+277           DMAc  Potassium acetate  (t-Bu)PhCPhos        120.0   
+148  Butyornitrile    Cesium pivalate      BrettPhos        105.0   
 
-     Temperature  Concentration  
-187        120.0          0.100  
-266        105.0          0.153  
-240        120.0          0.057  
+     Concentration  
+378          0.057  
+277          0.100  
+148          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1235,15 +1235,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-187  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-266           DMAc    Cesium pivalate  Di-tert-butylphenylphosphine   
-240           DMAc     Cesium acetate  Di-tert-butylphenylphosphine   
+           Solvent               Base         Ligand  Temperature  \
+378       p-Xylene  Potassium acetate  (t-Bu)PhCPhos         90.0   
+277           DMAc  Potassium acetate  (t-Bu)PhCPhos        120.0   
+148  Butyornitrile    Cesium pivalate      BrettPhos        105.0   
 
-     Temperature  Concentration      yield  
-187        120.0          0.100  19.526304  
-266        105.0          0.153   2.316846  
-240        120.0          0.057  32.459936  
+     Concentration      yield  
+378          0.057  11.644013  
+277          0.100   0.945204  
+148          0.100  29.603271  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

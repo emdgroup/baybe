@@ -1,0 +1,25 @@
+SurrogateProtocol
+=================
+
+.. currentmodule:: baybe.surrogates.base
+
+.. autoclass:: SurrogateProtocol
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SurrogateProtocol.__init__
+      ~SurrogateProtocol.fit
+      ~SurrogateProtocol.to_botorch
+   
+   
+
+   
+   
+   

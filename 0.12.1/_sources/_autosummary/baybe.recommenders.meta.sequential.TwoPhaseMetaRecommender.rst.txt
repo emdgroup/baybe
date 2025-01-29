@@ -1,0 +1,42 @@
+TwoPhaseMetaRecommender
+=======================
+
+.. currentmodule:: baybe.recommenders.meta.sequential
+
+.. autoclass:: TwoPhaseMetaRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~TwoPhaseMetaRecommender.__init__
+      ~TwoPhaseMetaRecommender.from_dict
+      ~TwoPhaseMetaRecommender.from_json
+      ~TwoPhaseMetaRecommender.get_current_recommender
+      ~TwoPhaseMetaRecommender.get_next_recommender
+      ~TwoPhaseMetaRecommender.get_non_meta_recommender
+      ~TwoPhaseMetaRecommender.recommend
+      ~TwoPhaseMetaRecommender.select_recommender
+      ~TwoPhaseMetaRecommender.to_dict
+      ~TwoPhaseMetaRecommender.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TwoPhaseMetaRecommender.initial_recommender
+      ~TwoPhaseMetaRecommender.recommender
+      ~TwoPhaseMetaRecommender.switch_after
+      ~TwoPhaseMetaRecommender.remain_switched
+      ~TwoPhaseMetaRecommender.is_stateful
+   
+   

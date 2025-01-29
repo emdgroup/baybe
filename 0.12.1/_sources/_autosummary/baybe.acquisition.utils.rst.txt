@@ -1,0 +1,31 @@
+baybe.acquisition.utils
+=======================
+
+.. automodule:: baybe.acquisition.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      convert_acqf
+      str_to_acqf
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

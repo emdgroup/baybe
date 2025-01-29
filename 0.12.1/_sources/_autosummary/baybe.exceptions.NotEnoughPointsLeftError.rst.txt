@@ -1,0 +1,6 @@
+baybe.exceptions.NotEnoughPointsLeftError
+=========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NotEnoughPointsLeftError

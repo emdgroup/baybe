@@ -1,0 +1,6 @@
+baybe.exceptions.InvalidSurrogateModelError
+===========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: InvalidSurrogateModelError
