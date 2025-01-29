@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2025-01-29
+### Changed
+- Default of `allow_recommending_already_recommended` is changed back to `False`
+  to avoid exploitation cycles ([#468](https://github.com/emdgroup/baybe/issues/468))
+
 ## [0.12.0] - 2025-01-28
 ### Breaking Changes 
 - Lookup callables for simulation are now expected to accept/return dataframes with

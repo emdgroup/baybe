@@ -133,7 +133,7 @@ class Campaign(SerialMixin):
 
     allow_recommending_already_recommended: bool | UnspecifiedType = field(
         default=Factory(
-            _make_allow_flag_default_factory(default=True), takes_self=True
+            _make_allow_flag_default_factory(default=False), takes_self=True
         ),
         validator=_validate_allow_flag,
         kw_only=True,
