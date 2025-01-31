@@ -1,0 +1,6 @@
+baybe.utils.basic.group\_duplicate\_values
+==========================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: group_duplicate_values

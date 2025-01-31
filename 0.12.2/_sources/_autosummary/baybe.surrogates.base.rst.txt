@@ -1,0 +1,33 @@
+baybe.surrogates.base
+=====================
+
+.. automodule:: baybe.surrogates.base
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      IndependentGaussianSurrogate
+      Surrogate
+      SurrogateProtocol
+   
+   
+
+   
+   
+   
+
+
+

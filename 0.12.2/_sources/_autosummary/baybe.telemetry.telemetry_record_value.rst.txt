@@ -1,0 +1,6 @@
+baybe.telemetry.telemetry\_record\_value
+========================================
+
+.. currentmodule:: baybe.telemetry
+
+.. autofunction:: telemetry_record_value

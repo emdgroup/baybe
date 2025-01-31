@@ -1,0 +1,28 @@
+Prior
+=====
+
+.. currentmodule:: baybe.priors.base
+
+.. autoclass:: Prior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Prior.__init__
+      ~Prior.from_dict
+      ~Prior.from_json
+      ~Prior.to_dict
+      ~Prior.to_gpytorch
+      ~Prior.to_json
+   
+   
+
+   
+   
+   

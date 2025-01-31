@@ -1,0 +1,6 @@
+baybe.exceptions.UnmatchedAttributeError
+========================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: UnmatchedAttributeError

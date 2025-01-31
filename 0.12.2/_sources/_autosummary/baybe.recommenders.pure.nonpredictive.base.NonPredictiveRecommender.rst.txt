@@ -1,0 +1,33 @@
+NonPredictiveRecommender
+========================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.base
+
+.. autoclass:: NonPredictiveRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NonPredictiveRecommender.__init__
+      ~NonPredictiveRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NonPredictiveRecommender.allow_recommending_already_measured
+      ~NonPredictiveRecommender.allow_recommending_pending_experiments
+      ~NonPredictiveRecommender.allow_repeated_recommendations
+      ~NonPredictiveRecommender.compatibility
+   
+   

@@ -1216,15 +1216,19 @@
             <span class="n">covar_module</span><span class="o">=</span><span class="n">covar_module</span><span class="p">,</span>
             <span class="n">likelihood</span><span class="o">=</span><span class="n">likelihood</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">mll</span> <span class="o">=</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
 
-        <span class="c1"># TODO: This is a simple temporary workaround to avoid model overfitting</span>
-        <span class="c1">#   via early stopping in the presence of task parameters, which currently</span>
-        <span class="c1">#   have no prior configured.</span>
+        <span class="c1"># TODO: This is still a temporary workaround to avoid overfitting seen in</span>
+        <span class="c1">#  low-dimensional TL cases. More robust settings are being researched.</span>
         <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">n_task_dimensions</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">botorch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">fit_gpytorch_mll_torch</span><span class="p">(</span><span class="n">mll</span><span class="p">,</span> <span class="n">step_limit</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+            <span class="n">mll</span> <span class="o">=</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">mlls</span><span class="o">.</span><span class="n">LeaveOneOutPseudoLikelihood</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">botorch</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+            <span class="n">mll</span> <span class="o">=</span> <span class="n">gpytorch</span><span class="o">.</span><span class="n">ExactMarginalLogLikelihood</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">likelihood</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+            <span class="p">)</span>
+
+        <span class="n">botorch</span><span class="o">.</span><span class="n">fit</span><span class="o">.</span><span class="n">fit_gpytorch_mll</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>

@@ -1,0 +1,32 @@
+baybe.utils.boolean
+===================
+
+.. automodule:: baybe.utils.boolean
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      check_if_in
+      is_abstract
+      strtobool
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

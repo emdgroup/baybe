@@ -1,0 +1,42 @@
+BotorchRecommender
+==================
+
+.. currentmodule:: baybe.recommenders.pure.bayesian.botorch
+
+.. autoclass:: BotorchRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BotorchRecommender.__init__
+      ~BotorchRecommender.get_surrogate
+      ~BotorchRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BotorchRecommender.sequential_continuous
+      ~BotorchRecommender.hybrid_sampler
+      ~BotorchRecommender.sampling_percentage
+      ~BotorchRecommender.n_restarts
+      ~BotorchRecommender.n_raw_samples
+      ~BotorchRecommender.acquisition_function
+      ~BotorchRecommender.acquisition_function_cls
+      ~BotorchRecommender.allow_recommending_already_measured
+      ~BotorchRecommender.allow_recommending_pending_experiments
+      ~BotorchRecommender.allow_repeated_recommendations
+      ~BotorchRecommender.compatibility
+      ~BotorchRecommender.surrogate_model
+   
+   

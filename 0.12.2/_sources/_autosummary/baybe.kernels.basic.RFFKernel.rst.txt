@@ -1,0 +1,37 @@
+RFFKernel
+=========
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: RFFKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~RFFKernel.__init__
+      ~RFFKernel.from_dict
+      ~RFFKernel.from_json
+      ~RFFKernel.to_dict
+      ~RFFKernel.to_factory
+      ~RFFKernel.to_gpytorch
+      ~RFFKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~RFFKernel.num_samples
+      ~RFFKernel.lengthscale_prior
+      ~RFFKernel.lengthscale_initial_value
+   
+   

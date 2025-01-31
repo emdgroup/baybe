@@ -1,0 +1,36 @@
+MeanPredictionSurrogate
+=======================
+
+.. currentmodule:: baybe.surrogates.naive
+
+.. autoclass:: MeanPredictionSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MeanPredictionSurrogate.__init__
+      ~MeanPredictionSurrogate.fit
+      ~MeanPredictionSurrogate.from_dict
+      ~MeanPredictionSurrogate.from_json
+      ~MeanPredictionSurrogate.posterior
+      ~MeanPredictionSurrogate.to_botorch
+      ~MeanPredictionSurrogate.to_dict
+      ~MeanPredictionSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MeanPredictionSurrogate.supports_transfer_learning
+   
+   

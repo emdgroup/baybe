@@ -1,0 +1,33 @@
+PureRecommender
+===============
+
+.. currentmodule:: baybe.recommenders.pure.base
+
+.. autoclass:: PureRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PureRecommender.__init__
+      ~PureRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PureRecommender.allow_recommending_already_measured
+      ~PureRecommender.allow_recommending_pending_experiments
+      ~PureRecommender.allow_repeated_recommendations
+      ~PureRecommender.compatibility
+   
+   

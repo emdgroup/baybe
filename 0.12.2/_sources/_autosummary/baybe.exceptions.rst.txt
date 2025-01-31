@@ -1,0 +1,48 @@
+baybe.exceptions
+================
+
+.. automodule:: baybe.exceptions
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+      :toctree:
+   
+      DeprecationError
+      EmptySearchSpaceError
+      IncompatibilityError
+      IncompatibleAcquisitionFunctionError
+      IncompatibleArgumentError
+      IncompatibleExplainerError
+      IncompatibleSearchSpaceError
+      InvalidSurrogateModelError
+      InvalidTargetValueError
+      ModelNotTrainedError
+      NoMCAcquisitionFunctionError
+      NoRecommendersLeftError
+      NotEnoughPointsLeftError
+      NothingToSimulateError
+      NumericalUnderflowError
+      OptionalImportError
+      UnidentifiedSubclassError
+      UnmatchedAttributeError
+      UnusedObjectWarning
+   
+   
+
+
+

@@ -1,0 +1,38 @@
+baybe.surrogates.gaussian\_process.presets.core
+===============================================
+
+.. automodule:: baybe.surrogates.gaussian_process.presets.core
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      make_gp_from_preset
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      GaussianProcessPreset
+   
+   
+
+   
+   
+   
+
+
+
