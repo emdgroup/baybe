@@ -333,7 +333,7 @@ def fixture_parameters(
             ],
             *[
                 SubstanceParameter(
-                    name=f"Substance_1_{encoding}",
+                    name=f"Substance_1_{encoding.name}",
                     data=mock_substances,
                     encoding=encoding,
                 )
