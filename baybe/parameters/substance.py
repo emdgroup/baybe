@@ -1,6 +1,7 @@
 """Substance parameters."""
 
 import gc
+import warnings
 from functools import cached_property
 from typing import Any, ClassVar
 
@@ -140,8 +141,16 @@ class SubstanceParameter(DiscreteParameter):
             kwargs_fingerprint=self.kwargs_fingerprint,
         )
 
-        # Drop NaN and constant columns
+        # Drop NaN, constant columns and columns with duplicated names
         comp_df = comp_df.loc[:, ~comp_df.isna().any(axis=0)]
+        if any(mask_duplicated_columns := comp_df.columns.duplicated()):
+            warnings.warn(
+                f"There were duplicated column names for the substance parameter "
+                f"{self.name} with encoding {self.encoding.name}. This could indicate "
+                f"bugs with the encoding computation. The duplicated columns will be "
+                f"dropped."
+            )
+            comp_df = comp_df.loc[:, ~mask_duplicated_columns]
         comp_df = df_drop_single_value_columns(comp_df)
 
         # Label the rows with the molecule names
