@@ -247,6 +247,7 @@ modindex_common_prefix = ["baybe."]
 
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
+    "botorch": ("https://botorch.readthedocs.io/en/latest", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
@@ -256,7 +257,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
-    "shap": ("https://shap.readthedocs.io/en/latest/", None),
+    "shap": ("https://shap.readthedocs.io/en/stable/", None),
 }
 
 # --- Options for autodoc typehints and autodoc -------------------------------
