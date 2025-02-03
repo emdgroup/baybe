@@ -95,7 +95,7 @@ campaign_par = Campaign(
     searchspace=searchspace,
     objective=ParetoObjective([y0, y1]),
     recommender=BotorchRecommender(
-        acquisition_function=qLogNEHVI(ref_point=[-1, -1]),
+        acquisition_function=qLogNEHVI(),
         sequential_continuous=True,
     ),
 )
