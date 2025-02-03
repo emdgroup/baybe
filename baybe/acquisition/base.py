@@ -169,15 +169,19 @@ class AcquisitionFunction(ABC, SerialMixin):
                         "maximization/minimization targets only."
                     )
                 maximize = [t.mode == TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
+                multiplier = torch.tensor([1.0 if m else -1.0 for m in maximize])
                 additional_params["objective"] = WeightedMCMultiOutputObjective(
-                    torch.tensor([1.0 if m else -1.0 for m in maximize])
+                    multiplier
                 )
                 train_y = measurements[[t.name for t in objective.targets]].to_numpy()
-                if not isinstance(ref_point := params_dict["ref_point"], Iterable):
+                if isinstance(ref_point := params_dict["ref_point"], Iterable):
+                    ref_point = [
+                        p * m for p, m in zip(ref_point, multiplier, strict=True)
+                    ]
+                else:
                     kwargs = {"factor": ref_point} if ref_point is not None else {}
-                    params_dict["ref_point"] = self.compute_ref_point(
-                        train_y, maximize, **kwargs
-                    )
+                    ref_point = self.compute_ref_point(train_y, maximize, **kwargs)
+                params_dict["ref_point"] = ref_point
 
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
