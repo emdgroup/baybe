@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC
+from collections.abc import Iterable
 from inspect import signature
 from typing import TYPE_CHECKING, ClassVar
 
@@ -80,7 +81,10 @@ class AcquisitionFunction(ABC, SerialMixin):
         from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
         from botorch.acquisition.objective import LinearMCObjective
 
-        from baybe.acquisition.acqfs import qThompsonSampling
+        from baybe.acquisition.acqfs import (
+            qLogNoisyExpectedHypervolumeImprovement,
+            qThompsonSampling,
+        )
 
         # Retrieve botorch acquisition function class and match attributes
         acqf_cls = _get_botorch_acqf_class(type(self))
@@ -154,6 +158,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                         bo_surrogate.posterior(train_x).mean.max().item()
                     )
             case ParetoObjective():
+                assert isinstance(self, qLogNoisyExpectedHypervolumeImprovement)
                 if not all(
                     isinstance(t, NumericalTarget)
                     and t.mode in (TargetMode.MAX, TargetMode.MIN)
@@ -163,14 +168,17 @@ class AcquisitionFunction(ABC, SerialMixin):
                         "Pareto optimization currently supports "
                         "maximization/minimization targets only."
                     )
+                maximize = [t.mode == TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
                 additional_params["objective"] = WeightedMCMultiOutputObjective(
-                    torch.tensor(
-                        [
-                            1.0 if t.mode is TargetMode.MAX else -1.0  # type: ignore[attr-defined]
-                            for t in objective.targets
-                        ]
-                    )
+                    torch.tensor([1.0 if m else -1.0 for m in maximize])
                 )
+                train_y = measurements[[t.name for t in objective.targets]].to_numpy()
+                if not isinstance(ref_point := params_dict["ref_point"], Iterable):
+                    kwargs = {"factor": ref_point} if ref_point is not None else {}
+                    params_dict["ref_point"] = self.compute_ref_point(
+                        train_y, maximize, **kwargs
+                    )
+
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
 
