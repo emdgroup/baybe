@@ -79,8 +79,8 @@ target = NumericalTarget(
 objective = SingleTargetObjective(target=target)
 ```
 In cases where we are confronted with multiple (potentially conflicting) targets,
-the `DesirabilityObjective` can be used instead. It allows to define additional
-settings, such as how these targets should be balanced.
+the `ParetoObjective` or `DesirabilityObjective` can be used instead.
+These allow to define additional settings, such as how the targets should be balanced.
 For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
 of the user guide.
