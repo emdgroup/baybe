@@ -1,8 +1,10 @@
-"""Benchmark task definitions."""
+"""Benchmark definitions."""
 
 from benchmarks.definition.config import (
     Benchmark,
     BenchmarkSettings,
+)
+from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
