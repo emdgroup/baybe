@@ -4,7 +4,8 @@ import gc
 import math
 from typing import ClassVar
 
-import cattrs
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
@@ -14,7 +15,7 @@ from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
-from baybe.utils.basic import classproperty
+from baybe.utils.basic import classproperty, convert_to_float
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
 from baybe.utils.validation import finite_float
 
@@ -325,10 +326,42 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
 
-    ref_point: tuple[float, ...] = field(
-        converter=lambda x: cattrs.structure(x, tuple[float, ...])
+    ref_point: float | tuple[float, ...] | None = field(
+        default=None, converter=optional_c(convert_to_float)
     )
-    """The reference point for computing the hypervolume improvement."""
+    """The reference point for computing the hypervolume improvement.
+
+    * When omitted, a default reference point is computed based on the provided data.
+    * When specified as a float, the value is interpreted as a multiplicative factor
+      determining the reference point location based on the difference between the best
+      and worst target configuration in the provided data.
+    * When specified as a vector, the input is taken as is.
+    """
+
+    @staticmethod
+    def compute_ref_point(
+        array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
+    ) -> npt.NDArray:
+        """Compute the reference point based on the observed target configurations."""
+        if np.ndim(array) != 2:
+            raise ValueError(
+                "The specified data array must have exactly two dimensions."
+            )
+        if np.ndim(maximize) != 1:
+            raise ValueError(
+                "The specified Boolean array must have exactly one dimension."
+            )
+
+        # Convert arrays
+        array = np.asarray(array)
+        maximize = np.where(maximize, 1.0, -1.0)
+
+        # Compute bounds
+        array = array * maximize[None, :]
+        min = np.min(array, axis=0)
+        max = np.max(array, axis=0)
+
+        return min - factor * (max - min)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
