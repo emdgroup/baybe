@@ -153,7 +153,7 @@ plt.axis([-1, 1, -1, 1])
 
 plt.sca(axs[1])
 centers = lookup(
-    pd.DataFrame(np.c_[CENTER_Y0, CENTER_Y1].T, columns=[x0.name, x1.name])
+    pd.DataFrame(np.linspace(CENTER_Y0, CENTER_Y1), columns=[x0.name, x1.name])
 )
 plt.plot(*centers.to_numpy().T, "k", label="frontier")
 plt.plot(data[y0.name], data[y1.name], "o", color="0.7", markersize=2, label="training")
