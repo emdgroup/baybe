@@ -54,12 +54,6 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     name: str = field(init=False)
     """The name of the benchmark."""
 
-    best_possible_result: float | None = field(default=None)
-    """The best possible result which can be achieved in the optimization process."""
-
-    optimal_function_inputs: list[dict[str, Any]] | None = field(default=None)
-    """An input that creates the best_possible_result."""
-
     @property
     def description(self) -> str:
         """The description of the benchmark function."""
@@ -89,6 +83,17 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         )
 
         return Result(self.name, result, metadata)
+
+
+@define(frozen=True)
+class ConvergenceBenchmark(Benchmark):
+    """A class for defining convergence benchmarks."""
+
+    best_possible_result: float | None = field(default=None)
+    """The best possible result which can be achieved in the optimization process."""
+
+    optimal_function_inputs: list[dict[str, Any]] | None = field(default=None)
+    """An input that creates the best_possible_result."""
 
 
 # Register un-/structure hooks

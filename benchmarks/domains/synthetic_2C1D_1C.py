@@ -15,8 +15,8 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from benchmarks.definition import (
-    Benchmark,
+from benchmarks.definition.config import (
+    ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
 
@@ -101,7 +101,7 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=50,
 )
 
-synthetic_2C1D_1C_benchmark = Benchmark(
+synthetic_2C1D_1C_benchmark = ConvergenceBenchmark(
     function=synthetic_2C1D_1C,
     best_possible_result=4.09685,
     settings=benchmark_config,
