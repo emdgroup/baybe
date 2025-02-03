@@ -28,7 +28,7 @@ BenchmarkSettingsType = TypeVar("BenchmarkSettingsType", bound=BenchmarkSettings
 
 
 @define(frozen=True)
-class ConvergenceExperimentSettings(BenchmarkSettings):
+class ConvergenceBenchmarkSettings(BenchmarkSettings):
     """Benchmark configuration for recommender convergence analyses."""
 
     batch_size: int = field(validator=instance_of(int))

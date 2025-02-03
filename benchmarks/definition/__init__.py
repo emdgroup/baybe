@@ -3,11 +3,11 @@
 from benchmarks.definition.config import (
     Benchmark,
     BenchmarkSettings,
-    ConvergenceExperimentSettings,
+    ConvergenceBenchmarkSettings,
 )
 
 __all__ = [
-    "ConvergenceExperimentSettings",
+    "ConvergenceBenchmarkSettings",
     "Benchmark",
     "BenchmarkSettings",
 ]

@@ -17,7 +17,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from benchmarks.definition import (
     Benchmark,
-    ConvergenceExperimentSettings,
+    ConvergenceBenchmarkSettings,
 )
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def lookup(df: pd.DataFrame, /) -> pd.DataFrame:
     )
 
 
-def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
+def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Hybrid synthetic test function.
 
     Inputs:
@@ -95,7 +95,7 @@ def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
     )
 
 
-benchmark_config = ConvergenceExperimentSettings(
+benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,
