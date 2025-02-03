@@ -3,7 +3,7 @@
 # In this example, we illustrate the difference between single-target and Pareto
 # optimization under laboratory conditions provided by a pair of synthetic targets.
 # In particular:
-# * We set up two root mean square target functions with different center points,
+# * We set up two quadratic target functions with different center points,
 # * visualize the corresponding Pareto frontier,
 # * and compare the recommendations obtained by optimizing the targets individually
 #   and jointly.
@@ -58,8 +58,8 @@ searchspace = SearchSpace.from_product([x0, x1])
 @arrays_to_dataframes([x0.name, x1.name], [y0.name, y1.name])
 def lookup(arr: np.ndarray) -> np.ndarray:
     """Compute root mean square values for different center points."""
-    y0 = np.sqrt(np.sum((arr - CENTER_Y0) ** 2, axis=1))
-    y1 = np.sqrt(np.sum((arr - CENTER_Y1) ** 2, axis=1))
+    y0 = np.sum((arr - CENTER_Y0) ** 2, axis=1)
+    y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1)
     return np.c_[y0, y1]
 
 
