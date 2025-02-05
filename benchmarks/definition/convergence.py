@@ -5,7 +5,7 @@ from typing import Any
 from attrs import define, field
 from attrs.validators import instance_of
 
-from benchmarks.definition.config import Benchmark, BenchmarkSettings
+from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
 
 @define(frozen=True, kw_only=True)

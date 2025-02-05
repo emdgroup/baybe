@@ -1,6 +1,6 @@
 """Benchmark definitions."""
 
-from benchmarks.definition.config import (
+from benchmarks.definition.base import (
     Benchmark,
     BenchmarkSettings,
 )
