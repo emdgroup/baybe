@@ -31,11 +31,11 @@ BenchmarkSettingsType = TypeVar("BenchmarkSettingsType", bound=BenchmarkSettings
 class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     """The base class for a benchmark executable."""
 
-    settings: BenchmarkSettingsType = field()
-    """The benchmark configuration."""
-
     function: Callable[[BenchmarkSettingsType], DataFrame] = field()
     """The callable which contains the benchmarking logic."""
+
+    settings: BenchmarkSettingsType = field()
+    """The benchmark configuration."""
 
     name: str = field(init=False)
     """The name of the benchmark."""
