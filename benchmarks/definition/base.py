@@ -67,13 +67,8 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         return Result(self.name, result, metadata)
 
 
-# Register un-/structure hooks
-converter.register_unstructure_hook(
-    Benchmark,
-    lambda o: dict(
-        {"description": o.description},
-        **make_dict_unstructure_fn(Benchmark, converter, function=override(omit=True))(
-            o
-        ),
-    ),
-)
+@converter.register_unstructure_hook
+def unstructure_benchmark(benchmark: Benchmark) -> dict:
+    """Unstructure a benchmark instance."""
+    fn = make_dict_unstructure_fn(Benchmark, converter, function=override(omit=True))
+    return {"description": benchmark.description, **fn(benchmark)}
