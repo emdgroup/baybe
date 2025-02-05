@@ -18,10 +18,10 @@ from benchmarks.serialization import BenchmarkSerialization, converter
 
 @define(frozen=True, kw_only=True)
 class BenchmarkSettings(ABC, BenchmarkSerialization):
-    """Benchmark configuration for recommender analyses."""
+    """The basic benchmark configuration."""
 
     random_seed: int = field(validator=instance_of(int), default=1337)
-    """The random seed for reproducibility."""
+    """The used random seed."""
 
 
 BenchmarkSettingsType = TypeVar("BenchmarkSettingsType", bound=BenchmarkSettings)
@@ -29,10 +29,10 @@ BenchmarkSettingsType = TypeVar("BenchmarkSettingsType", bound=BenchmarkSettings
 
 @define(frozen=True)
 class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
-    """The base class for a benchmark executable."""
+    """The base class for all benchmark definitions."""
 
     function: Callable[[BenchmarkSettingsType], DataFrame] = field()
-    """The callable which contains the benchmarking logic."""
+    """The callable containing the benchmarking logic."""
 
     settings: BenchmarkSettingsType = field()
     """The benchmark configuration."""

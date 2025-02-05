@@ -27,7 +27,7 @@ class ResultMetadata(BenchmarkSerialization):
     """The latest BayBE tag reachable in the ancestor commit history."""
 
     branch: str = field(validator=instance_of(str), init=False)
-    """The branch currently checked out."""
+    """The branch checked out during benchmark execution."""
 
     @branch.default
     def _default_branch(self) -> str:

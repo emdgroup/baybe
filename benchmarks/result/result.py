@@ -16,7 +16,7 @@ from benchmarks.serialization import BenchmarkSerialization, converter
 
 @define(frozen=True)
 class Result(BenchmarkSerialization):
-    """A single result of the benchmarking."""
+    """A single benchmarking result."""
 
     benchmark_identifier: str = field(validator=instance_of(str))
     """The identifier of the benchmark that produced the result."""

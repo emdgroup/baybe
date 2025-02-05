@@ -27,7 +27,7 @@ class ConvergenceBenchmark(Benchmark[ConvergenceBenchmarkSettings]):
     """A class for defining convergence benchmarks."""
 
     best_possible_result: float | None = field(default=None)
-    """The best possible result which can be achieved in the optimization process."""
+    """The best possible result that can be achieved in the optimization process."""
 
     optimal_function_inputs: list[dict[str, Any]] | None = field(default=None)
-    """An input that creates the best_possible_result."""
+    """The optimal inputs to the system being optimized."""
