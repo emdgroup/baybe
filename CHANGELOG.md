@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `BCUT2D` encoding for `SubstanceParameter`
+- Stored benchmarking results now include the Python environment and version
 
 ## [0.12.2] - 2025-01-31
 ### Changed
