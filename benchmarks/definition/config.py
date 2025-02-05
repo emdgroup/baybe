@@ -16,11 +16,11 @@ from benchmarks.result import Result, ResultMetadata
 from benchmarks.serialization import BenchmarkSerialization, converter
 
 
-@define(frozen=True)
+@define(frozen=True, kw_only=True)
 class BenchmarkSettings(ABC, BenchmarkSerialization):
     """Benchmark configuration for recommender analyses."""
 
-    random_seed: int = field(validator=instance_of(int), kw_only=True, default=1337)
+    random_seed: int = field(validator=instance_of(int), default=1337)
     """The random seed for reproducibility."""
 
 

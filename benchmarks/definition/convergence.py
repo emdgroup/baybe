@@ -8,7 +8,7 @@ from attrs.validators import instance_of
 from benchmarks.definition.config import Benchmark, BenchmarkSettings
 
 
-@define(frozen=True)
+@define(frozen=True, kw_only=True)
 class ConvergenceBenchmarkSettings(BenchmarkSettings):
     """Benchmark configuration for recommender convergence analyses."""
 
