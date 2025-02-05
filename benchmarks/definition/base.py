@@ -40,12 +40,16 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     name: str = field(init=False)
     """The name of the benchmark."""
 
+    @function.validator
+    def _validate_function(self, _, function) -> None:
+        if function.__doc__ is None:
+            raise ValueError("The benchmark function must have a docstring.")
+
     @property
     def description(self) -> str:
         """The description of the benchmark function."""
-        if self.function.__doc__ is not None:
-            return self.function.__doc__
-        return "No description available."
+        assert self.function.__doc__ is not None
+        return self.function.__doc__
 
     @name.default
     def _default_name(self):
