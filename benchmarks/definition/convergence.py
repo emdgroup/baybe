@@ -23,7 +23,7 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
 
 
 @define(frozen=True)
-class ConvergenceBenchmark(Benchmark):
+class ConvergenceBenchmark(Benchmark[ConvergenceBenchmarkSettings]):
     """A class for defining convergence benchmarks."""
 
     best_possible_result: float | None = field(default=None)
