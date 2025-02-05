@@ -37,9 +37,6 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     settings: BenchmarkSettingsType = field()
     """The benchmark configuration."""
 
-    name: str = field(init=False)
-    """The name of the benchmark."""
-
     @function.validator
     def _validate_function(self, _, function) -> None:
         if function.__doc__ is None:
@@ -50,11 +47,6 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         """The description of the benchmark function."""
         assert self.function.__doc__ is not None
         return self.function.__doc__
-
-    @name.default
-    def _default_name(self):
-        """Return the name of the benchmark function."""
-        return self.function.__name__
 
     def __call__(self) -> Result:
         """Execute the benchmark and return the result."""
