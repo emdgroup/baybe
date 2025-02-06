@@ -21,6 +21,7 @@ SubstanceEncoding
       ~SubstanceEncoding.ATOMPAIR
       ~SubstanceEncoding.AUTOCORR
       ~SubstanceEncoding.AVALON
+      ~SubstanceEncoding.BCUT2D
       ~SubstanceEncoding.E3FP
       ~SubstanceEncoding.ECFP
       ~SubstanceEncoding.ELECTROSHAPE

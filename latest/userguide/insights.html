@@ -1101,7 +1101,7 @@ they want to visualize by specifying the corresponding <code class="docutils lit
 <section id="explainers">
 <h3>Explainers<a class="headerlink" href="#explainers" title="Link to this heading">¶</a></h3>
 <p>In general, SHAP is an exhaustive method testing all combinations of features. This
-exhaustive algorithm (implemented by the <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.ExactExplainer.html#shap.ExactExplainer" title="(in SHAP vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">shap.ExactExplainer</span></code></a> class) is
+exhaustive algorithm (implemented by the <a class="reference external" href="https://shap.readthedocs.io/en/stable/generated/shap.ExactExplainer.html#shap.ExactExplainer" title="(in SHAP vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">shap.ExactExplainer</span></code></a> class) is
 often not feasible in practice, and various approximate variants are available (see
 <a class="reference internal" href="../_autosummary/baybe.insights.shap.EXPLAINERS.html#baybe.insights.shap.EXPLAINERS" title="baybe.insights.shap.EXPLAINERS"><span class="xref myst py py-data">supported explainers</span></a>). For details about their inner
 mechanics, we refer to the <a class="reference external" href="https://shap.readthedocs.io/en/latest/api.html#explainers">SHAP documentation</a>.</p>
@@ -1123,7 +1123,7 @@ in terms of their actual (physical) quantities. This comes with certain limitati
 as <a class="reference internal" href="../_autosummary/baybe.parameters.categorical.CategoricalParameter.html#baybe.parameters.categorical.CategoricalParameter" title="baybe.parameters.categorical.CategoricalParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CategoricalParameter</span></code></span></a>,
 <a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a>
 or <a class="reference internal" href="../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter" title="baybe.parameters.custom.CustomDiscreteParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CustomDiscreteParameter</span></code></span></a>),
-the only supported explainer is the <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html#shap.KernelExplainer" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">KernelExplainer</span></code></span></a>.
+the only supported explainer is the <a class="reference external" href="https://shap.readthedocs.io/en/stable/generated/shap.KernelExplainer.html#shap.KernelExplainer" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">KernelExplainer</span></code></span></a>.
 Attempts to use other explainers will result in an
 <a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html#baybe.exceptions.IncompatibleExplainerError" title="baybe.exceptions.IncompatibleExplainerError"><span class="xref myst py py-exc"><code class="docutils literal notranslate"><span class="pre">IncompatibleExplainerError</span></code></span></a>.</p>
 </div>
@@ -1150,8 +1150,8 @@ variants. For example:</p>
 </pre></div>
 </div>
 <p><img alt="SHAP_Bar_Lime" src="../_images/shap_bar_lime.svg" /></p>
-<p>As expected, the result from <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.explainers.other.LimeTabular.html#shap.explainers.other.LimeTabular" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">LimeTabular</span></code></span></a> are very
-similar to the results from the SHAP <a class="reference external" href="https://shap.readthedocs.io/en/latest/generated/shap.KernelExplainer.html#shap.KernelExplainer" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">KernelExplainer</span></code></span></a> because
+<p>As expected, the result from <a class="reference external" href="https://shap.readthedocs.io/en/stable/generated/shap.explainers.other.LimeTabular.html#shap.explainers.other.LimeTabular" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">LimeTabular</span></code></span></a> are very
+similar to the results from the SHAP <a class="reference external" href="https://shap.readthedocs.io/en/stable/generated/shap.KernelExplainer.html#shap.KernelExplainer" title="SHAP latest"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">KernelExplainer</span></code></span></a> because
 both methods involve linear local approximations.</p>
 </section>
 </section>
