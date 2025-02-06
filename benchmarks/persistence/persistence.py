@@ -12,7 +12,7 @@ from typing import Protocol
 import boto3
 import boto3.session
 from attr import define, field
-from attrs.validators import instance_of, optional
+from attrs.validators import instance_of
 from boto3.session import Session
 from typing_extensions import override
 
@@ -48,8 +48,12 @@ class PathConstructor:
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark for which the path should be constructed."""
 
-    branch: str | None = field(validator=optional(instance_of(str)))
-    """The branch checked out at benchmark execution time."""
+    branch: str = field(
+        validator=instance_of(str),
+        converter=lambda x: "branchless" if x is None else x,
+    )
+    """The branch checked out at benchmark execution time.
+    In case of detached head state the branch is set to 'branchless'."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
     """The latest BayBE version tag existing at benchmark execution time."""
@@ -108,6 +112,7 @@ class PathConstructor:
         separator = "/" if strategy is PathStrategy.HIERARCHICAL else "_"
 
         file_usable_date = self.execution_date_time.strftime("%Y-%m-%d")
+
         components = [
             self.benchmark_name,
             self.branch,
@@ -117,9 +122,7 @@ class PathConstructor:
         ]
 
         sanitized_components = [
-            self._sanitize_string(component)
-            for component in components
-            if component is not None
+            self._sanitize_string(component) for component in components
         ]
         path = separator.join(sanitized_components) + separator + "result.json"
 
