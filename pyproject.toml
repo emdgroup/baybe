@@ -68,7 +68,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 
 [project.optional-dependencies]
 chem = [
-    "scikit-fingerprints>=1.7.0",
+    "scikit-fingerprints>=1.13.1",
 ]
 
 onnx = [
@@ -116,7 +116,7 @@ examples = [
     "baybe[chem]", # Required for some of the examples
     "baybe[onnx]", # Required for some of the examples
     "baybe[simulation]", # Required for some of the examples
-    "matplotlib>=3.7.3",
+    "matplotlib>=3.7.3,!=3.9.1",
     "openpyxl>=3.0.9",
     "pillow>=10.0.1", # Necessary due to vulnerability
     "plotly>=5.10.0",

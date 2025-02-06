@@ -49,7 +49,7 @@ objective = target.to_objective()
 
 ### Creating the Search Space
 
-# This example uses the [Hartmann Function](https://botorch.org/api/test_functions.html#botorch.test_functions.synthetic.Hartmann)
+# This example uses the [Hartmann Function](botorch.test_functions.synthetic.Hartmann)
 # as implemented by `botorch`.
 # The bounds of the search space are dictated by the test function and can be extracted
 # from the function itself.
