@@ -111,8 +111,6 @@ cyclonedx-python-lib==7.5.1
     # via pip-audit
 dask==2024.7.1
     # via xyzpy
-datasketch==1.6.5
-    # via scikit-fingerprints
 debugpy==1.8.2
     # via ipykernel
 decorator==5.1.1
@@ -374,7 +372,7 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.9.1
+matplotlib==3.10.0
     # via
     #   baybe (pyproject.toml)
     #   lifelines
@@ -456,7 +454,6 @@ numpy==1.26.4
     #   autograd
     #   botorch
     #   contourpy
-    #   datasketch
     #   descriptastorus
     #   e3fp
     #   formulaic
@@ -805,7 +802,7 @@ ruff==0.5.2
     # via baybe (pyproject.toml)
 s3transfer==0.10.4
     # via boto3
-scikit-fingerprints==1.9.0
+scikit-fingerprints==1.13.1
     # via baybe (pyproject.toml)
 scikit-image==0.25.0
     # via lime
@@ -826,7 +823,6 @@ scipy==1.14.0
     #   baybe (pyproject.toml)
     #   autograd-gamma
     #   botorch
-    #   datasketch
     #   descriptastorus
     #   e3fp
     #   formulaic
