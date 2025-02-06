@@ -44,6 +44,11 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             raise ValueError("The benchmark function must have a docstring.")
 
     @property
+    def name(self) -> str:
+        """The name of the benchmark function."""
+        return self.function.__name__
+
+    @property
     def description(self) -> str:
         """The description of the benchmark function."""
         assert self.function.__doc__ is not None
@@ -74,4 +79,8 @@ def unstructure_benchmark(benchmark: Benchmark) -> dict:
     fn = make_dict_unstructure_fn(
         type(benchmark), converter, function=override(omit=True)
     )
-    return {"description": benchmark.description, **fn(benchmark)}
+    return {
+        "name": benchmark.name,
+        "description": benchmark.description,
+        **fn(benchmark),
+    }
