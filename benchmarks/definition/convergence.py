@@ -3,7 +3,7 @@
 from typing import Any
 
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import deep_mapping, instance_of, optional
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
@@ -26,8 +26,14 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
 class ConvergenceBenchmark(Benchmark[ConvergenceBenchmarkSettings]):
     """A class for defining convergence benchmarks."""
 
-    best_possible_result: float | None = field(default=None)
-    """The best possible result that can be achieved in the optimization process."""
-
-    optimal_function_inputs: list[dict[str, Any]] | None = field(default=None)
-    """The optimal inputs to the system being optimized."""
+    optimal_target_values: dict[str, Any] | None = field(
+        default=None,
+        validator=optional(
+            deep_mapping(
+                key_validator=instance_of(str),
+                mapping_validator=instance_of(dict),
+                value_validator=lambda *_: None,
+            )
+        ),
+    )
+    """The optimal values that can be achieved for the targets **individually**."""
