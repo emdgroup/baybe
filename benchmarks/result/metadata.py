@@ -30,11 +30,14 @@ class ResultMetadata(BenchmarkSerialization):
     """The branch checked out during benchmark execution."""
 
     @branch.default
-    def _default_branch(self) -> str:
+    def _default_branch(self) -> str | None:
         """Set the current checkout branch."""
         repo = git.Repo(search_parent_directories=True)
-        current_branch = repo.active_branch.name
-        return current_branch
+        try:
+            current_branch = repo.active_branch.name
+            return current_branch
+        except TypeError:
+            return None
 
     @commit_hash.default
     def _default_commit_hash(self) -> str:
