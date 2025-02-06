@@ -27,17 +27,17 @@ class Result(BenchmarkSerialization):
     """The metadata associated with the benchmark result."""
 
     python_env: dict[str, str] = field(
-        validator=deep_mapping(instance_of(str), instance_of(str), instance_of(dict))
+        init=False,
+        validator=deep_mapping(instance_of(str), instance_of(str), instance_of(dict)),
     )
     """The Python environment in which the benchmark was executed."""
 
-    python_version: str = field(default=sys.version, validator=instance_of(str))
-    """The Python version in which the benchmark was executed."""
+    python_version: str = field(
+        init=False, default=sys.version, validator=instance_of(str)
+    )
+    """The Python version with which the benchmark was executed."""
 
     @python_env.default
     def _default_python_env(self) -> dict[str, str]:
         installed_packages = importlib_metadata.distributions()
-        package_dict = {
-            dist.metadata["Name"]: dist.version for dist in installed_packages
-        }
-        return package_dict
+        return {dist.metadata["Name"]: dist.version for dist in installed_packages}
