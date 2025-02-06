@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import sys
+
+import importlib_metadata
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import deep_mapping, instance_of
 from pandas import DataFrame
 
 from benchmarks.result import ResultMetadata
@@ -22,3 +25,19 @@ class Result(BenchmarkSerialization):
 
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
     """The metadata associated with the benchmark result."""
+
+    python_env: dict[str, str] = field(
+        init=False,
+        validator=deep_mapping(instance_of(str), instance_of(str), instance_of(dict)),
+    )
+    """The Python environment in which the benchmark was executed."""
+
+    python_version: str = field(
+        init=False, default=sys.version, validator=instance_of(str)
+    )
+    """The Python version with which the benchmark was executed."""
+
+    @python_env.default
+    def _default_python_env(self) -> dict[str, str]:
+        installed_packages = importlib_metadata.distributions()
+        return {dist.metadata["Name"]: dist.version for dist in installed_packages}
