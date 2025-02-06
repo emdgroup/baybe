@@ -12,7 +12,7 @@ from typing import Protocol
 import boto3
 import boto3.session
 from attr import define, field
-from attrs.validators import instance_of
+from attrs.validators import instance_of, optional
 from boto3.session import Session
 from typing_extensions import override
 
@@ -48,7 +48,7 @@ class PathConstructor:
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark for which the path should be constructed."""
 
-    branch: str | None = field(validator=instance_of((str, type(None))))
+    branch: str | None = field(validator=optional(instance_of(str)))
     """The branch checked out at benchmark execution time."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
