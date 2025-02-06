@@ -48,7 +48,7 @@ class PathConstructor:
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark for which the path should be constructed."""
 
-    branch: str = field(validator=instance_of(str))
+    branch: str | None = field(validator=instance_of((str, type(None))))
     """The branch checked out at benchmark execution time."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
@@ -117,7 +117,9 @@ class PathConstructor:
         ]
 
         sanitized_components = [
-            self._sanitize_string(component) for component in components
+            self._sanitize_string(component)
+            for component in components
+            if component is not None
         ]
         path = separator.join(sanitized_components) + separator + "result.json"
 
