@@ -8,7 +8,8 @@ from typing import Generic, TypeVar
 
 from attrs import define, field
 from attrs.validators import instance_of
-from cattr.gen import make_dict_unstructure_fn, override
+from cattrs import override
+from cattrs.gen import make_dict_unstructure_fn
 from pandas import DataFrame
 
 from baybe.utils.random import temporary_seed
@@ -70,5 +71,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
 @converter.register_unstructure_hook
 def unstructure_benchmark(benchmark: Benchmark) -> dict:
     """Unstructure a benchmark instance."""
-    fn = make_dict_unstructure_fn(Benchmark, converter, function=override(omit=True))
+    fn = make_dict_unstructure_fn(
+        type(benchmark), converter, function=override(omit=True)
+    )
     return {"description": benchmark.description, **fn(benchmark)}
