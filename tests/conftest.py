@@ -896,7 +896,6 @@ def run_iterations(
     with temporary_seed(int(time.time())):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
-            # dont use parameter noise for these tests
 
             add_fake_measurements(rec, campaign.targets)
             if add_noise and (k % 2):

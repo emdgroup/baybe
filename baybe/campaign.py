@@ -399,6 +399,7 @@ class Campaign(SerialMixin):
         # Invalidate cached recommendation if pending experiments are provided
         if (pending_experiments is not None) and (len(pending_experiments) > 0):
             self._cached_recommendation = pd.DataFrame()
+            validate_parameter_input(pending_experiments, self.parameters)
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those

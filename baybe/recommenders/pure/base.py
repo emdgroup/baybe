@@ -15,6 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -96,6 +97,18 @@ class PureRecommender(ABC, RecommenderProtocol):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
+        # Validation
+        if (
+            measurements is not None
+            and len(measurements) > 0
+            and objective is not None
+            and searchspace is not None
+        ):
+            validate_target_input(measurements, objective.targets)
+            validate_parameter_input(measurements, searchspace.parameters)
+        if pending_experiments is not None and searchspace is not None:
+            validate_parameter_input(pending_experiments, searchspace.parameters)
+
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
