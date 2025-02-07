@@ -50,7 +50,7 @@ class PathConstructor:
 
     branch: str = field(
         validator=instance_of(str),
-        converter=lambda x: "branchless" if x is None else x,
+        converter=lambda x: "-branchless-" if x is None else x,
     )
     """The branch checked out at benchmark execution time.
     In case of detached head state the branch is set to 'branchless'."""
