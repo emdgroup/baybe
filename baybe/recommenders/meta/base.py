@@ -16,6 +16,7 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin, converter, unstructure_base
 from baybe.serialization.core import get_base_structure_hook
+from baybe.utils.dataframe import ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 
@@ -103,14 +104,21 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         # Data validation
         if (
             measurements is not None
+            and not isinstance(measurements, ValidatedDataFrame)
             and len(measurements) > 0
             and objective is not None
             and searchspace is not None
         ):
             validate_target_input(measurements, objective.targets)
             validate_parameter_input(measurements, searchspace.parameters)
-        if pending_experiments is not None and searchspace is not None:
+            measurements.__class__ = ValidatedDataFrame
+        if (
+            pending_experiments is not None
+            and not isinstance(pending_experiments, ValidatedDataFrame)
+            and searchspace is not None
+        ):
             validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments.__class__ = ValidatedDataFrame
 
         recommender = self.select_recommender(
             batch_size=batch_size,
