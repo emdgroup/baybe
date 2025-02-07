@@ -42,7 +42,7 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import filter_df, fuzzy_row_match
+from baybe.utils.dataframe import ValidatedDataFrame, filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
@@ -283,6 +283,7 @@ class Campaign(SerialMixin):
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
+        data.__class__ = ValidatedDataFrame
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -400,6 +401,7 @@ class Campaign(SerialMixin):
         if (pending_experiments is not None) and (len(pending_experiments) > 0):
             self._cached_recommendation = pd.DataFrame()
             validate_parameter_input(pending_experiments, self.parameters)
+            pending_experiments.__class__ = ValidatedDataFrame
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those

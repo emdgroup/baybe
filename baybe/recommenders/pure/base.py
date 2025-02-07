@@ -15,6 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.utils.dataframe import ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 _DEPRECATION_ERROR_MESSAGE = (
@@ -100,14 +101,21 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Validation
         if (
             measurements is not None
+            and not isinstance(measurements, ValidatedDataFrame)
             and len(measurements) > 0
             and objective is not None
             and searchspace is not None
         ):
             validate_target_input(measurements, objective.targets)
             validate_parameter_input(measurements, searchspace.parameters)
-        if pending_experiments is not None and searchspace is not None:
+            measurements.__class__ = ValidatedDataFrame
+        if (
+            pending_experiments is not None
+            and not isinstance(pending_experiments, ValidatedDataFrame)
+            and searchspace is not None
+        ):
             validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments.__class__ = ValidatedDataFrame
 
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
