@@ -346,7 +346,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "surrogate_model",
     [BetaBernoulliMultiArmedBanditSurrogate()],
-    ids=["bernulli_bandit_surrogate"],
+    ids=["bernoulli_bandit_surrogate"],
 )
 @pytest.mark.parametrize(
     "parameter_names",

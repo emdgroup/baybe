@@ -50,7 +50,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     @classproperty
     def supports_pending_experiments(cls) -> bool:
-        """Flag indicating whether pending_experiments is supported."""
+        """Flag indicating whether pending experiments are supported."""
         return cls.abbreviation.startswith("q")
 
     @classproperty

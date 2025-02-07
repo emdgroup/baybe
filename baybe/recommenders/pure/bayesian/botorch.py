@@ -168,7 +168,6 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
         if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
