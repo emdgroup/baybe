@@ -7,10 +7,11 @@ import sys
 import importlib_metadata
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of
+from cattrs.gen import make_dict_unstructure_fn
 from pandas import DataFrame
 
 from benchmarks.result import ResultMetadata
-from benchmarks.serialization import BenchmarkSerialization
+from benchmarks.serialization import BenchmarkSerialization, converter
 
 
 @define(frozen=True)
@@ -41,3 +42,9 @@ class Result(BenchmarkSerialization):
     def _default_python_env(self) -> dict[str, str]:
         installed_packages = importlib_metadata.distributions()
         return {dist.metadata["Name"]: dist.version for dist in installed_packages}
+
+
+converter.register_unstructure_hook(
+    Result,
+    make_dict_unstructure_fn(Result, converter, _cattrs_include_init_false=True),
+)
