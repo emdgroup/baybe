@@ -174,6 +174,13 @@ class PosteriorStandardDeviation(AcquisitionFunction):
     with minimal posterior standard deviation."""
 
 
+@define(frozen=True)
+class qPosteriorStandardDeviation(AcquisitionFunction):
+    """Monte Carlo based posterior standard deviation."""
+
+    abbreviation: ClassVar[str] = "qPSTD"
+
+
 ########################################################################################
 ### Simple Regret
 @define(frozen=True)
