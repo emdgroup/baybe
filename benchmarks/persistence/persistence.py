@@ -49,11 +49,11 @@ class PathConstructor:
     """The name of the benchmark for which the path should be constructed."""
 
     branch: str = field(
+        converter=lambda x: x or "-branchless-",
         validator=instance_of(str),
-        converter=lambda x: "-branchless-" if x is None else x,
     )
     """The branch checked out at benchmark execution time.
-    In case of detached head state the branch is set to 'branchless'."""
+    In case of detached head state the branch is set to '-branchless-'."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
     """The latest BayBE version tag existing at benchmark execution time."""
