@@ -119,7 +119,11 @@ class AcquisitionFunction(ABC, SerialMixin):
                     if issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
                         additional_params["best_f"] *= -1.0
 
-                if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
+                if issubclass(
+                    acqf_cls, bo_acqf.AnalyticAcquisitionFunction
+                ) and not isinstance(acqf_cls, bo_acqf.PosteriorStandardDeviation):
+                    # Minimize acqfs in case the target should be minimized. PSTD  is
+                    # exempt as the direction does not depend on the target type.
                     additional_params["maximize"] = False
                 elif issubclass(acqf_cls, bo_acqf.qNegIntegratedPosteriorVariance):
                     # qNIPV is valid but does not require any adjusted params
