@@ -1,13 +1,17 @@
-"""Benchmark task definitions."""
+"""Benchmark definitions."""
 
-from benchmarks.definition.config import (
+from benchmarks.definition.base import (
     Benchmark,
     BenchmarkSettings,
-    ConvergenceExperimentSettings,
+)
+from benchmarks.definition.convergence import (
+    ConvergenceBenchmark,
+    ConvergenceBenchmarkSettings,
 )
 
 __all__ = [
-    "ConvergenceExperimentSettings",
     "Benchmark",
     "BenchmarkSettings",
+    "ConvergenceBenchmark",
+    "ConvergenceBenchmarkSettings",
 ]

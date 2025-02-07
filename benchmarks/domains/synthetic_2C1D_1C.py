@@ -15,9 +15,9 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from benchmarks.definition import (
-    Benchmark,
-    ConvergenceExperimentSettings,
+from benchmarks.definition.convergence import (
+    ConvergenceBenchmark,
+    ConvergenceBenchmarkSettings,
 )
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def lookup(df: pd.DataFrame, /) -> pd.DataFrame:
     )
 
 
-def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
+def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Hybrid synthetic test function.
 
     Inputs:
@@ -95,20 +95,16 @@ def synthetic_2C1D_1C(settings: ConvergenceExperimentSettings) -> DataFrame:
     )
 
 
-benchmark_config = ConvergenceExperimentSettings(
+benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=5,
     n_doe_iterations=30,
     n_mc_iterations=50,
 )
 
-synthetic_2C1D_1C_benchmark = Benchmark(
+synthetic_2C1D_1C_benchmark = ConvergenceBenchmark(
     function=synthetic_2C1D_1C,
-    best_possible_result=4.09685,
+    optimal_target_values={"target": 4.09685},
     settings=benchmark_config,
-    optimal_function_inputs=[
-        {"x": 1.610, "y": 1.571, "z": 3},
-        {"x": 1.610, "y": -4.712, "z": 3},
-    ],
 )
 
 
