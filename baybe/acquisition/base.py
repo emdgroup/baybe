@@ -44,8 +44,13 @@ class AcquisitionFunction(ABC, SerialMixin):
     """An alternative name for type resolution."""
 
     @classproperty
-    def is_mc(cls) -> bool:
-        """Flag indicating whether this is a Monte-Carlo acquisition function."""
+    def supports_batching(cls) -> bool:
+        """Flag indicating whether batch recommendation is supported."""
+        return cls.abbreviation.startswith("q")
+
+    @classproperty
+    def supports_pending_experiments(cls) -> bool:
+        """Flag indicating whether pending_experiments is supported."""
         return cls.abbreviation.startswith("q")
 
     @classproperty
@@ -95,7 +100,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
         if pending_experiments is not None:
-            if self.is_mc:
+            if self.supports_pending_experiments:
                 pending_x = searchspace.transform(pending_experiments, allow_extra=True)
                 additional_params["X_pending"] = to_tensor(pending_x)
             else:

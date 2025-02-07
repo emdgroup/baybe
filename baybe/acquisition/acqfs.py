@@ -307,6 +307,11 @@ class qThompsonSampling(qSimpleRegret):
         flds = fields(qThompsonSampling)
         return (flds.n_mc_samples.name,)
 
+    @override
+    @classproperty
+    def supports_batching(cls) -> bool:
+        return False
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

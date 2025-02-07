@@ -125,11 +125,15 @@ def test_pending_points(campaign, batch_size):
     )
 
 
-_non_mc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
+acqfs_non_pending = [
+    a()
+    for a in get_subclasses(AcquisitionFunction)
+    if (not a.supports_pending_experiments)
+]
 
 
 @pytest.mark.parametrize(
-    "acqf", _non_mc_acqfs, ids=[a.abbreviation for a in _non_mc_acqfs]
+    "acqf", acqfs_non_pending, ids=[a.abbreviation for a in acqfs_non_pending]
 )
 @pytest.mark.parametrize(
     "parameter_names",
@@ -140,7 +144,7 @@ _non_mc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
     """Test exception raised for acqfs that don't support pending experiments."""
     recommender = TwoPhaseMetaRecommender(

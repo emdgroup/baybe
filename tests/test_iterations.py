@@ -77,17 +77,20 @@ valid_continuous_recommenders = [
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 
-valid_active_learning_acqfs = [
+acqfs_active_learning = [
     qNIPV(sampling_fraction=0.2, sampling_method="Random"),
     qNIPV(sampling_fraction=0.2, sampling_method="FPS"),
     qNIPV(sampling_fraction=1.0, sampling_method="FPS"),
     qNIPV(sampling_n_points=1, sampling_method="Random"),
     qNIPV(sampling_n_points=1, sampling_method="FPS"),
+    qUCB(beta=10.0),
 ]
-valid_mc_acqfs = [
-    a() for a in get_subclasses(AcquisitionFunction) if a.is_mc
-] + valid_active_learning_acqfs
-valid_nonmc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
+acqfs_batching = [
+    a() for a in get_subclasses(AcquisitionFunction) if a.supports_batching
+] + acqfs_active_learning
+acqfs_non_batching = [
+    a() for a in get_subclasses(AcquisitionFunction) if not a.supports_batching
+]
 
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybrid recommenders like naive ones or recommenders not using default arguments
@@ -212,10 +215,10 @@ test_targets = [
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", valid_mc_acqfs, ids=[a.abbreviation for a in valid_mc_acqfs]
+    "acqf", acqfs_batching, ids=[a.abbreviation for a in acqfs_batching]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
+def test_batching_acqfs(campaign, n_iterations, batch_size, acqf):
     if isinstance(acqf, qKG):
         pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
     if isinstance(acqf, qTS) and batch_size > 1:
@@ -226,11 +229,11 @@ def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", valid_nonmc_acqfs, ids=[a.abbreviation for a in valid_nonmc_acqfs]
+    "acqf", acqfs_non_batching, ids=[a.abbreviation for a in acqfs_non_batching]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_nonmc_acqfs(campaign, n_iterations, batch_size):
+def test_non_batching_acqfs(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
