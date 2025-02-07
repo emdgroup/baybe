@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import git
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import instance_of, optional
 from cattrs.gen import make_dict_unstructure_fn
 
 from benchmarks.serialization import BenchmarkSerialization, converter
@@ -26,7 +26,7 @@ class ResultMetadata(BenchmarkSerialization):
     latest_baybe_tag: str = field(validator=instance_of(str), init=False)
     """The latest BayBE tag reachable in the ancestor commit history."""
 
-    branch: str = field(validator=instance_of(str), init=False)
+    branch: str | None = field(validator=optional(instance_of(str)), init=False)
     """The branch checked out during benchmark execution."""
 
     @branch.default
