@@ -761,7 +761,10 @@ def arrays_to_dataframes(
     return decorator
 
 
-class ValidatedDataFrame(pd.DataFrame):
-    """Wrapper indicating the underlying experimental data was already verified."""
+class _ValidatedDataFrame(pd.DataFrame):
+    """Wrapper indicating the underlying experimental data was already verified.
+
+    .. ignore::
+    """
 
     pass
