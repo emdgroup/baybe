@@ -381,6 +381,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html">qNoisyExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html">qPosteriorStandardDeviation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qProbabilityOfImprovement.html">qProbabilityOfImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qSimpleRegret.html">qSimpleRegret</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qThompsonSampling.html">qThompsonSampling</a></li>
@@ -1032,7 +1033,8 @@ including a few guidelines.</p>
 <p>In BayBE, there are two types of acquisition function that can be chosen to search for
 the points with the highest predicted model uncertainty:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.PosteriorStandardDeviation.html#baybe.acquisition.acqfs.PosteriorStandardDeviation" title="baybe.acquisition.acqfs.PosteriorStandardDeviation"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">PosteriorStandardDeviation</span></code></span></a> (<code class="docutils literal notranslate"><span class="pre">PSTD</span></code>)</p></li>
+<li><p><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.PosteriorStandardDeviation.html#baybe.acquisition.acqfs.PosteriorStandardDeviation" title="baybe.acquisition.acqfs.PosteriorStandardDeviation"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">PosteriorStandardDeviation</span></code></span></a> (<code class="docutils literal notranslate"><span class="pre">PSTD</span></code>)
+/ <a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html#baybe.acquisition.acqfs.qPosteriorStandardDeviation" title="baybe.acquisition.acqfs.qPosteriorStandardDeviation"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">qPosteriorStandardDeviation</span></code></span></a> (<code class="docutils literal notranslate"><span class="pre">qPSTD</span></code>)</p></li>
 <li><p><a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.UpperConfidenceBound.html#baybe.acquisition.acqfs.UpperConfidenceBound" title="baybe.acquisition.acqfs.UpperConfidenceBound"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">UpperConfidenceBound</span></code></span></a> (<code class="docutils literal notranslate"><span class="pre">UCB</span></code>) /
 <a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qUpperConfidenceBound.html#baybe.acquisition.acqfs.qUpperConfidenceBound" title="baybe.acquisition.acqfs.qUpperConfidenceBound"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">qUpperConfidenceBound</span></code></span></a> (<code class="docutils literal notranslate"><span class="pre">qUCB</span></code>)
 with high <code class="docutils literal notranslate"><span class="pre">beta</span></code>:<br />
@@ -1040,7 +1042,7 @@ Increasing values of <code class="docutils literal notranslate"><span class="pre
 the acquisition value, yielding a selection of points driven primarily by the
 posterior variance. However, we generally recommend to use this acquisition function
 only if a small exploratory component is desired – otherwise, the
-<a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.PosteriorStandardDeviation.html#baybe.acquisition.acqfs.PosteriorStandardDeviation" title="baybe.acquisition.acqfs.PosteriorStandardDeviation"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">PosteriorStandardDeviation</span></code></span></a>
+<a class="reference internal" href="../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html#baybe.acquisition.acqfs.qPosteriorStandardDeviation" title="baybe.acquisition.acqfs.qPosteriorStandardDeviation"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">qPosteriorStandardDeviation</span></code></span></a>
 acquisition function is what you are looking for.</p></li>
 </ul>
 </section>

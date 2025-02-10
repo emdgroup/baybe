@@ -380,6 +380,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html">qNoisyExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html">qPosteriorStandardDeviation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qProbabilityOfImprovement.html">qProbabilityOfImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qSimpleRegret.html">qSimpleRegret</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qThompsonSampling.html">qThompsonSampling</a></li>
@@ -1196,6 +1197,16 @@
 
 
 
+<div class="viewcode-block" id="qPosteriorStandardDeviation">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html#baybe.acquisition.acqfs.qPosteriorStandardDeviation">[docs]</a>
+<span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">qPosteriorStandardDeviation</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monte Carlo based posterior standard deviation.&quot;&quot;&quot;</span>
+
+    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qPSTD&quot;</span></div>
+
+
+
 <span class="c1">########################################################################################</span>
 <span class="c1">### Simple Regret</span>
 <div class="viewcode-block" id="qSimpleRegret">
@@ -1362,7 +1373,12 @@
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">qThompsonSampling</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">flds</span><span class="o">.</span><span class="n">n_mc_samples</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">flds</span><span class="o">.</span><span class="n">n_mc_samples</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">supports_batching</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
 
 
 

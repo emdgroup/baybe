@@ -380,6 +380,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html">qNoisyExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html">qPosteriorStandardDeviation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qProbabilityOfImprovement.html">qProbabilityOfImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qSimpleRegret.html">qSimpleRegret</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qThompsonSampling.html">qThompsonSampling</a></li>
@@ -1053,9 +1054,17 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An alternative name for type resolution.&quot;&quot;&quot;</span>
 
     <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">is_mc</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating whether this is a Monte-Carlo acquisition function.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">supports_batching</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating whether batch recommendation is supported.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">abbreviation</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">)</span>
+
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">supports_pending_experiments</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating whether pending experiments are supported.</span>
+
+<span class="sd">        This is based on the same mechanism underlying batched recommendations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">supports_batching</span>
 
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -1106,7 +1115,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">get_integration_points</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_mc</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_pending_experiments</span><span class="p">:</span>
                 <span class="n">pending_x</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">pending_experiments</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
                 <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;X_pending&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">pending_x</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1118,6 +1127,7 @@
         <span class="c1"># Add acquisition objective / best observed value</span>
         <span class="k">match</span> <span class="n">objective</span><span class="p">:</span>
             <span class="k">case</span> <span class="n">SingleTargetObjective</span><span class="p">(</span><span class="n">NumericalTarget</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span><span class="p">)):</span>
+                <span class="c1"># Adjust best_f</span>
                 <span class="k">if</span> <span class="s2">&quot;best_f&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
                     <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;best_f&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
                         <span class="n">bo_surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
@@ -1125,11 +1135,21 @@
                     <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
                         <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;best_f&quot;</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mf">1.0</span>
 
-                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;maximize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">):</span>
-                    <span class="c1"># qNIPV is valid but does not require any adjusted params</span>
+                <span class="c1"># Adjust objective</span>
+                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span>
+                    <span class="n">acqf_cls</span><span class="p">,</span>
+                    <span class="p">(</span>
+                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">,</span>
+                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">PosteriorStandardDeviation</span><span class="p">,</span>
+                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qPosteriorStandardDeviation</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">):</span>
+                    <span class="c1"># The active learning acqfs are valid but no changes based on the</span>
+                    <span class="c1"># target direction are required.</span>
                     <span class="k">pass</span>
+                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
+                    <span class="c1"># Minimize acqfs in case the target should be minimized.</span>
+                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;maximize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
                     <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinearMCObjective</span><span class="p">(</span>
                         <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>

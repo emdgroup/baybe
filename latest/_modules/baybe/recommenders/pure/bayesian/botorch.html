@@ -380,6 +380,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html">qNoisyExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html">qPosteriorStandardDeviation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qProbabilityOfImprovement.html">qProbabilityOfImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qSimpleRegret.html">qSimpleRegret</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../../_autosummary/baybe.acquisition.acqfs.qThompsonSampling.html">qThompsonSampling</a></li>
@@ -1123,7 +1124,7 @@
 <span class="sd">            The dataframe indices of the recommended points in the provided</span>
 <span class="sd">            experimental representation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">is_mc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">supports_batching</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; only works with Monte Carlo &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;acquisition functions for batch sizes &gt; 1.&quot;</span>
@@ -1177,8 +1178,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            A dataframe containing the recommendations as individual rows.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># For batch size &gt; 1, this optimizer needs a MC acquisition function</span>
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">is_mc</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">supports_batching</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; only works with Monte Carlo &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;acquisition functions for batch sizes &gt; 1.&quot;</span>
@@ -1243,8 +1243,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The recommended points.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># For batch size &gt; 1, this optimizer needs a MC acquisition function</span>
-        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">is_mc</span><span class="p">:</span>
+        <span class="c1"># For batch size &gt; 1, the acqf needs to support batching</span>
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span><span class="o">.</span><span class="n">supports_batching</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; only works with Monte Carlo &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;acquisition functions for batch sizes &gt; 1.&quot;</span>
