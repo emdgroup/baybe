@@ -404,6 +404,15 @@ class BotorchRecommender(BayesianRecommender):
         if hasattr(self._botorch_acqf, "to"):
             self._botorch_acqf = self._botorch_acqf.to(self.device)
 
+            # If the acquisition function contains any index-based attributes,
+            # ensure they are on the same device. In particular, move "indices" to the
+            # correct device.
+            if hasattr(self._botorch_acqf, "indices"):
+                if isinstance(self._botorch_acqf.indices, torch.Tensor):
+                    self._botorch_acqf.indices = self._botorch_acqf.indices.to(
+                        self.device
+                    )
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
