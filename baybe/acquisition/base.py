@@ -110,10 +110,17 @@ class AcquisitionFunction(ABC, SerialMixin):
 
         # Force a dummy forward pass to re-compute the prediction strategy caches
         # on the correct device.
-        try:
-            _ = bo_surrogate(train_x)
-        except Exception:
-            pass
+        with torch.no_grad():
+            try:
+                _ = bo_surrogate(train_x)
+            except Exception:
+                pass
+
+        # Re-move the prediction strategy caches after the forward pass.
+        if hasattr(bo_surrogate, "prediction_strategy"):
+            ps = bo_surrogate.prediction_strategy
+            if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
+                ps.mean_cache = ps.mean_cache.to(device)
 
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
