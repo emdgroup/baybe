@@ -126,7 +126,8 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._U"),
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
-    (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
 ]
@@ -301,8 +302,6 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    """Skip the docstring for the is_mc classproperty."""
-    # Note that we cannot do `return name == "is_mc"` since this messes up other members
-    # that need to be skipped.
-    if name == "is_mc":
+    """Skip the docstring for the acqf classproperties."""
+    if name in ["supports_batching", "supports_pending_experiments"]:
         return True

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
+- `qPSTD` acquisition function
+
+### Changed
+- Acquisition function indicator `is_mc` has been removed in favor of new indicators 
+  `supports_batching` and `supports_pending_experiments`
+
+### Fixed
+- Incorrect optimization direction with `PSTD` with a single minimization target
 
 ## [0.12.2] - 2025-01-31
 ### Changed

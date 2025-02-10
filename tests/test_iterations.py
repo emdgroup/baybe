@@ -1,12 +1,15 @@
 # TODO: This file needs to be refactored.
 """Tests various configurations for a small number of iterations."""
 
+from contextlib import nullcontext
+
 import pytest
+from botorch.exceptions import UnsupportedError
 from pytest import param
 
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.exceptions import UnusedObjectWarning
+from baybe.exceptions import InvalidSurrogateModelError, UnusedObjectWarning
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import (
     LinearKernel,
@@ -77,17 +80,19 @@ valid_continuous_recommenders = [
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 
-valid_active_learning_acqfs = [
+acqfs_extra = [  # Additionally tested acqfs with extra configurations
     qNIPV(sampling_fraction=0.2, sampling_method="Random"),
     qNIPV(sampling_fraction=0.2, sampling_method="FPS"),
     qNIPV(sampling_fraction=1.0, sampling_method="FPS"),
     qNIPV(sampling_n_points=1, sampling_method="Random"),
     qNIPV(sampling_n_points=1, sampling_method="FPS"),
 ]
-valid_mc_acqfs = [
-    a() for a in get_subclasses(AcquisitionFunction) if a.is_mc
-] + valid_active_learning_acqfs
-valid_nonmc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
+acqfs_batching = [
+    a() for a in get_subclasses(AcquisitionFunction) if a.supports_batching
+] + acqfs_extra
+acqfs_non_batching = [
+    a() for a in get_subclasses(AcquisitionFunction) if not a.supports_batching
+]
 
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybrid recommenders like naive ones or recommenders not using default arguments
@@ -202,35 +207,40 @@ valid_kernel_factories = [
 ]
 
 test_targets = [
-    ["Target_max"],
-    ["Target_min"],
-    ["Target_match_bell"],
-    ["Target_match_triangular"],
-    ["Target_max_bounded", "Target_min_bounded"],
+    param(["Target_max"], id="Tmax"),
+    param(["Target_min"], id="Tmin"),
+    param(["Target_match_bell"], id="Tmatch_bell"),
+    param(["Target_match_triangular"], id="Tmatch_triang"),
+    param(["Target_max_bounded", "Target_min_bounded"], id="Tmax_bounded_Tmin_bounded"),
 ]
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", valid_mc_acqfs, ids=[a.abbreviation for a in valid_mc_acqfs]
+    "acqf", acqfs_batching, ids=[a.abbreviation for a in acqfs_batching]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_mc_acqfs(campaign, n_iterations, batch_size, acqf):
-    if isinstance(acqf, qKG):
-        pytest.skip(f"{acqf.__class__.__name__} only works with continuous spaces.")
-    if isinstance(acqf, qTS) and batch_size > 1:
-        pytest.skip(f"{acqf.__class__.__name__} only works with batch size 1.")
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+def test_batching_acqfs(campaign, n_iterations, batch_size, acqf):
+    context = nullcontext()
+    if campaign.searchspace.type not in [
+        SearchSpaceType.CONTINUOUS,
+        SearchSpaceType.HYBRID,
+    ] and isinstance(acqf, qKG):
+        # qKG does not work with purely discrete spaces
+        context = pytest.raises(UnsupportedError)
 
-    run_iterations(campaign, n_iterations, batch_size)
+    with context:
+        run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", valid_nonmc_acqfs, ids=[a.abbreviation for a in valid_nonmc_acqfs]
+    "acqf", acqfs_non_batching, ids=[a.abbreviation for a in acqfs_non_batching]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_nonmc_acqfs(campaign, n_iterations, batch_size):
+def test_non_batching_acqfs(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
@@ -256,13 +266,20 @@ def test_kernel_factories(campaign, n_iterations, batch_size):
     ids=[c.__class__ for c in valid_surrogate_models],
 )
 def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
+    context = nullcontext()
     if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
-        pytest.skip("Batch recommendation is not supported.")
-    run_iterations(campaign, n_iterations, batch_size)
+        context = pytest.raises(InvalidSurrogateModelError)
+
+    with context:
+        run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender", valid_initial_recommenders)
+@pytest.mark.parametrize(
+    "recommender",
+    valid_initial_recommenders,
+    ids=[c.__class__ for c in valid_initial_recommenders],
+)
 def test_initial_recommenders(campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
         run_iterations(campaign, n_iterations, batch_size)
@@ -275,35 +292,61 @@ def test_targets(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender", valid_discrete_recommenders)
+@pytest.mark.parametrize(
+    "recommender",
+    valid_discrete_recommenders,
+    ids=[c.__class__ for c in valid_discrete_recommenders],
+)
 def test_recommenders_discrete(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender", valid_continuous_recommenders)
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
+@pytest.mark.parametrize(
+    "recommender",
+    valid_continuous_recommenders,
+    ids=[c.__class__ for c in valid_continuous_recommenders],
+)
+@pytest.mark.parametrize(
+    "parameter_names", [["Conti_finite1", "Conti_finite2"]], ids=["conti_params"]
+)
 def test_recommenders_continuous(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("recommender", valid_hybrid_recommenders)
+@pytest.mark.parametrize(
+    "recommender",
+    valid_hybrid_recommenders,
+    ids=[c.__class__ for c in valid_hybrid_recommenders],
+)
 @pytest.mark.parametrize(
     "parameter_names",
     [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
+    ids=["hybrid_params"],
 )
 def test_recommenders_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("recommender", valid_meta_recommenders, indirect=True)
+@pytest.mark.parametrize(
+    "recommender",
+    valid_meta_recommenders,
+    ids=[c.__class__ for c in valid_meta_recommenders],
+    indirect=True,
+)
 def test_meta_recommenders(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 
 
-@pytest.mark.parametrize("acqf", [qTS(), qUCB()])
-@pytest.mark.parametrize("surrogate_model", [BetaBernoulliMultiArmedBanditSurrogate()])
+@pytest.mark.parametrize(
+    "acqf", [qTS(), qUCB()], ids=[qTS.abbreviation, qUCB.abbreviation]
+)
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [BetaBernoulliMultiArmedBanditSurrogate()],
+    ids=["bernoulli_bandit_surrogate"],
+)
 @pytest.mark.parametrize(
     "parameter_names",
     [
@@ -314,7 +357,7 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
         ["Frame_B"],
     ],
 )
-@pytest.mark.parametrize("batch_size", [1])
-@pytest.mark.parametrize("target_names", [["Target_binary"]])
+@pytest.mark.parametrize("target_names", [["Target_binary"]], ids=["binary_target"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_multi_armed_bandit(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)

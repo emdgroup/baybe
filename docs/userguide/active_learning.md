@@ -19,7 +19,8 @@ including a few guidelines.
 ## Local Uncertainty Reduction
 In BayBE, there are two types of acquisition function that can be chosen to search for
 the points with the highest predicted model uncertainty:
-- [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) (`PSTD`)
+- [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) (`PSTD`) 
+  / [`qPosteriorStandardDeviation`](baybe.acquisition.acqfs.qPosteriorStandardDeviation) (`qPSTD`) 
 - [`UpperConfidenceBound`](baybe.acquisition.acqfs.UpperConfidenceBound) (`UCB`) / 
   [`qUpperConfidenceBound`](baybe.acquisition.acqfs.qUpperConfidenceBound) (`qUCB`)
   with high `beta`:  
@@ -27,7 +28,7 @@ the points with the highest predicted model uncertainty:
   the acquisition value, yielding a selection of points driven primarily by the
   posterior variance. However, we generally recommend to use this acquisition function
   only if a small exploratory component is desired – otherwise, the
-  [`PosteriorStandardDeviation`](baybe.acquisition.acqfs.PosteriorStandardDeviation) 
+  [`qPosteriorStandardDeviation`](baybe.acquisition.acqfs.qPosteriorStandardDeviation) 
   acquisition function is what you are looking for.
 
 ## Global Uncertainty Reduction

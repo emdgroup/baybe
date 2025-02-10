@@ -174,6 +174,13 @@ class PosteriorStandardDeviation(AcquisitionFunction):
     with minimal posterior standard deviation."""
 
 
+@define(frozen=True)
+class qPosteriorStandardDeviation(AcquisitionFunction):
+    """Monte Carlo based posterior standard deviation."""
+
+    abbreviation: ClassVar[str] = "qPSTD"
+
+
 ########################################################################################
 ### Simple Regret
 @define(frozen=True)
@@ -306,6 +313,11 @@ class qThompsonSampling(qSimpleRegret):
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         flds = fields(qThompsonSampling)
         return (flds.n_mc_samples.name,)
+
+    @override
+    @classproperty
+    def supports_batching(cls) -> bool:
+        return False
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
