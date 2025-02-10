@@ -400,17 +400,26 @@ class BotorchRecommender(BayesianRecommender):
                     self._surrogate_model.train_targets.to(self.device)
                 )
 
-        # Move acquisition function to the correct device
+        # Move acquisition function to the correct device.
+        # Some attributes (e.g. DataFrames) are not convertible, so we first try a
+        # direct call.
         if hasattr(self._botorch_acqf, "to"):
-            self._botorch_acqf = self._botorch_acqf.to(self.device)
-
-            # Ensure that any tensor-valued attributes within the acquisition function
-            # are also moved to the correct device.
-            for attr in ["indices", "objective"]:
-                if hasattr(self._botorch_acqf, attr):
-                    tensor_attr = getattr(self._botorch_acqf, attr)
-                    if isinstance(tensor_attr, torch.Tensor):
-                        setattr(self._botorch_acqf, attr, tensor_attr.to(self.device))
+            try:
+                self._botorch_acqf = self._botorch_acqf.to(self.device)
+            except TypeError:
+                # If the direct call fails due to a non-tensor attribute (e.g.
+                # DataFrame), iterate over all attributes and move only if possible
+                # (skip DataFrames).
+                for attr, value in self._botorch_acqf.__dict__.items():
+                    if isinstance(value, pd.DataFrame):
+                        continue
+                    if hasattr(value, "to"):
+                        try:
+                            setattr(self._botorch_acqf, attr, value.to(self.device))
+                        except Exception:
+                            pass
+                # Try calling .to() again after the attribute fix.
+                self._botorch_acqf = self._botorch_acqf.to(self.device)
 
         # Collect leftover original slotted classes processed by `attrs.define`
         gc.collect()
