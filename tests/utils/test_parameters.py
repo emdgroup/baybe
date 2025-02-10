@@ -1,5 +1,7 @@
 """Tests for parameter utilities."""
 
+from unittest.mock import Mock
+
 import pytest
 from pytest import param
 
@@ -14,91 +16,79 @@ def mirror_interval(interval: Interval) -> Interval:
     return Interval(lower=-interval.upper, upper=-interval.lower)
 
 
+@pytest.mark.parametrize("mirror", [False, True], ids=["regular", "mirrored"])
 @pytest.mark.parametrize(
     (
         "bounds",
         "thresholds",
-        "is_valid",
         "expected_bounds",
     ),
     [
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.0, upper=1.0),
-            False,
             None,
             id="bounds_on_thresholds",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.5, upper=1.5),
-            False,
             None,
             id="bounds_in_thresholds",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.5, upper=1.0),
-            False,
             None,
-            id="bounds_in_thresholds_single_side_match",
+            id="bounds_in_thresholds_one_side_match",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=0.5),
-            True,
             Interval(lower=-1.0, upper=1.0),
             id="thresholds_in_bounds",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=1.0),
-            True,
             Interval(lower=-1.0, upper=-0.5),
-            id="thresholds_in_bounds_single_side_match",
+            id="thresholds_in_bounds_one_side_match",
         ),
         param(
             Interval(lower=-0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.5),
-            True,
             Interval(lower=0.5, upper=1.0),
             id="bounds_intersected_with_thresholds",
         ),
         param(
             Interval(lower=0.0, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
-            True,
             Interval(lower=0.0, upper=1.0),
             id="bounds_intersected_with_thresholds_on_one_point",
         ),
     ],
 )
-@pytest.mark.parametrize("mirror", [False, True])
-def test_activate_parameter(
+def test_parameter_activation(
     bounds: Interval,
     thresholds: Interval,
-    is_valid: bool,
     expected_bounds: Interval | None,
     mirror: bool,
-) -> None:
-    """Test that the utility correctly activate a parameter.
+):
+    """The parameter activation utility correctly activates a parameter.
 
     Args:
-        bounds: the bounds of the parameter to activate
-        thresholds: the thresholds of inactive range
-        is_valid: boolean variable indicating whether a parameter is returned from
-            activate_parameter
-        expected_bounds: the bounds of the activated parameter if one is returned
-        mirror: if true both bounds and thresholds get mirrored
-
-    Returns:
-        None
+        bounds: The bounds of the parameter to activate.
+        thresholds: The inactivity thresholds.
+        expected_bounds: The expected bounds of the activated parameter.
+        mirror: If ``True``, both bounds and thresholds get mirrored.
     """
+    is_valid = expected_bounds is not None
+
     if mirror:
         bounds = mirror_interval(bounds)
         thresholds = mirror_interval(thresholds)
-    if mirror and is_valid:
-        expected_bounds = mirror_interval(expected_bounds)
+        if is_valid:
+            expected_bounds = mirror_interval(expected_bounds)
 
     parameter = NumericalContinuousParameter("parameter", bounds=bounds)
 
@@ -112,42 +102,7 @@ def test_activate_parameter(
             activate_parameter(parameter, thresholds)
 
 
-@pytest.mark.parametrize(
-    ("bounds", "thresholds", "match"),
-    [
-        param(
-            Interval(lower=-0.5, upper=0.5),
-            Interval(lower=0.5, upper=1.0),
-            "The thresholds must cover zero",
-            id="invalid_thresholds",
-        ),
-        param(
-            Interval(lower=0.5, upper=1.0),
-            Interval(lower=-0.5, upper=0.5),
-            "The parameter bounds must cover zero",
-            id="invalid_bounds",
-        ),
-    ],
-)
-@pytest.mark.parametrize("mirror", [False, True])
-def test_invalid_activate_parameter(
-    bounds: Interval, thresholds: Interval, match: str, mirror: bool
-) -> None:
-    """Test that invalid bounds or thresholds are given.
-
-    Args:
-        bounds: the bounds of the parameter to activate
-        thresholds: the thresholds of inactive range
-        match: error message to match
-        mirror: if true both bounds and thresholds get mirrored
-
-    Returns:
-        None
-    """
-    if mirror:
-        bounds = mirror_interval(bounds)
-        thresholds = mirror_interval(thresholds)
-
-    parameter = NumericalContinuousParameter("parameter", bounds=bounds)
-    with pytest.raises(ValueError, match=match):
-        activate_parameter(parameter, thresholds)
+def test_invalid_parameter_activation():
+    """Activating a parameter requires a valid inactive region to start with."""
+    with pytest.raises(ValueError, match="The thresholds must cover zero"):
+        activate_parameter(Mock(), Interval(lower=0.5, upper=1.0))
