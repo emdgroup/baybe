@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC
+from collections.abc import Iterable
 from inspect import signature
 from typing import TYPE_CHECKING, ClassVar
 
@@ -17,6 +18,7 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
@@ -76,9 +78,13 @@ class AcquisitionFunction(ABC, SerialMixin):
         """
         import botorch.acquisition as bo_acqf
         import torch
+        from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
         from botorch.acquisition.objective import LinearMCObjective
 
-        from baybe.acquisition.acqfs import qThompsonSampling
+        from baybe.acquisition.acqfs import (
+            qLogNoisyExpectedHypervolumeImprovement,
+            qThompsonSampling,
+        )
 
         # Retrieve botorch acquisition function class and match attributes
         acqf_cls = _get_botorch_acqf_class(type(self))
@@ -151,6 +157,32 @@ class AcquisitionFunction(ABC, SerialMixin):
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.max().item()
                     )
+            case ParetoObjective():
+                assert isinstance(self, qLogNoisyExpectedHypervolumeImprovement)
+                if not all(
+                    isinstance(t, NumericalTarget)
+                    and t.mode in (TargetMode.MAX, TargetMode.MIN)
+                    for t in objective.targets
+                ):
+                    raise NotImplementedError(
+                        "Pareto optimization currently supports "
+                        "maximization/minimization targets only."
+                    )
+                maximize = [t.mode == TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
+                multiplier = torch.tensor([1.0 if m else -1.0 for m in maximize])
+                additional_params["objective"] = WeightedMCMultiOutputObjective(
+                    multiplier
+                )
+                train_y = measurements[[t.name for t in objective.targets]].to_numpy()
+                if isinstance(ref_point := params_dict["ref_point"], Iterable):
+                    ref_point = [
+                        p * m for p, m in zip(ref_point, multiplier, strict=True)
+                    ]
+                else:
+                    kwargs = {"factor": ref_point} if ref_point is not None else {}
+                    ref_point = self.compute_ref_point(train_y, maximize, **kwargs)
+                params_dict["ref_point"] = ref_point
+
             case _:
                 raise ValueError(f"Unsupported objective type: {objective}")
 
@@ -172,7 +204,9 @@ def _get_botorch_acqf_class(
     import botorch
 
     for cls in baybe_acqf_cls.mro():
-        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
+        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False) or getattr(
+            botorch.acquisition.multi_objective, cls.__name__, False
+        ):
             if is_abstract(acqf_cls):
                 continue
             return acqf_cls  # type: ignore

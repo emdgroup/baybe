@@ -1,16 +1,22 @@
 """Collection of small basic utilities."""
 
+from __future__ import annotations
+
 import enum
 import functools
 import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
-from typing import Any, TypeGuard, TypeVar
+from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
+import cattrs
 from attrs import asdict, has
 from typing_extensions import override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
+
+if TYPE_CHECKING:
+    from _typeshed import ConvertibleToFloat
 
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
@@ -338,3 +344,12 @@ def register_hooks(
         return result
 
     return wraps
+
+
+def convert_to_float(
+    x: ConvertibleToFloat | Iterable[ConvertibleToFloat],
+) -> float | tuple[float, ...]:
+    """Convert to a float / iterable of floats."""
+    if isinstance(x, Iterable):
+        return cattrs.structure(x, tuple[float, ...])
+    return float(x)

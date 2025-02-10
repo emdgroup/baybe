@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default of `allow_recommending_already_recommended` is changed back to `False`
   to avoid exploitation cycles ([#468](https://github.com/emdgroup/baybe/issues/468))
 
+## [Unreleased]
+### Added
+- `ParetoObjective` class for Pareto optimization of multiple targets
+
 ## [0.12.0] - 2025-01-28
 ### Breaking Changes 
 - Lookup callables for simulation are now expected to accept/return dataframes with
