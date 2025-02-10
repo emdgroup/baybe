@@ -30,34 +30,47 @@ _logger = logging.getLogger(__name__)
 
 
 @overload
-def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
+def to_tensor(
+    x: np.ndarray | pd.DataFrame, *, device: torch.device | None = None
+) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
+def to_tensor(
+    *x: np.ndarray | pd.DataFrame, device: torch.device | None = None
+) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(data: Any, device: torch.device | None = None) -> torch.Tensor:
-    """Convert data to a torch.Tensor and move to the provided device if specified.
+def to_tensor(
+    *x: Any, device: torch.device | None = None
+) -> torch.Tensor | tuple[torch.Tensor, ...]:
+    """Convert one or multiple array-like objects.
+
+    (e.g. numpy arrays or pandas DataFrames) to
+    torch.Tensors and move them to the specified device
+    if provided.
 
     Args:
-        data: The input data (e.g. a numpy array or list).
-        device: Optional; the torch.device to move the tensor to.
+        *x: One or multiple array-like objects to convert.
+        device: Optional; the torch.device to move the tensor(s) to.
 
     Returns:
-        A torch.Tensor, potentially moved to `device`.
+        A torch.Tensor if a single input is given, or a tuple of torch.Tensors for
+        multiple inputs.
     """
-    # If the input is a pandas DataFrame, convert it to a numpy array with float type.
-    if isinstance(data, pd.DataFrame):
-        data = data.values.astype(np.float64)
-    # If the input is a list, convert it to a numpy array with float type.
-    elif isinstance(data, list):
-        data = np.array(data, dtype=np.float64)
 
-    tensor_data = torch.tensor(data)
-    if device is not None:
-        tensor_data = tensor_data.to(device)
-    return tensor_data
+    def convert(item: Any) -> torch.Tensor:
+        if isinstance(item, pd.DataFrame):
+            item = item.values.astype(np.float64)
+        elif isinstance(item, list):
+            item = np.array(item, dtype=np.float64)
+        tensor_item = torch.tensor(item)
+        return tensor_item.to(device) if device is not None else tensor_item
+
+    if len(x) == 1:
+        return convert(x[0])
+    else:
+        return tuple(convert(item) for item in x)
 
 
 def add_fake_measurements(
