@@ -375,18 +375,34 @@ class BotorchRecommender(BayesianRecommender):
             pending_experiments: The pending experiments to be used.
         """
         # First call parent method to set up the surrogate model and
-        #  acquisition function
+        # acquisition function
         super()._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
         )
 
         # Move surrogate model to the correct device
         if hasattr(self._surrogate_model, "to"):
-            self._surrogate_model.to(self.device)
+            self._surrogate_model = self._surrogate_model.to(self.device)
+
+            # If the model has a likelihood, move it to the device too
+            if hasattr(self._surrogate_model, "likelihood"):
+                self._surrogate_model.likelihood = self._surrogate_model.likelihood.to(
+                    self.device
+                )
+
+            # If the model has training data, move it to the device
+            if hasattr(self._surrogate_model, "train_inputs"):
+                self._surrogate_model.train_inputs = tuple(
+                    x.to(self.device) for x in self._surrogate_model.train_inputs
+                )
+            if hasattr(self._surrogate_model, "train_targets"):
+                self._surrogate_model.train_targets = (
+                    self._surrogate_model.train_targets.to(self.device)
+                )
 
         # Move acquisition function to the correct device
         if hasattr(self._botorch_acqf, "to"):
-            self._botorch_acqf.to(self.device)
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
