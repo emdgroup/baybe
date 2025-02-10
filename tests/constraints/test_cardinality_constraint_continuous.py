@@ -35,11 +35,11 @@ def _validate_cardinality_constrained_batch(
         captured_warnings: A list of captured warnings.
     """
     # Assert that the maximum cardinality constraint is fulfilled
-    assert is_cardinality_fulfilled(subspace_continuous, batch, "max")
+    assert is_cardinality_fulfilled(batch, subspace_continuous, check_minimum=False)
 
     # Check whether the minimum cardinality constraint is fulfilled
     is_min_cardinality_fulfilled = is_cardinality_fulfilled(
-        subspace_continuous, batch, "min"
+        batch, subspace_continuous, check_maximum=False
     )
 
     # A warning must be raised when the minimum cardinality constraint is not fulfilled

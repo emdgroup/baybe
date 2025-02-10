@@ -290,9 +290,9 @@ class BotorchRecommender(BayesianRecommender):
 
         # Check if any minimum cardinality constraints are violated
         if not is_cardinality_fulfilled(
-            subspace_continuous,
             pd.DataFrame(points, columns=subspace_continuous.parameter_names),
-            "min",
+            subspace_continuous,
+            check_maximum=False,
         ):
             warnings.warn(
                 "At least one minimum cardinality constraint is violated.",
