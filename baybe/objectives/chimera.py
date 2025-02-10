@@ -7,10 +7,9 @@ from typing import TypeGuard
 
 import cattrs
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, ge, gt, instance_of, min_len
+from attrs.validators import deep_iterable, ge, instance_of, min_len
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
@@ -46,11 +45,8 @@ class ThresholdType(Enum):
 class ChimeraObjective(Objective):
     """An objective scalarizing multiple targets using Chimera Merits.
 
-    This class implements the Chimera function for multi-objective optimization,
-    allowing users to establish a hierarchy of targets with thresholds. The score
-    is minimized.
+    see https://pubs.rsc.org/ko/content/articlelanding/2018/sc/c8sc02239a#!divAbstract.
 
-    For details, see: https://pubs.rsc.org/ko/content/articlelanding/2018/sc/c8sc02239a#!divAbstract
     """
 
     _targets: tuple[Target, ...] = field(
@@ -60,13 +56,13 @@ class ChimeraObjective(Objective):
     )
     "The targets considered by the objective."
 
-    targets_threshold_values: tuple[float, ...] = field(
+    threshold_values: tuple[float, ...] = field(
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
         validator=deep_iterable(member_validator=[finite_float, ge(0.0)]),
     )
     """The target degradation thresholds for each target from its optimum."""
 
-    targets_threshold_types: tuple[ThresholdType, ...] | None = field(
+    threshold_types: tuple[ThresholdType, ...] | None = field(
         converter=lambda x: None
         if x is None
         else tuple(
@@ -77,13 +73,27 @@ class ChimeraObjective(Objective):
 
     softness: float = field(
         converter=float,
-        validator=gt(0.0),
+        default=1e-3,
     )
     """The softness parameter regulating the Heaviside function."""
 
-    @targets_threshold_values.default
-    def _default_targets_threshold_values(self) -> tuple[float, ...]:
-        default_values = (0.0,) * len(self._targets)  # TODO: intepretation?
+    # internal attrs for inspection/debugging and testing
+    _targets_transformed: pd.DataFrame | None = field(init=False, default=None)
+    _targets_normalized: pd.DataFrame | None = field(init=False, default=None)
+    _targets_values_shifted: np.ndarray | None = field(init=False, default=None)
+    _threshold_values_transformed: tuple[float, ...] | None = field(
+        init=False, default=None
+    )
+    _threshold_values_normalized: tuple[float, ...] | None = field(
+        init=False, default=None
+    )
+    _threshold_values_shifted: tuple[float, ...] | None = field(
+        init=False, default=None
+    )
+
+    @threshold_values.default
+    def _default_threshold_values(self) -> tuple[float, ...]:
+        default_values = (0.0,) * len(self._targets)
         warnings.warn(
             f"The values for targets thresholds have not been specified. "
             f"Setting the target threshold values to {default_values}.",
@@ -91,8 +101,8 @@ class ChimeraObjective(Objective):
         )
         return default_values
 
-    @targets_threshold_types.default
-    def _default_targets_threshold_types(self) -> tuple[ThresholdType, ...]:
+    @threshold_types.default
+    def _default_threshold_types(self) -> tuple[ThresholdType, ...]:
         default_values = (ThresholdType.FRACTION,) * len(self._targets)
         warnings.warn(
             f"The types for target thresholds have not been specified. "
@@ -100,11 +110,6 @@ class ChimeraObjective(Objective):
             UserWarning,
         )
         return default_values
-
-    @softness.default  # TODO: do we need to add warning here?
-    def _default_softness(self) -> float:
-        default_value = 1e-3
-        return default_value
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
@@ -118,20 +123,20 @@ class ChimeraObjective(Objective):
         if not all(target._is_transform_normalized for target in targets):
             raise ValueError(
                 "All targets must have normalized computational representations to "
-                "enable the computation of desirability values. This requires having "
+                "enable the computation of chimera merit values. This requires having "
                 "appropriate target bounds and transformations in place."
             )
 
-    @targets_threshold_values.validator
-    def _validate_targets_threshold_values(self, _, values) -> None:
+    @threshold_values.validator
+    def _validate_threshold_values(self, _, values) -> None:
         if (lv := len(values)) != (lt := len(self._targets)):
             raise ValueError(
                 f"If custom threshold values are specified, there must be one for each target. "  # noqa: E501
                 f"Specified number of targets: {lt}. Specified number of threshold values: {lv}."  # noqa: E501
             )
 
-    @targets_threshold_types.validator
-    def _validate_targets_threshold_types(self, _, types) -> None:
+    @threshold_types.validator
+    def _validate_threshold_types(self, _, types) -> None:
         if (lt := len(types)) != (ltg := len(self._targets)):
             raise ValueError(
                 f"If custom threshold types are specified, there must be one for each target. "  # noqa: E501
@@ -165,9 +170,6 @@ class ChimeraObjective(Objective):
 
         return self._soft_heaviside(value, softness)
 
-    def _invert_binary(self, a: float) -> float:
-        return 1 - a
-
     def _shift(
         self,
         transformed: pd.DataFrame,
@@ -179,18 +181,20 @@ class ChimeraObjective(Objective):
         # Initialize the shift, where the primary target is unshifted
         shift = 0.0
         # Initialize the domain with the index of transformed
-        domain = transformed.index
+        domain = np.asarray(transformed.index)
 
-        for target, threshold_value, threshold_type in zip(
-            self.targets, transformed_threshold_values, self.targets_threshold_types
+        for idx, (target, threshold_value, threshold_type) in enumerate(
+            zip(self.targets, transformed_threshold_values, self.threshold_types)
         ):
-            if threshold_type == ThresholdType.FRACTION:
-                _threshold = threshold_value
-            elif threshold_type == ThresholdType.PERCENTILE:
+            if threshold_type is ThresholdType.FRACTION:
+                domain_max = transformed[target.name].loc[domain].max()
+                domain_min = transformed[target.name].loc[domain].min()
+                _threshold = domain_min + threshold_value * (domain_max - domain_min)
+            elif threshold_type is ThresholdType.PERCENTILE:
                 _threshold = transformed[target.name].quantile(
-                    threshold_value, interpolation="linear"
+                    threshold_value[idx], interpolation="linear"
                 )
-            elif threshold_type == ThresholdType.ABSOLUTE:
+            elif threshold_type is ThresholdType.ABSOLUTE:
                 _threshold = threshold_value
             else:
                 raise ValueError(f"Unsupported ThresholdType: {threshold_type}")
@@ -200,35 +204,27 @@ class ChimeraObjective(Objective):
             shifted_thresholds.append(_shifted_threshold)
 
             # Adjust to region of interest for the next (lower-)level objective
-            interest = transformed[target.name][domain] < _shifted_threshold
+            interest = transformed[target.name].loc[domain] < threshold_value
             if interest.any():
-                domain = domain[interest]
-            #     print(target, "| New domain: ", domain, "\n")
-            # else:
-            #     print(target, "| No interest", "\n")
-            #     continue
+                domain = transformed[target.name].loc[domain][interest].index
 
-            # Compute new shift
-            current_idx = self.targets.index(target)
-            next_idx = (current_idx + 1) % len(
-                self.targets
-            )  # Loop back to target_idx == 0
-            shift = transformed.values[:, next_idx].max() - min(shifted_thresholds)
-            # TODO: Explanation
-            # We ensure no value of lower-level target can exceed the baseline
-            # defined (minimum) by the cumulative minima from higher-level target
-            # Apply shift directly to the corresponding target values
-            _shifted_value = transformed.values[:, next_idx] - shift
-            shifted_values.append(_shifted_value)
-            # print("next_idx: ", next_idx, "\n")
+            # Determine the next target
+            next_idx = (idx + 1) % len(self.targets)
+            # Restrict next objective values to the current domain.
+            next_target_values = transformed.loc[domain, transformed.columns[next_idx]]
+            # Compute new shift based on the restricted domain.
+            shift = next_target_values.max() - np.min(shifted_thresholds)
+
+            # Apply shift to the entire next objective column.
+            shifted_value = transformed.iloc[:, next_idx].to_numpy() - shift
+            shifted_values.append(shifted_value)
 
         return np.array(shifted_values), np.asarray(shifted_thresholds)
 
     def _scalarize(
-        self, shifted_values: npt.ArrayLike, shifted_thresholds: npt.ArrayLike
+        self, shifted_values: np.ndarray, shifted_thresholds: np.ndarray
     ) -> np.ndarray:
         # Start with the last term in the shifted_transformed (the fallback term)
-        # TODO: explain a bit what is this fallback term
         merits = shifted_values[-1].copy()
 
         # Reverse iterate through all but the last target
@@ -238,17 +234,18 @@ class ChimeraObjective(Objective):
 
             # Compute step functions / positive and negative masks
             pos_mask = self.step(current_obj - current_tol)
-            neg_mask = self._invert_binary(pos_mask)
-            # TODO: here typecasting happening
+            neg_mask = 1 - pos_mask
 
             # Scalarize through inversely updating merits:
             # (kept if within threshold, else replaced by higher-level)
             merits = merits * neg_mask + pos_mask * current_obj
 
         # Normalize CHIMERA merits
-        if merits.max() > 0:
+        merits_range = merits.max() - merits.min()
+        if merits_range > 0:
             merits = (merits - merits.min()) / (merits.max() - merits.min())
-
+        else:
+            merits = np.zeros_like(merits)  # Handle uniform values
         return merits
 
     @override
@@ -260,8 +257,8 @@ class ChimeraObjective(Objective):
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
-        targets_df["Threshold values"] = self.targets_threshold_values
-        targets_df["Threshold types"] = [t.value for t in self.targets_threshold_types]
+        targets_df["Threshold values"] = self.threshold_values
+        targets_df["Threshold types"] = [t.value for t in self.threshold_types]
 
         fields = [
             to_string("Type", self.__class__.__name__, single_line=True),
@@ -317,47 +314,75 @@ class ChimeraObjective(Objective):
         )
         transformed = df[[t.name for t in targets]].copy()
 
-        # Transform all targets individually
+        # Transform all target values to [0, 1] based on bounds defined
+        # TODO: Discuss this part in terms of necessity
         for target in self.targets:
             transformed[target.name] = target.transform(df[target.name])
-            # All values in transformed become "closer to 1, the better" here
-            # TODO: for non-numerical targets? for MODE="MATCH"?
+            # All transformed targets are set to be maximized
 
         # Transform threshold values for each target
-        _threshold_values_transformed = list(self.targets_threshold_values)
-        # TODO: typecasting happening
+        _threshold_values_transformed = list(self.threshold_values)
 
+        # Helper function to transform the target-specific threshold value
         def transform_threshold_value(x: float, target: NumericalTarget) -> float:
             """Transform the threshold value using the target's transform method."""
             return target.transform(pd.Series([x])).values[0]
 
-        # TODO: for non-numerical targets? for MODE="MATCH"?
-
         for target, threshold_type, threshold_value in zip(
-            targets, self.targets_threshold_types, self.targets_threshold_values
+            targets, self.threshold_types, self.threshold_values
         ):
-            # Invert maximization problems to minimization problems
+            # Set targets to be minimized instead
             transformed[target.name] = 1.0 - transformed[target.name]
-            # TODO: for non-numerical targets? for MODE="MATCH"?
             _threshold_values_transformed[targets.index(target)] = threshold_value
-            # Invert the threshold value if it is an absolute threshold
+            # Invert the threshold value only if it is an absolute threshold
             if threshold_type == ThresholdType.ABSOLUTE:
                 _threshold_values_transformed[targets.index(target)] = (
                     1.0 - transform_threshold_value(threshold_value, target)
                 )
-            # TODO: everything becomes a minimization problem, meaning value < threshold
 
-        # Shift objectives and thresholds
+        object.__setattr__(self, "_targets_transformed", transformed.copy())
+        object.__setattr__(
+            self, "_threshold_values_transformed", _threshold_values_transformed.copy()
+        )
+
+        # Rescale the targets and threshold back to the min-max scale
+        # This is how CHIMERA originally implmented the scalarization (without bounds)
+
+        # Final rescaling for each target column and corresponding threshold value
+        for target in self.targets:
+            min_val = transformed[target.name].min()
+            max_val = transformed[target.name].max()
+            idx = targets.index(target)
+            if max_val > min_val:
+                # Rescale the target column.
+                transformed[target.name] = (transformed[target.name] - min_val) / (
+                    max_val - min_val
+                )
+                # Rescale the threshold value only if it is absolute.
+                if self.threshold_types[idx] is ThresholdType.ABSOLUTE:
+                    _threshold_values_transformed[idx] = (
+                        _threshold_values_transformed[idx] - min_val
+                    ) / (max_val - min_val)
+            else:  # handling uniform values
+                transformed[target.name] = 0.0
+                if self.threshold_types[idx] is ThresholdType.ABSOLUTE:
+                    _threshold_values_transformed[idx] = 0.0
+
+        object.__setattr__(self, "_targets_normalized", transformed.copy())
+        object.__setattr__(
+            self, "_threshold_values_normalized", _threshold_values_transformed.copy()
+        )
+
+        # Shift target and threshold values to ensure a hierarchical order of the values
         shifted_values, shifted_thresholds = self._shift(
             transformed, _threshold_values_transformed
         )
-        # TODO: caching?
+
+        object.__setattr__(self, "_targets_shifted", shifted_values.copy())
+        object.__setattr__(self, "_threshold_values_shifted", shifted_thresholds.copy())
 
         # Scalarize the shifted targets into CHIMERA merit values
         vals = self._scalarize(shifted_values, shifted_thresholds)
-        # TODO: How do we intepretate this value? Examples + clarification
-        # TODO: Is normalization needed? Is this closer to 1 the better or the opposite?
-        # TODO: What happens if we reformulate this to a maximization problem?
 
         # Store the total Chimera merit in a dataframe column
         transformed = pd.DataFrame({"Merit": vals}, index=transformed.index)
