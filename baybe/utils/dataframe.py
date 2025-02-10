@@ -12,6 +12,7 @@ import pandas as pd
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
+from baybe.utils.interval import Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -661,3 +662,18 @@ def filter_df(
     out.index.name = index_name
 
     return out
+
+
+def is_between(df: pd.DataFrame, thresholds: dict[str, Interval]) -> pd.DataFrame:
+    """Check if the values of a dataframe lie within column-specific intervals.
+
+    Args:
+        df: A dataframe containing numeric values.
+        thresholds: A dictionary mapping column names to individual intervals.
+
+    Returns:
+        A Boolean-valued dataframe indicating which elements lie in the intervals.
+    """
+    lower_thresholds = np.array([thresholds[p].lower for p in df.columns])
+    upper_thresholds = np.array([thresholds[p].upper for p in df.columns])
+    return (df >= lower_thresholds) & (df <= upper_thresholds)

@@ -4,22 +4,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.searchspace import SubspaceContinuous
-from baybe.utils.interval import Interval
-
-
-def is_between(df: pd.DataFrame, thresholds: dict[str, Interval]) -> pd.DataFrame:
-    """Check if the values of a dataframe lie within column-specific intervals.
-
-    Args:
-        df: A dataframe containing numeric values.
-        thresholds: A dictionary mapping column names to individual intervals.
-
-    Returns:
-        A Boolean-valued dataframe indicating which elements lie in the intervals.
-    """
-    lower_thresholds = np.array([thresholds[p].lower for p in df.columns])
-    upper_thresholds = np.array([thresholds[p].upper for p in df.columns])
-    return (df >= lower_thresholds) & (df <= upper_thresholds)
+from baybe.utils.dataframe import is_between
 
 
 def is_cardinality_fulfilled(
