@@ -77,7 +77,13 @@ class BotorchRecommender(BayesianRecommender):
     optimization. **Does not affect purely discrete optimization**.
     """
 
-    device: torch.device | None = None
+    device: torch.device | None = field(
+        default=None,
+        converter=lambda x: torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if x is None
+        else x,
+    )
+    """The device to use for computations. If None, uses CUDA if available, else CPU."""
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -92,6 +98,17 @@ class BotorchRecommender(BayesianRecommender):
             raise ValueError(
                 f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
             )
+
+    def _to_device(self, tensor: torch.Tensor) -> torch.Tensor:
+        """Move tensors to the specified device.
+
+        Args:
+            tensor: The tensor to move to the device.
+
+        Returns:
+            The tensor on the specified device.
+        """
+        return tensor.to(self.device) if self.device is not None else tensor
 
     @override
     def _recommend_discrete(
@@ -131,8 +148,9 @@ class BotorchRecommender(BayesianRecommender):
 
         # determine the next set of points to be tested
         candidates_comp = subspace_discrete.transform(candidates_exp)
+        candidates_tensor = self._to_device(to_tensor(candidates_comp))
         points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, to_tensor(candidates_comp)
+            self._botorch_acqf, batch_size, candidates_tensor
         )
 
         # retrieve the index of the points from the input dataframe
@@ -182,7 +200,9 @@ class BotorchRecommender(BayesianRecommender):
 
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
+            bounds=self._to_device(
+                torch.from_numpy(subspace_continuous.comp_rep_bounds.values)
+            ),
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
@@ -263,10 +283,10 @@ class BotorchRecommender(BayesianRecommender):
         candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
         fixed_features_list = candidates_comp.to_dict("records")
 
-        # Updated: Convert bounds to a tensor and move to selected device if provided
-        bounds_tensor = torch.from_numpy(searchspace.comp_rep_bounds.values)
-        if self.device is not None:
-            bounds_tensor = bounds_tensor.to(self.device)
+        # Convert bounds to a tensor and move to selected device
+        bounds_tensor = self._to_device(
+            torch.from_numpy(searchspace.comp_rep_bounds.values)
+        )
 
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
