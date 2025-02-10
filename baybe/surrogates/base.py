@@ -337,6 +337,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         train_x_comp_rep, train_y_comp_rep = to_tensor(
             searchspace.transform(measurements, allow_extra=True),
             objective.transform(measurements, allow_extra=True),
+            device=getattr(self, "device", None),
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
