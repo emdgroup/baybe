@@ -89,8 +89,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         # Create botorch surrogate model
         bo_surrogate = surrogate.to_botorch()
 
-        # Get computational data representation
-        train_x = to_tensor(searchspace.transform(measurements, allow_extra=True))
+        # Get computational data representation (ensure tensor is on surrogate.device)
+        train_x = to_tensor(
+            searchspace.transform(measurements, allow_extra=True),
+            device=getattr(surrogate, "device", None),
+        )
 
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
@@ -100,7 +103,8 @@ class AcquisitionFunction(ABC, SerialMixin):
             additional_params["X_baseline"] = train_x
         if "mc_points" in signature_params:
             additional_params["mc_points"] = to_tensor(
-                self.get_integration_points(searchspace)  # type: ignore[attr-defined]
+                self.get_integration_points(searchspace),  # type: ignore[attr-defined]
+                device=getattr(surrogate, "device", None),
             )
         if pending_experiments is not None:
             if self.supports_pending_experiments:
