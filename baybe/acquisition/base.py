@@ -118,6 +118,10 @@ class AcquisitionFunction(ABC, SerialMixin):
             except Exception:
                 pass
 
+        # Ensure that any newly computed caches in the surrogate are moved to the
+        # target device.
+        bo_surrogate = bo_surrogate.to(device)
+
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
