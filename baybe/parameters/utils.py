@@ -7,9 +7,7 @@ import pandas as pd
 from attrs import evolve
 
 from baybe.parameters.base import Parameter
-from baybe.parameters.numerical import (
-    NumericalContinuousParameter,
-)
+from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.utils.interval import Interval
 
 _TParameter = TypeVar("_TParameter", bound=Parameter)
@@ -95,26 +93,27 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 
 
 def activate_parameter(
-    parameter: NumericalContinuousParameter,
-    thresholds: Interval,
+    parameter: NumericalContinuousParameter, thresholds: Interval
 ) -> NumericalContinuousParameter:
-    """Activates a given parameter by moving its bounds away from zero.
+    """Force-activates a given parameter by moving its bounds away from zero.
+
+    A parameter that is trivially active because its value range does not overlap
+    with the considered inactivity interval is unaffected.
 
     Important:
-        Parameters whose ranges include zero but whose bounds do not overlap with the
-        inactive range (i.e. parameters that contain the value zero far from their
-        boundary values) remain unchanged, because the corresponding activated parameter
+        A parameter whose range includes zero but extends beyond the threshold interval
+        on both sides remains unchanged, because the corresponding activated parameter
         would no longer have a continuous value range.
 
     Args:
         parameter: The parameter to be activated.
-        thresholds: The thresholds of the inactive range of the parameter.
+        thresholds: The considered parameter (in)activity thresholds.
 
     Returns:
         A copy of the parameter with adjusted bounds.
 
     Raises:
-        ValueError: If the threshold does not cover zero.
+        ValueError: If the threshold interval does not contain zero.
         ValueError: If the parameter cannot be activated since both its bounds are
             in the inactive range.
     """
@@ -127,28 +126,11 @@ def activate_parameter(
             f"{thresholds.upper}) is given."
         )
 
-    if not parameter.bounds.contains(0.0):
-        raise ValueError(
-            f"The parameter bounds must cover zero but "
-            f"({parameter.bounds.lower}, {parameter.bounds.upper}) is "
-            f"given."
-        )
-
-    # Note that the definition on the boundary (lower/upper threshold) is vague.
-    # The value on the lower/upper boundary is determined as within inactive_range;
-    # while an activated parameter may take this boundary value (lower/upper
-    # threshold). We allow the misuse of boundary in the "in_inactive_range" and it
-    # is just an utils for checking condition. Ultimately, the "key" threshold
-    # boundary appears as a bound of the activated parameter and this is compatible
-    # with the thresholds defined in ContinuousCardinalityConstraint, as long as the
-    # "key" threshold boundary is not zero. The "key" threshold boundary is always
-    # non-zero when the thresholds are inferred from the bounds of this parameter.
-
     def in_inactive_range(x: float) -> bool:
         """Return true when x is within the inactive range."""
         return thresholds.lower <= x <= thresholds.upper
 
-    # When both bounds in inactive range.
+    # When both bounds are in the in inactive range
     if in_inactive_range(lower_bound) and in_inactive_range(upper_bound):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
@@ -157,7 +139,7 @@ def activate_parameter(
         )
 
     # When the upper bound is in inactive range, move it to the lower threshold of the
-    # inactive region.
+    # inactive region
     if lower_bound < thresholds.lower and in_inactive_range(upper_bound):
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
@@ -166,5 +148,6 @@ def activate_parameter(
     if upper_bound > thresholds.upper and in_inactive_range(lower_bound):
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
 
-    # Both bounds separated from inactive range
+    # When the parameter is already trivially active (or activating it would tear
+    # its value range apart)
     return parameter
