@@ -66,6 +66,12 @@ def mirror_interval(interval: Interval) -> Interval:
             Interval(lower=0.0, upper=1.0),
             id="bounds_intersected_with_thresholds_on_one_point",
         ),
+        param(
+            Interval(lower=0.5, upper=1.0),
+            Interval(lower=-1.0, upper=0.0),
+            Interval(lower=0.5, upper=1.0),
+            id="bounds_and_thresholds_nonoverlapping",
+        ),
     ],
 )
 def test_parameter_activation(
