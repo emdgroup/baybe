@@ -105,7 +105,9 @@ class AcquisitionFunction(ABC, SerialMixin):
         if pending_experiments is not None:
             if self.supports_pending_experiments:
                 pending_x = searchspace.transform(pending_experiments, allow_extra=True)
-                additional_params["X_pending"] = to_tensor(pending_x)
+                additional_params["X_pending"] = to_tensor(
+                    pending_x, device=getattr(surrogate, "device", None)
+                )
             else:
                 raise IncompatibleAcquisitionFunctionError(
                     f"Pending experiments were provided but the chosen acquisition "

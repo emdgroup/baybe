@@ -189,7 +189,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
-        scaler(to_tensor(objective.transform(measurements, allow_extra=True)))
+        scaler(
+            to_tensor(
+                objective.transform(measurements, allow_extra=True),
+                device=getattr(self, "device", None),
+            )
+        )
         scaler.eval()
 
         return scaler
