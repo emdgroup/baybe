@@ -47,6 +47,13 @@ def to_tensor(data: Any, device: torch.device | None = None) -> torch.Tensor:
     Returns:
         A torch.Tensor, potentially moved to `device`.
     """
+    # If the input is a pandas DataFrame, convert it to a numpy array with float type.
+    if isinstance(data, pd.DataFrame):
+        data = data.values.astype(np.float64)
+    # If the input is a list, convert it to a numpy array with float type.
+    elif isinstance(data, list):
+        data = np.array(data, dtype=np.float64)
+
     tensor_data = torch.tensor(data)
     if device is not None:
         tensor_data = tensor_data.to(device)
