@@ -100,7 +100,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         if hasattr(bo_surrogate, "prediction_strategy"):
             ps = bo_surrogate.prediction_strategy
             if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
-                ps.mean_cache = ps.mean_cache.to(device)
+                ps._mean_cache = ps.mean_cache.to(device)
 
         # Get computational data representation (ensure tensor is on surrogate.device)
         train_x = to_tensor(
@@ -120,7 +120,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         if hasattr(bo_surrogate, "prediction_strategy"):
             ps = bo_surrogate.prediction_strategy
             if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
-                ps.mean_cache = ps.mean_cache.to(device)
+                # Use the underlying attribute as `mean_cache` is read-only.
+                ps._mean_cache = ps.mean_cache.to(device)
 
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
