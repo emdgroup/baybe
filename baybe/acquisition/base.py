@@ -87,7 +87,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         )[0]
 
         # Create botorch surrogate model
-        bo_surrogate = surrogate.to_botorch()
+        bo_surrogate = surrogate.to_botorch().to(getattr(surrogate, "device", None))
 
         # Get computational data representation (ensure tensor is on surrogate.device)
         train_x = to_tensor(
