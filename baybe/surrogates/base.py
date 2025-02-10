@@ -171,8 +171,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             mapping[idxs] = transformer
         scaler = ColumnTransformer(mapping)
 
-        # Fit the scaler to the parameter bounds
-        scaler.fit(to_tensor(searchspace.comp_rep_bounds))
+        # Fit the scaler to the parameter bounds, making sure to use the correct device.
+        scaler.fit(
+            to_tensor(searchspace.comp_rep_bounds, device=getattr(self, "device", None))
+        )
 
         return scaler
 
@@ -218,7 +220,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 "The surrogate must be trained before a posterior can be computed."
             )
         return self._posterior_comp(
-            to_tensor(self._searchspace.transform(candidates, allow_extra=True))
+            to_tensor(
+                self._searchspace.transform(candidates, allow_extra=True),
+                device=getattr(self, "device", None),
+            )
         )
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
