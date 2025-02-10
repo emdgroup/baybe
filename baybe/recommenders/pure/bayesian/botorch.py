@@ -5,6 +5,7 @@ import math
 from typing import Any, ClassVar
 
 import pandas as pd
+import torch
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import gt, instance_of
@@ -75,6 +76,8 @@ class BotorchRecommender(BayesianRecommender):
     """Number of raw samples drawn for the initialization heuristic in gradient-based
     optimization. **Does not affect purely discrete optimization**.
     """
+
+    device: torch.device | None = None
 
     @sampling_percentage.validator
     def _validate_percentage(  # noqa: DOC101, DOC103
@@ -255,16 +258,20 @@ class BotorchRecommender(BayesianRecommender):
                 candidates_comp, n_candidates, method=self.hybrid_sampler
             )
 
-        # Prepare all considered discrete configurations in the
-        # List[Dict[int, float]] format expected by BoTorch.
+        # Ensure candidate columns are in the expected format
         num_comp_columns = len(candidates_comp.columns)
         candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
         fixed_features_list = candidates_comp.to_dict("records")
 
+        # Updated: Convert bounds to a tensor and move to selected device if provided
+        bounds_tensor = torch.from_numpy(searchspace.comp_rep_bounds.values)
+        if self.device is not None:
+            bounds_tensor = bounds_tensor.to(self.device)
+
         # Actual call of the BoTorch optimization routine
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
+            bounds=bounds_tensor,
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
