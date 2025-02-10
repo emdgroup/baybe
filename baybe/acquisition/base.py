@@ -86,8 +86,16 @@ class AcquisitionFunction(ABC, SerialMixin):
             self, acqf_cls.__init__, ignore=self._non_botorch_attrs
         )[0]
 
-        # Create botorch surrogate model
+        # Create botorch surrogate model and ensure its training data is moved to
+        # the correct device.
         bo_surrogate = surrogate.to_botorch().to(getattr(surrogate, "device", None))
+        device = getattr(surrogate, "device", None)
+        if hasattr(bo_surrogate, "train_inputs"):
+            bo_surrogate.train_inputs = tuple(
+                x.to(device) for x in bo_surrogate.train_inputs
+            )
+        if hasattr(bo_surrogate, "train_targets"):
+            bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
 
         # Get computational data representation (ensure tensor is on surrogate.device)
         train_x = to_tensor(
