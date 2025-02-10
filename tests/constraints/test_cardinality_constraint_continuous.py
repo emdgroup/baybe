@@ -12,12 +12,12 @@ from baybe.constraints.continuous import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
 )
+from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace.core import SearchSpace, SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.cardinality_constraints import is_cardinality_fulfilled
 
 
 def _validate_cardinality_constrained_batch(

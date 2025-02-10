@@ -17,6 +17,7 @@ from typing_extensions import override
 
 from baybe.acquisition.acqfs import qThompsonSampling
 from baybe.constraints import ContinuousCardinalityConstraint
+from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
@@ -30,7 +31,6 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
-from baybe.utils.cardinality_constraints import is_cardinality_fulfilled
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
