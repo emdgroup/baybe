@@ -108,6 +108,13 @@ class AcquisitionFunction(ABC, SerialMixin):
             device=getattr(surrogate, "device", None),
         )
 
+        # Force a dummy forward pass to re-compute the prediction strategy caches
+        # on the correct device.
+        try:
+            _ = bo_surrogate(train_x)
+        except Exception:
+            pass
+
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
         additional_params = {}
