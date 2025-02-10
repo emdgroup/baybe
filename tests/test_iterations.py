@@ -80,17 +80,16 @@ valid_continuous_recommenders = [
     in [SearchSpaceType.CONTINUOUS, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
 ]
 
-acqfs_active_learning = [
+acqfs_extra = [  # Additionally tested acqfs with extra configurations
     qNIPV(sampling_fraction=0.2, sampling_method="Random"),
     qNIPV(sampling_fraction=0.2, sampling_method="FPS"),
     qNIPV(sampling_fraction=1.0, sampling_method="FPS"),
     qNIPV(sampling_n_points=1, sampling_method="Random"),
     qNIPV(sampling_n_points=1, sampling_method="FPS"),
-    qUCB(beta=10.0),
 ]
 acqfs_batching = [
     a() for a in get_subclasses(AcquisitionFunction) if a.supports_batching
-] + acqfs_active_learning
+] + acqfs_extra
 acqfs_non_batching = [
     a() for a in get_subclasses(AcquisitionFunction) if not a.supports_batching
 ]
