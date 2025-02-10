@@ -98,7 +98,7 @@ class AcquisitionFunction(ABC, SerialMixin):
             bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
         # Clear any existing prediction strategy caches to force recomputation on the
         # correct device.
-        if hasattr(bo_surrogate, "prediction_strategy"):
+        if getattr(bo_surrogate, "prediction_strategy", None) is not None:
             bo_surrogate.prediction_strategy._mean_cache = None
 
         # Get computational data representation (ensure tensor is on surrogate.device)
@@ -117,7 +117,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
         # Clear any prediction strategy caches after the dummy forward pass to force
         # recomputation on the correct device.
-        if hasattr(bo_surrogate, "prediction_strategy"):
+        if getattr(bo_surrogate, "prediction_strategy", None) is not None:
             bo_surrogate.prediction_strategy._mean_cache = None
 
         # Collect remaining (context-specific) parameters
