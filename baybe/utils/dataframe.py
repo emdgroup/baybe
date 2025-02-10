@@ -5,15 +5,15 @@ from __future__ import annotations
 import functools
 import logging
 from collections.abc import Callable, Collection, Iterable, Sequence
-from typing import TYPE_CHECKING, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
+import torch
 
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
-from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -37,35 +37,20 @@ def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
 def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
-    """Convert numpy arrays and pandas dataframes to tensors.
+def to_tensor(data: Any, device: torch.device | None = None) -> torch.Tensor:
+    """Convert data to a torch.Tensor and move to the provided device if specified.
 
     Args:
-        *x: The array(s)/dataframe(s) to be converted.
+        data: The input data (e.g. a numpy array or list).
+        device: Optional; the torch.device to move the tensor to.
 
     Returns:
-        The provided array(s)/dataframe(s) represented as tensor(s).
+        A torch.Tensor, potentially moved to `device`.
     """
-    # FIXME This function seems to trigger a problem when some columns in either of
-    #  the dfs have a dtype other than int or float (e.g. object, bool). This can
-    #  weirdly happen, even if all values are numeric, e.g. when a target column is
-    #  looked up from a df in simulation, it can have dtype object even if it's all
-    #  floats. As a simple fix (this seems to be the most reasonable place to take
-    #  care of this) df.values has been changed to df.values.astype(float),
-    #  even though this seems like double casting here.
-    import torch
-
-    from baybe.utils.torch import DTypeFloatTorch
-
-    out = tuple(
-        torch.from_numpy(
-            (xi.values if isinstance(xi, pd.DataFrame) else xi).astype(DTypeFloatNumpy)
-        ).to(DTypeFloatTorch)
-        for xi in x
-    )
-    if len(x) == 1:
-        out = out[0]
-    return out
+    tensor_data = torch.tensor(data)
+    if device is not None:
+        tensor_data = tensor_data.to(device)
+    return tensor_data
 
 
 def add_fake_measurements(
@@ -689,6 +674,7 @@ def arrays_to_dataframes(
     input_labels: Sequence[str],
     output_labels: Sequence[str],
     /,
+    *,
     use_torch: bool = False,
 ) -> Callable[
     [Callable[[_ArrayLike], _ArrayLike]], Callable[[pd.DataFrame], pd.DataFrame]
