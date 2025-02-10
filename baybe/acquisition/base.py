@@ -50,8 +50,11 @@ class AcquisitionFunction(ABC, SerialMixin):
 
     @classproperty
     def supports_pending_experiments(cls) -> bool:
-        """Flag indicating whether pending experiments are supported."""
-        return cls.abbreviation.startswith("q")
+        """Flag indicating whether pending experiments are supported.
+
+        This is based on the same mechanism underlying batched recommendations.
+        """
+        return cls.supports_batching
 
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
@@ -121,7 +124,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
                 if issubclass(
                     acqf_cls, bo_acqf.AnalyticAcquisitionFunction
-                ) and not isinstance(acqf_cls, bo_acqf.PosteriorStandardDeviation):
+                ) and not issubclass(acqf_cls, bo_acqf.PosteriorStandardDeviation):
                     # Minimize acqfs in case the target should be minimized. PSTD  is
                     # exempt as the direction does not depend on the target type.
                     additional_params["maximize"] = False
