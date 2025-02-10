@@ -96,11 +96,10 @@ class AcquisitionFunction(ABC, SerialMixin):
             )
         if hasattr(bo_surrogate, "train_targets"):
             bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
-        # Ensure the prediction strategy's caches are also moved.
+        # Clear any existing prediction strategy caches to force recomputation on the
+        # correct device.
         if hasattr(bo_surrogate, "prediction_strategy"):
-            ps = bo_surrogate.prediction_strategy
-            if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
-                ps._mean_cache = ps.mean_cache.to(device)
+            bo_surrogate.prediction_strategy._mean_cache = None
 
         # Get computational data representation (ensure tensor is on surrogate.device)
         train_x = to_tensor(
@@ -116,12 +115,10 @@ class AcquisitionFunction(ABC, SerialMixin):
             except Exception:
                 pass
 
-        # Re-move the prediction strategy caches after the forward pass.
+        # Clear any prediction strategy caches after the dummy forward pass to force
+        # recomputation on the correct device.
         if hasattr(bo_surrogate, "prediction_strategy"):
-            ps = bo_surrogate.prediction_strategy
-            if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
-                # Use the underlying attribute as `mean_cache` is read-only.
-                ps._mean_cache = ps.mean_cache.to(device)
+            bo_surrogate.prediction_strategy._mean_cache = None
 
         # Collect remaining (context-specific) parameters
         signature_params = signature(acqf_cls).parameters
