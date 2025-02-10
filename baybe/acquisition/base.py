@@ -96,6 +96,9 @@ class AcquisitionFunction(ABC, SerialMixin):
             )
         if hasattr(bo_surrogate, "train_targets"):
             bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
+        # Move the surrogate's likelihood to the correct device (if present)
+        if hasattr(bo_surrogate, "likelihood") and bo_surrogate.likelihood is not None:
+            bo_surrogate.likelihood = bo_surrogate.likelihood.to(device)
         # Clear any existing prediction strategy caches to force recomputation on the
         # correct device.
         if getattr(bo_surrogate, "prediction_strategy", None) is not None:
