@@ -88,14 +88,19 @@ class AcquisitionFunction(ABC, SerialMixin):
 
         # Create botorch surrogate model and ensure its training data is moved to
         # the correct device.
-        bo_surrogate = surrogate.to_botorch().to(getattr(surrogate, "device", None))
         device = getattr(surrogate, "device", None)
+        bo_surrogate = surrogate.to_botorch().to(device)
         if hasattr(bo_surrogate, "train_inputs"):
             bo_surrogate.train_inputs = tuple(
                 x.to(device) for x in bo_surrogate.train_inputs
             )
         if hasattr(bo_surrogate, "train_targets"):
             bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
+        # Ensure the prediction strategy's caches are also moved.
+        if hasattr(bo_surrogate, "prediction_strategy"):
+            ps = bo_surrogate.prediction_strategy
+            if hasattr(ps, "mean_cache") and ps.mean_cache is not None:
+                ps.mean_cache = ps.mean_cache.to(device)
 
         # Get computational data representation (ensure tensor is on surrogate.device)
         train_x = to_tensor(
