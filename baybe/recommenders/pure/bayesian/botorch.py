@@ -16,6 +16,7 @@ from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
 )
+from baybe.objectives.base import Objective
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
     SearchSpace,
@@ -357,6 +358,35 @@ class BotorchRecommender(BayesianRecommender):
             ),
         ]
         return to_string(self.__class__.__name__, *fields)
+
+    def _setup_botorch_acqf(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None,
+    ) -> None:
+        """Set up the BoTorch acquisition function.
+
+        Args:
+            searchspace: The search space to be used.
+            objective: The objective to be used.
+            measurements: The measurements to be used.
+            pending_experiments: The pending experiments to be used.
+        """
+        # First call parent method to set up the surrogate model and
+        #  acquisition function
+        super()._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
+
+        # Move surrogate model to the correct device
+        if hasattr(self._surrogate_model, "to"):
+            self._surrogate_model.to(self.device)
+
+        # Move acquisition function to the correct device
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf.to(self.device)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
