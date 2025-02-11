@@ -146,9 +146,12 @@ class ContinuousCardinalityConstraint(
     )
     """A relative threshold for determining if a value is considered zero.
 
-    The threshold defines an **open** (asymmetric) interval around zero, because
-    numerical routines that optimize parameter values on the complementary set
-    considered to contain "nonzero" values may push the numerical value exactly to the
+    The threshold is translated into an asymmetric open interval around zero via
+    :meth:`get_absolute_thresholds`.
+
+    **Note:** The interval induced by the threshold is considered **open** because
+    numerical routines that optimize parameter values on the complementary set (i.e. the
+    value range considered "nonzero") may push the numerical value exactly to the
     interval boundary, which should therefore also be considered "nonzero".
     """
 
