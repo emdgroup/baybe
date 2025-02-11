@@ -36,7 +36,9 @@ def is_cardinality_fulfilled(
         }
 
         # Count the number of active values per dataframe row
-        n_zeros = is_between(df[c.parameters], thresholds).sum(axis=1)
+        cols = df[c.parameters]
+        is_inactive = is_between(cols, thresholds) | (cols == 0.0)
+        n_zeros = is_inactive.sum(axis=1)
         n_active = len(c.parameters) - n_zeros
 
         # Check if cardinality is violated

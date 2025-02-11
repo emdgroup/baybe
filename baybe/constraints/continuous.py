@@ -144,7 +144,13 @@ class ContinuousCardinalityConstraint(
     relative_threshold: float = field(
         default=1e-2, converter=float, validator=[gt(0.0), lt(1.0)]
     )
-    """A relative threshold for determining if a value is considered zero."""
+    """A relative threshold for determining if a value is considered zero.
+
+    The threshold defines an **open** (asymmetric) interval around zero, because
+    numerical routines that optimize parameter values on the complementary set
+    considered to contain "nonzero" values may push the numerical value exactly to the
+    interval boundary, which should therefore also be considered "nonzero".
+    """
 
     @property
     def n_inactive_parameter_combinations(self) -> int:

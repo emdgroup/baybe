@@ -748,4 +748,4 @@ def is_between(df: pd.DataFrame, thresholds: dict[str, Interval]) -> pd.DataFram
     """
     lower_thresholds = np.array([thresholds[p].lower for p in df.columns])
     upper_thresholds = np.array([thresholds[p].upper for p in df.columns])
-    return (df >= lower_thresholds) & (df <= upper_thresholds)
+    return (df > lower_thresholds) & (df < upper_thresholds)
