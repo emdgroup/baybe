@@ -3,6 +3,7 @@
 from typing import Any
 
 import numpy as np
+import pytest
 import torch
 from attrs import asdict, has
 from hypothesis import given
@@ -67,6 +68,10 @@ def validate_gpytorch_kernel_components(obj: Any, mapped: Any, **kwargs) -> None
             assert component == mapped_component
 
 
+# Temporarily marked as xfail due to a bug for LinearKernel in the only available
+# GPyTorch version, see https://github.com/cornellius-gp/gpytorch/issues/2633. Awaiting
+# new gpytorch and botorch releases.
+@pytest.mark.xfail(reason="Bug in GPyTorch 0.14.0")
 @given(kernels())
 def test_kernel_assembly(kernel: Kernel):
     """Turning a BayBE kernel into a GPyTorch kernel raises no errors and all its
