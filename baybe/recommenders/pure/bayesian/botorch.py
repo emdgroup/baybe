@@ -502,6 +502,11 @@ class BotorchRecommender(BayesianRecommender):
                 # Optimize the acquisition function
                 p, acqf = self._recommend_continuous_torch(subspace, batch_size)
 
+                # TODO: https://github.com/pytorch/botorch/issues/2740
+                if acqf.ndim == 1:
+                    assert len(acqf) == 1
+                    acqf = acqf[0]
+
                 # Append optimization results
                 points_all.append(p)
                 acqf_values_all.append(acqf)
