@@ -21,6 +21,7 @@ from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import (
     IncompatibilityError,
     IncompatibleAcquisitionFunctionError,
+    InfeasibilityError,
     MinimumCardinalityViolatedWarning,
 )
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
@@ -477,18 +478,22 @@ class BotorchRecommender(BayesianRecommender):
     ) -> tuple[Tensor, Tensor]:
         """Find the optimum candidates from multiple continuous subspaces.
 
-        **Important**: A subspace without a feasible solution will be ignored
-        silently, and no warning will be raised. This design is intentional to
-        accommodate recommendations with cardinality constraints. Please be mindful
-        of this behavior when invoking this method.
+        Important:
+            Subspaces without feasible solutions will be silently ignored. If none of
+            the subspaces has a feasible solution, an exception will be raised.
 
         Args:
             subspaces: The subspaces to consider for the optimization.
             batch_size: The number of points to be recommended.
 
+        Raises:
+            InfeasibilityError: If none of the subspaces has a feasible solution.
+
         Returns:
             The batch of candidates and the corresponding acquisition value.
         """
+        from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
+
         acqf_values_all: list[Tensor] = []
         points_all: list[Tensor] = []
 
@@ -501,11 +506,12 @@ class BotorchRecommender(BayesianRecommender):
                 points_all.append(p)
                 acqf_values_all.append(acqf)
 
-            # TODO: Replace ValueError with customized erorr. See
-            #  https://github.com/pytorch/botorch/pull/2652
             # The optimization problem may be infeasible in certain subspaces
-            except ValueError:
+            except BoInfeasibilityError:
                 pass
+
+        if not points_all:
+            raise InfeasibilityError("No feasible solution could be found.")
 
         # Find the best option f
         best_idx = np.argmax(acqf_values_all)

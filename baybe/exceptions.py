@@ -41,6 +41,10 @@ class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
 
 
+class InfeasibilityError(Exception):
+    """An optimization problem has no feasible solution."""
+
+
 class NotEnoughPointsLeftError(Exception):
     """
     More recommendations are requested than there are viable parameter configurations
