@@ -44,13 +44,12 @@ def _validate_cardinality_constrained_batch(
     )
 
     # A warning must be raised when the minimum cardinality constraint is not fulfilled
-    if is_min_cardinality_fulfilled:
-        assert not captured_warnings
-    else:
-        assert all(
-            issubclass(w.category, MinimumCardinalityViolatedWarning)
-            for w in captured_warnings
-        )
+    cardinality_warnings = [
+        w
+        for w in captured_warnings
+        if issubclass(w.category, MinimumCardinalityViolatedWarning)
+    ]
+    assert is_min_cardinality_fulfilled != bool(cardinality_warnings)
 
     # Assert that we obtain as many samples as requested
     assert batch.shape[0] == batch_size
