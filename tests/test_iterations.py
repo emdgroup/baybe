@@ -46,6 +46,7 @@ from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
+    BotorchKernelFactory,
 )
 from baybe.utils.basic import get_subclasses
 
@@ -204,6 +205,7 @@ valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kerne
 valid_kernel_factories = [
     param(DefaultKernelFactory(), id="Default"),
     param(EDBOKernelFactory(), id="EDBO"),
+    param(BotorchKernelFactory(), id="BoTorch"),
 ]
 
 test_targets = [
