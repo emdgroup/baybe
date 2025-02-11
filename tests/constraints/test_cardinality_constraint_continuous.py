@@ -1,6 +1,7 @@
 """Tests for the continuous cardinality constraint."""
 
 import warnings
+from collections.abc import Sequence
 from itertools import combinations_with_replacement
 from warnings import WarningMessage
 
@@ -21,16 +22,16 @@ from baybe.targets.numerical import NumericalTarget
 
 
 def _validate_cardinality_constrained_batch(
-    subspace_continuous: SubspaceContinuous,
     batch: pd.DataFrame,
+    subspace_continuous: SubspaceContinuous,
     batch_size: int,
-    captured_warnings: list[WarningMessage | None],
+    captured_warnings: Sequence[WarningMessage],
 ):
     """Validate that a cardinality-constrained batch fulfills the necessary conditions.
 
     Args:
+        batch: The batch to validate.
         subspace_continuous: The continuous subspace from which to recommend the points.
-        batch: Batch to validate.
         batch_size: The number of points to be recommended.
         captured_warnings: A list of captured warnings.
     """
@@ -43,9 +44,13 @@ def _validate_cardinality_constrained_batch(
     )
 
     # A warning must be raised when the minimum cardinality constraint is not fulfilled
-    if not is_min_cardinality_fulfilled:
-        w_message = "Minimum cardinality constraints are not guaranteed."
-        assert any(str(w.message) == w_message for w in captured_warnings)
+    if is_min_cardinality_fulfilled:
+        assert not captured_warnings
+    else:
+        assert all(
+            issubclass(w.category, MinimumCardinalityViolatedWarning)
+            for w in captured_warnings
+        )
 
     # Assert that we obtain as many samples as requested
     assert batch.shape[0] == batch_size
@@ -106,7 +111,7 @@ def test_sampling_cardinality_constraint(cardinality_bounds: tuple[int, int]):
         samples = subspace_continous.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
-    _validate_cardinality_constrained_batch(subspace_continous, samples, BATCH_SIZE, w)
+    _validate_cardinality_constrained_batch(samples, subspace_continous, BATCH_SIZE, w)
 
 
 def test_polytope_sampling_with_cardinality_constraint():
@@ -155,12 +160,7 @@ def test_polytope_sampling_with_cardinality_constraint():
         samples = subspace_continous.sample_uniform(BATCH_SIZE)
 
     # Assert that the constraint conditions hold
-    _validate_cardinality_constrained_batch(
-        subspace_continous,
-        samples,
-        BATCH_SIZE,
-        w,
-    )
+    _validate_cardinality_constrained_batch(samples, subspace_continous, BATCH_SIZE, w)
 
     # Assert that linear equality constraint is fulfilled
     assert np.allclose(

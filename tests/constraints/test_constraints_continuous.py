@@ -111,10 +111,7 @@ def test_cardinality_constraint(recommender):
 
     # Assert that the constraint conditions hold
     _validate_cardinality_constrained_batch(
-        searchspace.continuous,
-        recommendation,
-        BATCH_SIZE,
-        w,
+        recommendation, searchspace.continuous, BATCH_SIZE, w
     )
 
 
