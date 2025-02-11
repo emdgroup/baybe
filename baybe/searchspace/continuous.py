@@ -371,16 +371,23 @@ class SubspaceContinuous(SerialMixin):
         for p in self.parameters:
             if p.name in inactive_parameter_names:
                 p_adjusted = _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+
             elif p.name in active_parameter_names:
-                # cardinality constraint object containing the current parameter
-                cardinality_constraint_with_p = [
+                constraints = [
                     c for c in self.constraints_cardinality if p.name in c.parameters
-                ][0]
+                ]
+
+                # Constraint validation should have ensured that each parameter can
+                # be part of at most one cardinality constraint
+                assert len(constraints) == 1
+
                 p_adjusted = activate_parameter(
-                    p, cardinality_constraint_with_p.get_absolute_thresholds(p.bounds)
+                    p, constraints[0].get_absolute_thresholds(p.bounds)
                 )
+
             else:
                 p_adjusted = p
+
             adjusted_parameters.append(p_adjusted)
 
         return evolve(self, parameters=adjusted_parameters, constraints_nonlin=())
