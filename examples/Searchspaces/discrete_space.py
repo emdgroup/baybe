@@ -6,14 +6,14 @@
 ### Necessary imports for this example
 
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function
 
@@ -23,8 +23,7 @@ from baybe.utils.botorch_wrapper import botorch_function_wrapper
 # In addition, the dimension is then adjusted automatically.
 
 # Note that choosing a different test function requires to change the `import` statement.
-# All test functions that are available in BoTorch are also available here and are later wrapped
-# via the `botorch_function_wrapper`.
+# All test functions that are available in BoTorch are also available here.
 
 DIMENSION = 4
 TestFunctionClass = Rastrigin
@@ -53,11 +52,6 @@ else:
 
 BOUNDS = TestFunction.bounds
 
-# It is necessary to "translate" the BoTorch function such that it can be used by BayBE.
-# This is done by using the `botorch_function_wrapper` function.
-
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
-
 ### Creating the searchspace and the objective
 
 # In this example, we construct a purely discrete space.
@@ -79,7 +73,8 @@ parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
 
 ### Constructing the campaign and performing a recommendation
 
@@ -93,19 +88,16 @@ BATCH_SIZE = 3
 recommendation = campaign.recommend(batch_size=BATCH_SIZE)
 
 # Evaluate the test function.
-# Note that we need iterate through the rows of the recommendation.
-# Furthermore, we need to interpret the row as a list.
 
-target_values = []
-for index, row in recommendation.iterrows():
-    target_values.append(WRAPPED_FUNCTION(*row.to_list()))
+lookup = arrays_to_dataframes(
+    [p.name for p in parameters], [target.name], use_torch=True
+)(TestFunction)
 
-# We add an additional column with the calculated target values.
-
-recommendation["Target"] = target_values
+lookup_values = lookup(recommendation)
+measurements = pd.concat([recommendation, lookup_values], axis=1)
 
 # Here, we inform the campaign about our measurement.
 
-campaign.add_measurements(recommendation)
+campaign.add_measurements(measurements)
 print("\n\nRecommended experiments with measured values: ")
-print(recommendation)
+print(measurements)

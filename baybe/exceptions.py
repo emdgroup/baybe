@@ -2,6 +2,8 @@
 
 
 ##### Warnings #####
+
+
 class UnusedObjectWarning(UserWarning):
     """
     A method or function was called with undesired arguments which indicates an
@@ -29,6 +31,14 @@ class IncompatibleSearchSpaceError(IncompatibilityError):
 
 class IncompatibleAcquisitionFunctionError(IncompatibilityError):
     """An incompatible acquisition function was selected."""
+
+
+class IncompatibleExplainerError(IncompatibilityError):
+    """An explainer is incompatible with the data it is presented."""
+
+
+class IncompatibleArgumentError(IncompatibilityError):
+    """An incompatible argument was passed to a callable."""
 
 
 class NotEnoughPointsLeftError(Exception):
@@ -63,7 +73,7 @@ class NumericalUnderflowError(Exception):
     """A computation would lead to numerical underflow."""
 
 
-class OptionalImportError(Exception):
+class OptionalImportError(ImportError):
     """An attempt was made to import an optional but uninstalled dependency."""
 
 

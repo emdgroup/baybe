@@ -39,6 +39,9 @@ class SubstanceEncoding(ParameterEncoding):
     AVALON = "AVALON"
     """:class:`skfp.fingerprints.AvalonFingerprint`"""
 
+    BCUT2D = "BCUT2D"
+    """:class:`skfp.fingerprints.BCUT2DFingerprint`"""
+
     E3FP = "E3FP"
     """:class:`skfp.fingerprints.E3FPFingerprint`"""
 

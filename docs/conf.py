@@ -21,7 +21,7 @@ __location__ = os.path.dirname(__file__)
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "BayBE"
-copyright = "2022-2024 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
+copyright = "2022-2025 Merck KGaA, Darmstadt, Germany and/or its affiliates. All rights reserved."  # noqa
 author = "Merck KGaA, Darmstadt, Germany"
 
 
@@ -82,6 +82,8 @@ extensions = [
     "sphinx_autodoc_typehints",  # Proper typehints
     "sphinx_copybutton",  # Copy button for code blocks
     "sphinxcontrib.bibtex",  # Bibtex support
+    "sphinx_paramlinks",  # Links to arguments of callables
+    "sphinx_design",  # For dropdowns etc
 ]
 bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
@@ -124,7 +126,10 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._U"),
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
-    (r"py:obj", "baybe.acquisition.acqfs.*.is_mc"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
+    # Other
+    (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
 ]
 
 # Ignore the following links when checking inks for viability
@@ -243,6 +248,7 @@ modindex_common_prefix = ["baybe."]
 
 # Mappings to all external packages that we want to have clickable links to
 intersphinx_mapping = {
+    "botorch": ("https://botorch.readthedocs.io/en/latest", None),
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
@@ -252,6 +258,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
+    "shap": ("https://shap.readthedocs.io/en/stable/", None),
 }
 
 # --- Options for autodoc typehints and autodoc -------------------------------
@@ -295,8 +302,6 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
-    """Skip the docstring for the is_mc classproperty."""
-    # Note that we cannot do `return name == "is_mc"` since this messes up other members
-    # that need to be skipped.
-    if name == "is_mc":
+    """Skip the docstring for the acqf classproperties."""
+    if name in ["supports_batching", "supports_pending_experiments"]:
         return True

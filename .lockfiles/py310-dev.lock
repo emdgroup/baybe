@@ -8,7 +8,7 @@ anyio==4.4.0
     # via
     #   httpx
     #   jupyter-server
-appnope==0.1.4 ; platform_system == 'Darwin'
+appnope==0.1.4 ; sys_platform == 'darwin'
     # via ipykernel
 argon2-cffi==23.1.0
     # via jupyter-server
@@ -53,7 +53,7 @@ botocore==1.35.68
     # via
     #   boto3
     #   s3transfer
-botorch==0.11.3
+botorch==0.13.0
     # via baybe (pyproject.toml)
 cachecontrol==0.14.0
     # via pip-audit
@@ -61,7 +61,7 @@ cachetools==5.4.0
     # via
     #   streamlit
     #   tox
-cattrs==23.2.3
+cattrs==24.1.2
     # via baybe (pyproject.toml)
 certifi==2024.7.4
     # via
@@ -84,7 +84,9 @@ click==8.1.7
     #   pydoclint
     #   streamlit
 cloudpickle==3.0.0
-    # via dask
+    # via
+    #   dask
+    #   shap
 colorama==0.4.6
     # via
     #   click
@@ -109,8 +111,6 @@ cyclonedx-python-lib==7.5.1
     # via pip-audit
 dask==2024.7.1
     # via xyzpy
-datasketch==1.6.5
-    # via scikit-fingerprints
 debugpy==1.8.2
     # via ipykernel
 decorator==5.1.1
@@ -135,6 +135,7 @@ docutils==0.21.2
     #   myst-parser
     #   pybtex-docutils
     #   sphinx
+    #   sphinx-paramlinks
     #   sphinxcontrib-bibtex
 e3fp==1.2.5
     # via scikit-fingerprints
@@ -195,7 +196,7 @@ googleapis-common-protos==1.63.2
     # via
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-exporter-otlp-proto-http
-gpytorch==1.12
+gpytorch==1.14
     # via
     #   baybe (pyproject.toml)
     #   botorch
@@ -229,6 +230,8 @@ idna==3.7
     #   httpx
     #   jsonschema
     #   requests
+imageio==2.36.1
+    # via scikit-image
 imagesize==1.4.1
     # via sphinx
 importlib-metadata==7.1.0
@@ -237,7 +240,7 @@ importlib-metadata==7.1.0
     #   opentelemetry-api
 iniconfig==2.0.0
     # via pytest
-intel-openmp==2021.4.0 ; platform_system == 'Windows'
+intel-openmp==2021.4.0 ; sys_platform == 'win32'
     # via mkl
 interface-meta==1.3.0
     # via formulaic
@@ -256,7 +259,9 @@ ipywidgets==8.1.3
 isoduration==20.11.0
     # via jsonschema
 jaxtyping==0.2.33
-    # via linear-operator
+    # via
+    #   gpytorch
+    #   linear-operator
 jedi==0.19.1
     # via ipython
 jinja2==3.1.4
@@ -343,11 +348,15 @@ kiwisolver==1.4.5
     # via matplotlib
 latexcodec==3.0.0
     # via pybtex
+lazy-loader==0.4
+    # via scikit-image
 license-expression==30.3.0
     # via cyclonedx-python-lib
 lifelines==0.29.0
     # via ngboost
-linear-operator==0.5.2
+lime==0.2.0.1
+    # via shap
+linear-operator==0.6
     # via
     #   botorch
     #   gpytorch
@@ -365,10 +374,11 @@ markupsafe==2.1.5
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.9.1
+matplotlib==3.10.0
     # via
     #   baybe (pyproject.toml)
     #   lifelines
+    #   lime
     #   seaborn
     #   types-seaborn
 matplotlib-inline==0.1.7
@@ -385,7 +395,7 @@ mdurl==0.1.2
     # via markdown-it-py
 mistune==3.0.2
     # via nbconvert
-mkl==2021.4.0 ; platform_system == 'Windows'
+mkl==2021.4.0 ; sys_platform == 'win32'
     # via torch
 mmh3==5.0.1
     # via e3fp
@@ -393,8 +403,8 @@ mordredcommunity==2.0.6
     # via scikit-fingerprints
 mpmath==1.3.0
     # via
-    #   botorch
     #   gpytorch
+    #   linear-operator
     #   sympy
 msgpack==1.0.8
     # via cachecontrol
@@ -403,7 +413,9 @@ multipledispatch==1.0.0
 mypy==1.11.0
     # via baybe (pyproject.toml)
 mypy-extensions==1.0.0
-    # via mypy
+    # via
+    #   mypy
+    #   typing-inspect
 myst-parser==4.0.0
     # via baybe (pyproject.toml)
 nbclient==0.10.0
@@ -423,6 +435,7 @@ nest-asyncio==1.6.0
 networkx==3.3
     # via
     #   mordredcommunity
+    #   scikit-image
     #   torch
 ngboost==0.5.1
     # via baybe (pyproject.toml)
@@ -435,20 +448,22 @@ notebook-shim==0.2.4
     #   jupyterlab
     #   notebook
 numba==0.60.0
-    # via scikit-fingerprints
+    # via
+    #   scikit-fingerprints
+    #   shap
 numpy==1.26.4
     # via
     #   baybe (pyproject.toml)
     #   altair
     #   autograd
-    #   botorch
     #   contourpy
-    #   datasketch
     #   descriptastorus
     #   e3fp
     #   formulaic
     #   h5py
+    #   imageio
     #   lifelines
+    #   lime
     #   matplotlib
     #   mordredcommunity
     #   ngboost
@@ -464,44 +479,47 @@ numpy==1.26.4
     #   pyro-ppl
     #   rdkit
     #   scikit-fingerprints
+    #   scikit-image
     #   scikit-learn
     #   scikit-learn-extra
     #   scipy
     #   seaborn
+    #   shap
     #   streamlit
+    #   tifffile
     #   types-seaborn
     #   xarray
     #   xyzpy
-nvidia-cublas-cu12==12.1.3.1 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cublas-cu12==12.1.3.1 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via
     #   nvidia-cudnn-cu12
     #   nvidia-cusolver-cu12
     #   torch
-nvidia-cuda-cupti-cu12==12.1.105 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cuda-cupti-cu12==12.1.105 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cuda-nvrtc-cu12==12.1.105 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cuda-nvrtc-cu12==12.1.105 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cuda-runtime-cu12==12.1.105 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cuda-runtime-cu12==12.1.105 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cudnn-cu12==8.9.2.26 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cudnn-cu12==8.9.2.26 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cufft-cu12==11.0.2.54 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cufft-cu12==11.0.2.54 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-curand-cu12==10.3.2.106 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-curand-cu12==10.3.2.106 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cusolver-cu12==11.4.5.107 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cusolver-cu12==11.4.5.107 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-cusparse-cu12==12.1.0.106 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-cusparse-cu12==12.1.0.106 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via
     #   nvidia-cusolver-cu12
     #   torch
-nvidia-nccl-cu12==2.20.5 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-nccl-cu12==2.20.5 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
-nvidia-nvjitlink-cu12==12.5.82 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-nvjitlink-cu12==12.5.82 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via
     #   nvidia-cusolver-cu12
     #   nvidia-cusparse-cu12
-nvidia-nvtx-cu12==12.1.105 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+nvidia-nvtx-cu12==12.1.105 ; platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 onnx==1.16.1
     # via
@@ -565,6 +583,7 @@ packaging==24.1
     #   jupyterlab
     #   jupyterlab-server
     #   jupytext
+    #   lazy-loader
     #   matplotlib
     #   mordredcommunity
     #   nbconvert
@@ -575,7 +594,9 @@ packaging==24.1
     #   plotly
     #   pyproject-api
     #   pytest
+    #   scikit-image
     #   setuptools-scm
+    #   shap
     #   sphinx
     #   streamlit
     #   tox
@@ -591,6 +612,7 @@ pandas==2.2.2
     #   pandas-flavor
     #   scikit-fingerprints
     #   seaborn
+    #   shap
     #   streamlit
     #   xarray
     #   xyzpy
@@ -611,8 +633,10 @@ pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
 pillow==10.4.0
     # via
     #   baybe (pyproject.toml)
+    #   imageio
     #   matplotlib
     #   rdkit
+    #   scikit-image
     #   streamlit
 pip==24.1.2
     # via pip-api
@@ -695,6 +719,8 @@ pyparsing==3.1.2
     #   pip-requirements-parser
 pyproject-api==1.7.1
     # via tox
+pyre-extensions==0.0.32
+    # via botorch
 pyreadline3==3.4.1 ; sys_platform == 'win32'
     # via humanfriendly
 pyro-api==0.1.2
@@ -781,15 +807,19 @@ ruff==0.5.2
     # via baybe (pyproject.toml)
 s3transfer==0.10.4
     # via boto3
-scikit-fingerprints==1.9.0
+scikit-fingerprints==1.13.1
     # via baybe (pyproject.toml)
+scikit-image==0.25.0
+    # via lime
 scikit-learn==1.5.1
     # via
     #   baybe (pyproject.toml)
     #   gpytorch
+    #   lime
     #   ngboost
     #   scikit-fingerprints
     #   scikit-learn-extra
+    #   shap
     #   skl2onnx
 scikit-learn-extra==0.3.0
     # via baybe (pyproject.toml)
@@ -798,17 +828,19 @@ scipy==1.14.0
     #   baybe (pyproject.toml)
     #   autograd-gamma
     #   botorch
-    #   datasketch
     #   descriptastorus
     #   e3fp
     #   formulaic
     #   gpytorch
     #   lifelines
+    #   lime
     #   linear-operator
     #   ngboost
     #   scikit-fingerprints
+    #   scikit-image
     #   scikit-learn
     #   scikit-learn-extra
+    #   shap
 sdaxen-python-utilities==0.1.5
     # via e3fp
 seaborn==0.13.2
@@ -821,6 +853,8 @@ setuptools==71.1.0
     #   setuptools-scm
 setuptools-scm==8.1.0
     # via baybe (pyproject.toml)
+shap==0.46.0
+    # via baybe (pyproject.toml)
 six==1.16.0
     # via
     #   asttokens
@@ -832,6 +866,8 @@ six==1.16.0
     #   rfc3339-validator
 skl2onnx==1.17.0
     # via baybe (pyproject.toml)
+slicer==0.0.8
+    # via shap
 smart-open==7.0.5
     # via e3fp
 smmap==5.0.1
@@ -856,12 +892,18 @@ sphinx==8.1.3
     #   sphinx-autodoc-typehints
     #   sphinx-basic-ng
     #   sphinx-copybutton
+    #   sphinx-design
+    #   sphinx-paramlinks
     #   sphinxcontrib-bibtex
 sphinx-autodoc-typehints==2.5.0
     # via baybe (pyproject.toml)
 sphinx-basic-ng==1.0.0b2
     # via furo
 sphinx-copybutton==0.5.2
+    # via baybe (pyproject.toml)
+sphinx-design==0.6.1
+    # via baybe (pyproject.toml)
+sphinx-paramlinks==0.6.0
     # via baybe (pyproject.toml)
 sphinxcontrib-applehelp==1.0.8
     # via sphinx
@@ -885,7 +927,7 @@ sympy==1.13.1
     # via
     #   onnxruntime
     #   torch
-tbb==2021.13.0 ; platform_system == 'Windows'
+tbb==2021.13.0 ; sys_platform == 'win32'
     # via mkl
 tenacity==8.5.0
     # via
@@ -897,7 +939,11 @@ terminado==0.18.1
     #   jupyter-server
     #   jupyter-server-terminals
 threadpoolctl==3.5.0
-    # via scikit-learn
+    # via
+    #   botorch
+    #   scikit-learn
+tifffile==2024.12.12
+    # via scikit-image
 tinycss2==1.3.0
     # via nbconvert
 tokenize-rt==6.1.0
@@ -946,9 +992,11 @@ tox-uv==1.9.1
 tqdm==4.66.4
     # via
     #   huggingface-hub
+    #   lime
     #   ngboost
     #   pyro-ppl
     #   scikit-fingerprints
+    #   shap
     #   xyzpy
 traitlets==5.14.3
     # via
@@ -966,12 +1014,10 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-triton==2.3.1 ; python_full_version < '3.12' and platform_machine == 'x86_64' and platform_system == 'Linux'
+triton==2.3.1 ; python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'linux'
     # via torch
 typeguard==2.13.3
-    # via
-    #   jaxtyping
-    #   linear-operator
+    # via jaxtyping
 types-python-dateutil==2.9.0.20240316
     # via arrow
 types-pytz==2024.1.0.20240417
@@ -984,6 +1030,7 @@ typing-extensions==4.12.2
     #   altair
     #   anyio
     #   async-lru
+    #   botorch
     #   cattrs
     #   formulaic
     #   funcy-stubs
@@ -991,8 +1038,12 @@ typing-extensions==4.12.2
     #   ipython
     #   mypy
     #   opentelemetry-sdk
+    #   pyre-extensions
     #   streamlit
     #   torch
+    #   typing-inspect
+typing-inspect==0.9.0
+    # via pyre-extensions
 tzdata==2024.1
     # via pandas
 uri-template==1.3.0
@@ -1009,7 +1060,7 @@ virtualenv==20.26.3
     # via
     #   pre-commit
     #   tox
-watchdog==4.0.1 ; platform_system != 'Darwin'
+watchdog==4.0.1 ; sys_platform != 'darwin'
     # via streamlit
 wcwidth==0.2.13
     # via prompt-toolkit

@@ -44,9 +44,17 @@ class AcquisitionFunction(ABC, SerialMixin):
     """An alternative name for type resolution."""
 
     @classproperty
-    def is_mc(cls) -> bool:
-        """Flag indicating whether this is a Monte-Carlo acquisition function."""
+    def supports_batching(cls) -> bool:
+        """Flag indicating whether batch recommendation is supported."""
         return cls.abbreviation.startswith("q")
+
+    @classproperty
+    def supports_pending_experiments(cls) -> bool:
+        """Flag indicating whether pending experiments are supported.
+
+        This is based on the same mechanism underlying batched recommendations.
+        """
+        return cls.supports_batching
 
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
@@ -95,7 +103,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                 self.get_integration_points(searchspace)  # type: ignore[attr-defined]
             )
         if pending_experiments is not None:
-            if self.is_mc:
+            if self.supports_pending_experiments:
                 pending_x = searchspace.transform(pending_experiments, allow_extra=True)
                 additional_params["X_pending"] = to_tensor(pending_x)
             else:
@@ -107,20 +115,33 @@ class AcquisitionFunction(ABC, SerialMixin):
         # Add acquisition objective / best observed value
         match objective:
             case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+                # Adjust best_f
                 if "best_f" in signature_params:
                     additional_params["best_f"] = (
                         bo_surrogate.posterior(train_x).mean.min().item()
                     )
+                    if issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
+                        additional_params["best_f"] *= -1.0
 
-                if issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
+                # Adjust objective
+                if issubclass(
+                    acqf_cls,
+                    (
+                        bo_acqf.qNegIntegratedPosteriorVariance,
+                        bo_acqf.PosteriorStandardDeviation,
+                        bo_acqf.qPosteriorStandardDeviation,
+                    ),
+                ):
+                    # The active learning acqfs are valid but no changes based on the
+                    # target direction are required.
+                    pass
+                elif issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
+                    # Minimize acqfs in case the target should be minimized.
                     additional_params["maximize"] = False
                 elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
                     additional_params["objective"] = LinearMCObjective(
                         torch.tensor([-1.0])
                     )
-                elif issubclass(acqf_cls, bo_acqf.qNegIntegratedPosteriorVariance):
-                    # qNIPV is valid but does not require any adjusted params
-                    pass
                 else:
                     raise ValueError(
                         f"Unsupported acquisition function type: {acqf_cls}."

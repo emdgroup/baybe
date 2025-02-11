@@ -151,7 +151,7 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        if batch_size > 1 and not self.acquisition_function.is_mc:
+        if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
@@ -205,7 +205,7 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        if batch_size > 1 and not self.acquisition_function.is_mc:
+        if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
@@ -392,8 +392,8 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        # For batch size > 1, this optimizer needs a MC acquisition function
-        if batch_size > 1 and not self.acquisition_function.is_mc:
+        # For batch size > 1, the acqf needs to support batching
+        if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."

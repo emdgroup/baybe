@@ -13,9 +13,11 @@ from .conftest import run_iterations
 )
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Categorical_1", f"Substance_1_{enc}"] for enc in SubstanceEncoding],
+    [["Categorical_1", f"Substance_1_{enc.name}"] for enc in SubstanceEncoding],
     ids=[enc.name for enc in SubstanceEncoding],
 )
+@pytest.mark.parametrize("n_grid_points", [8], ids=["g8"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
 def test_run_iterations(campaign, batch_size, n_iterations):
     """Test running some iterations with fake results and a substance parameter."""
     run_iterations(campaign, n_iterations, batch_size)

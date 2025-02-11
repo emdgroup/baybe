@@ -1,11 +1,10 @@
 """Naive recommender for hybrid spaces."""
 
 import gc
-import warnings
 from typing import ClassVar
 
 import pandas as pd
-from attrs import define, evolve, field, fields
+from attrs import define, field
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
@@ -48,36 +47,6 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     """The recommender used for the continuous subspace. Default:
     :class:`baybe.recommenders.pure.bayesian.botorch.BotorchRecommender`"""
 
-    def __attrs_post_init__(self):
-        """Validate if flags are synchronized and overrides them otherwise."""
-        if (
-            flag := self.allow_recommending_already_measured
-        ) != self.disc_recommender.allow_recommending_already_measured:
-            warnings.warn(
-                f"The value of "
-                f"'{fields(self.__class__).allow_recommending_already_measured.name}' "
-                f"differs from what is specified in the discrete recommender. "
-                f"The value of the discrete recommender will be ignored."
-            )
-            self.disc_recommender = evolve(
-                self.disc_recommender,
-                allow_recommending_already_measured=flag,
-            )
-
-        if (
-            flag := self.allow_repeated_recommendations
-        ) != self.disc_recommender.allow_repeated_recommendations:
-            warnings.warn(
-                f"The value of "
-                f"'{fields(self.__class__).allow_repeated_recommendations.name}' "
-                f"differs from what is specified in the discrete recommender. "
-                f"The value of the discrete recommender will be ignored."
-            )
-            self.disc_recommender = evolve(
-                self.disc_recommender,
-                allow_repeated_recommendations=flag,
-            )
-
     @override
     def recommend(
         self,
@@ -89,8 +58,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
     ) -> pd.DataFrame:
         from baybe.acquisition.partial import PartialAcquisitionFunction
 
-        if (not isinstance(self.disc_recommender, BayesianRecommender)) and (
-            not isinstance(self.disc_recommender, NonPredictiveRecommender)
+        disc_is_bayesian = isinstance(self.disc_recommender, BayesianRecommender)
+        if not disc_is_bayesian and not isinstance(
+            self.disc_recommender, NonPredictiveRecommender
         ):
             raise NotImplementedError(
                 """The discrete recommender should be either a Bayesian or a
@@ -110,7 +80,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
                 searchspace=searchspace,
                 objective=objective,
                 measurements=measurements,
-                pending_experiments=pending_experiments,
+                pending_experiments=pending_experiments if disc_is_bayesian else None,
             )
 
         # We are in a hybrid setting now
@@ -122,12 +92,8 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
 
-        # Get discrete candidates. The metadata flags are ignored since the search space
-        # is hybrid
-        candidates_exp, _ = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=True,
-            allow_recommending_already_measured=True,
-        )
+        # Get discrete candidates
+        candidates_exp, _ = searchspace.discrete.get_candidates()
 
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):

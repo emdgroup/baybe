@@ -1,5 +1,6 @@
 """Collection of small basic utilities."""
 
+import enum
 import functools
 import inspect
 from collections.abc import Callable, Collection, Iterable, Sequence
@@ -14,6 +15,23 @@ from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
+
+
+class UnspecifiedType(enum.Enum):
+    """Sentinel indicating an unspecified value when `None` is ambiguous."""
+
+    UNSPECIFIED = "UNSPECIFIED"
+
+    @override
+    def __repr__(self):
+        return "UNSPECIFIED"
+
+    def __bool__(self):
+        raise NotImplementedError(f"'{self!r}' has no Boolean representation.")
+
+
+UNSPECIFIED = UnspecifiedType.UNSPECIFIED
+"""Sentinel indicating an unspecified value when `None` is ambiguous."""
 
 
 @dataclass(frozen=True, repr=False)

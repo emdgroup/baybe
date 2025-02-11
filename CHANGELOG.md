@@ -6,13 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
-- Example for a traditional mixture
-- `add_noise_to_perturb_degenerate_rows` utility
-- `benchmarks` subpackage for defining and running performance tests
-– `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
-- `DiscreteConstraint.get_valid` to conveniently access valid candidates
-- Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `BCUT2D` encoding for `SubstanceParameter`
+- Stored benchmarking results now include the Python environment and version
+- `qPSTD` acquisition function
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
 - Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
   cardinality is violated in `BotorchRecommender`
@@ -25,6 +21,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Utilities `count_zeros` and `is_cardinality_fulfilled`
 
 ### Changed
+- Acquisition function indicator `is_mc` has been removed in favor of new indicators 
+  `supports_batching` and `supports_pending_experiments`
+
+### Fixed
+- Incorrect optimization direction with `PSTD` with a single minimization target
+
+## [0.12.2] - 2025-01-31
+### Changed
+- More robust settings for the GP fitting
+
+## [0.12.1] - 2025-01-29
+### Changed
+- Default of `allow_recommending_already_recommended` is changed back to `False`
+  to avoid exploitation cycles ([#468](https://github.com/emdgroup/baybe/issues/468))
+
+## [0.12.0] - 2025-01-28
+### Breaking Changes 
+- Lookup callables for simulation are now expected to accept/return dataframes with
+  the corresponding parameter/target column labels
+
+### Added
+- SHAP explanations via the new `SHAPInsight` class
+- Optional `insights` dependency group
+- Insights user guide
+- Example for a traditional mixture
+- `allow_missing` and `allow_extra` keyword arguments to `Objective.transform`
+- `add_noise_to_perturb_degenerate_rows` utility
+- `benchmarks` subpackage for defining and running performance tests
+– `Campaign.toggle_discrete_candidates` to dynamically in-/exclude discrete candidates
+- `filter_df` utility for filtering dataframe content
+- `arrays_to_dataframes` decorator to create lookups from array-based callables
+- `DiscreteConstraint.get_valid` to conveniently access valid candidates
+- Functionality for persisting benchmarking results on S3 from a manual pipeline run
+- `remain_switched` option to `TwoPhaseMetaRecommender`
+- `is_stateful` class variable to `MetaRecommender`
+- `get_non_meta_recommender` method to `MetaRecommender`
+
+### Changed
 - `SubstanceParameter` encodings are now computed exclusively with the
   `scikit-fingerprints` package, granting access to all fingerprints available therein
 - Example for slot-based mixtures has been revised and grouped together with the new 
@@ -33,6 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CustomDiscreteParameter` does not allow duplicated rows in `data` anymore
 - De-/activating Polars via `BAYBE_DEACTIVATE_POLARS` now requires passing values
   compatible with `strtobool`
+- All arguments to `MetaRecommender.select_recommender` are now optional
+- `MetaRecommender`s can now be composed of other `MetaRecommender`s
+- For performance reasons, search space manipulation using `polars` is no longer
+  guaranteed to produce the same row order as the corresponding `pandas` operations
+- `allow_repeated_recommendations` has been renamed to 
+  `allow_recommending_already_recommended` and is now `True` by default
 
 ### Fixed
 - Rare bug arising from degenerate `SubstanceParameter.comp_df` rows that caused
@@ -45,6 +85,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `NumericalTarget` now raises an error
 - Crash when using `ContinuousCardinalityConstraint` caused by an unintended interplay
   between constraints and dropped parameters yielding empty parameter sets
+- Minimizing a single `NumericalTarget` with specified bounds/transformation via
+  `SingleTargetObjective` no longer erroneously maximizes it
+- `allow_*` flags are now context-aware, i.e. setting them in a context where they are
+  irrelevant now raises an error instead of passing silently
+
+### Removed
+- `botorch_function_wrapper` utility for creating lookup callables
 
 ### Deprecations
 - Passing a dataframe via the `data` argument to `Objective.transform` is no longer
@@ -59,6 +106,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceEncoding` value `RDKIT`. As a replacement, `RDKIT2DDESCRIPTORS` can be used.
 - The `metadata` attribute of `SubspaceDiscrete` no longer exists. Metadata is now
   exclusively handled by the `Campaign` class.
+- `get_current_recommender` and `get_next_recommender` of `MetaRecommender` have become
+  obsolete and calling them is no longer possible
+- Passing `allow_*` flags to recommenders is no longer supported since the necessary
+  metadata required for the flags is no longer available at that level. The
+  functionality has been taken over by `Campaign`.
+
+## [0.11.4] - 2025-01-27
+### Changed
+- Polars lazy streaming has been deactivated due to instabilities
+
+### Fixed
+- Improvement-based Monte Carlo acquisition functions now use the correct
+  reference value for single-target minimization
 
 ## [0.11.3] - 2024-11-06
 ### Fixed

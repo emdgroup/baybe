@@ -48,8 +48,12 @@ class PathConstructor:
     benchmark_name: str = field(validator=instance_of(str))
     """The name of the benchmark for which the path should be constructed."""
 
-    branch: str = field(validator=instance_of(str))
-    """The branch checked out at benchmark execution time."""
+    branch: str = field(
+        converter=lambda x: x or "-branchless-",
+        validator=instance_of(str),
+    )
+    """The branch checked out at benchmark execution time.
+    In case of detached head state the branch is set to '-branchless-'."""
 
     latest_baybe_tag: str = field(validator=instance_of(str))
     """The latest BayBE version tag existing at benchmark execution time."""
@@ -108,6 +112,7 @@ class PathConstructor:
         separator = "/" if strategy is PathStrategy.HIERARCHICAL else "_"
 
         file_usable_date = self.execution_date_time.strftime("%Y-%m-%d")
+
         components = [
             self.benchmark_name,
             self.branch,

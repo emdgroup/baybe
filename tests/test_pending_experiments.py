@@ -17,6 +17,7 @@ from baybe.recommenders import (
     PAMClusteringRecommender,
     TwoPhaseMetaRecommender,
 )
+from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
 from baybe.utils.random import temporary_seed
@@ -25,86 +26,67 @@ _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]
 _continuous_params = ["Conti_finite1", "Conti_finite2", "Conti_finite3"]
 _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2"]
 
-# Repeated recommendations explicitly need to be allowed or the potential overlap will
-# be avoided trivially
-_flags = dict(
-    allow_repeated_recommendations=True,
-    allow_recommending_already_measured=True,
-)
-
 
 @pytest.mark.parametrize(
     "parameter_names, recommender",
     [
         param(
             _discrete_params,
-            FPSRecommender(**_flags),
+            FPSRecommender(),
             id="fps_discrete",
         ),
-        param(_discrete_params, PAMClusteringRecommender(**_flags), id="pam_discrete"),
+        param(_discrete_params, PAMClusteringRecommender(), id="pam_discrete"),
         param(
             _discrete_params,
-            KMeansClusteringRecommender(**_flags),
+            KMeansClusteringRecommender(),
             id="kmeans_discrete",
         ),
         param(
             _discrete_params,
-            GaussianMixtureClusteringRecommender(**_flags),
+            GaussianMixtureClusteringRecommender(),
             id="gm_discrete",
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_discrete",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_continuous",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(recommender=BotorchRecommender(**_flags)),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_hybrid",
         ),
         param(
             _discrete_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    **_flags, allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_discrete_allow",
         ),
         param(
             _continuous_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    **_flags, allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_continuous_allow",
         ),
         param(
             _hybrid_params,
-            TwoPhaseMetaRecommender(
-                recommender=BotorchRecommender(
-                    **_flags, allow_recommending_pending_experiments=True
-                )
-            ),
+            TwoPhaseMetaRecommender(recommender=BotorchRecommender()),
             id="botorch_hybrid_allow",
         ),
         param(
             _discrete_params,
             NaiveHybridSpaceRecommender(
-                disc_recommender=FPSRecommender(**_flags), **_flags
+                disc_recommender=FPSRecommender(),
             ),
             id="naive1_discrete",
         ),
         param(
             _discrete_params,
             NaiveHybridSpaceRecommender(
-                disc_recommender=KMeansClusteringRecommender(**_flags), **_flags
+                disc_recommender=KMeansClusteringRecommender(),
             ),
             id="naive2_discrete",
         ),
@@ -114,6 +96,12 @@ _flags = dict(
 def test_pending_points(campaign, batch_size):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
+
+    # Repeated recommendations explicitly need to be allowed or the potential overlap
+    # will be avoided trivially
+    if campaign.searchspace.type == SearchSpaceType.DISCRETE:
+        campaign.allow_recommending_already_recommended = True
+        campaign.allow_recommending_already_measured = True
 
     # Perform a fake first iteration
     rec = campaign.recommend(batch_size)
@@ -137,11 +125,15 @@ def test_pending_points(campaign, batch_size):
     )
 
 
-_non_mc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc]
+acqfs_non_pending = [
+    a()
+    for a in get_subclasses(AcquisitionFunction)
+    if (not a.supports_pending_experiments)
+]
 
 
 @pytest.mark.parametrize(
-    "acqf", _non_mc_acqfs, ids=[a.abbreviation for a in _non_mc_acqfs]
+    "acqf", acqfs_non_pending, ids=[a.abbreviation for a in acqfs_non_pending]
 )
 @pytest.mark.parametrize(
     "parameter_names",
@@ -152,7 +144,7 @@ _non_mc_acqfs = [a() for a in get_subclasses(AcquisitionFunction) if not a.is_mc
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_invalid_acqf(searchspace, recommender, objective, batch_size, acqf):
     """Test exception raised for acqfs that don't support pending experiments."""
     recommender = TwoPhaseMetaRecommender(

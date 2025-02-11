@@ -106,7 +106,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         """Cast the constraint in a format required by botorch.
 
         Used in calling ``optimize_acqf_*`` functions, for details see
-        https://botorch.org/api/optim.html#botorch.optim.optimize.optimize_acqf
+        :func:`botorch.optim.optimize.optimize_acqf`
 
         Args:
             parameters: The parameter objects of the continuous space.

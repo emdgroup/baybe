@@ -85,6 +85,12 @@ changing the Python environment. To do so, you can set the environment variable
 `BAYBE_DEACTIVATE_POLARS` to any truthy value accepted by
 [`strtobool`](baybe.utils.boolean.strtobool).
 
+```{admonition} Row Order
+:class: caution
+
+For performance reasons, search space manipulation using `polars` is not
+guaranteed to produce the same row order as the corresponding `pandas` operations.
+```
 
 ## Disk Caching
 For some components, such as the

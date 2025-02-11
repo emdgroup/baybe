@@ -4,27 +4,28 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from functools import reduce
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import Attribute, Factory, define, evolve, field, fields
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
-from baybe.searchspace._annotated import AnnotatedSubspaceDiscrete
+from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
+from baybe.searchspace._filtered import FilteredSubspaceDiscrete
 from baybe.searchspace.core import (
     SearchSpace,
     SearchSpaceType,
@@ -39,7 +40,7 @@ from baybe.telemetry import (
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
-from baybe.utils.basic import is_all_instance
+from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
@@ -52,6 +53,38 @@ _RECOMMENDED = "recommended"
 _MEASURED = "measured"
 _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
+
+
+def _make_allow_flag_default_factory(
+    default: bool,
+) -> Callable[[Campaign], bool | UnspecifiedType]:
+    """Make a default factory for allow_* flags."""
+
+    def default_allow_flag(campaign: Campaign) -> bool | UnspecifiedType:
+        """Attrs-compatible default factory for allow_* flags."""
+        if campaign.searchspace.type is SearchSpaceType.DISCRETE:
+            return default
+        return UNSPECIFIED
+
+    return default_allow_flag
+
+
+def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -> None:
+    """Attrs-compatible validator for context-aware validation of allow_* flags."""
+    match campaign.searchspace.type:
+        case SearchSpaceType.DISCRETE:
+            if not isinstance(value, bool):
+                raise ValueError(
+                    f"For search spaces of '{SearchSpaceType.DISCRETE}', "
+                    f"'{attribute.name}' must be a Boolean."
+                )
+        case _:
+            if value is not UNSPECIFIED:
+                raise ValueError(
+                    f"For search spaces of type other than "
+                    f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' cannot be set "
+                    f"since the flag is meaningless in such contexts.",
+                )
 
 
 @define
@@ -87,6 +120,36 @@ class Campaign(SerialMixin):
         validator=instance_of(RecommenderProtocol),
     )
     """The employed recommender"""
+
+    allow_recommending_already_measured: bool | UnspecifiedType = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=True), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
+    """Allow to recommend experiments that were already measured earlier.
+    Can only be set for discrete search spaces."""
+
+    allow_recommending_already_recommended: bool | UnspecifiedType = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=False), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
+    """Allow to recommend experiments that were already recommended earlier.
+    Can only be set for discrete search spaces."""
+
+    allow_recommending_pending_experiments: bool | UnspecifiedType = field(
+        default=Factory(
+            _make_allow_flag_default_factory(default=False), takes_self=True
+        ),
+        validator=_validate_allow_flag,
+        kw_only=True,
+    )
+    """Allow pending experiments to be part of the recommendations.
+    Can only be set for discrete search spaces."""
 
     # Metadata
     _searchspace_metadata: pd.DataFrame = field(init=False, eq=eq_dataframe)
@@ -301,6 +364,9 @@ class Campaign(SerialMixin):
             A new dataframe containing the  discrete candidate set passing through the
             specified filter.
         """
+        # Clear cache
+        self._cached_recommendation = pd.DataFrame()
+
         df = self.searchspace.discrete.exp_rep
 
         if isinstance(constraints, pd.DataFrame):
@@ -371,21 +437,87 @@ class Campaign(SerialMixin):
             self._measurements_exp.fillna({"FitNr": self.n_fits_done}, inplace=True)
 
         # Prepare the search space according to the current campaign state
-        annotated_searchspace = evolve(
-            self.searchspace,
-            discrete=AnnotatedSubspaceDiscrete.from_subspace(
-                self.searchspace.discrete, self._searchspace_metadata
-            ),
-        )
+        if self.searchspace.type is SearchSpaceType.DISCRETE:
+            # TODO: This implementation should at some point be hidden behind an
+            #   appropriate public interface, like `SubspaceDiscrete.filter()`
+            mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
+            if not self.allow_recommending_already_recommended:
+                mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
+            if not self.allow_recommending_already_measured:
+                mask_todrop |= self._searchspace_metadata[_MEASURED]
+            if (
+                not self.allow_recommending_pending_experiments
+                and pending_experiments is not None
+            ):
+                mask_todrop |= pd.merge(
+                    self.searchspace.discrete.exp_rep,
+                    pending_experiments,
+                    indicator=True,
+                    how="left",
+                )["_merge"].eq("both")
+            searchspace = evolve(
+                self.searchspace,
+                discrete=FilteredSubspaceDiscrete.from_subspace(
+                    self.searchspace.discrete, ~mask_todrop.to_numpy()
+                ),
+            )
+        else:
+            searchspace = self.searchspace
+
+        # Pending experiments should not be passed to non-predictive recommenders
+        # to avoid complaints about unused arguments, so we need to know of what
+        # type the next recommender will be
+        recommender = self.recommender
+        if isinstance(recommender, MetaRecommender):
+            recommender = recommender.get_non_meta_recommender(
+                batch_size,
+                searchspace,
+                self.objective,
+                self._measurements_exp,
+                pending_experiments,
+            )
+        is_nonpredictive = isinstance(recommender, NonPredictiveRecommender)
 
         # Get the recommended search space entries
-        rec = self.recommender.recommend(
-            batch_size,
-            annotated_searchspace,
-            self.objective,
-            self._measurements_exp,
-            pending_experiments,
-        )
+        try:
+            # NOTE: The `recommend` call must happen on `self.recommender` to update
+            #   potential inner states in case of meta recommenders!
+            rec = self.recommender.recommend(
+                batch_size,
+                searchspace,
+                self.objective,
+                self._measurements_exp,
+                None if is_nonpredictive else pending_experiments,
+            )
+        except NotEnoughPointsLeftError as ex:
+            # Aliases for code compactness
+            f = fields(Campaign)
+            ok_m = self.allow_recommending_already_measured
+            ok_r = self.allow_recommending_already_recommended
+            ok_p = self.allow_recommending_pending_experiments
+            ok_m_name = f.allow_recommending_already_measured.name
+            ok_r_name = f.allow_recommending_already_recommended.name
+            ok_p_name = f.allow_recommending_pending_experiments.name
+            no_blocked_pending_points = ok_p or (pending_experiments is None)
+
+            # If there are no candidate restrictions to be relaxed
+            if ok_m and ok_r and no_blocked_pending_points:
+                raise ex
+
+            # Otherwise, extract possible relaxations
+            solution = [
+                f"'{name}=True'"
+                for name, value in [
+                    (ok_m_name, ok_m),
+                    (ok_r_name, ok_r),
+                    (ok_p_name, no_blocked_pending_points),
+                ]
+                if not value
+            ]
+            message = solution[0] if len(solution) == 1 else " and/or ".join(solution)
+            raise NotEnoughPointsLeftError(
+                f"{str(ex)} Consider setting {message}."
+            ) from ex
 
         # Cache the recommendations
         self._cached_recommendation = rec.copy()
@@ -402,9 +534,6 @@ class Campaign(SerialMixin):
 
     def posterior(self, candidates: pd.DataFrame) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
-
-        The predictive distribution is based on the surrogate model of the last used
-        recommender.
 
         Args:
             candidates: The candidate points in experimental recommendations.
@@ -430,8 +559,18 @@ class Campaign(SerialMixin):
         with torch.no_grad():
             return surrogate.posterior(candidates)
 
-    def get_surrogate(self) -> SurrogateProtocol:
+    def get_surrogate(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> SurrogateProtocol:
         """Get the current surrogate model.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
 
         Raises:
             RuntimeError: If the current recommender does not provide a surrogate model.
@@ -451,20 +590,26 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        pure_recommender: RecommenderProtocol
+        recommender: RecommenderProtocol
         if isinstance(self.recommender, MetaRecommender):
-            pure_recommender = self.recommender.get_current_recommender()
+            recommender = self.recommender.get_non_meta_recommender(
+                batch_size,
+                self.searchspace,
+                self.objective,
+                self.measurements,
+                pending_experiments,
+            )
         else:
-            pure_recommender = self.recommender
+            recommender = self.recommender
 
-        if isinstance(pure_recommender, BayesianRecommender):
-            return pure_recommender.get_surrogate(
+        if isinstance(recommender, BayesianRecommender):
+            return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
         else:
             raise RuntimeError(
                 f"The current recommender is of type "
-                f"'{pure_recommender.__class__.__name__}', which does not provide "
+                f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )
