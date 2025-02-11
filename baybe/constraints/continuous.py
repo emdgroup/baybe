@@ -144,7 +144,7 @@ class ContinuousCardinalityConstraint(
     relative_threshold: float = field(
         default=1e-2, converter=float, validator=[gt(0.0), lt(1.0)]
     )
-    """A relative threshold for determining if the value is considered zero."""
+    """A relative threshold for determining if a value is considered zero."""
 
     @property
     def n_inactive_parameter_combinations(self) -> int:
