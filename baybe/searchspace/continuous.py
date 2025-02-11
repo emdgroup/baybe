@@ -380,10 +380,16 @@ class SubspaceContinuous(SerialMixin):
                 # Constraint validation should have ensured that each parameter can
                 # be part of at most one cardinality constraint
                 assert len(constraints) == 1
+                constraint = constraints[0]
 
-                p_adjusted = activate_parameter(
-                    p, constraints[0].get_absolute_thresholds(p.bounds)
-                )
+                # If the corresponding constraint enforces a minimum cardinality,
+                # force-activate the parameter
+                if constraint.min_cardinality > 0:
+                    p_adjusted = activate_parameter(
+                        p, constraint.get_absolute_thresholds(p.bounds)
+                    )
+                else:
+                    p_adjusted = p
 
             else:
                 p_adjusted = p
