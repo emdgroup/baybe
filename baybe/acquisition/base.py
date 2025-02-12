@@ -168,7 +168,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                         "Pareto optimization currently supports "
                         "maximization/minimization targets only."
                     )
-                maximize = [t.mode == TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
+                maximize = [t.mode is TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
                 multiplier = torch.tensor([1.0 if m else -1.0 for m in maximize])
                 additional_params["objective"] = WeightedMCMultiOutputObjective(
                     multiplier
