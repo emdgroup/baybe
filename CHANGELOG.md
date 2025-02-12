@@ -10,15 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
-- Warning `MinimumCardinalityViolatedWarning` is triggered when any minimum 
-  cardinality is violated in `BotorchRecommender`
+- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
+  constraints are violated
 - Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
-  optimization behavior in the presence of multiple subspaces
+  optimization behavior in the presence of cardinality constraints
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
-- Attribute `relative_threshold` and method `get_threshold` to 
+- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
   `ContinuousCardinalityConstraint`
-- Utilities `count_zeros` and `is_cardinality_fulfilled`
+- Utilities `activate_parameter`, `is_between` and `is_cardinality_fulfilled`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
