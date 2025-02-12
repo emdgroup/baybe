@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.parameters import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -111,6 +112,14 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    _task_startified_outtransform: bool = field(default=False)
+    """Whether task-stratified output transform should be used for multi-task model.
+    
+    This is experimental and may be removed before merging to main.
+    Also, the StratifiedStandardise would need to be adapted to work
+    with multi-output models.
+    """
+
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
@@ -123,7 +132,7 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     @staticmethod
     def _make_parameter_scaler_factory(
-        parameter: Parameter,
+            parameter: Parameter,
     ) -> type[InputTransform] | None:
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
@@ -156,7 +165,19 @@ class GaussianProcessSurrogate(Surrogate):
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+
+        if context.is_multitask and self._task_startified_outtransform:
+            # TODO See https://github.com/pytorch/botorch/issues/2739
+            if train_y.shape[-1] != 1:
+                raise NotImplementedError(
+                    'Task-stratified output transform currently does not support' +
+                    'multiple outputs.')
+            outcome_transform = botorch.models.transforms.outcome.StratifiedStandardize(
+                task_values=train_x[..., context.task_idx].unique().to(torch.long),
+                stratification_idx=context.task_idx
+            )
+        else:
+            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
@@ -169,20 +190,12 @@ class GaussianProcessSurrogate(Surrogate):
             context.searchspace, train_x, train_y
         ).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
             batch_shape=batch_shape,
+            # The active_dims parameter is omitted as it is not needed for both
+            # - single-task SingleTaskGP: all features are used
+            # - multi-task MultiTaskGP: the model splits task and non-task features
+            #   before passing them to the covariance kernel
         )
-
-        # create GP covariance
-        if not context.is_multitask:
-            covar_module = base_covar_module
-        else:
-            task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=context.n_tasks,
-                active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
-            )
-            covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
@@ -191,15 +204,41 @@ class GaussianProcessSurrogate(Surrogate):
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
+        # Whether to use multi- or single-task model
+        if not context.is_multitask:
+            model_cls = botorch.models.SingleTaskGP
+            model_kwargs = {}
+        else:
+            model_cls = botorch.models.MultiTaskGP
+            # TODO
+            #  It is assumed that there is only one task parameter with only one active value
+            #  One active task value is required for MultiTaskGP as else
+            #  one posterior per task would be returned:
+            #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
+            # TODO
+            #  The below code implicitly assumes there is single task parameter,
+            #  which is already checked in the SearchSpace
+            task_param = [p for p in context.searchspace.discrete.parameters if isinstance(p, TaskParameter)][0]
+            if len(task_param.active_values) > 1:
+                raise NotImplementedError('Does not support multiple active task values')
+            model_kwargs = {
+                'task_feature': context.task_idx,
+                'output_tasks': [task_param.comp_df.at[task_param.active_values[0], task_param.name]],
+                'rank': context.n_tasks,
+                'task_covar_prior': None,
+                'all_tasks': task_param.comp_df[task_param.name].astype(int).to_list(),
+            }
+
         # construct and fit the Gaussian process
-        self._model = botorch.models.SingleTaskGP(
+        self._model = model_cls(
             train_x,
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
             mean_module=mean_module,
-            covar_module=covar_module,
+            covar_module=base_covar_module,
             likelihood=likelihood,
+            **model_kwargs
         )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
