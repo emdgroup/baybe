@@ -112,7 +112,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    _task_startified_outtransform: bool = field(default=False)
+    _task_stratified_outtransform: bool = field(default=False)
     """Whether task-stratified output transform should be used for multi-task model.
     
     This is experimental and may be removed before merging to main.
@@ -166,7 +166,7 @@ class GaussianProcessSurrogate(Surrogate):
             train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
         )
 
-        if context.is_multitask and self._task_startified_outtransform:
+        if context.is_multitask and self._task_stratified_outtransform:
             # TODO See https://github.com/pytorch/botorch/issues/2739
             if train_y.shape[-1] != 1:
                 raise NotImplementedError(
