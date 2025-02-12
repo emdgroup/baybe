@@ -236,13 +236,19 @@ class BotorchRecommender(BayesianRecommender):
     ) -> tuple[Tensor, Tensor]:
         """Recommend from a continuous search space with cardinality constraints.
 
-        This is achieved by considering the individual restricted subspaces that can be
+        This is achieved by considering the individual restricted subspaces that can be
         obtained by splitting the parameters into sets of active and inactive
-        parameters, according to what is allowed by the cardinality constraints. In each
-        of these spaces, the in-/activity assignment is fixed, so that the cardinality
-        constraints can be removed and a regular optimization can be performed. The
-        recommendation is then constructed from the combined optimization results of the
-        unconstrained spaces.
+        parameters, according to what is allowed by the cardinality constraints.
+
+        The specific collection of subspaces considered by the recommender is obtained
+        as either the full combinatorial set of possible parameter splits or a random
+        selection thereof, depending on the upper bound specified by the corresponding
+        recommender attribute.
+
+        In each of these spaces, the (in)activity assignment is fixed, so that the
+        cardinality constraints can be removed and a regular optimization can be
+        performed. The recommendation is then constructed from the combined optimization
+        results of the unconstrained spaces.
 
         Args:
             subspace_continuous: The continuous subspace from which to generate
