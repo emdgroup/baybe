@@ -7,6 +7,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+from matplotlib import pyplot as plt
 from pytest import mark
 
 from baybe._optional.info import INSIGHTS_INSTALLED
@@ -159,8 +160,10 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     df = ongoing_campaign.measurements[[p.name for p in ongoing_campaign.parameters]]
     if use_comp_rep:
         df = ongoing_campaign.searchspace.transform(df)
+
     with mock.patch("matplotlib.pyplot.show"):
         shap_insight.plot(plot_type, df)
+        plt.close()
 
 
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
