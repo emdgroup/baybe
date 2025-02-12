@@ -30,7 +30,6 @@ class ParetoObjective(Objective):
         return self._targets
 
     @override
-    @override
     def transform(
         self,
         df: pd.DataFrame | None = None,
