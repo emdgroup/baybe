@@ -147,7 +147,13 @@ def validate_cardinality_constraint_parameter_bounds(
                     f"The bounds of all parameters affected by a constraint of type "
                     f"'{ContinuousCardinalityConstraint.__name__}' must include zero, "
                     f"but the bounds of parameter '{name}' are: "
-                    f"{parameter.bounds.to_tuple()}"
+                    f"{parameter.bounds.to_tuple()}, which may indicate unintended "
+                    f"settings in your parameter definition. "
+                    f"A parameter whose value range includes zero trivially "
+                    f"increases the cardinality of the resulting configuration by one. "
+                    f"Therefore, if your parameter definitions are all correct, "
+                    f"consider excluding the parameter from the constraint and "
+                    f"reducing the cardinality limits by one accordingly."
                 )
             )
 
