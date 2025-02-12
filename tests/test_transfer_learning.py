@@ -19,8 +19,13 @@ from baybe.targets import NumericalTarget
 from baybe.utils.interval import Interval
 
 
-@pytest.mark.parametrize("task_stratified_outtransform", [True, False])
-def test_recommendation(task_stratified_outtransform):
+# @pytest.mark.parametrize("task_stratified_outtransform", [True, False])
+# @pytest.mark.parametrize("observed_test_data", [True, False])
+@pytest.mark.parametrize(
+    "task_stratified_outtransform,observed_test_data",
+    ([True, True], [False, True], [False, True]),
+)
+def test_recommendation(task_stratified_outtransform: bool, observed_test_data: bool):
     """Test a BO iteration with multi-task model."""
     objective = SingleTargetObjective(target=NumericalTarget(name="y", mode="MAX"))
     parameters = [
@@ -32,7 +37,7 @@ def test_recommendation(task_stratified_outtransform):
         {
             "x": [1.0, 2.0, 3.0, 4.0],
             "y": [1.0, 2.0, 3.0, 4.0],
-            "task": ["A", "A", "B", "B"],
+            "task": ["A", "A", "B", "B"] if observed_test_data else ["B"] * 4,
         }
     )
     campaign = deepcopy(
@@ -53,5 +58,6 @@ def test_recommendation(task_stratified_outtransform):
     _ = campaign.recommend(batch_size=1)
 
 
-# TODO once recommendation without data for active task is fixed
-#  add test where no active task data is added at the start
+# TODO once stratified standardise works with recommendation
+#  without data for active task is fixed
+#  add the missing test where no active task data is added at the start
