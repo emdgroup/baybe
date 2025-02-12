@@ -9,8 +9,8 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.parameters.base import Parameter
 from baybe.parameters import TaskParameter
+from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -113,8 +113,8 @@ class GaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     _task_stratified_outtransform: bool = field(default=False)
-    """Whether task-stratified output transform should be used for multi-task model.
-    
+    """Should task-stratified output transform be used for multi-task model.
+
     This is experimental and may be removed before merging to main.
     Also, the StratifiedStandardise would need to be adapted to work
     with multi-output models.
@@ -132,7 +132,7 @@ class GaussianProcessSurrogate(Surrogate):
     @override
     @staticmethod
     def _make_parameter_scaler_factory(
-            parameter: Parameter,
+        parameter: Parameter,
     ) -> type[InputTransform] | None:
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         return None
@@ -170,11 +170,12 @@ class GaussianProcessSurrogate(Surrogate):
             # TODO See https://github.com/pytorch/botorch/issues/2739
             if train_y.shape[-1] != 1:
                 raise NotImplementedError(
-                    'Task-stratified output transform currently does not support' +
-                    'multiple outputs.')
+                    "Task-stratified output transform currently does not support"
+                    + "multiple outputs."
+                )
             outcome_transform = botorch.models.transforms.outcome.StratifiedStandardize(
                 task_values=train_x[..., context.task_idx].unique().to(torch.long),
-                stratification_idx=context.task_idx
+                stratification_idx=context.task_idx,
             )
         else:
             outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
@@ -211,22 +212,31 @@ class GaussianProcessSurrogate(Surrogate):
         else:
             model_cls = botorch.models.MultiTaskGP
             # TODO
-            #  It is assumed that there is only one task parameter with only one active value
+            #  It is assumed that there is only one task parameter with only
+            #  one active value.
             #  One active task value is required for MultiTaskGP as else
             #  one posterior per task would be returned:
             #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
             # TODO
             #  The below code implicitly assumes there is single task parameter,
-            #  which is already checked in the SearchSpace
-            task_param = [p for p in context.searchspace.discrete.parameters if isinstance(p, TaskParameter)][0]
+            #  which is already checked in the SearchSpace.
+            task_param = [
+                p
+                for p in context.searchspace.discrete.parameters
+                if isinstance(p, TaskParameter)
+            ][0]
             if len(task_param.active_values) > 1:
-                raise NotImplementedError('Does not support multiple active task values')
+                raise NotImplementedError(
+                    "Does not support multiple active task values."
+                )
             model_kwargs = {
-                'task_feature': context.task_idx,
-                'output_tasks': [task_param.comp_df.at[task_param.active_values[0], task_param.name]],
-                'rank': context.n_tasks,
-                'task_covar_prior': None,
-                'all_tasks': task_param.comp_df[task_param.name].astype(int).to_list(),
+                "task_feature": context.task_idx,
+                "output_tasks": [
+                    task_param.comp_df.at[task_param.active_values[0], task_param.name]
+                ],
+                "rank": context.n_tasks,
+                "task_covar_prior": None,
+                "all_tasks": task_param.comp_df[task_param.name].astype(int).to_list(),
             }
 
         # construct and fit the Gaussian process
@@ -238,7 +248,7 @@ class GaussianProcessSurrogate(Surrogate):
             mean_module=mean_module,
             covar_module=base_covar_module,
             likelihood=likelihood,
-            **model_kwargs
+            **model_kwargs,
         )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
