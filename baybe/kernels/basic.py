@@ -6,9 +6,8 @@ from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
-from typing_extensions import override
-
 from gpytorch.constraints import Interval
+from typing_extensions import override
 
 from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior

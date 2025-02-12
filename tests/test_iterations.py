@@ -44,9 +44,9 @@ from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
+    BotorchKernelFactory,
     DefaultKernelFactory,
     EDBOKernelFactory,
-    BotorchKernelFactory,
 )
 from baybe.utils.basic import get_subclasses
 
