@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
+  constraints are violated
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of cardinality constraints
+- Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
+  in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
+- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
+  `ContinuousCardinalityConstraint`
+- Utilities `activate_parameter`, `is_between` and `is_cardinality_fulfilled`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

@@ -268,3 +268,22 @@ def test_cardinality_constraints_with_overlapping_parameters():
                 ),
             ),
         )
+
+
+def test_cardinality_constraint_with_invalid_parameter_bounds():
+    """Imposing a cardinality constraint on a parameter whose range does not include
+    zero raises an error."""  # noqa
+    parameters = (
+        NumericalContinuousParameter("c1", (0, 1)),
+        NumericalContinuousParameter("c2", (1, 2)),
+    )
+    with pytest.raises(ValueError, match="must include zero"):
+        SubspaceContinuous(
+            parameters=parameters,
+            constraints_nonlin=(
+                ContinuousCardinalityConstraint(
+                    parameters=["c1", "c2"],
+                    max_cardinality=1,
+                ),
+            ),
+        )

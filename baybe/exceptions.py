@@ -11,6 +11,10 @@ class UnusedObjectWarning(UserWarning):
     """
 
 
+class MinimumCardinalityViolatedWarning(UserWarning):
+    """Minimum cardinality constraints are violated."""
+
+
 ##### Exceptions #####
 
 
@@ -35,6 +39,10 @@ class IncompatibleExplainerError(IncompatibilityError):
 
 class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
+
+
+class InfeasibilityError(Exception):
+    """An optimization problem has no feasible solution."""
 
 
 class NotEnoughPointsLeftError(Exception):
