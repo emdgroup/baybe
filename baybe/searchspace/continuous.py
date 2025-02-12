@@ -342,7 +342,7 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
-    def _enforce_cardinality_constraints_via_assignment(
+    def _enforce_cardinality_constraints(
         self,
         inactive_parameter_names: Collection[str],
     ) -> SubspaceContinuous:
@@ -549,7 +549,7 @@ class SubspaceContinuous(SerialMixin):
             # optional and it helps reduce the parameter space with certain
             # computational cost.
             subspace_without_cardinality_constraint = (
-                self._enforce_cardinality_constraints_via_assignment(
+                self._enforce_cardinality_constraints(
                     inactive_params_sample
                 )._drop_parameters(inactive_params_sample)
             )

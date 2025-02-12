@@ -279,11 +279,7 @@ class BotorchRecommender(BayesianRecommender):
 
         # Create iterable of subspaces to be optimized
         subspaces = (
-            (
-                subspace_continuous._enforce_cardinality_constraints_via_assignment(
-                    inactive_parameters
-                )
-            )
+            (subspace_continuous._enforce_cardinality_constraints(inactive_parameters))
             for inactive_parameters in iterator
         )
 
