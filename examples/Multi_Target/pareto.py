@@ -14,7 +14,6 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from polars import set_random_seed
 
 from baybe.acquisition import qLogNEHVI
 from baybe.campaign import Campaign
@@ -24,6 +23,7 @@ from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
+from baybe.utils.random import set_random_seed
 
 ### Settings
 
