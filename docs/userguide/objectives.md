@@ -1,13 +1,9 @@
 # Objective
 
 Optimization problems involve either a single target quantity of interest or 
-several (potentially conflicting) targets that need to be considered simultaneously.  
+several (potentially conflicting) targets that need to be considered simultaneously.
 BayBE uses the concept of an [`Objective`](baybe.objective.Objective) to allow the user
 to control how these different types of scenarios are handled.
-
-```{note}
-We are actively working on adding more objective types for multiple targets.
-```
 
 ## SingleTargetObjective
 The need to optimize a single [`Target`](baybe.targets.base.Target) is the most basic
@@ -23,8 +19,9 @@ target = NumericalTarget(name="Yield", mode="MAX")
 objective = SingleTargetObjective(target)
 ```
 In fact, the role of the
-`SingleTargetObjective` is to merely signal the absence of other `Target`s in the
-optimization problem.
+[`SingleTargetObjective`](baybe.objectives.single.SingleTargetObjective) 
+is to merely signal the absence of other [`Targets`](baybe.targets.base.Target)
+in the optimization problem.
 Because this fairly trivial conversion step requires no additional user configuration,
 we provide a convenience constructor for it:
 
@@ -62,7 +59,8 @@ If provided, the necessary normalization is taken care of automatically.
 Otherwise, an error will be thrown.
 ```
 
-Besides the list of `targets` to be scalarized, this objective type takes two
+Besides the list of [`Targets`](baybe.targets.base.Target)
+to be scalarized, this objective type takes two
 additional optional parameters that let us control its behavior:
 * `weights`: Specifies the relative importance of the targets in the form of a
   sequence of positive numbers, one for each target considered.  
@@ -102,3 +100,40 @@ objective = DesirabilityObjective(
 ```
 
 For a complete example demonstrating desirability mode, see [here](./../../examples/Multi_Target/desirability).
+
+## ParetoObjective
+The [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective) can be used when the
+goal is to find a set of solutions that represent optimal trade-offs among
+multiple conflicting targets. Unlike the
+[`DesirabilityObjective`](#DesirabilityObjective), this approach does not aggregate the
+targets into a single scalar value but instead seeks to identify the Pareto front – the
+set of *non-dominated* target configurations.
+
+```{admonition} Non-dominated Configurations
+:class: tip
+A target configuration is considered non-dominated if no other configuration is better 
+in *all* targets.
+```
+
+Identifying the Pareto front requires maintaining explicit models for each of the target
+involved. This differs from the [`DesirabilityObjective`](#DesirabilityObjective),
+which relies on a single predictive model to describe the associated
+desirability values. However, the drawback of the latter is that the exact trade-off
+between the targets must be specified *in advance*, through explicit target
+weights. By contrast, the Pareto approach allows to specify this trade-off
+*after* the experiments have been carried out, giving the user the flexibly to adjust
+their preferences post-hoc – knowing that each of the obtained points is optimal
+with respect to a particular preference model. In this sense, the
+Pareto approach can be considered a true multi-target optimization method. 
+
+To set up a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), simply
+specify the corresponding target objects:
+```python
+from baybe.targets import NumericalTarget
+from baybe.objectives import ParetoObjective
+
+target_1 = NumericalTarget(name="t_1", mode="MIN")
+target_2 = NumericalTarget(name="t_2", mode="MAX")
+objective = ParetoObjective(targets=[target_1, target_2])
+```
+
