@@ -4,11 +4,27 @@ from contextlib import contextmanager
 from typing import Generator
 
 from gpytorch.settings import debug, fast_computations
-from gpytorch.settings._feature_flag import _feature_flag
 
-class single_device_mode(_feature_flag):
+class single_device_mode:
     """Context manager that forces all operations to happen on a single device."""
     _global_value = False
+
+    def __init__(self, state: bool = True):
+        self.prev = self.__class__._global_value
+        self.state = state
+
+    def __enter__(self):
+        self.__class__._global_value = self.state
+        return self
+
+    def __exit__(self, *args):
+        self.__class__._global_value = self.prev
+        return False
+
+    @classmethod
+    def on(cls) -> bool:
+        """Return whether single device mode is currently enabled."""
+        return cls._global_value
 
 @contextmanager
 def device_mode(state: bool = True) -> Generator[None, None, None]:
