@@ -181,8 +181,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                 case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
                     # Adjust best_f
                     if "best_f" in signature_params:
+                        # Move to CPU before converting to item
                         additional_params["best_f"] = (
-                            bo_surrogate.posterior(train_x).mean.min().item()
+                            bo_surrogate.posterior(train_x).mean.cpu().min().item()
                         )
                         if issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
                             additional_params["best_f"] *= -1.0
@@ -209,8 +210,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                         )
                 case SingleTargetObjective() | DesirabilityObjective():
                     if "best_f" in signature_params:
+                        # Move to CPU before converting to item
                         additional_params["best_f"] = (
-                            bo_surrogate.posterior(train_x).mean.max().item()
+                            bo_surrogate.posterior(train_x).mean.cpu().max().item()
                         )
                 case _:
                     raise ValueError(f"Unsupported objective type: {objective}")

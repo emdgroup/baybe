@@ -19,6 +19,8 @@ from cattrs.dispatch import (
 )
 from joblib.hashing import hash
 from typing_extensions import override
+import numpy as np
+import torch
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -231,6 +233,28 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
         )
 
+    def posterior_to_numpy(posterior: Posterior) -> np.ndarray:
+        """Safely convert a posterior to numpy array.
+        
+        Args:
+            posterior: The posterior to convert
+            
+        Returns:
+            The numpy array representation
+        """
+        # Get mean tensor
+        mean = posterior.mean
+        
+        # Move to CPU if on CUDA
+        if mean.is_cuda:
+            mean = mean.cpu()
+        
+        # Detach if needed
+        if mean.requires_grad:
+            mean = mean.detach()
+        
+        return mean.numpy()
+
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
 
@@ -254,6 +278,20 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         p = self._posterior(self._input_scaler.transform(candidates_comp))
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
+        
+        # Ensure any tensor attributes are on CPU before returning
+        if hasattr(p, "mean"):
+            mean = p.mean
+            if isinstance(mean, torch.Tensor) and mean.is_cuda:
+                # Create a new mean tensor on CPU
+                p.mean = mean.cpu().detach()
+        
+        if hasattr(p, "variance"):
+            variance = p.variance
+            if isinstance(variance, torch.Tensor) and variance.is_cuda:
+                # Create a new variance tensor on CPU
+                p.variance = variance.cpu().detach()
+        
         return p
 
     @abstractmethod

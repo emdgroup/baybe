@@ -42,35 +42,73 @@ def to_tensor(
 
 
 def to_tensor(
-    *x: Any, device: torch.device | None = None
+    *args: Any,
+    device: torch.device | str | None = None,
 ) -> torch.Tensor | tuple[torch.Tensor, ...]:
-    """Convert one or multiple array-like objects.
-
-    (e.g. numpy arrays or pandas DataFrames) to
-    torch.Tensors and move them to the specified device
-    if provided.
+    """Convert one or multiple inputs to PyTorch tensors.
 
     Args:
-        *x: One or multiple array-like objects to convert.
-        device: Optional; the torch.device to move the tensor(s) to.
+        *args: One or multiple inputs to convert to tensors.
+        device: The device to move the tensor(s) to.
 
     Returns:
-        A torch.Tensor if a single input is given, or a tuple of torch.Tensors for
-        multiple inputs.
+        Either a single tensor or a tuple of tensors, depending on input.
     """
+    def _convert_single(data: Any) -> torch.Tensor:
+        if isinstance(data, torch.Tensor):
+            # If it's already a tensor, just move it to the right device
+            tensor = data
+        elif isinstance(data, pd.DataFrame):
+            # Convert DataFrame to numpy first
+            tensor = torch.tensor(data.values.astype(np.float64))
+        elif isinstance(data, np.ndarray):
+            tensor = torch.from_numpy(data.astype(np.float64))
+        else:
+            tensor = torch.tensor(data, dtype=torch.float64)
 
-    def convert(item: Any) -> torch.Tensor:
-        if isinstance(item, pd.DataFrame):
-            item = item.values.astype(np.float64)
-        elif isinstance(item, list):
-            item = np.array(item, dtype=np.float64)
-        tensor_item = torch.tensor(item)
-        return tensor_item.to(device) if device is not None else tensor_item
+        # Move to specified device if provided
+        if device is not None:
+            tensor = tensor.to(device)
+        elif torch.cuda.is_available():
+            # Default to CUDA if available and no device specified
+            tensor = tensor.to('cuda')
 
-    if len(x) == 1:
-        return convert(x[0])
+        return tensor
+
+    # Handle single or multiple inputs
+    if len(args) == 1:
+        return _convert_single(args[0])
     else:
-        return tuple(convert(item) for item in x)
+        return tuple(_convert_single(arg) for arg in args)
+
+
+def from_tensor(
+    tensor: torch.Tensor | tuple[torch.Tensor, ...],
+) -> np.ndarray | tuple[np.ndarray, ...]:
+    """Convert PyTorch tensor(s) to NumPy array(s).
+    
+    Args:
+        tensor: The tensor or tuple of tensors to convert.
+        
+    Returns:
+        The converted NumPy array(s).
+    """
+    def _convert_single(t: torch.Tensor) -> np.ndarray:
+        # First move to CPU if needed
+        if t.is_cuda:
+            t = t.cpu()
+        
+        # Then detach if needed
+        if t.requires_grad:
+            t = t.detach()
+            
+        # Finally convert to numpy
+        return t.numpy()
+    
+    # Handle single tensor or tuple of tensors
+    if isinstance(tensor, tuple):
+        return tuple(_convert_single(t) for t in tensor)
+    return _convert_single(tensor)
 
 
 def add_fake_measurements(
@@ -701,13 +739,6 @@ def arrays_to_dataframes(
 ]:
     """Make a decorator for labeling the input/output columns of array-based callables.
 
-    Useful for creating parameter-to-target lookups from array-based logic.
-    The decorator transforms a callable designed to work with unlabelled arrays such
-    that it can operate with dataframes instead. The original callable is expected to
-    accept and return two-dimensional arrays. When decorated, the callable accepts and
-    returns dataframes whose columns are mapped to the corresponding arrays based on the
-    specified label sequences.
-
     Args:
         input_labels: The sequence of labels for the input columns.
         output_labels: The sequence of labels for the output columns.
@@ -729,9 +760,12 @@ def arrays_to_dataframes(
             array_in = df[list(input_labels)].to_numpy()
             if use_torch:
                 import torch
-
                 with torch.no_grad():
-                    array_out = fn(torch.from_numpy(array_in)).numpy()
+                    result = fn(torch.from_numpy(array_in))
+                    # Move to CPU before converting to numpy
+                    if result.is_cuda:
+                        result = result.cpu()
+                    array_out = result.numpy()
             else:
                 array_out = fn(array_in)
             return pd.DataFrame(array_out, columns=list(output_labels), index=df.index)

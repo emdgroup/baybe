@@ -312,11 +312,15 @@ class BotorchRecommender(BayesianRecommender):
             or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
         )
 
+        # Move points to CPU and detach before converting to numpy
+        if points.is_cuda:
+            points = points.detach().cpu()
+
         # Align candidates with search space index. Done via including the search space
         # index during the merge, which is used later for back-translation into the
         # experimental representation
         merged = pd.merge(
-            pd.DataFrame(points),
+            pd.DataFrame(points.numpy()),  # Now safe to convert to numpy
             candidates_comp.reset_index(),
             on=list(candidates_comp.columns),
             how="left",
