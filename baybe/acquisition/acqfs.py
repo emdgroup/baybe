@@ -360,7 +360,7 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
             array([-0.2,  9. ])
 
             >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, False], 0.2)
-            array([ -0.4, -22. ])
+            array([ -0.4, 22. ])
 
         Args:
             array: A 2-D array-like where each row represents a target configuration.
@@ -392,7 +392,7 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
         min = np.min(array, axis=0)
         max = np.max(array, axis=0)
 
-        return min - factor * (max - min)
+        return (min - factor * (max - min)) * maximize
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
