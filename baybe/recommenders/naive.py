@@ -84,33 +84,42 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             )
 
         # We are in a hybrid setting now
+        
+        # Enforce both sub-recommenders use the same device.
+        common_device = self.disc_recommender.device
+        self.cont_recommender.device = common_device
 
-        # We will attach continuous parts to discrete parts and the other way round.
-        # To make things simple, we sample a single point in the continuous space which
-        # will then be attached to every discrete point when the acquisition function
-        # is evaluated.
+        # Sample a single continuous point and convert it to a tensor on the common device.
         cont_part = searchspace.continuous.sample_uniform(1)
-        cont_part_tensor = to_tensor(cont_part).unsqueeze(-2)
+        cont_part_tensor = to_tensor(cont_part, device=common_device).unsqueeze(-2)
 
         # Get discrete candidates
         candidates_exp, _ = searchspace.discrete.get_candidates()
 
         # We now check whether the discrete recommender is bayesian.
         if isinstance(self.disc_recommender, BayesianRecommender):
-            # Get access to the recommenders acquisition function
+            # Get access to the recommender's acquisition function,
+            # which should move all underlying tensors to the correct device.
             self.disc_recommender._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
 
             # Construct the partial acquisition function that attaches cont_part
-            # whenever evaluating the acquisition function
+            # whenever evaluating the acquisition function.
             disc_acqf_part = PartialAcquisitionFunction(
                 botorch_acqf=self.disc_recommender._botorch_acqf,
                 pinned_part=cont_part_tensor,
                 pin_discrete=False,
             )
 
-            self.disc_recommender._botorch_acqf = disc_acqf_part
+            # Force the partial acquisition function (and any internal caches)
+            # to be on the common device.
+            self.disc_recommender._botorch_acqf = disc_acqf_part.to(common_device)
+            # Reset prediction strategy cache if present so that any cached tensors
+            # (e.g. mean_cache) are recomputed on the correct device.
+            if (hasattr(self.disc_recommender._botorch_acqf, "model") and
+                hasattr(self.disc_recommender._botorch_acqf.model, "prediction_strategy")):
+                self.disc_recommender._botorch_acqf.model.prediction_strategy._mean_cache = None
 
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
@@ -119,23 +128,29 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             batch_size=batch_size,
         )
 
-        # Get one random discrete point that will be attached when evaluating the
-        # acquisition function in the discrete space.
+        # Get one random discrete point and convert it to a tensor on the common device.
         disc_part = searchspace.discrete.comp_rep.loc[disc_rec_idx].sample(1)
-        disc_part_tensor = to_tensor(disc_part).unsqueeze(-2)
+        disc_part_tensor = to_tensor(disc_part, device=common_device).unsqueeze(-2)
 
         # Setup a fresh acquisition function for the continuous recommender
         self.cont_recommender._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
         )
 
-        # Construct the continuous space as a standalone space
+        # Construct the continuous space as a standalone acquisition function.
         cont_acqf_part = PartialAcquisitionFunction(
             botorch_acqf=self.cont_recommender._botorch_acqf,
             pinned_part=disc_part_tensor,
             pin_discrete=True,
         )
-        self.cont_recommender._botorch_acqf = cont_acqf_part
+        # Force the continuous acquisition function (and its caches)
+        # to reside on the common device.
+        self.cont_recommender._botorch_acqf = cont_acqf_part.to(common_device)
+        # Reset prediction strategy cache if present so that any cached tensors
+        # are recomputed on the correct device.
+        if (hasattr(self.cont_recommender._botorch_acqf, "model") and
+            hasattr(self.cont_recommender._botorch_acqf.model, "prediction_strategy")):
+            self.cont_recommender._botorch_acqf.model.prediction_strategy._mean_cache = None
 
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(

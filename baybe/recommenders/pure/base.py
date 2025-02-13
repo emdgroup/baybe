@@ -214,7 +214,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-        pending_experiments: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -251,14 +251,29 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Get recommendations
         if is_hybrid_space:
             rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+
+            # ------------------------------------------------------------------
+            # New lines to ensure consistent device usage and reset caches
+            # ------------------------------------------------------------------
+            if (
+                hasattr(self, "_botorch_acqf")
+                and getattr(self._botorch_acqf, "model", None) is not None
+            ):
+                # Move model to the correct device (if not already)
+                if hasattr(self, "device"):
+                    self._botorch_acqf.model = self._botorch_acqf.model.to(self.device)
+                    # Reset the prediction strategy cache so that future passes
+                    # recalculate everything on the correct device
+                    if hasattr(self._botorch_acqf.model, "prediction_strategy"):
+                        self._botorch_acqf.model.prediction_strategy._mean_cache = None
+            # ------------------------------------------------------------------
+
+            return rec
         else:
             idxs = self._recommend_discrete(
                 searchspace.discrete, candidates_exp, batch_size
             )
-            rec = searchspace.discrete.exp_rep.loc[idxs, :]
-
-        # Return recommendations
-        return rec
+            return idxs
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -30,6 +30,7 @@ from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
 )
+from baybe.utils.device_mode import single_device_mode
 
 
 @define(kw_only=True)
@@ -150,6 +151,18 @@ class BotorchRecommender(BayesianRecommender):
         # determine the next set of points to be tested
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_tensor = self._to_device(to_tensor(candidates_comp))
+
+        # ------------------- NEW LINES FOR GPU CONSISTENCY -------------------
+        # Ensure the acquisition function is on the correct device
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+            # Properly clear GPyTorch's cached Tensors on device move
+            if (hasattr(self._botorch_acqf, "model")
+                and hasattr(self._botorch_acqf.model, "prediction_strategy")
+                and hasattr(self._botorch_acqf.model.prediction_strategy, "_memoize_cache")):
+                self._botorch_acqf.model.prediction_strategy._memoize_cache = {}
+        # ---------------------------------------------------------------------
+
         points, _ = optimize_acqf_discrete(
             self._botorch_acqf, batch_size, candidates_tensor
         )
@@ -231,32 +244,7 @@ class BotorchRecommender(BayesianRecommender):
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
-
-        This functions samples points from the discrete subspace, performs optimization
-        in the continuous subspace with these points being fixed and returns the best
-        found solution.
-
-        **Important**: This performs a brute-force calculation by fixing every possible
-        assignment of discrete variables and optimizing the continuous subspace for
-        each of them. It is thus computationally expensive.
-
-        **Note**: This function implicitly assumes that discrete search space parts in
-        the respective data frame come first and continuous parts come second.
-
-        Args:
-            searchspace: The search space in which the recommendations should be made.
-            candidates_exp: The experimental representation of the candidates
-                of the discrete subspace.
-            batch_size: The size of the calculated batch.
-
-        Raises:
-            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
-                function is used with a batch size > 1.
-
-        Returns:
-            The recommended points.
-        """
+        """Recommend points using the optimize_acqf_mixed function of BoTorch."""
         # For batch size > 1, the acqf needs to support batching
         if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
@@ -289,7 +277,16 @@ class BotorchRecommender(BayesianRecommender):
             torch.from_numpy(searchspace.comp_rep_bounds.values)
         )
 
-        # Actual call of the BoTorch optimization routine
+        # ------------------- NEW LINES FOR GPU CONSISTENCY -------------------
+        # Move the acquisition function onto the device and reset internal caches
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+            if (hasattr(self._botorch_acqf, "model")
+                and hasattr(self._botorch_acqf.model, "prediction_strategy")
+                and hasattr(self._botorch_acqf.model.prediction_strategy, "_memoize_cache")):
+                self._botorch_acqf.model.prediction_strategy._memoize_cache = {}
+        # ---------------------------------------------------------------------
+
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
             bounds=bounds_tensor,
@@ -366,60 +363,95 @@ class BotorchRecommender(BayesianRecommender):
         measurements: pd.DataFrame | None,
         pending_experiments: pd.DataFrame | None,
     ) -> None:
-        """Set up the BoTorch acquisition function.
+        """Set up the BoTorch acquisition function."""
+        with single_device_mode(state=True):  # Force everything to same device
+            # First ensure all input tensors are on the correct device
+            if hasattr(self, "device"):
+                if measurements is not None and hasattr(measurements, "to"):
+                    measurements = measurements.to(self.device)
+                if pending_experiments is not None and hasattr(pending_experiments, "to"):
+                    pending_experiments = pending_experiments.to(self.device)
+            
+            # Call parent setup
+            super()._setup_botorch_acqf(
+                searchspace, objective, measurements, pending_experiments
+            )
 
-        Args:
-            searchspace: The search space to be used.
-            objective: The objective to be used.
-            measurements: The measurements to be used.
-            pending_experiments: The pending experiments to be used.
-        """
-        # First call parent method to set up the surrogate model and
-        # acquisition function
-        super()._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_experiments
-        )
+            # Move model components to device
+            if hasattr(self._surrogate_model, "to"):
+                self._surrogate_model = self._surrogate_model.to(self.device)
+                
+                # Move the kernel to device if it exists
+                if hasattr(self._surrogate_model, "covar_module"):
+                    self._surrogate_model.covar_module = self._surrogate_model.covar_module.to(self.device)
+                    if hasattr(self._surrogate_model.covar_module, "kernels"):
+                        self._surrogate_model.covar_module.kernels = tuple(
+                            k.to(self.device) for k in self._surrogate_model.covar_module.kernels
+                        )
+                        # Move base kernels
+                        for k in self._surrogate_model.covar_module.kernels:
+                            if hasattr(k, "base_kernel"):
+                                k.base_kernel = k.base_kernel.to(self.device)
+                            # Also check for any sub-components
+                            for attr_name in dir(k):
+                                attr = getattr(k, attr_name)
+                                if hasattr(attr, "to") and not isinstance(attr, (str, int, float)):
+                                    try:
+                                        setattr(k, attr_name, attr.to(self.device))
+                                    except Exception:
+                                        pass
 
-        # Move surrogate model to the correct device
-        if hasattr(self._surrogate_model, "to"):
-            self._surrogate_model = self._surrogate_model.to(self.device)
+                # Move likelihood
+                if hasattr(self._surrogate_model, "likelihood"):
+                    self._surrogate_model.likelihood = self._surrogate_model.likelihood.to(
+                        self.device
+                    )
 
-            # If the model has a likelihood, move it to the device too
-            if hasattr(self._surrogate_model, "likelihood"):
-                self._surrogate_model.likelihood = self._surrogate_model.likelihood.to(
-                    self.device
-                )
+                # Move training data
+                if hasattr(self._surrogate_model, "train_inputs"):
+                    self._surrogate_model.train_inputs = tuple(
+                        x.to(self.device) for x in self._surrogate_model.train_inputs
+                    )
+                if hasattr(self._surrogate_model, "train_targets"):
+                    self._surrogate_model.train_targets = (
+                        self._surrogate_model.train_targets.to(self.device)
+                    )
 
-            # If the model has training data, move it to the device
-            if hasattr(self._surrogate_model, "train_inputs"):
-                self._surrogate_model.train_inputs = tuple(
-                    x.to(self.device) for x in self._surrogate_model.train_inputs
-                )
-            if hasattr(self._surrogate_model, "train_targets"):
-                self._surrogate_model.train_targets = (
-                    self._surrogate_model.train_targets.to(self.device)
-                )
+                # Force rebuild of caches
+                with torch.no_grad():
+                    if self._surrogate_model.train_inputs:
+                        _ = self._surrogate_model(self._surrogate_model.train_inputs[0])
 
-        # Move acquisition function to the correct device.
-        # Some attributes (e.g. DataFrames) are not convertible, so we first try a
-        # direct call.
-        if hasattr(self._botorch_acqf, "to"):
-            try:
-                self._botorch_acqf = self._botorch_acqf.to(self.device)
-            except TypeError:
-                # If the direct call fails due to a non-tensor attribute (e.g.
-                # DataFrame), iterate over all attributes and move only if possible
-                # (skip DataFrames).
-                for attr, value in self._botorch_acqf.__dict__.items():
-                    if isinstance(value, pd.DataFrame):
-                        continue
-                    if hasattr(value, "to"):
-                        try:
-                            setattr(self._botorch_acqf, attr, value.to(self.device))
-                        except Exception:
-                            pass
-                # Try calling .to() again after the attribute fix.
-                self._botorch_acqf = self._botorch_acqf.to(self.device)
+            # Move acquisition function and clear all caches
+            if hasattr(self._botorch_acqf, "to"):
+                try:
+                    self._botorch_acqf = self._botorch_acqf.to(self.device)
+                except TypeError:
+                    # If the direct call fails due to a non-tensor attribute (e.g.
+                    # DataFrame), iterate over all attributes and move only if possible
+                    # (skip DataFrames).
+                    for attr, value in self._botorch_acqf.__dict__.items():
+                        if isinstance(value, pd.DataFrame):
+                            continue
+                        if hasattr(value, "to"):
+                            try:
+                                setattr(self._botorch_acqf, attr, value.to(self.device))
+                            except Exception:
+                                pass
+                    # Try calling .to() again after the attribute fix.
+                    self._botorch_acqf = self._botorch_acqf.to(self.device)
 
-        # Collect leftover original slotted classes processed by `attrs.define`
-        gc.collect()
+            # Clear ALL caches that might contain tensors on wrong device
+            for obj in [self._surrogate_model, self._botorch_acqf]:
+                if hasattr(obj, "prediction_strategy"):
+                    if hasattr(obj.prediction_strategy, "_memoize_cache"):
+                        obj.prediction_strategy._memoize_cache = {}
+                    if hasattr(obj.prediction_strategy, "_mean_cache"):
+                        obj.prediction_strategy._mean_cache = None
+                    if hasattr(obj.prediction_strategy, "_covar_cache"):
+                        obj.prediction_strategy._covar_cache = None
+
+            # Force garbage collection to clean up any lingering CPU tensors
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
