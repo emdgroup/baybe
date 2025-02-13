@@ -3,11 +3,15 @@
 from contextlib import contextmanager
 from typing import Generator
 
-from gpytorch.settings import debug, single_device_mode, fast_computations
+from gpytorch.settings import debug, fast_computations
+from gpytorch.settings._feature_flag import _feature_flag
 
+class single_device_mode(_feature_flag):
+    """Context manager that forces all operations to happen on a single device."""
+    _global_value = False
 
 @contextmanager
-def single_device_mode(state: bool = True) -> Generator[None, None, None]:
+def device_mode(state: bool = True) -> Generator[None, None, None]:
     """Context manager that forces all operations to happen on a single device.
     
     This combines multiple GPyTorch settings to ensure consistent device usage:
@@ -22,4 +26,4 @@ def single_device_mode(state: bool = True) -> Generator[None, None, None]:
         None
     """
     with single_device_mode(state), debug(state), fast_computations(solves=False):
-        yield 
+        yield
