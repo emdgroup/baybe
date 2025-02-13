@@ -174,9 +174,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                         "maximization/minimization targets only."
                     )
                 maximize = [t.mode is TargetMode.MAX for t in objective.targets]  # type: ignore[attr-defined]
-                multiplier = torch.tensor([1.0 if m else -1.0 for m in maximize])
+                multiplier = [1.0 if m else -1.0 for m in maximize]
                 additional_params["objective"] = WeightedMCMultiOutputObjective(
-                    multiplier
+                    torch.tensor(multiplier)
                 )
                 train_y = measurements[[t.name for t in objective.targets]].to_numpy()
                 if isinstance(ref_point := params_dict["ref_point"], Iterable):
@@ -185,7 +185,9 @@ class AcquisitionFunction(ABC, SerialMixin):
                     ]
                 else:
                     kwargs = {"factor": ref_point} if ref_point is not None else {}
-                    ref_point = self.compute_ref_point(train_y, maximize, **kwargs)
+                    ref_point = (
+                        self.compute_ref_point(train_y, maximize, **kwargs) * multiplier
+                    )
                 params_dict["ref_point"] = ref_point
 
             case _:
