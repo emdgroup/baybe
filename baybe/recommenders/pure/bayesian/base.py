@@ -6,9 +6,10 @@ from abc import ABC
 
 import pandas as pd
 from attrs import define, field, fields
+from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition.acqfs import qLogExpectedImprovement
+from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
@@ -30,10 +31,13 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The used surrogate model."""
 
-    acquisition_function: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qLogExpectedImprovement
+    acquisition_function: AcquisitionFunction | None = field(
+        default=None, converter=optional(convert_acqf)
     )
-    """The used acquisition function class."""
+    """The user-specified acquisition function. When omitted, a default is used."""
+
+    _acqf: AcquisitionFunction | None = field(default=None, init=False)
+    """The used acquisition function."""
 
     _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
@@ -62,6 +66,11 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
+    @staticmethod
+    def _default_acquisition_function(objective: Objective) -> AcquisitionFunction:
+        """Select the appropriate default acquisition function for the given context."""
+        return qLogEI() if len(objective.targets) == 1 else qLogNEHVI()
+
     def get_surrogate(
         self,
         searchspace: SearchSpace,
@@ -83,7 +92,8 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        self._botorch_acqf = self.acquisition_function.to_botorch(
+        self._acqf = self._default_acquisition_function(objective)
+        self._botorch_acqf = self._acqf.to_botorch(
             surrogate,
             searchspace,
             objective,

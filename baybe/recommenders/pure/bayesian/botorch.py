@@ -114,12 +114,14 @@ class BotorchRecommender(BayesianRecommender):
             The dataframe indices of the recommended points in the provided
             experimental representation.
         """
-        if batch_size > 1 and not self.acquisition_function.supports_batching:
+        assert self._acqf is not None
+
+        if batch_size > 1 and not self._acqf.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
             )
-        if batch_size > 1 and isinstance(self.acquisition_function, qThompsonSampling):
+        if batch_size > 1 and isinstance(self._acqf, qThompsonSampling):
             raise IncompatibilityError(
                 "Thompson sampling currently only supports a batch size of 1."
             )
@@ -168,7 +170,9 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             A dataframe containing the recommendations as individual rows.
         """
-        if batch_size > 1 and not self.acquisition_function.supports_batching:
+        assert self._acqf is not None
+
+        if batch_size > 1 and not self._acqf.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
@@ -233,8 +237,9 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The recommended points.
         """
-        # For batch size > 1, the acqf needs to support batching
-        if batch_size > 1 and not self.acquisition_function.supports_batching:
+        assert self._acqf is not None
+
+        if batch_size > 1 and not self._acqf.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
                 f"The '{self.__class__.__name__}' only works with Monte Carlo "
                 f"acquisition functions for batch sizes > 1."
