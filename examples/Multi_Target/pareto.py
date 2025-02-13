@@ -15,7 +15,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from baybe.acquisition import qLogNEHVI
 from baybe.campaign import Campaign
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
@@ -94,10 +93,7 @@ campaign_y1 = Campaign(
 campaign_par = Campaign(
     searchspace=searchspace,
     objective=ParetoObjective([y0, y1]),
-    recommender=BotorchRecommender(
-        acquisition_function=qLogNEHVI(),
-        sequential_continuous=True,
-    ),
+    recommender=BotorchRecommender(sequential_continuous=True),
 )
 
 # We feed each campaign with the same training data and request recommendations:
