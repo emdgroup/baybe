@@ -338,6 +338,9 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     * When specified as a vector, the input is taken as is.
     """
 
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
     @staticmethod
     def compute_ref_point(
         array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
