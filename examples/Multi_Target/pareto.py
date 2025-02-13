@@ -121,7 +121,7 @@ x0_mesh, x1_mesh = np.meshgrid(
 )
 df_y = lookup(pd.DataFrame({x0.name: x0_mesh.ravel(), x1.name: x1_mesh.ravel()}))
 y0_mesh = np.reshape(df_y[y0.name], x0_mesh.shape)
-y1_mesh = np.reshape(df_y[y1.name], x0_mesh.shape)
+y1_mesh = np.reshape(df_y[y1.name], x1_mesh.shape)
 
 
 # Now, we can plot the function values, the training data, the recommendations,
