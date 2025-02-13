@@ -118,7 +118,7 @@ class BotorchRecommender(BayesianRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
+    ) -> pd.DataFrame:
         """Generate recommendations from a discrete search space.
 
         Args:
@@ -167,6 +167,9 @@ class BotorchRecommender(BayesianRecommender):
             self._botorch_acqf, batch_size, candidates_tensor
         )
 
+        # Ensure the output points are moved to CPU before converting to NumPy
+        points = points.detach().cpu()
+
         # retrieve the index of the points from the input dataframe
         # IMPROVE: The merging procedure is conceptually similar to what
         #   `SearchSpace._match_measurement_with_searchspace_indices` does, though using
@@ -174,14 +177,15 @@ class BotorchRecommender(BayesianRecommender):
         #   handle continuous parameters, a corresponding utility could be extracted.
         idxs = pd.Index(
             pd.merge(
-                pd.DataFrame(points, columns=candidates_comp.columns),
+                pd.DataFrame(points.numpy(), columns=candidates_comp.columns),
                 candidates_comp.reset_index(),
-                on=list(candidates_comp),
+                on=list(candidates_comp.columns),
                 how="left",
             )["index"]
         )
 
-        return idxs
+        # Return the experimental representation using the found indices
+        return candidates_exp.loc[idxs]
 
     @override
     def _recommend_continuous(

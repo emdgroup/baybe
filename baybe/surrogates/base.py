@@ -275,22 +275,50 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         #   checker that the attribute is available at the time of the function call
         assert self._input_scaler is not None
 
-        p = self._posterior(self._input_scaler.transform(candidates_comp))
+        transformed = self._input_scaler.transform(candidates_comp)
+        # Initialize prediction strategy if needed
+        if (hasattr(self._model, "train_inputs") and 
+            self._model.train_inputs and 
+            (self._model.prediction_strategy is None or 
+             getattr(self._model.prediction_strategy, "_mean_cache", None) is None)):
+            # Move training data to the same device as transformed inputs.
+            train_x = self._model.train_inputs[0].to(transformed.device)
+            train_y = self._model.train_targets.to(transformed.device)
+            # Use model.eval() to ensure prediction mode.
+            self._model.eval()
+            try:
+                with torch.no_grad():
+                    # Force a forward pass with training data
+                    output = self._model(train_x)
+                    # Initialize likelihood
+                    _ = self._model.likelihood(output)
+                    # Ensure prediction strategy is created
+                    if self._model.prediction_strategy is None:
+                        self._model.prediction_strategy = self._model.exact_prediction_strategy(
+                            train_x, train_y, self._model.likelihood
+                        )
+            except Exception as e:
+                # Log a warning if a dummy pass fails; the cache might have been already set.
+                print("Warning: Dummy forward pass failed to initialize prediction strategy:", e)
+
+        p = self._posterior(transformed)
+
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
         
-        # Ensure any tensor attributes are on CPU before returning
-        if hasattr(p, "mean"):
-            mean = p.mean
-            if isinstance(mean, torch.Tensor) and mean.is_cuda:
-                # Create a new mean tensor on CPU
-                p.mean = mean.cpu().detach()
-        
-        if hasattr(p, "variance"):
-            variance = p.variance
-            if isinstance(variance, torch.Tensor) and variance.is_cuda:
-                # Create a new variance tensor on CPU
-                p.variance = variance.cpu().detach()
+        # If the posterior's tensors are on GPU, create a new posterior with CPU tensors
+        if hasattr(p, "mean") and isinstance(p.mean, torch.Tensor) and p.mean.is_cuda:
+            from botorch.posteriors import GPyTorchPosterior
+            from gpytorch.distributions import MultivariateNormal
+            
+            # Create a new MultivariateNormal distribution with CPU tensors
+            # Ensure proper shape by squeezing extra dimensions
+            mvn = MultivariateNormal(
+                p.mean.cpu().detach().squeeze(-1),  # Remove last dimension
+                p.variance.cpu().detach().squeeze(-1).diag_embed()  # Remove last dimension before creating diagonal matrix
+            )
+            # Create a new posterior with the CPU-based distribution
+            p = GPyTorchPosterior(mvn)
         
         return p
 
