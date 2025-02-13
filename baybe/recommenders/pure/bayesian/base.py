@@ -36,10 +36,10 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The user-specified acquisition function. When omitted, a default is used."""
 
-    _acqf: AcquisitionFunction | None = field(default=None, init=False)
+    _acqf: AcquisitionFunction | None = field(default=None, init=False, eq=False)
     """The used acquisition function."""
 
-    _botorch_acqf = field(default=None, init=False)
+    _botorch_acqf = field(default=None, init=False, eq=False)
     """The current acquisition function."""
 
     acquisition_function_cls: str | None = field(default=None, kw_only=True)
