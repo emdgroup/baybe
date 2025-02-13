@@ -344,8 +344,36 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     @staticmethod
     def compute_ref_point(
         array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
-    ) -> npt.NDArray:
-        """Compute the reference point based on the observed target configurations."""
+    ) -> np.ndarray:
+        """Compute a reference point for a given set of of target configurations.
+
+        The reference point is positioned in relation to the worst target configuration
+        within the provided array. The distance in each target dimension is adjusted by
+        a specified multiplication factor, which scales the reference point away from
+        the worst target configuration based on the maximum observed differences in
+        target values.
+
+        Example:
+            >>> from baybe.acquisition import qLogNEHVI
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, True], 0.1)
+            array([-0.2,  9. ])
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, False], 0.2)
+            array([ -0.4, -22. ])
+
+        Args:
+            array: A 2-D array-like where each row represents a target configuration.
+            maximize: A 1-D boolean array indicating which targets are to be maximized.
+            factor: A numeric value controlling the location of the reference point.
+
+        Raises:
+            ValueError: If the given target configuration array is not two-dimensional.
+            ValueError: If the given Boolean array is not one-dimensional.
+
+        Returns:
+            The computed reference point.
+        """
         if np.ndim(array) != 2:
             raise ValueError(
                 "The specified data array must have exactly two dimensions."
