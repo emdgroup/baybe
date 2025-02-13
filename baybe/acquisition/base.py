@@ -158,7 +158,12 @@ class AcquisitionFunction(ABC, SerialMixin):
                         bo_surrogate.posterior(train_x).mean.max().item()
                     )
             case ParetoObjective():
-                assert isinstance(self, qLogNoisyExpectedHypervolumeImprovement)
+                if not isinstance(self, qLogNoisyExpectedHypervolumeImprovement):
+                    raise IncompatibleAcquisitionFunctionError(
+                        f"Pareto optimization currently supports the "
+                        f"'{qLogNoisyExpectedHypervolumeImprovement.__name__}' "
+                        f"acquisition function only."
+                    )
                 if not all(
                     isinstance(t, NumericalTarget)
                     and t.mode in (TargetMode.MAX, TargetMode.MIN)
