@@ -20,6 +20,7 @@ from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
+from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.random import set_random_seed
@@ -93,7 +94,10 @@ campaign_y1 = Campaign(
 campaign_par = Campaign(
     searchspace=searchspace,
     objective=ParetoObjective([y0, y1]),
-    recommender=BotorchRecommender(sequential_continuous=True),
+    recommender=BotorchRecommender(
+        surrogate_model=GaussianProcessSurrogate().broadcast(),
+        sequential_continuous=True,
+    ),
 )
 
 # We feed each campaign with the same training data and request recommendations:
