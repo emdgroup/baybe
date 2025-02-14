@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import param
 
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
@@ -14,32 +15,18 @@ from baybe.utils.dataframe import add_fake_measurements
 @pytest.mark.parametrize(
     "bad_val, parameter_names",
     [
-        (1337, ["Num_disc_1"]),
-        (np.nan, ["Num_disc_1"]),
-        ("asd", ["Num_disc_1"]),
-        ("asd", ["Categorical_1"]),
-        (np.nan, ["Categorical_1"]),
-        (1337, ["Categorical_1"]),
-        ("asd", ["Custom_1"]),
-        (np.nan, ["Custom_1"]),
-        (1337, ["Custom_1"]),
-        ("asd", ["Task"]),
-        (np.nan, ["Task"]),
-        (1337, ["Task"]),
-    ],
-    ids=[
-        "num_param_outside_tol",
-        "num_param_nan",
-        "num_param_str",
-        "cat_param_invalid_cat",
-        "cat_param_nan",
-        "cat_param_num",
-        "custom_param_invalid_cat",
-        "custom_param_nan",
-        "custom_param_num",
-        "task_param_invalid_cat",
-        "task_param_nan",
-        "task_param_num",
+        param(1337, ["Num_disc_1"], id="num_param_outside_tol"),
+        param(np.nan, ["Num_disc_1"], id="num_param_nan"),
+        param("asd", ["Num_disc_1"], id="num_param_str"),
+        param("asd", ["Categorical_1"], id="cat_param_invalid_cat"),
+        param(np.nan, ["Categorical_1"], id="cat_param_nan"),
+        param(1337, ["Categorical_1"], id="cat_param_num"),
+        param("asd", ["Custom_1"], id="custom_param_invalid_cat"),
+        param(np.nan, ["Custom_1"], id="custom_param_nan"),
+        param(1337, ["Custom_1"], id="custom_param_num"),
+        param("asd", ["Task"], id="task_param_invalid_cat"),
+        param(np.nan, ["Task"], id="task_param_nan"),
+        param(1337, ["Task"], id="task_param_num"),
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
@@ -54,18 +41,11 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
 @pytest.mark.parametrize(
     "bad_val, target_names",
     [
-        (np.nan, ["Target_max"]),
-        ("asd", ["Target_max"]),
-        (np.nan, ["Target_binary"]),
-        (1337, ["Target_binary"]),
-        ("asd", ["Target_binary"]),
-    ],
-    ids=[
-        "num_target_nan",
-        "num_target_str",
-        "binary_target_nan",
-        "binary_target_num",
-        "binary_target_str",
+        param(np.nan, ["Target_max"], id="num_target_nan"),
+        param("asd", ["Target_max"], id="num_target_str"),
+        param(np.nan, ["Target_binary"], id="binary_target_nan"),
+        param(1337, ["Target_binary"], id="binary_target_num"),
+        param("asd", ["Target_binary"], id="binary_target_str"),
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
