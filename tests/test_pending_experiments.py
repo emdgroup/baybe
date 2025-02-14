@@ -20,9 +20,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace.core import SearchSpaceType
 from baybe.utils.basic import get_subclasses
-from baybe.utils.dataframe import (
-    add_parameter_noise,
-)
+from baybe.utils.dataframe import add_parameter_noise
 from baybe.utils.random import temporary_seed
 
 _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]

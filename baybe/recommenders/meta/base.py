@@ -105,7 +105,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         if (
             measurements is not None
             and not isinstance(measurements, _ValidatedDataFrame)
-            and len(measurements) > 0
+            and not measurements.empty
             and objective is not None
             and searchspace is not None
         ):

@@ -398,7 +398,7 @@ class Campaign(SerialMixin):
             )
 
         # Invalidate cached recommendation if pending experiments are provided
-        if (pending_experiments is not None) and (len(pending_experiments) > 0):
+        if (pending_experiments is not None) and not pending_experiments.empty:
             self._cached_recommendation = pd.DataFrame()
             validate_parameter_input(pending_experiments, self.parameters)
             pending_experiments.__class__ = _ValidatedDataFrame

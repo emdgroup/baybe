@@ -105,7 +105,7 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"that an objective is specified."
             )
 
-        if (measurements is None) or (len(measurements) == 0):
+        if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."

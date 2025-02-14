@@ -91,7 +91,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     """
     from baybe.targets import BinaryTarget, NumericalTarget
 
-    if len(data) < 1:
+    if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
     for t in targets:
@@ -134,7 +134,7 @@ def validate_parameter_input(
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
-    if len(data) < 1:
+    if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
     for p in parameters:

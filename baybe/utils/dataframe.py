@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import logging
 from collections.abc import Callable, Iterable, Sequence
-from typing import TYPE_CHECKING, Literal, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
@@ -282,7 +282,7 @@ def create_fake_input(
     parameters: Iterable[Parameter],
     targets: Iterable[Target],
     n_rows: int = 1,
-    **kwargs: dict,
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """Create fake valid input for :meth:`baybe.campaign.Campaign.add_measurements`.
 
@@ -762,9 +762,4 @@ def arrays_to_dataframes(
 
 
 class _ValidatedDataFrame(pd.DataFrame):
-    """Wrapper indicating the underlying experimental data was already verified.
-
-    .. ignore::
-    """
-
-    pass
+    """Wrapper indicating the underlying experimental data was already validated."""
