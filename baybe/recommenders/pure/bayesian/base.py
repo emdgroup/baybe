@@ -17,7 +17,8 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
-from baybe.utils.validation import validate_parameter_input
+from baybe.utils.dataframe import _ValidatedDataFrame
+from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 
 @define
@@ -105,11 +106,21 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"that an objective is specified."
             )
 
+        # Experimental input validation
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
             )
+        if not isinstance(measurements, _ValidatedDataFrame):
+            validate_target_input(measurements, objective.targets)
+            validate_parameter_input(measurements, searchspace.parameters)
+            measurements.__class__ = _ValidatedDataFrame
+        if pending_experiments is not None and not isinstance(
+            pending_experiments, _ValidatedDataFrame
+        ):
+            validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments.__class__ = _ValidatedDataFrame
 
         if (
             isinstance(self._surrogate_model, IndependentGaussianSurrogate)
@@ -123,9 +134,6 @@ class BayesianRecommender(PureRecommender, ABC):
 
         if isinstance(self._surrogate_model, CustomONNXSurrogate):
             CustomONNXSurrogate.validate_compatibility(searchspace)
-
-        if pending_experiments is not None:
-            validate_parameter_input(pending_experiments, searchspace.parameters)
 
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
