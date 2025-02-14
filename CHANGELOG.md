@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `qPSTD` acquisition function
 - `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
   `qLogNoisyExpectedHypervolumeImprovement` acquisition function
+- `BroadcastingSurrogate` class and corresponding `Surrogate.broadcast` method for
+  making single-target surrogate models multi-target compatible
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
