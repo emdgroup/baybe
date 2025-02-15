@@ -106,6 +106,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
+    supports_multi_target: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate is multi-target
+    compatible."""
+
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
@@ -319,6 +323,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 model.
         """
         # TODO: consider adding a validation step for `measurements`
+
+        # Validate multi-target compatibility
+        if not self.supports_multi_target and (n_targets := len(objective.targets)) > 1:
+            raise ValueError(
+                f"You attempted to train a single-target surrogate in a "
+                f"{n_targets}-target context. Either use a proper multi-target "
+                f"surrogate or consider explicitly replicating the current "
+                f"surrogate model using its "
+                f"'.{self.broadcast.__name__}' method."
+            )
 
         # When the context is unchanged, no retraining is necessary
         if (
