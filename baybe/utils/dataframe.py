@@ -485,18 +485,24 @@ def fuzzy_row_match(
         The index of the matching rows in ``left_df``.
 
     Raises:
-        ValueError: If some rows are present in the right but not in the left dataframe.
+        ValueError: If either left_df or right_df does not contain columns for each
+            entry in parameters.
     """
-    # Assert that all parameters appear in the given dataframe
-    if not set(right_df.columns).issubset(set(left_df.columns)):
-        raise ValueError(
-            "For fuzzy row matching all columns of the right dataframe need to be "
-            "present in the left dataframe."
-        )
-
     # Separate categorical and numerical columns
     cat_cols = [p.name for p in parameters if not p.is_numerical]
     num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
+
+    # Assert that all parameters appear in the given dataframes
+    if diff := set(cat_cols + num_cols).difference(set(left_df.columns)):
+        raise ValueError(
+            f"For fuzzy row matching all parameters need to have a corresponding "
+            f"column in the left dataframe. Parameters not found: {diff})"
+        )
+    if diff := set(cat_cols + num_cols).difference(set(right_df.columns)):
+        raise ValueError(
+            f"For fuzzy row matching all parameters need to have a corresponding "
+            f"column in the right dataframe. Parameters not found: {diff})"
+        )
 
     # Initialize the match matrix. We will later filter it down via applying other
     # matrices (representing the matching for each relevant column) via logical 'and'.
