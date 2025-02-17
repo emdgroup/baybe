@@ -123,8 +123,7 @@ between the targets must be specified *in advance*, through explicit target
 weights. By contrast, the Pareto approach allows to specify this trade-off
 *after* the experiments have been carried out, giving the user the flexibly to adjust
 their preferences post-hoc – knowing that each of the obtained points is optimal
-with respect to a particular preference model. In this sense, the
-Pareto approach can be considered a true multi-target optimization method. 
+with respect to a particular preference model.
 
 To set up a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), simply
 specify the corresponding target objects:
