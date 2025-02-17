@@ -473,6 +473,11 @@ def fuzzy_row_match(
     an exact match with any of the allowed values. For numerical parameters, the user
     can decide via a flag whether values outside the tolerance should be accepted.
 
+    Note:
+        This function assumes that the dataframes contain only allowed values as
+        specified in the parameter objects. No further validation to assert this is
+        done.
+
     Args:
         left_df: The data that serves as lookup reference.
         right_df: The data that should be checked for matching rows in the left
@@ -485,11 +490,6 @@ def fuzzy_row_match(
 
     Raises:
         ValueError: If some rows are present in the right but not in the left dataframe.
-
-    Note:
-        This function assumes that the dataframes contain only allowed values as
-        specified in the parameter objects. No further validation to assert this is
-        done.
     """
     # Assert that all parameters appear in the given dataframe
     if not all(col in right_df.columns for col in left_df.columns):
