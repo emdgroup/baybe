@@ -466,8 +466,8 @@ def fuzzy_row_match(
 
     This is useful for matching measurements to entries in the search space, e.g. to
     detect which ones have been measured. For categorical parameters, there needs to be
-    an exact match with any of the allowed values. For numerical parameters, the user
-    can decide via a flag whether values outside the tolerance should be accepted.
+    an exact match with any of the allowed values. For numerical parameters, the points
+    with the smallest deviation are considered.
 
     Note:
         This function assumes that the dataframes contain only allowed values as
@@ -505,7 +505,6 @@ def fuzzy_row_match(
         match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
 
         # For numeric parameters, match the entry with the smallest deviation
-        # TODO: allow alternative distance metrics
         for col in num_cols:
             abs_diff = (left_df[col] - row[col]).abs()
             match &= abs_diff == abs_diff.min()
