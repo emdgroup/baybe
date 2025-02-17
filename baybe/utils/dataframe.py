@@ -488,45 +488,61 @@ def fuzzy_row_match(
         ValueError: If some rows are present in the right but not in the left dataframe.
     """
     # Assert that all parameters appear in the given dataframe
-    if not all(col in right_df.columns for col in left_df.columns):
+    if not set(right_df.columns).issubset(set(left_df.columns)):
         raise ValueError(
-            "For fuzzy row matching all rows of the right dataframe need to be present"
-            " in the left dataframe."
+            "For fuzzy row matching all columns of the right dataframe need to be "
+            "present in the left dataframe."
         )
 
-    # Iterate over all input rows
-    inds_matched = []
-    for ind, row in right_df.iterrows():
-        # Differentiate category-like and discrete numerical parameters
-        cat_cols = [p.name for p in parameters if not p.is_numerical]
-        num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
+    # Separate categorical and numerical columns
+    cat_cols = [p.name for p in parameters if not p.is_numerical]
+    num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
 
-        # Discrete parameters must match exactly
-        match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
+    # Initialize the match matrix. We will later filter it down via applying other
+    # matrices (representing the matching for each relevant column) via logical 'and'.
+    match_matrix = pd.DataFrame(
+        True, index=right_df.index, columns=left_df.index, dtype=bool
+    )
 
-        # For numeric parameters, match the entry with the smallest deviation
-        for col in num_cols:
-            abs_diff = (left_df[col] - row[col]).abs()
-            match &= abs_diff == abs_diff.min()
+    # Match categorical columns
+    for col in cat_cols:
+        # Per categorical column, this calculates the match between all elements of
+        # left and right and stores it as a matrix (via the explicit None indexer).
+        match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
 
-        # We expect exactly one match. If that's not the case, print a warning.
-        inds_found = left_df.index[match].to_list()
-        if len(inds_found) == 0 and len(num_cols) > 0:
-            warnings.warn(
-                f"Input row with index {ind} could not be matched to the search space. "
-                f"This could indicate that something went wrong."
-            )
-        elif len(inds_found) > 1:
-            warnings.warn(
-                f"Input row with index {ind} has multiple matches with the search "
-                f"space. This could indicate that something went wrong. Matching only "
-                f"first occurrence."
-            )
-            inds_matched.append(inds_found[0])
-        else:
-            inds_matched.extend(inds_found)
+    # Match numerical columns
+    for col in num_cols:
+        # Per numerical column, this calculates the match between all elements of
+        # left and right and stores it as a matrix (via the explicit None indexer).
+        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        min_diff = abs_diff.min(axis=1, keepdims=True)
+        match_matrix &= abs_diff == min_diff
 
-    return pd.Index(inds_matched)
+    # Find the matching indices. If a right row is not matched to any of the rows in
+    # left, idxmax would return the first index if left_df. Hence, we remember these
+    # cases and drop them explicitly.
+    matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
+    mask_no_match = ~match_matrix.any(axis=1)
+    matched_indices = matched_indices[~mask_no_match]
+
+    # Warn if there are multiple matches or no matches
+    if no_match_indices := right_df.index[mask_no_match].tolist():
+        warnings.warn(
+            f"Some input rows could not be matched to the search space. This could "
+            f"indicate that something went wrong. Indices with no matches: "
+            f"{no_match_indices}"
+        )
+
+    mask_multiple_matches = match_matrix.sum(axis=1) > 1
+    if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
+        warnings.warn(
+            f"Some input rows have multiple matches with the search space. "
+            f"This could indicate that something went wrong. Matching only "
+            f"first occurrence for these rows. Indices with multiple matches: "
+            f"{multiple_match_indices}"
+        )
+
+    return matched_indices
 
 
 def pretty_print_df(
