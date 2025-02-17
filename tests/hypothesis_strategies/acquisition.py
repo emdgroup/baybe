@@ -12,6 +12,7 @@ from baybe.acquisition import (
     qExpectedImprovement,
     qKnowledgeGradient,
     qLogExpectedImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedImprovement,
@@ -65,4 +66,5 @@ acquisition_functions = st.one_of(
     st.builds(qNoisyExpectedImprovement),
     st.builds(qLogNoisyExpectedImprovement),
     _qNIPV_strategy(),
+    st.builds(qLogNoisyExpectedHypervolumeImprovement),
 )
