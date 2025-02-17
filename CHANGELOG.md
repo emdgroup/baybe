@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `supports_batching` and `supports_pending_experiments`
 - `SHAPInsight` now allows explanation input that has additional columns compared to 
   the background data (will be ignored)
+- `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
+  measurements to the search space between 4x and 40x
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
