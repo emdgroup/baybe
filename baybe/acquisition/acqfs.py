@@ -14,10 +14,8 @@ from typing_extensions import override
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import classproperty
-from baybe.utils.sampling_algorithms import (
-    DiscreteSamplingMethod,
-    sample_numerical_df,
-)
+from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
+from baybe.utils.validation import finite_float
 
 
 ########################################################################################
@@ -267,9 +265,12 @@ class UpperConfidenceBound(AcquisitionFunction):
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
 
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
+    * A value of zero makes the acquisition mechanism consider the posterior predictive
+      mean only, resulting in a risk-neutral behavior.
+    * Values larger than zero induce risk-seeking behavior, shifting the focus
+      more and more toward exploration.
+    * Values smaller than zero lead to favoring risk-averse decisions (a.k.a. "safe
+      bets"), with purely exploitative behavior in the limit.
     """
 
 
@@ -279,13 +280,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qUCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
-    """Trade-off parameter for mean and variance.
-
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
-    """
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
+    """See :paramref:`UpperConfidenceBound.beta`."""
 
 
 @define(frozen=True)
