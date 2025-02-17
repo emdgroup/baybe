@@ -1,4 +1,4 @@
-"""Broadcasting functionality for surrogate models."""
+"""Composite surrogate models."""
 
 from __future__ import annotations
 
@@ -51,3 +51,42 @@ class BroadcastingSurrogate(SurrogateProtocol):
             else ModelList
         )
         return cls(*(m.to_botorch() for m in self._models))
+
+
+@define
+class CompositeSurrogate(SurrogateProtocol):
+    """A class for composing multi-target surrogates from single-target surrogates."""
+
+    surrogates: dict[str, SurrogateProtocol] = field()
+    """A dictionary mapping target names to single-target surrogates."""
+
+    _target_names: tuple[str, ...] = field(init=False)
+    """The names of the targets modeled by the surrogate outputs."""
+
+    @override
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective: ParetoObjective,
+        measurements: pd.DataFrame,
+    ) -> None:
+        for target in objective.targets:
+            self.surrogates[target.name].fit(
+                searchspace, target.to_objective(), measurements
+            )
+        self._target_names = tuple(t.name for t in objective.targets)
+
+    @override
+    def to_botorch(self) -> ModelList:
+        from botorch.models import ModelList
+        from botorch.models.model_list_gp_regression import ModelListGP
+
+        cls = (
+            ModelListGP
+            if all(
+                isinstance(s, GaussianProcessSurrogate)
+                for s in self.surrogates.values()
+            )
+            else ModelList
+        )
+        return cls(*(self.surrogates[t].to_botorch() for t in self._target_names))
