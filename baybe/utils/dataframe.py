@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import functools
-import logging
+import warnings
 from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
@@ -23,10 +23,6 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
-
-
-# Logging
-_logger = logging.getLogger(__name__)
 
 
 @overload
@@ -517,17 +513,15 @@ def fuzzy_row_match(
         # We expect exactly one match. If that's not the case, print a warning.
         inds_found = left_df.index[match].to_list()
         if len(inds_found) == 0 and len(num_cols) > 0:
-            _logger.warning(
-                "Input row with index %s could not be matched to the search space. "
-                "This could indicate that something went wrong.",
-                ind,
+            warnings.warn(
+                f"Input row with index {ind} could not be matched to the search space. "
+                f"This could indicate that something went wrong."
             )
         elif len(inds_found) > 1:
-            _logger.warning(
-                "Input row with index %s has multiple matches with "
-                "the search space. This could indicate that something went wrong. "
-                "Matching only first occurrence.",
-                ind,
+            warnings.warn(
+                f"Input row with index {ind} has multiple matches with the search "
+                f"space. This could indicate that something went wrong. Matching only "
+                f"first occurrence."
             )
             inds_matched.append(inds_found[0])
         else:
