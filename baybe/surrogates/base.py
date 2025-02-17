@@ -20,7 +20,7 @@ from cattrs.dispatch import (
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import ModelNotTrainedError
+from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -326,7 +326,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         # Validate multi-target compatibility
         if not self.supports_multi_target and (n_targets := len(objective.targets)) > 1:
-            raise ValueError(
+            raise IncompatibleSurrogateError(
                 f"You attempted to train a single-target surrogate in a "
                 f"{n_targets}-target context. Either use a proper multi-target "
                 f"surrogate or consider explicitly replicating the current "
