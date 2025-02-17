@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `qLogNoisyExpectedHypervolumeImprovement` acquisition function
 - `BroadcastingSurrogate` class and corresponding `Surrogate.broadcast` method for
   making single-target surrogate models multi-target compatible
+- `CompositeSurrogate` class for composing multi-target surrogates from single-target
+  surrogates
+- `supports_multi_target` attribute/property to `Surrogate`/`AcquisitionFunction`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
