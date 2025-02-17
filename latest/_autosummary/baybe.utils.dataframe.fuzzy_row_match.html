@@ -893,6 +893,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -957,6 +958,8 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1016,13 +1019,18 @@
 <h1>baybe.utils.dataframe.fuzzy_row_match<a class="headerlink" href="#baybe-utils-dataframe-fuzzy-row-match" title="Link to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="baybe.utils.dataframe.fuzzy_row_match">
-<span class="sig-prename descclassname"><span class="pre">baybe.utils.dataframe.</span></span><span class="sig-name descname"><span class="pre">fuzzy_row_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerical_measurements_must_be_within_tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/utils/dataframe.html#fuzzy_row_match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.utils.dataframe.fuzzy_row_match" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">baybe.utils.dataframe.</span></span><span class="sig-name descname"><span class="pre">fuzzy_row_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">left_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">right_df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/utils/dataframe.html#fuzzy_row_match"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.utils.dataframe.fuzzy_row_match" title="Link to this definition">¶</a></dt>
 <dd><p>Match row of the right dataframe to the rows of the left dataframe.</p>
-<p>This is useful for validity checks and to automatically match measurements to
-entries in the search space, e.g. to detect which ones have been measured.
-For categorical parameters, there needs to be an exact match with any of the
-allowed values. For numerical parameters, the user can decide via a flag
-whether values outside the tolerance should be accepted.</p>
+<p>This is useful for matching measurements to entries in the search space, e.g. to
+detect which ones have been measured. For categorical parameters, there needs to be
+an exact match with any of the allowed values. For numerical parameters, the points
+with the smallest deviation are considered.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function assumes that the dataframes contain only allowed values as
+specified in the parameter objects. No further validation to assert this is
+done.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1031,10 +1039,6 @@ whether values outside the tolerance should be accepted.</p>
 dataframe.</p></li>
 <li><p><span class="target" id="baybe.utils.dataframe.fuzzy_row_match.params.parameters"></span><strong>parameters</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference internal" href="baybe.parameters.base.Parameter.html#baybe.parameters.base.Parameter" title="baybe.parameters.base.Parameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Parameter</span></code></a>]</span>) – List of baybe parameter objects that are needed to identify
 potential tolerances.</p></li>
-<li><p><span class="target" id="baybe.utils.dataframe.fuzzy_row_match.params.numerical_measurements_must_be_within_tolerance"></span><strong>numerical_measurements_must_be_within_tolerance</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, numerical
-parameters are matched with the search space elements only if there is a
-match within the parameter tolerance. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the closest match is
-considered, irrespective of the distance.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1044,10 +1048,7 @@ considered, irrespective of the distance.</p></li>
 <dd class="field-odd"><p>The index of the matching rows in <code class="docutils literal notranslate"><span class="pre">left_df</span></code>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If some rows are present in the right but not in the left dataframe.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If the input data has invalid values.</p></li>
-</ul>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If some rows are present in the right but not in the left dataframe.</p>
 </dd>
 </dl>
 </dd></dl>

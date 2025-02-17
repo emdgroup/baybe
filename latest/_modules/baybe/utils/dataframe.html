@@ -892,6 +892,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -956,6 +957,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1011,9 +1014,9 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span> <span class="nn">functools</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -1031,10 +1034,6 @@
 
     <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Parameter</span> <span class="o">|</span> <span class="n">Target</span><span class="p">)</span>
     <span class="n">_ArrayLike</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ArrayLike&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
-
-
-<span class="c1"># Logging</span>
-<span class="n">_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="nd">@overload</span>
@@ -1083,7 +1082,7 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements">[docs]</a>
 <span class="k">def</span> <span class="nf">add_fake_measurements</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">targets</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Target</span><span class="p">],</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Target</span><span class="p">],</span>
     <span class="n">good_reference_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">good_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">bad_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1295,6 +1294,58 @@
 
 
 
+<div class="viewcode-block" id="create_fake_input">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input">[docs]</a>
+<span class="k">def</span> <span class="nf">create_fake_input</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Target</span><span class="p">],</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create fake valid input for :meth:`baybe.campaign.Campaign.add_measurements`.</span>
+
+<span class="sd">    If noisy parameter values are desired, it is recommended to apply</span>
+<span class="sd">    :func:`baybe.utils.dataframe.add_parameter_noise` to the output of this function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        parameters: The parameters.</span>
+<span class="sd">        targets: The targets.</span>
+<span class="sd">        n_rows: Number of desired rows.</span>
+<span class="sd">        **kwargs: Additional arguments to be passed to</span>
+<span class="sd">            :func:`baybe.utils.dataframe.add_fake_measurements`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dataframe corresponding to fake measurement input.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If less than one row was requested.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Assert at least one fake entry is being generated</span>
+    <span class="k">if</span> <span class="n">n_rows</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">create_fake_input</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; must at least create one row, but the &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;requested number was: </span><span class="si">{</span><span class="n">n_rows</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Create fake parameter values from their definitions</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">upper</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">)</span>
+
+        <span class="n">content</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">vals</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="c1"># Add fake target values</span>
+    <span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+
 <div class="viewcode-block" id="df_drop_single_value_columns">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html#baybe.utils.dataframe.df_drop_single_value_columns">[docs]</a>
 <span class="k">def</span> <span class="nf">df_drop_single_value_columns</span><span class="p">(</span>
@@ -1447,15 +1498,18 @@
     <span class="n">left_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">right_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span>
-    <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Match row of the right dataframe to the rows of the left dataframe.</span>
 
-<span class="sd">    This is useful for validity checks and to automatically match measurements to</span>
-<span class="sd">    entries in the search space, e.g. to detect which ones have been measured.</span>
-<span class="sd">    For categorical parameters, there needs to be an exact match with any of the</span>
-<span class="sd">    allowed values. For numerical parameters, the user can decide via a flag</span>
-<span class="sd">    whether values outside the tolerance should be accepted.</span>
+<span class="sd">    This is useful for matching measurements to entries in the search space, e.g. to</span>
+<span class="sd">    detect which ones have been measured. For categorical parameters, there needs to be</span>
+<span class="sd">    an exact match with any of the allowed values. For numerical parameters, the points</span>
+<span class="sd">    with the smallest deviation are considered.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        This function assumes that the dataframes contain only allowed values as</span>
+<span class="sd">        specified in the parameter objects. No further validation to assert this is</span>
+<span class="sd">        done.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        left_df: The data that serves as lookup reference.</span>
@@ -1463,17 +1517,12 @@
 <span class="sd">            dataframe.</span>
 <span class="sd">        parameters: List of baybe parameter objects that are needed to identify</span>
 <span class="sd">            potential tolerances.</span>
-<span class="sd">        numerical_measurements_must_be_within_tolerance: If ``True``, numerical</span>
-<span class="sd">            parameters are matched with the search space elements only if there is a</span>
-<span class="sd">            match within the parameter tolerance. If ``False``, the closest match is</span>
-<span class="sd">            considered, irrespective of the distance.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The index of the matching rows in ``left_df``.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If some rows are present in the right but not in the left dataframe.</span>
-<span class="sd">        ValueError: If the input data has invalid values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Assert that all parameters appear in the given dataframe</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">col</span> <span class="ow">in</span> <span class="n">right_df</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">left_df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
@@ -1482,30 +1531,9 @@
             <span class="s2">&quot; in the left dataframe.&quot;</span>
         <span class="p">)</span>
 
-    <span class="n">inds_matched</span> <span class="o">=</span> <span class="p">[]</span>
-
     <span class="c1"># Iterate over all input rows</span>
+    <span class="n">inds_matched</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">right_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-        <span class="c1"># Check if the row represents a valid input</span>
-        <span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">is_numerical</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">:</span>
-                    <span class="n">valid</span> <span class="o">&amp;=</span> <span class="n">param</span><span class="o">.</span><span class="n">is_in_range</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">valid</span> <span class="o">&amp;=</span> <span class="n">param</span><span class="o">.</span><span class="n">is_in_range</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Input data on row with the index </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> has invalid &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;values in parameter &#39;</span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;For categorical parameters, values need to exactly match a &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;valid choice defined in your config. &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;For numerical parameters, a match is accepted only if &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;the input value is within the specified tolerance/range. Set &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;the flag &#39;numerical_measurements_must_be_within_tolerance&#39; &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;to &#39;False&#39; to disable this behavior.&quot;</span>
-                <span class="p">)</span>
-
         <span class="c1"># Differentiate category-like and discrete numerical parameters</span>
         <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span><span class="p">]</span>
         <span class="n">num_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">)]</span>
@@ -1514,7 +1542,6 @@
         <span class="n">match</span> <span class="o">=</span> <span class="n">left_df</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">]</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># For numeric parameters, match the entry with the smallest deviation</span>
-        <span class="c1"># TODO: allow alternative distance metrics</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">num_cols</span><span class="p">:</span>
             <span class="n">abs_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
             <span class="n">match</span> <span class="o">&amp;=</span> <span class="n">abs_diff</span> <span class="o">==</span> <span class="n">abs_diff</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
@@ -1522,17 +1549,15 @@
         <span class="c1"># We expect exactly one match. If that&#39;s not the case, print a warning.</span>
         <span class="n">inds_found</span> <span class="o">=</span> <span class="n">left_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">match</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds_found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">num_cols</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Input row with index </span><span class="si">%s</span><span class="s2"> could not be matched to the search space. &quot;</span>
-                <span class="s2">&quot;This could indicate that something went wrong.&quot;</span><span class="p">,</span>
-                <span class="n">ind</span><span class="p">,</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Input row with index </span><span class="si">{</span><span class="n">ind</span><span class="si">}</span><span class="s2"> could not be matched to the search space. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;This could indicate that something went wrong.&quot;</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds_found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Input row with index </span><span class="si">%s</span><span class="s2"> has multiple matches with &quot;</span>
-                <span class="s2">&quot;the search space. This could indicate that something went wrong. &quot;</span>
-                <span class="s2">&quot;Matching only first occurrence.&quot;</span><span class="p">,</span>
-                <span class="n">ind</span><span class="p">,</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Input row with index </span><span class="si">{</span><span class="n">ind</span><span class="si">}</span><span class="s2"> has multiple matches with the search &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;space. This could indicate that something went wrong. Matching only &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;first occurrence.&quot;</span>
             <span class="p">)</span>
             <span class="n">inds_matched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inds_found</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1777,6 +1802,10 @@
 
     <span class="k">return</span> <span class="n">decorator</span></div>
 
+
+
+<span class="k">class</span> <span class="nc">_ValidatedDataFrame</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper indicating the underlying experimental data was already validated.&quot;&quot;&quot;</span>
 </pre></div>
         </article>
       </div>

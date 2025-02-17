@@ -893,6 +893,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -957,6 +958,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1047,16 +1050,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0 -0.989901 -0.820893  0.087020  0.758861
-1 -0.458844  0.988847 -0.757136 -0.360037
-2 -0.624449  0.502977  0.909065  0.445890
-3  0.979859 -0.030604 -0.721774  0.680165
-4  0.438061 -0.387681 -0.403545  0.232766
-5  0.079105 -0.262699 -0.299544 -0.021803
-6  0.882726 -0.127559  0.957317 -0.236595
-7 -0.480777 -0.030650  0.689073 -0.378971
-8 -0.504664 -0.725747 -0.355622 -0.336233
-9  0.182062  0.208724 -0.747566  0.777815
+0  0.336777 -0.790812 -0.335644  0.890428
+1 -0.760248  0.790663  0.797389  0.201323
+2 -0.990247  0.055613  0.600112 -0.253414
+3 -0.111544  0.358029  0.158239  0.175588
+4 -0.281414  0.725505 -0.064299 -0.205199
+5  0.292407  0.284239 -0.857776  0.111773
+6 -0.855683 -0.704724  0.757055 -0.512241
+7 -0.365191  0.243828 -0.046416  0.634998
+8 -0.409889 -0.679576 -0.242876 -0.331864
+9 -0.601982 -0.489974  0.743039  0.518682
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.

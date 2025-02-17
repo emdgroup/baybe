@@ -893,6 +893,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -957,6 +958,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1118,16 +1121,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0   2.421639  17.227004     0.276740     0.427119  79.522748   0.124751
-1   9.446374  13.677684     1.756184     0.265672  73.108373   1.745713
-2  15.242064  13.481822     1.026779     0.965587  34.458502  34.825246
-3  10.418330   6.406505     0.426842     2.162277  70.706912   9.879134
-4  15.032058   0.763433     2.029092     1.543210  51.023412  29.608795
-5  14.135144   7.893803     0.085316     3.309579  52.637320  21.938839
-6   1.836688  14.172150     0.063250     2.401842  77.335161   4.190909
-7  17.811851  19.393674     3.531871     1.211191  13.678076  44.373337
-8   6.915272  18.073506     2.723383     1.172000  47.923120  23.192719
-9  11.327857  11.804886     0.600534     0.900192  10.497898  64.868634
+0  19.764670   4.500601     2.007649     2.785724  25.011491  45.929865
+1  18.351749  15.724305     2.476853     0.578282  46.132197  16.736613
+2   7.767139   4.532111     1.512751     1.462830  77.088033   7.637136
+3  12.542480   3.201304     3.554378     0.765612  19.778111  60.158115
+4  10.909550  16.659641     2.166076     0.445682  22.672471  47.146580
+5   9.987472  16.284050     3.018143     1.536944   7.638826  61.534565
+6   4.557192  16.103752     0.288067     1.769622  47.275568  30.005799
+7  19.222514   3.551645     0.044832     0.684924  56.930174  19.565911
+8   7.222129   4.467737     0.584681     1.048731  47.296093  39.380630
+9  18.431915   2.705819     0.882853     3.885539  65.690626   8.403248
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1142,16 +1145,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    19.648643            0.703859
-1  100.0    23.124058            2.021856
-2  100.0    28.723886            1.992366
-3  100.0    16.824835            2.589119
-4  100.0    15.795490            3.572302
-5  100.0    22.028946            3.394895
-6  100.0    16.008838            2.465092
-7  100.0    37.205525            4.743062
-8  100.0    24.988778            3.895383
-9  100.0    23.132743            1.500725
+0  100.0    24.265271            4.793373
+1  100.0    34.076055            3.055135
+2  100.0    12.299250            2.975581
+3  100.0    15.743784            4.319990
+4  100.0    27.569191            2.611758
+5  100.0    26.271522            4.555086
+6  100.0    20.660944            2.057689
+7  100.0    22.774159            0.729756
+8  100.0    11.689866            1.633411
+9  100.0    21.137734            4.768392
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

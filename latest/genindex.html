@@ -891,6 +891,7 @@
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -955,6 +956,8 @@
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1014,7 +1017,11 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.plot.params.**kwargs">**kwargs (baybe.insights.shap.SHAPInsight.plot parameter)</a>, <a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.plot.params.**kwargs">[1]</a>
+
+        <ul>
+          <li><a href="_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input.params.**kwargs">(baybe.utils.dataframe.create_fake_input parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.create_fake_input.params.**kwargs">[1]</a>
 </li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.utils.plotting.html#baybe.utils.plotting.to_string.params.*fields">*fields (baybe.utils.plotting.to_string parameter)</a>, <a href="_autosummary/baybe.utils.plotting.to_string.html#baybe.utils.plotting.to_string.params.*fields">[1]</a>
@@ -2721,6 +2728,8 @@
 </li>
         <li><a href="_autosummary/baybe.utils.plotting.create_example_plots.html#baybe.utils.plotting.create_example_plots">create_example_plots() (in module baybe.utils.plotting)</a>
 </li>
+        <li><a href="_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input">create_fake_input() (in module baybe.utils.dataframe)</a>
+</li>
         <li><a href="_autosummary/baybe.parameters.enum.CustomEncoding.html#baybe.parameters.enum.CustomEncoding.CUSTOM">CUSTOM (baybe.parameters.enum.CustomEncoding attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter">CustomDiscreteParameter (class in baybe.parameters.custom)</a>
@@ -2781,6 +2790,10 @@
           <li><a href="_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements.params.data">(baybe.utils.dataframe.add_fake_measurements parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_fake_measurements.params.data">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.data">(baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.data">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_parameter_input.params.data">(baybe.utils.validation.validate_parameter_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input.params.data">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_target_input.params.data">(baybe.utils.validation.validate_target_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_target_input.html#baybe.utils.validation.validate_target_input.params.data">[1]</a>
 </li>
         </ul></li>
         <li><a href="_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter.decorrelate">decorrelate (baybe.parameters.custom.CustomDiscreteParameter attribute)</a>
@@ -4820,6 +4833,8 @@
 </li>
         <li><a href="_autosummary/baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.html#baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_restarts">n_restarts (baybe.recommenders.pure.bayesian.botorch.BotorchRecommender attribute)</a>
 </li>
+        <li><a href="_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input.params.n_rows">n_rows (baybe.utils.dataframe.create_fake_input parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.create_fake_input.params.n_rows">[1]</a>
+</li>
         <li><a href="_autosummary/baybe.utils.sampling_algorithms.farthest_point_sampling.html#baybe.utils.sampling_algorithms.farthest_point_sampling.params.n_samples">n_samples (baybe.utils.sampling_algorithms.farthest_point_sampling parameter)</a>, <a href="_autosummary/baybe.utils.sampling_algorithms.html#baybe.utils.sampling_algorithms.farthest_point_sampling.params.n_samples">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.n_tasks">n_tasks (baybe.searchspace.core.SearchSpace property)</a>
@@ -4878,10 +4893,10 @@
         </ul></li>
         <li><a href="_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">noise_ratio (baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">[1]</a>
 </li>
-        <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">noise_type (baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">[1]</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">noise_type (baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">[1]</a>
+</li>
         <li><a href="_autosummary/baybe.exceptions.NoMCAcquisitionFunctionError.html#baybe.exceptions.NoMCAcquisitionFunctionError">NoMCAcquisitionFunctionError</a>
 </li>
         <li><a href="_autosummary/baybe.utils.validation.non_inf_float.html#baybe.utils.validation.non_inf_float">non_inf_float() (in module baybe.utils.validation)</a>
@@ -4915,9 +4930,7 @@
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.numerical_measurements_must_be_within_tolerance">numerical_measurements_must_be_within_tolerance (baybe.campaign.Campaign.add_measurements parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.numerical_measurements_must_be_within_tolerance">[1]</a>
 
         <ul>
-          <li><a href="_autosummary/baybe.telemetry.html#baybe.telemetry.telemetry_record_recommended_measurement_percentage.params.numerical_measurements_must_be_within_tolerance">(baybe.telemetry.telemetry_record_recommended_measurement_percentage parameter)</a>, <a href="_autosummary/baybe.telemetry.telemetry_record_recommended_measurement_percentage.html#baybe.telemetry.telemetry_record_recommended_measurement_percentage.params.numerical_measurements_must_be_within_tolerance">[1]</a>
-</li>
-          <li><a href="_autosummary/baybe.utils.dataframe.fuzzy_row_match.html#baybe.utils.dataframe.fuzzy_row_match.params.numerical_measurements_must_be_within_tolerance">(baybe.utils.dataframe.fuzzy_row_match parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.fuzzy_row_match.params.numerical_measurements_must_be_within_tolerance">[1]</a>
+          <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_parameter_input.params.numerical_measurements_must_be_within_tolerance">(baybe.utils.validation.validate_parameter_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input.params.numerical_measurements_must_be_within_tolerance">[1]</a>
 </li>
         </ul></li>
         <li><a href="_autosummary/baybe.constraints.base.CardinalityConstraint.html#baybe.constraints.base.CardinalityConstraint.numerical_only">numerical_only (baybe.constraints.base.CardinalityConstraint attribute)</a>
@@ -5157,7 +5170,11 @@
 </li>
           <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.parameters">(baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.parameters">[1]</a>
 </li>
+          <li><a href="_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input.params.parameters">(baybe.utils.dataframe.create_fake_input parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.create_fake_input.params.parameters">[1]</a>
+</li>
           <li><a href="_autosummary/baybe.utils.dataframe.fuzzy_row_match.html#baybe.utils.dataframe.fuzzy_row_match.params.parameters">(baybe.utils.dataframe.fuzzy_row_match parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.fuzzy_row_match.params.parameters">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_parameter_input.params.parameters">(baybe.utils.validation.validate_parameter_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input.params.parameters">[1]</a>
 </li>
         </ul></li>
         <li><a href="_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction">PartialAcquisitionFunction (class in baybe.acquisition.partial)</a>
@@ -5979,6 +5996,10 @@
 </li>
           <li><a href="_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements.params.targets">(baybe.utils.dataframe.add_fake_measurements parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_fake_measurements.params.targets">[1]</a>
 </li>
+          <li><a href="_autosummary/baybe.utils.dataframe.create_fake_input.html#baybe.utils.dataframe.create_fake_input.params.targets">(baybe.utils.dataframe.create_fake_input parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.create_fake_input.params.targets">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_target_input.params.targets">(baybe.utils.validation.validate_target_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_target_input.html#baybe.utils.validation.validate_target_input.params.targets">[1]</a>
+</li>
         </ul></li>
         <li><a href="_autosummary/baybe.targets.enum.TargetTransformation.html#baybe.targets.enum.TargetTransformation">TargetTransformation (class in baybe.targets.enum)</a>
 </li>
@@ -6738,6 +6759,8 @@
 </li>
         <li><a href="_autosummary/baybe.utils.validation.validate_not_nan.html#baybe.utils.validation.validate_not_nan">validate_not_nan() (in module baybe.utils.validation)</a>
 </li>
+        <li><a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input">validate_parameter_input() (in module baybe.utils.validation)</a>
+</li>
         <li><a href="_autosummary/baybe.searchspace.validation.validate_parameter_names.html#baybe.searchspace.validation.validate_parameter_names">validate_parameter_names() (in module baybe.searchspace.validation)</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.validation.validate_parameters.html#baybe.searchspace.validation.validate_parameters">validate_parameters() (in module baybe.searchspace.validation)</a>
@@ -6746,10 +6769,12 @@
 </li>
         <li><a href="_autosummary/baybe.searchspace.discrete.validate_simplex_subspace_from_config.html#baybe.searchspace.discrete.validate_simplex_subspace_from_config">validate_simplex_subspace_from_config() (in module baybe.searchspace.discrete)</a>
 </li>
-        <li><a href="_autosummary/baybe.parameters.validation.validate_unique_values.html#baybe.parameters.validation.validate_unique_values">validate_unique_values() (in module baybe.parameters.validation)</a>
+        <li><a href="_autosummary/baybe.utils.validation.validate_target_input.html#baybe.utils.validation.validate_target_input">validate_target_input() (in module baybe.utils.validation)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.parameters.validation.validate_unique_values.html#baybe.parameters.validation.validate_unique_values">validate_unique_values() (in module baybe.parameters.validation)</a>
+</li>
         <li><a href="_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html#baybe.constraints.discrete.DiscreteCustomConstraint.validator">validator (baybe.constraints.discrete.DiscreteCustomConstraint attribute)</a>
 </li>
         <li><a href="_autosummary/baybe.telemetry.html#baybe.telemetry.telemetry_record_value.params.value">value (baybe.telemetry.telemetry_record_value parameter)</a>, <a href="_autosummary/baybe.telemetry.telemetry_record_value.html#baybe.telemetry.telemetry_record_value.params.value">[1]</a>

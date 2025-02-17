@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent             Base                        Ligand  \
-    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-    342       p-Xylene   Cesium acetate  Di-tert-butylphenylphosphine   
-    231           DMAc   Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    22     Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
+    54     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    201  Butyornitrile  Potassium pivalate                     BrettPhos   
     
          Temperature  Concentration  
-    155         90.0          0.153  
-    342         90.0          0.057  
-    231        120.0          0.057  
+    22         105.0          0.100  
+    54          90.0          0.057  
+    201        105.0          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent             Base                        Ligand  \
-    155  Butyornitrile  Cesium pivalate  Di-tert-butylphenylphosphine   
-    342       p-Xylene   Cesium acetate  Di-tert-butylphenylphosphine   
-    231           DMAc   Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    22     Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
+    54     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    201  Butyornitrile  Potassium pivalate                     BrettPhos   
     
-         Temperature  Concentration      yield  
-    155         90.0          0.153   7.811881  
-    342         90.0          0.057  23.152025  
-    231        120.0          0.057  17.971817  
+         Temperature  Concentration     yield  
+    22         105.0          0.100  7.683242  
+    54          90.0          0.057  4.949610  
+    201        105.0          0.057  0.971071  
 
 
 

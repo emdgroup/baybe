@@ -892,6 +892,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.arrays_to_dataframes.html">baybe.utils.dataframe.arrays_to_dataframes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.create_fake_input.html">baybe.utils.dataframe.create_fake_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_single_value_columns.html">baybe.utils.dataframe.df_drop_single_value_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_drop_string_columns.html">baybe.utils.dataframe.df_drop_string_columns</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.df_uncorrelated_features.html">baybe.utils.dataframe.df_uncorrelated_features</a></li>
@@ -956,6 +957,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
 </li>
 </ul>
@@ -1050,8 +1053,9 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">UNSPECIFIED</span><span class="p">,</span> <span class="n">UnspecifiedType</span><span class="p">,</span> <span class="n">is_all_instance</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">eq_dataframe</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">filter_df</span><span class="p">,</span> <span class="n">fuzzy_row_match</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">_ValidatedDataFrame</span><span class="p">,</span> <span class="n">filter_df</span><span class="p">,</span> <span class="n">fuzzy_row_match</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.plotting</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">validate_parameter_input</span><span class="p">,</span> <span class="n">validate_target_input</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
@@ -1282,48 +1286,25 @@
 <span class="sd">        Each addition of data is considered a new batch. Added results are checked for</span>
 <span class="sd">        validity. Categorical values need to have an exact match. For numerical values,</span>
 <span class="sd">        a campaign flag determines if values that lie outside a specified tolerance</span>
-<span class="sd">        are accepted.</span>
-<span class="sd">        Note that this modifies the provided data in-place.</span>
+<span class="sd">        are accepted. Possible validation exceptions are documented in</span>
+<span class="sd">        :func:`baybe.utils.validation.validate_target_input` and</span>
+<span class="sd">        :func:`baybe.utils.validation.validate_parameter_input`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data: The data to be added (with filled values for targets). Preferably</span>
 <span class="sd">                created via :func:`baybe.campaign.Campaign.recommend`.</span>
 <span class="sd">            numerical_measurements_must_be_within_tolerance: Flag indicating if</span>
 <span class="sd">                numerical parameters need to be within their tolerances.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If one of the targets has missing values or NaNs in the provided</span>
-<span class="sd">                dataframe.</span>
-<span class="sd">            TypeError: If the target has non-numeric entries in the provided dataframe.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Invalidate recommendation cache first (in case of uncaught exceptions below)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
 
-        <span class="c1"># Check if all targets have valid values</span>
-        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The target &#39;</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has missing values or NaNs in the &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;provided dataframe. Missing target values are not supported.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;iufb&quot;</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The target &#39;</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has non-numeric entries in the &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;provided dataframe. Non-numeric target values are not supported.&quot;</span>
-                <span class="p">)</span>
-
-        <span class="c1"># Check if all targets have valid values</span>
-        <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The parameter &#39;</span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has missing values or NaNs in the &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;provided dataframe. Missing parameter values are not supported.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">is_numerical</span> <span class="ow">and</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;iufb&quot;</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;The numerical parameter &#39;</span><span class="si">{</span><span class="n">param</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has non-numeric entries in&quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot; the provided dataframe.&quot;</span>
-                <span class="p">)</span>
+        <span class="c1"># Validate target and parameter input values</span>
+        <span class="n">validate_target_input</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="n">validate_parameter_input</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">numerical_measurements_must_be_within_tolerance</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">_ValidatedDataFrame</span>
 
         <span class="c1"># Read in measurements and add them to the database</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_batches_done</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -1338,20 +1319,14 @@
         <span class="c1"># Update metadata</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">(</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="p">,</span> <span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">HYBRID</span><span class="p">):</span>
             <span class="n">idxs_matched</span> <span class="o">=</span> <span class="n">fuzzy_row_match</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span>
-                <span class="n">data</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-                <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">exp_rep</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace_metadata</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idxs_matched</span><span class="p">,</span> <span class="n">_MEASURED</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Telemetry</span>
         <span class="n">telemetry_record_value</span><span class="p">(</span><span class="n">TELEM_LABELS</span><span class="p">[</span><span class="s2">&quot;COUNT_ADD_RESULTS&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span><span class="p">,</span>
-            <span class="n">data</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-            <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
         <span class="p">)</span></div>
 
 
@@ -1447,8 +1422,10 @@
             <span class="p">)</span>
 
         <span class="c1"># Invalidate cached recommendation if pending experiments are provided</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pending_experiments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pending_experiments</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+            <span class="n">validate_parameter_input</span><span class="p">(</span><span class="n">pending_experiments</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+            <span class="n">pending_experiments</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">_ValidatedDataFrame</span>
 
         <span class="c1"># If there are cached recommendations and the batch size of those is equal to</span>
         <span class="c1"># the previously requested one, we just return those</span>
