@@ -47,6 +47,10 @@ class IncompatibleSearchSpaceError(IncompatibilityError):
     """
 
 
+class IncompatibleSurrogateError(IncompatibilityError):
+    """An incompatible surrogate was selected."""
+
+
 class IncompatibleAcquisitionFunctionError(IncompatibilityError):
     """An incompatible acquisition function was selected."""
 

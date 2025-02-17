@@ -12,7 +12,11 @@ from typing_extensions import override
 from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleAcquisitionFunctionError,
+    InvalidSurrogateModelError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
@@ -100,7 +104,7 @@ class BayesianRecommender(PureRecommender, ABC):
             not self._acqf.supports_multi_target
             and (n_targets := len(objective.targets)) > 1
         ):
-            raise ValueError(
+            raise IncompatibleAcquisitionFunctionError(
                 f"You attempted to use a single-target acquisition function in a "
                 f"{n_targets}-target context."
             )
