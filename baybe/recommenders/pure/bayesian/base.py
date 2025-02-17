@@ -94,8 +94,18 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
-        surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._acqf = self._default_acquisition_function(objective)
+
+        if (
+            not self._acqf.supports_multi_target
+            and (n_targets := len(objective.targets)) > 1
+        ):
+            raise ValueError(
+                f"You attempted to use a single-target acquisition function in a "
+                f"{n_targets}-target context."
+            )
+
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = self._acqf.to_botorch(
             surrogate,
             searchspace,

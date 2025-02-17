@@ -59,6 +59,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         return cls.supports_batching
 
     @classproperty
+    def supports_multi_target(cls) -> bool:
+        """Flag indicating whether multiple targets are supported."""
+        return "Hypervolume" in cls.__name__
+
+    @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         """Names of attributes that are not passed to the BoTorch constructor."""
         return ()
