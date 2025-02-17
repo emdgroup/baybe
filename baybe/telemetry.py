@@ -214,7 +214,6 @@ def telemetry_record_recommended_measurement_percentage(
     cached_recommendation: pd.DataFrame,
     measurements: pd.DataFrame,
     parameters: Sequence[Parameter],
-    numerical_measurements_must_be_within_tolerance: bool,
 ) -> None:
     """Submit the percentage of added measurements.
 
@@ -232,13 +231,11 @@ def telemetry_record_recommended_measurement_percentage(
         measurements: The measurements which are supposed to be checked against cached
             recommendations.
         parameters: The list of parameters spanning the entire search space.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            parameter entries are matched with the reference elements only if there is
-            a match within the parameter tolerance. If ``False``, the closest match
-            is considered, irrespective of the distance.
     """
     if is_enabled():
-        if len(cached_recommendation) > 0:
+        if cached_recommendation.empty:
+            _submit_scalar_value(TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"], 1)
+        else:
             recommended_measurements_percentage = (
                 len(fuzzy_row_match(cached_recommendation, measurements, parameters))
                 / len(cached_recommendation)
@@ -247,9 +244,4 @@ def telemetry_record_recommended_measurement_percentage(
             _submit_scalar_value(
                 TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
                 recommended_measurements_percentage,
-            )
-        else:
-            _submit_scalar_value(
-                TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"],
-                1,
             )

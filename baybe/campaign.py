@@ -305,10 +305,7 @@ class Campaign(SerialMixin):
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
-            self._cached_recommendation,
-            data,
-            self.parameters,
-            numerical_measurements_must_be_within_tolerance,
+            self._cached_recommendation, data, self.parameters
         )
 
     def toggle_discrete_candidates(  # noqa: DOC501
