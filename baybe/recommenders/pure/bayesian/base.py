@@ -66,10 +66,13 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
-    @staticmethod
-    def _default_acquisition_function(objective: Objective) -> AcquisitionFunction:
+    def _default_acquisition_function(
+        self, objective: Objective
+    ) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
-        return qLogEI() if len(objective.targets) == 1 else qLogNEHVI()
+        if self.acquisition_function is None:
+            return qLogEI() if len(objective.targets) == 1 else qLogNEHVI()
+        return self.acquisition_function
 
     def get_surrogate(
         self,
