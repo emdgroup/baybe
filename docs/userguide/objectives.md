@@ -115,15 +115,17 @@ A target configuration is considered non-dominated if no other configuration is 
 in *all* targets.
 ```
 
-Identifying the Pareto front requires maintaining explicit models for each of the target
-involved. This differs from the [`DesirabilityObjective`](#DesirabilityObjective),
-which relies on a single predictive model to describe the associated
-desirability values. However, the drawback of the latter is that the exact trade-off
-between the targets must be specified *in advance*, through explicit target
-weights. By contrast, the Pareto approach allows to specify this trade-off
-*after* the experiments have been carried out, giving the user the flexibly to adjust
-their preferences post-hoc – knowing that each of the obtained points is optimal
-with respect to a particular preference model.
+Identifying the Pareto front requires maintaining explicit models for each of the
+targets involved. Accordingly, it requires to use acquisition functions capable of
+processing vector-valued input, such as
+{class}`~baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement`. This differs
+from the [`DesirabilityObjective`](#DesirabilityObjective), which relies on a single
+predictive model to describe the associated desirability values. However, the drawback
+of the latter is that the exact trade-off between the targets must be specified *in
+advance*, through explicit target weights. By contrast, the Pareto approach allows to
+specify this trade-off *after* the experiments have been carried out, giving the user
+the flexibly to adjust their preferences post-hoc – knowing that each of the obtained
+points is optimal with respect to a particular preference model.
 
 To set up a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), simply
 specify the corresponding target objects:
