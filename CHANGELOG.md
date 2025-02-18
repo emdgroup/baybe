@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.12.2] - 2025-01-31
 ### Changed
 - More robust settings for the GP fitting
+- The `beta` parameter of `UCB` and `qUCB` can now also take negative values
 
 ## [0.12.1] - 2025-01-29
 ### Changed
