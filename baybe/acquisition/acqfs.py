@@ -326,7 +326,7 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
 
-    ref_point: float | tuple[float, ...] | None = field(
+    reference_point: float | tuple[float, ...] | None = field(
         default=None, converter=optional_c(convert_to_float)
     )
     """The reference point for computing the hypervolume improvement.
@@ -341,6 +341,15 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
 
     prune_baseline: bool = field(default=True, validator=instance_of(bool))
     """Auto-prune candidates that are unlikely to be the best."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        # While BoTorch's acquisition function also expects a `ref_point` argument,
+        # the attribute defined here is more general and can hence not be directly
+        # matched. Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(qLogNoisyExpectedHypervolumeImprovement)
+        return (flds.reference_point.name,)
 
     @staticmethod
     def compute_ref_point(
