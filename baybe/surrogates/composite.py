@@ -9,7 +9,7 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.objectives.pareto import ParetoObjective
+from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -32,7 +32,7 @@ class BroadcastingSurrogate(SurrogateProtocol):
     def fit(
         self,
         searchspace: SearchSpace,
-        objective: ParetoObjective,
+        objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
         for target in objective.targets:
@@ -67,7 +67,7 @@ class CompositeSurrogate(SurrogateProtocol):
     def fit(
         self,
         searchspace: SearchSpace,
-        objective: ParetoObjective,
+        objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
         for target in objective.targets:
