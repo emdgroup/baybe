@@ -226,18 +226,18 @@ class BotorchAcquisitionFunctionBuilder:
 
         assert isinstance(self.acqf, qLogNoisyExpectedHypervolumeImprovement)
 
-        if isinstance(ref_point := self._args.ref_point, Iterable):
-            point = [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
+        if isinstance(ref_point := self.acqf.reference_point, Iterable):
+            self._args.ref_point = torch.tensor(
+                [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
+            )
         else:
-            kwargs = {"factor": ref_point} if ref_point is not None else {}
-            point = (
+            kwargs = {} if ref_point is None else {"factor": ref_point}
+            self._args.ref_point = torch.tensor(
                 self.acqf.compute_ref_point(
                     self._train_y, self._maximize_flags, **kwargs
                 )
                 * self._multiplier
             )
-
-        self._args.ref_point = torch.tensor(point)
 
     def set_default_sample_shape(self, acqf: BotorchAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
