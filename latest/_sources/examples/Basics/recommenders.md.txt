@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    22     Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
-    54     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-    201  Butyornitrile  Potassium pivalate                     BrettPhos   
+            Solvent             Base                        Ligand  Temperature  \
+    4   Butyl Ester   Cesium acetate                 (t-Bu)PhCPhos        105.0   
+    24  Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+    32  Butyl Ester  Cesium pivalate                 (t-Bu)PhCPhos        105.0   
     
-         Temperature  Concentration  
-    22         105.0          0.100  
-    54          90.0          0.057  
-    201        105.0          0.057  
+        Concentration  
+    4           0.100  
+    24          0.057  
+    32          0.153  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    22     Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
-    54     Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-    201  Butyornitrile  Potassium pivalate                     BrettPhos   
+            Solvent             Base                        Ligand  Temperature  \
+    4   Butyl Ester   Cesium acetate                 (t-Bu)PhCPhos        105.0   
+    24  Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        120.0   
+    32  Butyl Ester  Cesium pivalate                 (t-Bu)PhCPhos        105.0   
     
-         Temperature  Concentration     yield  
-    22         105.0          0.100  7.683242  
-    54          90.0          0.057  4.949610  
-    201        105.0          0.057  0.971071  
+        Concentration      yield  
+    4           0.100   6.190174  
+    24          0.057  23.630200  
+    32          0.153  27.782682  
 
 
 

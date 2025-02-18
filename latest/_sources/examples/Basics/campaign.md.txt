@@ -119,13 +119,13 @@ print(recommendation)
     
     
     Recommended measurements with batch_size = 2: 
-               Solvent                Base                        Ligand  \
-    262           DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
-    190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
+             Solvent             Base                        Ligand  Temperature  \
+    269         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+    22   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        105.0   
     
-         Temperature  Concentration  
-    262         90.0            0.1  
-    190         90.0            0.1  
+         Concentration  
+    269          0.153  
+    22           0.100  
 
 
 Adding target values is done by creating a new column in the `recommendation`
@@ -143,13 +143,13 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    262           DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
-    190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
+             Solvent             Base                        Ligand  Temperature  \
+    269         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
+    22   Butyl Ester   Cesium acetate  Di-tert-butylphenylphosphine        105.0   
     
-         Temperature  Concentration      yield  
-    262         90.0            0.1  28.977360  
-    190         90.0            0.1   1.374999  
+         Concentration      yield  
+    269          0.153  10.452260  
+    22           0.100  30.911454  
 
 
 

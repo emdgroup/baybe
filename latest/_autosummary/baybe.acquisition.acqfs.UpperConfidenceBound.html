@@ -1148,9 +1148,14 @@
 <dt class="sig sig-object py" id="baybe.acquisition.acqfs.UpperConfidenceBound.beta">
 <span class="sig-name descname"><span class="pre">beta</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a></em><a class="headerlink" href="#baybe.acquisition.acqfs.UpperConfidenceBound.beta" title="Link to this definition">¶</a></dt>
 <dd><p>Trade-off parameter for mean and variance.</p>
-<p>A value of zero makes the acquisition mechanism consider the posterior predictive
-mean only, resulting in pure exploitation. Higher values shift the focus more and
-more toward exploration.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span> <span class="pre">&gt;</span> <span class="pre">0</span></code>: Rewards uncertainty, takes more risk.
+Limit <code class="docutils literal notranslate"><span class="pre">inf</span></code>: Pure exploration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>: Punishes uncertainty, takes less risk.
+Limit <code class="docutils literal notranslate"><span class="pre">-inf</span></code>: Pure exploitation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">beta</span> <span class="pre">=</span> <span class="pre">0</span></code>: Discards knowledge about uncertainty, i.e. neither rewards nor
+punishes it, is risk-neutral.</p></li>
+</ul>
 </dd></dl>
 
 </dd></dl>

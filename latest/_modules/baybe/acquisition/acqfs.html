@@ -1019,16 +1019,14 @@
 <span class="kn">from</span> <span class="nn">attr.converters</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
 <span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_v</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">le</span>
+<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">gt</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">le</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span> <span class="nn">baybe.acquisition.base</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">classproperty</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.sampling_algorithms</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DiscreteSamplingMethod</span><span class="p">,</span>
-    <span class="n">sample_numerical_df</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.sampling_algorithms</span> <span class="kn">import</span> <span class="n">DiscreteSamplingMethod</span><span class="p">,</span> <span class="n">sample_numerical_df</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">finite_float</span>
 
 
 <span class="c1">########################################################################################</span>
@@ -1322,12 +1320,15 @@
 
     <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;UCB&quot;</span>
 
-    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">ge</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Trade-off parameter for mean and variance.</span>
 
-<span class="sd">    A value of zero makes the acquisition mechanism consider the posterior predictive</span>
-<span class="sd">    mean only, resulting in pure exploitation. Higher values shift the focus more and</span>
-<span class="sd">    more toward exploration.</span>
+<span class="sd">    * ``beta &gt; 0``: Rewards uncertainty, takes more risk.</span>
+<span class="sd">      Limit ``inf``: Pure exploration</span>
+<span class="sd">    * ``beta &lt; 0``: Punishes uncertainty, takes less risk.</span>
+<span class="sd">      Limit ``-inf``: Pure exploitation</span>
+<span class="sd">    * ``beta = 0``: Discards knowledge about uncertainty, i.e. neither rewards nor</span>
+<span class="sd">      punishes it, is risk-neutral.</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
 
 
@@ -1340,13 +1341,8 @@
 
     <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qUCB&quot;</span>
 
-    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">ge</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Trade-off parameter for mean and variance.</span>
-
-<span class="sd">    A value of zero makes the acquisition mechanism consider the posterior predictive</span>
-<span class="sd">    mean only, resulting in pure exploitation. Higher values shift the focus more and</span>
-<span class="sd">    more toward exploration.</span>
-<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="n">beta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">finite_float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;See :paramref:`UpperConfidenceBound.beta`.&quot;&quot;&quot;</span></div>
 
 
 
