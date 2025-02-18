@@ -61,7 +61,7 @@ class AcquisitionFunction(ABC, SerialMixin):
     @classproperty
     def supports_multi_output(cls) -> bool:
         """Flag indicating whether multiple outputs are supported."""
-        return "Hypervolume" in cls.__name__
+        return "Hypervolume" in cls.__name__  # type: ignore[attr-defined]
 
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
