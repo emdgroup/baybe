@@ -101,7 +101,7 @@ class BayesianRecommender(PureRecommender, ABC):
         self._acqf = self._default_acquisition_function(objective)
 
         if (
-            not self._acqf.supports_multi_target
+            not self._acqf.supports_multi_output
             and (n_targets := len(objective.targets)) > 1
         ):
             raise IncompatibleAcquisitionFunctionError(

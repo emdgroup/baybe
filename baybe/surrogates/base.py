@@ -106,8 +106,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
-    supports_multi_target: ClassVar[bool] = False
-    """Class variable encoding whether or not the surrogate is multi-target
+    supports_multi_output: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate is multi-output
     compatible."""
 
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
@@ -325,7 +325,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # TODO: consider adding a validation step for `measurements`
 
         # Validate multi-target compatibility
-        if not self.supports_multi_target and (n_targets := len(objective.targets)) > 1:
+        if not self.supports_multi_output and (n_targets := len(objective.targets)) > 1:
             raise IncompatibleSurrogateError(
                 f"You attempted to train a single-target surrogate in a "
                 f"{n_targets}-target context. Either use a proper multi-target "
