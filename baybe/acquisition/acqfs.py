@@ -265,12 +265,12 @@ class UpperConfidenceBound(AcquisitionFunction):
     beta: float = field(converter=float, validator=ge(0.0), default=0.2)
     """Trade-off parameter for mean and variance.
 
-    * A value of zero makes the acquisition mechanism consider the posterior predictive
-      mean only, resulting in a risk-neutral behavior.
-    * Values larger than zero induce risk-seeking behavior, shifting the focus
-      more and more toward exploration.
-    * Values smaller than zero lead to favoring risk-averse decisions (a.k.a. "safe
-      bets"), with purely exploitative behavior in the limit.
+    * ``beta > 0``: Rewards uncertainty, takes more risk.
+      Limit ``inf``: Pure exploration
+    * ``beta < 0``: Punishes uncertainty, takes less risk.
+      Limit ``-inf``: Pure exploitation
+    * ``beta = 0``: Discards knowledge about uncertainty, i.e. neither rewards nor
+      punishes it, is risk-neutral.
     """
 
 
