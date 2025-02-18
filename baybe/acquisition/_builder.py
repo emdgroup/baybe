@@ -73,6 +73,9 @@ flds = fields(BotorchAcquisitionArgs)
 class BotorchAcquisitionFunctionBuilder:
     """A class for building BoTorch acquisition functions from BayBE objects."""
 
+    # The BayBE acquisition function to be translated
+    acqf: AcquisitionFunction = field(validator=instance_of(AcquisitionFunction))
+
     # The (pre-validated) BayBE objects
     surrogate: SurrogateProtocol = field()
     searchspace: SearchSpace = field()
@@ -81,10 +84,9 @@ class BotorchAcquisitionFunctionBuilder:
     pending_experiments: pd.DataFrame | None = field(default=None)
 
     # Context shared across building methods
-    _args: BotorchAcquisitionArgs | None = field(init=False)
-    _acqf: AcquisitionFunction | None = field(init=False)
-    _botorch_acqf_cls: BotorchAcquisitionFunction | None = field(init=False)
-    _signature: MappingProxyType | None = field(init=False)
+    _args: BotorchAcquisitionArgs = field(init=False)
+    _botorch_acqf_cls: BotorchAcquisitionFunction = field(init=False)
+    _signature: MappingProxyType = field(init=False)
     _set_best_f_called: bool = field(init=False, default=False)
 
     @cached_property
@@ -109,14 +111,9 @@ class BotorchAcquisitionFunctionBuilder:
     def _multiplier(self) -> list[float]:
         return [1.0 if m else -1.0 for m in self._maximize_flags]
 
-    def build(self, acqf: AcquisitionFunction, /) -> BotorchAcquisitionFunction:
+    def build(self) -> BotorchAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
-        self._initialize(acqf)
-
         # Set context-specific parameters
-        self._set_X_baseline()
-        self._set_mc_points()
-        self._set_X_pending()
         self._set_best_f()
         self._invert_optimization_direction()
         self._set_X_baseline()
@@ -129,15 +126,15 @@ class BotorchAcquisitionFunctionBuilder:
 
         return botorch_acqf
 
-    def _initialize(self, acqf: AcquisitionFunction, /) -> None:
+    def __attrs_post_init__(self) -> None:
         """Initialize the building process."""
-        self._acqf = acqf
-
         # Retrieve botorch acquisition function class and match attributes
-        self._botorch_acqf_cls = _get_botorch_acqf_class(type(acqf))
+        self._botorch_acqf_cls = _get_botorch_acqf_class(type(self.acqf))
         self._signature = signature(self._botorch_acqf_cls).parameters
         args, _ = match_attributes(
-            acqf, self._botorch_acqf_cls.__init__, ignore=acqf._non_botorch_attrs
+            self.acqf,
+            self._botorch_acqf_cls.__init__,
+            ignore=self.acqf._non_botorch_attrs,
         )
 
         # Pre-populate the acqf arguments with the content of the BayBE acqf
@@ -155,9 +152,9 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.mc_points.name not in self._signature:
             return
 
-        assert isinstance(self._acqf, qNegIntegratedPosteriorVariance)
+        assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
         self._args.mc_points = to_tensor(
-            self._acqf.get_integration_points(self.searchspace)
+            self.acqf.get_integration_points(self.searchspace)
         )
 
     def _set_X_pending(self) -> None:
@@ -191,7 +188,7 @@ class BotorchAcquisitionFunctionBuilder:
         assert self._set_best_f_called
 
         if issubclass(
-            type(self._acqf),
+            type(self.acqf),
             (
                 bo_acqf.qNegIntegratedPosteriorVariance,
                 bo_acqf.PosteriorStandardDeviation,
@@ -226,14 +223,14 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.ref_point.name not in self._signature:
             return
 
-        assert isinstance(self._acqf, qLogNoisyExpectedHypervolumeImprovement)
+        assert isinstance(self.acqf, qLogNoisyExpectedHypervolumeImprovement)
 
         if isinstance(ref_point := self._args.ref_point, Iterable):
             point = [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
         else:
             kwargs = {"factor": ref_point} if ref_point is not None else {}
             point = (
-                self._acqf.compute_ref_point(
+                self.acqf.compute_ref_point(
                     self._train_y, self._maximize_flags, **kwargs
                 )
                 * self._multiplier
@@ -243,8 +240,8 @@ class BotorchAcquisitionFunctionBuilder:
 
     def set_default_sample_shape(self, acqf: BotorchAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
-        if not isinstance(self._acqf, qThompsonSampling):
+        if not isinstance(self.acqf, qThompsonSampling):
             return
 
         assert hasattr(acqf, "_default_sample_shape")
-        acqf._default_sample_shape = torch.Size([self._acqf.n_mc_samples])
+        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])

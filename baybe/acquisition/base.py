@@ -75,8 +75,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         from baybe.acquisition._builder import BotorchAcquisitionFunctionBuilder
 
         return BotorchAcquisitionFunctionBuilder(
-            surrogate, searchspace, objective, measurements, pending_experiments
-        ).build(self)
+            self, surrogate, searchspace, objective, measurements, pending_experiments
+        ).build()
 
 
 def _get_botorch_acqf_class(
