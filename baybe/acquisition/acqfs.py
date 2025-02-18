@@ -8,7 +8,7 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import define, field, fields
-from attrs.validators import ge, gt, instance_of, le
+from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
@@ -262,7 +262,7 @@ class UpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "UCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
     """Trade-off parameter for mean and variance.
 
     * ``beta > 0``: Rewards uncertainty, takes more risk.
