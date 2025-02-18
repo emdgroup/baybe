@@ -33,7 +33,7 @@ from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import match_attributes
+from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import to_tensor
 
 
@@ -105,6 +105,7 @@ class BotorchAcquisitionFunctionBuilder:
 
     @property
     def _maximize_flags(self) -> list[bool]:
+        assert is_all_instance(self.objective.targets, NumericalTarget)
         return [t.mode is TargetMode.MAX for t in self.objective.targets]
 
     @property
