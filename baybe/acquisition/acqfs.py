@@ -4,6 +4,8 @@ import gc
 import math
 from typing import ClassVar
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
@@ -13,7 +15,7 @@ from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
-from baybe.utils.basic import classproperty
+from baybe.utils.basic import classproperty, convert_to_float
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -318,6 +320,92 @@ class qThompsonSampling(qSimpleRegret):
     @classproperty
     def supports_batching(cls) -> bool:
         return False
+
+
+########################################################################################
+### Hypervolume Improvement
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    reference_point: float | tuple[float, ...] | None = field(
+        default=None, converter=optional_c(convert_to_float)
+    )
+    """The reference point for computing the hypervolume improvement.
+
+    * When omitted, a default reference point is computed based on the provided data.
+    * When specified as a float, the value is interpreted as a multiplicative factor
+      determining the reference point location based on the difference between the best
+      and worst target configuration in the provided data.
+    * When specified as a vector, the input is taken as is.
+    """
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        # While BoTorch's acquisition function also expects a `ref_point` argument,
+        # the attribute defined here is more general and can hence not be directly
+        # matched. Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(qLogNoisyExpectedHypervolumeImprovement)
+        return (flds.reference_point.name,)
+
+    @staticmethod
+    def compute_ref_point(
+        array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
+    ) -> np.ndarray:
+        """Compute a reference point for a given set of of target configurations.
+
+        The reference point is positioned in relation to the worst target configuration
+        within the provided array. The distance in each target dimension is adjusted by
+        a specified multiplication factor, which scales the reference point away from
+        the worst target configuration based on the maximum observed differences in
+        target values.
+
+        Example:
+            >>> from baybe.acquisition import qLogNEHVI
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, True], 0.1)
+            array([-0.2,  9. ])
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, False], 0.2)
+            array([ -0.4, 22. ])
+
+        Args:
+            array: A 2-D array-like where each row represents a target configuration.
+            maximize: A 1-D boolean array indicating which targets are to be maximized.
+            factor: A numeric value controlling the location of the reference point.
+
+        Raises:
+            ValueError: If the given target configuration array is not two-dimensional.
+            ValueError: If the given Boolean array is not one-dimensional.
+
+        Returns:
+            The computed reference point.
+        """
+        if np.ndim(array) != 2:
+            raise ValueError(
+                "The specified data array must have exactly two dimensions."
+            )
+        if np.ndim(maximize) != 1:
+            raise ValueError(
+                "The specified Boolean array must have exactly one dimension."
+            )
+
+        # Convert arrays
+        array = np.asarray(array)
+        maximize = np.where(maximize, 1.0, -1.0)
+
+        # Compute bounds
+        array = array * maximize[None, :]
+        min = np.min(array, axis=0)
+        max = np.max(array, axis=0)
+
+        return (min - factor * (max - min)) * maximize
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

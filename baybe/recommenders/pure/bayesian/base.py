@@ -6,12 +6,17 @@ from abc import ABC
 
 import pandas as pd
 from attrs import define, field, fields
+from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition.acqfs import qLogExpectedImprovement
+from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleAcquisitionFunctionError,
+    InvalidSurrogateModelError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
@@ -30,12 +35,15 @@ class BayesianRecommender(PureRecommender, ABC):
     )
     """The used surrogate model."""
 
-    acquisition_function: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qLogExpectedImprovement
+    acquisition_function: AcquisitionFunction | None = field(
+        default=None, converter=optional(convert_acqf)
     )
-    """The used acquisition function class."""
+    """The user-specified acquisition function. When omitted, a default is used."""
 
-    _botorch_acqf = field(default=None, init=False)
+    _acqf: AcquisitionFunction | None = field(default=None, init=False, eq=False)
+    """The used acquisition function."""
+
+    _botorch_acqf = field(default=None, init=False, eq=False)
     """The current acquisition function."""
 
     acquisition_function_cls: str | None = field(default=None, kw_only=True)
@@ -62,6 +70,14 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
+    def _default_acquisition_function(
+        self, objective: Objective
+    ) -> AcquisitionFunction:
+        """Select the appropriate default acquisition function for the given context."""
+        if self.acquisition_function is None:
+            return qLogEI() if len(objective.targets) == 1 else qLogNEHVI()
+        return self.acquisition_function
+
     def get_surrogate(
         self,
         searchspace: SearchSpace,
@@ -82,8 +98,19 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
+        self._acqf = self._default_acquisition_function(objective)
+
+        if (
+            not self._acqf.supports_multi_output
+            and (n_targets := len(objective.targets)) > 1
+        ):
+            raise IncompatibleAcquisitionFunctionError(
+                f"You attempted to use a single-target acquisition function in a "
+                f"{n_targets}-target context."
+            )
+
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        self._botorch_acqf = self.acquisition_function.to_botorch(
+        self._botorch_acqf = self._acqf.to_botorch(
             surrogate,
             searchspace,
             objective,

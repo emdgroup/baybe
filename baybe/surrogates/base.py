@@ -20,7 +20,7 @@ from cattrs.dispatch import (
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import ModelNotTrainedError
+from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -40,6 +40,8 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
     from torch import Tensor
+
+    from baybe.surrogates.composite import BroadcastingSurrogate
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -104,6 +106,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
+    supports_multi_output: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate is multi-output
+    compatible."""
+
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
@@ -134,6 +140,22 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
+
+    def broadcast(self) -> BroadcastingSurrogate:
+        """Make the surrogate handle multiple targets via broadcasting.
+
+        If the surrogate only supports single targets, this method turns it into a
+        multi-target surrogate by replicating the model architecture for each observed
+        target. The resulting copies are trained independently, but share the same
+        architecture.
+
+        If the surrogate is itself already multi-target compatible, this operation
+        effectively disables the model's inherent multi-target mechanism by treating
+        it as a single-target surrogate and applying the same broadcasting mechanism.
+        """
+        from baybe.surrogates.composite import BroadcastingSurrogate
+
+        return BroadcastingSurrogate(self)
 
     @staticmethod
     def _make_parameter_scaler_factory(
@@ -301,6 +323,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 model.
         """
         # TODO: consider adding a validation step for `measurements`
+
+        # Validate multi-target compatibility
+        if not self.supports_multi_output and (n_targets := len(objective.targets)) > 1:
+            raise IncompatibleSurrogateError(
+                f"You attempted to train a single-target surrogate in a "
+                f"{n_targets}-target context. Either use a proper multi-target "
+                f"surrogate or consider explicitly replicating the current "
+                f"surrogate model using its "
+                f"'.{self.broadcast.__name__}' method."
+            )
 
         # When the context is unchanged, no retraining is necessary
         if (
