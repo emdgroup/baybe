@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   making single-target surrogate models multi-target compatible
 - `CompositeSurrogate` class for composing multi-target surrogates from single-target
   surrogates
-- `supports_multi_target` attribute/property to `Surrogate`/`AcquisitionFunction`
+- `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

@@ -59,8 +59,8 @@ class AcquisitionFunction(ABC, SerialMixin):
         return cls.supports_batching
 
     @classproperty
-    def supports_multi_target(cls) -> bool:
-        """Flag indicating whether multiple targets are supported."""
+    def supports_multi_output(cls) -> bool:
+        """Flag indicating whether multiple outputs are supported."""
         return "Hypervolume" in cls.__name__
 
     @classproperty
