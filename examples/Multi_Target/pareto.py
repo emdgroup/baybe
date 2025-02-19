@@ -152,10 +152,10 @@ plt.axis([-1, 1, -1, 1])
 # and the Pareto frontier in the target space:
 
 plt.sca(axs[1])
-centers = lookup(
+frontier = lookup(
     pd.DataFrame(np.linspace(CENTER_Y0, CENTER_Y1), columns=[x0.name, x1.name])
 )
-plt.plot(*centers.to_numpy().T, "k", label="frontier")
+plt.plot(*frontier.to_numpy().T, "k", label="frontier")
 plt.plot(data[y0.name], data[y1.name], "o", color="0.7", markersize=2, label="training")
 plt.plot(out_y0[y0.name], out_y0[y1.name], "o", color="tab:red", label="single_y0")
 plt.plot(out_y1[y0.name], out_y1[y1.name], "o", color="tab:blue", label="single_y1")
