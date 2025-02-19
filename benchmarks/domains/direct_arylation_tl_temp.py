@@ -14,7 +14,6 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.random import set_random_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -120,8 +119,6 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     ]
     Optimal Output: 100.0
     """
-    set_random_seed(1337)
-
     objective, searchspace = optimization_space()
 
     campaign = Campaign(
