@@ -4,7 +4,7 @@ For more details, see https://emdgroup.github.io/baybe/stable/userguide/envvars.
 """
 
 from baybe.telemetry.api import (
-    TELEM_LABELS,
+    TELEMETRY_LABELS,
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_HOSTNAME,
     VARNAME_TELEMETRY_USERNAME,
@@ -13,7 +13,7 @@ from baybe.telemetry.api import (
 )
 
 __all__ = [
-    "TELEM_LABELS",
+    "TELEMETRY_LABELS",
     "VARNAME_TELEMETRY_ENABLED",
     "VARNAME_TELEMETRY_HOSTNAME",
     "VARNAME_TELEMETRY_USERNAME",

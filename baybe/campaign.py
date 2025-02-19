@@ -36,7 +36,7 @@ from baybe.serialization import SerialMixin, converter
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
-    TELEM_LABELS,
+    TELEMETRY_LABELS,
     telemetry_record_recommended_measurement_percentage,
     telemetry_record_value,
 )
@@ -303,7 +303,7 @@ class Campaign(SerialMixin):
             self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
         # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
+        telemetry_record_value(TELEMETRY_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
             self._cached_recommendation, data, self.parameters
         )
@@ -501,8 +501,8 @@ class Campaign(SerialMixin):
             self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
 
         # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
+        telemetry_record_value(TELEMETRY_LABELS["COUNT_RECOMMEND"], 1)
+        telemetry_record_value(TELEMETRY_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
 

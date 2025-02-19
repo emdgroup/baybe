@@ -10,7 +10,7 @@ from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import fuzzy_row_match
 
 # Telemetry labels for metrics
-TELEM_LABELS = {
+TELEMETRY_LABELS = {
     "RECOMMENDED_MEASUREMENTS_PERCENTAGE": "value_recommended-measurements-percentage",
     "BATCH_SIZE": "value_batch-size",
     "COUNT_ADD_RESULTS": "count_add-results",
@@ -84,7 +84,7 @@ def telemetry_record_recommended_measurement_percentage(
         from baybe.telemetry._telemetry import transmission_queue
 
         if cached_recommendation.empty:
-            transmission_queue.put((TELEM_LABELS["NAKED_INITIAL_MEASUREMENTS"], 1))
+            transmission_queue.put((TELEMETRY_LABELS["NAKED_INITIAL_MEASUREMENTS"], 1))
         else:
             recommended_measurements_percentage = (
                 len(fuzzy_row_match(cached_recommendation, measurements, parameters))
@@ -93,7 +93,7 @@ def telemetry_record_recommended_measurement_percentage(
             )
             transmission_queue.put(
                 (
-                    TELEM_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
+                    TELEMETRY_LABELS["RECOMMENDED_MEASUREMENTS_PERCENTAGE"],
                     recommended_measurements_percentage,
                 )
             )
