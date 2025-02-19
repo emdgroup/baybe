@@ -7,7 +7,6 @@ import os
 from random import randint
 
 from baybe.campaign import Campaign
-from baybe.objective import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
     BotorchRecommender,
@@ -16,11 +15,8 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.telemetry import (
-    VARNAME_TELEMETRY_ENABLED,
-    VARNAME_TELEMETRY_USERNAME,
-    get_user_details,
-)
+from baybe.telemetry import VARNAME_TELEMETRY_ENABLED, VARNAME_TELEMETRY_USERNAME
+from baybe.telemetry._telemetry import get_user_details
 from baybe.utils.dataframe import add_fake_measurements
 
 dict_solvent = {
@@ -68,9 +64,7 @@ config = {
         parameters=parameters,
         constraints=None,
     ),
-    "objective": Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
+    "objective": NumericalTarget(name="Yield", mode="MAX").to_objective(),
     "recommender": TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
         initial_recommender=RandomRecommender(),
