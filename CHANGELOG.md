@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
   `supports_batching` and `supports_pending_experiments`
-- Telemetry now runs in a daemon thread
+- Telemetry now runs in a separate thread
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target

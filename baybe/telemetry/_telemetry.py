@@ -174,8 +174,8 @@ def test_connection() -> Exception | None:
         return ex
 
 
-def daemon_task() -> None:
-    """The telemetry logic to be executed in the daemon thread."""  # noqa
+def telemetry_task() -> None:
+    """The telemetry logic to be executed in a background thread."""  # noqa
     # Telemetry is inactive
     if not is_enabled():
         transmission_queue.close()
@@ -238,4 +238,4 @@ def submit_scalar_value(instrument_name: str, value: int | float) -> None:
 
 tools = TelemetryTools()
 transmission_queue = CloseableQueue()
-Thread(target=daemon_task).start()
+Thread(target=telemetry_task).start()
