@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
   providing statistical measures about the target predictions of a given set of
   candidates
+- Additional benchmarks
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
