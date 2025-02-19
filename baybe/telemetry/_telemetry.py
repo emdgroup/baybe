@@ -77,7 +77,7 @@ class TelemetryTools:
         """Lazily initialize telemetry objects upon first access."""
         if name not in [
             (fields(TelemetryTools)).instruments.name,
-            self._initialize.__name__,
+            "_initialize",
         ]:
             try:
                 self._initialize()
