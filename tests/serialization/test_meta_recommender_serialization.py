@@ -60,6 +60,8 @@ def test_meta_recommender_state_serialization(recommender):
     # Before serialization, identity must hold
     rec = select_recommender(recommender, 0)
     assert rec is RECOMMENDERS[0]
+    if isinstance(recommender, SequentialMetaRecommender):
+        recommender._was_used = True
     rec = select_recommender(recommender, 1)
     assert rec is RECOMMENDERS[1]
 

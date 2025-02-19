@@ -189,7 +189,7 @@ def test_polars_product(constraints, parameters):
     # Do Pandas product
     df_pd = parameter_cartesian_prod_pandas(parameters)
 
-    # Assert equality of lengths before filtering
+    # Assert equality before filtering
     assert_frame_equal(df_pl.to_pandas(), df_pd)
 
     # Apply constraints
@@ -198,5 +198,9 @@ def test_polars_product(constraints, parameters):
         _apply_constraint_filter_polars(ldf, constraints)[0].collect().to_pandas()
     )
 
-    # Assert strict equality of two dataframes
-    assert_frame_equal(df_pl_filtered, df_pd_filtered)
+    # Assert order-agnostic equality of the two dataframes
+    cols = df_pd_filtered.columns.tolist()
+    assert_frame_equal(
+        df_pd_filtered.sort_values(cols).reset_index(drop=True),
+        df_pl_filtered.sort_values(cols).reset_index(drop=True),
+    )

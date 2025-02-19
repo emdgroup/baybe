@@ -2,19 +2,26 @@
 
 import gc
 from abc import ABC
-from typing import ClassVar
+from typing import ClassVar, NoReturn
 
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.exceptions import NotEnoughPointsLeftError
+from baybe.exceptions import DeprecationError, NotEnoughPointsLeftError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.utils.dataframe import _ValidatedDataFrame
+from baybe.utils.validation import validate_parameter_input, validate_target_input
+
+_DEPRECATION_ERROR_MESSAGE = (
+    "The attribute '{}' is no longer available for recommenders. "
+    "All 'allow_*' flags are now handled by `baybe.campaign.Campaign`."
+)
 
 
 # TODO: Slots are currently disabled since they also block the monkeypatching necessary
@@ -24,23 +31,63 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 class PureRecommender(ABC, RecommenderProtocol):
     """Abstract base class for all pure recommenders."""
 
-    # Class variables
     compatibility: ClassVar[SearchSpaceType]
     """Class variable reflecting the search space compatibility."""
 
-    # Object variables
-    allow_repeated_recommendations: bool = field(default=False, kw_only=True)
-    """Allow to make recommendations that were already recommended earlier.
-    This only has an influence in discrete search spaces."""
+    _deprecated_allow_repeated_recommendations: bool = field(
+        alias="allow_repeated_recommendations",
+        default=None,
+        kw_only=True,
+    )
+    "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
-    allow_recommending_already_measured: bool = field(default=True, kw_only=True)
-    """Allow to make recommendations that were measured previously.
-    This only has an influence in discrete search spaces."""
+    _deprecated_allow_recommending_already_measured: bool = field(
+        alias="allow_recommending_already_measured",
+        default=None,
+        kw_only=True,
+    )
+    "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
 
-    allow_recommending_pending_experiments: bool = field(default=False, kw_only=True)
-    """Allow `pending_experiments` to be part of the recommendations. If set to `False`,
-    the corresponding points will be removed from the candidates. This only has an
-    influence in discrete search spaces."""
+    _deprecated_allow_recommending_pending_experiments: bool = field(
+        alias="allow_recommending_pending_experiments",
+        default=None,
+        kw_only=True,
+    )
+    "Deprecated! Now handled by :class:`baybe.campaign.Campaign`."
+
+    def __attrs_post_init__(self):
+        if (
+            self._deprecated_allow_repeated_recommendations is not None
+            or self._deprecated_allow_recommending_already_measured is not None
+            or self._deprecated_allow_recommending_pending_experiments is not None
+        ):
+            raise DeprecationError(
+                "Passing 'allow_*' flags to recommenders is no longer supported. "
+                "These are now handled by `baybe.campaign.Campaign`. "
+                "(Note: 'allow_repeated_recommendations' has been renamed to "
+                "'allow_recommending_already_recommended'.)"
+            )
+
+    @property
+    def allow_repeated_recommendations(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError(
+            _DEPRECATION_ERROR_MESSAGE.format("allow_repeated_recommendations")
+        )
+
+    @property
+    def allow_recommending_already_measured(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError(
+            _DEPRECATION_ERROR_MESSAGE.format("allow_recommending_already_measured")
+        )
+
+    @property
+    def allow_recommending_pending_experiments(self) -> NoReturn:
+        """Deprecated!"""
+        raise DeprecationError(
+            _DEPRECATION_ERROR_MESSAGE.format("allow_recommending_pending_experiments")
+        )
 
     @override
     def recommend(
@@ -51,6 +98,25 @@ class PureRecommender(ABC, RecommenderProtocol):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
+        # Validation
+        if (
+            measurements is not None
+            and not isinstance(measurements, _ValidatedDataFrame)
+            and not measurements.empty
+            and objective is not None
+            and searchspace is not None
+        ):
+            validate_target_input(measurements, objective.targets)
+            validate_parameter_input(measurements, searchspace.parameters)
+            measurements.__class__ = _ValidatedDataFrame
+        if (
+            pending_experiments is not None
+            and not isinstance(pending_experiments, _ValidatedDataFrame)
+            and searchspace is not None
+        ):
+            validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments.__class__ = _ValidatedDataFrame
+
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
                 subspace_continuous=searchspace.continuous, batch_size=batch_size
@@ -191,19 +257,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         is_hybrid_space = searchspace.type is SearchSpaceType.HYBRID
 
         # Get discrete candidates
-        # Repeated recommendations are always allowed for hybrid spaces
-        # Pending experiments are excluded for discrete spaces unless configured
-        # differently.
-        dont_exclude_pending = (
-            is_hybrid_space or self.allow_recommending_pending_experiments
-        )
-        candidates_exp, _ = searchspace.discrete.get_candidates(
-            allow_repeated_recommendations=is_hybrid_space
-            or self.allow_repeated_recommendations,
-            allow_recommending_already_measured=is_hybrid_space
-            or self.allow_recommending_already_measured,
-            exclude=None if dont_exclude_pending else pending_experiments,
-        )
+        candidates_exp, _ = searchspace.discrete.get_candidates()
 
         # TODO: Introduce new flag to recommend batches larger than the search space
 
@@ -212,10 +266,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
             raise NotEnoughPointsLeftError(
                 f"Using the current settings, there are fewer than {batch_size} "
-                "possible data points left to recommend. This can happen "
-                "when all candidates have already been measured/recommended while "
-                "`allow_repeated_recommendations'/'allow_recommending_already_measured' "  # noqa: E501
-                "are set to `False`."
+                f"possible data points left to recommend."
             )
 
         # Get recommendations

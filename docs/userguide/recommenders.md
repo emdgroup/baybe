@@ -14,20 +14,6 @@ While some pure recommenders are versatile and work across different types of se
 spaces, other are specifically designed for discrete or continuous spaces. The
 compatibility is indicated via the corresponding `compatibility` class variable.
 
-```{admonition} Additional Options for Discrete Search Spaces
-:class: note
-For discrete search spaces, BayBE provides additional controls for pure recommenders:
-- `allow_repeated_recommendations`: Controls whether a recommender is allowed to
-  recommend previous recommendations again. 
-- `allow_recommending_already_measured`: Controls whether a recommender is allowed to
-  recommend points that have already been measured. This only considers exact matches
-  to the search space.
-- `allow_recommending_pending_experiments`: Controls whether a recommender is allowed
-  to recommend points that have been marked as `pending_experiments`
-  (see [asynchronous workflows](PENDING_EXPERIMENTS)). This only considers exact matches to the
-  search space.
-```
-
 ### Bayesian Recommenders
 
 The Bayesian recommenders in BayBE are built on the foundation of the
@@ -46,22 +32,22 @@ for various acquisition functions.
   spaces, as it does gradient-based optimization in the continuous part of the space
   while exhaustively evaluating configurations of the discrete subspace. You can customize this
   behavior to only sample a certain percentage of the discrete subspace via the
-  `sample_percentage` attribute and to choose different sampling algorithms via the
-  `hybrid_sampler` attribute.
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.sampling_percentage`
+  argument and to choose different sampling algorithms via the
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.hybrid_sampler`
+  argument.
 
   The gradient-based optimization part can also further be controlled by the
-  `n_restarts` and `n_raw_samples` keywords. For details, please refer
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_restarts` and
+  {attr}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.n_raw_samples`
+  arguments. For details, please refer
   to [BotorchRecommender](baybe.recommenders.pure.bayesian.botorch.BotorchRecommender).
  
-  An example on using this recommender in a hybrid space can be found
-  [here](./../../examples/Backtesting/hybrid).
-
 * The **[`NaiveHybridSpaceRecommender`](baybe.recommenders.naive.NaiveHybridSpaceRecommender)**
   can be applied to all search spaces, but is intended to be used in hybrid spaces.
   This recommender combines individual recommenders for the continuous and the discrete
   subspaces. It independently optimizes each subspace and consolidates the best results
-  to generate a candidate for the original hybrid space. An example on using this
-  recommender in a hybrid space can be found [here](./../../examples/Backtesting/hybrid).
+  to generate a candidate for the original hybrid space. 
 
 ### Clustering Recommenders
 

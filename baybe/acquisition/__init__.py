@@ -13,6 +13,7 @@ from baybe.acquisition.acqfs import (
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedImprovement,
+    qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
     qSimpleRegret,
     qThompsonSampling,
@@ -21,6 +22,7 @@ from baybe.acquisition.acqfs import (
 
 PM = PosteriorMean
 PSTD = PosteriorStandardDeviation
+qPSTD = qPosteriorStandardDeviation
 qSR = qSimpleRegret
 EI = ExpectedImprovement
 qEI = qExpectedImprovement
@@ -43,6 +45,7 @@ __all__ = [
     # Posterior Statistics
     "PosteriorMean",
     "PosteriorStandardDeviation",
+    "qPosteriorStandardDeviation",
     # Simple Regret
     "qSimpleRegret",
     # Expected Improvement
@@ -67,6 +70,7 @@ __all__ = [
     # Posterior Statistics
     "PM",
     "PSTD",
+    "qPSTD",
     # Simple Regret
     "qSR",
     # Expected Improvement

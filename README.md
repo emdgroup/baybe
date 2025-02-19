@@ -30,10 +30,15 @@
 The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for Bayesian Design
 of Experiments, focusing on additions that enable real-world experimental campaigns.
 
-Besides functionality to perform a typical recommend-measure loop, BayBE's highlights are:
-- ✨ Custom parameter encodings: Improve your campaign with domain knowledge
+## 🔋 Batteries Included
+Besides its core functionality to perform a typical recommend-measure loop, BayBE
+offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
+The following provides a non-comprehensive overview:
+
+- 🛠️ Custom parameter encodings: Improve your campaign with domain knowledge
 - 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
 - 🎯 Single and multiple targets with min, max and match objectives
+- 🔍 Insights: Easily analyze feature importance and model behavior
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
@@ -296,7 +301,8 @@ The available groups are:
 - `lint`: Required for linting and formatting.
 - `mypy`: Required for static type checking.
 - `onnx`: Required for using custom surrogate models in [ONNX format](https://onnx.ai).
-- `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/)
+- `polars`: Required for optimized search space construction via [Polars](https://docs.pola.rs/).
+- `insights`: Required for built-in model and campaign analysis (e.g. using [SHAP](https://shap.readthedocs.io/)).
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `benchmarking`: Required for running the benchmarking module.
@@ -332,7 +338,7 @@ A list of know issues can be found [here](https://emdgroup.github.io/baybe/stabl
 
 ## 📄 License
 
-Copyright 2022-2024 Merck KGaA, Darmstadt, Germany
+Copyright 2022-2025 Merck KGaA, Darmstadt, Germany
 and/or its affiliates. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");

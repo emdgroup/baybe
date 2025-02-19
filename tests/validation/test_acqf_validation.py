@@ -39,18 +39,17 @@ def test_qNIPV(sampling_n_points, sampling_fraction, sampling_method, error, mat
         qNIPV(**kwargs)
 
 
-@pytest.mark.parametrize("acqf", [qNEI, qLogNEI])
+@pytest.mark.parametrize("acqf", [qNEI, qLogNEI], ids=["qNEI", "qLogNEI"])
 def test_EI(acqf):
     """Providing a non-Boolean argument to `prune_baseline` raises an error."""
     with pytest.raises(TypeError):
         acqf(1)
 
 
-@pytest.mark.parametrize("acqf", [UCB, qUCB])
+@pytest.mark.parametrize("acqf", [UCB, qUCB], ids=["UCB", "qUCB"])
 @pytest.mark.parametrize(
     ("beta", "match"),
     [
-        param(-1.0, "must be >= 0.0", id="negative"),
         param("a", "could not convert", id="not_a_float"),
     ],
 )

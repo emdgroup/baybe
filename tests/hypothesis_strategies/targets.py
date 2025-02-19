@@ -28,12 +28,14 @@ def numerical_targets(
     """
     name = draw(target_name)
     mode = draw(st.sampled_from(TargetMode))
+    transformation = draw(st.sampled_from(_VALID_TRANSFORMATIONS[mode]))
     if bounds_strategy is None:
         bounds_strategy = st_intervals(
-            exclude_half_bounded=True, exclude_fully_unbounded=mode is TargetMode.MATCH
+            exclude_half_bounded=True,
+            exclude_fully_unbounded=mode is TargetMode.MATCH
+            or transformation is not None,
         )
     bounds = draw(bounds_strategy)
-    transformation = draw(st.sampled_from(_VALID_TRANSFORMATIONS[mode]))
 
     return NumericalTarget(
         name=name, mode=mode, bounds=bounds, transformation=transformation

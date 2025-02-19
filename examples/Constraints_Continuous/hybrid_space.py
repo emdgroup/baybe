@@ -2,8 +2,7 @@
 
 # Example for optimizing a synthetic test functions in a hybrid space with one
 # constraint in the discrete subspace and one constraint in the continuous subspace.
-# All test functions that are available in BoTorch are also available here and wrapped
-# via the `botorch_function_wrapper`.
+# All test functions that are available in BoTorch are also available here.
 # This example assumes some basic familiarity with using BayBE.
 # We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 # Also, there is a large overlap with other examples with regards to using the test function.
@@ -14,6 +13,7 @@
 ### Necessary imports for this example
 
 import numpy as np
+import pandas as pd
 from botorch.test_functions import Rastrigin
 
 from baybe import Campaign
@@ -22,11 +22,10 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function
 
@@ -48,7 +47,6 @@ else:
     DIMENSION = TestFunctionClass().dim
 
 BOUNDS = TestFunction.bounds
-WRAPPED_FUNCTION = botorch_function_wrapper(test_function=TestFunction)
 
 ### Creating the searchspace and the objective
 
@@ -90,7 +88,14 @@ constraints = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
+
+### Wrap the test function as a dataframe-based lookup callable
+
+lookup = arrays_to_dataframes(
+    [p.name for p in parameters], [target.name], use_torch=True
+)(TestFunction)
 
 ### Construct the campaign and run some iterations
 
@@ -102,17 +107,11 @@ campaign = Campaign(
 BATCH_SIZE = 5
 N_ITERATIONS = 2
 
-for k in range(N_ITERATIONS):
+for _ in range(N_ITERATIONS):
     recommendation = campaign.recommend(batch_size=BATCH_SIZE)
-
-    # target value are looked up via the botorch wrapper
-    target_values = []
-    for index, row in recommendation.iterrows():
-        target_values.append(WRAPPED_FUNCTION(*row.to_list()))
-
-    recommendation["Target"] = target_values
-
-    campaign.add_measurements(recommendation)
+    lookup_values = lookup(recommendation)
+    measurements = pd.concat([recommendation, lookup_values], axis=1)
+    campaign.add_measurements(measurements)
 
 ### Verify the constraints
 measurements = campaign.measurements

@@ -17,12 +17,11 @@ import seaborn as sns
 from botorch.test_functions.synthetic import Hartmann
 
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.plotting import create_example_plots
 
 ### Settings
@@ -43,7 +42,8 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimen
 # The corresponding [Objective](baybe.objective.Objective)
 # is created as follows:
 
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
 
 ### Creating the Searchspace
 
@@ -96,11 +96,13 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # noise. The used model is of course not aware of this relationship but needs to infer
 # it from the data gathered during the optimization process.
 
+wrapper = arrays_to_dataframes(
+    [p.name for p in discrete_params], [target.name], use_torch=True
+)
+
 test_functions = {
-    "Test_Function": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": botorch_function_wrapper(
-        Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)
-    ),
+    "Test_Function": wrapper(Hartmann(dim=DIMENSION)),
+    "Training_Function": wrapper(Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)),
 }
 
 # (Lookup)=
@@ -117,7 +119,7 @@ grid = np.meshgrid(*[p.values for p in discrete_params])
 lookups: dict[str, pd.DataFrame] = {}
 for function_name, function in test_functions.items():
     lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
-    lookup["Target"] = lookup.apply(function, axis=1)
+    lookup = pd.concat([lookup, function(lookup)], axis=1)
     lookup["Function"] = function_name
     lookups[function_name] = lookup
 lookup_training_task = lookups["Training_Function"]

@@ -1,12 +1,15 @@
 """Tests for the objective module."""
 
 import numpy as np
+import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 
 from baybe.objectives.desirability import DesirabilityObjective, scalarize
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
+from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.targets import NumericalTarget
 
 
@@ -93,3 +96,19 @@ def test_desirability_scalarization(values, scalarizer, weights, expected):
     """The desirability scalarization yields the expected result."""
     actual = scalarize(values, scalarizer, weights)
     assert np.array_equal(actual, expected), (expected, actual)
+
+
+@pytest.mark.parametrize(
+    ("mode", "bounds", "opt"),
+    [("MIN", None, 0), ("MAX", None, 1), ("MIN", (0, 1), 0), ("MAX", (0, 1), 1)],
+)
+def test_single_objective(mode, bounds, opt):
+    """Recommendations yield expected results with and without bounded objective."""
+    searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
+    objective = NumericalTarget("t", mode=mode, bounds=bounds).to_objective()
+    recommender = BotorchRecommender()
+    measurements = pd.DataFrame(
+        {"p": np.linspace(0, 1, 100), "t": np.linspace(0, 1, 100)}
+    )
+    rec = recommender.recommend(1, searchspace, objective, measurements)
+    assert np.isclose(rec["p"].item(), opt)

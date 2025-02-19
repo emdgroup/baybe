@@ -16,14 +16,14 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from botorch.test_functions.synthetic import Hartmann
+from torch import Tensor
 
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios, simulate_transfer_learning
 from baybe.targets import NumericalTarget
-from baybe.utils.botorch_wrapper import botorch_function_wrapper
+from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.plotting import create_example_plots
 
 ### Settings
@@ -44,11 +44,12 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 7  # number of grid points per input dimen
 # The corresponding [Objective](baybe.objective.Objective)
 # is created as follows:
 
-objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+target = NumericalTarget(name="Target", mode="MIN")
+objective = target.to_objective()
 
 ### Creating the Search Space
 
-# This example uses the [Hartmann Function](https://botorch.org/api/test_functions.html#botorch.test_functions.synthetic.Hartmann)
+# This example uses the [Hartmann Function](botorch.test_functions.synthetic.Hartmann)
 # as implemented by `botorch`.
 # The bounds of the search space are dictated by the test function and can be extracted
 # from the function itself.
@@ -91,16 +92,19 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # and vice versa. The used model is of course not aware of this relationship but
 # needs to infer it from the data gathered during the optimization process.
 
+wrapper = arrays_to_dataframes(
+    [p.name for p in discrete_params], [target.name], use_torch=True
+)
 
-def shifted_hartmann(*x: float) -> float:
-    """Calculate a shifted, scaled and noisy variant of the Hartman function."""
-    noised_hartmann = Hartmann(dim=DIMENSION, noise_std=0.15)
-    return 2.5 * botorch_function_wrapper(noised_hartmann)(x) + 3.25
+
+def shifted_hartmann(x: Tensor, /) -> Tensor:
+    """Calculate a shifted, scaled and noisy variant of the Hartmann function."""
+    return 2.5 * Hartmann(dim=DIMENSION, noise_std=0.15)(x) + 3.25
 
 
 test_functions = {
-    "Hartmann": botorch_function_wrapper(Hartmann(dim=DIMENSION)),
-    "Shifted": shifted_hartmann,
+    "Hartmann": wrapper(Hartmann(dim=DIMENSION)),
+    "Shifted": wrapper(shifted_hartmann),
 }
 
 ### Generating Lookup Tables
@@ -116,7 +120,7 @@ grid = np.meshgrid(*[p.values for p in discrete_params])
 lookups: dict[str, pd.DataFrame] = {}
 for function_name, function in test_functions.items():
     lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
-    lookup["Target"] = tuple(lookup.apply(function, axis=1))
+    lookup = pd.concat([lookup, function(lookup)], axis=1)
     lookup["Function"] = function_name
     lookups[function_name] = lookup
 lookup = pd.concat([lookups["Hartmann"], lookups["Shifted"]]).reset_index()

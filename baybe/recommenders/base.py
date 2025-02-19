@@ -68,6 +68,11 @@ converter.register_unstructure_hook(
             _surrogate_model=cattrs.override(rename="surrogate_model"),
             _current_recommender=cattrs.override(omit=False),
             _used_recommender_ids=cattrs.override(omit=False),
+            _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
+            _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
+            _deprecated_allow_recommending_pending_experiments=cattrs.override(
+                omit=True
+            ),
         ),
     ),
 )

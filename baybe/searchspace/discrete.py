@@ -240,7 +240,7 @@ class SubspaceDiscrete(SerialMixin):
             lazy_df, mask_missing = _apply_constraint_filter_polars(
                 lazy_df, constraints
             )
-            df_records = lazy_df.collect(streaming=True).to_dicts()
+            df_records = lazy_df.collect().to_dicts()
             df = pd.DataFrame.from_records(df_records)
         except OptionalImportError:
             # Apply pandas product
@@ -598,40 +598,14 @@ class SubspaceDiscrete(SerialMixin):
             comp_rep_shape=(n_rows, n_cols_comp),
         )
 
-    def get_candidates(
-        self,
-        allow_repeated_recommendations: bool = False,
-        allow_recommending_already_measured: bool = False,
-        exclude: pd.DataFrame | None = None,
-    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Return the set of candidate parameter settings that can be tested.
-
-        Args:
-            allow_repeated_recommendations: If ``True``, parameter settings that have
-                already been recommended in an earlier iteration are still considered
-                valid candidates. This is relevant, for instance, when an earlier
-                recommended parameter setting has not been measured by the user (for any
-                reason) after the corresponding recommendation was made.
-            allow_recommending_already_measured: If ``True``, parameters settings for
-                which there are already target values available are still considered as
-                valid candidates.
-            exclude: Points in experimental representation that should be excluded as
-                candidates.
 
         Returns:
             The candidate parameter settings both in experimental and computational
             representation.
         """
-        # Filter the search space down to the candidates
-        mask_todrop = self._excluded.copy()
-
-        # Remove additional excludes
-        if exclude is not None:
-            mask_todrop |= pd.merge(self.exp_rep, exclude, indicator=True, how="left")[
-                "_merge"
-            ].eq("both")
-
-        return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
+        return self.exp_rep.loc[~self._excluded], self.comp_rep.loc[~self._excluded]
 
     def transform(
         self,

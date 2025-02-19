@@ -149,10 +149,13 @@ def smiles_to_fingerprint_features(
     )
     name = f"{encoding.name}_"
     prefix = prefix + "_" if prefix else ""
-    col_names = [
-        prefix + name + f.split("fingerprint")[1]
-        for f in fingerprint_encoder.get_feature_names_out()
+    feature_names_out = fingerprint_encoder.get_feature_names_out()
+    no_descriptor_names = all("fingerprint" in f for f in feature_names_out)
+    suffixes = [
+        f.split("fingerprint")[1] if no_descriptor_names else f.replace(" ", "_")
+        for f in feature_names_out
     ]
+    col_names = [prefix + name + suffix for suffix in suffixes]
     df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
 
     return df

@@ -2,5 +2,4 @@
 omit =
     baybe/utils/plotting.py
     baybe/utils/random.py
-    baybe/utils/botorch_wrapper.py
     baybe/simulation/*

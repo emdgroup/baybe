@@ -37,7 +37,7 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
         import torch
 
         # TODO: use target value bounds for covariance scaling when explicitly provided
-        mean = self._model * torch.ones([len(candidates_comp_scaled)])
+        mean = self._model * torch.ones([len(candidates_comp_scaled)])  # type: ignore[operator]
         var = torch.ones(len(candidates_comp_scaled))
         return mean, var
 
