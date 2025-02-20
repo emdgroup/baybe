@@ -44,11 +44,18 @@ source_task = [
 ]
 
 
-def space_data() -> (SingleTargetObjective, SearchSpace, pd.DataFrame, pd.DataFrame):
+def space_data() -> (
+    SingleTargetObjective,
+    SearchSpace,
+    SearchSpace,
+    pd.DataFrame,
+    pd.DataFrame,
+):
     """Definition of search space, objective, and data.
 
     Returns:
-        Objective, search space, pre-measured task data (source task),
+        Objective, TL search space, non-TL search space,
+        pre-measured task data (source task),
         and lookup for the active (target) task.
     """
     data_params = [
@@ -68,13 +75,14 @@ def space_data() -> (SingleTargetObjective, SearchSpace, pd.DataFrame, pd.DataFr
 
     objective = SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
     searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
+    searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
     lookup = data.query(f'aryl_halide=="{test_task}"').copy(deep=True)
     initial_data = data.query("aryl_halide.isin(@source_task)", engine="python").copy(
         deep=True
     )
 
-    return objective, searchspace, initial_data, lookup
+    return objective, searchspace, searchspace_nontl, initial_data, lookup
 
 
 def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -97,7 +105,7 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     ]
     Optimal Output: 68.24812709999999
     """
-    objective, searchspace, initial_data, lookup = space_data()
+    objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     campaign = Campaign(
         searchspace=searchspace,
@@ -118,6 +126,28 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
                 impute_mode="error",
             )
         )
+    # No training data
+    results.append(
+        simulate_scenarios(
+            {"0": campaign},
+            lookup,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
+    # Non-TL campaign
+    results.append(
+        simulate_scenarios(
+            {"non-TL": Campaign(searchspace=searchspace_nontl, objective=objective)},
+            lookup,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
     results = pd.concat(results)
     return results
 
