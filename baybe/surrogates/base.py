@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, ClassVar, Protocol
 
 import cattrs
 import pandas as pd
+import torch
 from attrs import define, field
 from cattrs.dispatch import (
     StructuredValue,
@@ -19,8 +20,6 @@ from cattrs.dispatch import (
 )
 from joblib.hashing import hash
 from typing_extensions import override
-import numpy as np
-import torch
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
@@ -233,28 +232,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
         )
 
-    def posterior_to_numpy(posterior: Posterior) -> np.ndarray:
-        """Safely convert a posterior to numpy array.
-        
-        Args:
-            posterior: The posterior to convert
-            
-        Returns:
-            The numpy array representation
-        """
-        # Get mean tensor
-        mean = posterior.mean
-        
-        # Move to CPU if on CUDA
-        if mean.is_cuda:
-            mean = mean.cpu()
-        
-        # Detach if needed
-        if mean.requires_grad:
-            mean = mean.detach()
-        
-        return mean.numpy()
-
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
 
@@ -277,10 +254,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         transformed = self._input_scaler.transform(candidates_comp)
         # Initialize prediction strategy if needed
-        if (hasattr(self._model, "train_inputs") and 
-            self._model.train_inputs and 
-            (self._model.prediction_strategy is None or 
-             getattr(self._model.prediction_strategy, "_mean_cache", None) is None)):
+        if (
+            hasattr(self._model, "train_inputs")
+            and self._model.train_inputs
+            and (
+                self._model.prediction_strategy is None
+                or getattr(self._model.prediction_strategy, "_mean_cache", None) is None
+            )
+        ):
             # Move training data to the same device as transformed inputs.
             train_x = self._model.train_inputs[0].to(transformed.device)
             train_y = self._model.train_targets.to(transformed.device)
@@ -294,32 +275,42 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                     _ = self._model.likelihood(output)
                     # Ensure prediction strategy is created
                     if self._model.prediction_strategy is None:
-                        self._model.prediction_strategy = self._model.exact_prediction_strategy(
-                            train_x, train_y, self._model.likelihood
+                        self._model.prediction_strategy = (
+                            self._model.exact_prediction_strategy(
+                                train_x, train_y, self._model.likelihood
+                            )
                         )
             except Exception as e:
-                # Log a warning if a dummy pass fails; the cache might have been already set.
-                print("Warning: Dummy forward pass failed to initialize prediction strategy:", e)
+                # Log a warning if a dummy pass fails; the cache might have been
+                # already set.
+                print(
+                    "Warning: Dummy forward pass failed to initialize "
+                    "prediction strategy:",
+                    e,
+                )
 
         p = self._posterior(transformed)
 
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
-        
+
         # If the posterior's tensors are on GPU, create a new posterior with CPU tensors
         if hasattr(p, "mean") and isinstance(p.mean, torch.Tensor) and p.mean.is_cuda:
             from botorch.posteriors import GPyTorchPosterior
             from gpytorch.distributions import MultivariateNormal
-            
+
             # Create a new MultivariateNormal distribution with CPU tensors
             # Ensure proper shape by squeezing extra dimensions
             mvn = MultivariateNormal(
                 p.mean.cpu().detach().squeeze(-1),  # Remove last dimension
-                p.variance.cpu().detach().squeeze(-1).diag_embed()  # Remove last dimension before creating diagonal matrix
+                p.variance.cpu()
+                .detach()
+                .squeeze(-1)
+                .diag_embed(),  # Remove last dimension before creating diagonal matrix
             )
             # Create a new posterior with the CPU-based distribution
             p = GPyTorchPosterior(mvn)
-        
+
         return p
 
     @abstractmethod
