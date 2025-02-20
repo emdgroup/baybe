@@ -39,13 +39,13 @@ def get_data() -> pd.DataFrame:
 data = get_data()
 
 
-def optimization_space() -> (SingleTargetObjective, SearchSpace):
+def optimization_space() -> (SingleTargetObjective, SearchSpace, SearchSpace):
     """Definition of search space and objective.
 
     Returns:
-        Objective and search space.
+        Objective, TL search space, non-TL search space
     """
-    parameters = [
+    data_params = [
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
@@ -61,17 +61,18 @@ def optimization_space() -> (SingleTargetObjective, SearchSpace):
             values=sorted(data["Concentration"].unique()),
             tolerance=0.001,
         ),
-        TaskParameter(
-            name="Temp_C",
-            values=["90", "105", "120"],
-            active_values=["105"],
-        ),
     ]
+    task_param = TaskParameter(
+        name="Temp_C",
+        values=["90", "105", "120"],
+        active_values=["105"],
+    )
 
     objective = SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
-    searchspace = SearchSpace.from_product(parameters=parameters)
+    searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
+    searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
-    return objective, searchspace
+    return objective, searchspace, searchspace_nontl
 
 
 def lookup() -> pd.DataFrame:
@@ -119,7 +120,7 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     ]
     Optimal Output: 100.0
     """
-    objective, searchspace = optimization_space()
+    objective, searchspace, searchspace_nontl = optimization_space()
 
     campaign = Campaign(
         searchspace=searchspace,
@@ -144,6 +145,28 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
                 impute_mode="error",
             )
         )
+    # No training data
+    results.append(
+        simulate_scenarios(
+            {"0": campaign},
+            lookup_data,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
+    # Non-TL campaign
+    results.append(
+        simulate_scenarios(
+            {"non-TL": Campaign(searchspace=searchspace_nontl, objective=objective)},
+            lookup_data,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
     results = pd.concat(results)
     return results
 
