@@ -27,10 +27,7 @@ def get_data() -> pd.DataFrame:
         Data for benchmark.
     """
     # TODO change path
-    data_dir = (
-        "/Users/karinhrovatin/Documents/code/"
-        + "BayBE_benchmark/domains/DirectArylation/"
-    )
+    data_dir = "../data/DirectArylation/"
     data = pd.read_excel(data_dir + "data.xlsx", index_col=0)
     data["Temp_C"] = data["Temp_C"].astype(str)
     return data
