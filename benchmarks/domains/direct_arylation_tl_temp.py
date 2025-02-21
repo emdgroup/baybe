@@ -36,11 +36,19 @@ def get_data() -> pd.DataFrame:
 data = get_data()
 
 
-def optimization_space() -> (SingleTargetObjective, SearchSpace, SearchSpace):
-    """Definition of search space and objective.
+def space_data() -> (
+    SingleTargetObjective,
+    SearchSpace,
+    SearchSpace,
+    pd.DataFrame,
+    pd.DataFrame,
+):
+    """Definition of search space, objective, and data.
 
     Returns:
-        Objective, TL search space, non-TL search space
+        Objective, TL search space, non-TL search space,
+        pre-measured task data (source task),
+        and lookup for the active (target) task.
     """
     data_params = [
         SubstanceParameter(
@@ -69,25 +77,10 @@ def optimization_space() -> (SingleTargetObjective, SearchSpace, SearchSpace):
     searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
     searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
-    return objective, searchspace, searchspace_nontl
+    lookup = data.query('Temp_C=="105"').copy(deep=True)
+    initial_data = data.query('Temp_C!="105"').copy(deep=True)
 
-
-def lookup() -> pd.DataFrame:
-    """Get lookup for the active task.
-
-    Returns:
-        Active task lookup.
-    """
-    return data.query('Temp_C=="105"').copy(deep=True)
-
-
-def initial_data() -> pd.DataFrame:
-    """Get starting data for the pre-measured tasks.
-
-    Returns:
-        Pre-measured task data.
-    """
-    return data.query('Temp_C!="105"').copy(deep=True)
+    return objective, searchspace, searchspace_nontl, initial_data, lookup
 
 
 def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -117,25 +110,21 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     ]
     Optimal Output: 100.0
     """
-    objective, searchspace, searchspace_nontl = optimization_space()
+    objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     campaign = Campaign(
         searchspace=searchspace,
         objective=objective,
     )
 
-    lookup_data = lookup()
-    initial_samples = initial_data()
-
     results = []
     for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
                 {f"{int(100 * p)}": campaign},
-                lookup_data,
+                lookup,
                 initial_data=[
-                    initial_samples.sample(frac=p)
-                    for _ in range(settings.n_mc_iterations)
+                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
                 ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
@@ -146,7 +135,7 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     results.append(
         simulate_scenarios(
             {"0": campaign},
-            lookup_data,
+            lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
@@ -157,7 +146,7 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     results.append(
         simulate_scenarios(
             {"non-TL": Campaign(searchspace=searchspace_nontl, objective=objective)},
-            lookup_data,
+            lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
