@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -14,6 +16,7 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -26,9 +29,8 @@ def get_data() -> pd.DataFrame:
     Returns:
         Data for benchmark.
     """
-    # TODO change path
-    data_dir = "../data/DirectArylation/"
-    data = pd.read_excel(data_dir + "data.xlsx", index_col=0)
+    data_path = DATA_PATH + "DirectArylation" + os.sep
+    data = pd.read_excel(data_path + "data.xlsx", index_col=0)
     data["Temp_C"] = data["Temp_C"].astype(str)
     return data
 
