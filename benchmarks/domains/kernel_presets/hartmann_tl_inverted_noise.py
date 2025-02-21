@@ -126,7 +126,7 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=3,  # 100,
+    n_mc_iterations=50,
 )
 
 hartmann_tl_inverted_noise_benchmark = ConvergenceBenchmark(
