@@ -37,6 +37,8 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     ]
     Optimal Output: 0.9462931105452647
     """
+    print(easom_tl_noise)
+
     objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     recommender_botorch_preset = TwoPhaseMetaRecommender(
@@ -139,7 +141,7 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=50,
+    n_mc_iterations=10,
 )
 
 easom_tl_noise_benchmark = ConvergenceBenchmark(
