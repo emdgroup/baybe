@@ -462,7 +462,7 @@ def fuzzy_row_match(
     right_df: pd.DataFrame,
     parameters: Sequence[Parameter],
 ) -> pd.Index:
-    """Match row of the right dataframe to the rows of the left dataframe.
+    """Match rows of the right dataframe to rows of the left dataframe.
 
     This is useful for matching measurements to entries in the search space, e.g. to
     detect which ones have been measured. For categorical parameters, there needs to be
@@ -476,10 +476,8 @@ def fuzzy_row_match(
 
     Args:
         left_df: The data that serves as lookup reference.
-        right_df: The data that should be checked for matching rows in the left
-            dataframe.
-        parameters: List of baybe parameter objects that are needed to identify
-            potential tolerances.
+        right_df: The data that is checked for matching rows in the left dataframe.
+        parameters: Parameter objects that identify relevant column names.
 
     Returns:
         The index of the matching rows in ``left_df``.
@@ -510,33 +508,33 @@ def fuzzy_row_match(
         True, index=right_df.index, columns=left_df.index, dtype=bool
     )
 
-    # Match categorical columns
+    # Match categorical parameters
     for col in cat_cols:
-        # Per categorical column, this calculates the match between all elements of
-        # left and right and stores it as a matrix (via the explicit None indexer).
+        # Per categorical parameter, this calculates the match between all elements of
+        # left and right and stores it as a matrix.
         match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
 
-    # Match numerical columns
+    # Match numerical parameters
     for col in num_cols:
-        # Per numerical column, this calculates the match between all elements of
-        # left and right and stores it as a matrix (via the explicit None indexer).
+        # Per numerical parameter, this identifies the rows with the smallest absolute
+        # difference and stores it as a matrix.
         abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 
     # Find the matching indices. If a right row is not matched to any of the rows in
-    # left, idxmax would return the first index if left_df. Hence, we remember these
+    # left, idxmax would return the first index of left_df. Hence, we remember these
     # cases and drop them explicitly.
     matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
     mask_no_match = ~match_matrix.any(axis=1)
     matched_indices = matched_indices[~mask_no_match]
 
-    # Warn if there are multiple matches or no matches
+    # Warn if there are multiple or no matches
     if no_match_indices := right_df.index[mask_no_match].tolist():
         warnings.warn(
             f"Some input rows could not be matched to the search space. This could "
-            f"indicate that something went wrong. Indices with no matches: "
-            f"{no_match_indices}"
+            f"indicate that something went wrong or measurements are very noisy. "
+            f"Indices with no matches: {no_match_indices}"
         )
 
     mask_multiple_matches = match_matrix.sum(axis=1) > 1
