@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -10,6 +12,7 @@ from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -22,10 +25,9 @@ def get_data() -> pd.DataFrame:
     Returns:
         Data for benchmark.
     """
-    # TODO change path
-    data_dir = "../data/ArylHalides/"
-    data = pd.read_table(data_dir + "data.csv", sep=",")
-    data_raw = pd.read_table(data_dir + "data_raw.csv", sep=",")
+    data_path = DATA_PATH + "ArylHalides" + os.sep
+    data = pd.read_table(data_path + "data.csv", sep=",")
+    data_raw = pd.read_table(data_path + "data_raw.csv", sep=",")
     for substance in ["base", "ligand", "additive"]:
         data[substance + "_smiles"] = data[substance].map(
             dict(zip(data_raw[substance], data_raw[substance + "_smiles"]))
