@@ -23,9 +23,7 @@ def get_data() -> pd.DataFrame:
         Data for benchmark.
     """
     # TODO change path
-    data_dir = (
-        "/Users/karinhrovatin/Documents/code/" + "BayBE_benchmark/domains/ArylHalides/"
-    )
+    data_dir = "../data/ArylHalides/"
     data = pd.read_table(data_dir + "data.csv", sep=",")
     data_raw = pd.read_table(data_dir + "data_raw.csv", sep=",")
     for substance in ["base", "ligand", "additive"]:
