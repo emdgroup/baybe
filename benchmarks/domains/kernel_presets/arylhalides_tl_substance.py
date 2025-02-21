@@ -40,6 +40,8 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     ]
     Optimal Output: 68.24812709999999
     """
+    print("arylhalides_tl_substance")
+
     objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     recommender_botorch_preset = TwoPhaseMetaRecommender(
@@ -127,7 +129,7 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=50,
+    n_mc_iterations=10,
 )
 
 arylhalides_tl_substance_benchmark = ConvergenceBenchmark(

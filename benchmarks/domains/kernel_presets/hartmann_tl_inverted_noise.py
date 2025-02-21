@@ -39,6 +39,8 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     ]
     Optimal Output: 2.999716768817375
     """
+    print("hartmann_tl_inverted_noise")
+
     objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     recommender_botorch_preset = TwoPhaseMetaRecommender(
@@ -126,7 +128,7 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=50,
+    n_mc_iterations=10,
 )
 
 hartmann_tl_inverted_noise_benchmark = ConvergenceBenchmark(
