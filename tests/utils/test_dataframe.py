@@ -62,7 +62,7 @@ def test_degenerate_rows_invalid_input():
 )
 @pytest.mark.parametrize("noise", [True, False], ids=["exact", "noisy"])
 def test_fuzzy_row_match(searchspace, noise):
-    """Test whether fuzzy row matching returns expected indices."""
+    """Fuzzy row matching returns expected indices."""
     left_df = searchspace.discrete.exp_rep.copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].copy()
@@ -87,8 +87,8 @@ def test_fuzzy_row_match(searchspace, noise):
     ],
 )
 @pytest.mark.parametrize("invalid", ["left_invalid", "right_invalid"])
-def test_invalid_fuzzy_row_match(searchspace, invalid, n_grid_points):
-    """Test whether fuzzy row matching returns expected errors."""
+def test_invalid_fuzzy_row_match(searchspace, invalid):
+    """Fuzzy row matching returns expected errors."""
     left_df = searchspace.discrete.exp_rep.copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].copy()
