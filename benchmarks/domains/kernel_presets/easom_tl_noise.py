@@ -139,7 +139,7 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=100,
+    n_mc_iterations=50,
 )
 
 easom_tl_noise_benchmark = ConvergenceBenchmark(
