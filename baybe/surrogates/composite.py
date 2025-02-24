@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 
@@ -54,13 +55,13 @@ class BroadcastingSurrogate(SurrogateProtocol):
 
 
 @define
-class CompositeSurrogate(SurrogateProtocol):
+class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     """A class for composing multi-target surrogates from single-target surrogates."""
 
     surrogates: dict[str, SurrogateProtocol] = field()
     """A dictionary mapping target names to single-target surrogates."""
 
-    _target_names: tuple[str, ...] = field(init=False)
+    _target_names: tuple[str, ...] = field(init=False, eq=False)
     """The names of the targets modeled by the surrogate outputs."""
 
     @override
