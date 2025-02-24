@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from botorch.posteriors import GPyTorchPosterior, Posterior
     from torch import Tensor
 
-    from baybe.surrogates.composite import BroadcastingSurrogate
+    from baybe.surrogates.composite import CompositeSurrogate
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -141,7 +141,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return AdapterModel(self)
 
-    def broadcast(self) -> BroadcastingSurrogate:
+    def broadcast(self) -> CompositeSurrogate:
         """Make the surrogate handle multiple targets via broadcasting.
 
         If the surrogate only supports single targets, this method turns it into a
@@ -153,9 +153,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         effectively disables the model's inherent multi-target mechanism by treating
         it as a single-target surrogate and applying the same broadcasting mechanism.
         """
-        from baybe.surrogates.composite import BroadcastingSurrogate
+        from baybe.surrogates.composite import CompositeSurrogate
 
-        return BroadcastingSurrogate(self)
+        return CompositeSurrogate.from_template(self)
 
     @staticmethod
     def _make_parameter_scaler_factory(
