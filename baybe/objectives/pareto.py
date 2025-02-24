@@ -8,6 +8,7 @@ from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
+from baybe.objectives.validation import validate_target_names
 from baybe.targets.base import Target
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
@@ -19,7 +20,11 @@ class ParetoObjective(Objective):
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
-        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
+        validator=[
+            min_len(2),
+            deep_iterable(member_validator=instance_of(Target)),
+            validate_target_names,
+        ],
         alias="targets",
     )
     "The targets considered by the objective."
