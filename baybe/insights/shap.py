@@ -37,7 +37,7 @@ NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
 EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
 """Supported explainer types for :class:`baybe.insights.shap.SHAPInsight`"""
 
-SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter"}
+SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter", "waterfall"}
 """Supported plot types for :meth:`baybe.insights.shap.SHAPInsight.plot`"""
 
 
@@ -328,7 +328,9 @@ class SHAPInsight:
 
     def plot(
         self,
-        plot_type: Literal["bar", "beeswarm", "force", "heatmap", "scatter"],
+        plot_type: Literal[
+            "bar", "beeswarm", "force", "heatmap", "scatter", "waterfall"
+        ],
         data: pd.DataFrame | None = None,
         /,
         *,
@@ -368,7 +370,7 @@ class SHAPInsight:
         plot_func = getattr(shap.plots, plot_type)
 
         # Handle plot types that only explain a single data point
-        if plot_type == "force":
+        if plot_type in ["force", "waterfall"]:
             if explanation_index is None:
                 warnings.warn(
                     f"When using plot type '{plot_type}', an 'explanation_index' must "
@@ -376,8 +378,12 @@ class SHAPInsight:
                     f"explained. Choosing the first entry at position 0."
                 )
                 explanation_index = 0
+
             toplot = self.explain(data.iloc[[explanation_index]])
-            kwargs["matplotlib"] = True
+            toplot = toplot[0]
+
+            if plot_type == "force":
+                kwargs["matplotlib"] = True
         else:
             toplot = self.explain(data)
 
