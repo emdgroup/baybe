@@ -265,15 +265,15 @@ class SHAPInsight:
             The computed Shapley explanation.
 
         Raises:
-            ValueError: If the columns of the given dataframe cannot be aligned with the
-                columns of the explainer background dataframe.
+            ValueError: If not all the columns of the explainer background dataframe
+                are present in data.
         """
         if data is None:
             data = self.background_data
-        elif set(self.background_data.columns) != set(data.columns):
+        elif not set(self.background_data.columns).issubset(data.columns):
             raise ValueError(
-                "The provided dataframe must have the same column names as used by "
-                "the explainer object."
+                "The provided dataframe must contain all columns that were used for "
+                "the background data."
             )
 
         # Align columns with background data
@@ -302,6 +302,7 @@ class SHAPInsight:
         # (`base_values` can be a scalar or vector)
         # TODO: https://github.com/shap/shap/issues/3958
         idx = self.background_data.columns.get_indexer(data.columns)
+        idx = idx[idx != -1]  # Additional columns in data are ignored.
         for attr in ["values", "data", "base_values"]:
             try:
                 setattr(explanations, attr, getattr(explanations, attr)[:, idx])

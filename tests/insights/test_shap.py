@@ -140,11 +140,7 @@ def test_invalid_explained_data(ongoing_campaign, explainer_cls, use_comp_rep):
         use_comp_rep=use_comp_rep,
     )
     df = pd.DataFrame({"Num_disc_1": [0, 2]})
-    with pytest.raises(
-        ValueError,
-        match="The provided dataframe must have the same column names as used by "
-        "the explainer object.",
-    ):
+    with pytest.raises(ValueError, match="must contain all columns that were used"):
         shap_insight.explain(df)
 
 
