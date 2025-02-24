@@ -6,11 +6,11 @@ import pandas as pd
 import pytest
 
 from baybe.objectives.pareto import ParetoObjective
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.surrogates.composite import BroadcastingSurrogate, CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -38,7 +38,7 @@ def test_composite_surrogates(meta_surrogate_cls):
     """Composition yields a valid surrogate."""
     t1 = NumericalTarget("t1", "MAX")
     t2 = NumericalTarget("t2", "MIN")
-    searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
     measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})
 
@@ -46,7 +46,7 @@ def test_composite_surrogates(meta_surrogate_cls):
         surrogate = BroadcastingSurrogate(GaussianProcessSurrogate())
     else:
         surrogate = CompositeSurrogate(
-            {"t1": GaussianProcessSurrogate(), "t2": RandomRecommender()}
+            {"t1": GaussianProcessSurrogate(), "t2": RandomForestSurrogate()}
         )
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
