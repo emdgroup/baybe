@@ -101,6 +101,10 @@ class DiscreteParameter(Parameter, ABC):
     def values(self) -> tuple:
         """The values the parameter can take."""
 
+    @property
+    def active_values(self) -> tuple:
+        return self.values
+
     @cached_property
     @abstractmethod
     def comp_df(self) -> pd.DataFrame:
