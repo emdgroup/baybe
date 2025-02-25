@@ -24,7 +24,6 @@ from baybe.parameters import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.base import (
-    DiscreteLabelLikeParameter,
     DiscreteParameter,
     Parameter,
 )
@@ -549,14 +548,7 @@ class SubspaceDiscrete(SerialMixin):
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
         n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
-        n_rows = prod(
-            len(
-                p.active_values
-                if isinstance(p, DiscreteLabelLikeParameter)
-                else p.values
-            )
-            for p in parameters
-        )
+        n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix
         # elements in the comp rep. The latter is the total number of parameter
@@ -571,19 +563,9 @@ class SubspaceDiscrete(SerialMixin):
         # divided by the number of values for the respective parameter. Contributions of
         # all parameters are summed up.
         exp_rep_bytes = sum(
-            pd.DataFrame(
-                p.active_values
-                if isinstance(p, DiscreteLabelLikeParameter)
-                else p.values
-            )
-            .memory_usage(index=False, deep=True)
-            .sum()
+            pd.DataFrame(p.active_values).memory_usage(index=False, deep=True).sum()
             * n_rows
-            / len(
-                p.active_values
-                if isinstance(p, DiscreteLabelLikeParameter)
-                else p.values
-            )
+            / len(p.active_values)
             for p in parameters
         )
 
@@ -756,9 +738,7 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
     param_frames = [
         pl.LazyFrame(
             {
-                p.name: p.active_values
-                if isinstance(p, DiscreteLabelLikeParameter)
-                else p.values  # type:ignore[attr-defined]
+                p.name: p.active_values  # type:ignore[attr-defined]
             }
         )
         for p in discrete_parameters
@@ -795,7 +775,7 @@ def parameter_cartesian_prod_pandas(
 
     index = pd.MultiIndex.from_product(
         [
-            p.active_values if isinstance(p, DiscreteLabelLikeParameter) else p.values  # type:ignore[attr-defined]
+            p.active_values  # type:ignore[attr-defined]
             for p in discrete_parameters
         ],
         names=[p.name for p in discrete_parameters],
