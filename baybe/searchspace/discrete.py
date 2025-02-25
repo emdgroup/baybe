@@ -22,9 +22,12 @@ from baybe.exceptions import DeprecationError, OptionalImportError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalDiscreteParameter,
-    TaskParameter,
 )
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.base import (
+    DiscreteLabelLikeParameter,
+    DiscreteParameter,
+    Parameter,
+)
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import (
     validate_parameter_names,
@@ -34,7 +37,6 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
 from baybe.utils.dataframe import (
-    df_drop_single_value_columns,
     get_transform_objects,
     pretty_print_df,
 )
@@ -156,42 +158,19 @@ class SubspaceDiscrete(SerialMixin):
 
     @_excluded.default
     def _default_excluded(self) -> pd.Series:
-        """Exclude inactive tasks from search."""
-        return ~self._on_task_configurations()
+        """By default, dont exlcude any configurations."""
+        return pd.Series(False, index=self.exp_rep.index)
 
     @comp_rep.default
     def _default_comp_rep(self) -> pd.DataFrame:
         """Create the default computational representation."""
-        # Create a dataframe containing the computational parameter representation
-        comp_rep = self.transform(self.exp_rep)
-
-        # Ignore all columns that do not carry any covariate information
-        # TODO[12758]: This logic needs to be refined, i.e. when should we drop columns
-        #   and when not (can have undesired/unexpected side-effects). Should this be
-        #   configurable at the parameter level? A hotfix was made to exclude task
-        #   parameters, but this needs to be revisited as well.
-        comp_rep = df_drop_single_value_columns(
-            comp_rep, [p.name for p in self.parameters if isinstance(p, TaskParameter)]
-        )
-
-        return comp_rep
+        return self.transform(self.exp_rep)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
         from baybe.searchspace.core import SearchSpace
 
         return SearchSpace(discrete=self)
-
-    def _on_task_configurations(self) -> pd.Series:
-        """Retrieve the parameter configurations for the active tasks."""
-        # TODO [16932]: This only works for a single parameter
-        try:
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-        except StopIteration:
-            return pd.Series(True, index=self.exp_rep.index)
-        return self.exp_rep[task_param.name].isin(task_param.active_values)
 
     @classmethod
     def empty(cls) -> SubspaceDiscrete:
@@ -570,7 +549,14 @@ class SubspaceDiscrete(SerialMixin):
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
         n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
-        n_rows = prod(p.comp_df.shape[0] for p in parameters)
+        n_rows = prod(
+            len(
+                p.active_values
+                if isinstance(p, DiscreteLabelLikeParameter)
+                else p.values
+            )
+            for p in parameters
+        )
 
         # Comp rep space is estimated as the size of float times the number of matrix
         # elements in the comp rep. The latter is the total number of parameter
@@ -585,9 +571,19 @@ class SubspaceDiscrete(SerialMixin):
         # divided by the number of values for the respective parameter. Contributions of
         # all parameters are summed up.
         exp_rep_bytes = sum(
-            pd.DataFrame(p.values).memory_usage(index=False, deep=True).sum()
+            pd.DataFrame(
+                p.active_values
+                if isinstance(p, DiscreteLabelLikeParameter)
+                else p.values
+            )
+            .memory_usage(index=False, deep=True)
+            .sum()
             * n_rows
-            / p.comp_df.shape[0]
+            / len(
+                p.active_values
+                if isinstance(p, DiscreteLabelLikeParameter)
+                else p.values
+            )
             for p in parameters
         )
 
@@ -757,7 +753,16 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
         return pl.LazyFrame()
 
     # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]  # type:ignore[attr-defined]
+    param_frames = [
+        pl.LazyFrame(
+            {
+                p.name: p.active_values
+                if isinstance(p, DiscreteLabelLikeParameter)
+                else p.values  # type:ignore[attr-defined]
+            }
+        )
+        for p in discrete_parameters
+    ]
 
     # Handling edge cases
     if len(param_frames) == 1:
@@ -789,7 +794,10 @@ def parameter_cartesian_prod_pandas(
         return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(
-        [p.values for p in discrete_parameters],  # type:ignore[attr-defined]
+        [
+            p.active_values if isinstance(p, DiscreteLabelLikeParameter) else p.values  # type:ignore[attr-defined]
+            for p in discrete_parameters
+        ],
         names=[p.name for p in discrete_parameters],
     )
     ret = pd.DataFrame(index=index).reset_index()
