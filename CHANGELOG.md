@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
+- Additional benchmarks
+- BoTorch kernel presets
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

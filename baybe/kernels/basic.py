@@ -6,6 +6,7 @@ from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, in_, instance_of
 from attrs.validators import optional as optional_v
+from gpytorch.constraints import Interval
 from typing_extensions import override
 
 from baybe.kernels.base import BasicKernel
@@ -179,6 +180,12 @@ class RBFKernel(BasicKernel):
         validator=optional_v([finite_float, gt(0.0)]),
     )
     """An optional initial value for the kernel lengthscale."""
+
+    # TODO replace with baybe constraint if possible
+    lengthscale_constraint: Interval | None = field(
+        default=None, validator=optional_v(instance_of(Interval))
+    )
+    """An optional prior on the kernel lengthscale constraint."""
 
 
 @define(frozen=True)
