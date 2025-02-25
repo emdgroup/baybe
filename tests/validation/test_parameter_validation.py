@@ -89,19 +89,24 @@ def test_invalid_bounds_numerical_continuous_parameter(bounds, error):
 
 
 @pytest.mark.parametrize(
-    ("values", "error"),
+    ("values", "active_values", "error"),
     [
-        param("ABC", ValueError, id="string"),
-        param(["", "A"], ValueError, id="empty_string"),
-        param(["A", "A"], ValueError, id="duplicates"),
-        param(["A"], ValueError, id="only_one_value"),
-        param(["A", 1], TypeError, id="not_a_string"),
+        param("ABC", None, ValueError, id="string"),
+        param(["", "A"], None, ValueError, id="empty_string"),
+        param(["A", "A"], None, ValueError, id="duplicates"),
+        param(["A"], None, ValueError, id="only_one_value"),
+        param(["A", 1], None, TypeError, id="not_a_string"),
+        param(["A", "B"], [], ValueError, id="no_active_values"),
+        param(["A", "B"], ["C"], ValueError, id="unknown_active_values"),
+        param(["A", "B"], ["A", "A"], ValueError, id="duplicate_active_values"),
     ],
 )
-def test_invalid_values_categorical_parameter(values, error):
+def test_invalid_values_categorical_parameter(values, active_values, error):
     """Providing invalid parameter values raises an exception."""
     with pytest.raises(error):
-        CategoricalParameter(name="invalid_values", values=values)
+        CategoricalParameter(
+            name="invalid_values", values=values, active_values=active_values
+        )
 
 
 def test_invalid_encoding_categorical_parameter():
