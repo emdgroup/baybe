@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `supports_batching` and `supports_pending_experiments`
 - `SHAPInsight` now allows explanation input that has additional columns compared to 
   the background data (will be ignored)
+- The default value for `sequential_continuous` in `BotorchRecommender` has been 
+  changed to `True`
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target

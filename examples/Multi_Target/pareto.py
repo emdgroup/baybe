@@ -18,7 +18,6 @@ from matplotlib import pyplot as plt
 from baybe.campaign import Campaign
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
-from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
@@ -75,22 +74,9 @@ data = pd.concat([data, lookup(data)], axis=1)
 # * One focusing on the second target
 # * One for Pareto optimization of both targets
 
-campaign_y0 = Campaign(
-    searchspace=searchspace,
-    objective=y0.to_objective(),
-    recommender=BotorchRecommender(sequential_continuous=True),
-)
-campaign_y1 = Campaign(
-    searchspace=searchspace,
-    objective=y1.to_objective(),
-    recommender=BotorchRecommender(sequential_continuous=True),
-)
-
-campaign_par = Campaign(
-    searchspace=searchspace,
-    objective=ParetoObjective([y0, y1]),
-    recommender=BotorchRecommender(sequential_continuous=True),
-)
+campaign_y0 = Campaign(searchspace=searchspace, objective=y0.to_objective())
+campaign_y1 = Campaign(searchspace=searchspace, objective=y1.to_objective())
+campaign_par = Campaign(searchspace=searchspace, objective=ParetoObjective([y0, y1]))
 
 # We feed each campaign with the same training data and request recommendations:
 
