@@ -271,7 +271,7 @@ def fixture_parameters(
             values=mock_categories,
         ),
         CategoricalParameter(
-            name="SomeSetting",
+            name="Some_Setting",
             values=("slow", "normal", "fast"),
             encoding="INT",
         ),
@@ -279,6 +279,10 @@ def fixture_parameters(
             name="Num_disc_1",
             values=(1, 2, 7),
             tolerance=0.3,
+        ),
+        NumericalDiscreteParameter(
+            name="Num_disc_2",
+            values=(-1.1, -1, 0, 1, 1.1),
         ),
         NumericalDiscreteParameter(
             name="Fraction_1",

@@ -45,7 +45,7 @@ def test_simple_dependency(campaign, n_grid_points, mock_substances, mock_catego
 
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
+    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
 )
 @pytest.mark.parametrize(
     "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
@@ -214,7 +214,7 @@ def test_mixture(campaign, n_grid_points, mock_substances):
 
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
+    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
 )
 @pytest.mark.parametrize("constraint_names", [["Constraint_13"]])
 def test_custom(campaign):
@@ -243,7 +243,7 @@ def test_custom(campaign):
 
 @pytest.mark.parametrize(
     "parameter_names",
-    [["SomeSetting", "Fraction_1", "Fraction_2", "Fraction_3"]],
+    [["Some_Setting", "Fraction_1", "Fraction_2", "Fraction_3"]],
 )
 @pytest.mark.parametrize("constraint_names", [["Constraint_14"]])
 def test_cardinality(campaign):
