@@ -347,11 +347,11 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     ) -> np.ndarray:
         """Compute a reference point for a given set of of target configurations.
 
-        The reference point is positioned in relation to the worst target configuration
-        within the provided array. The distance in each target dimension is adjusted by
-        a specified multiplication factor, which scales the reference point away from
-        the worst target configuration based on the maximum observed differences in
-        target values.
+        The reference point is positioned relative to the worst point in the direction
+        coming from the best point. A factor of 0.0 results in the reference point
+        being the worst point, while a factor > 0.0 moves the reference point
+        further away from both worst and best points. A factor of 1.0 exactly
+        mirrors the best around the worst point.
 
         Example:
             >>> from baybe.acquisition import qLogNEHVI
