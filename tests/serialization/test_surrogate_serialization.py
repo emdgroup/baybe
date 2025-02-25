@@ -32,8 +32,9 @@ def test_surrogate_serialization(request, surrogate_cls):
         CompositeSurrogate(
             {"A": RandomForestSurrogate(), "B": GaussianProcessSurrogate()}
         ),
+        CompositeSurrogate.from_template(GaussianProcessSurrogate()),
     ],
-    ids=["via_init"],
+    ids=["via_init", "via_template"],
 )
 def test_composite_surrogate_serialization(surrogate):
     """A serialization roundtrip yields an equivalent object."""

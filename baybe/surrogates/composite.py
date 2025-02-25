@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
+from baybe.serialization import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -89,3 +90,19 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
             else ModelList
         )
         return cls(*(self.surrogates[t].to_botorch() for t in self._target_names))
+
+
+@converter.register_structure_hook
+def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
+    """Resolve the object type."""
+    if (type_ := obj.pop("type")) == _BroadcastMapping.__name__:
+        return converter.structure(obj, _BroadcastMapping[SurrogateProtocol])
+    if type_ == "dict":
+        return converter.structure(obj, dict[str, SurrogateProtocol])
+    return NotImplementedError(f"No structure hook implemented for '{type_}'.")
+
+
+@converter.register_unstructure_hook
+def unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
+    """Add the object type information."""
+    return {"type": type(obj).__name__, **converter.unstructure(obj)}
