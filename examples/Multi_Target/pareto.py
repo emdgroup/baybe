@@ -58,7 +58,7 @@ searchspace = SearchSpace.from_product([x0, x1])
 def lookup(arr: np.ndarray) -> np.ndarray:
     """Compute root mean square values for different center points."""
     y0 = -np.sum((arr - CENTER_Y0) ** 2, axis=1)
-    y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1)
+    y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1) * 100 + 1000
     return np.c_[y0, y1]
 
 
@@ -160,7 +160,6 @@ plt.legend(loc="upper left")
 plt.xlabel(y0.name)
 plt.ylabel(y1.name)
 plt.title("Target Space")
-plt.axis("square")
 
 plt.tight_layout()
 plt.savefig("pareto.svg")
