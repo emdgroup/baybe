@@ -43,7 +43,7 @@ valid_naive_hybrid_recommenders = [
 @pytest.mark.parametrize("recommender", valid_naive_hybrid_recommenders)
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
+    [["Categorical_1", "Some_Setting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
 def test_serialization_without_recommendation(campaign):
     """Serialize all possible hybrid recommender objects and test for equality."""
