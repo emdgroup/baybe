@@ -398,6 +398,17 @@ def fixture_parameters(
                 )
                 for k in range(3)
             ],
+            *[
+                CategoricalParameter(
+                    name=f"Solvent_{k + 1}_subset",
+                    values=tuple(mock_substances.keys()),
+                    active_values=(
+                        list(mock_substances.keys())[0],
+                        list(mock_substances.keys())[-1],
+                    ),
+                )
+                for k in range(3)
+            ],
         ]
 
     # Check that only valid parameter names have been specified, otherwise they would
