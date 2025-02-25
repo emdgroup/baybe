@@ -396,6 +396,14 @@ def fixture_parameters(
             ],
         ]
 
+    # Check that only valid parameter names have been specified, otherwise they would
+    # be silently ignored by the test.
+    all_valid_names = [p.name for p in valid_parameters]
+    invalid_names = [p for p in parameter_names if p not in all_valid_names]
+    assert (
+        not invalid_names
+    ), f"Invalid name in fixture 'parameter_names': {invalid_names}"
+
     return [p for p in valid_parameters if p.name in parameter_names]
 
 
