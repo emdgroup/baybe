@@ -46,7 +46,7 @@ set_random_seed(1337)
 
 x0 = NumericalContinuousParameter("x0", (-1, 1))
 x1 = NumericalContinuousParameter("x1", (-1, 1))
-y0 = NumericalTarget("y0", "MIN")
+y0 = NumericalTarget("y0", "MAX")
 y1 = NumericalTarget("y1", "MIN")
 searchspace = SearchSpace.from_product([x0, x1])
 
@@ -57,7 +57,7 @@ searchspace = SearchSpace.from_product([x0, x1])
 @arrays_to_dataframes([x0.name, x1.name], [y0.name, y1.name])
 def lookup(arr: np.ndarray) -> np.ndarray:
     """Compute root mean square values for different center points."""
-    y0 = np.sum((arr - CENTER_Y0) ** 2, axis=1)
+    y0 = -np.sum((arr - CENTER_Y0) ** 2, axis=1)
     y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1)
     return np.c_[y0, y1]
 
@@ -156,7 +156,7 @@ plt.plot(data[y0.name], data[y1.name], "o", color="0.7", markersize=2, label="tr
 plt.plot(out_y0[y0.name], out_y0[y1.name], "o", color="tab:red", label="single_y0")
 plt.plot(out_y1[y0.name], out_y1[y1.name], "o", color="tab:blue", label="single_y1")
 plt.plot(out_par[y0.name], out_par[y1.name], "o", color="tab:purple", label="pareto")
-plt.legend(loc="upper right")
+plt.legend(loc="upper left")
 plt.xlabel(y0.name)
 plt.ylabel(y1.name)
 plt.title("Target Space")
