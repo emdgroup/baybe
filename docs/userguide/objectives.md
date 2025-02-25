@@ -111,8 +111,8 @@ set of *non-dominated* target configurations.
 
 ```{admonition} Non-dominated Configurations
 :class: tip
-A target configuration is considered non-dominated if no other configuration is better 
-in *all* targets.
+A target configuration is considered non-dominated (or Pareto-optimal) if no other
+configuration is better in *all* targets.
 ```
 
 Identifying the Pareto front requires maintaining explicit models for each of the
