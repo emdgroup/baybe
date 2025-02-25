@@ -172,23 +172,59 @@ def test_invalid_encoding_substance_parameter():
 
 
 @pytest.mark.parametrize(
-    "data",
+    ("data", "active_values"),
     [
-        param(pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]), id="contains_nan"),
-        param(pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]), id="contains_inf"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), id="duplicate_idxs"),
-        param(pd.DataFrame([[1, 2]], index=["A"]), id="wrong_label_number"),
-        param(pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), id="zero_var_col"),
-        param(pd.DataFrame([[1, 2], [3, "a"]], index=["A", "B"]), id="wrong_type"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), id="non_string_idx"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), id="empty_string_idx"),
+        param(
+            pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]),
+            None,
+            id="contains_nan",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]),
+            None,
+            id="contains_inf",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), None, id="duplicate_idxs"
+        ),
+        param(pd.DataFrame([[1, 2]], index=["A"]), None, id="wrong_label_number"),
+        param(
+            pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), None, id="zero_var_col"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, "a"]], index=["A", "B"]), None, id="wrong_type"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), None, id="non_string_idx"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), None, id="empty_string_idx"
+        ),
         param(
             pd.DataFrame([[1, 2], [1, 2], [3, 4]], index=["A", "B", "C"]),
+            None,
             id="duplicate_rows",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            [],
+            id="no_active_values",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            ["C"],
+            id="unknown_active_values",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            ["A", "A"],
+            id="duplicate_active_values",
         ),
     ],
 )
-def test_invalid_data_custom_parameter(data):
+def test_invalid_data_custom_parameter(data, active_values):
     """Providing an invalid custom encoding raises an exception."""
     with pytest.raises(ValueError):
-        CustomDiscreteParameter(name="invalid_data", data=data)
+        CustomDiscreteParameter(
+            name="invalid_data", data=data, active_values=active_values
+        )
