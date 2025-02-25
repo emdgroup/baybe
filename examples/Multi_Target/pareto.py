@@ -56,9 +56,9 @@ searchspace = SearchSpace.from_product([x0, x1])
 
 @arrays_to_dataframes([x0.name, x1.name], [y0.name, y1.name])
 def lookup(arr: np.ndarray) -> np.ndarray:
-    """Compute root mean square values for different center points."""
-    y0 = -np.sum((arr - CENTER_Y0) ** 2, axis=1)
-    y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1) * 100 + 1000
+    """Compute (negative scaled) mean square values for different center points."""
+    y0 = -np.sum((arr - CENTER_Y0) ** 2, axis=1)  # negative
+    y1 = np.sum((arr - CENTER_Y1) ** 2, axis=1) * 100 + 1000  # scaled
     return np.c_[y0, y1]
 
 
