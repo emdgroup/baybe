@@ -221,8 +221,20 @@ def test_invalid_constraint_parameter_combos():
             "Fraction_1",
             "Solvent_1",
             "Custom_1",
-        ]
+        ],
+        [
+            "Categorical_1_subset",
+            "Categorical_2",
+            "Frame_A",
+            "Some_Setting",
+            "Num_disc_1",
+            "Fraction_1",
+            "Solvent_1_subset",
+            "Custom_1_subset",
+            "Task",
+        ],
     ],
+    ids=["simple", "with_active_values"],
 )
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
