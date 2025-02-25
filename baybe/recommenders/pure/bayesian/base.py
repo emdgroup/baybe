@@ -21,9 +21,20 @@ from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
-from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
+from baybe.surrogates.base import (
+    IndependentGaussianSurrogate,
+    Surrogate,
+    SurrogateProtocol,
+)
 from baybe.utils.dataframe import _ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
+
+
+def _autobroadcast(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
+    """Broadcasts single-output surrogate models and passes through everything else."""
+    if isinstance(surrogate, Surrogate) and not surrogate.supports_multi_output:
+        return surrogate.broadcast()
+    return surrogate
 
 
 @define
@@ -31,7 +42,9 @@ class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
     _surrogate_model: SurrogateProtocol = field(
-        alias="surrogate_model", factory=GaussianProcessSurrogate
+        alias="surrogate_model",
+        factory=GaussianProcessSurrogate,
+        converter=_autobroadcast,
     )
     """The used surrogate model."""
 
