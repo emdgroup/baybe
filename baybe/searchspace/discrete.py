@@ -533,6 +533,15 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
 
+    @property
+    def scaling_bounds(self) -> pd.DataFrame:
+        """The bounds used for scaling the surrogate model input."""
+        return (
+            pd.concat([p.comp_df.agg(["min", "max"]) for p in self.parameters], axis=1)
+            if self.parameters
+            else pd.DataFrame(index=["min", "max"])
+        )
+
     @staticmethod
     def estimate_product_space_size(
         parameters: Sequence[DiscreteParameter],
