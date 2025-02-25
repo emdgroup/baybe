@@ -115,8 +115,8 @@ class BayesianRecommender(PureRecommender, ABC):
 
         if objective.is_multi_output and not self._acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
-                f"You attempted to use a single-target acquisition function in a "
-                f"{len(objective.targets)}-target context."
+                f"You attempted to use a single-output acquisition function in a "
+                f"{len(objective.targets)}-target multi-output context."
             )
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
