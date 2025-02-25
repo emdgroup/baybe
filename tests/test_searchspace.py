@@ -3,7 +3,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
+from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
@@ -21,6 +23,10 @@ from baybe.searchspace import (
     SearchSpaceType,
     SubspaceContinuous,
     SubspaceDiscrete,
+)
+from baybe.searchspace.discrete import (
+    parameter_cartesian_prod_pandas,
+    parameter_cartesian_prod_polars,
 )
 
 
@@ -299,3 +305,41 @@ def test_cardinality_constraint_with_invalid_parameter_bounds():
                 ),
             ),
         )
+
+
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Categorical_1",
+            "Categorical_2",
+            "Custom_1",
+            "Solvent_1",
+            "Solvent_2",
+            "Fraction_1",
+        ],
+        [
+            "Categorical_1_subset",
+            "Categorical_2",
+            "Custom_1_subset",
+            "Solvent_1_subset",
+            "Solvent_2",
+            "Fraction_1",
+        ],
+    ],
+    ids=["simple", "with_active_values"],
+)
+def test_polars_pandas_equivalence(parameters):
+    """Search spaces created with Polars and Pandas are identical."""
+    # Do Polars product
+    ldf = parameter_cartesian_prod_polars(parameters)
+    df_pl = ldf.collect()
+
+    # Do Pandas product
+    df_pd = parameter_cartesian_prod_pandas(parameters)
+
+    # Assert equality
+    assert_frame_equal(df_pl.to_pandas(), df_pd)

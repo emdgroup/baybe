@@ -102,7 +102,8 @@ class DiscreteParameter(Parameter, ABC):
         """The values the parameter can take."""
 
     @property
-    def active_values(self) -> tuple:
+    def product_values(self) -> tuple:
+        """The values that are relevant to the search space creation via product."""
         return self.values
 
     @cached_property
@@ -222,6 +223,12 @@ class DiscreteLabelLikeParameter(DiscreteParameter, ABC):
             )
         )
         return param_dict
+
+    @override
+    @property
+    def product_values(self) -> tuple:
+        """The values that are relevant to the search space creation via product."""
+        return self.active_values
 
 
 @define(frozen=True, slots=False)
