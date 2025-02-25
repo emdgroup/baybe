@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import cattrs
 import pandas as pd
 from attrs import define, field
+from attrs.converters import optional as optional_c
 from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
@@ -91,8 +92,6 @@ class Parameter(ABC, SerialMixin):
 class DiscreteParameter(Parameter, ABC):
     """Abstract class for discrete parameters."""
 
-    # TODO [15280]: needs to be refactored
-
     # class variables
     encoding: ParameterEncoding | None = field(init=False, default=None)
     """An optional encoding for the parameter."""
@@ -153,8 +152,69 @@ class DiscreteParameter(Parameter, ABC):
         param_dict = dict(
             Name=self.name,
             Type=self.__class__.__name__,
-            Num_Values=len(self.values),
+            nValues=len(self.values),
             Encoding=self.encoding,
+        )
+        return param_dict
+
+
+@define(frozen=True, slots=False)
+class DiscreteLabelLikeParameter(DiscreteParameter, ABC):
+    """Abstract class for discrete label-like parameters.
+
+    In general, these are parameters with non-numerical experimental representations.
+    """
+
+    # class variables
+    is_numerical: ClassVar[bool] = False
+    """Class variable encoding whether this parameter is numeric."""
+
+    # object variables
+    active_values: tuple[str, ...] | None = field(
+        default=None, converter=optional_c(tuple), kw_only=True
+    )
+    """Optional labels identifying the ones which should be actively recommended."""
+
+    def __attrs_post_init__(self):
+        if self.active_values is None:
+            # Uses trick for frozen class, see https://github.com/python-attrs/attrs/issues/120
+            object.__setattr__(self, "active_values", self.values)
+
+    @active_values.validator
+    def _validate_active_values(  # noqa: DOC101, DOC103
+        self, _: Any, content: tuple[str, ...]
+    ) -> None:
+        """Validate the active parameter values.
+
+        If no such list is provided, no validation is being performed. In particular,
+        the errors listed below are only relevant if the ``values`` list is provided.
+
+        Raises:
+            ValueError: If an empty active parameters list is provided.
+            ValueError: If the active parameter values are not unique.
+            ValueError: If not all active values are valid parameter choices.
+        """
+        if content is None:
+            return
+
+        if len(content) == 0:
+            raise ValueError(
+                "If an active parameters list is provided, it must not be empty."
+            )
+        if len(set(content)) != len(content):
+            raise ValueError("The active parameter values must be unique.")
+        if not all(v in self.values for v in content):
+            raise ValueError(
+                f"All active values must be valid parameter choices from: {self.values}"
+            )
+
+    @override
+    def summary(self) -> dict:
+        param_dict = super().summary()
+        param_dict.update(
+            dict(
+                nActiveValues=len(self.active_values),
+            )
         )
         return param_dict
 
