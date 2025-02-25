@@ -327,10 +327,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # Validate multi-target compatibility
         if objective.is_multi_output and not self.supports_multi_output:
             raise IncompatibleSurrogateError(
-                f"You attempted to train a single-target surrogate in a "
-                f"{len(objective.targets)}-target context. Either use a proper "
-                f"multi-target surrogate or consider explicitly replicating the "
-                f"current surrogate model using its "
+                f"You attempted to train a single-output surrogate in a "
+                f"{len(objective.targets)}-target multi-output context. Either use "
+                f"a proper multi-output surrogate or consider explicitly "
+                f"replicating the current surrogate model using its "
                 f"'.{self.broadcast.__name__}' method."
             )
 
