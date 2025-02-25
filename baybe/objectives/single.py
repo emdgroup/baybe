@@ -2,6 +2,7 @@
 
 import gc
 import warnings
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -19,6 +20,9 @@ from baybe.utils.plotting import to_string
 @define(frozen=True, slots=False)
 class SingleTargetObjective(Objective):
     """An objective focusing on a single target."""
+
+    is_multi_output: ClassVar[bool] = False
+    # See base class.
 
     _target: Target = field(validator=instance_of(Target), alias="target")
     """The single target considered by the objective."""

@@ -88,7 +88,7 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
-            return qLogEI() if len(objective.targets) == 1 else qLogNEHVI()
+            return qLogNEHVI() if objective.is_multi_output else qLogEI()
         return self.acquisition_function
 
     def get_surrogate(
@@ -113,13 +113,10 @@ class BayesianRecommender(PureRecommender, ABC):
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._acqf = self._default_acquisition_function(objective)
 
-        if (
-            not self._acqf.supports_multi_output
-            and (n_targets := len(objective.targets)) > 1
-        ):
+        if objective.is_multi_output and not self._acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
                 f"You attempted to use a single-target acquisition function in a "
-                f"{n_targets}-target context."
+                f"{len(objective.targets)}-target context."
             )
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)

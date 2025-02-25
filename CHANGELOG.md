@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compatible
 - `CompositeSurrogate` class for composing multi-target surrogates from single-target
   surrogates
+- `is_multi_output` attribute to `Objective`
 - `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
 
 ### Changed

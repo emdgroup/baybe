@@ -325,12 +325,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         # TODO: consider adding a validation step for `measurements`
 
         # Validate multi-target compatibility
-        if not self.supports_multi_output and (n_targets := len(objective.targets)) > 1:
+        if objective.is_multi_output and not self.supports_multi_output:
             raise IncompatibleSurrogateError(
                 f"You attempted to train a single-target surrogate in a "
-                f"{n_targets}-target context. Either use a proper multi-target "
-                f"surrogate or consider explicitly replicating the current "
-                f"surrogate model using its "
+                f"{len(objective.targets)}-target context. Either use a proper "
+                f"multi-target surrogate or consider explicitly replicating the "
+                f"current surrogate model using its "
                 f"'.{self.broadcast.__name__}' method."
             )
 
