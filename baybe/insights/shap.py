@@ -266,7 +266,7 @@ class SHAPInsight:
 
         Raises:
             ValueError: If not all the columns of the explainer background dataframe
-                are present in data.
+                are present in the given data.
         """
         if data is None:
             data = self.background_data
