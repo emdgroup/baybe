@@ -4,6 +4,7 @@ import gc
 import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
+from typing import ClassVar
 
 import cattrs
 import numpy as np
@@ -62,6 +63,9 @@ def scalarize(
 @define(frozen=True, slots=False)
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
+
+    is_multi_output: ClassVar[bool] = False
+    # See base class.
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,

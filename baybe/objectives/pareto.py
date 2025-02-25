@@ -1,6 +1,7 @@
 """Functionality for multi-target objectives."""
 
 import warnings
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -17,6 +18,9 @@ from baybe.utils.dataframe import transform_target_columns
 @define(frozen=True, slots=False)
 class ParetoObjective(Objective):
     """An objective handling multiple targets in a Pareto sense."""
+
+    is_multi_output: ClassVar[bool] = True
+    # See base class.
 
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
