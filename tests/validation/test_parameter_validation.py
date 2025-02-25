@@ -5,7 +5,6 @@ from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 import pytest
-from attrs import NOTHING
 from cattrs.errors import IterableValidationError
 from pytest import param
 
@@ -114,11 +113,11 @@ def test_invalid_encoding_categorical_parameter():
 @pytest.mark.parametrize(
     ("values", "active_values", "error"),
     [
-        param("ABC", NOTHING, ValueError, id="string"),
-        param(["", "A"], NOTHING, ValueError, id="empty_string"),
-        param(["A", "A"], NOTHING, ValueError, id="duplicates"),
-        param(["A"], NOTHING, ValueError, id="only_one_value"),
-        param(["A", 1], NOTHING, TypeError, id="not_a_string"),
+        param("ABC", None, ValueError, id="string"),
+        param(["", "A"], None, ValueError, id="empty_string"),
+        param(["A", "A"], None, ValueError, id="duplicates"),
+        param(["A"], None, ValueError, id="only_one_value"),
+        param(["A", 1], None, TypeError, id="not_a_string"),
         param(["A", "B"], [], ValueError, id="no_active_values"),
         param(["A", "B"], ["C"], ValueError, id="unknown_active_values"),
         param(["A", "B"], ["A", "A"], ValueError, id="duplicate_active_values"),
