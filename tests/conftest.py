@@ -242,6 +242,12 @@ def fixture_parameters(
             encoding="OHE",
         ),
         CategoricalParameter(
+            name="Categorical_1_subset",
+            values=("A", "B", "C"),
+            encoding="OHE",
+            active_values=("A"),
+        ),
+        CategoricalParameter(
             name="Categorical_2",
             values=("bad", "OK", "good"),
             encoding="INT",
@@ -321,6 +327,18 @@ def fixture_parameters(
             ),
         ),
         CustomDiscreteParameter(
+            name="Custom_1_subset",
+            data=pd.DataFrame(
+                {
+                    "D1": [1.1, 1.4, 1.7],
+                    "D2": [11, 23, 55],
+                    "D3": [-4, -13, 4],
+                },
+                index=["mol1", "mol2", "mol3"],
+            ),
+            active_values=("mol1", "mol3"),
+        ),
+        CustomDiscreteParameter(
             name="Custom_2",
             data=pd.DataFrame(
                 {
@@ -344,6 +362,17 @@ def fixture_parameters(
                 SubstanceParameter(
                     name=f"Solvent_{k+1}",
                     data=mock_substances,
+                )
+                for k in range(3)
+            ],
+            *[
+                SubstanceParameter(
+                    name=f"Solvent_{k + 1}_subset",
+                    data=mock_substances,
+                    active_values=(
+                        list(mock_substances.keys())[0],
+                        list(mock_substances.keys())[-1],
+                    ),
                 )
                 for k in range(3)
             ],
