@@ -25,9 +25,6 @@ def is_cardinality_fulfilled(
     Returns:
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
-    if len(subspace_continuous.constraints_cardinality) == 0:
-        return True
-
     for c in subspace_continuous.constraints_cardinality:
         # Get the activity thresholds for all parameters
         thresholds = {
