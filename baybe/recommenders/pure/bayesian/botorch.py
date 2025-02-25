@@ -50,7 +50,7 @@ class BotorchRecommender(BayesianRecommender):
     # See base class.
 
     # Object variables
-    sequential_continuous: bool = field(default=False)
+    sequential_continuous: bool = field(default=True)
     """Flag defining whether to apply sequential greedy or batch optimization in
     **continuous** search spaces. In discrete/hybrid spaces, sequential greedy
     optimization is applied automatically.

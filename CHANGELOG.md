@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the background data (will be ignored)
 - `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
   measurements to the search space between 4x and 40x
+- The default value for `sequential_continuous` in `BotorchRecommender` has been 
+  changed to `True`
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
