@@ -133,23 +133,31 @@ def test_invalid_values_task_parameter(values, active_values, error):
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
-    ("data", "error"),
+    ("data", "active_values", "error"),
     [
-        param({"": "C", "A": "C"}, ValueError, id="empty_string"),
-        param({"A": "C"}, ValueError, id="only_one_value"),
-        param({"A": "C", 1: "C"}, TypeError, id="not_a_string"),
-        param({"A": "C", "B": "X", "C": "Y"}, ExceptionGroup, id="invalid_smiles"),
+        param({"": "C", "A": "C"}, None, ValueError, id="empty_string"),
+        param({"A": "C"}, None, ValueError, id="only_one_value"),
+        param({"A": "C", 1: "C"}, None, TypeError, id="not_a_string"),
+        param(
+            {"A": "C", "B": "X", "C": "Y"}, None, ExceptionGroup, id="invalid_smiles"
+        ),
         param(
             {"A": "CC", "B": "C-C", "C": "CCO", "D": "OCC"},
+            None,
             ExceptionGroup,
             id="duplicate_substances",
         ),
+        param({"A": "C", "B": "CC"}, [], ValueError, id="no_active_values"),
+        param({"A": "C", "B": "CC"}, ["C"], ValueError, id="unknown_active_values"),
+        param(
+            {"A": "C", "B": "CC"}, ["A", "A"], ValueError, id="duplicate_active_values"
+        ),
     ],
 )
-def test_invalid_data_substance_parameter(data, error):
+def test_invalid_data_substance_parameter(data, active_values, error):
     """Providing invalid substance data raises an exception."""
     with pytest.raises(error):
-        SubstanceParameter(name="invalid_data", data=data)
+        SubstanceParameter(name="invalid_data", data=data, active_values=active_values)
 
 
 @pytest.mark.skipif(
