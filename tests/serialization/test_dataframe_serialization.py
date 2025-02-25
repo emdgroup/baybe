@@ -2,7 +2,7 @@
 
 import pandas as pd
 from hypothesis import given
-from pytest import mark
+from pytest import mark, param
 
 from baybe.serialization import deserialize_dataframe, serialize_dataframe
 from baybe.serialization.core import _unstructure_dataframe_hook
@@ -20,7 +20,10 @@ def test_dataframe_roundtrip(df: pd.DataFrame):
 @mark.parametrize(
     "obj",
     [
-        _unstructure_dataframe_hook(pd.DataFrame({"c1": [1, 2], "c2": [3, 4]})),
+        param(
+            _unstructure_dataframe_hook(pd.DataFrame({"c1": [1, 2], "c2": [3, 4]})),
+            id="obj0",
+        ),
         {
             "constructor": "from_records",
             "data": [
