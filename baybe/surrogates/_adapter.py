@@ -26,8 +26,11 @@ class AdapterModel(Model):
 
     @property
     def num_outputs(self) -> int:
-        # TODO: So far, the usage is limited to single-output models.
-        return 1
+        if (objective := self._surrogate._objective) is None:
+            raise RuntimeError(
+                "The model needs to be fitted to a specific context first."
+            )
+        return len(objective.targets)
 
     def posterior(
         self,
