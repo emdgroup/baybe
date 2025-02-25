@@ -540,15 +540,6 @@ def fuzzy_row_match(
     mask_no_match = ~match_matrix.any(axis=1)
     matched_indices = matched_indices[~mask_no_match]
 
-    # Warn if there are multiple or no matches
-    if no_match_indices := right_df.index[mask_no_match].tolist():
-        w = SearchSpaceMatchWarning(
-            f"Some input rows could not be matched to the search space. Indices with "
-            f"no matches: {no_match_indices}",
-            right_df.loc[no_match_indices],
-        )
-        warnings.warn(w)
-
     mask_multiple_matches = match_matrix.sum(axis=1) > 1
     if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
         w = SearchSpaceMatchWarning(
