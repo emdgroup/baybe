@@ -205,7 +205,8 @@ class DiscreteLabelLikeParameter(DiscreteParameter, ABC):
             raise ValueError("The active parameter values must be unique.")
         if not all(v in self.values for v in content):
             raise ValueError(
-                f"All active values must be valid parameter choices from: {self.values}"
+                f"All active values must be valid parameter choices from: "
+                f"{self.values}, provided: {content}"
             )
 
     @override
