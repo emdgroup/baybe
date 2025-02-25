@@ -219,16 +219,16 @@ class DiscreteLabelLikeParameter(DiscreteParameter, ABC):
         param_dict = super().summary()
         param_dict.update(
             dict(
-                nActiveValues=len(self.active_values),
+                nActiveValues=len(self.active_values),  # type: ignore[arg-type]
             )
         )
         return param_dict
 
     @override
     @property
-    def product_values(self) -> tuple:
+    def product_values(self) -> tuple[str, ...]:
         """The values that are relevant to the search space creation via product."""
-        return self.active_values
+        return self.active_values  # type: ignore[return-value]
 
 
 @define(frozen=True, slots=False)
