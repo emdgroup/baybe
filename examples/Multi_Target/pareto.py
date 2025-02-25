@@ -78,16 +78,12 @@ data = pd.concat([data, lookup(data)], axis=1)
 campaign_y0 = Campaign(
     searchspace=searchspace,
     objective=y0.to_objective(),
-    recommender=BotorchRecommender(
-        acquisition_function="qUCB", sequential_continuous=True
-    ),
+    recommender=BotorchRecommender(sequential_continuous=True),
 )
 campaign_y1 = Campaign(
     searchspace=searchspace,
     objective=y1.to_objective(),
-    recommender=BotorchRecommender(
-        acquisition_function="qUCB", sequential_continuous=True
-    ),
+    recommender=BotorchRecommender(sequential_continuous=True),
 )
 
 campaign_par = Campaign(
