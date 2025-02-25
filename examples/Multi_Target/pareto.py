@@ -36,7 +36,7 @@ CENTER_Y1 = (0.5, 0.5)
 
 # Also, we fix the random seed for reproducibility:
 
-set_random_seed(1337)
+set_random_seed(42)
 
 
 ### Defining the Optimization Problem
