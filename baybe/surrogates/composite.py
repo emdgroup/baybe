@@ -97,7 +97,7 @@ def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
     """Resolve the object type."""
     if (type_ := obj.pop("type")) == _BroadcastMapping.__name__:
         return converter.structure(obj, _BroadcastMapping[SurrogateProtocol])
-    if type_ == "dict":
+    elif type_ == "dict":
         return converter.structure(obj, dict[str, SurrogateProtocol])
     return NotImplementedError(f"No structure hook implemented for '{type_}'.")
 
