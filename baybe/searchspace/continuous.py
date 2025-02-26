@@ -305,10 +305,10 @@ class SubspaceContinuous(SerialMixin):
         return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
-    def parameter_names_in_cardinality_constraints(self) -> tuple[str, ...]:
+    def parameter_names_in_cardinality_constraints(self) -> frozenset[str]:
         """The names of all parameters affected by cardinality constraints."""
         names_per_constraint = (c.parameters for c in self.constraints_cardinality)
-        return tuple(chain(*names_per_constraint))
+        return frozenset(chain(*names_per_constraint))
 
     @property
     def comp_rep_bounds(self) -> pd.DataFrame:
@@ -361,9 +361,11 @@ class SubspaceContinuous(SerialMixin):
             constraints.
         """
         # Extract active parameters involved in cardinality constraints
-        active_parameter_names = set(
-            self.parameter_names_in_cardinality_constraints
-        ).difference(inactive_parameter_names)
+        active_parameter_names = (
+            self.parameter_names_in_cardinality_constraints.difference(
+                inactive_parameter_names
+            )
+        )
 
         # Adjust parameters depending on their in-/activity assignment
         adjusted_parameters: list[ContinuousParameter] = []
