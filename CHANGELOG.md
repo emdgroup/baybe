@@ -10,15 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
 - `SHAPInsight` now supports the `waterfall` plot type
+- `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
+  support restricting the search space via `active_values`, while `values` continue to 
+  identify allowed measurement inputs
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
   `supports_batching` and `supports_pending_experiments`
 - `SHAPInsight` now allows explanation input that has additional columns compared to 
   the background data (will be ignored)
+- For label-like parameters, `SubspaceDiscrete` now only includes parameter values 
+  that are in `active_values`
+- Model scaling now uses the parameter bounds instead of the search space bounds
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
+
+### Removed
+- `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 
 ## [0.12.2] - 2025-01-31
 ### Changed

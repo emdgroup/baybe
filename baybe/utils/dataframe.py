@@ -511,12 +511,7 @@ def fuzzy_row_match(
 
         # We expect exactly one match. If that's not the case, print a warning.
         inds_found = left_df.index[match].to_list()
-        if len(inds_found) == 0 and len(num_cols) > 0:
-            warnings.warn(
-                f"Input row with index {ind} could not be matched to the search space. "
-                f"This could indicate that something went wrong."
-            )
-        elif len(inds_found) > 1:
+        if len(inds_found) > 1:
             warnings.warn(
                 f"Input row with index {ind} has multiple matches with the search "
                 f"space. This could indicate that something went wrong. Matching only "

@@ -13,7 +13,7 @@ from baybe.serialization.core import converter
 @pytest.mark.parametrize(
     "parameter_names",
     [
-        ["Categorical_1", "Num_discrete_1"],
+        ["Categorical_1", "Num_disc_1"],
         ["Fraction_1"],
         ["Conti_finite1"],
         ["Custom_1"],

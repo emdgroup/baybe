@@ -2,7 +2,6 @@
 
 import gc
 from functools import cached_property
-from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
@@ -10,7 +9,7 @@ from attrs import Converter, define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.base import DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 from baybe.utils.conversion import nonstring_to_tuple
@@ -24,12 +23,8 @@ def _convert_values(value, self, field) -> tuple[str, ...]:
 
 
 @define(frozen=True, slots=False)
-class CategoricalParameter(DiscreteParameter):
+class CategoricalParameter(DiscreteLabelLikeParameter):
     """Parameter class for categorical parameters."""
-
-    # class variables
-    is_numerical: ClassVar[bool] = False
-    # See base class.
 
     # object variables
     _values: tuple[str, ...] = field(
@@ -75,43 +70,8 @@ class CategoricalParameter(DiscreteParameter):
 class TaskParameter(CategoricalParameter):
     """Parameter class for task parameters."""
 
-    # object variables
-    active_values: tuple = field(converter=tuple)
-    """An optional list of values describing for which tasks recommendations should be
-    given. By default, all parameters are considered active."""
-
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
-
-    @active_values.default
-    def _default_active_values(self) -> tuple:
-        """Set all parameters active by default."""
-        # TODO [16605]: Redesign metadata handling
-        return self.values
-
-    @active_values.validator
-    def _validate_active_values(  # noqa: DOC101, DOC103
-        self, _: Any, values: tuple
-    ) -> None:
-        """Validate the active parameter values.
-
-        If no such list is provided, no validation is being performed. In particular,
-        the errors listed below are only relevant if the ``values`` list is provided.
-
-        Raises:
-            ValueError: If an empty active parameters list is provided.
-            ValueError: If the active parameter values are not unique.
-            ValueError: If not all active values are valid parameter choices.
-        """
-        # TODO [16605]: Redesign metadata handling
-        if len(values) == 0:
-            raise ValueError(
-                "If an active parameters list is provided, it must not be empty."
-            )
-        if len(set(values)) != len(values):
-            raise ValueError("The active parameter values must be unique.")
-        if not all(v in self.values for v in values):
-            raise ValueError("All active values must be valid parameter choices.")
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

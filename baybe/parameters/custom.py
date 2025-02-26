@@ -2,7 +2,7 @@
 
 import gc
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from attrs import define, field
 from attrs.validators import min_len
 from typing_extensions import override
 
-from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.base import DiscreteLabelLikeParameter
 from baybe.parameters.enum import CustomEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.boolean import eq_dataframe
@@ -19,16 +19,12 @@ from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
-class CustomDiscreteParameter(DiscreteParameter):
+class CustomDiscreteParameter(DiscreteLabelLikeParameter):
     """Custom parameters.
 
     For these parameters, the user can read in a precomputed representation for labels,
     e.g. from quantum chemistry.
     """
-
-    # class variables
-    is_numerical: ClassVar[bool] = False
-    # See base class.
 
     # object variables
     data: pd.DataFrame = field(validator=min_len(2), eq=eq_dataframe)
