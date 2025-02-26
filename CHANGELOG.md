@@ -9,10 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
+- `SHAPInsight` now supports the `waterfall` plot type
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
   `supports_batching` and `supports_pending_experiments`
+- `SHAPInsight` now allows explanation input that has additional columns compared to 
+  the background data (will be ignored)
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
