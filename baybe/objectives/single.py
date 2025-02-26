@@ -45,6 +45,11 @@ class SingleTargetObjective(Objective):
         return (self._target,)
 
     @override
+    @property
+    def n_outputs(self) -> int:
+        return 1
+
+    @override
     def transform(
         self,
         df: pd.DataFrame | None = None,

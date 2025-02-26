@@ -122,6 +122,11 @@ class DesirabilityObjective(Objective):
     def targets(self) -> tuple[Target, ...]:
         return self._targets
 
+    @override
+    @property
+    def n_outputs(self) -> int:
+        return 1
+
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
         """The normalized target weights."""

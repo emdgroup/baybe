@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   surrogates
 - `is_multi_output` attribute to `Objective`
 - `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
+- `n_outputs` property to `Objective`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

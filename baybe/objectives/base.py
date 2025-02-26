@@ -32,6 +32,11 @@ class Objective(ABC, SerialMixin):
     def targets(self) -> tuple[Target, ...]:
         """The targets included in the objective."""
 
+    @property
+    @abstractmethod
+    def n_outputs(self) -> int:
+        """The number of outputs of the objective."""
+
     @abstractmethod
     def transform(
         self,
