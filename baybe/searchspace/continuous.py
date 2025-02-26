@@ -397,7 +397,15 @@ class SubspaceContinuous(SerialMixin):
 
             adjusted_parameters.append(p_adjusted)
 
-        return evolve(self, parameters=adjusted_parameters, constraints_nonlin=())
+        return evolve(
+            self,
+            parameters=adjusted_parameters,
+            constraints_nonlin=[
+                c
+                for c in self.constraints_nonlin
+                if not isinstance(c, ContinuousCardinalityConstraint)
+            ],
+        )
 
     def transform(
         self,
