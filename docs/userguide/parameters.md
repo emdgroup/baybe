@@ -14,7 +14,7 @@ as the direct link to the controllable variables in your experiment.
 Before starting an iterative campaign, the user is required to specify the exact 
 parameters they can control and want to consider in their optimization.
 
-```{admonition} Parameter names
+```{admonition} Parameter Names
 :class: note
 BayBE identifies each parameter by a ``name``. All parameter names in one 
 campaign must be unique.
@@ -42,28 +42,35 @@ NumericalContinuousParameter(
 ```
 
 ## Discrete Parameters
-A discrete parameter has a finite set of possible values. 
-These values can be numeric or label-like and are transformed internally before being 
-ingested by the surrogate model.
+A discrete parameter has a finite set of possible values that can be recommended. 
+These values can be numeric or label-like (i.e. strings) and are transformed 
+internally before being ingested by the surrogate model.
 
-```{admonition} Parameter encoding
+```{admonition} Parameter Encoding
 :class: note
-We call the process of transforming labels into numbers ``encoding``. 
 To make labels usable in machine learning, we assign each label one or more numbers. 
-While there are trivial ways of doing this, BayBE also provides methods to avoid 
-problematic biases and even introduce useful information into the resulting latent 
-number space. For different parameters, different types of encoding make sense. These 
-situations are reflected by the different discrete parameter types BayBE offers.
+This process is called ``encoding``. While there are trivial ways of doing this 
+(e.g. one-hot encoding), BayBE also provides methods to avoid problematic biases and 
+even introduce useful information into the resulting latent number space. For different 
+parameters, different types of encoding make sense. These situations are reflected by 
+the different discrete parameter types BayBE offers.
+```
+
+```{admonition} For Label-Like Parameters: Values and Active Values
+:class: note
+After a discrete parameter was created, its possible values are stored in the `values` 
+property. All label-like parameters also support specifying `active_values`, which 
+must be ba susbet of `values`. `active_values` specify which labels are considered 
+for recommendation. Labels which are in `values` but not in `active_values` can be 
+part of measurements, but wont be recommended. Using this mechanism, you can configure 
+a campaign to being able to ingest historical data, while running it only in a 
+currently interesting subset of labels.
 ```
 
 ### NumericalDiscreteParameter
 This is the right type for parameters that have numerical values.
 We support sets with equidistant values like ``(1, 2, 3, 4, 5)`` but also unevenly 
 spaced sets of numbers like ``(0.2, 1.0, 2.0, 5.0, 10.0, 50.0)``.
-
-The parameter type also supports specifying a ``tolerance``.
-If specified, BayBE throws an error if measurements are added that are not within 
-that specified tolerance from any of the possible values.
 
 ```python
 from baybe.parameters import NumericalDiscreteParameter
@@ -94,6 +101,9 @@ from baybe.parameters import CategoricalParameter
 CategoricalParameter(
     name="Intensity",
     values=("low", "medium", "high"),
+    active_values=(
+        "low",  # optional, only combinations with Intensity=low will be recommended
+    ),
     encoding="INT",  # optional, uses integer encoding as described above
 )
 ```
@@ -131,6 +141,10 @@ SubstanceParameter(
         "1-Octanol": "CCCCCCCCO",
         "Toluene": "CC1=CC=CC=C1",
     },
+    active_values=[  # optional, recommends only water and toluene as solvent
+        "Water",
+        "Toluene",
+    ],
     encoding="MORDRED",  # optional
     decorrelate=0.7,  # optional
 )
@@ -203,7 +217,7 @@ different chemical encodings compared to one-hot and a random baseline:
 :class: only-dark
 ```
 
-```{admonition} Optional dependency
+```{admonition} Optional Dependency
 :class: note
 The ``SubstanceParameter`` is only available if BayBE was installed with the 
 additional ``chem`` dependency.
@@ -235,6 +249,10 @@ descriptors = pd.DataFrame(
 CustomDiscreteParameter(
     name="Polymer",
     data=descriptors,
+    active_values=(  # optional, enforces that only Polymer A or C is recommended
+        "Polymer A",
+        "Polymer C",
+    ),
     decorrelate=True,  # optional, uses default correlation threshold
 )
 ```
