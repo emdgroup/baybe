@@ -6,6 +6,6 @@ These examples demonstrate how to register custom hooks using the
 :maxdepth: 1
 
 Basics<basics>
-Probability Of Improvement<probability_of_improvement>
 Campaign Stopping<campaign_stopping>
+Probability Of Improvement<probability_of_improvement>
 ```

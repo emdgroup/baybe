@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Modeling a Mixture in Slot-Based Representation" href="slot_based.html" /><link rel="prev" title="Mixtures" href="Mixtures.html" />
+<link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Backtesting" href="../Backtesting/Backtesting.html" /><link rel="prev" title="Modeling a Mixture in Slot-Based Representation" href="slot_based.html" />
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Modeling a Mixture in Traditional Representation - BayBE documentation</title>
@@ -303,14 +303,14 @@
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Searchspaces/Searchspaces.html">Searchspaces</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Searchspaces</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../Searchspaces/hybrid_space.html">Hybrid Space</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Searchspaces/discrete_space.html">Discrete Space</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Searchspaces/continuous_space.html">Continuous Space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Searchspaces/discrete_space.html">Discrete Space</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Constraints_Discrete/Constraints_Discrete.html">Constraints Discrete</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of Constraints Discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/custom_constraints.html">Custom</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/dependency_constraints.html">Dependency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/custom_constraints.html">Custom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/exclusion_constraints.html">Exclusion</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Constraints_Discrete/prodsum_constraints.html">Product/Sum</a></li>
 </ul>
 </li>
@@ -324,9 +324,9 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Serialization/Serialization.html">Serialization</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of Serialization</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Serialization/basic_serialization.html">Basic Serialization</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Serialization/create_from_config.html">Create From Config</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Serialization/validate_config.html">Validate Config</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Serialization/basic_serialization.html">Basic Serialization</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Custom_Surrogates/Custom_Surrogates.html">Custom Surrogates</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of Custom Surrogates</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -334,31 +334,31 @@
 <li class="toctree-l3"><a class="reference internal" href="../Custom_Surrogates/surrogate_params.html">Surrogate Params</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../Custom_Hooks/Custom_Hooks.html">Custom Hooks</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of Custom Hooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/basics.html">Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/probability_of_improvement.html">Probability Of Improvement</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/campaign_stopping.html">Campaign Stopping</a></li>
+<li class="toctree-l2 current has-children"><a class="reference internal" href="Mixtures.html">Mixtures</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of Mixtures</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="slot_based.html">Slot Based</a></li>
+<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">Traditional</a></li>
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Backtesting/Backtesting.html">Backtesting</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of Backtesting</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/impute_mode.html">Impute Mode</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../Backtesting/full_lookup.html">Full Lookup</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Backtesting/custom_blackbox.html">Custom Blackbox</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Backtesting/impute_mode.html">Impute Mode</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Backtesting/full_initial_data.html">Full Initial Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Backtesting/full_lookup.html">Full Lookup</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of Transfer Learning</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../Multi_Armed_Bandit/Multi_Armed_Bandit.html">Multi Armed Bandit</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of Multi Armed Bandit</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Multi_Armed_Bandit/bernoulli_multi_armed_bandit.html">Bernoulli Multi Armed Bandit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Transfer Learning</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/basic_transfer_learning.html">Basic Transfer Learning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/backtesting.html">Backtesting</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../Multi_Armed_Bandit/Multi_Armed_Bandit.html">Multi Armed Bandit</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Multi Armed Bandit</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Multi_Armed_Bandit/bernoulli_multi_armed_bandit.html">Bernoulli Multi Armed Bandit</a></li>
-</ul>
-</li>
-<li class="toctree-l2 current has-children"><a class="reference internal" href="Mixtures.html">Mixtures</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Mixtures</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l3 current current-page"><a class="current reference internal" href="#">Traditional</a></li>
-<li class="toctree-l3"><a class="reference internal" href="slot_based.html">Slot Based</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../Custom_Hooks/Custom_Hooks.html">Custom Hooks</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Custom Hooks</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/basics.html">Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/campaign_stopping.html">Campaign Stopping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../Custom_Hooks/probability_of_improvement.html">Probability Of Improvement</a></li>
 </ul>
 </li>
 </ul>
@@ -1121,16 +1121,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  10.104661  19.427060     2.241295     0.242669  65.804354   2.179961
-1  15.141106  13.945034     2.773874     1.899317  60.957498   5.283170
-2  11.730640   3.372892     3.050675     0.525058  35.549480  45.771255
-3  10.090107  17.170254     3.644838     0.929718  36.896369  31.268714
-4   8.536555  12.755410     1.709659     2.340027   0.923684  73.734665
-5   8.784565  19.239996     2.401693     0.589845  21.050586  47.933316
-6  19.676049  14.077549     2.487186     0.374218  47.837757  15.547240
-7  10.473393   6.902174     0.172693     2.661915  51.990726  27.799098
-8   6.073289  19.673697     3.229320     0.091644  62.992953   7.939096
-9  19.473845   4.785847     1.978213     2.514094  60.431383  10.816617
+0  14.036192   7.059887     0.427730     0.690077  43.685144  34.100969
+1   5.921185  19.169069     0.156137     3.966245  12.272833  58.514531
+2   4.050174  12.718019     1.233819     2.080401  57.349229  22.568359
+3   5.436990  14.156248     2.366386     0.544191  32.643717  44.852468
+4   0.006268  15.347490     4.155222     0.464136   4.212536  75.814349
+5  18.892852   1.811664     2.957087     1.270343  37.542648  37.525405
+6   3.426113  12.594028     1.355250     2.214185  50.349736  30.060688
+7   5.058359   9.734124     2.844424     2.086094  39.623948  40.653052
+8   1.946011  11.052808     3.152957     0.601414  13.866262  69.380548
+9   6.541783  18.790144     3.409239     1.341099  58.350253  11.567481
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1145,16 +1145,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    29.531722            2.483964
-1  100.0    29.086141            4.673191
-2  100.0    15.103532            3.575733
-3  100.0    27.260360            4.574556
-4  100.0    21.291966            4.049686
-5  100.0    28.024560            2.991538
-6  100.0    33.753599            2.861405
-7  100.0    17.375567            2.834608
-8  100.0    25.746986            3.320965
-9  100.0    24.259693            4.492307
+0  100.0    21.096079            1.117807
+1  100.0    25.090254            4.122382
+2  100.0    16.768193            3.314220
+3  100.0    19.593238            2.910577
+4  100.0    15.353757            4.619358
+5  100.0    20.704516            4.227430
+6  100.0    16.020141            3.569435
+7  100.0    14.792483            4.930517
+8  100.0    12.998818            3.754371
+9  100.0    25.331928            4.750338
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
@@ -1170,23 +1170,23 @@ random points from the search space:</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="slot_based.html">
+          <a class="next-page" href="../Backtesting/Backtesting.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Modeling a Mixture in Slot-Based Representation</div>
+                <div class="title">Backtesting</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="Mixtures.html">
+          <a class="prev-page" href="slot_based.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Mixtures</div>
+                <div class="title">Modeling a Mixture in Slot-Based Representation</div>
                 
               </div>
             </a>

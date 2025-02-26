@@ -6,6 +6,6 @@ These examples demonstrate various ways to configure
 :maxdepth: 1
 
 Hybrid Space<hybrid_space>
-Discrete Space<discrete_space>
 Continuous Space<continuous_space>
+Discrete Space<discrete_space>
 ```
