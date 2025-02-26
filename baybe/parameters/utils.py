@@ -126,8 +126,8 @@ def activate_parameter(
             f"{thresholds.upper}) was given."
         )
 
-    def in_inactive_range(x: float) -> bool:
-        """Return true when x is within the inactive range."""
+    def in_inactive_range(x: float, /) -> bool:
+        """Return whether the argument is within the inactive range."""
         return thresholds.lower <= x <= thresholds.upper
 
     # When both bounds are in the in inactive range
