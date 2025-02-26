@@ -15,10 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
   optimization behavior in the presence of cardinality constraints
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
-  in both `ContinuousCardinalityConstraint`and `SubspaceContinuous`
+  to both `ContinuousCardinalityConstraint`and `SubspaceContinuous` for iterating
+  over cardinality-constrained parameter sets
 - Attribute `relative_threshold` and method `get_absolute_thresholds` to 
-  `ContinuousCardinalityConstraint`
-- Utilities `activate_parameter`, `is_between` and `is_cardinality_fulfilled`
+  `ContinuousCardinalityConstraint` for handling inactivity ranges
+- Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
+  validating cardinality constraints
+- Utility `is_between` as a dataframe-compatible version of `pandas.Series.between`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
