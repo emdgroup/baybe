@@ -97,8 +97,11 @@ def activate_parameter(
 ) -> NumericalContinuousParameter:
     """Force-activates a given parameter by moving its bounds away from zero.
 
-    A parameter that is trivially active because its value range does not overlap
-    with the considered inactivity interval is unaffected.
+    A parameter is considered active if its value falls outside the specified threshold
+    interval. Force-activating a parameter adjusts its range to ensure it cannot take
+    values within this interval. Parameters that are inherently active, due to their
+    original value ranges not overlapping with the inactivity interval, remain
+    unchanged.
 
     Important:
         A parameter whose range includes zero but extends beyond the threshold interval
