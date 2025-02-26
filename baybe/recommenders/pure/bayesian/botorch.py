@@ -219,7 +219,7 @@ class BotorchRecommender(BayesianRecommender):
     def _recommend_continuous_torch(
         self, subspace_continuous: SubspaceContinuous, batch_size: int
     ) -> tuple[Tensor, Tensor]:
-        """Dispatcher selecting continuous optimization routine."""
+        """Dispatcher selecting the continuous optimization routine."""
         if subspace_continuous.constraints_cardinality:
             return self._recommend_continuous_with_cardinality_constraints(
                 subspace_continuous, batch_size
