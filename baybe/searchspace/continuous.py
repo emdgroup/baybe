@@ -531,6 +531,7 @@ class SubspaceContinuous(SerialMixin):
                 f"Use '{SubspaceContinuous._sample_from_bounds.__name__}' "
                 f"or '{SubspaceContinuous._sample_from_polytope.__name__}' instead."
             )
+        from botorch.exceptions.errors import InfeasibilityError
 
         # List to store the created samples
         samples: list[pd.DataFrame] = []
@@ -554,13 +555,11 @@ class SubspaceContinuous(SerialMixin):
                 )._drop_parameters(inactive_params_sample)
             )
 
-            # TODO: Replace ValueError with customized erorr. See
-            #  https://github.com/pytorch/botorch/pull/2652
             # Sample from the reduced space
             try:
                 sample = subspace_without_cardinality_constraint.sample_uniform(1)
                 samples.append(sample)
-            except ValueError:
+            except InfeasibilityError:
                 n_fails += 1
 
             # Avoid infinite loop
