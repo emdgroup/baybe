@@ -17,7 +17,9 @@ from baybe.constraints.utils import is_cardinality_fulfilled
 from baybe.exceptions import MinimumCardinalityViolatedWarning
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
-from baybe.searchspace.core import SearchSpace, SubspaceContinuous
+from baybe.recommenders.pure.bayesian.base import BayesianRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.searchspace import SearchSpace, SubspaceContinuous
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -267,3 +269,37 @@ def test_empty_constraints_after_cardinality_constraint():
     ]
     subspace = SubspaceContinuous.from_product(parameters, constraints)
     subspace.sample_uniform(1)
+
+
+@pytest.mark.parametrize("recommender", [RandomRecommender(), BotorchRecommender()])
+def test_cardinality_constraint(recommender):
+    """Cardinality constraints are taken into account by the recommender."""
+    MIN_CARDINALITY = 4
+    MAX_CARDINALITY = 7
+    BATCH_SIZE = 10
+
+    parameters = [NumericalContinuousParameter(str(i), (0, 1)) for i in range(10)]
+    constraints = [
+        ContinuousCardinalityConstraint(
+            [p.name for p in parameters], MIN_CARDINALITY, MAX_CARDINALITY
+        )
+    ]
+    searchspace = SearchSpace.from_product(parameters, constraints)
+
+    if isinstance(recommender, BayesianRecommender):
+        objective = NumericalTarget("t", "MAX").to_objective()
+        measurements = pd.DataFrame(searchspace.continuous.sample_uniform(2))
+        measurements["t"] = np.random.random(len(measurements))
+    else:
+        objective = None
+        measurements = None
+
+    with warnings.catch_warnings(record=True) as w:
+        recommendation = recommender.recommend(
+            BATCH_SIZE, searchspace, objective, measurements
+        )
+
+    # Assert that the constraint conditions hold
+    _validate_cardinality_constrained_batch(
+        recommendation, searchspace.continuous, BATCH_SIZE, w
+    )
