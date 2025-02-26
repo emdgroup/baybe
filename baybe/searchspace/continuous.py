@@ -392,7 +392,6 @@ class SubspaceContinuous(SerialMixin):
                     )
                 else:
                     p_adjusted = p
-
             else:
                 p_adjusted = p
 
