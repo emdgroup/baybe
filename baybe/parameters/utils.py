@@ -123,7 +123,7 @@ def activate_parameter(
     if not thresholds.contains(0.0):
         raise ValueError(
             f"The thresholds must cover zero but ({thresholds.lower}, "
-            f"{thresholds.upper}) is given."
+            f"{thresholds.upper}) was given."
         )
 
     def in_inactive_range(x: float) -> bool:
