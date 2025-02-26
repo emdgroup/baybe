@@ -30,7 +30,7 @@ class AdapterModel(Model):
             raise RuntimeError(
                 "The model needs to be fitted to a specific context first."
             )
-        return len(objective.targets)
+        return objective.n_outputs
 
     def posterior(
         self,

@@ -39,6 +39,11 @@ class ParetoObjective(Objective):
         return self._targets
 
     @override
+    @property
+    def n_outputs(self) -> int:
+        return len(self._targets)
+
+    @override
     def transform(
         self,
         df: pd.DataFrame | None = None,
