@@ -142,7 +142,7 @@ class ContinuousCardinalityConstraint(
     """Class for continuous cardinality constraints."""
 
     relative_threshold: float = field(
-        default=1e-2, converter=float, validator=[gt(0.0), lt(1.0)]
+        default=1e-3, converter=float, validator=[gt(0.0), lt(1.0)]
     )
     """A relative threshold for determining if a value is considered zero.
 
