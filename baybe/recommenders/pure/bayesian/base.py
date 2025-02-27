@@ -42,9 +42,7 @@ class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
     _surrogate_model: SurrogateProtocol = field(
-        alias="surrogate_model",
-        factory=GaussianProcessSurrogate,
-        converter=_autobroadcast,
+        alias="surrogate_model", factory=GaussianProcessSurrogate
     )
     """The used surrogate model."""
 
@@ -99,9 +97,14 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
-        self._surrogate_model.fit(searchspace, objective, measurements)
+        surrogate = (
+            _autobroadcast(self._surrogate_model)
+            if objective.is_multi_output
+            else self._surrogate_model
+        )
+        surrogate.fit(searchspace, objective, measurements)
 
-        return self._surrogate_model
+        return surrogate
 
     def _setup_botorch_acqf(
         self,
