@@ -298,7 +298,11 @@ class BotorchRecommender(BayesianRecommender):
             check_maximum=False,
         ):
             warnings.warn(
-                "At least one minimum cardinality constraint is violated.",
+                "At least one minimum cardinality constraint has been violated. "
+                "This may occur when parameter ranges extend beyond zero in both "
+                "directions, making the feasible region non-convex. For such "
+                "parameters, minimum cardinality constraints are currently not "
+                "enforced due to the complexity of the resulting optimization problem.",
                 MinimumCardinalityViolatedWarning,
             )
 
