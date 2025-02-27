@@ -55,6 +55,22 @@ class _BroadcastMapping(Generic[_T]):
 class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     """A class for composing multi-target surrogates from single-target surrogates."""
 
+    # IMPROVE: Currently, the class is implemented in the most vanilla way, using only
+    #   BayBE's existing interfaces. There are several ways how it can be
+    #   further optimized by integrating it more directly with the underlying gpytorch
+    #   models. However, this probably requires some additional code adaptations to
+    #   achieve a full integration. Some future directions:
+    #   * Instead of fitting the models sequentially, a parallel optimization can
+    #     be done via `SumMarginalLogLikelihood`. However, a full integration would
+    #     also require supporting different fitting routines (e.g. LOO)
+    #   * The manual construction of the `PosteriorList` can be avoided when
+    #     the posterior computation is triggered directly on the `ModelList`. However,
+    #     this requires a clean integration of the necessary pre-processing steps
+    #     (transformation to computational representation + scaling)
+    #   * There is currently a lot of redundancy because each of the surrogates
+    #     internally stores a references to the fitting context (e.g. search space,
+    #     objective, ...)
+
     surrogates: _SurrogateGetter = field()
     """An index-based mapping from target names to single-target surrogates."""
 
