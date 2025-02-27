@@ -141,7 +141,7 @@ def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
         return converter.structure(obj, _BroadcastMapping[SurrogateProtocol])
     elif type_ == "dict":
         return converter.structure(obj, dict[str, SurrogateProtocol])
-    return NotImplementedError(f"No structure hook implemented for '{type_}'.")
+    raise NotImplementedError(f"No structure hook implemented for '{type_}'.")
 
 
 @converter.register_unstructure_hook
