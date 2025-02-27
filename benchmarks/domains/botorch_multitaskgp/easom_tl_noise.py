@@ -41,9 +41,9 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     results = []
 
     def sample_initial_data():
-        p = 0.0001
+        p = 0.00005
         upsample_max_thr = 0.5
-        n_upsample_max = 3
+        n_upsample_max = 1
         return pd.concat(
             [
                 # Sample specific fraction of initial data
