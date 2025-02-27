@@ -342,21 +342,22 @@ class BotorchRecommender(BayesianRecommender):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # NOTE: The explicit `or None` conversion is added as an additional safety net
+        #   because it is unclear if the corresponding presence checks for these
+        #   arguments is correctly implemented in all invoked BoTorch subroutines.
+        #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
-            # TODO: https://github.com/pytorch/botorch/issues/2042
             fixed_features=fixed_parameters or None,
-            # TODO: https://github.com/pytorch/botorch/issues/2042
             equality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_eq
             ]
             or None,
-            # TODO: https://github.com/pytorch/botorch/issues/2042
             inequality_constraints=[
                 c.to_botorch(subspace_continuous.parameters)
                 for c in subspace_continuous.constraints_lin_ineq
@@ -428,6 +429,10 @@ class BotorchRecommender(BayesianRecommender):
         fixed_features_list = candidates_comp.to_dict("records")
 
         # Actual call of the BoTorch optimization routine
+        # NOTE: The explicit `or None` conversion is added as an additional safety net
+        #   because it is unclear if the corresponding presence checks for these
+        #   arguments is correctly implemented in all invoked BoTorch subroutines.
+        #   For details: https://github.com/pytorch/botorch/issues/2042
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
             bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
@@ -442,7 +447,7 @@ class BotorchRecommender(BayesianRecommender):
                 )
                 for c in searchspace.continuous.constraints_lin_eq
             ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            or None,
             inequality_constraints=[
                 c.to_botorch(
                     searchspace.continuous.parameters,
@@ -450,7 +455,7 @@ class BotorchRecommender(BayesianRecommender):
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
             ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            or None,
         )
 
         # Align candidates with search space index. Done via including the search space
