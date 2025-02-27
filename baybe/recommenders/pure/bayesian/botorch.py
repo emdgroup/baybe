@@ -522,7 +522,13 @@ class BotorchRecommender(BayesianRecommender):
                 pass
 
         if not points_all:
-            raise InfeasibilityError("No feasible solution could be found.")
+            raise InfeasibilityError(
+                "No feasible solution could be found. Potentially the specified "
+                "constraints are too restrictive, i.e. there may be too many "
+                "constraints or thresholds may have been set too tightly. "
+                "Considered relaxing the constraints to improve the chances "
+                "of finding a feasible solution."
+            )
 
         # Find the best option f
         best_idx = np.argmax(acqf_values_all)
