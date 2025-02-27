@@ -113,7 +113,8 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     )
 
     results = []
-    for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
+    # for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
+    for p in [0.01, 0.05, 0.1]:
         results.append(
             simulate_scenarios(
                 {f"{int(100 * p)}": campaign},
@@ -155,7 +156,7 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=100,
+    n_mc_iterations=10,
 )
 
 arylhalides_tl_substance_benchmark = ConvergenceBenchmark(
