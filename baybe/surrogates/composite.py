@@ -74,7 +74,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     surrogates: _SurrogateGetter = field()
     """An index-based mapping from target names to single-target surrogates."""
 
-    _target_names: tuple[str, ...] = field(init=False, eq=False)
+    _target_names: tuple[str, ...] | None = field(init=False, eq=False)
     """The names of the targets modeled by the surrogate outputs."""
 
     @classmethod
@@ -85,6 +85,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     @property
     def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
         """The surrogates ordered according to the targets of the modeled objective."""
+        assert self._target_names is not None
         return tuple(self.surrogates[t] for t in self._target_names)
 
     @override
