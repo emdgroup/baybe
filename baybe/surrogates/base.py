@@ -205,7 +205,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         if (factory := self._make_target_scaler_factory()) is None:
             return _IDENTITY_TRANSFORM
 
-        # TODO: Multi-target extension
+        if objective.n_outputs != 1:
+            raise NotImplementedError(
+                "Output scalers for multi-output models are not yet available."
+            )
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
