@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import math
 import warnings
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
@@ -148,7 +148,7 @@ class SubspaceContinuous(SerialMixin):
             c.n_inactive_parameter_combinations for c in self.constraints_cardinality
         )
 
-    def inactive_parameter_combinations(self) -> Iterable[frozenset[str]]:
+    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
         """Get an iterator over all possible combinations of inactive parameters."""
         for combination in product(
             *[
