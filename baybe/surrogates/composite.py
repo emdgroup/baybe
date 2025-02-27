@@ -9,15 +9,18 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.utils.basic import is_all_instance
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
+    from botorch.posteriors import PosteriorList
 
 _T = TypeVar("_T")
 
@@ -63,6 +66,11 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         """Broadcast a given single-target surrogate logic to multiple targets."""
         return CompositeSurrogate(_BroadcastMapping(surrogate))
 
+    @property
+    def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
+        """The surrogates ordered according to the targets of the modeled objective."""
+        return tuple(self.surrogates[t] for t in self._target_names)
+
     @override
     def fit(
         self,
@@ -83,13 +91,30 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
 
         cls = (
             ModelListGP
-            if all(
-                isinstance(self.surrogates[t], GaussianProcessSurrogate)
-                for t in self._target_names
-            )
+            if is_all_instance(self._surrogates_flat, GaussianProcessSurrogate)
             else ModelList
         )
-        return cls(*(self.surrogates[t].to_botorch() for t in self._target_names))
+        return cls(*(s.to_botorch() for s in self._surrogates_flat))
+
+    def posterior(self, candidates: pd.DataFrame, /) -> PosteriorList:
+        """Compute the posterior for candidates in experimental representation.
+
+        The (independent joint) posterior is represented as a collection of individual
+        posterior models computed per target of the involved objective.
+        For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+        """
+        if not all(hasattr(s, "posterior") for s in self._surrogates_flat):
+            raise IncompatibleSurrogateError(
+                "A posterior can only be computed if all involved surrogates offer "
+                "posterior computation."
+            )
+
+        from botorch.posteriors import PosteriorList
+
+        # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
+        #   be handy here but unclear if this is doable with the current typing system
+        posteriors = [s.posterior(candidates) for s in self._surrogates_flat]  # type: ignore[attr-defined]
+        return PosteriorList(*posteriors)
 
 
 @converter.register_structure_hook
