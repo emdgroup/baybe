@@ -140,7 +140,8 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     )
 
     results = []
-    for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
+    # for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
+    for p in [0.01, 0.05, 0.1]:
         results.append(
             simulate_scenarios(
                 {f"{int(100 * p)}": campaign},
@@ -182,7 +183,7 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=100,
+    n_mc_iterations=10,
 )
 
 hartmann_tl_inverted_noise_benchmark = ConvergenceBenchmark(
