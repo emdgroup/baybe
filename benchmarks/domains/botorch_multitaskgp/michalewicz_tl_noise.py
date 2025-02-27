@@ -1,4 +1,4 @@
-"""Transfer learning benchmark with noisy Easom functions as tasks."""
+"""Transfer learning benchmark with noisy Michalewicz functions as tasks."""
 
 from __future__ import annotations
 
@@ -16,33 +16,37 @@ from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
-from benchmarks.domains.easom_tl_noise import space_data
+from benchmarks.domains.michalewicz_tl_noise import space_data
 
 
-def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+def michalewicz_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     """Benchmark function comparing TL and non-TL campaigns.
 
     Inputs:
-        x0  Discrete numerical parameter [-100,100]
-        x1  Discrete numerical parameter [-100,100]
+        x0  Discrete numerical parameter [0,3.1416]
+        x1  Discrete numerical parameter [0,3.1416]
+        x2  Discrete numerical parameter [0,3.1416]
+        x3  Discrete numerical parameter [0,3.1416]
         Function  Discrete task parameter
     Output: continuous
     Objective: Maximization
     Optimal Inputs: [
         {
-            x0 3.006012
-            x1 3.006012
+            x0 2.243995
+            x1 1.570796
+            x2 1.346397
+            x3 1.121997
         }
     ]
-    Optimal Output: 0.9462931105452647
+    Optimal Output: 3.418800985955677
     """
     objective, searchspace, searchspace_nontl, initial_data, lookup = space_data()
 
     results = []
 
     def sample_initial_data():
-        p = 0.0005
-        upsample_max_thr = 0.5
+        p = 0.005
+        upsample_max_thr = 3
         n_upsample_max = 3
         return pd.concat(
             [
@@ -56,6 +60,7 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         )
 
     # Do or do not use stratified outtransform
+
     for task_stratified_outtransform in [True, False]:
         campaign = Campaign(
             searchspace=searchspace,
@@ -97,7 +102,6 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
                 impute_mode="error",
             )
         )
-
     results = pd.concat(results)
     return results
 
@@ -108,8 +112,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=10,
 )
 
-easom_tl_noise_benchmark = ConvergenceBenchmark(
-    function=easom_tl_noise,
-    optimal_target_values={"Target": 0.9462931105452647},
+michalewicz_tl_noise_benchmark = ConvergenceBenchmark(
+    function=michalewicz_tl_noise,
+    optimal_target_values={"Target": 3.418800985955677},
     settings=benchmark_config,
 )
