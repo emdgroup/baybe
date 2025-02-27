@@ -232,10 +232,10 @@ def test_min_cardinality_warning():
         BotorchRecommender().recommend(
             BATCH_SIZE, searchspace, objective, prepare_measurements()
         )
-        assert any(
-            issubclass(w.category, MinimumCardinalityViolatedWarning)
-            for w in captured_warnings
-        )
+    assert any(
+        issubclass(w.category, MinimumCardinalityViolatedWarning)
+        for w in captured_warnings
+    )
 
 
 def test_empty_constraints_after_cardinality_constraint():
