@@ -488,25 +488,30 @@ def fuzzy_row_match(
         ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
             each entry in parameters.
     """
-    # Separate categorical and numerical columns
-    cat_cols = [p.name for p in parameters if not p.is_numerical]
-    num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
+    # Separate columns types
+    cat_cols = {p.name for p in parameters if (not p.is_numerical and p.is_discrete)}
+    num_cols = {p.name for p in parameters if (p.is_numerical and p.is_discrete)}
+    non_discrete_cols = {p.name for p in parameters if not p.is_discrete}
 
     # Assert that all parameters appear in the given dataframes
-    if diff := set(cat_cols + num_cols).difference(set(left_df.columns)):
+    if diff := (cat_cols | num_cols).difference(left_df.columns):
         raise ValueError(
-            f"For fuzzy row matching all parameters need to have a corresponding "
-            f"column in the left dataframe. Parameters not found: {diff})"
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the left dataframe. Parameters not found: {diff})"
         )
-    if diff := set(cat_cols + num_cols).difference(set(right_df.columns)):
+    if diff := (cat_cols | num_cols).difference(right_df.columns):
         raise ValueError(
-            f"For fuzzy row matching all parameters need to have a corresponding "
-            f"column in the right dataframe. Parameters not found: {diff})"
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the right dataframe. Parameters not found: "
+            f"{diff})"
         )
 
-    assert (set(cat_cols) | set(num_cols)) == {
-        p.name for p in parameters
-    }, "There are parameter types that would be silently ignored."
+    provided_cols = {p.name for p in parameters}
+    allowed_cols = cat_cols | num_cols | non_discrete_cols
+    assert allowed_cols == provided_cols, (
+        f"There are parameter types that would be silently ignored: "
+        f"{provided_cols.difference(allowed_cols)}"
+    )
 
     # Initialize the match matrix. We will later filter it down using other
     # matrices (representing the matches for individual parameters) via logical 'and'.
