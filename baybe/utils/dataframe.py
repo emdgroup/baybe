@@ -504,6 +504,10 @@ def fuzzy_row_match(
             f"column in the right dataframe. Parameters not found: {diff})"
         )
 
+    assert (set(cat_cols) | set(num_cols)) == {
+        p.name for p in parameters
+    }, "There are parameter types that would be silently ignored."
+
     # Initialize the match matrix. We will later filter it down using other
     # matrices (representing the matches for individual parameters) via logical 'and'.
     match_matrix = pd.DataFrame(
