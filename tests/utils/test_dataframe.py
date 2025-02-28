@@ -1,10 +1,13 @@
 """Tests for dataframe utilities."""
 
+from contextlib import nullcontext
+
 import numpy as np
 import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.utils.dataframe import (
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
@@ -54,18 +57,71 @@ def test_degenerate_rows_invalid_input():
 
 
 @pytest.mark.parametrize(
-    "parameter_names",
+    ("parameter_names", "noise", "duplicated"),
     [
-        param(["Categorical_1", "Categorical_2", "Switch_1"], id="discrete"),
-        param(["Categorical_1", "Num_disc_1", "Conti_finite1"], id="hybrid"),
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            False,
+            True,
+            id="discrete_num_noiseless_duplicated",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            False,
+            False,
+            id="discrete_num_noiseless_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            True,
+            False,
+            id="discrete_num_noisy_unique",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Some_Setting"],
+            False,
+            False,
+            id="discrete_cat",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Conti_finite_1"],
+            False,
+            False,
+            id="hybrid_cat",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite_1"],
+            False,
+            False,
+            id="hybrid_num_noiseless_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite_1"],
+            True,
+            False,
+            id="hybrid_num_noisy_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite_1"],
+            False,
+            True,
+            id="hybrid_num_noiseless_duplicated",
+        ),
     ],
 )
-@pytest.mark.parametrize("noise", [True, False], ids=["exact", "noisy"])
-def test_fuzzy_row_match(searchspace, noise):
+def test_fuzzy_row_match(searchspace, noise, duplicated):
     """Fuzzy row matching returns expected indices."""
     left_df = searchspace.discrete.exp_rep.copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
-    right_df = left_df.loc[selected].copy()
+    right_df = left_df.loc[selected].reset_index(drop=True)
+
+    context = nullcontext()
+    if duplicated:
+        # Set one of the input values to exactly the midpoint between two values to
+        # cause a degenerate match
+        vals = searchspace.get_parameters_by_name(["Num_disc_1"])[0].values
+        right_df.loc[0, "Num_disc_1"] = vals[0] + (vals[1] - vals[0]) / 2.0
+        context = pytest.warns(SearchSpaceMatchWarning, match="multiple matches")
 
     if noise:
         add_parameter_noise(
@@ -74,9 +130,12 @@ def test_fuzzy_row_match(searchspace, noise):
             noise_type="relative_percent",
             noise_level=0.1,
         )
-    matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
 
-    assert set(selected) == set(matched), (selected, matched)
+    with context:
+        matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
+
+    if not duplicated:
+        assert set(selected) == set(matched), (selected, matched)
 
 
 @pytest.mark.parametrize(
