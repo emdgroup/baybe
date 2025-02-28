@@ -8,7 +8,6 @@ import pytest
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.acquisition.base import AcquisitionFunction
 from baybe.constraints import (
     ContinuousLinearConstraint,
     ContinuousLinearEqualityConstraint,
@@ -34,16 +33,6 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-
-
-@pytest.mark.parametrize("acqf", ("VarUCB", "qVarUCB"))
-def test_acqfs(acqf):
-    """Using the deprecated acqf raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        BotorchRecommender(acquisition_function=acqf)
-
-    with pytest.warns(DeprecationWarning):
-        AcquisitionFunction.from_dict({"type": acqf})
 
 
 def test_acqf_keyword(acqf):
