@@ -22,6 +22,7 @@ from baybe.kernels.basic import (
     RQKernel,
 )
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.objectives.pareto import ParetoObjective
 from baybe.priors import (
     GammaPrior,
     HalfCauchyPrior,
@@ -47,6 +48,7 @@ from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations
@@ -93,6 +95,10 @@ acqfs_batching = [
 acqfs_non_batching = [
     a() for a in get_subclasses(AcquisitionFunction) if not a.supports_batching
 ]
+acqfs_single_output_batching = [
+    a for a in acqfs_batching if not a.supports_multi_output
+]
+acqfs_multi_output_batching = [a for a in acqfs_batching if a.supports_multi_output]
 
 # List of all hybrid recommenders with default attributes. Is extended with other lists
 # of hybrid recommenders like naive ones or recommenders not using default arguments
@@ -217,11 +223,13 @@ test_targets = [
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "acqf", acqfs_batching, ids=[a.abbreviation for a in acqfs_batching]
+    "acqf",
+    acqfs_single_output_batching,
+    ids=[a.abbreviation for a in acqfs_single_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-def test_batching_acqfs(campaign, n_iterations, batch_size, acqf):
+def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
     context = nullcontext()
     if campaign.searchspace.type not in [
         SearchSpaceType.CONTINUOUS,
@@ -232,6 +240,22 @@ def test_batching_acqfs(campaign, n_iterations, batch_size, acqf):
 
     with context:
         run_iterations(campaign, n_iterations, batch_size)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "objective",
+    [ParetoObjective([NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")])],
+)
+@pytest.mark.parametrize(
+    "acqf",
+    acqfs_multi_output_batching,
+    ids=[a.abbreviation for a in acqfs_multi_output_batching],
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+def test_multi_output_batching_acqfs(campaign, n_iterations, batch_size):
+    run_iterations(campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
