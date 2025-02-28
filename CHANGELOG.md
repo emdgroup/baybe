@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Expired Deprecations (from 0.9.*)
 - `baybe.objective` namespace 
+- `acquisition_function_cls` constructor parameter for `BayesianRecommender`
 - `VarUCB` and `qVarUCB` acquisition functions
 
 ## [0.12.2] - 2025-01-31

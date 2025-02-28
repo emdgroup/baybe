@@ -35,12 +35,6 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
 
-def test_acqf_keyword(acqf):
-    """Using the deprecated keyword raises an error."""
-    with pytest.raises(DeprecationError):
-        BotorchRecommender(acquisition_function_cls="qEI")
-
-
 def test_sequentialgreedyrecommender_class():
     """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
     with pytest.warns(DeprecationWarning):
