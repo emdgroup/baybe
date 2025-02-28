@@ -79,6 +79,48 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
+### ContinuousCardinalityConstraint
+The {class}`~baybe.constraints.continuous.ContinuousCardinalityConstraint` gives you a
+ tool to control the number of active factors (i.e. parameters that take a non-zero
+value) in your designs. This comes handy, for example, when designing mixtures with a
+limited number of components.
+
+To create a constraint of this kind, simply specify the set of parameters on which the
+constraint is to be imposed, together the corresponding upper and lower cardinality
+limits. For instance, the following constraint would ensure that there is always a
+minimum of one and a maximum of two components in each parameter configuration:
+
+```python
+from baybe.constraints import ContinuousCardinalityConstraint
+
+ContinuousCardinalityConstraint(
+    parameters=["x_1", "x_2", "x_3"],
+    min_cardinality=1,  # optional (defaults to 0)
+    max_cardinality=2,  # optional (defaults to the number of affected parameters)
+    relative_threshold=0.01,  # optional, controls the range of values considered active
+)
+```
+
+```{admonition} Computational Challenges
+:class: warning
+
+Note that, compared to optimization with [discrete cardinality
+constraints](#discretecardinalityconstraint), finding optimal cardinality-constrained
+solutions in continuous spaces is significantly more challenging due to the
+fractured nature of the resulting space. For larger parameter sets or complex constraint
+settings, searching an optimal parameter configuration can quickly become infeasible,
+creating the need for approximation schemes:
+
+* The
+    [`BotorchRecommender.max_n_subspaces`](baybe.recommenders.pure.bayesian.BotorchRecommender.max_n_subspaces)
+    attribute can be used to limit the number of subspaces considered during
+    optimization.
+* Because of the resulting non-convex parameter range, setting a lower bound on the
+  cardinality of parameter sets containing parameters with active ranges on both sides of
+  zero cannot always be guaranteed, potentially resulting in a
+  {class}`~baybe.exceptions.MinimumCardinalityViolatedWarning`.
+```
+
 ## Conditions
 Conditions are elements used within discrete constraints.
 While discrete constraints can operate on one or multiple parameters, a condition
@@ -370,15 +412,9 @@ The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteCardinalityConstraint
-The {class}`~baybe.constraints.discrete.DiscreteCardinalityConstraint` gives you a tool
-to control the number of active factors (i.e. parameters that take a non-zero value) in
-your design. This comes handy, for example, when designing mixtures with a limited
-number of components.
-
-To create a constraint of this kind, simply specify the set of parameters on which the
-constraint is to be imposed, together the corresponding upper and lower limits. For
-instance, the following constraint would ensure that there always a minimum of one and a
-maximum of two components in each mixture configuration:
+Like its [continuous cousin](#continuouscardinalityconstraint), the
+{class}`~baybe.constraints.discrete.DiscreteCardinalityConstraint` lets you control the
+number of active parameters in your design. The construction works analogously: 
 ```python
 from baybe.constraints import DiscreteCardinalityConstraint
 
