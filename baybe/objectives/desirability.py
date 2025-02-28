@@ -4,6 +4,7 @@ import gc
 import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
+from typing import ClassVar
 
 import cattrs
 import numpy as np
@@ -15,10 +16,11 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
+from baybe.objectives.validation import validate_target_names
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, to_tuple
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.dataframe import pretty_print_df, transform_target_columns
 from baybe.utils.numerical import geom_mean
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
@@ -62,9 +64,16 @@ def scalarize(
 class DesirabilityObjective(Objective):
     """An objective scalarizing multiple targets using desirability values."""
 
+    is_multi_output: ClassVar[bool] = False
+    # See base class.
+
     _targets: tuple[Target, ...] = field(
         converter=to_tuple,
-        validator=[min_len(2), deep_iterable(member_validator=instance_of(Target))],
+        validator=[
+            min_len(2),
+            deep_iterable(member_validator=instance_of(Target)),
+            validate_target_names,
+        ],
         alias="targets",
     )
     "The targets considered by the objective."
@@ -113,6 +122,11 @@ class DesirabilityObjective(Objective):
     def targets(self) -> tuple[Target, ...]:
         return self._targets
 
+    @override
+    @property
+    def n_outputs(self) -> int:
+        return 1
+
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
         """The normalized target weights."""
@@ -145,7 +159,7 @@ class DesirabilityObjective(Objective):
         # >>>>>>>>>> Deprecation
         if not ((df is None) ^ (data is None)):
             raise ValueError(
-                "Provide the dataframe to be transformed as argument to `df`."
+                "Provide the dataframe to be transformed as first positional argument."
             )
 
         if data is not None:
@@ -172,15 +186,10 @@ class DesirabilityObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Extract the relevant part of the dataframe
-        targets = get_transform_objects(
+        # Transform all targets individually
+        transformed = transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        transformed = df[[t.name for t in targets]].copy()
-
-        # Transform all targets individually
-        for target in self.targets:
-            transformed[target.name] = target.transform(df[target.name])
 
         # Scalarize the transformed targets into desirability values
         vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
