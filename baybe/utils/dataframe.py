@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import numpy as np
 import pandas as pd
 
+from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
@@ -535,7 +536,8 @@ def fuzzy_row_match(
         warnings.warn(
             f"Some input rows could not be matched to the search space. This could "
             f"indicate that something went wrong or measurements are very noisy. "
-            f"Indices with no matches: {no_match_indices}"
+            f"Indices with no matches: {no_match_indices}",
+            SearchSpaceMatchWarning,
         )
 
     mask_multiple_matches = match_matrix.sum(axis=1) > 1
@@ -544,7 +546,8 @@ def fuzzy_row_match(
             f"Some input rows have multiple matches with the search space. "
             f"This could indicate that something went wrong. Matching only "
             f"first occurrence for these rows. Indices with multiple matches: "
-            f"{multiple_match_indices}"
+            f"{multiple_match_indices}",
+            SearchSpaceMatchWarning,
         )
 
     return matched_indices
