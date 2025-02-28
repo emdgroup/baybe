@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ContinuousCardinalityConstraint` for handling inactivity ranges
 - Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
   validating cardinality constraints
-- Utility `is_between` as a dataframe-compatible version of `pandas.Series.between`
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

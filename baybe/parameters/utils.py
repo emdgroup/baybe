@@ -1,8 +1,10 @@
 """Parameter utilities."""
 
 from collections.abc import Callable, Collection
+from functools import partial
 from typing import Any, TypeVar
 
+import numpy as np
 import pandas as pd
 from attrs import evolve
 
@@ -129,12 +131,15 @@ def activate_parameter(
             f"{thresholds.upper}) was given."
         )
 
-    def in_inactive_range(x: float, /) -> bool:
-        """Return whether the argument is within the inactive range."""
-        return thresholds.lower <= x <= thresholds.upper
+    # Callable checking whether the argument is within the inactive range
+    _in_inactive_range = partial(
+        in_inactive_range,
+        lower_threshold=thresholds.lower,
+        upper_threshold=thresholds.upper,
+    )
 
     # When both bounds are in the in inactive range
-    if in_inactive_range(lower_bound) and in_inactive_range(upper_bound):
+    if _in_inactive_range(lower_bound) and _in_inactive_range(upper_bound):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
             f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
@@ -143,14 +148,54 @@ def activate_parameter(
 
     # When the upper bound is in inactive range, move it to the lower threshold of the
     # inactive region
-    if lower_bound < thresholds.lower and in_inactive_range(upper_bound):
+    if not _in_inactive_range(lower_bound) and _in_inactive_range(upper_bound):
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
     # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
-    if upper_bound > thresholds.upper and in_inactive_range(lower_bound):
+    if not _in_inactive_range(upper_bound) and _in_inactive_range(lower_bound):
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
 
     # When the parameter is already trivially active (or activating it would tear
     # its value range apart)
     return parameter
+
+
+def in_inactive_range(
+    x: np.ndarray | float,
+    lower_threshold: np.ndarray | float,
+    upper_threshold: np.ndarray | float,
+) -> np.ndarray:
+    """Check if the values can be treated zero or inactive.
+
+    Args:
+        x: A numpy array containing numeric values.
+        lower_threshold: Lower threshold of inactive region.
+        upper_threshold: Upper threshold of inactive region.
+
+    Returns:
+        A Boolean-valued numpy array indicating which elements are inactive.
+
+    Raises:
+        TypeError: If input arguments are not of the same type.
+        TypeError: If the types of input arguments are neither np.array nor float.
+    """
+    error_message = (
+        f"All input arguments must be of the same type: float or numpy "
+        f"array: but arguments of type {type(x)}, "
+        f"{type(lower_threshold)} and {type(upper_threshold)} are given."
+    )
+
+    if len({type(x), type(lower_threshold), type(upper_threshold)}) > 1:
+        raise TypeError(error_message)
+    if not (isinstance(x, np.ndarray) or isinstance(x, float)):
+        raise TypeError(error_message)
+
+    # When none of the inactive range thresholds lie on 0.0, the inactive range is an
+    # open interval: (lower_threshold, upper_threshold). This means a value x is
+    # treated inactive when it is in the exclusive inactive range (lower_threshold,
+    # upper_threshold). When any threshold of the inactive range lies on 0.0,
+    # the inactive range is a half-open, half-close interval. E.g. when the
+    # lower_threshold is 0.0, the inactive range is [0,0, upper_threshold).
+    is_inactive = ((x > lower_threshold) & (x < upper_threshold)) | (x == 0.0)
+    return is_inactive

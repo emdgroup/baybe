@@ -3,8 +3,8 @@
 import numpy as np
 import pandas as pd
 
+from baybe.parameters.utils import in_inactive_range
 from baybe.searchspace import SubspaceContinuous
-from baybe.utils.dataframe import is_between
 
 
 def is_cardinality_fulfilled(
@@ -26,15 +26,19 @@ def is_cardinality_fulfilled(
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
     for c in subspace_continuous.constraints_cardinality:
+        cols = df[c.parameters]
         # Get the activity thresholds for all parameters
         thresholds = {
             p.name: c.get_absolute_thresholds(p.bounds)
             for p in subspace_continuous.get_parameters_by_name(c.parameters)
         }
+        lower_thresholds = np.array([thresholds[p].lower for p in cols.columns])
+        upper_thresholds = np.array([thresholds[p].upper for p in cols.columns])
 
         # Count the number of active values per dataframe row
-        cols = df[c.parameters]
-        is_inactive = is_between(cols, thresholds) | (cols == 0.0)
+        is_inactive = in_inactive_range(
+            cols.to_numpy(), lower_thresholds, upper_thresholds
+        )
         n_zeros = is_inactive.sum(axis=1)
         n_active = len(c.parameters) - n_zeros
 
