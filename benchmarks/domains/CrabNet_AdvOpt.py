@@ -1,17 +1,9 @@
-"""
-@Time    :   2024/11/06 16:21:18
-@Author  :   Rita Lyu
-@Version :   1.0
-@Contact :   ritalyu0817@gmail.com
-@Desc    :   Crabnet hyperparameter benchmarking, a minimization task on Crabnet hyperparameters. 
+# Crabnet hyperparameter benchmarking, a minimization task on Crabnet hyperparameters. 
 
-Crabnet hyperparameter function with 20 continuous (treat as discrete for simplicity) and 3 categorical input. 
-This code interacts with an external API hosted on Hugging Face Spaces:
-https://huggingface.co/spaces/AccelerationConsortium/crabnet-hyperparameter
+# Crabnet hyperparameter function with 20 continuous (treat as discrete for simplicity) and 3 categorical input. 
+# This code interacts with an external API hosted on Hugging Face Spaces: https://huggingface.co/spaces/AccelerationConsortium/crabnet-hyperparameter
 
-The external space might be asleep, and this code includes logic to wake it up
-and retry until it becomes available or a retry limit is reached.
-"""
+# The external space might be asleep, and this code includes logic to wake it up and retry until it becomes available or a retry limit is reached.
 
 from __future__ import annotations
 
@@ -137,7 +129,7 @@ def advopt(settings: ConvergenceExperimentSettings) -> DataFrame:
         c2      categorical     c2 ∈ {c2_0, c2_1}
         c3      categorical     c3 ∈ {c3_0, c3_1, c3_2}
     Output: continuous
-    Objective: Minimization
+    Objective: minimization
     """
     # Define and create the search space
     lstParameters = []
@@ -222,7 +214,7 @@ def advopt_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFra
         c2      categorical     c2 ∈ {c2_0, c2_1}
         c3      categorical     c3 ∈ {c3_0, c3_1, c3_2}
     Output: continuous
-    Objective: Minimization
+    Objective: minimization
     """
     # Define and create the search space
     lstParameters = []
