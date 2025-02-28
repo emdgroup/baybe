@@ -369,6 +369,26 @@ DiscretePermutationInvarianceConstraint(
 The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
+### DiscreteCardinalityConstraint
+The {class}`~baybe.constraints.discrete.DiscreteCardinalityConstraint` gives you a tool
+to control the number of active factors (i.e. parameters that take a non-zero value) in
+your design. This comes handy, for example, when designing mixtures with a limited
+number of components.
+
+To create a constraint of this kind, simply specify the set of parameters on which the
+constraint is to be imposed, together the corresponding upper and lower limits. For
+instance, the following constraint would ensure that there always a minimum of one and a
+maximum of two components in each mixture configuration:
+```python
+from baybe.constraints import DiscreteCardinalityConstraint
+
+DiscreteCardinalityConstraint(
+    parameters=["Fraction_1", "Fraction_2", "Fraction_3"],
+    min_cardinality=1,  # optional (defaults to 0)
+    max_cardinality=2,  # optional (defaults to the number of affected parameters)
+)
+```
+
 ### DiscreteCustomConstraint
 With a [`DiscreteCustomConstraint`](baybe.constraints.discrete.DiscreteCustomConstraint) 
 constraint, you can specify a completely custom filter:
