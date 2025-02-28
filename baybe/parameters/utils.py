@@ -9,7 +9,10 @@ import pandas as pd
 from attrs import evolve
 
 from baybe.parameters.base import Parameter
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    _FixedNumericalContinuousParameter,
+)
 from baybe.utils.interval import Interval
 
 _TParameter = TypeVar("_TParameter", bound=Parameter)
@@ -149,11 +152,19 @@ def activate_parameter(
     # When the upper bound is in inactive range, move it to the lower threshold of the
     # inactive region
     if not _in_inactive_range(lower_bound) and _in_inactive_range(upper_bound):
+        if lower_bound == thresholds.lower:
+            return _FixedNumericalContinuousParameter(
+                name=parameter.name, value=lower_bound
+            )
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
     # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
     if not _in_inactive_range(upper_bound) and _in_inactive_range(lower_bound):
+        if upper_bound == thresholds.upper:
+            return _FixedNumericalContinuousParameter(
+                name=parameter.name, value=upper_bound
+            )
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
 
     # When the parameter is already trivially active (or activating it would tear

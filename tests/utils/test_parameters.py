@@ -24,11 +24,20 @@ def mirror_interval(interval: Interval) -> Interval:
         "expected_bounds",
     ),
     [
+        # Depending on whether a threshold lies on zero or not, the inactive range
+        # can be a half-closed or open interval. To capture call possible scenarios, we
+        # consider both with_zero(/nonzero)_threshold cases when necessary.
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.0, upper=1.0),
-            None,
-            id="bounds_on_thresholds",
+            Interval(lower=-1.0, upper=1.0),
+            id="bounds_on_thresholds_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=0.0, upper=1.0),
+            Interval(lower=0.0, upper=1.0),
+            Interval(lower=1.0, upper=1.0),
+            id="bounds_on_thresholds_with_zero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
@@ -39,8 +48,14 @@ def mirror_interval(interval: Interval) -> Interval:
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.5, upper=1.0),
+            Interval(lower=1.0, upper=1.0),
+            id="bounds_in_thresholds_one_side_match_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=-1.0, upper=0.0),
+            Interval(lower=-1.5, upper=0.0),
             None,
-            id="bounds_in_thresholds_one_side_match",
+            id="bounds_in_thresholds_one_side_match_with_zero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
@@ -51,8 +66,14 @@ def mirror_interval(interval: Interval) -> Interval:
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=1.0),
+            Interval(lower=-1.0, upper=1.0),
+            id="thresholds_in_bounds_one_side_match_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=-1.0, upper=0.0),
+            Interval(lower=-0.5, upper=0.0),
             Interval(lower=-1.0, upper=-0.5),
-            id="thresholds_in_bounds_one_side_match",
+            id="thresholds_in_bounds_one_side_match_with_zero_threshold",
         ),
         param(
             Interval(lower=-0.5, upper=1.0),
@@ -61,10 +82,16 @@ def mirror_interval(interval: Interval) -> Interval:
             id="bounds_intersected_with_thresholds",
         ),
         param(
+            Interval(lower=0.5, upper=1.0),
+            Interval(lower=-1.0, upper=0.5),
+            Interval(lower=0.5, upper=1.0),
+            id="bounds_intersected_with_thresholds_on_nonzero_one_point",
+        ),
+        param(
             Interval(lower=0.0, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=0.0, upper=1.0),
-            id="bounds_intersected_with_thresholds_on_one_point",
+            id="bounds_intersected_with_thresholds_on_zero_one_point",
         ),
         param(
             Interval(lower=0.5, upper=1.0),
