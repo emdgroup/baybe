@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
 
+### Expired Deprecations (from 0.9.*)
+- `baybe.objective` namespace 
+
 ## [0.12.2] - 2025-01-31
 ### Changed
 - More robust settings for the GP fitting
