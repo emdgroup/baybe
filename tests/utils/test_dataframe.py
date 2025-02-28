@@ -88,7 +88,7 @@ def test_fuzzy_row_match(searchspace, noise):
 )
 @pytest.mark.parametrize("invalid", ["left_invalid", "right_invalid"])
 def test_invalid_fuzzy_row_match(searchspace, invalid):
-    """Fuzzy row matching returns expected errors."""
+    """Returns expected errors when dataframes don't contain all expected columns."""
     left_df = searchspace.discrete.exp_rep.copy()
     selected = np.random.choice(left_df.index, 4, replace=False)
     right_df = left_df.loc[selected].copy()
@@ -96,8 +96,11 @@ def test_invalid_fuzzy_row_match(searchspace, invalid):
     # Drop first column
     if invalid == "left_invalid":
         left_df = left_df.iloc[:, 1:]
+        side = "left"
     else:
         right_df = right_df.iloc[:, 1:]
+        side = "right"
 
-    with pytest.raises(ValueError):
+    match = f"corresponding column in the {side} dataframe."
+    with pytest.raises(ValueError, match=match):
         fuzzy_row_match(left_df, right_df, searchspace.parameters)

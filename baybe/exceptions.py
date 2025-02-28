@@ -11,6 +11,13 @@ class UnusedObjectWarning(UserWarning):
     """
 
 
+class SearchSpaceMatchWarning(UserWarning):
+    """
+    When trying to match datapoints to entries in the search space, something
+    unexpected happened.
+    """
+
+
 ##### Exceptions #####
 
 
