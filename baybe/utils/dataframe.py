@@ -477,14 +477,15 @@ def fuzzy_row_match(
     Args:
         left_df: The data that serves as lookup reference.
         right_df: The data that is checked for matching rows in the left dataframe.
-        parameters: Parameter objects that identify relevant column names.
+        parameters: Parameter objects that identify the relevant column names and how
+            matching is performed.
 
     Returns:
         The index of the matching rows in ``left_df``.
 
     Raises:
-        ValueError: If either left_df or right_df does not contain columns for each
-            entry in parameters.
+        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
+            each entry in parameters.
     """
     # Separate categorical and numerical columns
     cat_cols = [p.name for p in parameters if not p.is_numerical]
@@ -502,22 +503,22 @@ def fuzzy_row_match(
             f"column in the right dataframe. Parameters not found: {diff})"
         )
 
-    # Initialize the match matrix. We will later filter it down via applying other
-    # matrices (representing the matching for each relevant column) via logical 'and'.
+    # Initialize the match matrix. We will later filter it down using other
+    # matrices (representing the matches for individual parameters) via logical 'and'.
     match_matrix = pd.DataFrame(
         True, index=right_df.index, columns=left_df.index, dtype=bool
     )
 
     # Match categorical parameters
     for col in cat_cols:
-        # Per categorical parameter, this calculates the match between all elements of
-        # left and right and stores it as a matrix.
+        # Per categorical parameter, this identifies matches between all elements of
+        # left and right and stores them in a matrix.
         match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
 
     # Match numerical parameters
     for col in num_cols:
         # Per numerical parameter, this identifies the rows with the smallest absolute
-        # difference and stores it as a matrix.
+        # difference and records them in a matrix.
         abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
