@@ -39,7 +39,7 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimen
 ### Creating the Optimization Objective
 
 # The test functions each have a single output that is to be minimized.
-# The corresponding [Objective](baybe.objective.Objective)
+# The corresponding [Objective](baybe.objectives.base.Objective)
 # is created as follows:
 
 target = NumericalTarget(name="Target", mode="MIN")
