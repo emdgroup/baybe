@@ -16,7 +16,6 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
-from baybe.objective import Objective as OldObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
@@ -35,12 +34,6 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-
-
-def test_objective_class():
-    """Using the deprecated objective class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        OldObjective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
 
 
 @pytest.mark.parametrize("acqf", ("VarUCB", "qVarUCB"))
