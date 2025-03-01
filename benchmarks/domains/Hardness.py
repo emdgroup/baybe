@@ -1,25 +1,20 @@
-# Hardness benchmarking, a maximization task on experimental hardness dataset. 
+# Hardness benchmarking, a maximization task on experimental hardness dataset.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from pandas import DataFrame
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy as sp
 import pandas as pd
-import seaborn as sns
+import scipy as sp
+from pandas import DataFrame
 
 from baybe.campaign import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget
-from baybe.utils.random import set_random_seed
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.targets import NumericalTarget, TargetMode
 from benchmarks.definition import (
     Benchmark,
@@ -29,9 +24,15 @@ from benchmarks.definition import (
 # Set up directory and load datasets
 home_dir = os.getcwd()
 # Materials Project (MP) bulk modulus dataset
-df_mp = pd.read_csv(os.path.join(home_dir, "benchmarks", "domains", "mp_bulkModulus_goodOverlap.csv"), index_col=0)
+df_mp = pd.read_csv(
+    os.path.join(home_dir, "benchmarks", "domains", "mp_bulkModulus_goodOverlap.csv"),
+    index_col=0,
+)
 # Experimental (Exp) hardness dataset
-df_exp = pd.read_csv(os.path.join(home_dir, "benchmarks", "domains", "exp_hardness_goodOverlap.csv"), index_col=0)
+df_exp = pd.read_csv(
+    os.path.join(home_dir, "benchmarks", "domains", "exp_hardness_goodOverlap.csv"),
+    index_col=0,
+)
 element_cols = df_exp.columns.to_list()[4:]
 
 # Initialize an empty dataframe to store the integrated hardness values
@@ -43,28 +44,36 @@ for composition_i in df_exp["composition"].unique():
     # Sort the data by load
     composition_subset = composition_subset.sort_values(by="load")
     composition_subset = composition_subset.drop_duplicates(subset="load")
-    if len(composition_subset) < 5:     # Continue to the next composition
+    if len(composition_subset) < 5:  # Continue to the next composition
         continue
 
     # Perform cubic spline interpolation of the hardness vs load curve
-    spline = sp.interpolate.CubicSpline(composition_subset["load"], composition_subset["hardness"])
+    spline = sp.interpolate.CubicSpline(
+        composition_subset["load"], composition_subset["hardness"]
+    )
     # Integrate the spline from the minimum load to the maximum load
-    integrated_value = spline.integrate(0.5, 5, extrapolate = True)
+    integrated_value = spline.integrate(0.5, 5, extrapolate=True)
 
     # Make a new dataframe with the element_cols from composition_subset
-    composition_summary = composition_subset[['strComposition', 'composition'] + element_cols]
-    composition_summary = composition_summary.drop_duplicates(subset='composition')
+    composition_summary = composition_subset[
+        ["strComposition", "composition"] + element_cols
+    ]
+    composition_summary = composition_summary.drop_duplicates(subset="composition")
     composition_summary["integratedHardness"] = integrated_value
 
-    df_exp_integrated_hardness = pd.concat([df_exp_integrated_hardness, composition_summary])
+    df_exp_integrated_hardness = pd.concat(
+        [df_exp_integrated_hardness, composition_summary]
+    )
 
 # ----- Target function (integrated hardness) -----
 df_searchspace_target = df_exp_integrated_hardness[element_cols]
 df_searchspace_target["Function"] = "targetFunction"
 
 # Make a lookup table for the task function (integrate hardness) - add the 'integratedHardness' column
-df_lookup_target = pd.concat([df_searchspace_target, df_exp_integrated_hardness["integratedHardness"]], axis=1)
-df_lookup_target = df_lookup_target.rename(columns={"integratedHardness":"Target"})
+df_lookup_target = pd.concat(
+    [df_searchspace_target, df_exp_integrated_hardness["integratedHardness"]], axis=1
+)
+df_lookup_target = df_lookup_target.rename(columns={"integratedHardness": "Target"})
 
 # ----- Source function (voigt bulk modulus) -----
 df_searchspace_source = df_mp[element_cols]
@@ -77,10 +86,11 @@ df_lookup_source = df_lookup_source.rename(columns={"vrh": "Target"})
 # Combine the search space
 df_searchspace = pd.concat([df_searchspace_target, df_searchspace_source])
 
+
 def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
     """Integrated hardness benchmark, compares across random, default, and no task parameter set up
 
-    Inputs: 
+    Inputs:
         B   discrete    {0.8, 0.66666667, 0.92307692 ...}   |B| = 13
         Sc  discrete    {0.,  0.00384615, 0.01923077 ...}   |Sc| = 26
         Cr  discrete    {0.01, 0.06, 0.1 ...}               |Cr| = 20
@@ -94,7 +104,6 @@ def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
     Output: discrete
     Objective: maximization
     """
-
     parameters = []
     parameters_no_task = []
 
@@ -107,24 +116,25 @@ def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
         )
         parameters.append(discrete_parameter_i)
         parameters_no_task.append(discrete_parameter_i)
-    
+
     task_parameter = TaskParameter(
         name="Function",
         values=["targetFunction", "sourceFunction"],
         active_values=["targetFunction"],
-    )   
+    )
     parameters.append(task_parameter)
 
     searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
-    searchspace_no_task = SearchSpace.from_dataframe(df_searchspace_target[element_cols], parameters=parameters_no_task)
-    
+    searchspace_no_task = SearchSpace.from_dataframe(
+        df_searchspace_target[element_cols], parameters=parameters_no_task
+    )
+
     objective = NumericalTarget(name="Target", mode=TargetMode.MAX).to_objective()
 
     scenarios: dict[str, Campaign] = {
         "Random Recommender": Campaign(
             searchspace=SearchSpace.from_dataframe(
-                df_searchspace_target[element_cols],
-                parameters=parameters_no_task
+                df_searchspace_target[element_cols], parameters=parameters_no_task
             ),
             recommender=RandomRecommender(),
             objective=objective,
@@ -152,7 +162,7 @@ def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
 def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFrame:
     """Integrated hardness benchmark, transfer learning with different initialized data sizes
 
-    Inputs: 
+    Inputs:
         B   discrete    {0.8, 0.66666667, 0.92307692 ...}   |B| = 13
         Sc  discrete    {0.,  0.00384615, 0.01923077 ...}   |Sc| = 26
         Cr  discrete    {0.01, 0.06, 0.1 ...}               |Cr| = 20
@@ -166,7 +176,6 @@ def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataF
     Output: discrete
     Objective: maximization
     """
-
     parameters = []
 
     # For each column in df_searchspace except the last one, create a NumericalDiscreteParameter
@@ -177,12 +186,12 @@ def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataF
             tolerance=0.0,
         )
         parameters.append(discrete_parameter_i)
-    
+
     task_parameter = TaskParameter(
         name="Function",
         values=["targetFunction", "sourceFunction"],
         active_values=["targetFunction"],
-    )   
+    )
     parameters.append(task_parameter)
 
     objective = NumericalTarget(name="Target", mode=TargetMode.MAX).to_objective()
@@ -194,16 +203,19 @@ def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataF
     ### ----------- For now, it is only using n=30 as initial data size ----------- ###
     # Create a list of dataframes with n samples from df_lookup_source to use as initial data
     for n in (2, 4, 6, 30):
-        initial_data_i = [df_lookup_source.sample(n) for _ in range(settings.n_mc_iterations)]
+        initial_data_i = [
+            df_lookup_source.sample(n) for _ in range(settings.n_mc_iterations)
+        ]
 
     return simulate_scenarios(
         {f"{n} Initial Data": campaign},
         df_lookup_target,
-        initial_data=initial_data_i, 
+        initial_data=initial_data_i,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
         impute_mode="error",
     )
+
 
 benchmark_config = ConvergenceExperimentSettings(
     batch_size=1,
@@ -227,21 +239,26 @@ hardness_transfer_learning_benchmark = Benchmark(
 
 
 if __name__ == "__main__":
-
-    # Describe the benchmark task 
-    print("Hardness benchmark is a maximization task on experimental hardness dataset. ")
-    print("The dataset is downselect to 94 composition with more than 5 hardness values. ")
-    print("The hardness values are integrated using cubic spline interpolation, and the task is to maximize the integrated hardness. \n")
-    print("Hardness benchmark compares across random, default, and no task parameter set up. \n")
-    print("Hardness transfer learning benchmark compares across different initialized data sizes. ")
+    # Describe the benchmark task
+    print(
+        "Hardness benchmark is a maximization task on experimental hardness dataset. "
+    )
+    print(
+        "The dataset is downselect to 94 composition with more than 5 hardness values. "
+    )
+    print(
+        "The hardness values are integrated using cubic spline interpolation, and the task is to maximize the integrated hardness. \n"
+    )
+    print(
+        "Hardness benchmark compares across random, default, and no task parameter set up. \n"
+    )
+    print(
+        "Hardness transfer learning benchmark compares across different initialized data sizes. "
+    )
 
     # Visualize the Hardness value histogram
     fig, ax = plt.subplots(
-        1, 1,
-        figsize=(8, 5),
-        facecolor='w',
-        edgecolor='k',
-        constrained_layout = True
+        1, 1, figsize=(8, 5), facecolor="w", edgecolor="k", constrained_layout=True
     )
 
     # Plot a histogram of the hardness values
