@@ -1,6 +1,6 @@
 """Benchmark domains."""
 
-from benchmarks.definition.config import Benchmark
+from benchmarks.definition.base import Benchmark
 from benchmarks.domains.Hardness import (
     hardness_benchmark,
     hardness_transfer_learning_benchmark,
