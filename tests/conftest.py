@@ -77,7 +77,11 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
-from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
+from baybe.utils.dataframe import (
+    add_fake_measurements,
+    add_parameter_noise,
+    create_fake_input,
+)
 from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
@@ -162,6 +166,18 @@ def fixture_batch_size(request):
     Testing 1 as edge case and 3 as a case for >1.
     """
     return request.param
+
+
+@pytest.fixture(name="n_fake_measurements")
+def fixture_n_fake_measurements(batch_size):
+    """Number of rows for :func:`baybe.utils.dataframe.create_fake_input`."""
+    return batch_size
+
+
+@pytest.fixture(name="fake_measurements")
+def fixture_fake_measurements(parameters, targets, batch_size):
+    """Artificially created valid measurements."""
+    return create_fake_input(parameters, targets, batch_size)
 
 
 @pytest.fixture(
@@ -880,7 +896,6 @@ def run_iterations(
     with temporary_seed(int(time.time())):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
-            # dont use parameter noise for these tests
 
             add_fake_measurements(rec, campaign.targets)
             if add_noise and (k % 2):

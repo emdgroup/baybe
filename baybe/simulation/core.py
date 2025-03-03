@@ -118,7 +118,7 @@ def simulate_experiment(
         campaign = deepcopy(campaign)
 
         # Add the initial data
-        if initial_data is not None:
+        if (initial_data is not None) and not initial_data.empty:
             campaign.add_measurements(initial_data)
 
         # For impute_mode 'ignore', do not recommend space entries that are not

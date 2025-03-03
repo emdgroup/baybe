@@ -37,7 +37,7 @@ NON_SHAP_EXPLAINERS = {"LimeTabular", "Maple"}
 EXPLAINERS = SHAP_EXPLAINERS | NON_SHAP_EXPLAINERS
 """Supported explainer types for :class:`baybe.insights.shap.SHAPInsight`"""
 
-SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter"}
+SHAP_PLOTS = {"bar", "beeswarm", "force", "heatmap", "scatter", "waterfall"}
 """Supported plot types for :meth:`baybe.insights.shap.SHAPInsight.plot`"""
 
 
@@ -265,15 +265,15 @@ class SHAPInsight:
             The computed Shapley explanation.
 
         Raises:
-            ValueError: If the columns of the given dataframe cannot be aligned with the
-                columns of the explainer background dataframe.
+            ValueError: If not all the columns of the explainer background dataframe
+                are present in the given data.
         """
         if data is None:
             data = self.background_data
-        elif set(self.background_data.columns) != set(data.columns):
+        elif not set(self.background_data.columns).issubset(data.columns):
             raise ValueError(
-                "The provided dataframe must have the same column names as used by "
-                "the explainer object."
+                "The provided dataframe must contain all columns that were used for "
+                "the background data."
             )
 
         # Align columns with background data
@@ -302,6 +302,7 @@ class SHAPInsight:
         # (`base_values` can be a scalar or vector)
         # TODO: https://github.com/shap/shap/issues/3958
         idx = self.background_data.columns.get_indexer(data.columns)
+        idx = idx[idx != -1]  # Additional columns in data are ignored.
         for attr in ["values", "data", "base_values"]:
             try:
                 setattr(explanations, attr, getattr(explanations, attr)[:, idx])
@@ -327,7 +328,9 @@ class SHAPInsight:
 
     def plot(
         self,
-        plot_type: Literal["bar", "beeswarm", "force", "heatmap", "scatter"],
+        plot_type: Literal[
+            "bar", "beeswarm", "force", "heatmap", "scatter", "waterfall"
+        ],
         data: pd.DataFrame | None = None,
         /,
         *,
@@ -367,7 +370,7 @@ class SHAPInsight:
         plot_func = getattr(shap.plots, plot_type)
 
         # Handle plot types that only explain a single data point
-        if plot_type == "force":
+        if plot_type in ["force", "waterfall"]:
             if explanation_index is None:
                 warnings.warn(
                     f"When using plot type '{plot_type}', an 'explanation_index' must "
@@ -375,8 +378,12 @@ class SHAPInsight:
                     f"explained. Choosing the first entry at position 0."
                 )
                 explanation_index = 0
+
             toplot = self.explain(data.iloc[[explanation_index]])
-            kwargs["matplotlib"] = True
+            toplot = toplot[0]
+
+            if plot_type == "force":
+                kwargs["matplotlib"] = True
         else:
             toplot = self.explain(data)
 

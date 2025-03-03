@@ -8,16 +8,14 @@ import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import define, field, fields
-from attrs.validators import ge, gt, instance_of, le
+from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
 from baybe.utils.basic import classproperty
-from baybe.utils.sampling_algorithms import (
-    DiscreteSamplingMethod,
-    sample_numerical_df,
-)
+from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
+from baybe.utils.validation import finite_float
 
 
 ########################################################################################
@@ -264,12 +262,15 @@ class UpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "UCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
     """Trade-off parameter for mean and variance.
 
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
+    * ``beta > 0``: Rewards uncertainty, takes more risk.
+      Limit ``inf``: Pure exploration
+    * ``beta < 0``: Punishes uncertainty, takes less risk.
+      Limit ``-inf``: Pure exploitation
+    * ``beta = 0``: Discards knowledge about uncertainty, i.e. neither rewards nor
+      punishes it, is risk-neutral.
     """
 
 
@@ -279,13 +280,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qUCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
-    """Trade-off parameter for mean and variance.
-
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
-    """
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
+    """See :paramref:`UpperConfidenceBound.beta`."""
 
 
 @define(frozen=True)

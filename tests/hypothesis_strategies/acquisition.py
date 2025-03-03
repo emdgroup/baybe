@@ -49,14 +49,14 @@ def _qNIPV_strategy(draw: st.DrawFn):
 acquisition_functions = st.one_of(
     st.builds(ExpectedImprovement),
     st.builds(ProbabilityOfImprovement),
-    st.builds(UpperConfidenceBound, beta=finite_floats(min_value=0.0)),
+    st.builds(UpperConfidenceBound, beta=finite_floats()),
     st.builds(PosteriorMean),
     st.builds(PosteriorStandardDeviation, maximize=st.sampled_from([True, False])),
     st.builds(qPosteriorStandardDeviation),
     st.builds(LogExpectedImprovement),
     st.builds(qExpectedImprovement),
     st.builds(qProbabilityOfImprovement),
-    st.builds(qUpperConfidenceBound, beta=finite_floats(min_value=0.0)),
+    st.builds(qUpperConfidenceBound, beta=finite_floats()),
     st.builds(qSimpleRegret),
     st.builds(qLogExpectedImprovement),
     st.builds(

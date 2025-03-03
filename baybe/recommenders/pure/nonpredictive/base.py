@@ -35,7 +35,7 @@ class NonPredictiveRecommender(PureRecommender, ABC):
                 f"experiments from the candidate set, adjust the search space "
                 f"accordingly."
             )
-        if (measurements is not None) and (len(measurements) != 0):
+        if (measurements is not None) and not measurements.empty:
             warnings.warn(
                 f"'{self.recommend.__name__}' was called with a non-empty "
                 f"set of measurements but '{self.__class__.__name__}' does not "
