@@ -5,6 +5,7 @@ from contextlib import nullcontext
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.exceptions import SearchSpaceMatchWarning
@@ -131,8 +132,13 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
             noise_level=0.1,
         )
 
-    with context:
+    with context as c:
         matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
+
+    # Assert correct identification of problematic df parts
+    if c is not None:
+        w = next(x for x in c if isinstance(x.message, SearchSpaceMatchWarning)).message
+        assert_frame_equal(right_df.loc[[0]], w.data)
 
     if not duplicated:
         assert set(selected) == set(matched), (selected, matched)
