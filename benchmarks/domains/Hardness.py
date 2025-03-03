@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,9 +15,9 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmarks.definition import (
-    Benchmark,
-    ConvergenceExperimentSettings,
+from benchmarks.definition.convergence import (
+    ConvergenceBenchmark,
+    ConvergenceBenchmarkSettings,
 )
 
 # Set up directory and load datasets
@@ -86,8 +85,7 @@ df_lookup_source = df_lookup_source.rename(columns={"vrh": "Target"})
 # Combine the search space
 df_searchspace = pd.concat([df_searchspace_target, df_searchspace_source])
 
-
-def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
+def hardness(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Integrated hardness benchmark, compares across random, default, and no task parameter set up
 
     Inputs:
@@ -159,7 +157,7 @@ def hardness(settings: ConvergenceExperimentSettings) -> DataFrame:
     )
 
 
-def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFrame:
+def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Integrated hardness benchmark, transfer learning with different initialized data sizes
 
     Inputs:
@@ -204,7 +202,7 @@ def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataF
     # Create a list of dataframes with n samples from df_lookup_source to use as initial data
     for n in (2, 4, 6, 30):
         initial_data_i = [
-            df_lookup_source.sample(n) for _ in range(settings.n_mc_iterations)
+            df_lookup_source.sample(n)
         ]
 
     return simulate_scenarios(
@@ -213,30 +211,29 @@ def hardness_transfer_learning(settings: ConvergenceExperimentSettings) -> DataF
         initial_data=initial_data_i,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
+        n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
     )
 
-
-benchmark_config = ConvergenceExperimentSettings(
+benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=1,
     n_doe_iterations=20,
     n_mc_iterations=5,
 )
 
-hardness_benchmark = Benchmark(
+hardness_benchmark = ConvergenceBenchmark(
     function=hardness,
     best_possible_result=None,
     settings=benchmark_config,
     optimal_function_inputs=None,
 )
 
-hardness_transfer_learning_benchmark = Benchmark(
+hardness_transfer_learning_benchmark = ConvergenceBenchmark(
     function=hardness_transfer_learning,
     best_possible_result=None,
     settings=benchmark_config,
     optimal_function_inputs=None,
 )
-
 
 if __name__ == "__main__":
     # Describe the benchmark task
