@@ -1,7 +1,5 @@
 """Tests for parameter utilities."""
 
-from unittest.mock import Mock
-
 import pytest
 from pytest import param
 
@@ -22,6 +20,7 @@ def mirror_interval(interval: Interval) -> Interval:
         "bounds",
         "thresholds",
         "expected_bounds",
+        "error_message",
     ),
     [
         # Depending on whether a threshold lies on zero or not, the inactive range
@@ -31,73 +30,93 @@ def mirror_interval(interval: Interval) -> Interval:
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.0, upper=1.0),
+            "",
             id="bounds_on_thresholds_with_nonzero_threshold",
         ),
         param(
             Interval(lower=0.0, upper=1.0),
             Interval(lower=0.0, upper=1.0),
             Interval(lower=1.0, upper=1.0),
+            "",
             id="bounds_on_thresholds_with_zero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.5, upper=1.5),
             None,
+            "cannot be set active",
             id="bounds_in_thresholds",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.5, upper=1.0),
             Interval(lower=1.0, upper=1.0),
+            "",
             id="bounds_in_thresholds_one_side_match_with_nonzero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=-1.5, upper=0.0),
             None,
+            "cannot be set active",
             id="bounds_in_thresholds_one_side_match_with_zero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=0.5),
             Interval(lower=-1.0, upper=1.0),
+            "",
             id="thresholds_in_bounds",
         ),
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=1.0),
             Interval(lower=-1.0, upper=1.0),
+            "",
             id="thresholds_in_bounds_one_side_match_with_nonzero_threshold",
         ),
         param(
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=-0.5, upper=0.0),
             Interval(lower=-1.0, upper=-0.5),
+            "",
             id="thresholds_in_bounds_one_side_match_with_zero_threshold",
         ),
         param(
             Interval(lower=-0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.5),
             Interval(lower=0.5, upper=1.0),
+            "",
             id="bounds_intersected_with_thresholds",
         ),
         param(
             Interval(lower=0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.5),
             Interval(lower=0.5, upper=1.0),
+            "",
             id="bounds_intersected_with_thresholds_on_nonzero_one_point",
         ),
         param(
             Interval(lower=0.0, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=0.0, upper=1.0),
+            "",
             id="bounds_intersected_with_thresholds_on_zero_one_point",
         ),
         param(
             Interval(lower=0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=0.5, upper=1.0),
+            "",
             id="bounds_and_thresholds_nonoverlapping",
+        ),
+        # Activating a parameter requires a valid inactive region to start with
+        param(
+            Interval(lower=0.5, upper=1.0),
+            Interval(lower=0.5, upper=1.0),
+            None,
+            "The thresholds must cover zero",
+            id="invalid_inactive_region",
         ),
     ],
 )
@@ -105,6 +124,7 @@ def test_parameter_activation(
     bounds: Interval,
     thresholds: Interval,
     expected_bounds: Interval | None,
+    error_message: str,
     mirror: bool,
 ):
     """The parameter activation utility correctly activates a parameter.
@@ -113,6 +133,7 @@ def test_parameter_activation(
         bounds: The bounds of the parameter to activate.
         thresholds: The inactivity thresholds.
         expected_bounds: The expected bounds of the activated parameter.
+        error_message: The error message for matching.
         mirror: If ``True``, both bounds and thresholds get mirrored.
     """
     is_valid = expected_bounds is not None
@@ -131,11 +152,5 @@ def test_parameter_activation(
         if expected_bounds.is_degenerate:
             assert isinstance(activated_parameter, _FixedNumericalContinuousParameter)
     else:
-        with pytest.raises(ValueError, match="cannot be set active"):
+        with pytest.raises(ValueError, match=error_message):
             activate_parameter(parameter, thresholds)
-
-
-def test_invalid_parameter_activation():
-    """Activating a parameter requires a valid inactive region to start with."""
-    with pytest.raises(ValueError, match="The thresholds must cover zero"):
-        activate_parameter(Mock(), Interval(lower=0.5, upper=1.0))
