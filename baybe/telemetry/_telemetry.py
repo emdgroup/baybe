@@ -75,9 +75,12 @@ class TelemetryTools:
     @override
     def __getattribute__(self, name: str, /) -> Any:
         """Lazily initialize telemetry objects upon first access."""
-        if name not in [
-            (fields(TelemetryTools)).instruments.name,
-            "_initialize",
+        flds = fields(TelemetryTools)
+        if name in [
+            flds.resource.name,
+            flds.reader.name,
+            flds.provider.name,
+            flds.meter.name,
         ]:
             try:
                 self._initialize()
