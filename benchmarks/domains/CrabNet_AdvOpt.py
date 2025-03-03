@@ -285,7 +285,7 @@ def advopt(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     )
 
 
-def advopt_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFrame:
+def advopt_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Crabnet hyperparameter optimization with 20 discrete and 3 categorical input.
     Transfer learning with different initial data sizes.
 
