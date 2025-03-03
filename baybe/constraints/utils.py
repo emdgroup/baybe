@@ -26,17 +26,17 @@ def is_cardinality_fulfilled(
         ``True`` if all cardinality constraints are fulfilled, ``False`` otherwise.
     """
     for c in subspace_continuous.constraints_cardinality:
-        cols = df[c.parameters]
         # Get the activity thresholds for all parameters
+        cols = df[c.parameters]
         thresholds = {
             p.name: c.get_absolute_thresholds(p.bounds)
             for p in subspace_continuous.get_parameters_by_name(c.parameters)
         }
-        lower_thresholds = np.array([thresholds[p].lower for p in cols.columns])
-        upper_thresholds = np.array([thresholds[p].upper for p in cols.columns])
+        lower_thresholds = [thresholds[p].lower for p in cols.columns]
+        upper_thresholds = [thresholds[p].upper for p in cols.columns]
 
         # Count the number of active values per dataframe row
-        inactives = is_inactive(cols.to_numpy(), lower_thresholds, upper_thresholds)
+        inactives = is_inactive(cols, lower_thresholds, upper_thresholds)
         n_zeros = inactives.sum(axis=1)
         n_active = len(c.parameters) - n_zeros
 

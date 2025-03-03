@@ -136,14 +136,14 @@ def activate_parameter(
         )
 
     # Callable checking whether the argument is within the inactive range
-    _in_inactive_range = partial(
+    _is_inactive = partial(
         is_inactive,
         lower_threshold=thresholds.lower,
         upper_threshold=thresholds.upper,
     )
 
     # When both bounds are in the in inactive range
-    if _in_inactive_range(lower_bound) and _in_inactive_range(upper_bound):
+    if _is_inactive(lower_bound) and _is_inactive(upper_bound):
         raise ValueError(
             f"Parameter '{parameter.name}' cannot be set active since its "
             f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
@@ -152,7 +152,7 @@ def activate_parameter(
 
     # When the upper bound is in inactive range, move it to the lower threshold of the
     # inactive region
-    if not _in_inactive_range(lower_bound) and _in_inactive_range(upper_bound):
+    if not _is_inactive(lower_bound) and _is_inactive(upper_bound):
         if lower_bound == thresholds.lower:
             return _FixedNumericalContinuousParameter(
                 name=parameter.name, value=lower_bound
@@ -161,7 +161,7 @@ def activate_parameter(
 
     # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
-    if not _in_inactive_range(upper_bound) and _in_inactive_range(lower_bound):
+    if not _is_inactive(upper_bound) and _is_inactive(lower_bound):
         if upper_bound == thresholds.upper:
             return _FixedNumericalContinuousParameter(
                 name=parameter.name, value=upper_bound
