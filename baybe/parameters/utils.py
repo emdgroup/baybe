@@ -5,6 +5,7 @@ from functools import partial
 from typing import Any, TypeVar
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attrs import evolve
 
@@ -173,9 +174,7 @@ def activate_parameter(
 
 
 def in_inactive_range(
-    x: np.ndarray | float,
-    lower_threshold: np.ndarray | float,
-    upper_threshold: np.ndarray | float,
+    x: npt.ArrayLike, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
 ) -> np.ndarray:
     """Check if the values can be treated zero or inactive.
 
@@ -186,21 +185,10 @@ def in_inactive_range(
 
     Returns:
         A Boolean-valued numpy array indicating which elements are inactive.
-
-    Raises:
-        TypeError: If input arguments are not of the same type.
-        TypeError: If the types of input arguments are neither np.array nor float.
     """
-    error_message = (
-        f"All input arguments must be of the same type: float or numpy "
-        f"array: but arguments of type {type(x)}, "
-        f"{type(lower_threshold)} and {type(upper_threshold)} are given."
-    )
-
-    if len({type(x), type(lower_threshold), type(upper_threshold)}) > 1:
-        raise TypeError(error_message)
-    if not (isinstance(x, np.ndarray) or isinstance(x, float)):
-        raise TypeError(error_message)
+    x = np.asarray(x)
+    lower_threshold = np.asarray(lower_threshold)
+    upper_threshold = np.asarray(upper_threshold)
 
     # When none of the inactive range thresholds lie on 0.0, the inactive range is an
     # open interval: (lower_threshold, upper_threshold). This means a value x is
