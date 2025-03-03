@@ -80,8 +80,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         duration = timedelta(seconds=stop_sec - start_sec)
 
         logger.info(
-            "=" * 80
-            + f"\nFinished benchmark '{self.name}' after {duration} "
+            f"\nFinished benchmark '{self.name}' after {duration} "
             + f"with random seed {self.settings.random_seed}.\n"
             + "=" * 80
         )
