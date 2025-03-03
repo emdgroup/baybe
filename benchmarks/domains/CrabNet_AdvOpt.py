@@ -26,7 +26,7 @@ from baybe.parameters import (
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget, TargetMode
+from baybe.targets import NumericalTarget
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -252,7 +252,7 @@ def advopt(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     )
 
     # define objective
-    objective = NumericalTarget(name="Target", mode=TargetMode.MIN).to_objective()
+    objective = NumericalTarget(name="Target", mode="MIN").to_objective()
 
     # Define the scenarios
     scenarios: dict[str, Campaign] = {
@@ -328,7 +328,7 @@ def advopt_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFram
     parameters.append(task_parameter)
 
     # define objective
-    objective = NumericalTarget(name="Target", mode=TargetMode.MIN).to_objective()
+    objective = NumericalTarget(name="Target", mode="MIN").to_objective()
 
     ### ----------- Note: need a elegant way to handle different initial data size ----------- ###
     ### ----------- For now, it is only using n=30 as initial data size ----------- ###
