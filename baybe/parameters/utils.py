@@ -137,7 +137,7 @@ def activate_parameter(
 
     # Callable checking whether the argument is within the inactive range
     _in_inactive_range = partial(
-        in_inactive_range,
+        is_inactive,
         lower_threshold=thresholds.lower,
         upper_threshold=thresholds.upper,
     )
@@ -173,7 +173,7 @@ def activate_parameter(
     return parameter
 
 
-def in_inactive_range(
+def is_inactive(
     x: npt.ArrayLike, /, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
 ) -> np.ndarray:
     """Check if the values can be treated zero or inactive.
@@ -196,5 +196,4 @@ def in_inactive_range(
     # upper_threshold). When any threshold of the inactive range lies on 0.0,
     # the inactive range is a half-open, half-close interval. E.g. when the
     # lower_threshold is 0.0, the inactive range is [0,0, upper_threshold).
-    is_inactive = ((x > lower_threshold) & (x < upper_threshold)) | (x == 0.0)
-    return is_inactive
+    return ((x > lower_threshold) & (x < upper_threshold)) | (x == 0.0)

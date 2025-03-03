@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from baybe.parameters.utils import in_inactive_range
+from baybe.parameters.utils import is_inactive
 from baybe.searchspace import SubspaceContinuous
 
 
@@ -36,10 +36,8 @@ def is_cardinality_fulfilled(
         upper_thresholds = np.array([thresholds[p].upper for p in cols.columns])
 
         # Count the number of active values per dataframe row
-        is_inactive = in_inactive_range(
-            cols.to_numpy(), lower_thresholds, upper_thresholds
-        )
-        n_zeros = is_inactive.sum(axis=1)
+        inactives = is_inactive(cols.to_numpy(), lower_thresholds, upper_thresholds)
+        n_zeros = inactives.sum(axis=1)
         n_active = len(c.parameters) - n_zeros
 
         # Check if cardinality is violated
