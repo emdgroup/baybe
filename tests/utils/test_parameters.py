@@ -25,8 +25,8 @@ def mirror_interval(interval: Interval) -> Interval:
     ),
     [
         # Depending on whether a threshold lies on zero or not, the inactive range
-        # can be a half-closed or open interval. To capture call possible scenarios, we
-        # consider both with_zero(/nonzero)_threshold cases when necessary.
+        # can be a half-closed or open interval. To capture all possible scenarios, we
+        # consider both with_zero/nonzero_threshold cases when necessary.
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-1.0, upper=1.0),

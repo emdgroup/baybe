@@ -176,12 +176,16 @@ def activate_parameter(
 def is_inactive(
     x: npt.ArrayLike, /, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
 ) -> np.ndarray:
-    """Check if the values can be treated zero or inactive.
+    """Check if the given values are inactive (i.e. can be treated as zero).
+
+    A value is considered inactive when at least one of the following is true:
+    * The value lies in the open interval specified by the given thresholds.
+    * The value is zero.
 
     Args:
-        x: A numpy array containing numeric values.
-        lower_threshold: Lower threshold of inactive region.
-        upper_threshold: Upper threshold of inactive region.
+        x: An array-like object containing numeric values.
+        lower_threshold: The (broadcastable) lower thresholds of the inactive regions.
+        upper_threshold: The (broadcastable) upper thresholds of the inactive regions.
 
     Returns:
         A Boolean-valued numpy array indicating which elements are inactive.
@@ -189,11 +193,4 @@ def is_inactive(
     x = np.asarray(x)
     lower_threshold = np.asarray(lower_threshold)
     upper_threshold = np.asarray(upper_threshold)
-
-    # When none of the inactive range thresholds lie on 0.0, the inactive range is an
-    # open interval: (lower_threshold, upper_threshold). This means a value x is
-    # treated inactive when it is in the exclusive inactive range (lower_threshold,
-    # upper_threshold). When any threshold of the inactive range lies on 0.0,
-    # the inactive range is a half-open, half-close interval. E.g. when the
-    # lower_threshold is 0.0, the inactive range is [0,0, upper_threshold).
     return ((x > lower_threshold) & (x < upper_threshold)) | (x == 0.0)
