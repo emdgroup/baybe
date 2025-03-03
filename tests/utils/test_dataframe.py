@@ -145,7 +145,7 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
         param(["Categorical_1", "Num_disc_1", "Conti_finite1"], id="hybrid"),
     ],
 )
-@pytest.mark.parametrize("invalid", ["left_invalid", "right_invalid"])
+@pytest.mark.parametrize("invalid", ["left", "right"])
 def test_invalid_fuzzy_row_match(searchspace, invalid):
     """Returns expected errors when dataframes don't contain all expected columns."""
     left_df = searchspace.discrete.exp_rep.copy()
@@ -153,13 +153,11 @@ def test_invalid_fuzzy_row_match(searchspace, invalid):
     right_df = left_df.loc[selected].copy()
 
     # Drop first column
-    if invalid == "left_invalid":
+    if invalid == "left":
         left_df = left_df.iloc[:, 1:]
-        side = "left"
     else:
         right_df = right_df.iloc[:, 1:]
-        side = "right"
 
-    match = f"corresponding column in the {side} dataframe."
+    match = f"corresponding column in the {invalid} dataframe."
     with pytest.raises(ValueError, match=match):
         fuzzy_row_match(left_df, right_df, searchspace.parameters)
