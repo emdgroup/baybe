@@ -18,7 +18,7 @@ from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
 from benchmarks.serialization import BenchmarkSerialization, converter
 
-logger = logging.getLogger("baybe.benchmarks.definition.base")
+logger = logging.getLogger(__name__)
 
 stdout = logging.StreamHandler(stream=sys.stdout)
 
