@@ -174,7 +174,7 @@ def activate_parameter(
 
 
 def in_inactive_range(
-    x: npt.ArrayLike, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
+    x: npt.ArrayLike, /, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
 ) -> np.ndarray:
     """Check if the values can be treated zero or inactive.
 
