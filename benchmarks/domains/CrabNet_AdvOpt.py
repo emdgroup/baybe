@@ -336,9 +336,7 @@ def advopt_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFra
         searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
 
         campaign_temp = Campaign(searchspace=searchspace, objective=objective)
-        initial_data_temp = [
-            df_training_y2.sample(n)
-        ]
+        initial_data_temp = [df_training_y2.sample(n)]
 
     return simulate_scenarios(
         {f"{n} Initial Data": campaign_temp},
