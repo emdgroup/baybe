@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ContinuousCardinalityConstraint` for handling inactivity ranges
 - Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
   validating cardinality constraints
+- Utility `is_inactive` for determining if parameters are inactive
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
