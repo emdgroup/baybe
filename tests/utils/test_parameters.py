@@ -11,10 +11,8 @@ from baybe.parameters.utils import activate_parameter
 from baybe.utils.interval import Interval
 
 
-def mirror_interval(interval: Interval | None) -> Interval | None:
+def mirror_interval(interval: Interval) -> Interval:
     """Return an interval copy mirrored around the origin."""
-    if interval is None:
-        return None
     return Interval(lower=-interval.upper, upper=-interval.lower)
 
 
@@ -143,8 +141,9 @@ def test_parameter_activation(
     is_valid = expected_bounds is not None
 
     if mirror:
-        bounds = mirror_interval(bounds)
         thresholds = mirror_interval(thresholds)
+        if bounds is not None:
+            bounds = mirror_interval(bounds)
         if is_valid:
             expected_bounds = mirror_interval(expected_bounds)
 
