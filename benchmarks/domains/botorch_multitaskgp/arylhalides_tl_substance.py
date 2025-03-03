@@ -92,7 +92,7 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=10,
-    n_mc_iterations=10,
+    n_mc_iterations=50,
 )
 
 arylhalides_tl_substance_benchmark = ConvergenceBenchmark(
