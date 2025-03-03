@@ -1,5 +1,7 @@
 """Tests for parameter utilities."""
 
+from unittest.mock import Mock
+
 import pytest
 from pytest import param
 
@@ -9,8 +11,10 @@ from baybe.parameters.utils import activate_parameter
 from baybe.utils.interval import Interval
 
 
-def mirror_interval(interval: Interval) -> Interval:
+def mirror_interval(interval: Interval | None) -> Interval | None:
     """Return an interval copy mirrored around the origin."""
+    if interval is None:
+        return None
     return Interval(lower=-interval.upper, upper=-interval.lower)
 
 
@@ -112,7 +116,7 @@ def mirror_interval(interval: Interval) -> Interval:
         ),
         # Activating a parameter requires a valid inactive region to start with
         param(
-            Interval(lower=0.5, upper=1.0),
+            None,
             Interval(lower=0.5, upper=1.0),
             None,
             "The thresholds must cover zero",
@@ -121,7 +125,7 @@ def mirror_interval(interval: Interval) -> Interval:
     ],
 )
 def test_parameter_activation(
-    bounds: Interval,
+    bounds: Interval | None,
     thresholds: Interval,
     expected_bounds: Interval | None,
     error_message: str,
@@ -144,7 +148,10 @@ def test_parameter_activation(
         if is_valid:
             expected_bounds = mirror_interval(expected_bounds)
 
-    parameter = NumericalContinuousParameter("parameter", bounds=bounds)
+    if bounds is None:
+        parameter = Mock()
+    else:
+        parameter = NumericalContinuousParameter("parameter", bounds=bounds)
 
     if is_valid:
         activated_parameter = activate_parameter(parameter, thresholds)
