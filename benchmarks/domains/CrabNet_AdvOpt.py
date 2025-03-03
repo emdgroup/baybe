@@ -27,9 +27,9 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget, TargetMode
-from benchmarks.definition import (
-    Benchmark,
-    ConvergenceExperimentSettings,
+from benchmarks.definition.convergence import (
+    ConvergenceBenchmark,
+    ConvergenceBenchmarkSettings,
 )
 
 client = Client("AccelerationConsortium/crabnet-hyperparameter")
@@ -200,7 +200,7 @@ df_searchspace = pd.concat([df_testing_y1, df_training_y2], ignore_index=True)
 df_searchspace = df_searchspace.drop(columns=["Target"])
 
 
-def advopt(settings: ConvergenceExperimentSettings) -> DataFrame:
+def advopt(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Crabnet hyperparameter optimization with 20 discrete and 3 categorical input.
     Compare across random, default, and no task parameter settings.
 
@@ -337,7 +337,7 @@ def advopt_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFra
 
         campaign_temp = Campaign(searchspace=searchspace, objective=objective)
         initial_data_temp = [
-            df_training_y2.sample(n) for _ in range(settings.n_mc_iterations)
+            df_training_y2.sample(n)
         ]
 
     return simulate_scenarios(
@@ -346,26 +346,27 @@ def advopt_transfer_learning(settings: ConvergenceExperimentSettings) -> DataFra
         initial_data=initial_data_temp,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
+        n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
     )
 
 
 # %%
-benchmark_config = ConvergenceExperimentSettings(
+benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=1,
     n_doe_iterations=30,
     n_mc_iterations=5,
 )
 
 # Define the benchmark
-crabnet_benchmark = Benchmark(
+crabnet_benchmark = ConvergenceBenchmark(
     function=advopt,
     best_possible_result=None,
     settings=benchmark_config,
     optimal_function_inputs=None,
 )
 
-crabnet_transfer_learning_benchmark = Benchmark(
+crabnet_transfer_learning_benchmark = ConvergenceBenchmark(
     function=advopt_transfer_learning,
     best_possible_result=None,
     settings=benchmark_config,
@@ -388,17 +389,14 @@ if __name__ == "__main__":
         "The categorical hyperparameters include boolean values for bias residual network, loss function, and elemental feature vector."
     )
     print(
-        "The numerical hyperparameters are normalized to range [0.0, 1.0], while the categorical hyperparameters are one-hot encoded."
+        "The numerical hyperparameters are normalized to range [0.0, 1.0], while the categorical hyperparameters are one-hot encoded. \n"
     )
-    print("")
     print(
-        "The objective is to minimize y1, RMSE, of the CrabNet hyperparameter function. If y1 is greater than 0.2, the result is coonsider bad."
+        "The objective is to minimize y1, RMSE, of the CrabNet hyperparameter function. If y1 is greater than 0.2, the result is coonsider bad. \n"
     )
-    print("")
     print(
-        "CrabNet benchmark compares across random, default, and no task parameter set up. "
+        "CrabNet benchmark compares across random, default, and no task parameter set up. \n"
     )
-    print("")
     print(
         "CrabNet transfer learning benchmark compares across different initialized data sizes. "
     )
