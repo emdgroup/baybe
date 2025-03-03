@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -84,6 +85,7 @@ df_lookup_source = df_lookup_source.rename(columns={"vrh": "Target"})
 
 # Combine the search space
 df_searchspace = pd.concat([df_searchspace_target, df_searchspace_source])
+
 
 def hardness(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     """Integrated hardness benchmark, compares across random, default, and no task parameter set up
@@ -201,9 +203,7 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
     ### ----------- For now, it is only using n=30 as initial data size ----------- ###
     # Create a list of dataframes with n samples from df_lookup_source to use as initial data
     for n in (2, 4, 6, 30):
-        initial_data_i = [
-            df_lookup_source.sample(n)
-        ]
+        initial_data_i = [df_lookup_source.sample(n)]
 
     return simulate_scenarios(
         {f"{n} Initial Data": campaign},
@@ -214,6 +214,7 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
         n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
     )
+
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=1,
