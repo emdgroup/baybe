@@ -15,7 +15,7 @@ from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget, TargetMode
+from baybe.targets import NumericalTarget
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -129,7 +129,7 @@ def hardness(settings: ConvergenceBenchmarkSettings) -> DataFrame:
         df_searchspace_target[element_cols], parameters=parameters_no_task
     )
 
-    objective = NumericalTarget(name="Target", mode=TargetMode.MAX).to_objective()
+    objective = NumericalTarget(name="Target", mode="MAX").to_objective()
 
     scenarios: dict[str, Campaign] = {
         "Random Recommender": Campaign(
@@ -194,7 +194,7 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
     )
     parameters.append(task_parameter)
 
-    objective = NumericalTarget(name="Target", mode=TargetMode.MAX).to_objective()
+    objective = NumericalTarget(name="Target", mode="MAX").to_objective()
 
     searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
     campaign = Campaign(searchspace=searchspace, objective=objective)
