@@ -11,6 +11,7 @@ from attrs import evolve
 
 from baybe.parameters.base import Parameter
 from baybe.parameters.numerical import (
+    ContinuousParameter,
     NumericalContinuousParameter,
     _FixedNumericalContinuousParameter,
 )
@@ -100,7 +101,7 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 
 def activate_parameter(
     parameter: NumericalContinuousParameter, thresholds: Interval
-) -> NumericalContinuousParameter:
+) -> ContinuousParameter:
     """Force-activates a given parameter by moving its bounds away from zero.
 
     A parameter is considered active if its value falls outside the specified threshold
