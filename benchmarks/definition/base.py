@@ -71,7 +71,6 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             "=" * 80
             + f"\nRunning benchmark '{self.name}' with "
             + f"random seed {self.settings.random_seed}.\n"
-            + "=" * 80
         )
         with temporary_seed(self.settings.random_seed):
             start_sec = time.perf_counter()
