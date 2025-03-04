@@ -195,23 +195,24 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
     parameters.append(task_parameter)
 
     objective = NumericalTarget(name="Target", mode="MAX").to_objective()
-
+    
     searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
-    campaign = Campaign(searchspace=searchspace, objective=objective)
+    
+    # Seperate campaign for different initial data size, preventing unintended data overwriting
+    scenarios: dict[str, Campaign] = {
+        f"{n} Initial Data": Campaign(searchspace=searchspace, objective=objective)
+        for n in (2, 4, 6, 30)
+    }
 
-    ### ----------- Note: need a elegant way to handle different initial data size ----------- ###
-    ### ----------- For now, it is only using n=30 as initial data size ----------- ###
-    # Create a list of dataframes with n samples from df_lookup_source to use as initial data
-    for n in (2, 4, 6, 30):
-        initial_data_i = [df_lookup_source.sample(n)]
-
+    # Create an iterable of datasets with different initial sizes
+    initial_data_sets = [df_lookup_source.sample(n) for n in (2, 4, 6, 30)]
+    
     return simulate_scenarios(
-        {f"{n} Initial Data": campaign},
+        scenarios,
         df_lookup_target,
-        initial_data=initial_data_i,
+        initial_data=initial_data_sets,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
-        n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
     )
 
@@ -224,16 +225,14 @@ benchmark_config = ConvergenceBenchmarkSettings(
 
 hardness_benchmark = ConvergenceBenchmark(
     function=hardness,
-    best_possible_result=None,
     settings=benchmark_config,
-    optimal_function_inputs=None,
+    optimal_target_values=None,
 )
 
 hardness_transfer_learning_benchmark = ConvergenceBenchmark(
     function=hardness_transfer_learning,
-    best_possible_result=None,
     settings=benchmark_config,
-    optimal_function_inputs=None,
+    optimal_target_values=None,
 )
 
 if __name__ == "__main__":
