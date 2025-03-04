@@ -11,9 +11,7 @@ from attrs import evolve
 
 from baybe.parameters.base import Parameter
 from baybe.parameters.numerical import (
-    ContinuousParameter,
     NumericalContinuousParameter,
-    _FixedNumericalContinuousParameter,
 )
 from baybe.utils.interval import Interval
 
@@ -101,7 +99,7 @@ def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
 
 def activate_parameter(
     parameter: NumericalContinuousParameter, thresholds: Interval
-) -> ContinuousParameter:
+) -> NumericalContinuousParameter:
     """Force-activates a given parameter by moving its bounds away from zero.
 
     A parameter is considered active if its value falls outside the specified threshold
@@ -127,6 +125,15 @@ def activate_parameter(
         ValueError: If the parameter cannot be activated since both its bounds are
             in the inactive range.
     """
+
+    def is_fraction(x_small: float, x_large: float) -> bool:
+        """Return true if x_small is a fraction of x_large."""
+        return (
+            (x_large / x_small > 1.0)
+            if x_small != 0.0
+            else (x_small == 0.0 and x_large == 0.0)
+        )
+
     lower_bound = parameter.bounds.lower
     upper_bound = parameter.bounds.upper
 
@@ -136,6 +143,16 @@ def activate_parameter(
             f"{thresholds.upper}) was given."
         )
 
+    if not (
+        is_fraction(thresholds.lower, lower_bound)
+        and is_fraction(thresholds.upper, upper_bound)
+    ):
+        raise NotImplementedError(
+            "This method is implemented only for the case when "
+            "thresholds is a proper sub-interval of the "
+            "parameter bounds."
+        )
+
     # Callable checking whether the argument is within the inactive range
     _is_inactive = partial(
         is_inactive,
@@ -143,30 +160,14 @@ def activate_parameter(
         upper_threshold=thresholds.upper,
     )
 
-    # When both bounds are in the in inactive range
-    if _is_inactive(lower_bound) and _is_inactive(upper_bound):
-        raise ValueError(
-            f"Parameter '{parameter.name}' cannot be set active since its "
-            f"bounds {parameter.bounds.to_tuple()} are entirely contained in the "
-            f"inactive range ({thresholds.lower}, {thresholds.upper})."
-        )
-
     # When the upper bound is in inactive range, move it to the lower threshold of the
     # inactive region
     if not _is_inactive(lower_bound) and _is_inactive(upper_bound):
-        if lower_bound == thresholds.lower:
-            return _FixedNumericalContinuousParameter(
-                name=parameter.name, value=lower_bound
-            )
         return evolve(parameter, bounds=(lower_bound, thresholds.lower))
 
     # When the lower bound is in inactive range, move it to the upper threshold of
     # the inactive region
     if not _is_inactive(upper_bound) and _is_inactive(lower_bound):
-        if upper_bound == thresholds.upper:
-            return _FixedNumericalContinuousParameter(
-                name=parameter.name, value=upper_bound
-            )
         return evolve(parameter, bounds=(thresholds.upper, upper_bound))
 
     # When the parameter is already trivially active (or activating it would tear
