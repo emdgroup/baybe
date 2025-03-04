@@ -135,13 +135,16 @@ def test_fuzzy_row_match(searchspace, noise, duplicated):
     with context as c:
         matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
 
-    # Assert correct identification of problematic df parts
-    if c is not None:
+    if duplicated:
+        # Assert correct identification of problematic df parts
         w = next(x for x in c if isinstance(x.message, SearchSpaceMatchWarning)).message
         assert_frame_equal(right_df.loc[[0]], w.data)
 
-    if not duplicated:
-        assert set(selected) == set(matched), (selected, matched)
+        # Ignore problematic indices for subsequent equality check
+        selected = selected[1:]
+        matched = matched[1:]
+
+    assert set(selected) == set(matched), (selected, matched)
 
 
 @pytest.mark.parametrize(
