@@ -195,9 +195,9 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
     parameters.append(task_parameter)
 
     objective = NumericalTarget(name="Target", mode="MAX").to_objective()
-    
+
     searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
-    
+
     # Seperate campaign for different initial data size, preventing unintended data overwriting
     scenarios: dict[str, Campaign] = {
         f"{n} Initial Data": Campaign(searchspace=searchspace, objective=objective)
@@ -206,7 +206,7 @@ def hardness_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFr
 
     # Create an iterable of datasets with different initial sizes
     initial_data_sets = [df_lookup_source.sample(n) for n in (2, 4, 6, 30)]
-    
+
     return simulate_scenarios(
         scenarios,
         df_lookup_target,
