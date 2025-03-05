@@ -17,110 +17,100 @@ def mirror_interval(interval: Interval) -> Interval:
 
 @pytest.mark.parametrize("mirror", [False, True], ids=["regular", "mirrored"])
 @pytest.mark.parametrize(
-    ("bounds", "thresholds", "expected_bounds", "error_type"),
+    ("bounds", "thresholds", "expected_result"),
     [
-        # Depending on whether a threshold lies on zero or not, the inactive range
-        # can be a half-closed or open interval. To capture all possible scenarios, we
-        # consider both with_zero/nonzero_threshold cases when necessary.
-        param(
-            Interval(lower=-1.0, upper=1.0),
-            Interval(lower=-1.0, upper=1.0),
-            None,
-            NotImplementedError,
-            id="bounds_on_thresholds_with_nonzero_threshold",
-        ),
-        param(
-            Interval(lower=0.0, upper=1.0),
-            Interval(lower=0.0, upper=1.0),
-            None,
-            NotImplementedError,
-            id="bounds_on_thresholds_with_zero_threshold",
-        ),
-        param(
-            Interval(lower=-1.0, upper=1.0),
-            Interval(lower=-1.5, upper=1.5),
-            None,
-            NotImplementedError,
-            id="bounds_in_thresholds",
-        ),
-        param(
-            Interval(lower=-1.0, upper=1.0),
-            Interval(lower=-1.5, upper=1.0),
-            None,
-            NotImplementedError,
-            id="bounds_in_thresholds_one_side_match_with_nonzero_threshold",
-        ),
-        param(
-            Interval(lower=-1.0, upper=0.0),
-            Interval(lower=-1.5, upper=0.0),
-            None,
-            NotImplementedError,
-            id="bounds_in_thresholds_one_side_match_with_zero_threshold",
-        ),
+        # Valid case: when parameter lower/upper bounds spread in both
+        # negative/position directions.
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=0.5),
             Interval(lower=-1.0, upper=1.0),
-            None,
-            id="thresholds_in_bounds",
+            id="valid_thresholds_in_bounds",
         ),
-        param(
-            Interval(lower=-1.0, upper=1.0),
-            Interval(lower=-0.5, upper=1.0),
-            None,
-            NotImplementedError,
-            id="thresholds_in_bounds_one_side_match_with_nonzero_threshold",
-        ),
+        # Valid case: when one parameter bound is zero
         param(
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=-0.5, upper=0.0),
             Interval(lower=-1.0, upper=-0.5),
+            id="valid_thresholds_in_bounds_one_side_match_with_zero_threshold",
+        ),
+        # Invalid case: Activating a parameter requires a valid inactive region to
+        # start with.
+        param(
             None,
-            id="thresholds_in_bounds_one_side_match_with_zero_threshold",
+            Interval(lower=0.5, upper=1.0),
+            ValueError,
+            id="invalid_inactive_region",
+        ),
+        # Invalid cases related to NotImplementedError. To test whether we can
+        # correctly catch different NotImplementedError cases, both nonzero/zero
+        # thresholds are considered when necessary.
+        param(
+            Interval(lower=-1.0, upper=1.0),
+            Interval(lower=-0.5, upper=1.0),
+            NotImplementedError,
+            id="invalid_thresholds_in_bounds_one_side_match_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=-1.0, upper=1.0),
+            Interval(lower=-1.0, upper=1.0),
+            NotImplementedError,
+            id="invalid_bounds_on_thresholds_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=0.0, upper=1.0),
+            Interval(lower=0.0, upper=1.0),
+            NotImplementedError,
+            id="invalid_bounds_on_thresholds_with_zero_threshold",
+        ),
+        param(
+            Interval(lower=-1.0, upper=1.0),
+            Interval(lower=-1.5, upper=1.5),
+            NotImplementedError,
+            id="invalid_bounds_in_thresholds",
+        ),
+        param(
+            Interval(lower=-1.0, upper=1.0),
+            Interval(lower=-1.5, upper=1.0),
+            NotImplementedError,
+            id="invalid_bounds_in_thresholds_one_side_match_with_nonzero_threshold",
+        ),
+        param(
+            Interval(lower=-1.0, upper=0.0),
+            Interval(lower=-1.5, upper=0.0),
+            NotImplementedError,
+            id="invalid_bounds_in_thresholds_one_side_match_with_zero_threshold",
         ),
         param(
             Interval(lower=-0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.5),
-            None,
             NotImplementedError,
-            id="bounds_intersected_with_thresholds",
+            id="invalid_bounds_intersected_with_thresholds",
         ),
         param(
             Interval(lower=0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.5),
-            None,
             NotImplementedError,
-            id="bounds_intersected_with_thresholds_on_nonzero_one_point",
+            id="invalid_bounds_intersected_with_thresholds_on_nonzero_one_point",
         ),
         param(
             Interval(lower=0.0, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
-            None,
             NotImplementedError,
-            id="bounds_intersected_with_thresholds_on_zero_one_point",
+            id="invalid_bounds_intersected_with_thresholds_on_zero_one_point",
         ),
         param(
             Interval(lower=0.5, upper=1.0),
             Interval(lower=-1.0, upper=0.0),
-            None,
             NotImplementedError,
-            id="bounds_and_thresholds_nonoverlapping",
-        ),
-        # Activating a parameter requires a valid inactive region to start with
-        param(
-            None,
-            Interval(lower=0.5, upper=1.0),
-            None,
-            ValueError,
-            id="invalid_inactive_region",
+            id="invalid_bounds_and_thresholds_nonoverlapping",
         ),
     ],
 )
 def test_parameter_activation(
     bounds: Interval | None,
     thresholds: Interval,
-    expected_bounds: Interval | None,
-    error_type: ValueError | NotImplementedError | None,
+    expected_result: Interval | type(ValueError) | type(NotImplementedError),
     mirror: bool,
 ):
     """The parameter activation utility correctly activates a parameter.
@@ -128,21 +118,18 @@ def test_parameter_activation(
     Args:
         bounds: The bounds of the parameter to activate.
         thresholds: The inactivity thresholds.
-        expected_bounds: The expected bounds of the activated parameter.
-        error_type: The error captured if any.
+        expected_result: The expected bounds of the activated parameter or any error
+            raised.
         mirror: If ``True``, both bounds and thresholds get mirrored.
     """
-    # Either activated parameter is None or an error was raised during function call
-    assert (expected_bounds is None) != (error_type is None)
-
-    is_valid = expected_bounds is not None
+    is_valid = isinstance(expected_result, Interval)
 
     if mirror:
         thresholds = mirror_interval(thresholds)
         if bounds is not None:
             bounds = mirror_interval(bounds)
         if is_valid:
-            expected_bounds = mirror_interval(expected_bounds)
+            expected_result = mirror_interval(expected_result)
 
     if bounds is None:
         parameter = Mock()
@@ -151,12 +138,12 @@ def test_parameter_activation(
 
     if is_valid:
         activated_parameter = activate_parameter(parameter, thresholds)
-        assert activated_parameter.bounds == expected_bounds
+        assert activated_parameter.bounds == expected_result
     else:
         error_message = (
             "The thresholds must cover zero"
-            if error_type is ValueError
+            if expected_result is ValueError
             else "proper sub-interval"
         )
-        with pytest.raises(error_type, match=error_message):
+        with pytest.raises(expected_result, match=error_message):
             activate_parameter(parameter, thresholds)
