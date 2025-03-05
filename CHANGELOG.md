@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
 - `SHAPInsight` now supports the `waterfall` plot type
+- Additional benchmarks
+- Models with `TaskParameter`s` now uses BoTorch's `MultiTaskGP` model
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
