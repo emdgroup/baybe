@@ -102,8 +102,8 @@ class DiscreteParameter(Parameter, ABC):
         """The values the parameter can take."""
 
     @property
-    def product_values(self) -> tuple:
-        """The values that are relevant to the search space creation via product."""
+    def active_values(self) -> tuple:
+        """The values that are considered for recommendation."""
         return self.values
 
     @cached_property
@@ -175,17 +175,23 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
     """Class variable encoding whether this parameter is numeric."""
 
     # object variables
-    active_values: tuple[str, ...] | None = field(
-        default=None, converter=optional_c(tuple), kw_only=True
+    _active_values: tuple[str, ...] | None = field(
+        default=None, converter=optional_c(tuple), kw_only=True, alias="active_values"
     )
     """Optional labels identifying the ones which should be actively recommended."""
 
     def __attrs_post_init__(self):
-        if self.active_values is None:
+        if self._active_values is None:
             # Uses trick for frozen class, see https://github.com/python-attrs/attrs/issues/120
-            object.__setattr__(self, "active_values", self.values)
+            object.__setattr__(self, "_active_values", self.values)
 
-    @active_values.validator
+    @override
+    @property
+    def active_values(self) -> tuple[str, ...]:
+        # See base class
+        return self._active_values  # type: ignore[return-value]
+
+    @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
         self, _: Any, content: tuple[str, ...]
     ) -> None:
@@ -224,12 +230,6 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
         )
         return param_dict
 
-    @override
-    @property
-    def product_values(self) -> tuple[str, ...]:
-        """The values that are relevant to the search space creation via product."""
-        return self.active_values  # type: ignore[return-value]
-
 
 @define(frozen=True, slots=False)
 class ContinuousParameter(Parameter):
@@ -243,7 +243,10 @@ class ContinuousParameter(Parameter):
 
 
 # Register (un-)structure hooks
-_overrides = {"_values": cattrs.override(rename="values")}
+_overrides = {
+    "_values": cattrs.override(rename="values"),
+    "_active_values": cattrs.override(rename="active_values"),
+}
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
     Parameter,
