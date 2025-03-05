@@ -335,7 +335,8 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     * When specified as a float, the value is interpreted as a multiplicative factor
       determining the reference point location based on the difference between the best
       and worst target configuration in the provided data.
-    * When specified as a vector, the input is taken as is.
+    * When specified as an iterable, the contained values are directly interpreted as
+      the coordinates of the reference point.
     """
 
     prune_baseline: bool = field(default=True, validator=instance_of(bool))
