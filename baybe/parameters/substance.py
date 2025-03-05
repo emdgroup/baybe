@@ -9,7 +9,7 @@ from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import DiscreteLabelLikeParameter
+from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
@@ -29,7 +29,7 @@ Smiles = str
 
 
 @define(frozen=True, slots=False)
-class SubstanceParameter(DiscreteLabelLikeParameter):
+class SubstanceParameter(_DiscreteLabelLikeParameter):
     """Generic substances that are treated with cheminformatics descriptors.
 
     Only a decorrelated subset of descriptors should be used as otherwise this can
