@@ -6,7 +6,7 @@ on:
       group_selection:
         description: "Select the group of benchmarks to run"
         required: true
-        default: "Manually selected benchmarks"
+        default: "All benchmarks"
         type: choice
         options:
           - "Manually selected benchmarks"
