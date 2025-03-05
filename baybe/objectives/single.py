@@ -13,7 +13,7 @@ from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.dataframe import pretty_print_df, transform_target_columns
 from baybe.utils.plotting import to_string
 
 
@@ -89,15 +89,9 @@ class SingleTargetObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Even for a single target, it is convenient to use the existing validation
-        # machinery instead of re-implementing it
-        get_transform_objects(
-            df, [self._target], allow_missing=allow_missing, allow_extra=allow_extra
+        out = transform_target_columns(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-
-        target_data = df[self._target.name].copy()
-
-        out = self._target.transform(target_data).to_frame()
 
         # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
         if (
