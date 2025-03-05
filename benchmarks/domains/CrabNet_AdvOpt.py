@@ -324,32 +324,31 @@ def advopt_transfer_learning(settings: ConvergenceBenchmarkSettings) -> DataFram
         values=["TrainingY2", "TestingY1"],
         active_values=["TestingY1"],
     )
-
     parameters.append(task_parameter)
 
-    # define objective
     objective = NumericalTarget(name="Target", mode="MIN").to_objective()
 
-    ### ----------- Note: need a elegant way to handle different initial data size ----------- ###
-    ### ----------- For now, it is only using n=30 as initial data size ----------- ###
-    for n in (50, 100, 500, 700, 1000):
-        searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
+    searchspace = SearchSpace.from_dataframe(df_searchspace, parameters=parameters)
 
-        campaign_temp = Campaign(searchspace=searchspace, objective=objective)
-        initial_data_temp = [df_training_y2.sample(n)]
+    # Seperate campaign for different initial data size, preventing unintended data overwriting
+    scenarios: dict[str, Campaign] = {
+        f"{n} Initial Data": Campaign(searchspace=searchspace, objective=objective)
+        for n in (50, 100, 500, 700, 1000)
+    }
+
+    # Create an iterable of datasets with different initial sizes
+    initial_data_sets = [df_training_y2.sample(n) for n in (50, 100, 500, 700, 1000)]
 
     return simulate_scenarios(
-        {f"{n} Initial Data": campaign_temp},
+        scenarios,
         df_testing_y1,
-        initial_data=initial_data_temp,
+        initial_data=initial_data_sets,
         batch_size=settings.batch_size,
         n_doe_iterations=settings.n_doe_iterations,
-        n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
     )
 
 
-# %%
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=1,
     n_doe_iterations=30,
@@ -359,16 +358,14 @@ benchmark_config = ConvergenceBenchmarkSettings(
 # Define the benchmark
 crabnet_benchmark = ConvergenceBenchmark(
     function=advopt,
-    best_possible_result=None,
     settings=benchmark_config,
-    optimal_function_inputs=None,
+    optimal_target_values=None,
 )
 
 crabnet_transfer_learning_benchmark = ConvergenceBenchmark(
     function=advopt_transfer_learning,
-    best_possible_result=None,
     settings=benchmark_config,
-    optimal_function_inputs=None,
+    optimal_target_values=None,
 )
 
 
