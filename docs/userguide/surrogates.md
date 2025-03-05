@@ -36,7 +36,7 @@ single-output model architecture for each of the existing output dimensions.
 
 To replicate a given surrogate, you can either call its 
 {meth}`~baybe.surrogates.base.Surrogate.replicate` method or use the
-[`CompositeSurrogate.from_replication()`](`~baybe.surrogates.composite.CompositeSurrogate.from_replication`)
+[`CompositeSurrogate.from_replication()`](baybe.surrogates.composite.CompositeSurrogate.from_replication)
 convenience constructor:
 ```python
 from baybe.surrogates import CompositeSurrogate, GaussianProcessSurrogate
