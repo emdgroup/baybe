@@ -44,18 +44,24 @@ class BayesianRecommender(PureRecommender, ABC):
     _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model", factory=GaussianProcessSurrogate
     )
-    """The used surrogate model."""
+    """The surrogate model."""
 
     acquisition_function: AcquisitionFunction | None = field(
         default=None, converter=optional(convert_acqf)
     )
-    """The user-specified acquisition function. When omitted, a default is used."""
+    """The acquisition function. When omitted, a default is used."""
 
-    _acqf: AcquisitionFunction | None = field(default=None, init=False, eq=False)
-    """The used acquisition function."""
+    # TODO: The objective is currently only required for validating the recommendation
+    #   context. Once multi-target support is complete, we might want to refactor
+    #   the validation mechanism, e.g. by
+    #   * storing only the minimal low-level information required
+    #   * switching to a strategy where we catch the BoTorch exceptions
+    #   * ...
+    _objective: Objective | None = field(default=None, init=False, eq=False)
+    """The encountered objective to be optimized."""
 
     _botorch_acqf = field(default=None, init=False, eq=False)
-    """The current acquisition function."""
+    """The induced BoTorch acquisition function."""
 
     acquisition_function_cls: str | None = field(default=None, kw_only=True)
     "Deprecated! Raises an error when used."
@@ -81,9 +87,7 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
-    def _default_acquisition_function(
-        self, objective: Objective
-    ) -> AcquisitionFunction:
+    def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
         if self.acquisition_function is None:
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
@@ -114,16 +118,17 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
-        self._acqf = self._default_acquisition_function(objective)
+        self._objective = objective
+        acqf = self._get_acquisition_function(objective)
 
-        if objective.is_multi_output and not self._acqf.supports_multi_output:
+        if objective.is_multi_output and not acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
                 f"You attempted to use a single-output acquisition function in a "
                 f"{len(objective.targets)}-target multi-output context."
             )
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        self._botorch_acqf = self._acqf.to_botorch(
+        self._botorch_acqf = acqf.to_botorch(
             surrogate,
             searchspace,
             objective,
