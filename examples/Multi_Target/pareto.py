@@ -11,6 +11,8 @@
 
 ### Imports
 
+import os
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -27,9 +29,11 @@ from baybe.utils.random import set_random_seed
 
 # Let's first define some general settings for our example:
 
-BATCH_SIZE = 10
-N_TRAINING_DATA = 100
-N_GRID_POINTS = 100
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+
+BATCH_SIZE = 2 if SMOKE_TEST else 10
+N_TRAINING_DATA = 2 if SMOKE_TEST else 100
+N_GRID_POINTS = 3 if SMOKE_TEST else 100
 CENTER_Y0 = (-0.5, -0.5)
 CENTER_Y1 = (0.5, 0.5)
 
