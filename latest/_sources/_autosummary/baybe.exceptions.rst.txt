@@ -38,6 +38,7 @@ baybe.exceptions
       NothingToSimulateError
       NumericalUnderflowError
       OptionalImportError
+      SearchSpaceMatchWarning
       UnidentifiedSubclassError
       UnmatchedAttributeError
       UnusedObjectWarning

@@ -469,6 +469,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.SearchSpaceMatchWarning.html">baybe.exceptions.SearchSpaceMatchWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnidentifiedSubclassError.html">baybe.exceptions.UnidentifiedSubclassError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnmatchedAttributeError.html">baybe.exceptions.UnmatchedAttributeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnusedObjectWarning.html">baybe.exceptions.UnusedObjectWarning</a></li>
@@ -1222,15 +1223,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-      Solvent                Base                        Ligand  Temperature  \
-392  p-Xylene   Potassium acetate                     BrettPhos        105.0   
-428  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-234      DMAc      Cesium acetate  Di-tert-butylphenylphosphine         90.0   
-
-     Concentration  
-392          0.153  
-428          0.153  
-234          0.057  
+      Solvent               Base         Ligand  Temperature  Concentration
+386  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0          0.153
+328  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        105.0          0.100
+219      DMAc     Cesium acetate  (t-Bu)PhCPhos        105.0          0.057
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1239,15 +1235,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-      Solvent                Base                        Ligand  Temperature  \
-392  p-Xylene   Potassium acetate                     BrettPhos        105.0   
-428  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-234      DMAc      Cesium acetate  Di-tert-butylphenylphosphine         90.0   
+      Solvent               Base         Ligand  Temperature  Concentration  \
+386  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0          0.153   
+328  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        105.0          0.100   
+219      DMAc     Cesium acetate  (t-Bu)PhCPhos        105.0          0.057   
 
-     Concentration      yield  
-392          0.153  28.924358  
-428          0.153  13.200181  
-234          0.057  24.118791  
+        yield  
+386  5.951243  
+328  1.471296  
+219  1.384542  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

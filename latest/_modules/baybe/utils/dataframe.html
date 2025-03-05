@@ -468,6 +468,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.SearchSpaceMatchWarning.html">baybe.exceptions.SearchSpaceMatchWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.UnidentifiedSubclassError.html">baybe.exceptions.UnidentifiedSubclassError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.UnmatchedAttributeError.html">baybe.exceptions.UnmatchedAttributeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.UnusedObjectWarning.html">baybe.exceptions.UnusedObjectWarning</a></li>
@@ -1021,6 +1022,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
+<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">SearchSpaceMatchWarning</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.binary</span> <span class="kn">import</span> <span class="n">BinaryTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.enum</span> <span class="kn">import</span> <span class="n">TargetMode</span>
@@ -1499,7 +1501,7 @@
     <span class="n">right_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Match row of the right dataframe to the rows of the left dataframe.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Match rows of the right dataframe to rows of the left dataframe.</span>
 
 <span class="sd">    This is useful for matching measurements to entries in the search space, e.g. to</span>
 <span class="sd">    detect which ones have been measured. For categorical parameters, there needs to be</span>
@@ -1513,57 +1515,89 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        left_df: The data that serves as lookup reference.</span>
-<span class="sd">        right_df: The data that should be checked for matching rows in the left</span>
-<span class="sd">            dataframe.</span>
-<span class="sd">        parameters: List of baybe parameter objects that are needed to identify</span>
-<span class="sd">            potential tolerances.</span>
+<span class="sd">        right_df: The data that is checked for matching rows in the left dataframe.</span>
+<span class="sd">        parameters: Parameter objects that identify the relevant column names and how</span>
+<span class="sd">            matching is performed.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The index of the matching rows in ``left_df``.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If some rows are present in the right but not in the left dataframe.</span>
+<span class="sd">        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for</span>
+<span class="sd">            each entry in parameters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Assert that all parameters appear in the given dataframe</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">col</span> <span class="ow">in</span> <span class="n">right_df</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">left_df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+    <span class="c1"># Separate columns types</span>
+    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">)}</span>
+    <span class="n">num_cols</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">)}</span>
+    <span class="n">non_discrete_cols</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">}</span>
+
+    <span class="c1"># Assert that all parameters appear in the given dataframes</span>
+    <span class="k">if</span> <span class="n">diff</span> <span class="o">:=</span> <span class="p">(</span><span class="n">cat_cols</span> <span class="o">|</span> <span class="n">num_cols</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">left_df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;For fuzzy row matching all rows of the right dataframe need to be present&quot;</span>
-            <span class="s2">&quot; in the left dataframe.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;For fuzzy row matching, all discrete parameters need to have a &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;corresponding column in the left dataframe. Parameters not found: </span><span class="si">{</span><span class="n">diff</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">diff</span> <span class="o">:=</span> <span class="p">(</span><span class="n">cat_cols</span> <span class="o">|</span> <span class="n">num_cols</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">right_df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;For fuzzy row matching, all discrete parameters need to have a &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;corresponding column in the right dataframe. Parameters not found: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">diff</span><span class="si">}</span><span class="s2">)&quot;</span>
         <span class="p">)</span>
 
-    <span class="c1"># Iterate over all input rows</span>
-    <span class="n">inds_matched</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">right_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-        <span class="c1"># Differentiate category-like and discrete numerical parameters</span>
-        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span><span class="p">]</span>
-        <span class="n">num_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">is_numerical</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">is_discrete</span><span class="p">)]</span>
+    <span class="n">provided_cols</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">}</span>
+    <span class="n">allowed_cols</span> <span class="o">=</span> <span class="n">cat_cols</span> <span class="o">|</span> <span class="n">num_cols</span> <span class="o">|</span> <span class="n">non_discrete_cols</span>
+    <span class="k">assert</span> <span class="n">allowed_cols</span> <span class="o">==</span> <span class="n">provided_cols</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;There are parameter types that would be silently ignored: &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">provided_cols</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">allowed_cols</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
-        <span class="c1"># Discrete parameters must match exactly</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">left_df</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">]</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">])</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># Initialize the match matrix. We will later filter it down using other</span>
+    <span class="c1"># matrices (representing the matches for individual parameters) via logical &#39;and&#39;.</span>
+    <span class="n">match_matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="kc">True</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">right_df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">left_df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span>
+    <span class="p">)</span>
 
-        <span class="c1"># For numeric parameters, match the entry with the smallest deviation</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">num_cols</span><span class="p">:</span>
-            <span class="n">abs_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">-</span> <span class="n">row</span><span class="p">[</span><span class="n">col</span><span class="p">])</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
-            <span class="n">match</span> <span class="o">&amp;=</span> <span class="n">abs_diff</span> <span class="o">==</span> <span class="n">abs_diff</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="c1"># Match categorical parameters</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">:</span>
+        <span class="c1"># Per categorical parameter, this identifies matches between all elements of</span>
+        <span class="c1"># left and right and stores them in a matrix.</span>
+        <span class="n">match_matrix</span> <span class="o">&amp;=</span> <span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
 
-        <span class="c1"># We expect exactly one match. If that&#39;s not the case, print a warning.</span>
-        <span class="n">inds_found</span> <span class="o">=</span> <span class="n">left_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">match</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds_found</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">num_cols</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Input row with index </span><span class="si">{</span><span class="n">ind</span><span class="si">}</span><span class="s2"> could not be matched to the search space. &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;This could indicate that something went wrong.&quot;</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">inds_found</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Input row with index </span><span class="si">{</span><span class="n">ind</span><span class="si">}</span><span class="s2"> has multiple matches with the search &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;space. This could indicate that something went wrong. Matching only &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;first occurrence.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">inds_matched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inds_found</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">inds_matched</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">inds_found</span><span class="p">)</span>
+    <span class="c1"># Match numerical parameters</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">num_cols</span><span class="p">:</span>
+        <span class="c1"># Per numerical parameter, this identifies the rows with the smallest absolute</span>
+        <span class="c1"># difference and records them in a matrix.</span>
+        <span class="n">abs_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">right_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">left_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">min_diff</span> <span class="o">=</span> <span class="n">abs_diff</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">match_matrix</span> <span class="o">&amp;=</span> <span class="n">abs_diff</span> <span class="o">==</span> <span class="n">min_diff</span>
 
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">inds_matched</span><span class="p">)</span></div>
+    <span class="c1"># Find the matching indices. If a right row is not matched to any of the rows in</span>
+    <span class="c1"># left, idxmax would return the first index of left_df. Hence, we remember these</span>
+    <span class="c1"># cases and drop them explicitly.</span>
+    <span class="n">matched_indices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">match_matrix</span><span class="o">.</span><span class="n">idxmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">mask_no_match</span> <span class="o">=</span> <span class="o">~</span><span class="n">match_matrix</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">matched_indices</span> <span class="o">=</span> <span class="n">matched_indices</span><span class="p">[</span><span class="o">~</span><span class="n">mask_no_match</span><span class="p">]</span>
+
+    <span class="c1"># Warn if there are multiple or no matches</span>
+    <span class="k">if</span> <span class="n">no_match_indices</span> <span class="o">:=</span> <span class="n">right_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_no_match</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">SearchSpaceMatchWarning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Some input rows could not be matched to the search space. Indices with &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;no matches: </span><span class="si">{</span><span class="n">no_match_indices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">right_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">no_match_indices</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="n">mask_multiple_matches</span> <span class="o">=</span> <span class="n">match_matrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">multiple_match_indices</span> <span class="o">:=</span> <span class="n">right_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_multiple_matches</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">SearchSpaceMatchWarning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Some input rows have multiple matches with the search space. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Matching only first occurrence for these rows. Indices with multiple &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;matches: </span><span class="si">{</span><span class="n">multiple_match_indices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">right_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">multiple_match_indices</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">matched_indices</span></div>
 
 
 

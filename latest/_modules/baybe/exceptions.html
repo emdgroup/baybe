@@ -468,6 +468,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.SearchSpaceMatchWarning.html">baybe.exceptions.SearchSpaceMatchWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnidentifiedSubclassError.html">baybe.exceptions.UnidentifiedSubclassError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnmatchedAttributeError.html">baybe.exceptions.UnmatchedAttributeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.UnusedObjectWarning.html">baybe.exceptions.UnusedObjectWarning</a></li>
@@ -1011,6 +1012,10 @@
           <h1>Source code for baybe.exceptions</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Custom exceptions and warnings.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
+<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
 <span class="c1">##### Warnings #####</span>
 
@@ -1022,6 +1027,27 @@
 <span class="sd">    A method or function was called with undesired arguments which indicates an</span>
 <span class="sd">    unintended user fault.</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SearchSpaceMatchWarning">
+<a class="viewcode-back" href="../../_autosummary/baybe.exceptions.SearchSpaceMatchWarning.html#baybe.exceptions.SearchSpaceMatchWarning">[docs]</a>
+<span class="nd">@define</span>
+<span class="k">class</span> <span class="nc">SearchSpaceMatchWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    When trying to match data to entries in the search space, something unexpected</span>
+<span class="sd">    happened.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__attrs_pre_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
 
 
 
