@@ -44,6 +44,7 @@ from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
+    BotorchKernelFactory,
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
@@ -204,6 +205,7 @@ valid_kernels = valid_base_kernels + valid_scale_kernels + valid_composite_kerne
 valid_kernel_factories = [
     param(DefaultKernelFactory(), id="Default"),
     param(EDBOKernelFactory(), id="EDBO"),
+    param(BotorchKernelFactory(), id="BoTorch"),
 ]
 
 test_targets = [
