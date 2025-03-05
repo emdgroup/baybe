@@ -6,6 +6,22 @@ the following command:
 python -m benchmarks
 ```
 
+An alternative would be to call only a subset of the benchmarks by providing
+one or multiple names from the benchmarks in the list
+ `BENCHMARKS` from the `__init__.py` file in the
+`domains` folder. More about the `BENCHMARKS` list can be found in the section
+[Add your benchmark to the benchmarking module]
+(#add-your-benchmark-to-the-benchmarking-module).
+A subset of benchmarks where the benchmark `synthetic_2C1D_1C` would be the first in
+the list can be called with:
+
+```bash
+python -m benchmarks --benchmark-list synthetic_2C1D_1C <key2> <key3>
+```
+
+Please find instruction on how to add the benchmarks to the CI/CD pipeline in the
+section [Add benchmark to CI/CD pipeline](#add-benchmark-to-ci/cd-pipeline).
+
 # `Benchmark`
 
 The `Benchmark` object is the combination of all benchmark related data.
@@ -83,3 +99,96 @@ For creating temporary credentials, a GitHub App will be used.
 To generated a token, the id of the GitHub App and its secret key must be provided in
 the secrets `APP_ID` and `APP_PRIVATE_KEY`. The file will be stored in the following
 format: `<benchmark_name>/<branch>/<latest_baybe_tag>/<execution-date>/<commit_hash>/result.json`.
+
+## Add benchmark to CI/CD pipeline
+
+The benchmarks will not automatically be executed in the CI/CD pipeline.
+You have to provide them as clickable inputs in the GitHub Actions workflow.
+To do this, a new boolean checkbox needs to be added to the workflow file
+`manual_benchmark.yml` in the`.github/workflows` folder. The checkbox name must exactly
+match the benchmark name. The benchmark `synthetic_2C1D_1C.py` with the callable
+`synthetic_2C1D_1C` (which is named after the callable NOT the file) would look
+like this:
+
+```yaml
+      synthetic_2C1D_1C:
+        description: "Run synthetic_2C1D_1C benchmark"
+        required: false
+        default: false
+        type: boolean
+```
+
+Which can just be copied below the existing checkboxes. If we would add a benchmark
+called `foo` with the callable `bar` the checkbox would look like this:
+
+```yaml
+name: Run Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      group_selection:
+        description: "Select the group of benchmarks to run"
+        required: true
+        default: "Manually selected benchmarks"
+        type: choice
+        options:
+          - "Manually selected benchmarks"
+          - "All benchmarks"
+          - "Default group"
+      synthetic_2C1D_1C:
+        description: "Run synthetic_2C1D_1C benchmark"
+        required: false
+        default: false
+        type: boolean
+      bar:
+        description: "Run foo benchmark"
+        required: false
+        default: false
+        type: boolean
+```
+
+### Add benchmark group
+
+There are also groups that can be definer in the workflow file. The benchmarks in the
+groups are jointly executed when the group is selected. Groups are defined as env variables
+in the workflow file. If you want to add `bar` to the `DEFAULT_BENCHMARKS` group, you
+can just write it behind the existing entities separated by a comma:
+
+```yaml
+DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C", "bar"]'
+```
+
+To add a new group `FOO_BAR` with `foo`, you can define it below the existing groups:
+
+```yaml
+env:
+    DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
+    FOO_BAR: '["foo"]'
+```
+
+And you also have to add it to the dropdown menu in the workflow file:
+
+```yaml
+      group_selection:
+        description: "Select the group of benchmarks to run"
+        required: true
+        default: "Manually selected benchmarks"
+        type: choice
+        options:
+          - "Manually selected benchmarks"
+          - "All benchmarks"
+          - "Default group"
+          - "Foo bar group"                       #<-- Add this line
+```
+
+So that the selected group can be checked in the step `build_matrix_from_group`, where
+you have to add:
+
+```yaml
+          if [ "$run_all_benchmarks" = "Default group" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
+          elif [ "$run_all_benchmarks" = "Foo bar group" ]; then             #<-- Add this line
+            benchmarks_to_execute='{"benchmark_list": ${{ env.FOO_BAR }} }'  #<-- Add this line
+          fi
+``` 
