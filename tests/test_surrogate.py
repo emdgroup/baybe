@@ -37,7 +37,7 @@ def test_caching(patched, searchspace, objective, fake_measurements):
         CompositeSurrogate(
             {"t1": GaussianProcessSurrogate(), "t2": RandomForestSurrogate()},
         ),
-        CompositeSurrogate.from_template(GaussianProcessSurrogate()),
+        CompositeSurrogate.from_replication(GaussianProcessSurrogate()),
     ],
     ids=["via_init", "via_template"],
 )

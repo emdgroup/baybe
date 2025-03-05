@@ -32,7 +32,7 @@ class _SurrogateGetter(Protocol):
 
 
 @define
-class _BroadcastMapping(Generic[_T]):
+class _ReplicationMapping(Generic[_T]):
     """A wrapper class providing copies of a given template object via indexing access.
 
     Essentially a serializable version of ``defaultdict(lambda: deepcopy(template))``.
@@ -78,9 +78,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     """The names of the targets modeled by the surrogate outputs."""
 
     @classmethod
-    def from_template(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
-        """Broadcast a given single-target surrogate logic to multiple targets."""
-        return CompositeSurrogate(_BroadcastMapping(surrogate))
+    def from_replication(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
+        """Replicate a given single-target surrogate logic for multiple targets."""
+        return CompositeSurrogate(_ReplicationMapping(surrogate))
 
     @property
     def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
@@ -137,8 +137,8 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
 @converter.register_structure_hook
 def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
     """Resolve the object type."""
-    if (type_ := obj.pop("type")) == _BroadcastMapping.__name__:
-        return converter.structure(obj, _BroadcastMapping[SurrogateProtocol])
+    if (type_ := obj.pop("type")) == _ReplicationMapping.__name__:
+        return converter.structure(obj, _ReplicationMapping[SurrogateProtocol])
     elif type_ == "dict":
         return converter.structure(obj, dict[str, SurrogateProtocol])
     raise NotImplementedError(f"No structure hook implemented for '{type_}'.")

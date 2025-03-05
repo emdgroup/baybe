@@ -32,7 +32,7 @@ def test_surrogate_serialization(request, surrogate_cls):
         CompositeSurrogate(
             {"A": RandomForestSurrogate(), "B": GaussianProcessSurrogate()}
         ),
-        CompositeSurrogate.from_template(GaussianProcessSurrogate()),
+        CompositeSurrogate.from_replication(GaussianProcessSurrogate()),
     ],
     ids=["via_init", "via_template"],
 )

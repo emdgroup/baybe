@@ -30,10 +30,10 @@ from baybe.utils.dataframe import _ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 
-def _autobroadcast(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
-    """Broadcasts single-output surrogate models and passes through everything else."""
+def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
+    """Replicates single-output surrogate models and passes through everything else."""
     if isinstance(surrogate, Surrogate) and not surrogate.supports_multi_output:
-        return surrogate.broadcast()
+        return surrogate.replicate()
     return surrogate
 
 
@@ -98,7 +98,7 @@ class BayesianRecommender(PureRecommender, ABC):
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
         surrogate = (
-            _autobroadcast(self._surrogate_model)
+            _autoreplicate(self._surrogate_model)
             if objective.is_multi_output
             else self._surrogate_model
         )

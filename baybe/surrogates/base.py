@@ -141,8 +141,8 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return AdapterModel(self)
 
-    def broadcast(self) -> CompositeSurrogate:
-        """Make the surrogate handle multiple targets via broadcasting.
+    def replicate(self) -> CompositeSurrogate:
+        """Make the surrogate handle multiple targets via replication.
 
         If the surrogate only supports single targets, this method turns it into a
         multi-target surrogate by replicating the model architecture for each observed
@@ -151,11 +151,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         If the surrogate is itself already multi-target compatible, this operation
         effectively disables the model's inherent multi-target mechanism by treating
-        it as a single-target surrogate and applying the same broadcasting mechanism.
+        it as a single-target surrogate and applying the same replication mechanism.
         """
         from baybe.surrogates.composite import CompositeSurrogate
 
-        return CompositeSurrogate.from_template(self)
+        return CompositeSurrogate.from_replication(self)
 
     @staticmethod
     def _make_parameter_scaler_factory(
@@ -334,7 +334,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"{len(objective.targets)}-target multi-output context. Either use "
                 f"a proper multi-output surrogate or consider explicitly "
                 f"replicating the current surrogate model using its "
-                f"'.{self.broadcast.__name__}' method."
+                f"'.{self.replicate.__name__}' method."
             )
 
         # When the context is unchanged, no retraining is necessary

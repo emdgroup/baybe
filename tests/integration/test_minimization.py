@@ -25,7 +25,7 @@ def get_acqf_values(acqf_cls, surrogate, searchspace, objective, df):
 def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
     surrogate = GaussianProcessSurrogate()
     if acqf_cls.supports_multi_output:
-        surrogate = surrogate.broadcast()
+        surrogate = surrogate.replicate()
     surrogate.fit(searchspace, objective, df)
     with torch.no_grad():
         posterior = surrogate.posterior(df)

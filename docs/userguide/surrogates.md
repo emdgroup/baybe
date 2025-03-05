@@ -30,22 +30,19 @@ independent components for each output. BayBE provides two convenient mechanisms
 achieve this, both built upon the
 {class}`~baybe.surrogates.composite.CompositeSurrogate` class:
 
-### Surrogate Broadcasting
+### Surrogate Replication
 The simplest way to construct a multi-output surrogate is to replicate a given
 single-output model architecture for each of the existing output dimensions.
-By analogy with NumPy's similar
-[mechanism for arrays](https://numpy.org/doc/stable/user/basics.broadcasting.html),
-we refer to this operation as *broadcasting*. 
 
-To broadcast a given surrogate, you can either call its 
-{meth}`~baybe.surrogates.base.Surrogate.broadcast` method or use the
-[`CompositeSurrogate.from_template()`](`~baybe.surrogates.composite.CompositeSurrogate.from_template`)
+To replicate a given surrogate, you can either call its 
+{meth}`~baybe.surrogates.base.Surrogate.replicate` method or use the
+[`CompositeSurrogate.from_replication()`](`~baybe.surrogates.composite.CompositeSurrogate.from_replication`)
 convenience constructor:
 ```python
 from baybe.surrogates import CompositeSurrogate, GaussianProcessSurrogate
 
-composite_a = GaussianProcessSurrogate().broadcast()
-composite_b = CompositeSurrogate.from_template(GaussianProcessSurrogate())
+composite_a = GaussianProcessSurrogate().replicate()
+composite_b = CompositeSurrogate.from_replication(GaussianProcessSurrogate())
 
 assert composite_a == composite_b
 ```
@@ -54,21 +51,21 @@ However, there are very few cases where such an explicit conversion is required.
 using a single-output surrogate model in a multi-output context would trivially fail, and
 because BayBE cares deeply about its users' lives, it automatically performs this conversion
 for you behind the scenes:
-```{admonition} Auto-Broadcasting
+```{admonition} Auto-Replication
 :class: important
 
 When using a single-output surrogate model in a multi-output context, BayBE
-automatically broadcasts the surrogate on the fly.
+automatically replicates the surrogate on the fly.
 ```
 The consequence of the above is that you can use the same model object regardless
 of the modeling context and its multi-output capabilities.
 
-There is *one* notable exception where an explicit broadcast may still make
+There is *one* notable exception where an explicit replication may still make
 sense: if you want to bypass the existing multi-output mechanics of a surrogate that is
 inherently multi-output compatible.
 
 ### Composite Surrogates
-An alternative to broadcasting is to manually assemble your
+An alternative to surrogate replication is to manually assemble your
 {class}`~baybe.surrogates.composite.CompositeSurrogate`. This can be useful if you want
 to
 * use the same model architecture but with different settings for each output or
@@ -89,7 +86,7 @@ surrogate = CompositeSurrogate(
 )
 ```
 
-A noticeable difference to the broadcasting approach is that manual assembly requires
+A noticeable difference to the replication approach is that manual assembly requires
 the exact set of target variables to be known at the time the object is created.
 
 
