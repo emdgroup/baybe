@@ -11,7 +11,7 @@ from typing_extensions import override
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
+from baybe.exceptions import InvalidSurrogateModelError
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
@@ -37,18 +37,6 @@ class BayesianRecommender(PureRecommender, ABC):
 
     _botorch_acqf = field(default=None, init=False)
     """The current acquisition function."""
-
-    acquisition_function_cls: str | None = field(default=None, kw_only=True)
-    "Deprecated! Raises an error when used."
-
-    @acquisition_function_cls.validator
-    def _validate_deprecated_argument(self, _, value) -> None:
-        """Raise DeprecationError if old acquisition_function_cls parameter is used."""
-        if value is not None:
-            raise DeprecationError(
-                "Passing 'acquisition_function_cls' to the constructor is deprecated. "
-                "The parameter has been renamed to 'acquisition_function'."
-            )
 
     @property
     def surrogate_model(self) -> SurrogateProtocol:
