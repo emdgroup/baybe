@@ -19,6 +19,7 @@ from typing_extensions import override
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives.base import Objective, to_objective
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
@@ -532,6 +533,65 @@ class Campaign(SerialMixin):
 
         with torch.no_grad():
             return surrogate.posterior(candidates)
+
+    def posterior_statistics(
+        self, candidates: pd.DataFrame, std_instead_of_var: bool = True
+    ) -> pd.DataFrame:
+        """Return common posterior statistics for each target.
+
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            std_instead_of_var: Flag deciding if the standard deviation or variance is
+                returned (if supported by the posterior).
+
+        Raises:
+            TypeError: If the posterior utilized by the surrogate does not support
+                any of the possible statistics.
+
+        Returns:
+            Data frame with prediction statistics for each target for each candidate.
+        """
+        posterior = self.posterior(candidates)
+
+        considered_stats = ["mean", "variance", "mode"]
+        supported_stats = [x for x in considered_stats if hasattr(posterior, x)]
+        if not supported_stats:
+            raise TypeError(
+                f"The utilized posterior is of type {posterior.__class__.__name__} and "
+                f"does not support any of the possible statistics: {considered_stats}. "
+                f"To call {self.posterior_statistics.__name__}, at least one of these "
+                f"statistics must be supported by the surrogate posterior."
+            )
+
+        assert self.objective is not None
+        match self.objective:
+            case DesirabilityObjective():
+                # TODO: Once desirability also supports posterior transforms this check
+                #  here will have to depend on the configuration of the obejctive and
+                #  whether it uses the transforms or not.
+                targets = ["desirability"]
+            case _:
+                targets = [t.name for t in self.objective.targets]
+
+        stats = pd.DataFrame(index=candidates.index)
+        for i, t in enumerate(targets):
+            for stat in supported_stats:
+                vals = (
+                    getattr(posterior, stat)
+                    .cpu()
+                    .numpy()
+                    .reshape((len(stats), len(targets)))
+                )
+                if stat == "variance" and std_instead_of_var:
+                    stat_name = "std"
+                    vals = np.sqrt(vals)
+                else:
+                    stat_name = stat
+
+                stats[f"{t}_{stat_name}"] = vals[:, i]
+
+        return stats
 
     def get_surrogate(
         self,
