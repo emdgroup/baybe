@@ -171,8 +171,11 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
             # lines = [line for line in lines if "![svg]" not in line]
             # We check whether pre-built light and dark plots exist. If so, we append
             # corresponding lines to our markdown file for including them.
+            # If not, we check if a single plot version exists and append it
+            # regardless of light/dark mode.
             light_figure = Path(sub_directory / (file_name + "_light.svg"))
             dark_figure = Path(sub_directory / (file_name + "_dark.svg"))
+            figure = Path(sub_directory / (file_name + ".svg"))
             if light_figure.is_file() and dark_figure.is_file():
                 lines.append(f"```{{image}} {file_name}_light.svg\n")
                 lines.append(":align: center\n")
@@ -181,6 +184,10 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                 lines.append(f"```{{image}} {file_name}_dark.svg\n")
                 lines.append(":align: center\n")
                 lines.append(":class: only-dark\n")
+                lines.append("```\n")
+            elif figure.is_file():
+                lines.append(f"```{{image}} {file_name}.svg\n")
+                lines.append(":align: center\n")
                 lines.append("```\n")
 
             # Rewrite the file

@@ -658,6 +658,31 @@ def get_transform_objects(
     return [p for p in objects if p.name in df]
 
 
+def transform_target_columns(
+    df: pd.DataFrame,
+    targets: Sequence[Target],
+    /,
+    *,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
+) -> pd.DataFrame:
+    """Transform the columns of a dataframe that correspond to objects of type :class:`~baybe.targets.base.Target`.
+
+    For more details, see :func:`baybe.utils.dataframe.get_transform_objects`.
+    """  # noqa: E501
+    # Extract the relevant part of the dataframe
+    targets = get_transform_objects(
+        df, targets, allow_missing=allow_missing, allow_extra=allow_extra
+    )
+    transformed = df[[t.name for t in targets]].copy()
+
+    # Transform all targets individually
+    for target in targets:
+        transformed[target.name] = target.transform(df[target.name])
+
+    return transformed
+
+
 def filter_df(
     df: pd.DataFrame, /, to_keep: pd.DataFrame, complement: bool = False
 ) -> pd.DataFrame:

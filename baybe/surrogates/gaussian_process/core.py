@@ -78,6 +78,8 @@ class _ModelContext:
 class GaussianProcessSurrogate(Surrogate):
     """A Gaussian process surrogate model."""
 
+    # TODO: Enable multi-target support via batching
+
     # Note [Scaling Workaround]
     # -------------------------
     # For GPs, we deactivate the base class scaling and instead let the botorch
