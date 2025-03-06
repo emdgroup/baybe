@@ -100,10 +100,6 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
-    # TODO: remove when refactoring active values mechanism
-    _excluded: pd.Series = field(init=False, eq=eq_dataframe)
-    """Temporary workaround for handling inactive ``TaskParameter`` values."""
-
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
 
@@ -154,11 +150,6 @@ class SubspaceDiscrete(SerialMixin):
                 "The index of this search space contains duplicates. "
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
-
-    @_excluded.default
-    def _default_excluded(self) -> pd.Series:
-        """By default, dont exlcude any configurations."""
-        return pd.Series(False, index=self.exp_rep.index)
 
     @comp_rep.default
     def _default_comp_rep(self) -> pd.DataFrame:
@@ -592,7 +583,7 @@ class SubspaceDiscrete(SerialMixin):
             The candidate parameter settings both in experimental and computational
             representation.
         """
-        return self.exp_rep.loc[~self._excluded], self.comp_rep.loc[~self._excluded]
+        return self.exp_rep, self.comp_rep
 
     def transform(
         self,
