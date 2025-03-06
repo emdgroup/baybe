@@ -3,6 +3,7 @@
 
 ci:
   autoupdate_schedule: quarterly
+  autofix_prs: false
 
 repos:
 - repo: https://github.com/pycqa/flake8

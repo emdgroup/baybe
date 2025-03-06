@@ -20,7 +20,7 @@ from cattrs.dispatch import (
 from joblib.hashing import hash
 from typing_extensions import override
 
-from baybe.exceptions import ModelNotTrainedError
+from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -40,6 +40,8 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import GPyTorchPosterior, Posterior
     from torch import Tensor
+
+    from baybe.surrogates.composite import CompositeSurrogate
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -104,6 +106,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate supports transfer
     learning."""
 
+    supports_multi_output: ClassVar[bool] = False
+    """Class variable encoding whether or not the surrogate is multi-output
+    compatible."""
+
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
@@ -134,6 +140,22 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         from baybe.surrogates._adapter import AdapterModel
 
         return AdapterModel(self)
+
+    def replicate(self) -> CompositeSurrogate:
+        """Make the surrogate handle multiple targets via replication.
+
+        If the surrogate only supports single targets, this method turns it into a
+        multi-target surrogate by replicating the model architecture for each observed
+        target. The resulting copies are trained independently, but share the same
+        architecture.
+
+        If the surrogate is itself already multi-target compatible, this operation
+        effectively disables the model's inherent multi-target mechanism by treating
+        it as a single-target surrogate and applying the same replication mechanism.
+        """
+        from baybe.surrogates.composite import CompositeSurrogate
+
+        return CompositeSurrogate.from_replication(self)
 
     @staticmethod
     def _make_parameter_scaler_factory(
@@ -183,7 +205,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         if (factory := self._make_target_scaler_factory()) is None:
             return _IDENTITY_TRANSFORM
 
-        # TODO: Multi-target extension
+        if objective.n_outputs != 1:
+            # There is execution path yet that could lead to this situation
+            raise NotImplementedError(
+                "Output scalers for multi-output models are not available."
+            )
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
@@ -301,6 +327,16 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 model.
         """
         # TODO: consider adding a validation step for `measurements`
+
+        # Validate multi-target compatibility
+        if objective.is_multi_output and not self.supports_multi_output:
+            raise IncompatibleSurrogateError(
+                f"You attempted to train a single-output surrogate in a "
+                f"{len(objective.targets)}-target multi-output context. Either use "
+                f"a proper multi-output surrogate or consider explicitly "
+                f"replicating the current surrogate model using its "
+                f"'.{self.replicate.__name__}' method."
+            )
 
         # When the context is unchanged, no retraining is necessary
         if (

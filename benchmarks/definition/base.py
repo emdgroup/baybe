@@ -1,5 +1,7 @@
 """Basic benchmark configuration."""
 
+import logging
+import sys
 import time
 from abc import ABC
 from collections.abc import Callable
@@ -15,6 +17,13 @@ from pandas import DataFrame
 from baybe.utils.random import temporary_seed
 from benchmarks.result import Result, ResultMetadata
 from benchmarks.serialization import BenchmarkSerialization, converter
+
+logger = logging.getLogger(__name__)
+
+stdout = logging.StreamHandler(stream=sys.stdout)
+
+logger.addHandler(stdout)
+logger.setLevel(logging.INFO)
 
 
 @define(frozen=True, kw_only=True)
@@ -58,12 +67,23 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         """Execute the benchmark and return the result."""
         start_datetime = datetime.now(timezone.utc)
 
+        logger.info(
+            "=" * 80
+            + f"\nRunning benchmark '{self.name}' with "
+            + f"random seed {self.settings.random_seed}.\n"
+        )
         with temporary_seed(self.settings.random_seed):
             start_sec = time.perf_counter()
             result = self.function(self.settings)
             stop_sec = time.perf_counter()
 
         duration = timedelta(seconds=stop_sec - start_sec)
+
+        logger.info(
+            f"\nFinished benchmark '{self.name}' after {duration} "
+            + f"with random seed {self.settings.random_seed}.\n"
+            + "=" * 80
+        )
 
         metadata = ResultMetadata(
             start_datetime=start_datetime,

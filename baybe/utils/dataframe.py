@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import numpy as np
 import pandas as pd
 
+from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
@@ -462,7 +463,7 @@ def fuzzy_row_match(
     right_df: pd.DataFrame,
     parameters: Sequence[Parameter],
 ) -> pd.Index:
-    """Match row of the right dataframe to the rows of the left dataframe.
+    """Match rows of the right dataframe to rows of the left dataframe.
 
     This is useful for matching measurements to entries in the search space, e.g. to
     detect which ones have been measured. For categorical parameters, there needs to be
@@ -476,57 +477,89 @@ def fuzzy_row_match(
 
     Args:
         left_df: The data that serves as lookup reference.
-        right_df: The data that should be checked for matching rows in the left
-            dataframe.
-        parameters: List of baybe parameter objects that are needed to identify
-            potential tolerances.
+        right_df: The data that is checked for matching rows in the left dataframe.
+        parameters: Parameter objects that identify the relevant column names and how
+            matching is performed.
 
     Returns:
         The index of the matching rows in ``left_df``.
 
     Raises:
-        ValueError: If some rows are present in the right but not in the left dataframe.
+        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
+            each entry in parameters.
     """
-    # Assert that all parameters appear in the given dataframe
-    if not all(col in right_df.columns for col in left_df.columns):
+    # Separate columns types
+    cat_cols = {p.name for p in parameters if (not p.is_numerical and p.is_discrete)}
+    num_cols = {p.name for p in parameters if (p.is_numerical and p.is_discrete)}
+    non_discrete_cols = {p.name for p in parameters if not p.is_discrete}
+
+    # Assert that all parameters appear in the given dataframes
+    if diff := (cat_cols | num_cols).difference(left_df.columns):
         raise ValueError(
-            "For fuzzy row matching all rows of the right dataframe need to be present"
-            " in the left dataframe."
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the left dataframe. Parameters not found: {diff})"
+        )
+    if diff := (cat_cols | num_cols).difference(right_df.columns):
+        raise ValueError(
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the right dataframe. Parameters not found: "
+            f"{diff})"
         )
 
-    # Iterate over all input rows
-    inds_matched = []
-    for ind, row in right_df.iterrows():
-        # Differentiate category-like and discrete numerical parameters
-        cat_cols = [p.name for p in parameters if not p.is_numerical]
-        num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
+    provided_cols = {p.name for p in parameters}
+    allowed_cols = cat_cols | num_cols | non_discrete_cols
+    assert allowed_cols == provided_cols, (
+        f"There are parameter types that would be silently ignored: "
+        f"{provided_cols.difference(allowed_cols)}"
+    )
 
-        # Discrete parameters must match exactly
-        match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
+    # Initialize the match matrix. We will later filter it down using other
+    # matrices (representing the matches for individual parameters) via logical 'and'.
+    match_matrix = pd.DataFrame(
+        True, index=right_df.index, columns=left_df.index, dtype=bool
+    )
 
-        # For numeric parameters, match the entry with the smallest deviation
-        for col in num_cols:
-            abs_diff = (left_df[col] - row[col]).abs()
-            match &= abs_diff == abs_diff.min()
+    # Match categorical parameters
+    for col in cat_cols:
+        # Per categorical parameter, this identifies matches between all elements of
+        # left and right and stores them in a matrix.
+        match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
 
-        # We expect exactly one match. If that's not the case, print a warning.
-        inds_found = left_df.index[match].to_list()
-        if len(inds_found) == 0 and len(num_cols) > 0:
-            warnings.warn(
-                f"Input row with index {ind} could not be matched to the search space. "
-                f"This could indicate that something went wrong."
-            )
-        elif len(inds_found) > 1:
-            warnings.warn(
-                f"Input row with index {ind} has multiple matches with the search "
-                f"space. This could indicate that something went wrong. Matching only "
-                f"first occurrence."
-            )
-            inds_matched.append(inds_found[0])
-        else:
-            inds_matched.extend(inds_found)
+    # Match numerical parameters
+    for col in num_cols:
+        # Per numerical parameter, this identifies the rows with the smallest absolute
+        # difference and records them in a matrix.
+        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        min_diff = abs_diff.min(axis=1, keepdims=True)
+        match_matrix &= abs_diff == min_diff
 
-    return pd.Index(inds_matched)
+    # Find the matching indices. If a right row is not matched to any of the rows in
+    # left, idxmax would return the first index of left_df. Hence, we remember these
+    # cases and drop them explicitly.
+    matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
+    mask_no_match = ~match_matrix.any(axis=1)
+    matched_indices = matched_indices[~mask_no_match]
+
+    # Warn if there are multiple or no matches
+    if no_match_indices := right_df.index[mask_no_match].tolist():
+        w = SearchSpaceMatchWarning(
+            f"Some input rows could not be matched to the search space. Indices with "
+            f"no matches: {no_match_indices}",
+            right_df.loc[no_match_indices],
+        )
+        warnings.warn(w)
+
+    mask_multiple_matches = match_matrix.sum(axis=1) > 1
+    if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
+        w = SearchSpaceMatchWarning(
+            f"Some input rows have multiple matches with the search space. "
+            f"Matching only first occurrence for these rows. Indices with multiple "
+            f"matches: {multiple_match_indices}",
+            right_df.loc[multiple_match_indices],
+        )
+        warnings.warn(w)
+
+    return matched_indices
 
 
 def pretty_print_df(
@@ -623,6 +656,31 @@ def get_transform_objects(
         )
 
     return [p for p in objects if p.name in df]
+
+
+def transform_target_columns(
+    df: pd.DataFrame,
+    targets: Sequence[Target],
+    /,
+    *,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
+) -> pd.DataFrame:
+    """Transform the columns of a dataframe that correspond to objects of type :class:`~baybe.targets.base.Target`.
+
+    For more details, see :func:`baybe.utils.dataframe.get_transform_objects`.
+    """  # noqa: E501
+    # Extract the relevant part of the dataframe
+    targets = get_transform_objects(
+        df, targets, allow_missing=allow_missing, allow_extra=allow_extra
+    )
+    transformed = df[[t.name for t in targets]].copy()
+
+    # Transform all targets individually
+    for target in targets:
+        transformed[target.name] = target.transform(df[target.name])
+
+    return transformed
 
 
 def filter_df(

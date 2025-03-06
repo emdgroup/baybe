@@ -10,6 +10,7 @@ from baybe.acquisition.acqfs import (
     qExpectedImprovement,
     qKnowledgeGradient,
     qLogExpectedImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedImprovement,
@@ -37,6 +38,7 @@ qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
 qTS = qThompsonSampling
+qLogNEHVI = qLogNoisyExpectedHypervolumeImprovement
 
 __all__ = [
     ######################### Acquisition functions
@@ -64,6 +66,8 @@ __all__ = [
     "qUpperConfidenceBound",
     # Thompson Sampling
     "qThompsonSampling",
+    # Hypervolume Improvement
+    "qLogNoisyExpectedHypervolumeImprovement",
     ######################### Abbreviations
     # Knowledge Gradient
     "qKG",
@@ -89,4 +93,6 @@ __all__ = [
     "qUCB",
     # Thompson Sampling
     "qTS",
+    # Hypervolume Improvement
+    "qLogNEHVI",
 ]

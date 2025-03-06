@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
 - `SHAPInsight` now supports the `waterfall` plot type
+- `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
+  `qLogNoisyExpectedHypervolumeImprovement` acquisition function
+- `Surrogate.replicate` method for making single-target surrogate models multi-target
+  compatible
+- `CompositeSurrogate` class for composing multi-target surrogates from single-target
+  surrogates
+- `is_multi_output` attribute to `Objective`
+- `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
+- `n_outputs` property to `Objective`
 - `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
 - A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
   constraints are violated
@@ -29,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `supports_batching` and `supports_pending_experiments`
 - `SHAPInsight` now allows explanation input that has additional columns compared to 
   the background data (will be ignored)
+- `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
+  measurements to the search space between 4x and 40x
+- The default value for `sequential_continuous` in `BotorchRecommender` has been 
+  changed to `True`
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target

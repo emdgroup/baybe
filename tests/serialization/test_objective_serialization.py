@@ -8,6 +8,7 @@ from pytest import param
 from baybe.objectives.base import Objective
 from tests.hypothesis_strategies.objectives import (
     desirability_objectives,
+    pareto_objectives,
     single_target_objectives,
 )
 
@@ -17,6 +18,7 @@ from tests.hypothesis_strategies.objectives import (
     [
         param(single_target_objectives(), id="SingleTargetObjective"),
         param(desirability_objectives(), id="DesirabilityObjective"),
+        param(pareto_objectives(), id="ParetoObjective"),
     ],
 )
 @given(data=st.data())

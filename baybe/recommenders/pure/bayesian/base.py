@@ -6,19 +6,35 @@ from abc import ABC
 
 import pandas as pd
 from attrs import define, field, fields
+from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition.acqfs import qLogExpectedImprovement
+from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
-from baybe.exceptions import DeprecationError, InvalidSurrogateModelError
+from baybe.exceptions import (
+    DeprecationError,
+    IncompatibleAcquisitionFunctionError,
+    InvalidSurrogateModelError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
-from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
+from baybe.surrogates.base import (
+    IndependentGaussianSurrogate,
+    Surrogate,
+    SurrogateProtocol,
+)
 from baybe.utils.dataframe import _ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
+
+
+def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
+    """Replicates single-output surrogate models and passes through everything else."""
+    if isinstance(surrogate, Surrogate) and not surrogate.supports_multi_output:
+        return surrogate.replicate()
+    return surrogate
 
 
 @define
@@ -28,15 +44,24 @@ class BayesianRecommender(PureRecommender, ABC):
     _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model", factory=GaussianProcessSurrogate
     )
-    """The used surrogate model."""
+    """The surrogate model."""
 
-    acquisition_function: AcquisitionFunction = field(
-        converter=convert_acqf, factory=qLogExpectedImprovement
+    acquisition_function: AcquisitionFunction | None = field(
+        default=None, converter=optional(convert_acqf)
     )
-    """The used acquisition function class."""
+    """The acquisition function. When omitted, a default is used."""
 
-    _botorch_acqf = field(default=None, init=False)
-    """The current acquisition function."""
+    # TODO: The objective is currently only required for validating the recommendation
+    #   context. Once multi-target support is complete, we might want to refactor
+    #   the validation mechanism, e.g. by
+    #   * storing only the minimal low-level information required
+    #   * switching to a strategy where we catch the BoTorch exceptions
+    #   * ...
+    _objective: Objective | None = field(default=None, init=False, eq=False)
+    """The encountered objective to be optimized."""
+
+    _botorch_acqf = field(default=None, init=False, eq=False)
+    """The induced BoTorch acquisition function."""
 
     acquisition_function_cls: str | None = field(default=None, kw_only=True)
     "Deprecated! Raises an error when used."
@@ -62,6 +87,12 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
+    def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
+        """Select the appropriate default acquisition function for the given context."""
+        if self.acquisition_function is None:
+            return qLogNEHVI() if objective.is_multi_output else qLogEI()
+        return self.acquisition_function
+
     def get_surrogate(
         self,
         searchspace: SearchSpace,
@@ -70,9 +101,14 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
-        self._surrogate_model.fit(searchspace, objective, measurements)
+        surrogate = (
+            _autoreplicate(self._surrogate_model)
+            if objective.is_multi_output
+            else self._surrogate_model
+        )
+        surrogate.fit(searchspace, objective, measurements)
 
-        return self._surrogate_model
+        return surrogate
 
     def _setup_botorch_acqf(
         self,
@@ -82,8 +118,17 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
+        self._objective = objective
+        acqf = self._get_acquisition_function(objective)
+
+        if objective.is_multi_output and not acqf.supports_multi_output:
+            raise IncompatibleAcquisitionFunctionError(
+                f"You attempted to use a single-output acquisition function in a "
+                f"{len(objective.targets)}-target multi-output context."
+            )
+
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        self._botorch_acqf = self.acquisition_function.to_botorch(
+        self._botorch_acqf = acqf.to_botorch(
             surrogate,
             searchspace,
             objective,
