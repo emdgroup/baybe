@@ -124,6 +124,11 @@ def activate_parameter(
         ValueError: If the threshold interval does not contain zero.
         ValueError: If the parameter cannot be activated since both its bounds are
             in the inactive range.
+        NotImplementedError: In situations that cannot be encountered in a regular
+            recommendation context since prevented by other validation measures (for
+            example, edge case of an activation that would result in a single active
+            point when the open inactive interval aligns on one side with the parameter
+            bounds). For such situations, the behavior of the function is not defined.
     """
 
     def is_fraction(value: float, reference: float) -> bool:
@@ -146,9 +151,8 @@ def activate_parameter(
         and is_fraction(thresholds.upper, upper_bound)
     ):
         raise NotImplementedError(
-            "This method is implemented only for the case when "
-            "thresholds is a proper sub-interval of the "
-            "parameter bounds."
+            "This function is implemented only for the case when "
+            "thresholds is a proper sub-interval of the parameter bounds."
         )
 
     # Callable checking whether the argument is within the inactive range

@@ -19,15 +19,15 @@ def mirror_interval(interval: Interval) -> Interval:
 @pytest.mark.parametrize(
     ("bounds", "thresholds", "expected_result"),
     [
-        # Valid case: when parameter lower/upper bounds spread in both
-        # negative/position directions.
+        # Valid case: When parameter lower/upper bounds spread in both
+        # negative/positive directions.
         param(
             Interval(lower=-1.0, upper=1.0),
             Interval(lower=-0.5, upper=0.5),
             Interval(lower=-1.0, upper=1.0),
             id="valid_thresholds_in_bounds",
         ),
-        # Valid case: when one parameter bound is zero
+        # Valid case: When one parameter bound is zero.
         param(
             Interval(lower=-1.0, upper=0.0),
             Interval(lower=-0.5, upper=0.0),
