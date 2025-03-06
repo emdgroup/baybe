@@ -570,7 +570,7 @@ class Campaign(SerialMixin):
                 # TODO: Once desirability also supports posterior transforms this check
                 #  here will have to depend on the configuration of the obejctive and
                 #  whether it uses the transforms or not.
-                targets = ["desirability"]
+                targets = ["Desirability"]
             case _:
                 targets = [t.name for t in self.objective.targets]
 
