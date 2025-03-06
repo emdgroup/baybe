@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       group_selection:
-        description: "Select the group of benchmarks to run"
+        description: "Group of Benchmarks to Run:"
         required: true
         default: "All benchmarks"
         type: choice
         options:
-          - "Manually selected benchmarks"
-          - "All benchmarks"
-          - "Default group"
+          - "Manually Selected"
+          - "All"
+          - "Default"
       synthetic_2C1D_1C:
-        description: "Run synthetic_2C1D_1C benchmark"
+        description: "synthetic_2C1D_1C benchmark"
         required: false
         default: false
         type: boolean
