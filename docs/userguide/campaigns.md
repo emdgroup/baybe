@@ -13,9 +13,9 @@ It further serves as the primary interface for interacting with BayBE as a user
 since it is responsible for handling experimental data, making recommendations, adding
 measurements, and most other user-related tasks.
 
-## Creating a campaign
+## Creating a Campaign
 
-### Basic creation
+### Basic Creation
 
 Creating a campaign requires specifying at least two pieces of information that
 describe the underlying optimization problem at hand:
@@ -40,7 +40,7 @@ campaign = Campaign(
 )
 ~~~
 
-### Creation from a JSON config
+### Creation From a JSON Config
 Instead of using the default constructor, it is also possible to create a `Campaign` 
 from a JSON configuration string via 
 [`Campaign.from_config`](baybe.campaign.Campaign.from_config).
@@ -52,7 +52,7 @@ instantiating the object, which skips the potentially costly search space creati
 For more details and a full exemplary config, we refer to the corresponding
 [example](./../../examples/Serialization/create_from_config).
 
-## Getting recommendations
+## Getting Recommendations
 
 ### Basics
 
@@ -76,7 +76,7 @@ with the three parameters `Categorical_1`, `Categorical_2` and `Num_disc_1`:
 | 18 | C               | bad             |            1 |
 |  9 | B               | bad             |            1 |
 
-```{admonition} Batch optimization
+```{admonition} Batch Optimization
 :class: important
 In general, the parameter configurations in a recommended batch are **jointly**
 optimized and therefore tailored to the specific batch size requested. 
@@ -100,7 +100,7 @@ is not capable of joint optimization. Currently, the
 is the only recommender available that performs joint optimization.
 ```
 
-```{admonition} Sequential vs. parallel experimentation
+```{admonition} Sequential vs. Parallel Experimentation
 :class: note
 If you have a fixed experimental budget but the luxury of choosing 
 whether to run your experiments sequentially or in parallel, sequential 
@@ -125,7 +125,34 @@ far. This is done by setting the following Boolean flags:
   `pending_experiments` can be recommended (see [asynchronous
   workflows](PENDING_EXPERIMENTS)).
 
-### Caching of recommendations
+### Prediction Statistics
+You might be interested in statistics about the predicted target values for your 
+recommendations, or indeed for any set of possible candidate points. The 
+[`posterior`](baybe.campaign.Campaign.posterior) and 
+[`posterior_statistics`](baybe.campaign.Campaign.posterior_statistics) methods provide
+a simple interface to look at the resulting statistics:
+~~~python
+stats = campaign.posterior_statistics(rec)
+~~~
+
+This will return a table with mean and standard deviation (and possibly other 
+statistics) of the target predictions for the provided candidates:
+
+|    | Yield_mean | Yield_std | Selectivity_mean |  Selectivity_std | ... |
+|---:|:-----------|:----------|:-----------------|:-----------------|-----|
+| 15 | 83.54      | 5.23      | 91.22            | 7.42             |.....|
+| 18 | 56.12      | 2.34      | 87.32            | 12.38            |.....|
+|  9 | 59.10      | 5.34      | 83.72            | 9.62             |.....|
+
+```{admonition} Posterior Statistics with Desirability Objectives
+:class: note
+A [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective) 
+scalarizes all targets into one single quantity called "Desirability". As a result, 
+the posterior statistics are only shown for this quantity, and not for individual 
+targets.
+```
+
+### Caching of Recommendations
 
 The `Campaign` object caches the last batch of recommendations returned, in order to 
 avoid unnecessary computations for subsequent queries between which the status
@@ -136,7 +163,7 @@ The latter is necessary because each batch is optimized for the specific number 
 experiments requested (see note above).
 
 (AM)=
-## Adding measurements
+## Adding Measurements
 
 Available experimental data can be added at any time during the campaign lifecycle using
 the [`add_measurements`](baybe.campaign.Campaign.add_measurements) method, 
@@ -200,7 +227,7 @@ experimentation at a later point in time:
 5. Run your (potentially lengthy) real-world experiments
 6. Repeat
 
-## Further information
+## Further Information
 
 Campaigns are created as a first step in most of our 
 [examples](./../../examples/examples).
