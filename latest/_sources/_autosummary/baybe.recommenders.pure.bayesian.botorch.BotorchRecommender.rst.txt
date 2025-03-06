@@ -31,6 +31,7 @@ BotorchRecommender
       ~BotorchRecommender.sampling_percentage
       ~BotorchRecommender.n_restarts
       ~BotorchRecommender.n_raw_samples
+      ~BotorchRecommender.max_n_subspaces
       ~BotorchRecommender.acquisition_function
       ~BotorchRecommender.acquisition_function_cls
       ~BotorchRecommender.allow_recommending_already_measured

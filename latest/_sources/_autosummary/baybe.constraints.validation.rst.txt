@@ -14,6 +14,7 @@ baybe.constraints.validation
    .. autosummary::
       :toctree:                                       
    
+      validate_cardinality_constraint_parameter_bounds
       validate_cardinality_constraints_are_nonoverlapping
       validate_constraints
    

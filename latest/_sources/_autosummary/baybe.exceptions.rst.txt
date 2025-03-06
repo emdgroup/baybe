@@ -30,8 +30,10 @@ baybe.exceptions
       IncompatibleExplainerError
       IncompatibleSearchSpaceError
       IncompatibleSurrogateError
+      InfeasibilityError
       InvalidSurrogateModelError
       InvalidTargetValueError
+      MinimumCardinalityViolatedWarning
       ModelNotTrainedError
       NoMCAcquisitionFunctionError
       NoRecommendersLeftError

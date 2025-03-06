@@ -23,6 +23,7 @@ SubspaceContinuous
       ~SubspaceContinuous.from_parameter
       ~SubspaceContinuous.from_product
       ~SubspaceContinuous.get_parameters_by_name
+      ~SubspaceContinuous.inactive_parameter_combinations
       ~SubspaceContinuous.sample_from_full_factorial
       ~SubspaceContinuous.sample_uniform
       ~SubspaceContinuous.samples_full_factorial
@@ -49,6 +50,8 @@ SubspaceContinuous
       ~SubspaceContinuous.constraints_cardinality
       ~SubspaceContinuous.full_factorial
       ~SubspaceContinuous.is_empty
+      ~SubspaceContinuous.n_inactive_parameter_combinations
       ~SubspaceContinuous.parameter_names
+      ~SubspaceContinuous.parameter_names_in_cardinality_constraints
    
    

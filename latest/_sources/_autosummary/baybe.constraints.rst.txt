@@ -39,5 +39,7 @@ baybe.constraints
 
    discrete
 
+   utils
+
    validation
 
