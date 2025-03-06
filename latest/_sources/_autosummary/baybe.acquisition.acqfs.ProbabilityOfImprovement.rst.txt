@@ -30,5 +30,6 @@ ProbabilityOfImprovement
    .. autosummary::
    
       ~ProbabilityOfImprovement.abbreviation
+      ~ProbabilityOfImprovement.supports_multi_output
    
    

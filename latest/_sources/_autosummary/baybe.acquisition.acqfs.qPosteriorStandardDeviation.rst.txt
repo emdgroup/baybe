@@ -30,5 +30,6 @@ qPosteriorStandardDeviation
    .. autosummary::
    
       ~qPosteriorStandardDeviation.abbreviation
+      ~qPosteriorStandardDeviation.supports_multi_output
    
    

@@ -31,5 +31,6 @@ UpperConfidenceBound
    
       ~UpperConfidenceBound.beta
       ~UpperConfidenceBound.abbreviation
+      ~UpperConfidenceBound.supports_multi_output
    
    

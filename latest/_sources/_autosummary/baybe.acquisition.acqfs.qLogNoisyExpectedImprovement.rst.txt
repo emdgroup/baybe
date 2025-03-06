@@ -31,5 +31,6 @@ qLogNoisyExpectedImprovement
    
       ~qLogNoisyExpectedImprovement.prune_baseline
       ~qLogNoisyExpectedImprovement.abbreviation
+      ~qLogNoisyExpectedImprovement.supports_multi_output
    
    

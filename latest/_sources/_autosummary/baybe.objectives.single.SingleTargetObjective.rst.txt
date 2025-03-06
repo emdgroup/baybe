@@ -29,6 +29,8 @@ SingleTargetObjective
 
    .. autosummary::
    
+      ~SingleTargetObjective.is_multi_output
+      ~SingleTargetObjective.n_outputs
       ~SingleTargetObjective.targets
    
    

@@ -29,6 +29,8 @@ DesirabilityObjective
 
    .. autosummary::
    
+      ~DesirabilityObjective.is_multi_output
+      ~DesirabilityObjective.n_outputs
       ~DesirabilityObjective.targets
       ~DesirabilityObjective.weights
       ~DesirabilityObjective.scalarizer

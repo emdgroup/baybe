@@ -31,5 +31,6 @@ qThompsonSampling
    
       ~qThompsonSampling.n_mc_samples
       ~qThompsonSampling.abbreviation
+      ~qThompsonSampling.supports_multi_output
    
    

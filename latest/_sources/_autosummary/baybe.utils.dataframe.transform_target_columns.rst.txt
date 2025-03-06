@@ -1,0 +1,6 @@
+baybe.utils.dataframe.transform\_target\_columns
+================================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: transform_target_columns

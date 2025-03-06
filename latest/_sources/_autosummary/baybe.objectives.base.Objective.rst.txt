@@ -29,6 +29,8 @@ Objective
 
    .. autosummary::
    
+      ~Objective.n_outputs
       ~Objective.targets
+      ~Objective.is_multi_output
    
    

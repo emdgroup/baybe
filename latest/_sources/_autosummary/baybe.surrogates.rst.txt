@@ -33,6 +33,8 @@ baybe.surrogates
 
    base
 
+   composite
+
    custom
 
    gaussian_process

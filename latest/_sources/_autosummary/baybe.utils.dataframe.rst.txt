@@ -27,6 +27,7 @@ baybe.utils.dataframe
       get_transform_objects
       pretty_print_df
       to_tensor
+      transform_target_columns
    
    
 

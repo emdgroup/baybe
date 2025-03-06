@@ -6,4 +6,5 @@ These examples demonstrate BayBE's
 :maxdepth: 1
 
 Desirability<desirability>
+Pareto<pareto>
 ```

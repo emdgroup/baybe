@@ -29,6 +29,7 @@ baybe.exceptions
       IncompatibleArgumentError
       IncompatibleExplainerError
       IncompatibleSearchSpaceError
+      IncompatibleSurrogateError
       InvalidSurrogateModelError
       InvalidTargetValueError
       ModelNotTrainedError

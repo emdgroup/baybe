@@ -21,6 +21,7 @@ BetaBernoulliMultiArmedBanditSurrogate
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior_means
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior_modes
+      ~BetaBernoulliMultiArmedBanditSurrogate.replicate
       ~BetaBernoulliMultiArmedBanditSurrogate.to_botorch
       ~BetaBernoulliMultiArmedBanditSurrogate.to_dict
       ~BetaBernoulliMultiArmedBanditSurrogate.to_json
@@ -34,6 +35,7 @@ BetaBernoulliMultiArmedBanditSurrogate
    .. autosummary::
    
       ~BetaBernoulliMultiArmedBanditSurrogate.prior
+      ~BetaBernoulliMultiArmedBanditSurrogate.supports_multi_output
       ~BetaBernoulliMultiArmedBanditSurrogate.supports_transfer_learning
    
    

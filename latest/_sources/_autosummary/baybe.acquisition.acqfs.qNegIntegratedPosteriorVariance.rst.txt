@@ -34,5 +34,6 @@ qNegIntegratedPosteriorVariance
       ~qNegIntegratedPosteriorVariance.sampling_fraction
       ~qNegIntegratedPosteriorVariance.sampling_method
       ~qNegIntegratedPosteriorVariance.abbreviation
+      ~qNegIntegratedPosteriorVariance.supports_multi_output
    
    

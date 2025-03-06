@@ -20,6 +20,7 @@ GaussianProcessSurrogate
       ~GaussianProcessSurrogate.from_json
       ~GaussianProcessSurrogate.from_preset
       ~GaussianProcessSurrogate.posterior
+      ~GaussianProcessSurrogate.replicate
       ~GaussianProcessSurrogate.to_botorch
       ~GaussianProcessSurrogate.to_dict
       ~GaussianProcessSurrogate.to_json
@@ -33,6 +34,7 @@ GaussianProcessSurrogate
    .. autosummary::
    
       ~GaussianProcessSurrogate.kernel_factory
+      ~GaussianProcessSurrogate.supports_multi_output
       ~GaussianProcessSurrogate.supports_transfer_learning
    
    

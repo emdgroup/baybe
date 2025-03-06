@@ -31,5 +31,6 @@ qNoisyExpectedImprovement
    
       ~qNoisyExpectedImprovement.prune_baseline
       ~qNoisyExpectedImprovement.abbreviation
+      ~qNoisyExpectedImprovement.supports_multi_output
    
    

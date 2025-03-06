@@ -19,6 +19,7 @@ Surrogate
       ~Surrogate.from_dict
       ~Surrogate.from_json
       ~Surrogate.posterior
+      ~Surrogate.replicate
       ~Surrogate.to_botorch
       ~Surrogate.to_dict
       ~Surrogate.to_json
@@ -31,6 +32,7 @@ Surrogate
 
    .. autosummary::
    
+      ~Surrogate.supports_multi_output
       ~Surrogate.supports_transfer_learning
    
    

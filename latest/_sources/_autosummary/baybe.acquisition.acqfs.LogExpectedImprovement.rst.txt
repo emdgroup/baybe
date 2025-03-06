@@ -30,5 +30,6 @@ LogExpectedImprovement
    .. autosummary::
    
       ~LogExpectedImprovement.abbreviation
+      ~LogExpectedImprovement.supports_multi_output
    
    

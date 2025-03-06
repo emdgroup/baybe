@@ -31,5 +31,6 @@ qKnowledgeGradient
    
       ~qKnowledgeGradient.num_fantasies
       ~qKnowledgeGradient.abbreviation
+      ~qKnowledgeGradient.supports_multi_output
    
    

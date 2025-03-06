@@ -154,7 +154,7 @@ print(recommender)
                    Kernel factory: DefaultKernelFactory()
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
-             Sequential continuous: False
+             Sequential continuous: True
              Hybrid sampler: None
              Sampling percentage: 1.0
        Switch after: 1
@@ -246,10 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent               Base         Ligand  Temperature  Concentration
-    386  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0          0.153
-    328  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        105.0          0.100
-    219      DMAc     Cesium acetate  (t-Bu)PhCPhos        105.0          0.057
+               Solvent                Base         Ligand  Temperature  \
+    137  Butyornitrile     Cesium pivalate  (t-Bu)PhCPhos         90.0   
+    81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+    327       p-Xylene      Cesium acetate  (t-Bu)PhCPhos        105.0   
+    
+         Concentration  
+    137          0.153  
+    81           0.057  
+    327          0.057  
 
 
 
@@ -262,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent               Base         Ligand  Temperature  Concentration  \
-    386  p-Xylene  Potassium acetate  (t-Bu)PhCPhos        120.0          0.153   
-    328  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        105.0          0.100   
-    219      DMAc     Cesium acetate  (t-Bu)PhCPhos        105.0          0.057   
+               Solvent                Base         Ligand  Temperature  \
+    137  Butyornitrile     Cesium pivalate  (t-Bu)PhCPhos         90.0   
+    81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+    327       p-Xylene      Cesium acetate  (t-Bu)PhCPhos        105.0   
     
-            yield  
-    386  5.951243  
-    328  1.471296  
-    219  1.384542  
+         Concentration      yield  
+    137          0.153  18.419452  
+    81           0.057  10.663415  
+    327          0.057  28.065469  
 
 
 

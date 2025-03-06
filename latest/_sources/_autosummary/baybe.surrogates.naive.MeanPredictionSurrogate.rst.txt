@@ -19,6 +19,7 @@ MeanPredictionSurrogate
       ~MeanPredictionSurrogate.from_dict
       ~MeanPredictionSurrogate.from_json
       ~MeanPredictionSurrogate.posterior
+      ~MeanPredictionSurrogate.replicate
       ~MeanPredictionSurrogate.to_botorch
       ~MeanPredictionSurrogate.to_dict
       ~MeanPredictionSurrogate.to_json
@@ -31,6 +32,7 @@ MeanPredictionSurrogate
 
    .. autosummary::
    
+      ~MeanPredictionSurrogate.supports_multi_output
       ~MeanPredictionSurrogate.supports_transfer_learning
    
    

@@ -29,6 +29,7 @@ AcquisitionFunction
 
    .. autosummary::
    
+      ~AcquisitionFunction.supports_multi_output
       ~AcquisitionFunction.abbreviation
    
    

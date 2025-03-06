@@ -30,5 +30,6 @@ qSimpleRegret
    .. autosummary::
    
       ~qSimpleRegret.abbreviation
+      ~qSimpleRegret.supports_multi_output
    
    

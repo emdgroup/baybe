@@ -22,6 +22,7 @@ baybe.utils.basic
    .. autosummary::
       :toctree:                                       
    
+      convert_to_float
       find_subclass
       get_baseclasses
       get_subclasses

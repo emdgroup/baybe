@@ -31,5 +31,6 @@ qUpperConfidenceBound
    
       ~qUpperConfidenceBound.beta
       ~qUpperConfidenceBound.abbreviation
+      ~qUpperConfidenceBound.supports_multi_output
    
    

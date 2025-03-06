@@ -19,6 +19,7 @@ BayesianLinearSurrogate
       ~BayesianLinearSurrogate.from_dict
       ~BayesianLinearSurrogate.from_json
       ~BayesianLinearSurrogate.posterior
+      ~BayesianLinearSurrogate.replicate
       ~BayesianLinearSurrogate.to_botorch
       ~BayesianLinearSurrogate.to_dict
       ~BayesianLinearSurrogate.to_json
@@ -32,6 +33,7 @@ BayesianLinearSurrogate
    .. autosummary::
    
       ~BayesianLinearSurrogate.model_params
+      ~BayesianLinearSurrogate.supports_multi_output
       ~BayesianLinearSurrogate.supports_transfer_learning
    
    
