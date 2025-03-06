@@ -16,7 +16,7 @@ A subset of benchmarks where the benchmark `synthetic_2C1D_1C` would be the firs
 the list can be called with:
 
 ```bash
-python -m benchmarks --benchmark-list synthetic_2C1D_1C <key2> <key3>
+python -m benchmarks --benchmark-list synthetic_2C1D_1C
 ```
 
 Please find instruction on how to add the benchmarks to the CI/CD pipeline in the

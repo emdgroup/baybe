@@ -16,7 +16,7 @@ from benchmarks.result import Result
 RUNS_IN_CI = "CI" in os.environ
 
 
-def save_benchmark_data(benchmark: Benchmark, result: Result):
+def save_benchmark_data(benchmark: Benchmark, result: Result) -> None:
     """Save the benchmark data to the object storage."""
     path_constructor = PathConstructor.from_result(result)
     persist_dict = benchmark.to_dict() | result.to_dict()
@@ -25,14 +25,14 @@ def save_benchmark_data(benchmark: Benchmark, result: Result):
     object_storage.write_json(persist_dict, path_constructor)
 
 
-def run_all_benchmarks():
+def run_all_benchmarks() -> None:
     """Run all benchmarks."""
     for benchmark in BENCHMARKS:
         result = benchmark()
         save_benchmark_data(benchmark, result)
 
 
-def run_specific_benchmarks(benchmark_subset_names: set[str]):
+def run_specific_benchmarks(benchmark_subset_names: set[str]) -> None:
     """Run a subset based on the benchmark name."""
     for benchmark in BENCHMARKS:
         if benchmark.name not in benchmark_subset_names:
@@ -42,7 +42,7 @@ def run_specific_benchmarks(benchmark_subset_names: set[str]):
         save_benchmark_data(benchmark, result)
 
 
-def main():
+def main() -> None:
     """Execute the benchmarking module."""
     parser = argparse.ArgumentParser(description="Executes the benchmarking module.")
     parser.add_argument(
