@@ -133,9 +133,9 @@ def activate_parameter(
 
     def is_fraction(value: float, reference: float) -> bool:
         """Check if the given value is a fraction of a specified reference value."""
-        if reference == 0.0:
-            return value == 0.0
-        return (value / reference) < 1.0
+        if value == 0.0:
+            return reference == 0.0
+        return reference / value > 1.0
 
     lower_bound = parameter.bounds.lower
     upper_bound = parameter.bounds.upper
