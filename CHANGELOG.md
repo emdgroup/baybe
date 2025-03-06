@@ -19,6 +19,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `is_multi_output` attribute to `Objective`
 - `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
 - `n_outputs` property to `Objective`
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
+  constraints are violated
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of cardinality constraints
+- Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
+  to both `ContinuousCardinalityConstraint`and `SubspaceContinuous` for iterating
+  over cardinality-constrained parameter sets
+- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
+  `ContinuousCardinalityConstraint` for handling inactivity ranges
+- Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
+  validating cardinality constraints
+- Utility `is_inactive` for determining if parameters are inactive
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
