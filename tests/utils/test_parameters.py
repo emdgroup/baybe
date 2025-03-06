@@ -110,7 +110,7 @@ def mirror_interval(interval: Interval) -> Interval:
 def test_parameter_activation(
     bounds: Interval | None,
     thresholds: Interval,
-    expected_result: Interval | type(ValueError) | type(NotImplementedError),
+    expected_result: Interval | type[ValueError] | type[NotImplementedError],
     mirror: bool,
 ):
     """The parameter activation utility correctly activates a parameter.
