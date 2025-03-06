@@ -512,6 +512,7 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The batch of candidates and the corresponding acquisition value.
         """
+        import torch
         from botorch.exceptions.errors import InfeasibilityError as BoInfeasibilityError
 
         acqf_values_all: list[Tensor] = []
@@ -520,7 +521,13 @@ class BotorchRecommender(BayesianRecommender):
         for subspace in subspaces:
             try:
                 # Optimize the acquisition function
-                p, acqf = self._recommend_continuous_torch(subspace, batch_size)
+                # Note: We explicitly evaluate the acqf function for the batch because
+                #   the object returned by the optimization routine may contain joint or
+                #   individual acquisition values, depending on the whether sequential
+                #   or joint optimization is applied
+                p, _ = self._recommend_continuous_torch(subspace, batch_size)
+                with torch.no_grad():
+                    acqf = self._botorch_acqf(p)
 
                 # Append optimization results
                 points_all.append(p)
