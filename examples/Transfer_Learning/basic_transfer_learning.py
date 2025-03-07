@@ -137,7 +137,7 @@ for p in (0.01, 0.02, 0.05, 0.08, 0.2):
     campaign = Campaign(searchspace=searchspace, objective=objective)
     initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
     result_fraction = simulate_scenarios(
-        {f"{int(100*p)}": campaign},
+        {f"{int(100 * p)}": campaign},
         lookup_test_task,
         initial_data=initial_data,
         batch_size=BATCH_SIZE,

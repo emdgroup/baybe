@@ -39,6 +39,6 @@ def test_degenerate_comp_df():
     }
     p = SubstanceParameter(name="p", data=dict_base, encoding="RDKITFINGERPRINT")
 
-    assert (
-        not p.comp_df.duplicated().any()
-    ), "A degenerate comp_df was not correctly treated."
+    assert not p.comp_df.duplicated().any(), (
+        "A degenerate comp_df was not correctly treated."
+    )

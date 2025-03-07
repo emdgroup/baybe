@@ -81,7 +81,7 @@ POINTS_PER_DIM = 3
 
 cont_parameters = [
     NumericalContinuousParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in CONT_INDICES
@@ -91,7 +91,7 @@ cont_parameters = [
 
 disc_parameters = [
     NumericalDiscreteParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,
     )
