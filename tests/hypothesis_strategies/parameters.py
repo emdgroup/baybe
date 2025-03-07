@@ -1,5 +1,7 @@
 """Hypothesis strategies for parameters."""
 
+from collections.abc import Sequence
+
 import hypothesis.strategies as st
 import numpy as np
 from hypothesis.extra.pandas import columns, data_frames
@@ -75,6 +77,13 @@ def custom_descriptors(draw: st.DrawFn):
 
 
 @st.composite
+def _active_values(draw: st.DrawFn, values: Sequence):
+    return draw(
+        st.lists(st.sampled_from(values), min_size=1, max_size=len(values), unique=True)
+    )
+
+
+@st.composite
 def numerical_discrete_parameters(
     draw: st.DrawFn,
     min_value: float | None = None,
@@ -120,9 +129,7 @@ def categorical_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     values = draw(categories)
     encoding = draw(st.sampled_from(CategoricalEncoding))
-    active_values = draw(
-        st.lists(st.sampled_from(values), min_size=1, max_size=len(values), unique=True)
-    )
+    active_values = draw(_active_values(values))
 
     return CategoricalParameter(
         name=name, values=values, encoding=encoding, active_values=active_values
@@ -134,9 +141,7 @@ def task_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.categorical.TaskParameter`."""
     name = draw(parameter_names)
     values = draw(categories)
-    active_values = draw(
-        st.lists(st.sampled_from(values), min_size=1, max_size=len(values), unique=True)
-    )
+    active_values = draw(_active_values(values))
     return TaskParameter(name=name, values=values, active_values=active_values)
 
 
@@ -146,14 +151,7 @@ def substance_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     data = draw(substance_data())
     decorrelate = draw(decorrelations)
-    active_values = draw(
-        st.lists(
-            st.sampled_from(list(data.keys())),
-            min_size=1,
-            max_size=len(data),
-            unique=True,
-        )
-    )
+    active_values = draw(_active_values(list(data.keys())))
 
     # Ignore deprecated encodings
     encodings = list(SubstanceEncoding)
@@ -176,14 +174,7 @@ def custom_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     data = draw(custom_descriptors())
     decorrelate = draw(decorrelations)
-    active_values = draw(
-        st.lists(
-            st.sampled_from(list(data.index)),
-            min_size=1,
-            max_size=len(data),
-            unique=True,
-        )
-    )
+    active_values = draw(_active_values(data.index.values))
 
     return CustomDiscreteParameter(
         name=name, data=data, decorrelate=decorrelate, active_values=active_values
