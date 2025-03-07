@@ -179,9 +179,9 @@ def test_df_permutation_aug(content, col_groups, content_expected):
     # Determine equality ignoring row order
     are_equal = df_augmented.equals(df_expected)
 
-    assert (
-        are_equal
-    ), f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
+    assert are_equal, (
+        f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -299,6 +299,6 @@ def test_df_dependency_aug(content, causing, affected, content_expected):
     # Determine equality ignoring row order
     are_equal = df_augmented.equals(df_expected)
 
-    assert (
-        are_equal
-    ), f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
+    assert are_equal, (
+        f"\norig:\n{df}\n\naugmented:\n{df_augmented}\n\nexpected:\n{df_expected}"
+    )

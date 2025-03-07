@@ -342,7 +342,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 SubstanceParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     data=mock_substances,
                 )
                 for k in range(3)
@@ -360,7 +360,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 CategoricalParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     values=tuple(mock_substances.keys()),
                 )
                 for k in range(3)

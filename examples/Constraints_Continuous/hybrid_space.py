@@ -65,7 +65,7 @@ parameters = [
     for k in range(0, DIMENSION // 2)
 ] + [
     NumericalContinuousParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in range(DIMENSION // 2, DIMENSION)
