@@ -133,6 +133,7 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
+    ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
 ]
 
 # Ignore the following links when checking inks for viability

@@ -56,10 +56,14 @@ parameters, different types of encoding make sense. These situations are reflect
 the different discrete parameter types BayBE offers.
 ```
 
+(label_like)= 
 ```{admonition} For Label-Like Parameters: Values and Active Values
 :class: note
-After a discrete parameter was created, its possible values are stored in the `values` 
-property. All label-like parameters also support specifying `active_values`, which 
+After a discrete parameter was created, its possible values are accessible via the 
+[`values`](baybe.parameters.base.DiscreteParameter.values) 
+property. All label-like parameters also support specifying 
+[`active_values`](baybe.parameters.base.DiscreteParameter.active_values) 
+, which 
 must be a subset of `values`. `active_values` specify which labels are considered 
 for recommendation. Labels that are in `values` but not in `active_values` can be 
 part of measurements, but won't be recommended. Using this mechanism, you can configure 
