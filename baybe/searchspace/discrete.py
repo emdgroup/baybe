@@ -20,7 +20,7 @@ from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_con
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError, OptionalImportError
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
@@ -153,10 +153,7 @@ class SubspaceDiscrete(SerialMixin):
     @classmethod
     def empty(cls) -> SubspaceDiscrete:
         """Create an empty discrete subspace."""
-        return SubspaceDiscrete(
-            parameters=[],
-            exp_rep=pd.DataFrame(),
-        )
+        return SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame())
 
     @classmethod
     def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
@@ -705,32 +702,24 @@ def _apply_constraint_filter_polars(
     return ldf, mask_missing
 
 
-def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
-    """Create the Cartesian product of all parameter values using Polars.
-
-    Ignores continuous parameters.
+def parameter_cartesian_prod_polars(
+    parameters: Sequence[DiscreteParameter],
+) -> pl.LazyFrame:
+    """Create the Cartesian product of discrete parameter values using Polars.
 
     Args:
-        parameters: List of parameter objects.
+        parameters: List of discrete parameter objects.
 
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
     from baybe._optional.polars import polars as pl
 
-    discrete_parameters = [p for p in parameters if p.is_discrete]
-    if not discrete_parameters:
+    if not parameters:
         return pl.LazyFrame()
 
     # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [
-        pl.LazyFrame(
-            {
-                p.name: p.active_values  # type:ignore[attr-defined]
-            }
-        )
-        for p in discrete_parameters
-    ]
+    param_frames = [pl.LazyFrame({p.name: p.active_values}) for p in parameters]
 
     # Handling edge cases
     if len(param_frames) == 1:
@@ -745,28 +734,21 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
 
 
 def parameter_cartesian_prod_pandas(
-    parameters: Sequence[Parameter],
+    parameters: Sequence[DiscreteParameter],
 ) -> pd.DataFrame:
-    """Create the Cartesian product of all parameter values using Pandas.
-
-    Ignores continuous parameters.
+    """Create the Cartesian product of discrete parameter values using Pandas.
 
     Args:
-        parameters: List of parameter objects.
+        parameters: List of discrete parameter objects.
 
     Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
-    discrete_parameters = [p for p in parameters if p.is_discrete]
-    if not discrete_parameters:
+    if not parameters:
         return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(
-        [
-            p.active_values  # type:ignore[attr-defined]
-            for p in discrete_parameters
-        ],
-        names=[p.name for p in discrete_parameters],
+        [p.active_values for p in parameters], names=[p.name for p in parameters]
     )
     ret = pd.DataFrame(index=index).reset_index()
 
