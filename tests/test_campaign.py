@@ -4,17 +4,25 @@ from contextlib import nullcontext
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_index_equal
 from pytest import param
 
+from baybe.acquisition import qLogEI, qLogNEHVI, qTS
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.objectives import DesirabilityObjective, ParetoObjective
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.surrogates import (
+    BetaBernoulliMultiArmedBanditSurrogate,
+    GaussianProcessSurrogate,
+)
+from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.basic import UNSPECIFIED
 
 from .conftest import run_iterations
@@ -113,3 +121,83 @@ def test_setting_allow_flags(flag, space_type, value):
 
     with pytest.raises(ValueError) if expect_error else nullcontext():
         Campaign(parameter, **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
+    [
+        param(
+            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            NumericalTarget("t1", "MAX").to_objective(),
+            GaussianProcessSurrogate(),
+            qLogEI(),
+            3,
+            id="single_target",
+        ),
+        param(
+            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            DesirabilityObjective(
+                (
+                    NumericalTarget("t1", "MAX", bounds=(0, 1)),
+                    NumericalTarget("t2", "MIN", bounds=(0, 1)),
+                )
+            ),
+            GaussianProcessSurrogate(),
+            qLogEI(),
+            3,
+            id="desirability",
+        ),
+        param(
+            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            ParetoObjective(
+                (NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN"))
+            ),
+            GaussianProcessSurrogate(),
+            qLogNEHVI(),
+            3,
+            id="pareto",
+        ),
+        param(
+            ["Categorical_1"],
+            BinaryTarget(name="Target_binary").to_objective(),
+            BetaBernoulliMultiArmedBanditSurrogate(),
+            qTS(),
+            1,
+            id="bernoulli",
+        ),
+    ],
+)
+@pytest.mark.parametrize("std_instead_of_var", [True, False], ids=["std", "var"])
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_posterior_statistics(
+    ongoing_campaign, n_iterations, batch_size, std_instead_of_var
+):
+    """Posterior statistics can have expected shape, index and columns."""
+    stats = ongoing_campaign.posterior_statistics(
+        ongoing_campaign.measurements, std_instead_of_var
+    )
+    print(stats)
+
+    # Assert number of entries and index
+    (
+        assert_index_equal(ongoing_campaign.measurements.index, stats.index),
+        (ongoing_campaign.measurements.index, stats.index),
+    )
+
+    # Assert expected columns are present
+    # mode is not tested as Pareto posteriors do not provide it.
+    match ongoing_campaign.objective:
+        case DesirabilityObjective():
+            targets = ["Desirability"]
+        case _:
+            targets = [t.name for t in ongoing_campaign.objective.targets]
+    tested_stats = {"mean"} | ({"std"} if std_instead_of_var else {"variance"})
+    for t in targets:
+        for stat in tested_stats:
+            assert (
+                sum(f"{t}_{stat}" in x for x in stats.columns) == 1
+            ), f"{t}_{stat} not in the returned posterior statistics"
+
+    # Assert no NaN's present
+    assert not stats.isna().any().any()
