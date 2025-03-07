@@ -19,26 +19,14 @@ from typing_extensions import override
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError, OptionalImportError
-from baybe.parameters import (
-    CategoricalParameter,
-    NumericalDiscreteParameter,
-)
-from baybe.parameters.base import (
-    DiscreteParameter,
-    Parameter,
-)
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.validation import (
-    validate_parameter_names,
-    validate_parameters,
-)
+from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
-from baybe.utils.dataframe import (
-    get_transform_objects,
-    pretty_print_df,
-)
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.plotting import to_string
