@@ -180,16 +180,13 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
     )
     """Optional labels identifying the ones which should be actively recommended."""
 
-    def __attrs_post_init__(self):
-        if self._active_values is None:
-            # Uses trick for frozen class, see https://github.com/python-attrs/attrs/issues/120
-            object.__setattr__(self, "_active_values", self.values)
-
     @override
     @property
     def active_values(self) -> tuple[str, ...]:
-        # See base class
-        return self._active_values  # type: ignore[return-value]
+        if self._active_values is None:
+            return self.values
+
+        return self._active_values
 
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
