@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent               Base                        Ligand  \
-    186  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-    1      Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
-    58     Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
+               Solvent                Base                        Ligand  \
+    105    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    168  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
+    279           DMAc   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration  
-    186        120.0          0.057  
-    1           90.0          0.100  
-    58         105.0          0.100  
+    105        120.0          0.057  
+    168        120.0          0.057  
+    279         90.0          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent               Base                        Ligand  \
-    186  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-    1      Butyl Ester     Cesium acetate                 (t-Bu)PhCPhos   
-    58     Butyl Ester  Potassium acetate                 (t-Bu)PhCPhos   
+               Solvent                Base                        Ligand  \
+    105    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    168  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
+    279           DMAc   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    186        120.0          0.057  10.597184  
-    1           90.0          0.100   2.656062  
-    58         105.0          0.100   3.096306  
+    105        120.0          0.057  32.488096  
+    168        120.0          0.057  30.516398  
+    279         90.0          0.057   0.081466  
 
 
 

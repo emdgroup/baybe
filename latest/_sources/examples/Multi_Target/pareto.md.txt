@@ -214,7 +214,8 @@ plt.title("Target Space")
 
 ```python
 plt.tight_layout()
-plt.savefig("pareto.svg")
+if not SMOKE_TEST:
+    plt.savefig("pareto.svg")
 ```
 ```{image} pareto.svg
 :align: center

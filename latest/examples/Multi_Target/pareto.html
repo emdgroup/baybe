@@ -1208,7 +1208,8 @@ and the Pareto frontier in the target space:</p>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pareto.svg&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">SMOKE_TEST</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;pareto.svg&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../../_images/pareto.svg" class="align-center" src="../../_images/pareto.svg" />
