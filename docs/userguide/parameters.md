@@ -60,9 +60,9 @@ the different discrete parameter types BayBE offers.
 :class: note
 After a discrete parameter was created, its possible values are stored in the `values` 
 property. All label-like parameters also support specifying `active_values`, which 
-must be ba susbet of `values`. `active_values` specify which labels are considered 
-for recommendation. Labels which are in `values` but not in `active_values` can be 
-part of measurements, but wont be recommended. Using this mechanism, you can configure 
+must be a subset of `values`. `active_values` specify which labels are considered 
+for recommendation. Labels that are in `values` but not in `active_values` can be 
+part of measurements, but won't be recommended. Using this mechanism, you can configure 
 a campaign to being able to ingest historical data, while running it only in a 
 currently interesting subset of labels.
 ```

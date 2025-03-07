@@ -172,7 +172,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
 
     # class variables
     is_numerical: ClassVar[bool] = False
-    """Class variable encoding whether this parameter is numeric."""
+    # See base class.
 
     # object variables
     _active_values: tuple[str, ...] | None = field(
@@ -222,13 +222,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
 
     @override
     def summary(self) -> dict:
-        param_dict = super().summary()
-        param_dict.update(
-            dict(
-                nActiveValues=len(self.active_values),  # type: ignore[arg-type]
-            )
-        )
-        return param_dict
+        return {**super().summary(), "nActiveValues": len(self.active_values)}
 
 
 @define(frozen=True, slots=False)
