@@ -42,9 +42,9 @@ def opt_v(x: Any, /) -> Callable:
     return optional(instance_of(x))
 
 
-@define
+@define(kw_only=True)
 class BotorchAcquisitionArgs:
-    """The collection of (optional) arguments for BoTorch acquisition functions."""
+    """The collection of (possible) arguments for BoTorch acquisition functions."""
 
     # Always required
     model: Model = field(validator=instance_of(Model))
@@ -53,12 +53,12 @@ class BotorchAcquisitionArgs:
     best_f: float | None = field(default=None, validator=opt_v(float))
     beta: float | None = field(default=None, validator=opt_v(float))
     maximize: bool | None = field(default=None, validator=opt_v(bool))
+    mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
     objective: BObjective | None = field(default=None, validator=opt_v(BObjective))
     prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
+    ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
     X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
     X_pending: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
@@ -88,6 +88,20 @@ class BotorchAcquisitionFunctionBuilder:
     _botorch_acqf_cls: BotorchAcquisitionFunction = field(init=False)
     _signature: MappingProxyType = field(init=False)
     _set_best_f_called: bool = field(init=False, default=False)
+
+    def __attrs_post_init__(self) -> None:
+        """Initialize the building process."""
+        # Retrieve botorch acquisition function class and match attributes
+        self._botorch_acqf_cls = _get_botorch_acqf_class(type(self.acqf))
+        self._signature = signature(self._botorch_acqf_cls).parameters
+        args, _ = match_attributes(
+            self.acqf,
+            self._botorch_acqf_cls.__init__,
+            ignore=self.acqf._non_botorch_attrs,
+        )
+
+        # Pre-populate the acqf arguments with the content of the BayBE acqf
+        self._args = BotorchAcquisitionArgs(model=self.surrogate.to_botorch(), **args)
 
     @cached_property
     def _train_x(self) -> Tensor:
@@ -126,20 +140,6 @@ class BotorchAcquisitionFunctionBuilder:
         self.set_default_sample_shape(botorch_acqf)
 
         return botorch_acqf
-
-    def __attrs_post_init__(self) -> None:
-        """Initialize the building process."""
-        # Retrieve botorch acquisition function class and match attributes
-        self._botorch_acqf_cls = _get_botorch_acqf_class(type(self.acqf))
-        self._signature = signature(self._botorch_acqf_cls).parameters
-        args, _ = match_attributes(
-            self.acqf,
-            self._botorch_acqf_cls.__init__,
-            ignore=self.acqf._non_botorch_attrs,
-        )
-
-        # Pre-populate the acqf arguments with the content of the BayBE acqf
-        self._args = BotorchAcquisitionArgs(self.surrogate.to_botorch(), **args)
 
     def _set_X_baseline(self) -> None:
         """Set BoTorch's ``X_baseline`` argument."""
