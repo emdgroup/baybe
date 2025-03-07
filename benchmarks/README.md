@@ -130,19 +130,19 @@ on:
       group_selection:
         description: "Select the group of benchmarks to run"
         required: true
-        default: "All benchmarks"
+        default: "All"
         type: choice
         options:
-          - "Manually selected benchmarks"
-          - "All benchmarks"
-          - "Default group"
+          - "Manually Selected"
+          - "All"
+          - "Default"
       synthetic_2C1D_1C:
-        description: "Run synthetic_2C1D_1C benchmark"
+        description: "Synthetic_2C1D_1C benchmark"
         required: false
         default: false
         type: boolean
       bar:
-        description: "Run foo benchmark"
+        description: "Foo benchmark"
         required: false
         default: false
         type: boolean
@@ -173,22 +173,22 @@ And you also have to add it to the dropdown menu in the workflow file:
       group_selection:
         description: "Select the group of benchmarks to run"
         required: true
-        default: "Manually selected benchmarks"
+        default: "All"
         type: choice
         options:
-          - "Manually selected benchmarks"
-          - "All benchmarks"
-          - "Default group"
-          - "Foo bar group"                       #<-- Add this line
+          - "Manually Selected"
+          - "All"
+          - "Default"
+          - "Foo bar"             #<-- Add this line
 ```
 
 So that the selected group can be checked in the step `build_matrix_from_group`, where
 you have to add:
 
 ```yaml
-          if [ "$run_all_benchmarks" = "Default group" ]; then
+          if [ "$run_all_benchmarks" = "Default" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
-          elif [ "$run_all_benchmarks" = "Foo bar group" ]; then             #<-- Add this line
+          elif [ "$run_all_benchmarks" = "Foo bar" ]; then                   #<-- Add this line
             benchmarks_to_execute='{"benchmark_list": ${{ env.FOO_BAR }} }'  #<-- Add this line
           fi
 ``` 
