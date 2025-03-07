@@ -105,14 +105,14 @@ ContinuousCardinalityConstraint(
 :class: warning
 
 Note that, compared to optimization with [discrete cardinality
-constraints](#discretecardinalityconstraint), finding optimal cardinality-constrained
+constraints](#DiscreteCardinalityConstraint), finding optimal cardinality-constrained
 solutions in continuous spaces is significantly more challenging due to the
 fractured nature of the resulting space. For larger parameter sets or complex constraint
 settings, searching an optimal parameter configuration can quickly become infeasible,
 creating the need for approximation schemes:
 
 * The
-  [`BotorchRecommender.max_n_subspaces`](baybe.recommenders.pure.bayesian.BotorchRecommender.max_n_subspaces)
+  {paramref}`BotorchRecommender.max_n_subspaces <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.max_n_subspaces>`
   attribute can be used to limit the number of subspaces considered during optimization.
 * When the ranges of cardinality-constrained parameters cover both positive and negative
   values, minimal cardinality requirements cannot always be guaranteed, potentially
@@ -410,7 +410,7 @@ The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
 
 ### DiscreteCardinalityConstraint
-Like its [continuous cousin](#continuouscardinalityconstraint), the
+Like its [continuous cousin](#ContinuousCardinalityConstraint), the
 {class}`~baybe.constraints.discrete.DiscreteCardinalityConstraint` lets you control the
 number of active parameters in your design. The construction works analogously: 
 ```python
