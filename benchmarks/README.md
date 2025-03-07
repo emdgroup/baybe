@@ -104,7 +104,7 @@ format: `<benchmark_name>/<branch>/<latest_baybe_tag>/<execution-date>/<commit_h
 
 The benchmarks will not automatically be executed in the CI/CD pipeline.
 You have to provide them as clickable inputs in the GitHub Actions workflow.
-To do this, a new boolean checkbox needs to be added to the workflow file
+To do this, a new Boolean checkbox needs to be added to the workflow file
 `manual_benchmark.yml` in the`.github/workflows` folder. The checkbox name must exactly
 match the benchmark name. The benchmark `synthetic_2C1D_1C.py` with the callable
 `synthetic_2C1D_1C` (which is named after the callable NOT the file) would look
@@ -118,7 +118,7 @@ like this:
         type: boolean
 ```
 
-Which can just be copied below the existing checkboxes. If we would add a benchmark
+which can just be copied below the existing checkboxes. If we would add a benchmark
 called `foo` with the callable `bar` the checkbox would look like this:
 
 ```yaml
@@ -130,19 +130,19 @@ on:
       group_selection:
         description: "Select the group of benchmarks to run"
         required: true
-        default: "All benchmarks"
+        default: "All"
         type: choice
         options:
-          - "Manually selected benchmarks"
-          - "All benchmarks"
-          - "Default group"
+          - "Manually Selected"
+          - "All"
+          - "Default"
       synthetic_2C1D_1C:
-        description: "Run synthetic_2C1D_1C benchmark"
+        description: "Synthetic_2C1D_1C benchmark"
         required: false
         default: false
         type: boolean
       bar:
-        description: "Run foo benchmark"
+        description: "Foo benchmark"
         required: false
         default: false
         type: boolean
@@ -150,7 +150,7 @@ on:
 
 ### Add benchmark group
 
-There are also groups that can be definer in the workflow file. The benchmarks in the
+There are also groups that can be defined in the workflow file. The benchmarks in the
 groups are jointly executed when the group is selected. Groups are defined as env variables
 in the workflow file. If you want to add `bar` to the `DEFAULT_BENCHMARKS` group, you
 can just write it behind the existing entities separated by a comma:
@@ -167,28 +167,28 @@ env:
     FOO_BAR: '["foo"]'
 ```
 
-And you also have to add it to the dropdown menu in the workflow file:
+You also have to add it to the dropdown menu in the workflow file:
 
 ```yaml
       group_selection:
         description: "Select the group of benchmarks to run"
         required: true
-        default: "Manually selected benchmarks"
+        default: "All"
         type: choice
         options:
-          - "Manually selected benchmarks"
-          - "All benchmarks"
-          - "Default group"
-          - "Foo bar group"                       #<-- Add this line
+          - "Manually Selected"
+          - "All"
+          - "Default"
+          - "Foo bar"             #<-- Add this line
 ```
 
-So that the selected group can be checked in the step `build_matrix_from_group`, where
+so that the selected group can be checked in the step `build_matrix_from_group`, where
 you have to add:
 
 ```yaml
-          if [ "$run_all_benchmarks" = "Default group" ]; then
+          if [ "$run_all_benchmarks" = "Default" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
-          elif [ "$run_all_benchmarks" = "Foo bar group" ]; then             #<-- Add this line
+          elif [ "$run_all_benchmarks" = "Foo bar" ]; then                   #<-- Add this line
             benchmarks_to_execute='{"benchmark_list": ${{ env.FOO_BAR }} }'  #<-- Add this line
           fi
 ``` 
