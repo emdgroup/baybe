@@ -40,6 +40,4 @@ class FilteredSubspaceDiscrete(SubspaceDiscrete):
 
     @override
     def get_candidates(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        mask_todrop = self._excluded.copy()
-        mask_todrop |= ~self.mask_keep
-        return self.exp_rep.loc[~mask_todrop], self.comp_rep.loc[~mask_todrop]
+        return self.exp_rep.loc[self.mask_keep], self.comp_rep.loc[self.mask_keep]

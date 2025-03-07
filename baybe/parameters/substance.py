@@ -2,14 +2,14 @@
 
 import gc
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import Any
 
 import pandas as pd
 from attrs import define, field
 from attrs.validators import and_, deep_mapping, instance_of, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.validation import validate_decorrelation
 from baybe.utils.basic import group_duplicate_values
@@ -29,7 +29,7 @@ Smiles = str
 
 
 @define(frozen=True, slots=False)
-class SubstanceParameter(DiscreteParameter):
+class SubstanceParameter(_DiscreteLabelLikeParameter):
     """Generic substances that are treated with cheminformatics descriptors.
 
     Only a decorrelated subset of descriptors should be used as otherwise this can
@@ -38,10 +38,6 @@ class SubstanceParameter(DiscreteParameter):
     descriptors to about 5-20. The number might be substantially higher with more
     labels given.
     """
-
-    # class variables
-    is_numerical: ClassVar[bool] = False
-    # See base class.
 
     # object variables
     data: dict[str, Smiles] = field(

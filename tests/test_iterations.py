@@ -346,8 +346,23 @@ def test_recommenders_continuous(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Categorical_1", "SomeSetting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
-    ids=["hybrid_params"],
+    [
+        [
+            "Categorical_1",
+            "Some_Setting",
+            "Num_disc_1",
+            "Conti_finite1",
+            "Conti_finite2",
+        ],
+        [
+            "Categorical_1_subset",
+            "Some_Setting",
+            "Num_disc_1",
+            "Conti_finite1",
+            "Conti_finite2",
+        ],
+    ],
+    ids=["hybrid_params", "hybrid_params_with_active_values"],
 )
 def test_recommenders_hybrid(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)

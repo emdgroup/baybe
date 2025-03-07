@@ -319,6 +319,11 @@ class SubspaceContinuous(SerialMixin):
             dtype=DTypeFloatNumpy,
         )
 
+    @property
+    def scaling_bounds(self) -> pd.DataFrame:
+        """The bounds used for scaling the surrogate model input."""
+        return self.comp_rep_bounds
+
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
         """Create a copy of the subspace with certain parameters removed.
 

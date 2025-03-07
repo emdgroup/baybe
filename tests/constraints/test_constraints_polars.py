@@ -88,7 +88,7 @@ def test_polars_prodsum3(parameters, constraints):
 
 @pytest.mark.parametrize(
     "parameter_names",
-    [["Solvent_1", "SomeSetting", "Temperature", "Pressure"]],
+    [["Solvent_1", "Some_Setting", "Temperature", "Pressure"]],
 )
 @pytest.mark.parametrize(
     "constraint_names", [["Constraint_4", "Constraint_5", "Constraint_6"]]
