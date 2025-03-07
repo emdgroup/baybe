@@ -148,4 +148,5 @@ plt.ylabel(y1.name)
 plt.title("Target Space")
 
 plt.tight_layout()
-plt.savefig("pareto.svg")
+if not SMOKE_TEST:
+    plt.savefig("pareto.svg")
