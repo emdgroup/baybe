@@ -6,7 +6,7 @@ on:
       group_selection:
         description: "Group of Benchmarks to Run:"
         required: true
-        default: "All benchmarks"
+        default: "All"
         type: choice
         options:
           - "Manually Selected"
@@ -32,11 +32,11 @@ jobs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
     steps:
       - name: Build matrix from inputs
-        if: ${{ github.event.inputs.group_selection == 'Manually selected benchmarks' || github.event.inputs.group_selection == 'All benchmarks' }}
+        if: ${{ github.event.inputs.group_selection == 'Manually Selected' || github.event.inputs.group_selection == 'All' }}
         id: build_matrix_from_inputs
         run: |
           benchmarks_to_execute='{"benchmark_list": ['
-          run_all_benchmarks=${{ github.event.inputs.group_selection == 'All benchmarks' }}
+          run_all_benchmarks=${{ github.event.inputs.group_selection == 'All' }}
 
           for key in $(echo '${{ toJson(github.event.inputs) }}' | jq -r 'keys_unsorted[]'); do
             if [ "$key" != "group_selection" ]; then
@@ -52,13 +52,13 @@ jobs:
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
 
       - name: Build matrix from group
-        if: ${{ github.event.inputs.group_selection != 'Manually selected benchmarks' && github.event.inputs.group_selection != 'All benchmarks' }}
+        if: ${{ github.event.inputs.group_selection != 'Manually Selected' && github.event.inputs.group_selection != 'All' }}
         id: build_matrix_from_group
         run: |
           benchmarks_to_execute='{"benchmark_list": []}'
           run_all_benchmarks="${{ github.event.inputs.group_selection }}"
 
-          if [ "$run_all_benchmarks" = "Default group" ]; then
+          if [ "$run_all_benchmarks" = "Default" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
           fi
 
@@ -69,7 +69,7 @@ jobs:
         run: |
           echo 'benchmarks_to_execute=${{ env.benchmarks_to_execute }}' >> "$GITHUB_OUTPUT"
           number_of_tasks=$(echo '${{ env.benchmarks_to_execute }}' | jq '.benchmark_list | length')
-          echo "$number_of_tasks"
+
           if [ "$number_of_tasks" -le 0 ]; then
             echo "Please run at least one benchmark"
             exit 1
@@ -100,7 +100,7 @@ jobs:
       - name: Execute Lambda function
         run: |
           aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "M", "repository": "${{ github.repository }}" }'  response.json
-          cat response.json
+
           if ! grep -q '"statusCode": 200' response.json; then
             echo "Lambda function failed. statusCode is not 200."
             exit 1
