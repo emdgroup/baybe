@@ -56,9 +56,6 @@ def space_data() -> (
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
-            # Instead of using RDKIT as in paper the
-            # RDKIT2DDESCRIPTORS is used due to deprecation of
-            # the former
             encoding="RDKIT2DDESCRIPTORS",
         )
         for substance in ["Solvent", "Base", "Ligand"]
