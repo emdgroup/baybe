@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.surrogates.custom" href="baybe.surrogates.custom.html" /><link rel="prev" title="baybe.surrogates.composite.unstructure_surrogate_getter" href="baybe.surrogates.composite.unstructure_surrogate_getter.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.surrogates.custom" href="baybe.surrogates.custom.html" /><link rel="prev" title="baybe.surrogates.composite" href="baybe.surrogates.composite.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>CompositeSurrogate - BayBE documentation</title>
@@ -772,8 +772,6 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.surrogates.composite.html">baybe.surrogates.composite</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><div class="visually-hidden">Toggle navigation of baybe.surrogates.composite</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.composite.structure_surrogate_getter.html">baybe.surrogates.composite.structure_surrogate_getter</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.composite.unstructure_surrogate_getter.html">baybe.surrogates.composite.unstructure_surrogate_getter</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">CompositeSurrogate</a></li>
 </ul>
 </li>
@@ -1164,14 +1162,14 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.surrogates.composite.CompositeSurrogate.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/composite.html#CompositeSurrogate.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.composite.CompositeSurrogate.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/composite.html#CompositeSurrogate.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.composite.CompositeSurrogate.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the posterior for candidates in experimental representation.</p>
 <p>The (independent joint) posterior is represented as a collection of individual
 posterior models computed per target of the involved objective.
 For details, see <a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.posterior()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior_list.PosteriorList" title="(in BoTorch v0.13.1.dev17+g290c0ba)"><code class="xref py py-class docutils literal notranslate"><span class="pre">PosteriorList</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">PosteriorList</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1180,13 +1178,13 @@ For details, see <a class="reference internal" href="baybe.surrogates.base.Surro
 <dt class="sig sig-object py" id="baybe.surrogates.composite.CompositeSurrogate.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/composite.html#CompositeSurrogate.to_botorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.composite.CompositeSurrogate.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Create the botorch-ready representation of the fitted model.</p>
-<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev17+g290c0ba)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
+<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev20+gbba835c)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
 configured such that it can be called with candidate points in <strong>computational
 representation</strong>, that is, input of the form as obtained via
 <a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.transform" title="baybe.searchspace.core.SearchSpace.transform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.searchspace.core.SearchSpace.transform()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.ModelList" title="(in BoTorch v0.13.1.dev17+g290c0ba)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelList</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">ModelList</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1240,14 +1238,14 @@ representation</strong>, that is, input of the form as obtained via
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.surrogates.composite.unstructure_surrogate_getter.html">
+          <a class="prev-page" href="baybe.surrogates.composite.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">baybe.surrogates.composite.unstructure_surrogate_getter</div>
+                <div class="title">baybe.surrogates.composite</div>
                 
               </div>
             </a>

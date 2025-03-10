@@ -772,8 +772,6 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.html">baybe.surrogates.composite</a><input class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><div class="visually-hidden">Toggle navigation of baybe.surrogates.composite</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.structure_surrogate_getter.html">baybe.surrogates.composite.structure_surrogate_getter</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.unstructure_surrogate_getter.html">baybe.surrogates.composite.unstructure_surrogate_getter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html">CompositeSurrogate</a></li>
 </ul>
 </li>
@@ -1135,13 +1133,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base                        Ligand  \
-132  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
-399       p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
+        Solvent               Base                        Ligand  Temperature  \
+73  Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine         90.0   
+41  Butyl Ester    Cesium pivalate                     BrettPhos        105.0   
 
-     Temperature  Concentration  
-132        120.0          0.057  
-399        105.0          0.057  
+    Concentration  
+73          0.100  
+41          0.153  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1154,13 +1152,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-132  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
-399       p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
+        Solvent               Base                        Ligand  Temperature  \
+73  Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine         90.0   
+41  Butyl Ester    Cesium pivalate                     BrettPhos        105.0   
 
-     Temperature  Concentration      yield  
-132        120.0          0.057  19.796961  
-399        105.0          0.057   4.081839  
+    Concentration      yield  
+73          0.100   7.879728  
+41          0.153  11.138883  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

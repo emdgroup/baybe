@@ -771,8 +771,6 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.composite.html">baybe.surrogates.composite</a><input class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><div class="visually-hidden">Toggle navigation of baybe.surrogates.composite</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.composite.structure_surrogate_getter.html">baybe.surrogates.composite.structure_surrogate_getter</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.composite.unstructure_surrogate_getter.html">baybe.surrogates.composite.unstructure_surrogate_getter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html">CompositeSurrogate</a></li>
 </ul>
 </li>
@@ -1189,26 +1187,26 @@
 
 
 
-<div class="viewcode-block" id="structure_surrogate_getter">
-<a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.structure_surrogate_getter.html#baybe.surrogates.composite.structure_surrogate_getter">[docs]</a>
-<span class="nd">@converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
-<span class="k">def</span> <span class="nf">structure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_SurrogateGetter</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_structure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_SurrogateGetter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the object type.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">type_</span> <span class="o">:=</span> <span class="n">obj</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="n">_ReplicationMapping</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">_ReplicationMapping</span><span class="p">[</span><span class="n">SurrogateProtocol</span><span class="p">])</span>
     <span class="k">elif</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;dict&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SurrogateProtocol</span><span class="p">])</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No structure hook implemented for &#39;</span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No structure hook implemented for &#39;</span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="unstructure_surrogate_getter">
-<a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.unstructure_surrogate_getter.html#baybe.surrogates.composite.unstructure_surrogate_getter">[docs]</a>
-<span class="nd">@converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span>
-<span class="k">def</span> <span class="nf">unstructure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">_SurrogateGetter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">_unstructure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">_SurrogateGetter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the object type information.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">converter</span><span class="o">.</span><span class="n">unstructure</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span></div>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">converter</span><span class="o">.</span><span class="n">unstructure</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span>
 
+
+<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook_func</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="ow">is</span> <span class="n">_SurrogateGetter</span><span class="p">,</span> <span class="n">_structure_surrogate_getter</span>
+<span class="p">)</span>
+<span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook_func</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="ow">is</span> <span class="n">_SurrogateGetter</span><span class="p">,</span> <span class="n">_unstructure_surrogate_getter</span>
+<span class="p">)</span>
 </pre></div>
         </article>
       </div>

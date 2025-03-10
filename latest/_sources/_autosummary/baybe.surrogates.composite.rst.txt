@@ -9,14 +9,6 @@ baybe.surrogates.composite
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      structure_surrogate_getter
-      unstructure_surrogate_getter
-   
    
 
    

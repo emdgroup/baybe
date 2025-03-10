@@ -1,6 +1,0 @@
-baybe.surrogates.composite.structure\_surrogate\_getter
-=======================================================
-
-.. currentmodule:: baybe.surrogates.composite
-
-.. autofunction:: structure_surrogate_getter

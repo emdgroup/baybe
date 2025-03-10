@@ -772,8 +772,6 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.html">baybe.surrogates.composite</a><input class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><div class="visually-hidden">Toggle navigation of baybe.surrogates.composite</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.structure_surrogate_getter.html">baybe.surrogates.composite.structure_surrogate_getter</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.unstructure_surrogate_getter.html">baybe.surrogates.composite.unstructure_surrogate_getter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html">CompositeSurrogate</a></li>
 </ul>
 </li>
@@ -1251,15 +1249,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-105    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-168  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
-279           DMAc   Potassium acetate                     BrettPhos   
+           Solvent                Base         Ligand  Temperature  \
+86     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos        105.0   
+119  Butyornitrile      Cesium acetate      BrettPhos         90.0   
+146  Butyornitrile     Cesium pivalate      BrettPhos         90.0   
 
-     Temperature  Concentration  
-105        120.0          0.057  
-168        120.0          0.057  
-279         90.0          0.057  
+     Concentration  
+86           0.153  
+119          0.153  
+146          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1268,15 +1266,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-105    Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-168  Butyornitrile   Potassium acetate                 (t-Bu)PhCPhos   
-279           DMAc   Potassium acetate                     BrettPhos   
+           Solvent                Base         Ligand  Temperature  \
+86     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos        105.0   
+119  Butyornitrile      Cesium acetate      BrettPhos         90.0   
+146  Butyornitrile     Cesium pivalate      BrettPhos         90.0   
 
-     Temperature  Concentration      yield  
-105        120.0          0.057  32.488096  
-168        120.0          0.057  30.516398  
-279         90.0          0.057   0.081466  
+     Concentration     yield  
+86           0.153  9.344728  
+119          0.153  3.846179  
+146          0.153  8.629270  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
