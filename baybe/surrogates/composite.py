@@ -134,8 +134,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         return PosteriorList(*posteriors)
 
 
-@converter.register_structure_hook
-def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
+def _structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
     """Resolve the object type."""
     if (type_ := obj.pop("type")) == _ReplicationMapping.__name__:
         return converter.structure(obj, _ReplicationMapping[SurrogateProtocol])
@@ -144,7 +143,14 @@ def structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
     raise NotImplementedError(f"No structure hook implemented for '{type_}'.")
 
 
-@converter.register_unstructure_hook
-def unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
+def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Add the object type information."""
     return {"type": type(obj).__name__, **converter.unstructure(obj)}
+
+
+converter.register_structure_hook_func(
+    lambda t: t is _SurrogateGetter, _structure_surrogate_getter
+)
+converter.register_unstructure_hook_func(
+    lambda t: t is _SurrogateGetter, _unstructure_surrogate_getter
+)
