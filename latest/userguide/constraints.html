@@ -1119,6 +1119,44 @@ The following constraint would achieve this:</p>
 <p>A more detailed example can be found
 <a class="reference internal" href="../examples/Constraints_Continuous/linear_constraints.html"><span class="doc std std-doc">here</span></a>.</p>
 </section>
+<section id="continuouscardinalityconstraint">
+<h3>ContinuousCardinalityConstraint<a class="headerlink" href="#continuouscardinalityconstraint" title="Link to this heading">¶</a></h3>
+<p>The <a class="reference internal" href="../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint" title="baybe.constraints.continuous.ContinuousCardinalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContinuousCardinalityConstraint</span></code></a> gives you a
+tool to control the number of active factors (i.e. parameters that take a non-zero
+value) in your designs. This comes handy, for example, when designing mixtures with a
+limited number of components.</p>
+<p>To create a constraint of this kind, simply specify the set of parameters on which the
+constraint is to be imposed, together with the corresponding upper and lower cardinality
+limits. For instance, the following constraint would ensure that there is always a
+minimum of one and a maximum of two components in each parameter configuration:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="n">ContinuousCardinalityConstraint</span>
+
+<span class="n">ContinuousCardinalityConstraint</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x_1&quot;</span><span class="p">,</span> <span class="s2">&quot;x_2&quot;</span><span class="p">,</span> <span class="s2">&quot;x_3&quot;</span><span class="p">],</span>
+    <span class="n">min_cardinality</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># defaults to 0</span>
+    <span class="n">max_cardinality</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>  <span class="c1"># defaults to the number of affected parameters (here: 3)</span>
+    <span class="n">relative_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>  <span class="c1"># optional, defines the range of values considered active</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="warning admonition">
+<p class="admonition-title">Computational Challenges</p>
+<p>Note that, compared to optimization with <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint" title="baybe.constraints.discrete.DiscreteCardinalityConstraint"><span class="xref myst py py-class">discrete cardinality
+constraints</span></a>, finding optimal cardinality-constrained
+solutions in continuous spaces is significantly more challenging due to the
+fractured nature of the resulting space. For larger parameter sets or complex constraint
+settings, searching an optimal parameter configuration can quickly become infeasible,
+creating the need for approximation schemes:</p>
+<ul class="simple">
+<li><p>The
+<a class="reference internal" href="../_autosummary/baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.html#baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.params.max_n_subspaces" title="baybe.recommenders.pure.bayesian.botorch.BotorchRecommender"><code class="xref py py-paramref docutils literal notranslate"><span class="pre">BotorchRecommender.max_n_subspaces</span></code></a>
+attribute can be used to limit the number of subspaces considered during optimization.</p></li>
+<li><p>When the ranges of cardinality-constrained parameters cover both positive and negative
+values, minimal cardinality requirements cannot always be guaranteed, potentially
+resulting in a <a class="reference internal" href="../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html#baybe.exceptions.MinimumCardinalityViolatedWarning" title="baybe.exceptions.MinimumCardinalityViolatedWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinimumCardinalityViolatedWarning</span></code></a>.</p></li>
+</ul>
+</div>
+</section>
 </section>
 <section id="conditions">
 <h2>Conditions<a class="headerlink" href="#conditions" title="Link to this heading">¶</a></h2>
@@ -1483,6 +1521,21 @@ dependencies as well:</p>
 <p>The usage of <code class="docutils literal notranslate"><span class="pre">DiscretePermutationInvarianceConstraint</span></code> is also part of the
 <a class="reference internal" href="../examples/Mixtures/slot_based.html"><span class="doc std std-doc">example on slot-based mixtures</span></a>.</p>
 </section>
+<section id="discretecardinalityconstraint">
+<h3>DiscreteCardinalityConstraint<a class="headerlink" href="#discretecardinalityconstraint" title="Link to this heading">¶</a></h3>
+<p>Like its <a class="reference internal" href="../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint" title="baybe.constraints.continuous.ContinuousCardinalityConstraint"><span class="xref myst py py-class">continuous cousin</span></a>, the
+<a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint" title="baybe.constraints.discrete.DiscreteCardinalityConstraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">DiscreteCardinalityConstraint</span></code></a> lets you control the
+number of active parameters in your design. The construction works analogously:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="n">DiscreteCardinalityConstraint</span>
+
+<span class="n">DiscreteCardinalityConstraint</span><span class="p">(</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Fraction_1&quot;</span><span class="p">,</span> <span class="s2">&quot;Fraction_2&quot;</span><span class="p">,</span> <span class="s2">&quot;Fraction_3&quot;</span><span class="p">],</span>
+    <span class="n">min_cardinality</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># defaults to 0</span>
+    <span class="n">max_cardinality</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>  <span class="c1"># defaults to the number of affected parameters (here: 3)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="discretecustomconstraint">
 <h3>DiscreteCustomConstraint<a class="headerlink" href="#discretecustomconstraint" title="Link to this heading">¶</a></h3>
 <p>With a <a class="reference internal" href="../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html#baybe.constraints.discrete.DiscreteCustomConstraint" title="baybe.constraints.discrete.DiscreteCustomConstraint"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DiscreteCustomConstraint</span></code></span></a>
@@ -1581,6 +1634,7 @@ the corresponding object or higher-level objects containing it.</p>
 <li><a class="reference internal" href="#">Constraints</a><ul>
 <li><a class="reference internal" href="#continuous-constraints">Continuous Constraints</a><ul>
 <li><a class="reference internal" href="#continuouslinearconstraint">ContinuousLinearConstraint</a></li>
+<li><a class="reference internal" href="#continuouscardinalityconstraint">ContinuousCardinalityConstraint</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#conditions">Conditions</a><ul>
@@ -1595,6 +1649,7 @@ the corresponding object or higher-level objects containing it.</p>
 <li><a class="reference internal" href="#discretelinkedparametersconstraint">DiscreteLinkedParametersConstraint</a></li>
 <li><a class="reference internal" href="#discretedependenciesconstraint">DiscreteDependenciesConstraint</a></li>
 <li><a class="reference internal" href="#discretepermutationinvarianceconstraint">DiscretePermutationInvarianceConstraint</a></li>
+<li><a class="reference internal" href="#discretecardinalityconstraint">DiscreteCardinalityConstraint</a></li>
 <li><a class="reference internal" href="#discretecustomconstraint">DiscreteCustomConstraint</a></li>
 </ul>
 </li>
