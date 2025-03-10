@@ -66,15 +66,15 @@ def get_data() -> pd.DataFrame:
     Returns:
         Data for benchmark.
     """
-    test_functions = {
-        "Test_Function": lambda x: Easom(x, negate=True),
-        "Training_Function": lambda x: Easom(x, noise_std=0.05, negate=True),
+    functions = {
+        "Target_Function": lambda x: Easom(x, negate=True),
+        "Source_Function": lambda x: Easom(x, noise_std=0.05, negate=True),
     }
 
     grid = np.meshgrid(*[points for points in _grid_locations().values()])
 
     lookups = []
-    for function_name, function in test_functions.items():
+    for function_name, function in functions.items():
         lookup = pd.DataFrame(
             {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)}
         )
@@ -88,8 +88,8 @@ def get_data() -> pd.DataFrame:
 
 data = get_data()
 
-test_task = "Test_Function"
-source_task = "Training_Function"
+target_task = "Target_Function"
+source_task = "Source_Function"
 
 
 def space_data() -> (
@@ -117,15 +117,15 @@ def space_data() -> (
 
     task_param = TaskParameter(
         name="Function",
-        values=[test_task, source_task],
-        active_values=[test_task],
+        values=[target_task, source_task],
+        active_values=[target_task],
     )
 
     objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MAX"))
     searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
     searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
-    lookup = data.query(f'Function=="{test_task}"').copy(deep=True)
+    lookup = data.query(f'Function=="{target_task}"').copy(deep=True)
     initial_data = data.query(f'Function=="{source_task}"', engine="python").copy(
         deep=True
     )

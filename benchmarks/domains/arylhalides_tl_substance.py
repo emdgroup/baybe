@@ -32,8 +32,8 @@ def get_data() -> pd.DataFrame:
 
 data = get_data()
 
-test_task = "1-iodo-4-methoxybenzene"
-source_task = [
+target_tasks = ["1-iodo-4-methoxybenzene"]
+source_tasks = [
     # Dissimilar source task
     "1-chloro-4-(trifluoromethyl)benzene"
 ]
@@ -66,16 +66,16 @@ def space_data() -> (
 
     task_param = TaskParameter(
         name="aryl_halide",
-        values=[test_task] + source_task,
-        active_values=[test_task],
+        values=target_tasks + source_tasks,
+        active_values=target_tasks,
     )
 
     objective = SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
     searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
     searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
-    lookup = data.query(f'aryl_halide=="{test_task}"').copy(deep=True)
-    initial_data = data.query("aryl_halide.isin(@source_task)", engine="python").copy(
+    lookup = data.query("aryl_halide.isin(@target_tasks)").copy(deep=True)
+    initial_data = data.query("aryl_halide.isin(@source_tasks)", engine="python").copy(
         deep=True
     )
 
