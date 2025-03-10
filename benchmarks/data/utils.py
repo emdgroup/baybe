@@ -1,5 +1,5 @@
 """Utils for reading data."""
 
-import os
+from pathlib import Path
 
-DATA_PATH = os.sep.join(__file__.split(os.sep)[:-1]) + os.sep
+DATA_PATH = Path(*Path(__file__).parts[:-1])
