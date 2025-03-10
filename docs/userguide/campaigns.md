@@ -144,6 +144,19 @@ statistics) of the target predictions for the provided candidates:
 | 18 | 56.12      | 2.34      | 87.32            | 12.38            |.....|
 |  9 | 59.10      | 5.34      | 83.72            | 9.62             |.....|
 
+You can also provide an optional sequence of statistic names to compute other 
+statistics. If a float is provided, the corresponding quantile points will be 
+calculated:
+~~~python
+stats = campaign.posterior_statistics(rec, statistics=["mode", 0.5])
+~~~
+
+|    | Yield_mode | Yield_Q_0.5 | Selectivity_mode | Selectivity_Q_0.5 | ... |
+|---:|:-----------|:------------|:-----------------|:------------------|-----|
+| 15 | 83.54      | 83.54       | 91.22            | 91.22             |.....|
+| 18 | 56.12      | 56.12       | 87.32            | 87.32             |.....|
+|  9 | 59.10      | 59.10       | 83.72            | 83.72             |.....|
+
 ```{admonition} Posterior Statistics with Desirability Objectives
 :class: note
 A [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective) 

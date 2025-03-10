@@ -6,11 +6,12 @@ import gc
 import json
 from collections.abc import Callable, Collection
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, Sequence, TypeAlias
 
 import cattrs
 import numpy as np
 import pandas as pd
+import torch
 from attrs import Attribute, Factory, define, evolve, field, fields
 from attrs.converters import optional
 from attrs.validators import instance_of
@@ -87,6 +88,9 @@ def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -
                     f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' cannot be set "
                     f"since the flag is meaningless in such contexts.",
                 )
+
+
+Statistic: TypeAlias = float | Literal["mean", "std", "variance", "mode"]
 
 
 @define
@@ -529,69 +533,75 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        import torch
-
         with torch.no_grad():
             return surrogate.posterior(candidates)
 
     def posterior_statistics(
-        self, candidates: pd.DataFrame, std_instead_of_var: bool = True
+        self, candidates: pd.DataFrame, statistics: Sequence[Statistic] | None = None
     ) -> pd.DataFrame:
         """Return common posterior statistics for each target.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
+            candidates: The candidate points in experimental representation.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
-            std_instead_of_var: Flag deciding if the standard deviation or variance is
-                returned (if supported by the posterior).
+            statistics: Sequence indicating which statistics to compute. Also accepts
+                floats, for which the corresponding quantile point will be computed.
 
         Raises:
+            ValueError: If a requested quantile is outside the open interval (0,1).
             TypeError: If the posterior utilized by the surrogate does not support
-                any of the possible statistics.
+                a requested statistic.
 
         Returns:
             Data frame with prediction statistics for each target for each candidate.
         """
+        statistics = statistics or ["mean", "std"]
+        for stat in (x for x in statistics if isinstance(x, float)):
+            if not 0 < stat < 1.0:
+                raise ValueError(
+                    f"Posterior quantile statistics can only be computed for quantiles "
+                    f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
+                    f"part of {statistics=}'."
+                )
         posterior = self.posterior(candidates)
-
-        considered_stats = ["mean", "variance", "mode"]
-        supported_stats = [x for x in considered_stats if hasattr(posterior, x)]
-        if not supported_stats:
-            raise TypeError(
-                f"The utilized posterior is of type {posterior.__class__.__name__} and "
-                f"does not support any of the possible statistics: {considered_stats}. "
-                f"To call {self.posterior_statistics.__name__}, at least one of these "
-                f"statistics must be supported by the surrogate posterior."
-            )
 
         assert self.objective is not None
         match self.objective:
             case DesirabilityObjective():
                 # TODO: Once desirability also supports posterior transforms this check
-                #  here will have to depend on the configuration of the obejctive and
+                #  here will have to depend on the configuration of the objective and
                 #  whether it uses the transforms or not.
                 targets = ["Desirability"]
             case _:
                 targets = [t.name for t in self.objective.targets]
 
-        stats = pd.DataFrame(index=candidates.index)
+        result = pd.DataFrame(index=candidates.index)
         for i, t in enumerate(targets):
-            for stat in supported_stats:
-                vals = (
-                    getattr(posterior, stat)
-                    .cpu()
-                    .numpy()
-                    .reshape((len(stats), len(targets)))
-                )
-                if stat == "variance" and std_instead_of_var:
-                    stat_name = "std"
-                    vals = np.sqrt(vals)
-                else:
-                    stat_name = stat
+            for stat in statistics:
+                stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
 
-                stats[f"{t}_{stat_name}"] = vals[:, i]
+                try:
+                    vals = (
+                        posterior.quantile(torch.tensor(stat))
+                        if isinstance(stat, float)
+                        else getattr(posterior, stat if stat != "std" else "variance")
+                    )
+                    if stat == "std":
+                        vals = torch.sqrt(vals)
+                except (AttributeError, NotImplementedError) as e:
+                    # We could arrive here because an invalid statistics string has
+                    # been requested or because a quantile point has been requested,
+                    # but the posterior type does not implement quantiles.
+                    raise TypeError(
+                        f"The utilized posterior of type "
+                        f"{posterior.__class__.__name__} does not support the "
+                        f"statistic associated with the requested input '{stat}'."
+                    ) from e
 
-        return stats
+                vals = vals.cpu().numpy().reshape((len(result), len(targets)))
+                result[f"{t}_{stat_name}"] = vals[:, i]
+
+        return result
 
     def get_surrogate(
         self,

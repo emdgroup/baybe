@@ -167,17 +167,22 @@ def test_setting_allow_flags(flag, space_type, value):
         ),
     ],
 )
-@pytest.mark.parametrize("std_instead_of_var", [True, False], ids=["std", "var"])
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-def test_posterior_statistics(
-    ongoing_campaign, n_iterations, batch_size, std_instead_of_var
-):
+def test_posterior_statistics(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics can have expected shape, index and columns."""
-    stats = ongoing_campaign.posterior_statistics(
-        ongoing_campaign.measurements, std_instead_of_var
+    objective = ongoing_campaign.objective
+    tested_stats = {"mean", "std"}
+    test_quantiles = not (
+        isinstance(objective, ParetoObjective)
+        or isinstance(objective.targets[0], BinaryTarget)
     )
-    print(stats)
+    if test_quantiles:
+        tested_stats |= {0.05, 0.95}
+
+    stats = ongoing_campaign.posterior_statistics(
+        ongoing_campaign.measurements, tested_stats
+    )
 
     # Assert number of entries and index
     (
@@ -185,19 +190,37 @@ def test_posterior_statistics(
         (ongoing_campaign.measurements.index, stats.index),
     )
 
-    # Assert expected columns are present
-    # mode is not tested as Pareto posteriors do not provide it.
-    match ongoing_campaign.objective:
+    # Assert expected columns are present.
+    match objective:
         case DesirabilityObjective():
             targets = ["Desirability"]
         case _:
-            targets = [t.name for t in ongoing_campaign.objective.targets]
-    tested_stats = {"mean"} | ({"std"} if std_instead_of_var else {"variance"})
+            targets = [t.name for t in objective.targets]
+
     for t in targets:
         for stat in tested_stats:
+            stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
             assert (
-                sum(f"{t}_{stat}" in x for x in stats.columns) == 1
-            ), f"{t}_{stat} not in the returned posterior statistics"
+                sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1
+            ), f"{t}_{stat_name} not in the returned posterior statistics"
 
     # Assert no NaN's present
     assert not stats.isna().any().any()
+
+    # Assert correct error for unsupported statistics
+    with pytest.raises(TypeError, match="does not support the statistic associated"):
+        ongoing_campaign.posterior_statistics(
+            ongoing_campaign.measurements, ["invalid"]
+        )
+
+    if test_quantiles:
+        # Assert correct error for invalid quantiles
+        with pytest.raises(ValueError, match="quantile statistics can only be"):
+            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [-0.1])
+            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [1.1])
+    else:
+        # Assert correct error for unsupported quantile calculation
+        with pytest.raises(
+            TypeError, match="does not support the statistic associated"
+        ):
+            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [0.1])
