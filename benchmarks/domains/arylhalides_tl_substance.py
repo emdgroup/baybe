@@ -26,12 +26,9 @@ def get_data() -> pd.DataFrame:
         Data for benchmark.
     """
     data_path = DATA_PATH + "ArylHalides" + os.sep
-    data = pd.read_table(data_path + "data.csv", sep=",")
-    data_raw = pd.read_table(data_path + "data_raw.csv", sep=",")
-    for substance in ["base", "ligand", "additive"]:
-        data[substance + "_smiles"] = data[substance].map(
-            dict(zip(data_raw[substance], data_raw[substance + "_smiles"]))
-        )
+    data = pd.read_table(data_path + "data_raw.csv", sep=",").dropna(
+        subset=["base", "ligand", "additive", "aryl_halide"]
+    )
     return data
 
 
