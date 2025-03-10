@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import os
-
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -25,8 +23,8 @@ def get_data() -> pd.DataFrame:
     Returns:
         Data for benchmark.
     """
-    data_path = DATA_PATH + "ArylHalides" + os.sep
-    data = pd.read_table(data_path + "data_raw.csv", sep=",").dropna(
+    data_path = DATA_PATH / "ArylHalides"
+    data = pd.read_table(data_path / "data_raw.csv", sep=",").dropna(
         subset=["base", "ligand", "additive", "aryl_halide"]
     )
     return data
