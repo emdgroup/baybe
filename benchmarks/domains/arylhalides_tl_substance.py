@@ -40,11 +40,13 @@ source_task = [
 
 
 def space_data() -> (
-    SingleTargetObjective,
-    SearchSpace,
-    SearchSpace,
-    pd.DataFrame,
-    pd.DataFrame,
+    tuple[
+        SingleTargetObjective,
+        SearchSpace,
+        SearchSpace,
+        pd.DataFrame,
+        pd.DataFrame,
+    ]
 ):
     """Definition of search space, objective, and data.
 

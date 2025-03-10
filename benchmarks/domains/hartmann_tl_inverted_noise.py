@@ -75,11 +75,13 @@ source_task = "Training_Function"
 
 
 def space_data() -> (
-    SingleTargetObjective,
-    SearchSpace,
-    SearchSpace,
-    pd.DataFrame,
-    pd.DataFrame,
+    tuple[
+        SingleTargetObjective,
+        SearchSpace,
+        SearchSpace,
+        pd.DataFrame,
+        pd.DataFrame,
+    ]
 ):
     """Definition of search space, objective, and data.
 
@@ -125,9 +127,9 @@ def hartmann_tl_inverted_noise(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     Objective: Maximization
     Optimal Inputs: [
         {
-            x0 0.25
-            x1 0.6
-            x2 0.75
+            x0: 0.25,
+            x1: 0.6,
+            x2: 0.75
         }
     ]
     Optimal Output: 2.999716768817375
