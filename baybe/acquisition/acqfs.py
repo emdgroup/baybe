@@ -2,6 +2,7 @@
 
 import gc
 import math
+from abc import ABC
 from typing import ClassVar
 
 import numpy as np
@@ -336,10 +337,9 @@ class qLogNParEGO(AcquisitionFunction):
 ########################################################################################
 ### Hypervolume Improvement
 @define(frozen=True)
-class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
-    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
+    """Expected hypervolume improvement base class."""
 
-    abbreviation: ClassVar[str] = "qLogNEHVI"
     supports_multi_output: ClassVar[bool] = True
 
     reference_point: float | tuple[float, ...] | None = field(
@@ -354,9 +354,6 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     * When specified as an iterable, the contained values are directly interpreted as
       the coordinates of the reference point.
     """
-
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
 
     @override
     @classproperty
@@ -422,6 +419,16 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
         max = np.max(array, axis=0)
 
         return (min - factor * (max - min)) * maximize
+
+
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
