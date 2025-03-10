@@ -93,9 +93,9 @@ def arylhalides_tl_substance(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     Objective: Maximization
     Optimal Inputs: [
         {
-            base    MTBD
-            ligand  AdBrettPhos
-            additive N,N-dibenzylisoxazol-3-amine
+            base: "MTBD",
+            ligand: "AdBrettPhos",
+            additive: "N,N-dibenzylisoxazol-3-amine"
         }
     ]
     Optimal Output: 68.24812709999999
