@@ -129,10 +129,10 @@ far. This is done by setting the following Boolean flags:
 You might be interested in statistics about the predicted target values for your 
 recommendations, or indeed for any set of possible candidate points. The 
 [`posterior`](baybe.campaign.Campaign.posterior) and 
-[`posterior_statistics`](baybe.campaign.Campaign.posterior_statistics) methods provide
+[`posterior_stats`](baybe.campaign.Campaign.posterior_stats) methods provide
 a simple interface to look at the resulting statistics:
 ~~~python
-stats = campaign.posterior_statistics(rec)
+stats = campaign.posterior_stats(rec)
 ~~~
 
 This will return a table with mean and standard deviation (and possibly other 
@@ -148,7 +148,7 @@ You can also provide an optional sequence of statistic names to compute other
 statistics. If a float is provided, the corresponding quantile points will be 
 calculated:
 ~~~python
-stats = campaign.posterior_statistics(rec, statistics=["mode", 0.5])
+stats = campaign.posterior_stats(rec, stats=["mode", 0.5])
 ~~~
 
 |    | Yield_mode | Yield_Q_0.5 | Selectivity_mode | Selectivity_Q_0.5 | ... |

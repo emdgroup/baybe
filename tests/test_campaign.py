@@ -169,8 +169,8 @@ def test_setting_allow_flags(flag, space_type, value):
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-def test_posterior_statistics(ongoing_campaign, n_iterations, batch_size):
-    """Posterior statistics can have expected shape, index and columns."""
+def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
+    """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
     tested_stats = {"mean", "std"}
     test_quantiles = not (
@@ -180,7 +180,7 @@ def test_posterior_statistics(ongoing_campaign, n_iterations, batch_size):
     if test_quantiles:
         tested_stats |= {0.05, 0.95}
 
-    stats = ongoing_campaign.posterior_statistics(
+    stats = ongoing_campaign.posterior_stats(
         ongoing_campaign.measurements, tested_stats
     )
 
@@ -209,18 +209,16 @@ def test_posterior_statistics(ongoing_campaign, n_iterations, batch_size):
 
     # Assert correct error for unsupported statistics
     with pytest.raises(TypeError, match="does not support the statistic associated"):
-        ongoing_campaign.posterior_statistics(
-            ongoing_campaign.measurements, ["invalid"]
-        )
+        ongoing_campaign.posterior_stats(ongoing_campaign.measurements, ["invalid"])
 
     if test_quantiles:
         # Assert correct error for invalid quantiles
         with pytest.raises(ValueError, match="quantile statistics can only be"):
-            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [-0.1])
-            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [1.1])
+            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [-0.1])
+            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [1.1])
     else:
         # Assert correct error for unsupported quantile calculation
         with pytest.raises(
             TypeError, match="does not support the statistic associated"
         ):
-            ongoing_campaign.posterior_statistics(ongoing_campaign.measurements, [0.1])
+            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [0.1])

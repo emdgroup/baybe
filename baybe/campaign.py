@@ -536,15 +536,15 @@ class Campaign(SerialMixin):
         with torch.no_grad():
             return surrogate.posterior(candidates)
 
-    def posterior_statistics(
-        self, candidates: pd.DataFrame, statistics: Sequence[Statistic] | None = None
+    def posterior_stats(
+        self, candidates: pd.DataFrame, stats: Sequence[Statistic] | None = None
     ) -> pd.DataFrame:
         """Return common posterior statistics for each target.
 
         Args:
             candidates: The candidate points in experimental representation.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
-            statistics: Sequence indicating which statistics to compute. Also accepts
+            stats: Sequence indicating which statistics to compute. Also accepts
                 floats, for which the corresponding quantile point will be computed.
 
         Raises:
@@ -555,13 +555,13 @@ class Campaign(SerialMixin):
         Returns:
             Data frame with prediction statistics for each target for each candidate.
         """
-        statistics = statistics or ["mean", "std"]
-        for stat in (x for x in statistics if isinstance(x, float)):
+        stats = stats or ["mean", "std"]
+        for stat in (x for x in stats if isinstance(x, float)):
             if not 0 < stat < 1.0:
                 raise ValueError(
                     f"Posterior quantile statistics can only be computed for quantiles "
                     f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
-                    f"part of {statistics=}'."
+                    f"part of {stats=}'."
                 )
         posterior = self.posterior(candidates)
 
@@ -577,7 +577,7 @@ class Campaign(SerialMixin):
 
         result = pd.DataFrame(index=candidates.index)
         for i, t in enumerate(targets):
-            for stat in statistics:
+            for stat in stats:
                 stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
 
                 try:
