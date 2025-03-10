@@ -18,7 +18,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 
-DIMENSION = 4  # input dimensionality of the test function
+DIMENSION = 4  # input dimensionality of the function
 POINTS_PER_DIM = 15  # number of grid points per input dimension
 BOUNDS = Michalewicz(dim=DIMENSION).bounds
 
@@ -42,11 +42,11 @@ def get_data() -> pd.DataFrame:
     Returns:
         Data for benchmark.
     """
-    test_functions = {
-        "Test_Function": lambda x: Michalewicz(dim=DIMENSION, negate=True)
+    functions = {
+        "Target_Function": lambda x: Michalewicz(dim=DIMENSION, negate=True)
         .forward(torch.tensor(x))
         .item(),
-        "Training_Function": lambda x: Michalewicz(
+        "Source_Function": lambda x: Michalewicz(
             dim=DIMENSION, noise_std=0.15, negate=True
         )
         .forward(torch.tensor(x))
@@ -56,7 +56,7 @@ def get_data() -> pd.DataFrame:
     grid = np.meshgrid(*[points for points in _grid_locations().values()])
 
     lookups = []
-    for function_name, function in test_functions.items():
+    for function_name, function in functions.items():
         lookup = pd.DataFrame(
             {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)}
         )
@@ -70,8 +70,8 @@ def get_data() -> pd.DataFrame:
 
 data = get_data()
 
-test_task = "Test_Function"
-source_task = "Training_Function"
+target_task = "Target_Function"
+source_task = "Source_Function"
 
 
 def space_data() -> (
@@ -99,15 +99,15 @@ def space_data() -> (
 
     task_param = TaskParameter(
         name="Function",
-        values=[test_task, source_task],
-        active_values=[test_task],
+        values=[target_task, source_task],
+        active_values=[target_task],
     )
 
     objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MAX"))
     searchspace = SearchSpace.from_product(parameters=[*data_params, task_param])
     searchspace_nontl = SearchSpace.from_product(parameters=data_params)
 
-    lookup = data.query(f'Function=="{test_task}"').copy(deep=True)
+    lookup = data.query(f'Function=="{target_task}"').copy(deep=True)
     initial_data = data.query(f'Function=="{source_task}"', engine="python").copy(
         deep=True
     )
