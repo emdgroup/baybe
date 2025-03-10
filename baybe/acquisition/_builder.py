@@ -7,7 +7,6 @@ from types import MappingProxyType
 from typing import Any
 
 import botorch.acquisition as bo_acqf
-import numpy as np
 import pandas as pd
 import torch
 from attrs import asdict, define, field, fields
@@ -104,14 +103,12 @@ class BotorchAcquisitionFunctionBuilder:
         self._args = BotorchAcquisitionArgs(model=self.surrogate.to_botorch(), **args)
 
     @cached_property
-    def _train_x(self) -> Tensor:
-        return to_tensor(
-            self.searchspace.transform(self.measurements, allow_extra=True)
-        )
+    def _train_x(self) -> pd.DataFrame:
+        return self.searchspace.transform(self.measurements, allow_extra=True)
 
     @cached_property
-    def _train_y(self) -> np.ndarray:
-        return self.measurements[[t.name for t in self.objective.targets]].to_numpy()
+    def _train_y(self) -> pd.DataFrame:
+        return self.measurements[[t.name for t in self.objective.targets]]
 
     @cached_property
     def _botorch_surrogate(self) -> Model:
@@ -146,7 +143,7 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.X_baseline.name not in self._signature:
             return
 
-        self._args.X_baseline = self._train_x
+        self._args.X_baseline = to_tensor(self._train_x)
 
     def _set_mc_points(self) -> None:
         """Set BoTorch's ``mc_points`` argument."""
@@ -175,13 +172,13 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.best_f.name not in self._signature:
             return
 
-        posterior_mean = self._botorch_surrogate.posterior(self._train_x).mean
+        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
 
         match self.objective:
             case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                self._args.best_f = posterior_mean.min().item()
+                self._args.best_f = post_mean.min().item()
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = posterior_mean.max().item()
+                self._args.best_f = post_mean.max().item()
 
     def _invert_optimization_direction(self) -> None:
         """Invert optimization direction for minimization targets."""
@@ -234,7 +231,7 @@ class BotorchAcquisitionFunctionBuilder:
             kwargs = {} if ref_point is None else {"factor": ref_point}
             self._args.ref_point = torch.tensor(
                 self.acqf.compute_ref_point(
-                    self._train_y, self._maximize_flags, **kwargs
+                    self._train_y.to_numpy(), self._maximize_flags, **kwargs
                 )
                 * self._multiplier
             )
