@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Literal, Sequence, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 
 import cattrs
 import numpy as np
@@ -576,8 +576,8 @@ class Campaign(SerialMixin):
                 targets = [t.name for t in self.objective.targets]
 
         result = pd.DataFrame(index=candidates.index)
-        for i, t in enumerate(targets):
-            for stat in stats:
+        for k, t in enumerate(targets):
+            for stat in stats:  # type: ignore[assignment]
                 stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
 
                 try:
@@ -599,7 +599,7 @@ class Campaign(SerialMixin):
                     ) from e
 
                 vals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                result[f"{t}_{stat_name}"] = vals[:, i]
+                result[f"{t}_{stat_name}"] = vals[:, k]
 
         return result
 
