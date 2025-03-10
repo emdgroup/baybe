@@ -37,11 +37,13 @@ data = get_data()
 
 
 def space_data() -> (
-    SingleTargetObjective,
-    SearchSpace,
-    SearchSpace,
-    pd.DataFrame,
-    pd.DataFrame,
+    tuple[
+        SingleTargetObjective,
+        SearchSpace,
+        SearchSpace,
+        pd.DataFrame,
+        pd.DataFrame,
+    ]
 ):
     """Definition of search space, objective, and data.
 
@@ -96,16 +98,16 @@ def direct_arylation_tl_temp(settings: ConvergenceBenchmarkSettings) -> pd.DataF
     Objective: Maximization
     Optimal Inputs: [
         {
-            Base    Cesium acetate
-            Ligand  SCHEMBL15068049
-            Solvent DMAc
-            Concentration   0.153
+            Base: "Cesium acetate",
+            Ligand: "SCHEMBL15068049",
+            Solvent: "DMAc",
+            Concentration: 0.153
         },
         {
-            Base    Cesium pivalate
-            Ligand  SCHEMBL15068049
-            Solvent DMAc
-            Concentration   0.153
+            Base: "Cesium pivalate",
+            Ligand: "SCHEMBL15068049",
+            Solvent: "DMAc",
+            Concentration: 0.153
         },
     ]
     Optimal Output: 100.0

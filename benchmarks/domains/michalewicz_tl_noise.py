@@ -75,11 +75,13 @@ source_task = "Training_Function"
 
 
 def space_data() -> (
-    SingleTargetObjective,
-    SearchSpace,
-    SearchSpace,
-    pd.DataFrame,
-    pd.DataFrame,
+    tuple[
+        SingleTargetObjective,
+        SearchSpace,
+        SearchSpace,
+        pd.DataFrame,
+        pd.DataFrame,
+    ]
 ):
     """Definition of search space, objective, and data.
 
@@ -126,10 +128,10 @@ def michalewicz_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame
     Objective: Maximization
     Optimal Inputs: [
         {
-            x0 2.243995
-            x1 1.570796
-            x2 1.346397
-            x3 1.121997
+            x0: 2.243995,
+            x1: 1.570796,
+            x2: 1.346397,
+            x3: 1.121997
         }
     ]
     Optimal Output: 3.418800985955677
