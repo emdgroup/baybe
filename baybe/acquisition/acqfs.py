@@ -286,6 +286,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
     """See :paramref:`UpperConfidenceBound.beta`."""
 
 
+########################################################################################
+### ThompsonSampling
 @define(frozen=True)
 class qThompsonSampling(qSimpleRegret):
     """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based.
