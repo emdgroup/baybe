@@ -3,6 +3,7 @@
 
 import argparse
 import os
+from collections.abc import Collection
 
 from benchmarks.definition import Benchmark
 from benchmarks.domains import BENCHMARKS
@@ -32,10 +33,10 @@ def run_all_benchmarks() -> None:
         save_benchmark_data(benchmark, result)
 
 
-def run_specific_benchmarks(benchmark_subset_names: set[str]) -> None:
+def run_benchmarks(benchmark_names: Collection[str]) -> None:
     """Run a subset based on the benchmark name."""
     for benchmark in BENCHMARKS:
-        if benchmark.name not in benchmark_subset_names:
+        if benchmark.name not in benchmark_names:
             continue
 
         result = benchmark()
@@ -54,7 +55,7 @@ def main() -> None:
         return
 
     benchmark_execute_set = set(args.benchmark_list)
-    run_specific_benchmarks(benchmark_execute_set)
+    run_benchmarks(benchmark_execute_set)
 
 
 if __name__ == "__main__":
