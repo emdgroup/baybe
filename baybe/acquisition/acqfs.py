@@ -422,6 +422,16 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
 
 @define(frozen=True)
+class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+
+@define(frozen=True)
 class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
 

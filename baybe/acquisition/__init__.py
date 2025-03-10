@@ -14,6 +14,7 @@ from baybe.acquisition.acqfs import (
     qLogNoisyExpectedImprovement,
     qLogNParEGO,
     qNegIntegratedPosteriorVariance,
+    qNoisyExpectedHypervolumeImprovement,
     qNoisyExpectedImprovement,
     qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
@@ -39,6 +40,7 @@ qPI = qProbabilityOfImprovement
 UCB = UpperConfidenceBound
 qUCB = qUpperConfidenceBound
 qTS = qThompsonSampling
+qNEHVI = qNoisyExpectedHypervolumeImprovement
 qLogNEHVI = qLogNoisyExpectedHypervolumeImprovement
 
 __all__ = [
@@ -68,6 +70,7 @@ __all__ = [
     # Thompson Sampling
     "qThompsonSampling",
     # Hypervolume Improvement
+    "qNoisyExpectedHypervolumeImprovement",
     "qLogNoisyExpectedHypervolumeImprovement",
     # ParEGO
     "qLogNParEGO",
@@ -97,5 +100,6 @@ __all__ = [
     # Thompson Sampling
     "qTS",
     # Hypervolume Improvement
+    "qNEHVI",
     "qLogNEHVI",
 ]
