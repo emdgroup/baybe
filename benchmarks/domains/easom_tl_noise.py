@@ -93,11 +93,13 @@ source_task = "Training_Function"
 
 
 def space_data() -> (
-    SingleTargetObjective,
-    SearchSpace,
-    SearchSpace,
-    pd.DataFrame,
-    pd.DataFrame,
+    tuple[
+        SingleTargetObjective,
+        SearchSpace,
+        SearchSpace,
+        pd.DataFrame,
+        pd.DataFrame,
+    ]
 ):
     """Definition of search space, objective, and data.
 
@@ -142,8 +144,8 @@ def easom_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     Objective: Maximization
     Optimal Inputs: [
         {
-            x0 3.006012
-            x1 3.006012
+            x0: 3.006012,
+            x1: 3.006012
         }
     ]
     Optimal Output: 0.9462931105452647
