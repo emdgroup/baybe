@@ -1040,14 +1040,14 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">deep_mapping</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">DiscreteParameter</span>
+<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">_DiscreteLabelLikeParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.validation</span> <span class="kn">import</span> <span class="n">validate_decorrelation</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">group_duplicate_values</span>
@@ -1069,7 +1069,7 @@
 <div class="viewcode-block" id="SubstanceParameter">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">SubstanceParameter</span><span class="p">(</span><span class="n">DiscreteParameter</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">SubstanceParameter</span><span class="p">(</span><span class="n">_DiscreteLabelLikeParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic substances that are treated with cheminformatics descriptors.</span>
 
 <span class="sd">    Only a decorrelated subset of descriptors should be used as otherwise this can</span>
@@ -1078,10 +1078,6 @@
 <span class="sd">    descriptors to about 5-20. The number might be substantially higher with more</span>
 <span class="sd">    labels given.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># class variables</span>
-    <span class="n">is_numerical</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="c1"># See base class.</span>
 
     <span class="c1"># object variables</span>
     <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Smiles</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>

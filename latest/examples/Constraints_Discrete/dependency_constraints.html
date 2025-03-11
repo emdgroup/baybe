@@ -1140,32 +1140,34 @@ Note that multiple dependencies have to be included in a single constraint objec
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                  Name                        Type  Num_Values
+                  Name                        Type  ...                   Encoding
 </pre></div>
 </div>
-<p>Encoding
-0    Frac1  NumericalDiscreteParameter           3
-None
-1   FrameA        CategoricalParameter           2
-CategoricalEncoding.OHE
-2   FrameB        CategoricalParameter           2
-CategoricalEncoding.OHE
-3     Solv          SubstanceParameter           2
-SubstanceEncoding.MORDRED
-4  Switch1        CategoricalParameter           2
-CategoricalEncoding.OHE
-5  Switch2        CategoricalParameter           2
-CategoricalEncoding.OHE
-Experimental Representation
-Solv Switch1  … FrameA  FrameB
-0      C1     off  …      A       A
-1      C1     off  …      A       A
-2      C1     off  …      A       B
-..    …     …  …    …     …
-32  water      on  …      A       B
-33  water      on  …      B       A
-34  water      on  …      B       B</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [35 rows x 6 columns]
+<p>nActiveValues
+0    Frac1  NumericalDiscreteParameter  …                       None
+NaN
+1   FrameA        CategoricalParameter  …    CategoricalEncoding.OHE
+2.0
+2   FrameB        CategoricalParameter  …    CategoricalEncoding.OHE
+2.0
+3     Solv          SubstanceParameter  …  SubstanceEncoding.MORDRED
+2.0
+4  Switch1        CategoricalParameter  …    CategoricalEncoding.OHE
+2.0
+5  Switch2        CategoricalParameter  …    CategoricalEncoding.OHE
+2.0</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [6 rows x 5 columns]
+         Experimental Representation
+                 Solv Switch1  ... FrameA  FrameB
+            0      C1     off  ...      A       A
+            1      C1     off  ...      A       A
+            2      C1     off  ...      A       B
+            ..    ...     ...  ...    ...     ...
+            32  water      on  ...      A       B
+            33  water      on  ...      B       A
+            34  water      on  ...      B       B
+            
+            [35 rows x 6 columns]
          Constraints
                           Type Affected_Paramet
             0  DiscreteDepe...  [Switch1, Sw...

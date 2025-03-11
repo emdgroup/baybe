@@ -1177,28 +1177,30 @@ warnings.warn(</p>
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                   Name                        Type  Num_Values
+                   Name                        Type  ...                 Encoding
 </pre></div>
 </div>
-<p>Encoding
-0  Pressure  NumericalDiscreteParameter           4
-None
-1      Solv          SubstanceParameter           8
-SubstanceEncoding.RDKIT
-2     Speed        CategoricalParameter           5
-CategoricalEncoding.INT
-3      Temp  NumericalDiscreteParameter          15
-None
-Experimental Representation
-Solv      Speed     Temp  Pressure
-0        C1       fast  100.000       1.0
-1        C1       fast  100.000       2.0
-2        C1       fast  100.000       5.0
-…     …        …      …       …
-1147  water  very slow  192.857      10.0
-1148  water  very slow  200.000       5.0
-1149  water  very slow  200.000      10.0</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [1150 rows x 4 columns]
+<p>nActiveValues
+0  Pressure  NumericalDiscreteParameter  …                     None
+NaN
+1      Solv          SubstanceParameter  …  SubstanceEncoding.RDKIT
+8.0
+2     Speed        CategoricalParameter  …  CategoricalEncoding.INT
+5.0
+3      Temp  NumericalDiscreteParameter  …                     None
+NaN</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [4 rows x 5 columns]
+         Experimental Representation
+                   Solv      Speed     Temp  Pressure
+            0        C1       fast  100.000       1.0
+            1        C1       fast  100.000       2.0
+            2        C1       fast  100.000       5.0
+            ...     ...        ...      ...       ...
+            1147  water  very slow  192.857      10.0
+            1148  water  very slow  200.000       5.0
+            1149  water  very slow  200.000      10.0
+            
+            [1150 rows x 4 columns]
          Constraints
                           Type Affected_Paramet
             0  DiscreteExcl...     [Temp, Solv]

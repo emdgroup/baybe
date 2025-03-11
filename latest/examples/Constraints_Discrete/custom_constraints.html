@@ -1181,28 +1181,30 @@ warnings.warn(</p>
       Search Space Type: DISCRETE
       SubspaceDiscrete
          Discrete Parameters
-                        Name                        Type  Num_Values
+                        Name                        Type  ...
 </pre></div>
 </div>
-<p>Encoding
-0  Concentration  NumericalDiscreteParameter           4
-None
-1        Solvent          SubstanceParameter           8
-SubstanceEncoding.RDKIT
-2          Speed        CategoricalParameter           5
-CategoricalEncoding.INT
-3    Temperature  NumericalDiscreteParameter           3
-None
-Experimental Representation
-Solvent      Speed  Temperature  Concentration
-0        C1       fast        100.0            1.0
-1        C1       fast        100.0            2.0
-2        C1       fast        100.0            5.0
-..      …        …          …            …
-447   water  very slow        200.0            1.0
-448   water  very slow        200.0            2.0
-449   water  very slow        200.0            5.0</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [450 rows x 4 columns]
+<p>Encoding nActiveValues
+0  Concentration  NumericalDiscreteParameter  …
+None           NaN
+1        Solvent          SubstanceParameter  …
+SubstanceEncoding.RDKIT           8.0
+2          Speed        CategoricalParameter  …
+CategoricalEncoding.INT           5.0
+3    Temperature  NumericalDiscreteParameter  …
+None           NaN</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>            [4 rows x 5 columns]
+         Experimental Representation
+                Solvent      Speed  Temperature  Concentration
+            0        C1       fast        100.0            1.0
+            1        C1       fast        100.0            2.0
+            2        C1       fast        100.0            5.0
+            ..      ...        ...          ...            ...
+            447   water  very slow        200.0            1.0
+            448   water  very slow        200.0            2.0
+            449   water  very slow        200.0            5.0
+            
+            [450 rows x 4 columns]
          Constraints
                           Type Affected_Paramet
             0  DiscreteCust...  [Concentrati...

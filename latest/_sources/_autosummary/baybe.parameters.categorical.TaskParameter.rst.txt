@@ -33,13 +33,13 @@ TaskParameter
 
    .. autosummary::
    
+      ~TaskParameter.active_values
       ~TaskParameter.comp_df
       ~TaskParameter.comp_rep_columns
       ~TaskParameter.is_continuous
       ~TaskParameter.is_discrete
       ~TaskParameter.is_numerical
       ~TaskParameter.values
-      ~TaskParameter.active_values
       ~TaskParameter.encoding
       ~TaskParameter.name
    

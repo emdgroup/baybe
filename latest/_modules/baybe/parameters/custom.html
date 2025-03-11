@@ -1040,7 +1040,7 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -1048,7 +1048,7 @@
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">min_len</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">DiscreteParameter</span>
+<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">_DiscreteLabelLikeParameter</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">CustomEncoding</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters.validation</span> <span class="kn">import</span> <span class="n">validate_decorrelation</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">eq_dataframe</span>
@@ -1059,16 +1059,12 @@
 <div class="viewcode-block" id="CustomDiscreteParameter">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.custom.CustomDiscreteParameter.html#baybe.parameters.custom.CustomDiscreteParameter">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">CustomDiscreteParameter</span><span class="p">(</span><span class="n">DiscreteParameter</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">CustomDiscreteParameter</span><span class="p">(</span><span class="n">_DiscreteLabelLikeParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom parameters.</span>
 
 <span class="sd">    For these parameters, the user can read in a precomputed representation for labels,</span>
 <span class="sd">    e.g. from quantum chemistry.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># class variables</span>
-    <span class="n">is_numerical</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="c1"># See base class.</span>
 
     <span class="c1"># object variables</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">min_len</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">eq</span><span class="o">=</span><span class="n">eq_dataframe</span><span class="p">)</span>

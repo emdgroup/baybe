@@ -89,14 +89,16 @@ print(campaign, end="\n" * 3)
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                                    Name                        Type  Num_Values
-Encoding
-                0            Granularity        CategoricalParameter           3
-CategoricalEncoding.OHE
-                1          Pressure[bar]  NumericalDiscreteParameter           3
-None
-                2  Temperature[degree_C]  NumericalDiscreteParameter          10
-None
+                                    Name                        Type  ...
+Encoding nActiveValues
+                0            Granularity        CategoricalParameter  ...
+CategoricalEncoding.OHE           3.0
+                1          Pressure[bar]  NumericalDiscreteParameter  ...
+None           NaN
+                2  Temperature[degree_C]  NumericalDiscreteParameter  ...
+None           NaN
+                
+                [3 rows x 5 columns]
              Experimental Representation
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 
@@ -192,14 +194,16 @@ print(campaign_recreate, end="\n" * 3)
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                                    Name                        Type  Num_Values
-Encoding
-                0            Granularity        CategoricalParameter           3
-CategoricalEncoding.OHE
-                1          Pressure[bar]  NumericalDiscreteParameter           3
-None
-                2  Temperature[degree_C]  NumericalDiscreteParameter          10
-None
+                                    Name                        Type  ...
+Encoding nActiveValues
+                0            Granularity        CategoricalParameter  ...
+CategoricalEncoding.OHE           3.0
+                1          Pressure[bar]  NumericalDiscreteParameter  ...
+None           NaN
+                2  Temperature[degree_C]  NumericalDiscreteParameter  ...
+None           NaN
+                
+                [3 rows x 5 columns]
              Experimental Representation
                    Granularity  Pressure[bar]  Temperature[degr
                 0       coarse            1.0          100.000 

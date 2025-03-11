@@ -33,6 +33,7 @@ CustomDiscreteParameter
 
    .. autosummary::
    
+      ~CustomDiscreteParameter.active_values
       ~CustomDiscreteParameter.comp_df
       ~CustomDiscreteParameter.comp_rep_columns
       ~CustomDiscreteParameter.is_continuous

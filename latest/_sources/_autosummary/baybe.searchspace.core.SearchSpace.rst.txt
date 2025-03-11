@@ -44,6 +44,7 @@ SearchSpace
       ~SearchSpace.n_tasks
       ~SearchSpace.parameter_names
       ~SearchSpace.parameters
+      ~SearchSpace.scaling_bounds
       ~SearchSpace.task_idx
       ~SearchSpace.type
    

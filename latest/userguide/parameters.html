@@ -1049,7 +1049,7 @@ as the direct link to the controllable variables in your experiment.
 Before starting an iterative campaign, the user is required to specify the exact
 parameters they can control and want to consider in their optimization.</p>
 <div class="note admonition">
-<p class="admonition-title">Parameter names</p>
+<p class="admonition-title">Parameter Names</p>
 <p>BayBE identifies each parameter by a <code class="docutils literal notranslate"><span class="pre">name</span></code>. All parameter names in one
 campaign must be unique.</p>
 </div>
@@ -1076,26 +1076,36 @@ that lies within the chosen interval.</p>
 </section>
 <section id="discrete-parameters">
 <h2>Discrete Parameters<a class="headerlink" href="#discrete-parameters" title="Link to this heading">¶</a></h2>
-<p>A discrete parameter has a finite set of possible values.
-These values can be numeric or label-like and are transformed internally before being
-ingested by the surrogate model.</p>
+<p>A discrete parameter has a finite set of possible values that can be recommended.
+These values can be numeric or label-like (i.e. strings) and are transformed
+internally before being ingested by the surrogate model.</p>
 <div class="note admonition">
-<p class="admonition-title">Parameter encoding</p>
-<p>We call the process of transforming labels into numbers <code class="docutils literal notranslate"><span class="pre">encoding</span></code>.
-To make labels usable in machine learning, we assign each label one or more numbers.
-While there are trivial ways of doing this, BayBE also provides methods to avoid
-problematic biases and even introduce useful information into the resulting latent
-number space. For different parameters, different types of encoding make sense. These
-situations are reflected by the different discrete parameter types BayBE offers.</p>
+<p class="admonition-title">Parameter Encoding</p>
+<p>To make labels usable in machine learning, we assign each label one or more numbers.
+This process is called <code class="docutils literal notranslate"><span class="pre">encoding</span></code>. While there are trivial ways of doing this
+(e.g. one-hot encoding), BayBE also provides methods to avoid problematic biases and
+even introduce useful information into the resulting latent number space. For different
+parameters, different types of encoding make sense. These situations are reflected by
+the different discrete parameter types BayBE offers.</p>
+</div>
+<div class="note admonition" id="label-like">
+<p class="admonition-title">For Label-Like Parameters: Values and Active Values</p>
+<p>After a discrete parameter was created, its possible values are accessible via the
+<a class="reference internal" href="../_autosummary/baybe.parameters.base.DiscreteParameter.html#baybe.parameters.base.DiscreteParameter.values" title="baybe.parameters.base.DiscreteParameter.values"><span class="xref myst py py-attr"><code class="docutils literal notranslate"><span class="pre">values</span></code></span></a>
+property. All label-like parameters also support specifying
+<a class="reference internal" href="../_autosummary/baybe.parameters.base.DiscreteParameter.html#baybe.parameters.base.DiscreteParameter.active_values" title="baybe.parameters.base.DiscreteParameter.active_values"><span class="xref myst py py-attr"><code class="docutils literal notranslate"><span class="pre">active_values</span></code></span></a>
+, which
+must be a subset of <code class="docutils literal notranslate"><span class="pre">values</span></code>. <code class="docutils literal notranslate"><span class="pre">active_values</span></code> specify which labels are considered
+for recommendation. Labels that are in <code class="docutils literal notranslate"><span class="pre">values</span></code> but not in <code class="docutils literal notranslate"><span class="pre">active_values</span></code> can be
+part of measurements, but won’t be recommended. Using this mechanism, you can configure
+a campaign to being able to ingest historical data, while running it only in a
+currently interesting subset of labels.</p>
 </div>
 <section id="numericaldiscreteparameter">
 <h3>NumericalDiscreteParameter<a class="headerlink" href="#numericaldiscreteparameter" title="Link to this heading">¶</a></h3>
 <p>This is the right type for parameters that have numerical values.
 We support sets with equidistant values like <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5)</span></code> but also unevenly
 spaced sets of numbers like <code class="docutils literal notranslate"><span class="pre">(0.2,</span> <span class="pre">1.0,</span> <span class="pre">2.0,</span> <span class="pre">5.0,</span> <span class="pre">10.0,</span> <span class="pre">50.0)</span></code>.</p>
-<p>The parameter type also supports specifying a <code class="docutils literal notranslate"><span class="pre">tolerance</span></code>.
-If specified, BayBE throws an error if measurements are added that are not within
-that specified tolerance from any of the possible values.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span>
 
 <span class="n">NumericalDiscreteParameter</span><span class="p">(</span>
@@ -1123,6 +1133,9 @@ be reasonable.</p>
 <span class="n">CategoricalParameter</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Intensity&quot;</span><span class="p">,</span>
     <span class="n">values</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;low&quot;</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">),</span>
+    <span class="n">active_values</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">&quot;low&quot;</span><span class="p">,</span>  <span class="c1"># optional, only combinations with Intensity=low will be recommended</span>
+    <span class="p">),</span>
     <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;INT&quot;</span><span class="p">,</span>  <span class="c1"># optional, uses integer encoding as described above</span>
 <span class="p">)</span>
 </pre></div>
@@ -1158,6 +1171,10 @@ Based on these, BayBE can assign each label a set of molecular descriptors as en
         <span class="s2">&quot;1-Octanol&quot;</span><span class="p">:</span> <span class="s2">&quot;CCCCCCCCO&quot;</span><span class="p">,</span>
         <span class="s2">&quot;Toluene&quot;</span><span class="p">:</span> <span class="s2">&quot;CC1=CC=CC=C1&quot;</span><span class="p">,</span>
     <span class="p">},</span>
+    <span class="n">active_values</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># optional, recommends only water and toluene as solvent</span>
+        <span class="s2">&quot;Water&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Toluene&quot;</span><span class="p">,</span>
+    <span class="p">],</span>
     <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;MORDRED&quot;</span><span class="p">,</span>  <span class="c1"># optional</span>
     <span class="n">decorrelate</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>  <span class="c1"># optional</span>
 <span class="p">)</span>
@@ -1219,7 +1236,7 @@ different chemical encodings compared to one-hot and a random baseline:</p>
 <img alt="../_images/full_lookup_light1.svg" class="only-light align-center" src="../_images/full_lookup_light1.svg" />
 <img alt="../_images/full_lookup_dark1.svg" class="only-dark align-center" src="../_images/full_lookup_dark1.svg" />
 <div class="note admonition">
-<p class="admonition-title">Optional dependency</p>
+<p class="admonition-title">Optional Dependency</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code> is only available if BayBE was installed with the
 additional <code class="docutils literal notranslate"><span class="pre">chem</span></code> dependency.</p>
 </div>
@@ -1248,6 +1265,10 @@ polymers:</p>
 <span class="n">CustomDiscreteParameter</span><span class="p">(</span>
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Polymer&quot;</span><span class="p">,</span>
     <span class="n">data</span><span class="o">=</span><span class="n">descriptors</span><span class="p">,</span>
+    <span class="n">active_values</span><span class="o">=</span><span class="p">(</span>  <span class="c1"># optional, enforces that only Polymer A or C is recommended</span>
+        <span class="s2">&quot;Polymer A&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Polymer C&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="n">decorrelate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># optional, uses default correlation threshold</span>
 <span class="p">)</span>
 </pre></div>

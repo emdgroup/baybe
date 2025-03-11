@@ -1048,6 +1048,7 @@
 <span class="kn">import</span> <span class="nn">cattrs</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span> <span class="nn">attrs.converters</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
 <span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
 <span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
 
@@ -1143,8 +1144,6 @@
 <span class="k">class</span> <span class="nc">DiscreteParameter</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract class for discrete parameters.&quot;&quot;&quot;</span>
 
-    <span class="c1"># TODO [15280]: needs to be refactored</span>
-
     <span class="c1"># class variables</span>
     <span class="n">encoding</span><span class="p">:</span> <span class="n">ParameterEncoding</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An optional encoding for the parameter.&quot;&quot;&quot;</span>
@@ -1153,6 +1152,11 @@
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The values the parameter can take.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">active_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The values that are considered for recommendation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
 
     <span class="nd">@cached_property</span>
     <span class="nd">@abstractmethod</span>
@@ -1216,12 +1220,71 @@
         <span class="n">param_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">Name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">Type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-            <span class="n">Num_Values</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
+            <span class="n">nValues</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">),</span>
             <span class="n">Encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">param_dict</span></div>
 </div>
 
+
+
+<span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">_DiscreteLabelLikeParameter</span><span class="p">(</span><span class="n">DiscreteParameter</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract class for discrete label-like parameters.</span>
+
+<span class="sd">    In general, these are parameters with non-numerical experimental representations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># class variables</span>
+    <span class="n">is_numerical</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># See base class.</span>
+
+    <span class="c1"># object variables</span>
+    <span class="n">_active_values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="nb">tuple</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;active_values&quot;</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional labels identifying the ones which should be actively recommended.&quot;&quot;&quot;</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">active_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_values</span>
+
+    <span class="nd">@_active_values</span><span class="o">.</span><span class="n">validator</span>
+    <span class="k">def</span> <span class="nf">_validate_active_values</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the active parameter values.</span>
+
+<span class="sd">        If no such list is provided, no validation is being performed. In particular,</span>
+<span class="sd">        the errors listed below are only relevant if the ``values`` list is provided.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If an empty active parameters list is provided.</span>
+<span class="sd">            ValueError: If the active parameter values are not unique.</span>
+<span class="sd">            ValueError: If not all active values are valid parameter choices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">content</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;If an active parameters list is provided, it must not be empty.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">content</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The active parameter values must be unique.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">content</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;All active values must be valid parameter choices from: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="si">}</span><span class="s2">, provided: </span><span class="si">{</span><span class="n">content</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@override</span>
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">**</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">summary</span><span class="p">(),</span> <span class="s2">&quot;nActiveValues&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_values</span><span class="p">)}</span>
 
 
 <div class="viewcode-block" id="ContinuousParameter">
@@ -1242,7 +1305,10 @@
 
 
 <span class="c1"># Register (un-)structure hooks</span>
-<span class="n">_overrides</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;_values&quot;</span><span class="p">:</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;values&quot;</span><span class="p">)}</span>
+<span class="n">_overrides</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;_values&quot;</span><span class="p">:</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;values&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;_active_values&quot;</span><span class="p">:</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;active_values&quot;</span><span class="p">),</span>
+<span class="p">}</span>
 <span class="c1"># FIXME[typing]: https://github.com/python/mypy/issues/4717</span>
 <span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span>
     <span class="n">Parameter</span><span class="p">,</span>

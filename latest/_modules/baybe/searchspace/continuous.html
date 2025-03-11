@@ -1380,6 +1380,11 @@
             <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatNumpy</span><span class="p">,</span>
         <span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scaling_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The bounds used for scaling the surrogate model input.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp_rep_bounds</span>
+
     <span class="k">def</span> <span class="nf">_drop_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_names</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SubspaceContinuous</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a copy of the subspace with certain parameters removed.</span>
 

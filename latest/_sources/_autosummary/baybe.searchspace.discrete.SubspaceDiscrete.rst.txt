@@ -48,5 +48,6 @@ SubspaceDiscrete
       ~SubspaceDiscrete.is_empty
       ~SubspaceDiscrete.metadata
       ~SubspaceDiscrete.parameter_names
+      ~SubspaceDiscrete.scaling_bounds
    
    

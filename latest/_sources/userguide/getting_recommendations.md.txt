@@ -75,12 +75,13 @@ searchspace_full = TaskParameter("p", ["A", "B", "C"]).to_searchspace()
 Depending on the specific needs and complexity of the filtering operation, one approach
 may be preferred over the other, but generally these mechanisms exist: 
 
-* Restricting individual parameter objects:
+* Restricting individual parameter objects via `active_values`:
   ~~~python
   searchspace_reduced = TaskParameter(
       "p", ["A", "B", "C"], active_values=["A", "B"]
   ).to_searchspace()
   ~~~
+  This is possible for all [label-like parameters](#label_like).
 
   ```{admonition} Caution
   :class: caution
@@ -88,15 +89,6 @@ may be preferred over the other, but generally these mechanisms exist:
   Note that this is *not* the same as defining the parameter with a reduced set of
   values `["A", "B"]` since in this case the value "C" would be undefined. This
   makes adding measurements containing that value impossible.
-  ```
-
-  ```{admonition} Experimental Feature
-  :class: warning
-
-  Specifying `active_values` is currently an experimental feature only
-  available to {class}`~baybe.parameters.categorical.TaskParameter`. 
-  It is likely that it will be made available for other categorical parameters in
-  the future.
   ```
 
 * Specifying only a subset of configurations (discrete spaces only):

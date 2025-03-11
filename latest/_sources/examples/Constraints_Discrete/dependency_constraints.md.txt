@@ -115,20 +115,22 @@ print(campaign)
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                      Name                        Type  Num_Values
-Encoding
-                0    Frac1  NumericalDiscreteParameter           3
-None
-                1   FrameA        CategoricalParameter           2
-CategoricalEncoding.OHE
-                2   FrameB        CategoricalParameter           2
-CategoricalEncoding.OHE
-                3     Solv          SubstanceParameter           2
-SubstanceEncoding.MORDRED
-                4  Switch1        CategoricalParameter           2
-CategoricalEncoding.OHE
-                5  Switch2        CategoricalParameter           2
-CategoricalEncoding.OHE
+                      Name                        Type  ...                   Encoding
+nActiveValues
+                0    Frac1  NumericalDiscreteParameter  ...                       None
+NaN
+                1   FrameA        CategoricalParameter  ...    CategoricalEncoding.OHE
+2.0
+                2   FrameB        CategoricalParameter  ...    CategoricalEncoding.OHE
+2.0
+                3     Solv          SubstanceParameter  ...  SubstanceEncoding.MORDRED
+2.0
+                4  Switch1        CategoricalParameter  ...    CategoricalEncoding.OHE
+2.0
+                5  Switch2        CategoricalParameter  ...    CategoricalEncoding.OHE
+2.0
+                
+                [6 rows x 5 columns]
              Experimental Representation
                      Solv Switch1  ... FrameA  FrameB
                 0      C1     off  ...      A       A

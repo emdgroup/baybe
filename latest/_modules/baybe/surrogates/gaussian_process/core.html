@@ -1105,7 +1105,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the search space parameter bounds in BoTorch Format.&quot;&quot;&quot;</span>
         <span class="kn">import</span> <span class="nn">torch</span>
 
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">comp_rep_bounds</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">scaling_bounds</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_numerical_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_inputs</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the indices of the regular numerical model inputs.&quot;&quot;&quot;</span>

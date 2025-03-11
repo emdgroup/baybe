@@ -160,16 +160,18 @@ print(campaign)
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                            Name                        Type  Num_Values
-Encoding
-                0  Concentration  NumericalDiscreteParameter           4
-None
-                1        Solvent          SubstanceParameter           8
-SubstanceEncoding.RDKIT
-                2          Speed        CategoricalParameter           5
-CategoricalEncoding.INT
-                3    Temperature  NumericalDiscreteParameter           3
-None
+                            Name                        Type  ...
+Encoding nActiveValues
+                0  Concentration  NumericalDiscreteParameter  ...
+None           NaN
+                1        Solvent          SubstanceParameter  ...
+SubstanceEncoding.RDKIT           8.0
+                2          Speed        CategoricalParameter  ...
+CategoricalEncoding.INT           5.0
+                3    Temperature  NumericalDiscreteParameter  ...
+None           NaN
+                
+                [4 rows x 5 columns]
              Experimental Representation
                     Solvent      Speed  Temperature  Concentration
                 0        C1       fast        100.0            1.0

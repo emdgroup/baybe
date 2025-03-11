@@ -1604,15 +1604,6 @@
     <span class="n">mask_no_match</span> <span class="o">=</span> <span class="o">~</span><span class="n">match_matrix</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">matched_indices</span> <span class="o">=</span> <span class="n">matched_indices</span><span class="p">[</span><span class="o">~</span><span class="n">mask_no_match</span><span class="p">]</span>
 
-    <span class="c1"># Warn if there are multiple or no matches</span>
-    <span class="k">if</span> <span class="n">no_match_indices</span> <span class="o">:=</span> <span class="n">right_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_no_match</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
-        <span class="n">w</span> <span class="o">=</span> <span class="n">SearchSpaceMatchWarning</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Some input rows could not be matched to the search space. Indices with &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;no matches: </span><span class="si">{</span><span class="n">no_match_indices</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">right_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">no_match_indices</span><span class="p">],</span>
-        <span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
-
     <span class="n">mask_multiple_matches</span> <span class="o">=</span> <span class="n">match_matrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
     <span class="k">if</span> <span class="n">multiple_match_indices</span> <span class="o">:=</span> <span class="n">right_df</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_multiple_matches</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
         <span class="n">w</span> <span class="o">=</span> <span class="n">SearchSpaceMatchWarning</span><span class="p">(</span>

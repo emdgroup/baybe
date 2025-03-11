@@ -33,6 +33,7 @@ SubstanceParameter
 
    .. autosummary::
    
+      ~SubstanceParameter.active_values
       ~SubstanceParameter.comp_df
       ~SubstanceParameter.comp_rep_columns
       ~SubstanceParameter.is_continuous

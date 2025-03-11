@@ -33,6 +33,7 @@ CategoricalParameter
 
    .. autosummary::
    
+      ~CategoricalParameter.active_values
       ~CategoricalParameter.comp_df
       ~CategoricalParameter.comp_rep_columns
       ~CategoricalParameter.is_continuous

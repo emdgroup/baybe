@@ -1114,24 +1114,18 @@ the following “full” search space:</p>
 <p>Depending on the specific needs and complexity of the filtering operation, one approach
 may be preferred over the other, but generally these mechanisms exist:</p>
 <ul>
-<li><p>Restricting individual parameter objects:</p>
+<li><p>Restricting individual parameter objects via <code class="docutils literal notranslate"><span class="pre">active_values</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">searchspace_reduced</span> <span class="o">=</span> <span class="n">TaskParameter</span><span class="p">(</span>
     <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">],</span> <span class="n">active_values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">]</span>
 <span class="p">)</span><span class="o">.</span><span class="n">to_searchspace</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>This is possible for all <a class="reference internal" href="parameters.html#label-like"><span class="std std-ref">label-like parameters</span></a>.</p>
 <div class="caution admonition">
 <p class="admonition-title">Caution</p>
 <p>Note that this is <em>not</em> the same as defining the parameter with a reduced set of
 values <code class="docutils literal notranslate"><span class="pre">[&quot;A&quot;,</span> <span class="pre">&quot;B&quot;]</span></code> since in this case the value “C” would be undefined. This
 makes adding measurements containing that value impossible.</p>
-</div>
-<div class="warning admonition">
-<p class="admonition-title">Experimental Feature</p>
-<p>Specifying <code class="docutils literal notranslate"><span class="pre">active_values</span></code> is currently an experimental feature only
-available to <a class="reference internal" href="../_autosummary/baybe.parameters.categorical.TaskParameter.html#baybe.parameters.categorical.TaskParameter" title="baybe.parameters.categorical.TaskParameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">TaskParameter</span></code></a>.
-It is likely that it will be made available for other categorical parameters in
-the future.</p>
 </div>
 </li>
 <li><p>Specifying only a subset of configurations (discrete spaces only):</p>

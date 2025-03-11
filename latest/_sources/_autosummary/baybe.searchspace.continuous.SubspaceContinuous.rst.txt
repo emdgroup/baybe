@@ -53,5 +53,6 @@ SubspaceContinuous
       ~SubspaceContinuous.n_inactive_parameter_combinations
       ~SubspaceContinuous.parameter_names
       ~SubspaceContinuous.parameter_names_in_cardinality_constraints
+      ~SubspaceContinuous.scaling_bounds
    
    

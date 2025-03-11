@@ -33,6 +33,7 @@ NumericalDiscreteParameter
 
    .. autosummary::
    
+      ~NumericalDiscreteParameter.active_values
       ~NumericalDiscreteParameter.comp_df
       ~NumericalDiscreteParameter.comp_rep_columns
       ~NumericalDiscreteParameter.is_continuous

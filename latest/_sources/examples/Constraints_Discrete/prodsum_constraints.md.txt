@@ -157,24 +157,24 @@ print(campaign)
           Search Space Type: DISCRETE
           SubspaceDiscrete
              Discrete Parameters
-                         Name                        Type  Num_Values
-Encoding
-                0   NumParam1  NumericalDiscreteParameter           3
-None
-                1   NumParam2  NumericalDiscreteParameter           3
-None
-                2   NumParam3  NumericalDiscreteParameter           3
-None
-                ..        ...                         ...         ...
+                         Name                        Type  ...                 Encoding
+nActiveValues
+                0   NumParam1  NumericalDiscreteParameter  ...                     None
+NaN
+                1   NumParam2  NumericalDiscreteParameter  ...                     None
+NaN
+                2   NumParam3  NumericalDiscreteParameter  ...                     None
+NaN
+                ..        ...                         ...  ...                      ...
 ...
-                5   NumParam6  NumericalDiscreteParameter           3
-None
-                6     Solvent          SubstanceParameter           3
-SubstanceEncoding.RDKIT
-                7       Speed        CategoricalParameter           3
-CategoricalEncoding.INT
+                5   NumParam6  NumericalDiscreteParameter  ...                     None
+NaN
+                6     Solvent          SubstanceParameter  ...  SubstanceEncoding.RDKIT
+3.0
+                7       Speed        CategoricalParameter  ...  CategoricalEncoding.INT
+3.0
                 
-                [8 rows x 4 columns]
+                [8 rows x 5 columns]
              Experimental Representation
                     Solvent Speed  ...  NumParam5  NumParam6
                 0        C1  fast  ...        0.0      100.0

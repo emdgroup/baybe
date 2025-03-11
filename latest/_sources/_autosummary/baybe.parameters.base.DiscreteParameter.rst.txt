@@ -33,6 +33,7 @@ DiscreteParameter
 
    .. autosummary::
    
+      ~DiscreteParameter.active_values
       ~DiscreteParameter.comp_df
       ~DiscreteParameter.comp_rep_columns
       ~DiscreteParameter.is_continuous
