@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Any, Literal, TypeAlias
 import cattrs
 import numpy as np
 import pandas as pd
-import torch
 from attrs import Attribute, Factory, define, evolve, field, fields
 from attrs.converters import optional
 from attrs.validators import instance_of
@@ -533,6 +532,8 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
+        import torch
+
         with torch.no_grad():
             return surrogate.posterior(candidates)
 
@@ -574,6 +575,8 @@ class Campaign(SerialMixin):
                 targets = ["Desirability"]
             case _:
                 targets = [t.name for t in self.objective.targets]
+
+        import torch
 
         result = pd.DataFrame(index=candidates.index)
         for k, t in enumerate(targets):
