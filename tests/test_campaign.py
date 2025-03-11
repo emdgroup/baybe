@@ -168,17 +168,17 @@ def test_setting_allow_flags(flag, space_type, value):
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@pytest.mark.parametrize("n_iterations", [2], ids=["i2"])
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
-    tested_stats = {"mean", "std"}
+    tested_stats = ["mean", "std"]
     test_quantiles = not (
         isinstance(objective, ParetoObjective)
         or isinstance(objective.targets[0], BinaryTarget)
     )
     if test_quantiles:
-        tested_stats |= {0.05, 0.95}
+        tested_stats += [0.05, 0.95]
 
     stats = ongoing_campaign.posterior_stats(
         ongoing_campaign.measurements, tested_stats
