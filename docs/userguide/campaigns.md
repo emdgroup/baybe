@@ -130,7 +130,7 @@ You might be interested in statistics about the predicted target values for your
 recommendations, or indeed for any set of possible candidate points. The 
 [`posterior`](baybe.campaign.Campaign.posterior) and 
 [`posterior_stats`](baybe.campaign.Campaign.posterior_stats) methods provide
-a simple interface to look at the resulting statistics:
+a simple interface for this:
 ~~~python
 stats = campaign.posterior_stats(rec)
 ~~~
