@@ -512,12 +512,14 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame | None = None) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            candidates: The candidate points in experimental recommendations. If not
+                provided, the posterior for the existing campaign measurements is
+                returned. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
         Raises:
             IncompatibilityError: If the underlying surrogate model exposes no
@@ -527,6 +529,9 @@ class Campaign(SerialMixin):
             Posterior: The corresponding posterior object.
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
             raise IncompatibilityError(
@@ -540,13 +545,18 @@ class Campaign(SerialMixin):
             return surrogate.posterior(candidates)
 
     def posterior_stats(
-        self, candidates: pd.DataFrame, stats: Sequence[Statistic] = ("mean", "std")
+        self,
+        candidates: pd.DataFrame | None = None,
+        /,
+        stats: Sequence[Statistic] = ("mean", "std"),
     ) -> pd.DataFrame:
         """Return common posterior statistics for each target.
 
         Args:
-            candidates: The candidate points in experimental representation.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            candidates: The candidate points in experimental representation. If not
+                provided, the statistics of the existing campaign measurements are
+                calculated. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior`.
             stats: Sequence indicating which statistics to compute. Also accepts
                 floats, for which the corresponding quantile point will be computed.
 
@@ -558,6 +568,9 @@ class Campaign(SerialMixin):
         Returns:
             A dataframe with posterior statistics for each target and candidate.
         """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
         stat: Statistic
         for stat in (x for x in stats if isinstance(x, float)):
             if not 0.0 < stat < 1.0:
