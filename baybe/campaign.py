@@ -556,15 +556,15 @@ class Campaign(SerialMixin):
                 a requested statistic.
 
         Returns:
-            Data frame with prediction statistics for each target for each candidate.
+            A dataframe with posterior statistics for each target and candidate.
         """
         stat: Statistic
         for stat in (x for x in stats if isinstance(x, float)):
-            if not 0 < stat < 1.0:
+            if not 0.0 < stat < 1.0:
                 raise ValueError(
                     f"Posterior quantile statistics can only be computed for quantiles "
                     f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
-                    f"part of {stats=}'."
+                    f"part of '{stats=}'."
                 )
         posterior = self.posterior(candidates)
 
@@ -581,30 +581,29 @@ class Campaign(SerialMixin):
         import torch
 
         result = pd.DataFrame(index=candidates.index)
-        for k, t in enumerate(targets):
+        for k, target_name in enumerate(targets):
             for stat in stats:
-                stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
-
                 try:
-                    vals = (
-                        posterior.quantile(torch.tensor(stat))
-                        if isinstance(stat, float)
-                        else getattr(posterior, stat if stat != "std" else "variance")
-                    )
-                    if stat == "std":
-                        vals = torch.sqrt(vals)
+                    if isinstance(stat, float):
+                        stat_name = f"Q_{stat}"
+                        vals = posterior.quantile(torch.tensor(stat))
+                    else:
+                        stat_name = stat
+                        vals = getattr(posterior, stat if stat != "std" else "variance")
                 except (AttributeError, NotImplementedError) as e:
                     # We could arrive here because an invalid statistics string has
                     # been requested or because a quantile point has been requested,
                     # but the posterior type does not implement quantiles.
                     raise TypeError(
                         f"The utilized posterior of type "
-                        f"{posterior.__class__.__name__} does not support the "
+                        f"'{posterior.__class__.__name__}' does not support the "
                         f"statistic associated with the requested input '{stat}'."
                     ) from e
 
+                if stat == "std":
+                    vals = torch.sqrt(vals)
                 vals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                result[f"{t}_{stat_name}"] = vals[:, k]
+                result[f"{target_name}_{stat_name}"] = vals[:, k]
 
         return result
 
