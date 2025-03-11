@@ -56,6 +56,11 @@ _MEASURED = "measured"
 _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
+Statistic: TypeAlias = float | Literal["mean", "std", "variance", "mode"]
+"""Type alias for requestable posterior statistics.
+
+A float will result in the corresponding quantile points."""
+
 
 def _make_allow_flag_default_factory(
     default: bool,
@@ -87,9 +92,6 @@ def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -
                     f"'{SearchSpaceType.DISCRETE}', '{attribute.name}' cannot be set "
                     f"since the flag is meaningless in such contexts.",
                 )
-
-
-Statistic: TypeAlias = float | Literal["mean", "std", "variance", "mode"]
 
 
 @define
@@ -538,7 +540,7 @@ class Campaign(SerialMixin):
             return surrogate.posterior(candidates)
 
     def posterior_stats(
-        self, candidates: pd.DataFrame, stats: Sequence[Statistic] | None = None
+        self, candidates: pd.DataFrame, stats: Sequence[Statistic] = ("mean", "std")
     ) -> pd.DataFrame:
         """Return common posterior statistics for each target.
 
@@ -556,7 +558,7 @@ class Campaign(SerialMixin):
         Returns:
             Data frame with prediction statistics for each target for each candidate.
         """
-        stats = stats or ["mean", "std"]
+        stat: Statistic
         for stat in (x for x in stats if isinstance(x, float)):
             if not 0 < stat < 1.0:
                 raise ValueError(
@@ -580,7 +582,7 @@ class Campaign(SerialMixin):
 
         result = pd.DataFrame(index=candidates.index)
         for k, t in enumerate(targets):
-            for stat in stats:  # type: ignore[assignment]
+            for stat in stats:
                 stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
 
                 try:
