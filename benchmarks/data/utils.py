@@ -2,4 +2,4 @@
 
 from pathlib import Path
 
-DATA_PATH = Path(*Path(__file__).parts[:-1])
+DATA_PATH = Path(__file__).parent

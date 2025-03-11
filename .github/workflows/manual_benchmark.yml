@@ -1,4 +1,4 @@
-name: Run Benchmark
+name: Benchmark
 
 on:
   workflow_dispatch:
@@ -9,17 +9,14 @@ on:
         default: "All"
         type: choice
         options:
-          - "Manually Selected"
           - "All"
-          - "Default"
-      synthetic_2C1D_1C:
-        description: "synthetic_2C1D_1C benchmark"
-        required: false
-        default: false
-        type: boolean
+          - "Transfer Learning"
+          - "Synthetic"
 
 env:
-  DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
+  TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous"]'
+  SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  ALL_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
 
 permissions:
   contents: read
@@ -31,38 +28,24 @@ jobs:
     outputs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
     steps:
-      - name: Build matrix from inputs
-        if: ${{ github.event.inputs.group_selection == 'Manually Selected' || github.event.inputs.group_selection == 'All' }}
-        id: build_matrix_from_inputs
-        run: |
-          benchmarks_to_execute='{"benchmark_list": ['
-          run_all_benchmarks=${{ github.event.inputs.group_selection == 'All' }}
-
-          for key in $(echo '${{ toJson(github.event.inputs) }}' | jq -r 'keys_unsorted[]'); do
-            if [ "$key" != "group_selection" ]; then
-              value=$(echo '${{ toJson(github.event.inputs) }}' | jq -r --arg k "$key" '.[$k]')
-              if [ "$value" = "true" ] || [ "$run_all_benchmarks" = "true" ]; then
-                benchmarks_to_execute="$benchmarks_to_execute \"$key\","
-              fi
-            fi
-          done
-          benchmarks_to_execute=$(echo "$benchmarks_to_execute" | sed 's/,$//')
-          benchmarks_to_execute="$benchmarks_to_execute ]}"
-
-          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
-
       - name: Build matrix from group
-        if: ${{ github.event.inputs.group_selection != 'Manually Selected' && github.event.inputs.group_selection != 'All' }}
         id: build_matrix_from_group
         run: |
           benchmarks_to_execute='{"benchmark_list": []}'
           run_all_benchmarks="${{ github.event.inputs.group_selection }}"
 
-          if [ "$run_all_benchmarks" = "Default" ]; then
-            benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
+          if [ "$run_all_benchmarks" = "Transfer Learning" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_BENCHMARKS }} }'
+          fi
+          if [ "$run_all_benchmarks" = "Synthetic" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.SYNTHETIC_BENCHMARKS }} }'
+          fi
+          if [ "$run_all_benchmarks" = "All" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
           fi
 
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
+
 
       - name: Set benchmarks output
         id: set_benchmarks
@@ -107,6 +90,7 @@ jobs:
           fi
 
   benchmark-test:
+    name: run
     needs: [prepare, add-runner]
     runs-on: self-hosted
     strategy:
