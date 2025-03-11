@@ -172,7 +172,7 @@ def test_setting_allow_flags(flag, space_type, value):
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
-    tested_stats = ["mean", "std"]
+    tested_stats = ["mean", "std", "var"]
     test_quantiles = not (
         isinstance(objective, ParetoObjective)
         or isinstance(objective.targets[0], BinaryTarget)

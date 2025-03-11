@@ -56,7 +56,7 @@ _MEASURED = "measured"
 _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
 
-Statistic: TypeAlias = float | Literal["mean", "std", "variance", "mode"]
+Statistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
 """Type alias for requestable posterior statistics.
 
 A float will result in the corresponding quantile points."""
@@ -602,7 +602,10 @@ class Campaign(SerialMixin):
                         vals = posterior.quantile(torch.tensor(stat))
                     else:
                         stat_name = stat
-                        vals = getattr(posterior, stat if stat != "std" else "variance")
+                        vals = getattr(
+                            posterior,
+                            stat if stat not in ["std", "var"] else "variance",
+                        )
                 except (AttributeError, NotImplementedError) as e:
                     # We could arrive here because an invalid statistics string has
                     # been requested or because a quantile point has been requested,
