@@ -28,7 +28,7 @@ def get_data() -> pd.DataFrame:
         Data for benchmark.
     """
     data_path = DATA_PATH / "DirectArylation"
-    data = pd.read_table(data_path + "data.csv", sep=",", index_col=0)
+    data = pd.read_table(data_path / "data.csv", sep=",", index_col=0)
     data["Temp_C"] = data["Temp_C"].astype(str)
     return data
 
