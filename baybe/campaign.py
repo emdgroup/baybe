@@ -181,7 +181,7 @@ class Campaign(SerialMixin):
             index=self.searchspace.discrete.exp_rep.index,
             columns=_METADATA_COLUMNS,
         )
-        df.loc[:, _EXCLUDED] = self.searchspace.discrete._excluded
+
         return df
 
     @override

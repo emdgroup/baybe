@@ -43,7 +43,7 @@ def test_invalid_onnx_str():
 @pytest.mark.parametrize("surrogate_model", ["onnx"], indirect=True)
 @pytest.mark.parametrize(
     ["parameter_names", "should_raise"],
-    [(["Categorical_1"], True), (["SomeSetting"], False)],
+    [(["Categorical_1"], True), (["Some_Setting"], False)],
 )
 def test_supported_parameter_types(campaign: Campaign, should_raise: bool):
     """Using an ONNX model with unsupported parameters should raise an exception."""

@@ -194,7 +194,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         scaler = ColumnTransformer(mapping)
 
         # Fit the scaler to the parameter bounds
-        scaler.fit(to_tensor(searchspace.comp_rep_bounds))
+        scaler.fit(to_tensor(searchspace.scaling_bounds))
 
         return scaler
 

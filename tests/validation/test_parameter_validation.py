@@ -5,7 +5,6 @@ from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 import pytest
-from attrs import NOTHING
 from cattrs.errors import IterableValidationError
 from pytest import param
 
@@ -90,19 +89,24 @@ def test_invalid_bounds_numerical_continuous_parameter(bounds, error):
 
 
 @pytest.mark.parametrize(
-    ("values", "error"),
+    ("values", "active_values", "error"),
     [
-        param("ABC", ValueError, id="string"),
-        param(["", "A"], ValueError, id="empty_string"),
-        param(["A", "A"], ValueError, id="duplicates"),
-        param(["A"], ValueError, id="only_one_value"),
-        param(["A", 1], TypeError, id="not_a_string"),
+        param("ABC", None, ValueError, id="string"),
+        param(["", "A"], None, ValueError, id="empty_string"),
+        param(["A", "A"], None, ValueError, id="duplicates"),
+        param(["A"], None, ValueError, id="only_one_value"),
+        param(["A", 1], None, TypeError, id="not_a_string"),
+        param(["A", "B"], [], ValueError, id="no_active_values"),
+        param(["A", "B"], ["C"], ValueError, id="unknown_active_values"),
+        param(["A", "B"], ["A", "A"], ValueError, id="duplicate_active_values"),
     ],
 )
-def test_invalid_values_categorical_parameter(values, error):
+def test_invalid_values_categorical_parameter(values, active_values, error):
     """Providing invalid parameter values raises an exception."""
     with pytest.raises(error):
-        CategoricalParameter(name="invalid_values", values=values)
+        CategoricalParameter(
+            name="invalid_values", values=values, active_values=active_values
+        )
 
 
 def test_invalid_encoding_categorical_parameter():
@@ -114,11 +118,11 @@ def test_invalid_encoding_categorical_parameter():
 @pytest.mark.parametrize(
     ("values", "active_values", "error"),
     [
-        param("ABC", NOTHING, ValueError, id="string"),
-        param(["", "A"], NOTHING, ValueError, id="empty_string"),
-        param(["A", "A"], NOTHING, ValueError, id="duplicates"),
-        param(["A"], NOTHING, ValueError, id="only_one_value"),
-        param(["A", 1], NOTHING, TypeError, id="not_a_string"),
+        param("ABC", None, ValueError, id="string"),
+        param(["", "A"], None, ValueError, id="empty_string"),
+        param(["A", "A"], None, ValueError, id="duplicates"),
+        param(["A"], None, ValueError, id="only_one_value"),
+        param(["A", 1], None, TypeError, id="not_a_string"),
         param(["A", "B"], [], ValueError, id="no_active_values"),
         param(["A", "B"], ["C"], ValueError, id="unknown_active_values"),
         param(["A", "B"], ["A", "A"], ValueError, id="duplicate_active_values"),
@@ -134,23 +138,31 @@ def test_invalid_values_task_parameter(values, active_values, error):
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize(
-    ("data", "error"),
+    ("data", "active_values", "error"),
     [
-        param({"": "C", "A": "C"}, ValueError, id="empty_string"),
-        param({"A": "C"}, ValueError, id="only_one_value"),
-        param({"A": "C", 1: "C"}, TypeError, id="not_a_string"),
-        param({"A": "C", "B": "X", "C": "Y"}, ExceptionGroup, id="invalid_smiles"),
+        param({"": "C", "A": "C"}, None, ValueError, id="empty_string"),
+        param({"A": "C"}, None, ValueError, id="only_one_value"),
+        param({"A": "C", 1: "C"}, None, TypeError, id="not_a_string"),
+        param(
+            {"A": "C", "B": "X", "C": "Y"}, None, ExceptionGroup, id="invalid_smiles"
+        ),
         param(
             {"A": "CC", "B": "C-C", "C": "CCO", "D": "OCC"},
+            None,
             ExceptionGroup,
             id="duplicate_substances",
         ),
+        param({"A": "C", "B": "CC"}, [], ValueError, id="no_active_values"),
+        param({"A": "C", "B": "CC"}, ["C"], ValueError, id="unknown_active_values"),
+        param(
+            {"A": "C", "B": "CC"}, ["A", "A"], ValueError, id="duplicate_active_values"
+        ),
     ],
 )
-def test_invalid_data_substance_parameter(data, error):
+def test_invalid_data_substance_parameter(data, active_values, error):
     """Providing invalid substance data raises an exception."""
     with pytest.raises(error):
-        SubstanceParameter(name="invalid_data", data=data)
+        SubstanceParameter(name="invalid_data", data=data, active_values=active_values)
 
 
 @pytest.mark.skipif(
@@ -165,23 +177,59 @@ def test_invalid_encoding_substance_parameter():
 
 
 @pytest.mark.parametrize(
-    "data",
+    ("data", "active_values"),
     [
-        param(pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]), id="contains_nan"),
-        param(pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]), id="contains_inf"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), id="duplicate_idxs"),
-        param(pd.DataFrame([[1, 2]], index=["A"]), id="wrong_label_number"),
-        param(pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), id="zero_var_col"),
-        param(pd.DataFrame([[1, 2], [3, "a"]], index=["A", "B"]), id="wrong_type"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), id="non_string_idx"),
-        param(pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), id="empty_string_idx"),
+        param(
+            pd.DataFrame([[1, 2], [3, np.nan]], index=["A", "B"]),
+            None,
+            id="contains_nan",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, np.inf]], index=["A", "B"]),
+            None,
+            id="contains_inf",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "A"]), None, id="duplicate_idxs"
+        ),
+        param(pd.DataFrame([[1, 2]], index=["A"]), None, id="wrong_label_number"),
+        param(
+            pd.DataFrame([[1, 2], [1, 2]], index=["A", "B"]), None, id="zero_var_col"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, "a"]], index=["A", "B"]), None, id="wrong_type"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", 1]), None, id="non_string_idx"
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", ""]), None, id="empty_string_idx"
+        ),
         param(
             pd.DataFrame([[1, 2], [1, 2], [3, 4]], index=["A", "B", "C"]),
+            None,
             id="duplicate_rows",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            [],
+            id="no_active_values",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            ["C"],
+            id="unknown_active_values",
+        ),
+        param(
+            pd.DataFrame([[1, 2], [3, 4]], index=["A", "B"]),
+            ["A", "A"],
+            id="duplicate_active_values",
         ),
     ],
 )
-def test_invalid_data_custom_parameter(data):
+def test_invalid_data_custom_parameter(data, active_values):
     """Providing an invalid custom encoding raises an exception."""
     with pytest.raises(ValueError):
-        CustomDiscreteParameter(name="invalid_data", data=data)
+        CustomDiscreteParameter(
+            name="invalid_data", data=data, active_values=active_values
+        )

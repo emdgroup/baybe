@@ -33,6 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validating cardinality constraints
 - Utility `is_inactive` for determining if parameters are inactive
 - Cardinality constraints sections to the user guide
+- `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
+  support restricting the search space via `active_values`, while `values` continue to 
+  identify allowed measurement inputs
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
@@ -43,9 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   measurements to the search space between 4x and 40x
 - The default value for `sequential_continuous` in `BotorchRecommender` has been 
   changed to `True`
+- For label-like parameters, `SubspaceDiscrete` now only includes parameter values 
+  that are in `active_values`
+- Model scaling now uses the parameter bounds instead of the search space bounds
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
+
+### Removed
+- `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 
 ## [0.12.2] - 2025-01-31
 ### Changed

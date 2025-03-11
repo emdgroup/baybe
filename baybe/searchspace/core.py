@@ -234,7 +234,15 @@ class SearchSpace(SerialMixin):
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
         return pd.concat(
-            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds], axis=1
+            [self.discrete.comp_rep_bounds, self.continuous.comp_rep_bounds],
+            axis=1,
+        )
+
+    @property
+    def scaling_bounds(self) -> pd.DataFrame:
+        """The bounds used for scaling the surrogate model input."""
+        return pd.concat(
+            [self.discrete.scaling_bounds, self.continuous.scaling_bounds], axis=1
         )
 
     @property

@@ -119,7 +119,7 @@ If you still want to use single precision, you can set the following Boolean var
 - `BAYBE_NUMPY_USE_SINGLE_PRECISION` (defaults to `False`)
 - `BAYBE_TORCH_USE_SINGLE_PRECISION` (defaults to `False`)
 
-```{admonition} Experimental feature only!
+```{admonition} Experimental Feature
 :class: warning
 Currently, it cannot be guaranteed that all calculations will be performed in single precision,
 even when setting the aforementioned variables. The reason is that there are several code snippets
