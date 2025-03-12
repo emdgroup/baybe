@@ -17,7 +17,7 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 )
 
 
-def arylhalides_ChloroTrifluour_IodoMetho(
+def arylhalides_ChlorTrifluour_IodoMeth(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Actual benchmark function."""
@@ -35,8 +35,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=30,
 )
 
-arylhalides_1Iodo4Metho_1Chloro4Trifluour_benchmark = ConvergenceBenchmark(
-    function=arylhalides_ChloroTrifluour_IodoMetho,
+arylhalides_ChlorTrifluour_IodMeth_benchmark = ConvergenceBenchmark(
+    function=arylhalides_ChlorTrifluour_IodoMeth,
     optimal_target_values={"yield": 68.24812709999999},
     settings=benchmark_config,
 )
