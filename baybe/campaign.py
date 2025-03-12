@@ -564,18 +564,7 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        recommender: RecommenderProtocol
-        if isinstance(self.recommender, MetaRecommender):
-            recommender = self.recommender.get_non_meta_recommender(
-                batch_size,
-                self.searchspace,
-                self.objective,
-                self.measurements,
-                pending_experiments,
-            )
-        else:
-            recommender = self.recommender
-
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
         if isinstance(recommender, BayesianRecommender):
             return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
@@ -587,6 +576,32 @@ class Campaign(SerialMixin):
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )
+
+    def _get_non_meta_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> RecommenderProtocol:
+        """Get the current recommender.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Returns:
+            The recommender for the current recommendation context.
+        """
+        if not isinstance(self.recommender, MetaRecommender):
+            return self.recommender
+        return self.recommender.get_non_meta_recommender(
+            batch_size,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+        )
 
 
 def _add_version(dict_: dict) -> dict:
