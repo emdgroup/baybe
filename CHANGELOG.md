@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For label-like parameters, `SubspaceDiscrete` now only includes parameter values 
   that are in `active_values`
 - Model scaling now uses the parameter bounds instead of the search space bounds
+- `benchmarks` module now accepts a list of domains to be executed
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target

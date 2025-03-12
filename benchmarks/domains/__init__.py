@@ -7,4 +7,5 @@ BENCHMARKS: list[Benchmark] = [
     synthetic_2C1D_1C_benchmark,
 ]
 
+
 __all__ = ["BENCHMARKS"]
