@@ -589,15 +589,28 @@ class Campaign(SerialMixin):
 
         import torch
 
+        result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
-            result = pd.DataFrame(index=candidates.index)
             for k, target_name in enumerate(targets):
                 for stat in stats:
                     try:
-                        if isinstance(stat, float):
+                        if isinstance(stat, float):  # Calculate quantile statistic
                             stat_name = f"Q_{stat}"
-                            vals = posterior.quantile(torch.tensor(stat))
-                        else:
+                            from botorch.posteriors import PosteriorList
+
+                            if isinstance(posterior, PosteriorList):
+                                # Special treatment for PosteriorList because .quantile
+                                # is not implemented
+                                vals = torch.cat(
+                                    [
+                                        p.quantile(torch.tensor(stat))
+                                        for p in posterior.posteriors
+                                    ],
+                                    dim=-1,
+                                )
+                            else:
+                                vals = posterior.quantile(torch.tensor(stat))
+                        else:  # Calculate non-quantile statistic
                             stat_name = stat
                             vals = getattr(
                                 posterior,
@@ -615,8 +628,9 @@ class Campaign(SerialMixin):
 
                     if stat == "std":
                         vals = torch.sqrt(vals)
-                    vals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                    result[f"{target_name}_{stat_name}"] = vals[:, k]
+
+                    numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
+                    result[f"{target_name}_{stat_name}"] = numpyvals[:, k]
 
         return result
 
