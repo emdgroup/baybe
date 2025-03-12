@@ -539,15 +539,11 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        import torch
-
-        with torch.no_grad():
-            return surrogate.posterior(candidates)
+        return surrogate.posterior(candidates)
 
     def posterior_stats(
         self,
         candidates: pd.DataFrame | None = None,
-        /,
         stats: Sequence[Statistic] = ("mean", "std"),
     ) -> pd.DataFrame:
         """Return common posterior statistics for each target.
@@ -593,33 +589,34 @@ class Campaign(SerialMixin):
 
         import torch
 
-        result = pd.DataFrame(index=candidates.index)
-        for k, target_name in enumerate(targets):
-            for stat in stats:
-                try:
-                    if isinstance(stat, float):
-                        stat_name = f"Q_{stat}"
-                        vals = posterior.quantile(torch.tensor(stat))
-                    else:
-                        stat_name = stat
-                        vals = getattr(
-                            posterior,
-                            stat if stat not in ["std", "var"] else "variance",
-                        )
-                except (AttributeError, NotImplementedError) as e:
-                    # We could arrive here because an invalid statistics string has
-                    # been requested or because a quantile point has been requested,
-                    # but the posterior type does not implement quantiles.
-                    raise TypeError(
-                        f"The utilized posterior of type "
-                        f"'{posterior.__class__.__name__}' does not support the "
-                        f"statistic associated with the requested input '{stat}'."
-                    ) from e
+        with torch.no_grad():
+            result = pd.DataFrame(index=candidates.index)
+            for k, target_name in enumerate(targets):
+                for stat in stats:
+                    try:
+                        if isinstance(stat, float):
+                            stat_name = f"Q_{stat}"
+                            vals = posterior.quantile(torch.tensor(stat))
+                        else:
+                            stat_name = stat
+                            vals = getattr(
+                                posterior,
+                                stat if stat not in ["std", "var"] else "variance",
+                            )
+                    except (AttributeError, NotImplementedError) as e:
+                        # We could arrive here because an invalid statistics string has
+                        # been requested or because a quantile point has been requested,
+                        # but the posterior type does not implement quantiles.
+                        raise TypeError(
+                            f"The utilized posterior of type "
+                            f"'{posterior.__class__.__name__}' does not support the "
+                            f"statistic associated with the requested input '{stat}'."
+                        ) from e
 
-                if stat == "std":
-                    vals = torch.sqrt(vals)
-                vals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                result[f"{target_name}_{stat_name}"] = vals[:, k]
+                    if stat == "std":
+                        vals = torch.sqrt(vals)
+                    vals = vals.cpu().numpy().reshape((len(result), len(targets)))
+                    result[f"{target_name}_{stat_name}"] = vals[:, k]
 
         return result
 
