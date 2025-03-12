@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
@@ -33,7 +33,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -506,12 +506,14 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame | None = None) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            candidates: The candidate points in experimental recommendations. If not
+                provided, the posterior for the existing campaign measurements is
+                returned. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
         Raises:
             IncompatibilityError: If the underlying surrogate model exposes no
@@ -521,6 +523,9 @@ class Campaign(SerialMixin):
             Posterior: The corresponding posterior object.
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
             raise IncompatibilityError(
@@ -528,10 +533,42 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        import torch
+        return surrogate.posterior(candidates)
 
-        with torch.no_grad():
-            return surrogate.posterior(candidates)
+    def posterior_stats(
+        self,
+        candidates: pd.DataFrame | None = None,
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
+    ) -> pd.DataFrame:
+        """Return posterior statistics for each target.
+
+        Args:
+            candidates: The candidate points in experimental representation. If not
+                provided, the statistics of the existing campaign measurements are
+                calculated. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior_stats`.
+            stats: Sequence indicating which statistics to compute. Also accepts
+                floats, for which the corresponding quantile point will be computed.
+
+        Raises:
+            ValueError: If a requested quantile is outside the open interval (0,1).
+            TypeError: If the posterior utilized by the surrogate does not support
+                a requested statistic.
+
+        Returns:
+            A dataframe with posterior statistics for each target and candidate.
+        """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior_stats"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
+
+        return surrogate.posterior_stats(candidates, stats)
 
     def get_surrogate(
         self,
