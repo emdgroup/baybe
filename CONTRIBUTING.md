@@ -15,8 +15,8 @@ we recommend the following workflow:
 1. Clone a [fork](https://github.com/emdgroup/BayBE/fork) of the repository to 
    your local machine.
 
-1. Create and activate a virtual python environment using one of the supported 
-   python versions.
+1. Create and activate a virtual Python environment using one of the supported 
+   Python versions.
 
 1. Change into the root folder of the cloned repository and install an editable version
    including all development dependencies:
@@ -49,13 +49,13 @@ we recommend the following workflow:
    You can retrieve all available environments via `tox list`.
    For more information, see our [README about tests](https://github.com/emdgroup/baybe/blob/main/tests/README.md).
    
-   For instance, running all code tests in Python 3.12 can be achieved via:
+   For instance, running all code tests in Python 3.13 can be achieved via:
    ```console
-   tox -e fulltest-py312
+   tox -e fulltest-py313
    ```
 
-   Other tox tests that are useful to verify your work locally are `tox -e lint-py312`,
-   `tox -e mypy-py312` and `tox -e coretest-py312`.
+   Other tox tests that are useful to verify your work locally are `tox -e lint-py313`,
+   `tox -e mypy-py313` and `tox -e coretest-py313`.
 
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
