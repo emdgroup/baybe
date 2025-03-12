@@ -42,7 +42,12 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_match
+from baybe.utils.dataframe import (
+    _ValidatedDataFrame,
+    filter_df,
+    fuzzy_row_match,
+    to_tensor,
+)
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
@@ -602,6 +607,74 @@ class Campaign(SerialMixin):
             self.measurements,
             pending_experiments,
         )
+
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame | None = None,
+        *,
+        joint: bool = False,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.Series | float:
+        """Get the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            joint: If ``False``, the acquisition values are computed for each candidate
+                separately. If ``True``, a single joint acquisition value is computed
+                for the entire candidate set.
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Raises:
+            RuntimeError: If no objective has been specified.
+            RuntimeError: If the current recommender does not use an acquisition
+                function.
+
+        Returns:
+            In joint mode, a single acquisition value. Otherwise, a series of individual
+            acquisition values.
+        """
+        # Validate setting
+        if self.objective is None:
+            raise RuntimeError(
+                "Acquisition values can only be computed if an objective has "
+                "been defined."
+            )
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
+        if not isinstance(recommender, BayesianRecommender):
+            raise RuntimeError(
+                f"The current recommender is of type "
+                f"'{recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model and hence no acquisition values. Both objects are "
+                f"only available for recommender subclasses of "
+                f"'{BayesianRecommender.__name__}'."
+            )
+
+        if candidates is None:
+            candidates = self.measurements
+
+        # Extract the acquisition function
+        recommender._setup_botorch_acqf(
+            self.searchspace, self.objective, self.measurements, pending_experiments
+        )
+        acqf = recommender._botorch_acqf
+
+        # Transform candidates to computation representation for function evaluation
+        comp = to_tensor(self.searchspace.transform(candidates, allow_extra=True))
+
+        import torch
+
+        # Depending on joint mode, evaluate using t- or q-batching
+        input = comp if joint else comp.unsqueeze(-2)
+        with torch.no_grad():
+            out = acqf(input)
+        if joint:
+            return out.item()
+        return pd.Series(out.numpy(), index=candidates.index)
 
 
 def _add_version(dict_: dict) -> dict:
