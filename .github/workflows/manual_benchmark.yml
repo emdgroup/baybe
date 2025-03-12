@@ -17,8 +17,8 @@ on:
         required: false
         default: false
         type: boolean
-      arylhalides_1Iodo4Metho_1Chloro4Trifluour_benchmark:
-        description: "arylhalides_1Iodo4Metho_1Chloro4Trifluour_benchmark"
+      arylhalides_ChlorTrifluour_IodoMeth:
+        description: "arylhalides_ChlorTrifluour_IodMeth_benchmark"
         required: false
         default: false
         type: boolean
