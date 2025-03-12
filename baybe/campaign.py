@@ -6,7 +6,7 @@ import gc
 import json
 from collections.abc import Callable, Collection
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import cattrs
 import numpy as np
@@ -608,6 +608,26 @@ class Campaign(SerialMixin):
             self.measurements,
             pending_experiments,
         )
+
+    @overload
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame | None = None,
+        *,
+        joint: Literal[False],
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.Series: ...
+
+    @overload
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame | None = None,
+        *,
+        joint: Literal[True],
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> float: ...
 
     def acquisition_values(
         self,
