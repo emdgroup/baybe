@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
@@ -14,7 +15,7 @@ from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
 
@@ -113,7 +114,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         )
         return cls(*(s.to_botorch() for s in self._surrogates_flat))
 
-    def posterior(self, candidates: pd.DataFrame, /) -> PosteriorList:
+    def posterior(self, candidates: pd.DataFrame) -> PosteriorList:
         """Compute the posterior for candidates in experimental representation.
 
         The (independent joint) posterior is represented as a collection of individual
@@ -132,6 +133,21 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         #   be handy here but unclear if this is doable with the current typing system
         posteriors = [s.posterior(candidates) for s in self._surrogates_flat]  # type: ignore[attr-defined]
         return PosteriorList(*posteriors)
+
+    def posterior_stats(
+        self,
+        candidates: pd.DataFrame,
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
+    ) -> pd.DataFrame:
+        """See :meth:`baybe.surrogates.base.Surrogate.posterior_stats`."""
+        if not all(hasattr(s, "posterior_stats") for s in self._surrogates_flat):
+            raise IncompatibleSurrogateError(
+                "Posterior statistics can only be computed if all involved surrogates "
+                "offer this computation."
+            )
+
+        dfs = [s.posterior_stats(candidates, stats) for s in self._surrogates_flat]  # type: ignore[attr-defined]
+        return pd.concat(dfs, axis=1)
 
 
 def _structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:

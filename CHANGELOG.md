@@ -36,8 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
   support restricting the search space via `active_values`, while `values` continue to 
   identify allowed measurement inputs
-- `Campaign.posterior_stats` as convenience for providing statistical measures 
-  about the target predictions of a given set of candidates
+- `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
+  providing statistical measures about the target predictions of a given set of
+  candidates
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

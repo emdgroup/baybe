@@ -6,7 +6,7 @@ import gc
 import json
 from collections.abc import Callable, Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Literal, TypeAlias
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
@@ -19,7 +19,6 @@ from typing_extensions import override
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
 from baybe.objectives.base import Objective, to_objective
-from baybe.objectives.desirability import DesirabilityObjective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
@@ -34,7 +33,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -55,11 +54,6 @@ _RECOMMENDED = "recommended"
 _MEASURED = "measured"
 _EXCLUDED = "excluded"
 _METADATA_COLUMNS = [_RECOMMENDED, _MEASURED, _EXCLUDED]
-
-Statistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
-"""Type alias for requestable posterior statistics.
-
-A float will result in the corresponding quantile points."""
 
 
 def _make_allow_flag_default_factory(
@@ -544,15 +538,15 @@ class Campaign(SerialMixin):
     def posterior_stats(
         self,
         candidates: pd.DataFrame | None = None,
-        stats: Sequence[Statistic] = ("mean", "std"),
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
     ) -> pd.DataFrame:
-        """Return common posterior statistics for each target.
+        """Return posterior statistics for each target.
 
         Args:
             candidates: The candidate points in experimental representation. If not
                 provided, the statistics of the existing campaign measurements are
                 calculated. For details, see
-                :meth:`baybe.surrogates.base.Surrogate.posterior`.
+                :meth:`baybe.surrogates.base.Surrogate.posterior_stats`.
             stats: Sequence indicating which statistics to compute. Also accepts
                 floats, for which the corresponding quantile point will be computed.
 
@@ -567,72 +561,14 @@ class Campaign(SerialMixin):
         if candidates is None:
             candidates = self.measurements[[p.name for p in self.parameters]]
 
-        stat: Statistic
-        for stat in (x for x in stats if isinstance(x, float)):
-            if not 0.0 < stat < 1.0:
-                raise ValueError(
-                    f"Posterior quantile statistics can only be computed for quantiles "
-                    f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
-                    f"part of '{stats=}'."
-                )
-        posterior = self.posterior(candidates)
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior_stats"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
 
-        assert self.objective is not None
-        match self.objective:
-            case DesirabilityObjective():
-                # TODO: Once desirability also supports posterior transforms this check
-                #  here will have to depend on the configuration of the objective and
-                #  whether it uses the transforms or not.
-                targets = ["Desirability"]
-            case _:
-                targets = [t.name for t in self.objective.targets]
-
-        import torch
-
-        result = pd.DataFrame(index=candidates.index)
-        with torch.no_grad():
-            for k, target_name in enumerate(targets):
-                for stat in stats:
-                    try:
-                        if isinstance(stat, float):  # Calculate quantile statistic
-                            stat_name = f"Q_{stat}"
-                            from botorch.posteriors import PosteriorList
-
-                            if isinstance(posterior, PosteriorList):
-                                # Special treatment for PosteriorList because .quantile
-                                # is not implemented
-                                vals = torch.cat(
-                                    [
-                                        p.quantile(torch.tensor(stat))
-                                        for p in posterior.posteriors
-                                    ],
-                                    dim=-1,
-                                )
-                            else:
-                                vals = posterior.quantile(torch.tensor(stat))
-                        else:  # Calculate non-quantile statistic
-                            stat_name = stat
-                            vals = getattr(
-                                posterior,
-                                stat if stat not in ["std", "var"] else "variance",
-                            )
-                    except (AttributeError, NotImplementedError) as e:
-                        # We could arrive here because an invalid statistics string has
-                        # been requested or because a quantile point has been requested,
-                        # but the posterior type does not implement quantiles.
-                        raise TypeError(
-                            f"The utilized posterior of type "
-                            f"'{posterior.__class__.__name__}' does not support the "
-                            f"statistic associated with the requested input '{stat}'."
-                        ) from e
-
-                    if stat == "std":
-                        vals = torch.sqrt(vals)
-
-                    numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                    result[f"{target_name}_{stat_name}"] = numpyvals[:, k]
-
-        return result
+        return surrogate.posterior_stats(candidates, stats)
 
     def get_surrogate(
         self,
