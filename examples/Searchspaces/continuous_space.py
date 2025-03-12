@@ -17,7 +17,7 @@ DIMENSION = 4
 BOUNDS = (-1, 1)
 
 parameters = [
-    NumericalContinuousParameter(name=f"x_{k+1}", bounds=BOUNDS)
+    NumericalContinuousParameter(name=f"x_{k + 1}", bounds=BOUNDS)
     for k in range(DIMENSION)
 ]
 
