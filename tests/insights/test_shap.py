@@ -157,9 +157,18 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     if use_comp_rep:
         df = ongoing_campaign.searchspace.transform(df)
 
-    with mock.patch("matplotlib.pyplot.show"):
-        shap_insight.plot(plot_type, df)
-        plt.close()
+    try:
+        with mock.patch("matplotlib.pyplot.show"):
+            shap_insight.plot(plot_type, df)
+            plt.close()
+    except AttributeError as e:
+        if "no attribute 'colors'" in str(e) and plot_type == "beeswarm":
+            pytest.xfail("SHAP bug")
+        raise e
+    except ValueError as e:
+        if "zero-size array to reduction" in str(e) and plot_type == "scatter":
+            pytest.xfail("SHAP bug")
+        raise e
 
 
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
