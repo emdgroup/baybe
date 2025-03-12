@@ -75,7 +75,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         objective: Objective,
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
-    ):
+    ) -> BotorchAcquisitionFunction:
         """Create the botorch-ready representation of the function.
 
         The required structure of `measurements` is specified in
