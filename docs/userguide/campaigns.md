@@ -170,12 +170,12 @@ This requirement can be disabled using the method's
 `numerical_measurements_must_be_within_tolerance` flag.
 ```
 
-## Prediction Statistics
+## Predictive Statistics
 You might be interested in statistics about the predicted target values for your 
 recommendations, or indeed for any set of possible candidate points. The 
-[`posterior`](baybe.campaign.Campaign.posterior) and 
-[`posterior_stats`](baybe.campaign.Campaign.posterior_stats) methods provide
-a simple interface for this:
+[`Campaign.posterior_stats`](baybe.campaign.Campaign.posterior_stats) and 
+[`Surrogate.posterior_stats`](baybe.surrogates.base.Surrogate.posterior_stats) methods
+provide a simple interface for this:
 ~~~python
 stats = campaign.posterior_stats(rec)
 ~~~
