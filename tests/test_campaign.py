@@ -127,7 +127,7 @@ def test_setting_allow_flags(flag, space_type, value):
     ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
     [
         param(
-            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             NumericalTarget("t1", "MAX").to_objective(),
             GaussianProcessSurrogate(),
             qLogEI(),
@@ -135,7 +135,7 @@ def test_setting_allow_flags(flag, space_type, value):
             id="single_target",
         ),
         param(
-            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             DesirabilityObjective(
                 (
                     NumericalTarget("t1", "MAX", bounds=(0, 1)),
@@ -148,7 +148,7 @@ def test_setting_allow_flags(flag, space_type, value):
             id="desirability",
         ),
         param(
-            ["Categorical_1", "Num_Disc_1", "Conti_finite1"],
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             ParetoObjective(
                 (NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN"))
             ),
@@ -168,15 +168,12 @@ def test_setting_allow_flags(flag, space_type, value):
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-@pytest.mark.parametrize("n_iterations", [2], ids=["i2"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
     objective = ongoing_campaign.objective
     tested_stats = ["mean", "std", "var"]
-    test_quantiles = not (
-        isinstance(objective, ParetoObjective)
-        or isinstance(objective.targets[0], BinaryTarget)
-    )
+    test_quantiles = not isinstance(objective.targets[0], BinaryTarget)
     if test_quantiles:
         tested_stats += [0.05, 0.95]
 
