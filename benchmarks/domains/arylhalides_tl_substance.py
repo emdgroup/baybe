@@ -18,13 +18,9 @@ from benchmarks.definition import (
 
 
 def get_data() -> pd.DataFrame:
-    """Load data for benchmark.
-
-    Returns:
-        Data for benchmark.
-    """
+    """Load the data for the benchmark."""
     data_path = DATA_PATH / "ArylHalides"
-    data = pd.read_table(data_path / "data_raw.csv", sep=",").dropna(
+    data = pd.read_table(data_path / "data.csv", sep=",").dropna(
         subset=["base", "ligand", "additive", "aryl_halide"]
     )
     return data
