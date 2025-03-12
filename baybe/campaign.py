@@ -552,7 +552,8 @@ class Campaign(SerialMixin):
                 Only required when using meta recommenders that demand it.
 
         Raises:
-            RuntimeError: If the current recommender does not provide a surrogate model.
+            IncompatibilityError: If the current recommender does not provide a
+                surrogate model.
 
         Returns:
             Surrogate: The surrogate of the current recommender.
@@ -575,7 +576,7 @@ class Campaign(SerialMixin):
                 self.searchspace, self.objective, self.measurements
             )
         else:
-            raise RuntimeError(
+            raise IncompatibilityError(
                 f"The current recommender is of type "
                 f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
@@ -630,8 +631,8 @@ class Campaign(SerialMixin):
                 Only required when using meta recommenders that demand it.
 
         Raises:
-            RuntimeError: If no objective has been specified.
-            RuntimeError: If the current recommender does not use an acquisition
+            IncompatibilityError: If no objective has been specified.
+            IncompatibilityError: If the current recommender does not use an acquisition
                 function.
 
         Returns:
@@ -640,13 +641,13 @@ class Campaign(SerialMixin):
         """
         # Validate setting
         if self.objective is None:
-            raise RuntimeError(
+            raise IncompatibilityError(
                 "Acquisition values can only be computed if an objective has "
                 "been defined."
             )
         recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
         if not isinstance(recommender, BayesianRecommender):
-            raise RuntimeError(
+            raise IncompatibilityError(
                 f"The current recommender is of type "
                 f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model and hence no acquisition values. Both objects are "
