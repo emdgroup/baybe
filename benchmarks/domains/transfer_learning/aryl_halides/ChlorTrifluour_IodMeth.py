@@ -31,8 +31,8 @@ def arylhalides_ChlorTrifluour_IodoMeth(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=10,
-    n_mc_iterations=30,
+    n_doe_iterations=12,
+    n_mc_iterations=40,
 )
 
 arylhalides_ChlorTrifluour_IodMeth_benchmark = ConvergenceBenchmark(
