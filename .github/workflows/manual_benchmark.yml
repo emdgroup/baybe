@@ -17,6 +17,16 @@ on:
         required: false
         default: false
         type: boolean
+      arylhalides_ChlorTrifluour_IodoMeth:
+        description: "arylhalides_ChlorTrifluour_IodMeth_benchmark"
+        required: false
+        default: false
+        type: boolean
+      arylhalides_IodoPyr_ChloroPyr:
+        description: "arylhalides_IodoPyr_ChloroPyr_benchmark"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
