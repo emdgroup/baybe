@@ -24,7 +24,9 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     negate = True
     dim = 3
     functions = {
-        "Target_Function": lambda x: Hartmann(dim=dim, negate=negate),
+        "Target_Function": lambda x: Hartmann(dim=dim, negate=negate)
+        .forward(torch.tensor(x))
+        .item(),
         "Source_Function": lambda x: Hartmann(dim=dim, negate=False, noise_std=0.15)
         .forward(torch.tensor(x))
         .item(),
