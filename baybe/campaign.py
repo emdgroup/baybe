@@ -650,10 +650,9 @@ class Campaign(SerialMixin):
             )
 
         # Extract the acquisition function
-        recommender._setup_botorch_acqf(
+        return recommender.get_acquisition_function(
             self.searchspace, self.objective, self.measurements, pending_experiments
         )
-        return recommender._botorch_acqf
 
     @overload
     def acquisition_values(

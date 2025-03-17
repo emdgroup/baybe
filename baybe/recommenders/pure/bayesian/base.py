@@ -1,8 +1,11 @@
 """Base class for all Bayesian recommenders."""
 
+from __future__ import annotations
+
 import gc
 import warnings
 from abc import ABC
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from attrs import define, field, fields
@@ -28,6 +31,9 @@ from baybe.surrogates.base import (
 )
 from baybe.utils.dataframe import _ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
+
+if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
@@ -135,6 +141,22 @@ class BayesianRecommender(PureRecommender, ABC):
             measurements,
             pending_experiments,
         )
+
+    def get_acquisition_function(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> BoAcquisitionFunction:
+        """Get the acquisition function for the given recommendation context.
+
+        For details on the method arguments, see :meth:`recommend`.
+        """
+        self._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
+        return self._botorch_acqf
 
     @override
     def recommend(
