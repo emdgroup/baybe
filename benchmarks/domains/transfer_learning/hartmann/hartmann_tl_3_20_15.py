@@ -15,7 +15,7 @@ from benchmarks.domains.transfer_learning.hartmann.base import (
 )
 
 
-def hartmann_tl_3_50_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     """Actual benchmark function.
 
     Compares two versions of the Hartmann function, where one has a
@@ -47,8 +47,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=50,
 )
 
-hartmann_tl_3_50_15_benchmark = ConvergenceBenchmark(
-    function=hartmann_tl_3_50_15,
-    optimal_target_values={"Target": -3.8598023524495533},
+hartmann_tl_3_20_15_benchmark = ConvergenceBenchmark(
+    function=hartmann_tl_3_20_15,
+    optimal_target_values={"Target": 3.8324342572721695},
     settings=benchmark_config,
 )
