@@ -52,6 +52,11 @@ on:
         required: false
         default: false
         type: boolean
+      michalewicz_tl_noise:
+        description: "michalewicz_tl_noise_benchmark"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'

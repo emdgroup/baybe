@@ -1,7 +1,6 @@
 """Benchmark domains."""
 
 from benchmarks.definition.base import Benchmark
-from benchmarks.domains.michalewicz_tl_noise import michalewicz_tl_noise_benchmark
 from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
 from benchmarks.domains.transfer_learning.aryl_halides.ChlorTrifluour_IodMeth import (
     arylhalides_ChlorTrifluour_IodMeth_benchmark,
@@ -23,6 +22,9 @@ from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_30_negate_15 im
 )
 from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_50_15 import (
     hartmann_tl_3_50_15_benchmark,
+)
+from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous import (
+    michalewicz_tl_noise_benchmark,
 )
 
 BENCHMARKS: list[Benchmark] = [
