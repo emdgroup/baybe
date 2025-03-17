@@ -83,6 +83,8 @@ def _look_up_targets_from_callable(
     """Look up target values by querying a callable."""
     df_targets = lookup(queries)
     queries[df_targets.columns] = df_targets.values
+    # Esnure that the data types in queries are the same as the ones in df_targets
+    queries[df_targets.columns] = queries[df_targets.columns].astype(df_targets.dtypes)
 
 
 def _look_up_targets_from_dataframe(
