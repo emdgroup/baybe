@@ -27,6 +27,36 @@ on:
         required: false
         default: false
         type: boolean
+      direct_arylation_tl_temperature:
+        description: "direct_arylation_tl_temperature_benchmark"
+        required: false
+        default: false
+        type: boolean
+      easom_tl_200_noise5:
+        description: "easom_tl_200_noise5_benchmark"
+        required: false
+        default: false
+        type: boolean
+      easom_tl_500_negate_noise5:
+        description: "easom_tl_500_negate_noise5_benchmark"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_30_negate_15:
+        description: "hartmann_tl_3_30_negate_15_benchmark"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_50_15:
+        description: "hartmann_tl_3_50_15_benchmark"
+        required: false
+        default: false
+        type: boolean
+      michalewicz_tl_noise:
+        description: "michalewicz_tl_noise_benchmark"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
