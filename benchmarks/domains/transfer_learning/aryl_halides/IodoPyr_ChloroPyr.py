@@ -38,8 +38,8 @@ def arylhalides_IodoPyr_ChloroPyr(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=12,
-    n_mc_iterations=40,
+    n_doe_iterations=15,
+    n_mc_iterations=30,
 )
 
 arylhalides_IodoPyr_ChloroPyr_benchmark = ConvergenceBenchmark(
