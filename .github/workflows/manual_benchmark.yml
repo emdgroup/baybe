@@ -42,6 +42,16 @@ on:
         required: false
         default: false
         type: boolean
+      hartmann_tl_3_30_negate_15:
+        description: "hartmann_tl_3_30_negate_15_benchmark"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_50_15:
+        description: "hartmann_tl_3_50_15_benchmark"
+        required: false
+        default: false
+        type: boolean
 
 env:
   DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
