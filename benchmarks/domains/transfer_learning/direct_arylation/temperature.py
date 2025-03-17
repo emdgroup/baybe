@@ -163,8 +163,7 @@ def direct_arylation_tl_temperature(
             impute_mode="error",
         )
     )
-    results = pd.concat(results)
-    return results
+    return pd.concat(results)
 
 
 benchmark_config = ConvergenceBenchmarkSettings(

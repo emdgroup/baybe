@@ -7,6 +7,7 @@ a noise_std of 0.15 to the source function.
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -49,7 +50,7 @@ def create_objective() -> SingleTargetObjective:
 
 
 def wrap_function(
-    function: callable, function_name: str, df: pd.DataFrame
+    function: Callable, function_name: str, df: pd.DataFrame
 ) -> pd.DataFrame:
     """Wrap the given function such that it operates on DataFrames."""
     input_columns = df.columns.tolist()
@@ -83,7 +84,7 @@ def wrap_function(
 
 
 def create_initial_data(
-    function: callable, function_name: str, num_of_points: int
+    function: Callable, function_name: str, num_of_points: int
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
     # Create random samples in [0, pi]^dim
@@ -153,8 +154,7 @@ def michalewicz_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame
             impute_mode="error",
         )
     )
-    results = pd.concat(results)
-    return results
+    return pd.concat(results)
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
