@@ -36,8 +36,8 @@ def easom_tl_200_noise5(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=10,
-    n_mc_iterations=50,
+    n_doe_iterations=15,
+    n_mc_iterations=30,
 )
 
 easom_tl_200_noise5_benchmark = ConvergenceBenchmark(
