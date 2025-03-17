@@ -16,8 +16,6 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 
-DIMENSION = 3  # input dimensionality of the function
-
 
 def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.array]:
     """Locations of measurements for every dimension.
