@@ -94,7 +94,7 @@ def abstract_arylhalides_tl_substance_benchmark(
     target_tasks: list[str],
     percentages: list[float],
 ) -> pd.DataFrame:
-    """Benchmark function comparing TL and non-TL campaigns.
+    """Abstract benchmark function comparing TL and non-TL campaigns.
 
     Inputs:
         base:           Substance with MORDRED encoding
@@ -103,19 +103,9 @@ def abstract_arylhalides_tl_substance_benchmark(
         aryl_halide:    Task parameter
     Output:             Continuous (yield)
     Objective:          Maximization
-    Optimal Inputs:
-        base: "MTBD",
-        ligand: "AdBrettPhos",
-        additive: "N,N-dibenzylisoxazol-3-amine"
-    Optimal Output:     68.24812709999999
     """
     data = get_data()
 
-    # target_tasks = ["1-iodo-4-methoxybenzene"]
-    # source_tasks = [
-    #    # Dissimilar source task
-    #    "1-chloro-4-(trifluoromethyl)benzene"
-    # ]
     searchspace = create_searchspace(
         data=data,
         use_task_parameter=True,

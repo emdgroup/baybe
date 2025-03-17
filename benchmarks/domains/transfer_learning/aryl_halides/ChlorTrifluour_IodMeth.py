@@ -20,7 +20,14 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 def arylhalides_ChlorTrifluour_IodoMeth(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Actual benchmark function."""
+    """Actual benchmark function.
+
+    Optimal Inputs:
+        base:       "MTBD",
+        ligand:     "AdBrettPhos",
+        additive:   "N,N-dibenzylisoxazol-3-amine"
+    Optimal Output: 68.24812709999999
+    """
     return abstract_arylhalides_tl_substance_benchmark(
         settings=settings,
         source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],

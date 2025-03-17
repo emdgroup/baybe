@@ -20,7 +20,14 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 def arylhalides_IodoPyr_ChloroPyr(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Actual benchmark function."""
+    """Actual benchmark function.
+
+    Optimal Inputs:
+        base:       "P2Et",
+        ligand:     "t-BuXPhos",
+        additive:   "4-phenylisoxazole"
+    Optimal Output: 68.76495224
+    """
     return abstract_arylhalides_tl_substance_benchmark(
         settings=settings,
         source_tasks=["2-iodopyridine"],
