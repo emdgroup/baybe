@@ -168,8 +168,8 @@ def direct_arylation_tl_temperature(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=10,
-    n_mc_iterations=50,
+    n_doe_iterations=15,
+    n_mc_iterations=30,
 )
 
 direct_arylation_tl_temperature_benchmark = ConvergenceBenchmark(
