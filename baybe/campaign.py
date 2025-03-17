@@ -700,12 +700,12 @@ class Campaign(SerialMixin):
             acquisition values.
         """
         if candidates is None:
-            candidates = self.measurements
+            candidates = self.measurements[[p.name for p in self.parameters]]
 
         acqf = self.get_acquisition_function(batch_size, pending_experiments)
 
         # Transform candidates to computation representation for function evaluation
-        comp = to_tensor(self.searchspace.transform(candidates, allow_extra=True))
+        comp = to_tensor(self.searchspace.transform(candidates))
 
         import torch
 
