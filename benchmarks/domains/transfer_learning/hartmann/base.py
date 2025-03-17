@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pandas as pd
 from botorch.test_functions.synthetic import Hartmann
@@ -17,7 +19,7 @@ from benchmarks.definition import (
 )
 
 
-def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.array]:
+def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.ndarray]:
     """Locations of measurements for every dimension.
 
     Args:
@@ -34,25 +36,26 @@ def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.array]:
     }
 
 
-def get_data(functions: dict[str, callable], grid: dict[str, np.array]) -> pd.DataFrame:
+def get_data(
+    functions: dict[str, Callable], grid: dict[str, np.ndarray]
+) -> pd.DataFrame:
     """Generate data for benchmark."""
-    grid = np.meshgrid(*[points for points in grid.values()])
+    meshgrid = np.meshgrid(*[points for points in grid.values()])
 
     lookups = []
     for function_name, function in functions.items():
         lookup = pd.DataFrame(
-            {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)}
+            {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(meshgrid)}
         )
         lookup["Target"] = lookup.apply(function, axis=1)
         lookup["Function"] = function_name
         lookups.append(lookup)
-    lookups = pd.concat(lookups)
 
-    return lookups
+    return pd.concat(lookups)
 
 
 def create_searchspace(
-    grid_locations: dict[str, np.array], use_task_parameter: bool
+    grid_locations: dict[str, np.ndarray], use_task_parameter: bool
 ) -> SearchSpace:
     """Create search space for the benchmark."""
     params = [
@@ -93,7 +96,7 @@ def create_initial_data(data: pd.DataFrame) -> pd.DataFrame:
 
 def abstract_hartmann_tl_noise(
     settings: ConvergenceBenchmarkSettings,
-    functions: dict[str, callable],
+    functions: dict[str, Callable],
     points_per_dim: int,
     dim: int,
     percentages: list[float],
@@ -153,5 +156,4 @@ def abstract_hartmann_tl_noise(
             impute_mode="error",
         )
     )
-    results = pd.concat(results)
-    return results
+    return pd.concat(results)

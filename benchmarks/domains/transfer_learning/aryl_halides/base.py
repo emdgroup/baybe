@@ -20,9 +20,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from benchmarks.data.utils import DATA_PATH
-from benchmarks.definition import (
-    ConvergenceBenchmarkSettings,
-)
+from benchmarks.definition import ConvergenceBenchmarkSettings
 
 
 def get_data() -> pd.DataFrame:
@@ -155,5 +153,4 @@ def abstract_arylhalides_tl_substance_benchmark(
             impute_mode="error",
         )
     )
-    results = pd.concat(results)
-    return results
+    return pd.concat(results)
