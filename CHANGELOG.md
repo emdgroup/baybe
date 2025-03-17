@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
   support restricting the search space via `active_values`, while `values` continue to 
   identify allowed measurement inputs
+- `Campaign.get_acquisition_function` convenience method
 - `Campaign.acquisition_values` convenience method for computing acquisition values
 
 ### Changed

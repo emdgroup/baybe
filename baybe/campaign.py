@@ -52,6 +52,7 @@ from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction
     from botorch.posteriors import Posterior
 
 # Metadata columns
@@ -609,6 +610,51 @@ class Campaign(SerialMixin):
             pending_experiments,
         )
 
+    def get_acquisition_function(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> AcquisitionFunction:
+        """Get the current acquisition function.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Raises:
+            IncompatibilityError: If no objective has been specified.
+            IncompatibilityError: If the current recommender does not use an acquisition
+                function.
+
+        Returns:
+            The acquisition function of the current recommender.
+        """
+        # Validate setting
+        if self.objective is None:
+            raise IncompatibilityError(
+                "Acquisition values can only be computed if an objective has "
+                "been defined."
+            )
+
+        # Extract the recommender
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
+        if not isinstance(recommender, BayesianRecommender):
+            raise IncompatibilityError(
+                f"The current recommender is of type "
+                f"'{recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model and hence no acquisition values. Both objects are "
+                f"only available for recommender subclasses of "
+                f"'{BayesianRecommender.__name__}'."
+            )
+
+        # Extract the acquisition function
+        recommender._setup_botorch_acqf(
+            self.searchspace, self.objective, self.measurements, pending_experiments
+        )
+        return recommender._botorch_acqf
+
     @overload
     def acquisition_values(
         self,
@@ -650,39 +696,14 @@ class Campaign(SerialMixin):
             pending_experiments: See :meth:`recommend`.
                 Only required when using meta recommenders that demand it.
 
-        Raises:
-            IncompatibilityError: If no objective has been specified.
-            IncompatibilityError: If the current recommender does not use an acquisition
-                function.
-
         Returns:
             In joint mode, a single acquisition value. Otherwise, a series of individual
             acquisition values.
         """
-        # Validate setting
-        if self.objective is None:
-            raise IncompatibilityError(
-                "Acquisition values can only be computed if an objective has "
-                "been defined."
-            )
-        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
-        if not isinstance(recommender, BayesianRecommender):
-            raise IncompatibilityError(
-                f"The current recommender is of type "
-                f"'{recommender.__class__.__name__}', which does not provide "
-                f"a surrogate model and hence no acquisition values. Both objects are "
-                f"only available for recommender subclasses of "
-                f"'{BayesianRecommender.__name__}'."
-            )
-
         if candidates is None:
             candidates = self.measurements
 
-        # Extract the acquisition function
-        recommender._setup_botorch_acqf(
-            self.searchspace, self.objective, self.measurements, pending_experiments
-        )
-        acqf = recommender._botorch_acqf
+        acqf = self.get_acquisition_function(batch_size, pending_experiments)
 
         # Transform candidates to computation representation for function evaluation
         comp = to_tensor(self.searchspace.transform(candidates, allow_extra=True))
