@@ -204,18 +204,41 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     # Assert no NaN's present
     assert not stats.isna().any().any()
 
-    # Assert correct error for unsupported statistics
-    with pytest.raises(TypeError, match="does not support the statistic associated"):
-        ongoing_campaign.posterior_stats(ongoing_campaign.measurements, ["invalid"])
-
-    if test_quantiles:
-        # Assert correct error for invalid quantiles
-        with pytest.raises(ValueError, match="quantile statistics can only be"):
-            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [-0.1])
-            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [1.1])
-    else:
+    if not test_quantiles:
         # Assert correct error for unsupported quantile calculation
         with pytest.raises(
             TypeError, match="does not support the statistic associated"
         ):
             ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [0.1])
+
+
+@pytest.mark.parametrize(
+    ("stats", "error", "match"),
+    [
+        param(
+            ["invalid"],
+            TypeError,
+            "does not support the statistic associated",
+            id="invalid_stat",
+        ),
+        param(
+            [-0.1],
+            ValueError,
+            "quantile statistics can only be",
+            id="quantile_too_small",
+        ),
+        param(
+            [1.1],
+            ValueError,
+            "quantile statistics can only be",
+            id="quantile_too_large",
+        ),
+    ],
+)
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
+    """Invalid inputs for posterior statistics raise expected exceptions."""
+    with pytest.raises(error, match=match):
+        ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)
