@@ -6,7 +6,6 @@ from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
-from botorch.test_functions.synthetic import Hartmann
 
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
@@ -19,6 +18,24 @@ from benchmarks.definition import (
 )
 
 
+def hartmann(X: np.ndarray, negate: bool, noise_std: float = 0) -> float:
+    """Reimplementation of the Hartmann function."""
+    x = np.array(X).ravel()
+    A = np.array(
+        [[3.0, 10.0, 30.0], [0.1, 10.0, 35.0], [3.0, 10.0, 30.0], [0.1, 10.0, 35.0]]
+    )
+    P = 1e-4 * np.array(
+        [[3689, 1170, 2673], [4699, 4387, 7470], [1091, 8732, 5547], [381, 5743, 8828]]
+    )
+    alpha = np.array([1.0, 1.2, 3.0, 3.2])
+    r = np.sum(A * np.square(x - P), axis=-1)
+    factor = 1 if negate else -1
+    h = factor * np.dot(np.exp(-r), alpha)
+    if noise_std > 0:
+        h += np.random.normal(loc=0.0, scale=noise_std, size=1)[0]
+    return h
+
+
 def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.ndarray]:
     """Locations of measurements for every dimension.
 
@@ -29,7 +46,7 @@ def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.ndarray]:
     Returns:
         Dictionary with dimension names (keys) and corresponding measurement points.
     """
-    bounds = Hartmann(dim=dim).bounds
+    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     return {
         f"x{d}": np.linspace(lower, upper, points_per_dim)
         for d, (lower, upper) in enumerate(bounds.T)
@@ -73,7 +90,6 @@ def create_searchspace(
                 active_values=["Target_Function"],
             )
         )
-
     return SearchSpace.from_product(parameters=params)
 
 

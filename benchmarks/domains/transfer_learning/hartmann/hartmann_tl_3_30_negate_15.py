@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import pandas as pd
-import torch
-from botorch.test_functions.synthetic import Hartmann
 
 from benchmarks.definition import (
     ConvergenceBenchmark,
@@ -12,6 +10,7 @@ from benchmarks.definition import (
 )
 from benchmarks.domains.transfer_learning.hartmann.base import (
     abstract_hartmann_tl_noise,
+    hartmann,
 )
 
 
@@ -24,12 +23,8 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     negate = True
     dim = 3
     functions = {
-        "Target_Function": lambda x: Hartmann(dim=dim, negate=negate)
-        .forward(torch.tensor(x))
-        .item(),
-        "Source_Function": lambda x: Hartmann(dim=dim, negate=False, noise_std=0.15)
-        .forward(torch.tensor(x))
-        .item(),
+        "Target_Function": lambda x: hartmann(x, negate=negate),
+        "Source_Function": lambda x: hartmann(x, negate=False, noise_std=0.15),
     }
     return abstract_hartmann_tl_noise(
         settings=settings,
