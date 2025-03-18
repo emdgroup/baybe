@@ -52,8 +52,8 @@ on:
         required: false
         default: false
         type: boolean
-      michalewicz_tl_noise:
-        description: "michalewicz_tl_noise_benchmark"
+      michalewicz_tl_continuous:
+        description: "michalewicz_tl_continuous_benchmark"
         required: false
         default: false
         type: boolean
