@@ -44,7 +44,7 @@ def easom(x: np.ndarray, noise_std: float = 0.0, negate: bool = False):
     Returns:
         Easom function output
     """
-    x = np.ndarray(x).ravel()
+    x = np.array(x).ravel()
     assert x.shape == (2,)
     y = (
         -math.cos(x[0])
