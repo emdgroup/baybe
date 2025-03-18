@@ -14,6 +14,7 @@ from baybe.parameters import (
     SubstanceParameter,
     TaskParameter,
 )
+from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -37,7 +38,7 @@ def create_searchspace(
     use_task_parameter: bool,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
-    params = [
+    params: list[DiscreteParameter] = [
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
@@ -117,32 +118,22 @@ def direct_arylation_tl_temperature(
         use_task_parameter=False,
     )
 
-    # Searchspace in which all initial data will be added
-    searchspace_naive_tl = create_searchspace(
-        data=data,
-        use_task_parameter=False,
-    )
-
     lookup = create_lookup(data)
     initial_data = create_initial_data(data)
 
-    tl_campaign = Campaign(
-        searchspace=searchspace,
-        objective=create_objective(),
-    )
+    tl_campaign = Campaign(searchspace=searchspace, objective=create_objective())
     non_tl_campaign = Campaign(
         searchspace=searchspace_nontl, objective=create_objective()
     )
-    naive_campaign = Campaign(
-        searchspace=searchspace_naive_tl, objective=create_objective()
-    )
-    naive_campaign.add_measurements(initial_data)
 
     results = []
-    for p in [0.01, 0.02, 0.05, 0.1, 0.2]:
+    for p in [0.01, 0.05, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
-                {f"{int(100 * p)}": tl_campaign},
+                {
+                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_naive": non_tl_campaign,
+                },
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
@@ -155,7 +146,7 @@ def direct_arylation_tl_temperature(
     # No training data and non-TL campaign
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "non_TL": non_tl_campaign, "naive": naive_campaign},
+            {"0": tl_campaign, "non_TL": non_tl_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
@@ -168,8 +159,8 @@ def direct_arylation_tl_temperature(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=15,
-    n_mc_iterations=30,
+    n_doe_iterations=17,
+    n_mc_iterations=40,
 )
 
 direct_arylation_tl_temperature_benchmark = ConvergenceBenchmark(
