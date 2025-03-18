@@ -48,7 +48,7 @@ on:
         default: false
         type: boolean
       hartmann_tl_3_20_15:
-        description: "hartmann_tl_3_50_15_benchmark"
+        description: "hartmann_tl_3_20_15_benchmark"
         required: false
         default: false
         type: boolean
