@@ -29,9 +29,9 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     return abstract_hartmann_tl_noise(
         settings=settings,
         functions=functions,
-        points_per_dim=50,
+        points_per_dim=20,
         dim=dim,
-        percentages=[0.01, 0.02, 0.05, 0.1, 0.2],
+        percentages=[0.01, 0.05, 0.1, 0.2],
         negate=negate,
     )
 

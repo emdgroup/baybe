@@ -10,6 +10,7 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -75,7 +76,7 @@ def create_searchspace(
     grid_locations: dict[str, np.ndarray], use_task_parameter: bool
 ) -> SearchSpace:
     """Create search space for the benchmark."""
-    params = [
+    params: list[DiscreteParameter] = [
         NumericalDiscreteParameter(
             name=name,
             values=points,
@@ -138,11 +139,11 @@ def abstract_hartmann_tl_noise(
     lookup = create_lookup(data)
 
     objective = create_objective(negate)
-    campaign_tl = Campaign(
+    tl_campaign = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
     )
-    campaign_nontl = Campaign(
+    nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
     )
@@ -151,7 +152,10 @@ def abstract_hartmann_tl_noise(
     for p in percentages:
         results.append(
             simulate_scenarios(
-                {f"{int(100 * p)}": campaign_tl},
+                {
+                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_naive": nontl_campaign,
+                },
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
@@ -164,7 +168,7 @@ def abstract_hartmann_tl_noise(
     # No training data and non-TL campaign
     results.append(
         simulate_scenarios(
-            {"0": campaign_tl, "non-TL": campaign_nontl},
+            {"0": tl_campaign, "non-TL": nontl_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
