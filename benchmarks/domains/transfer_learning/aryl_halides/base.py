@@ -16,6 +16,7 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -52,7 +53,7 @@ def create_searchspace(
     source_tasks: list[str],
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
-    params = [
+    params: list[DiscreteParameter] = [
         SubstanceParameter(
             name=substance,
             data=dict(zip(data[substance], data[f"{substance}_smiles"])),
@@ -124,7 +125,7 @@ def abstract_arylhalides_tl_substance_benchmark(
         searchspace=searchspace,
         objective=create_objective(),
     )
-    non_tl_campaign = Campaign(
+    nontl_campaign = Campaign(
         searchspace=searchspace_nontl, objective=create_objective()
     )
 
@@ -132,7 +133,10 @@ def abstract_arylhalides_tl_substance_benchmark(
     for p in percentages:
         results.append(
             simulate_scenarios(
-                {f"{int(100 * p)}": tl_campaign},
+                {
+                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_naive": nontl_campaign,
+                },
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
@@ -145,7 +149,7 @@ def abstract_arylhalides_tl_substance_benchmark(
     # No training data and non-TL campaign
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "non_TL": non_tl_campaign},
+            {"0": tl_campaign, "non_TL": nontl_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
