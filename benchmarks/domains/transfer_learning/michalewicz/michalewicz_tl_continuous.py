@@ -17,6 +17,7 @@ from botorch.test_functions.synthetic import Michalewicz
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
+from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -25,7 +26,7 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 
 def create_searchspace(use_task_parameter: bool) -> SearchSpace:
     """Create search space for the benchmark."""
-    params = [
+    params: list[Parameter] = [
         NumericalContinuousParameter(
             name=f"x{k}",
             bounds=(0, math.pi),
@@ -100,7 +101,7 @@ def create_initial_data(
     return df
 
 
-def michalewicz_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     """Benchmark function comparing TL and non-TL campaigns.
 
     Inputs:
@@ -130,7 +131,7 @@ def michalewicz_tl_noise(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame
     for p in [1, 10, 25, 50, 100]:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl},
+                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -163,8 +164,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=30,
 )
 
-michalewicz_tl_noise_benchmark = ConvergenceBenchmark(
-    function=michalewicz_tl_noise,
+michalewicz_tl_continuous_benchmark = ConvergenceBenchmark(
+    function=michalewicz_tl_continuous,
     optimal_target_values={"Target": 4.687658},
     settings=benchmark_config,
 )

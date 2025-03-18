@@ -24,7 +24,7 @@ from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_30_negate_15 im
     hartmann_tl_3_30_negate_15_benchmark,
 )
 from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous import (
-    michalewicz_tl_noise_benchmark,
+    michalewicz_tl_continuous_benchmark,
 )
 
 BENCHMARKS: list[Benchmark] = [
@@ -36,7 +36,7 @@ BENCHMARKS: list[Benchmark] = [
     easom_tl_100_negate_noise5_benchmark,
     hartmann_tl_3_30_negate_15_benchmark,
     hartmann_tl_3_20_15_benchmark,
-    michalewicz_tl_noise_benchmark,
+    michalewicz_tl_continuous_benchmark,
 ]
 
 
