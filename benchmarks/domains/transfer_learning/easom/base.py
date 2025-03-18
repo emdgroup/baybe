@@ -152,11 +152,11 @@ def abstract_easom_tl_noise(
     lookup = create_lookup(data)
     initial_data = create_initial_data(data)
 
-    campaign_tl = Campaign(
+    tl_campaign = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
     )
-    campaign_nontl = Campaign(
+    nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
     )
@@ -166,7 +166,10 @@ def abstract_easom_tl_noise(
     for p in percentages:
         results.append(
             simulate_scenarios(
-                {"TL": campaign_tl},
+                {
+                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_naive": nontl_campaign,
+                },
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
@@ -179,7 +182,7 @@ def abstract_easom_tl_noise(
     # No training data and non-TL campaign
     results.append(
         simulate_scenarios(
-            {"TL-noSource": campaign_tl, "non-TL": campaign_nontl},
+            {"0": tl_campaign, "non-TL": nontl_campaign},
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

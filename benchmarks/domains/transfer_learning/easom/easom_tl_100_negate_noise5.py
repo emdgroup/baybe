@@ -36,13 +36,12 @@ def easom_tl_100_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=15,
-    n_mc_iterations=30,
+    n_doe_iterations=20,
+    n_mc_iterations=40,
 )
 
 easom_tl_100_negate_noise5_benchmark = ConvergenceBenchmark(
     function=easom_tl_100_negate_noise5,
-    optimal_target_values={"Target": 0.9462931105452647},
-    # TODO Fix optimal target value
+    optimal_target_values={"Target": 0.9635009628660742},
     settings=benchmark_config,
 )
