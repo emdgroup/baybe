@@ -25,6 +25,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -194,7 +195,7 @@ class SubSelectionCondition(Condition):
 
     # object variables
     _selection: tuple = field(
-        converter=tuple,
+        converter=to_tuple,
         # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(1),
