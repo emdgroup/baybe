@@ -13,47 +13,47 @@ on:
           - "All"
           - "Default"
       synthetic_2C1D_1C:
-        description: "synthetic_2C1D_1C benchmark"
+        description: "synthetic_2C1D_1C"
         required: false
         default: false
         type: boolean
       arylhalides_ChlorTrifluour_IodoMeth:
-        description: "arylhalides_ChlorTrifluour_IodMeth_benchmark"
+        description: "arylhalides_ChlorTrifluour_IodMeth"
         required: false
         default: false
         type: boolean
       arylhalides_IodoPyr_ChloroPyr:
-        description: "arylhalides_IodoPyr_ChloroPyr_benchmark"
+        description: "arylhalides_IodoPyr_ChloroPyr"
         required: false
         default: false
         type: boolean
       direct_arylation_tl_temperature:
-        description: "direct_arylation_tl_temperature_benchmark"
+        description: "direct_arylation_tl_temperature"
         required: false
         default: false
         type: boolean
       easom_tl_71_noise5:
-        description: "easom_tl_71_noise5_benchmark"
+        description: "easom_tl_71_noise5"
         required: false
         default: false
         type: boolean
       easom_tl_47_negate_noise5:
-        description: "easom_tl_47_negate_noise5_benchmark"
+        description: "easom_tl_47_negate_noise5"
         required: false
         default: false
         type: boolean
       hartmann_tl_3_30_negate_15:
-        description: "hartmann_tl_3_30_negate_15_benchmark"
+        description: "hartmann_tl_3_30_negate_15"
         required: false
         default: false
         type: boolean
       hartmann_tl_3_15_15:
-        description: "hartmann_tl_3_15_15_benchmark"
+        description: "hartmann_tl_3_15_15"
         required: false
         default: false
         type: boolean
       michalewicz_tl_continuous:
-        description: "michalewicz_tl_continuous_benchmark"
+        description: "michalewicz_tl_continuous"
         required: false
         default: false
         type: boolean
