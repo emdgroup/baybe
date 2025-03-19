@@ -38,8 +38,8 @@ def aryl_halide_ChlorTrifluour_IodoMeth(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=17,
-    n_mc_iterations=40,
+    n_doe_iterations=20,
+    n_mc_iterations=50,
 )
 
 aryl_halide_ChlorTrifluour_IodMeth_benchmark = ConvergenceBenchmark(
