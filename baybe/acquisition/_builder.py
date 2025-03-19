@@ -103,14 +103,6 @@ class BotorchAcquisitionFunctionBuilder:
         self._args = BotorchAcquisitionArgs(model=self.surrogate.to_botorch(), **args)
 
     @cached_property
-    def _train_x(self) -> pd.DataFrame:
-        return self.searchspace.transform(self.measurements, allow_extra=True)
-
-    @cached_property
-    def _train_y(self) -> pd.DataFrame:
-        return self.measurements[[t.name for t in self.objective.targets]]
-
-    @cached_property
     def _botorch_surrogate(self) -> Model:
         return self.surrogate.to_botorch()
 
@@ -122,6 +114,14 @@ class BotorchAcquisitionFunctionBuilder:
     @property
     def _multiplier(self) -> list[float]:
         return [1.0 if m else -1.0 for m in self._maximize_flags]
+
+    @cached_property
+    def _train_x(self) -> pd.DataFrame:
+        return self.searchspace.transform(self.measurements, allow_extra=True)
+
+    @cached_property
+    def _train_y(self) -> pd.DataFrame:
+        return self.measurements[[t.name for t in self.objective.targets]]
 
     def build(self) -> BotorchAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
@@ -137,48 +137,6 @@ class BotorchAcquisitionFunctionBuilder:
         self.set_default_sample_shape(botorch_acqf)
 
         return botorch_acqf
-
-    def _set_X_baseline(self) -> None:
-        """Set BoTorch's ``X_baseline`` argument."""
-        if flds.X_baseline.name not in self._signature:
-            return
-
-        self._args.X_baseline = to_tensor(self._train_x)
-
-    def _set_mc_points(self) -> None:
-        """Set BoTorch's ``mc_points`` argument."""
-        if flds.mc_points.name not in self._signature:
-            return
-
-        assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
-        self._args.mc_points = to_tensor(
-            self.acqf.get_integration_points(self.searchspace)
-        )
-
-    def _set_X_pending(self) -> None:
-        """Set BoTorch's ``X_pending`` argument."""
-        if self.pending_experiments is None:
-            return
-
-        pending_x = self.searchspace.transform(
-            self.pending_experiments, allow_extra=True
-        )
-        self._args.X_pending = to_tensor(pending_x)
-
-    def _set_best_f(self) -> None:
-        """Set BoTorch's ``best_f`` argument."""
-        self._set_best_f_called = True
-
-        if flds.best_f.name not in self._signature:
-            return
-
-        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
-
-        match self.objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                self._args.best_f = post_mean.min().item()
-            case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = post_mean.max().item()
 
     def _invert_optimization_direction(self) -> None:
         """Invert optimization direction for minimization targets."""
@@ -216,6 +174,39 @@ class BotorchAcquisitionFunctionBuilder:
                     torch.tensor(self._multiplier)
                 )
 
+    def _set_best_f(self) -> None:
+        """Set BoTorch's ``best_f`` argument."""
+        self._set_best_f_called = True
+
+        if flds.best_f.name not in self._signature:
+            return
+
+        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
+
+        match self.objective:
+            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+                self._args.best_f = post_mean.min().item()
+            case SingleTargetObjective() | DesirabilityObjective():
+                self._args.best_f = post_mean.max().item()
+
+    def set_default_sample_shape(self, acqf: BotorchAcquisitionFunction, /):
+        """Apply temporary workaround for Thompson sampling."""
+        if not isinstance(self.acqf, qThompsonSampling):
+            return
+
+        assert hasattr(acqf, "_default_sample_shape")
+        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])
+
+    def _set_mc_points(self) -> None:
+        """Set BoTorch's ``mc_points`` argument."""
+        if flds.mc_points.name not in self._signature:
+            return
+
+        assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
+        self._args.mc_points = to_tensor(
+            self.acqf.get_integration_points(self.searchspace)
+        )
+
     def _set_ref_point(self) -> None:
         """Set BoTorch's ``ref_point`` argument."""
         if flds.ref_point.name not in self._signature:
@@ -236,10 +227,19 @@ class BotorchAcquisitionFunctionBuilder:
                 * self._multiplier
             )
 
-    def set_default_sample_shape(self, acqf: BotorchAcquisitionFunction, /):
-        """Apply temporary workaround for Thompson sampling."""
-        if not isinstance(self.acqf, qThompsonSampling):
+    def _set_X_baseline(self) -> None:
+        """Set BoTorch's ``X_baseline`` argument."""
+        if flds.X_baseline.name not in self._signature:
             return
 
-        assert hasattr(acqf, "_default_sample_shape")
-        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])
+        self._args.X_baseline = to_tensor(self._train_x)
+
+    def _set_X_pending(self) -> None:
+        """Set BoTorch's ``X_pending`` argument."""
+        if self.pending_experiments is None:
+            return
+
+        pending_x = self.searchspace.transform(
+            self.pending_experiments, allow_extra=True
+        )
+        self._args.X_pending = to_tensor(pending_x)
