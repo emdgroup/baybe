@@ -128,7 +128,7 @@ def direct_arylation_tl_temperature(
     )
 
     results = []
-    for p in [0.01, 0.05, 0.1, 0.2]:
+    for p in [0, 0.01, 0.05, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
                 {
@@ -138,23 +138,15 @@ def direct_arylation_tl_temperature(
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                ]
+                if p > 0
+                else None,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
+                n_mc_iterations=settings.n_mc_iterations if p == 0 else None,
                 impute_mode="error",
             )
         )
-    # No training data and non-TL campaign
-    results.append(
-        simulate_scenarios(
-            {"0": tl_campaign, "non_TL": non_tl_campaign},
-            lookup,
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-        )
-    )
     return pd.concat(results)
 
 
