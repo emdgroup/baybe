@@ -26,7 +26,7 @@ def grid_locations(points_per_dim: int) -> dict[str, np.ndarray]:
     Returns:
         Dictionary with dimension names (keys) and corresponding measurement points.
     """
-    bounds: np.ndarray = np.array([[-100] * 2, [100] * 2])
+    bounds: np.ndarray = np.array([[-10] * 2, [10] * 2])
     return {
         f"x{d}": np.linspace(lower, upper, points_per_dim)
         for d, (lower, upper) in enumerate(bounds.T)

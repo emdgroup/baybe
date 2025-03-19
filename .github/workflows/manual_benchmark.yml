@@ -37,8 +37,8 @@ on:
         required: false
         default: false
         type: boolean
-      easom_tl_100_negate_noise5:
-        description: "easom_tl_100_negate_noise5_benchmark"
+      easom_tl_47_negate_noise5:
+        description: "easom_tl_47_negate_noise5_benchmark"
         required: false
         default: false
         type: boolean
@@ -47,8 +47,8 @@ on:
         required: false
         default: false
         type: boolean
-      hartmann_tl_3_20_15:
-        description: "hartmann_tl_3_20_15_benchmark"
+      hartmann_tl_3_15_15:
+        description: "hartmann_tl_3_15_15_benchmark"
         required: false
         default: false
         type: boolean
