@@ -11,6 +11,7 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -90,7 +91,7 @@ def make_searchspace(
     grid_locations: dict[str, np.ndarray], use_task_parameter: bool
 ) -> SearchSpace:
     """Create search space for the benchmark."""
-    params = [
+    params: list[DiscreteParameter] = [
         NumericalDiscreteParameter(
             name=name,
             values=points,
