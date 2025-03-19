@@ -46,9 +46,8 @@ def load_data() -> pd.DataFrame:
 
 def make_searchspace(
     data: pd.DataFrame,
-    use_task_parameter: bool,
-    target_tasks: Collection[str],
-    source_tasks: Collection[str],
+    target_tasks: Collection[str] | None = None,
+    source_tasks: Collection[str] | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -59,6 +58,7 @@ def make_searchspace(
         )
         for substance in ["base", "ligand", "additive"]
     ]
+    use_task_parameter = target_tasks is not None and source_tasks is not None
     if use_task_parameter:
         params.append(
             TaskParameter(
@@ -107,16 +107,10 @@ def abstract_aryl_halide_tl_substance_benchmark(
 
     searchspace = make_searchspace(
         data=data,
-        use_task_parameter=True,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
     )
-    searchspace_nontl = make_searchspace(
-        data=data,
-        use_task_parameter=False,
-        source_tasks=source_tasks,
-        target_tasks=target_tasks,
-    )
+    searchspace_nontl = make_searchspace(data=data)
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
