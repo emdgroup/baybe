@@ -11,8 +11,8 @@ import pandas as pd
 import torch
 from attrs import asdict, define, field, fields
 from attrs.validators import instance_of, optional
-from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
-from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BObjective
+from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
+from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
 from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.models.model import Model
@@ -53,7 +53,7 @@ class BotorchAcquisitionArgs:
     beta: float | None = field(default=None, validator=opt_v(float))
     maximize: bool | None = field(default=None, validator=opt_v(bool))
     mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    objective: BObjective | None = field(default=None, validator=opt_v(BObjective))
+    objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
     prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
     ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
     X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
@@ -84,7 +84,7 @@ class BotorchAcquisitionFunctionBuilder:
 
     # Context shared across building methods
     _args: BotorchAcquisitionArgs = field(init=False)
-    _botorch_acqf_cls: BotorchAcquisitionFunction = field(init=False)
+    _botorch_acqf_cls: BoAcquisitionFunction = field(init=False)
     _signature: MappingProxyType = field(init=False)
     _set_best_f_called: bool = field(init=False, default=False)
 
@@ -128,7 +128,7 @@ class BotorchAcquisitionFunctionBuilder:
         """The training target values."""
         return self.measurements[[t.name for t in self.objective.targets]]
 
-    def build(self) -> BotorchAcquisitionFunction:
+    def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
         # Set context-specific parameters
         self._set_best_f()
@@ -194,7 +194,7 @@ class BotorchAcquisitionFunctionBuilder:
             case SingleTargetObjective() | DesirabilityObjective():
                 self._args.best_f = post_mean.max().item()
 
-    def set_default_sample_shape(self, acqf: BotorchAcquisitionFunction, /):
+    def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
         if not isinstance(self.acqf, qThompsonSampling):
             return
