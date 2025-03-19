@@ -13,11 +13,11 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
-    abstract_arylhalides_tl_substance_benchmark,
+    abstract_aryl_halide_tl_substance_benchmark,
 )
 
 
-def arylhalides_IodoPyr_ChloroPyr(
+def aryl_halide_IodoPyr_ChloroPyr(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Actual benchmark function.
@@ -28,7 +28,7 @@ def arylhalides_IodoPyr_ChloroPyr(
         additive:   "4-phenylisoxazole"
     Optimal Output: 68.76495224
     """
-    return abstract_arylhalides_tl_substance_benchmark(
+    return abstract_aryl_halide_tl_substance_benchmark(
         settings=settings,
         source_tasks=["2-iodopyridine"],
         target_tasks=["3-chloropyridine"],
@@ -42,8 +42,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=50,
 )
 
-arylhalides_IodoPyr_ChloroPyr_benchmark = ConvergenceBenchmark(
-    function=arylhalides_IodoPyr_ChloroPyr,
+aryl_halide_IodoPyr_ChloroPyr_benchmark = ConvergenceBenchmark(
+    function=aryl_halide_IodoPyr_ChloroPyr,
     optimal_target_values={"yield": 68.76495224},
     settings=benchmark_config,
 )
