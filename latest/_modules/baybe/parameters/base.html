@@ -1059,6 +1059,7 @@
     <span class="n">get_base_structure_hook</span><span class="p">,</span>
     <span class="n">unstructure_base</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">to_tuple</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">baybe.searchspace.continuous</span> <span class="kn">import</span> <span class="n">SubspaceContinuous</span>
@@ -1241,7 +1242,10 @@
 
     <span class="c1"># object variables</span>
     <span class="n">_active_values</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="nb">tuple</span><span class="p">),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;active_values&quot;</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="n">to_tuple</span><span class="p">),</span>
+        <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;active_values&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Optional labels identifying the ones which should be actively recommended.&quot;&quot;&quot;</span>
 

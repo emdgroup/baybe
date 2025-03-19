@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base         Ligand  Temperature  \
-    412     p-Xylene  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-    36   Butyl Ester     Cesium pivalate      BrettPhos         90.0   
-    418     p-Xylene  Potassium pivalate      BrettPhos        105.0   
+               Solvent                Base                        Ligand  \
+    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    385       p-Xylene   Potassium acetate                 (t-Bu)PhCPhos   
+    407       p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
     
-         Concentration  
-    412          0.100  
-    36           0.057  
-    418          0.100  
+         Temperature  Concentration  
+    212        105.0          0.153  
+    385        120.0          0.100  
+    407         90.0          0.153  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base         Ligand  Temperature  \
-    412     p-Xylene  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-    36   Butyl Ester     Cesium pivalate      BrettPhos         90.0   
-    418     p-Xylene  Potassium pivalate      BrettPhos        105.0   
+               Solvent                Base                        Ligand  \
+    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    385       p-Xylene   Potassium acetate                 (t-Bu)PhCPhos   
+    407       p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
     
-         Concentration      yield  
-    412          0.100  31.142131  
-    36           0.057   4.386595  
-    418          0.100   2.308690  
+         Temperature  Concentration      yield  
+    212        105.0          0.153   0.101200  
+    385        120.0          0.100   0.258764  
+    407         90.0          0.153  19.331259  
 
 
 
