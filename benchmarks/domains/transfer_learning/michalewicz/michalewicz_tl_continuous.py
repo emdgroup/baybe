@@ -154,8 +154,8 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=15,
-    n_mc_iterations=30,
+    n_doe_iterations=20,
+    n_mc_iterations=50,
 )
 
 michalewicz_tl_continuous_benchmark = ConvergenceBenchmark(

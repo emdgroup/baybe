@@ -36,8 +36,8 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=15,
-    n_mc_iterations=30,
+    n_doe_iterations=20,
+    n_mc_iterations=50,
 )
 
 hartmann_tl_3_30_negate_15_benchmark = ConvergenceBenchmark(
