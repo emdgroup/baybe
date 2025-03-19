@@ -17,8 +17,8 @@ from benchmarks.domains.transfer_learning.easom.easom_tl_71_noise5 import (
 from benchmarks.domains.transfer_learning.easom.easom_tl_100_negate_noise5 import (
     easom_tl_100_negate_noise5_benchmark,
 )
-from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_20_15 import (
-    hartmann_tl_3_20_15_benchmark,
+from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_15_15 import (
+    hartmann_tl_3_15_15_benchmark,
 )
 from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_30_negate_15 import (
     hartmann_tl_3_30_negate_15_benchmark,
@@ -35,7 +35,7 @@ BENCHMARKS: list[Benchmark] = [
     easom_tl_71_noise5_benchmark,
     easom_tl_100_negate_noise5_benchmark,
     hartmann_tl_3_30_negate_15_benchmark,
-    hartmann_tl_3_20_15_benchmark,
+    hartmann_tl_3_15_15_benchmark,
     michalewicz_tl_continuous_benchmark,
 ]
 

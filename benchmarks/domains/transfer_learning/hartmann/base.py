@@ -37,12 +37,11 @@ def hartmann(X: np.ndarray, negate: bool, noise_std: float = 0) -> float:
     return h
 
 
-def grid_locations(points_per_dim: int, dim: int) -> dict[str, np.ndarray]:
+def grid_locations(points_per_dim: int) -> dict[str, np.ndarray]:
     """Locations of measurements for every dimension.
 
     Args:
         points_per_dim: Number of grid points per input dimension.
-        dim: The input dimension of the Hartmann function.
 
     Returns:
         Dictionary with dimension names (keys) and corresponding measurement points.
