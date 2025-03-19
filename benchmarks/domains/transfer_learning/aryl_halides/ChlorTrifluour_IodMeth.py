@@ -1,7 +1,7 @@
 """Aryl-Halide benchmark for transfer learning.
 
-As source parameter, this benchmark uses 1-chloro-4-(trifluoromethyl)benzene.
-As target parameter, this benchmark uses 1-iodo-4-methoxybenzene.
+Source task: 1-chloro-4-(trifluoromethyl)benzene
+Target task: 1-iodo-4-methoxybenzene
 """
 
 from __future__ import annotations
