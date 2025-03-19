@@ -25,7 +25,7 @@ from benchmarks.definition import (
 from benchmarks.definition.convergence import ConvergenceBenchmark
 
 
-def get_data() -> pd.DataFrame:
+def load_data() -> pd.DataFrame:
     """Load data for benchmark."""
     data_path = DATA_PATH / "DirectArylation"
     data = pd.read_table(data_path / "data.csv", sep=",", index_col=0)
@@ -33,7 +33,7 @@ def get_data() -> pd.DataFrame:
     return data
 
 
-def create_searchspace(
+def make_searchspace(
     data: pd.DataFrame,
     use_task_parameter: bool,
 ) -> SearchSpace:
@@ -63,17 +63,17 @@ def create_searchspace(
     return SearchSpace.from_product(parameters=params)
 
 
-def create_objective() -> SingleTargetObjective:
+def make_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
     return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
-def create_lookup(data: pd.DataFrame) -> pd.DataFrame:
+def make_lookup(data: pd.DataFrame) -> pd.DataFrame:
     """Create the lookup for the benchmark."""
     return data[data["Temp_C"] == "105"]
 
 
-def create_initial_data(data: pd.DataFrame) -> pd.DataFrame:
+def make_initial_data(data: pd.DataFrame) -> pd.DataFrame:
     """Create the initial data for the benchmark."""
     return data[data["Temp_C"] != "105"]
 
@@ -107,23 +107,23 @@ def direct_arylation_tl_temperature(
     ]
     Optimal Output: 100.0
     """
-    data = get_data()
+    data = load_data()
 
-    searchspace = create_searchspace(
+    searchspace = make_searchspace(
         data=data,
         use_task_parameter=True,
     )
-    searchspace_nontl = create_searchspace(
+    searchspace_nontl = make_searchspace(
         data=data,
         use_task_parameter=False,
     )
 
-    lookup = create_lookup(data)
-    initial_data = create_initial_data(data)
+    lookup = make_lookup(data)
+    initial_data = make_initial_data(data)
 
-    tl_campaign = Campaign(searchspace=searchspace, objective=create_objective())
+    tl_campaign = Campaign(searchspace=searchspace, objective=make_objective())
     non_tl_campaign = Campaign(
-        searchspace=searchspace_nontl, objective=create_objective()
+        searchspace=searchspace_nontl, objective=make_objective()
     )
 
     results = []
