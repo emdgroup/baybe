@@ -37,8 +37,8 @@ on:
         required: false
         default: false
         type: boolean
-      easom_tl_100_negate_noise5:
-        description: "easom_tl_100_negate_noise5_benchmark"
+      easom_tl_47_negate_noise5:
+        description: "easom_tl_47_negate_noise5_benchmark"
         required: false
         default: false
         type: boolean
