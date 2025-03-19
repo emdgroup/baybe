@@ -24,7 +24,7 @@ from baybe.targets import NumericalTarget
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 
 
-def create_searchspace(use_task_parameter: bool) -> SearchSpace:
+def make_searchspace(use_task_parameter: bool) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
         NumericalContinuousParameter(
@@ -45,7 +45,7 @@ def create_searchspace(use_task_parameter: bool) -> SearchSpace:
     return SearchSpace.from_product(parameters=params)
 
 
-def create_objective() -> SingleTargetObjective:
+def make_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
     return SingleTargetObjective(target=NumericalTarget(name="Target", mode="MAX"))
 
@@ -84,7 +84,7 @@ def wrap_function(
     return result_df
 
 
-def create_initial_data(
+def make_initial_data(
     function: Callable, function_name: str, num_of_points: int
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
@@ -113,10 +113,10 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
-    searchspace_nontl = create_searchspace(use_task_parameter=False)
-    searchspace_tl = create_searchspace(use_task_parameter=True)
+    searchspace_nontl = make_searchspace(use_task_parameter=False)
+    searchspace_tl = make_searchspace(use_task_parameter=True)
 
-    objective = create_objective()
+    objective = make_objective()
     campaign_tl = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
@@ -136,7 +136,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                     functions["Target_Function"], "Target_Function", x
                 ),
                 initial_data=[
-                    create_initial_data(
+                    make_initial_data(
                         functions["Source_Function"], "Source_Function", p
                     )
                     for _ in range(settings.n_mc_iterations)
