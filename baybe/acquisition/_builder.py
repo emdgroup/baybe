@@ -104,23 +104,28 @@ class BotorchAcquisitionFunctionBuilder:
 
     @cached_property
     def _botorch_surrogate(self) -> Model:
+        """The botorch surrogate object."""
         return self.surrogate.to_botorch()
 
     @property
     def _maximize_flags(self) -> list[bool]:
+        """Booleans indicating which target is to be minimized/maximized."""
         assert is_all_instance(self.objective.targets, NumericalTarget)
         return [t.mode is TargetMode.MAX for t in self.objective.targets]
 
     @property
     def _multiplier(self) -> list[float]:
+        """Signs indicating which target is to be minimized/maximized."""
         return [1.0 if m else -1.0 for m in self._maximize_flags]
 
     @cached_property
     def _train_x(self) -> pd.DataFrame:
+        """The training parameter values."""
         return self.searchspace.transform(self.measurements, allow_extra=True)
 
     @cached_property
     def _train_y(self) -> pd.DataFrame:
+        """The training target values."""
         return self.measurements[[t.name for t in self.objective.targets]]
 
     def build(self) -> BotorchAcquisitionFunction:
