@@ -13,11 +13,11 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
-    abstract_arylhalides_tl_substance_benchmark,
+    abstract_aryl_halide_tl_substance_benchmark,
 )
 
 
-def arylhalides_ChlorTrifluour_IodoMeth(
+def aryl_halide_ChlorTrifluour_IodoMeth(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Actual benchmark function.
@@ -28,7 +28,7 @@ def arylhalides_ChlorTrifluour_IodoMeth(
         additive:   "N,N-dibenzylisoxazol-3-amine"
     Optimal Output: 68.24812709999999
     """
-    return abstract_arylhalides_tl_substance_benchmark(
+    return abstract_aryl_halide_tl_substance_benchmark(
         settings=settings,
         source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
         target_tasks=["1-iodo-4-methoxybenzene"],
@@ -42,8 +42,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=40,
 )
 
-arylhalides_ChlorTrifluour_IodMeth_benchmark = ConvergenceBenchmark(
-    function=arylhalides_ChlorTrifluour_IodoMeth,
+aryl_halide_ChlorTrifluour_IodMeth_benchmark = ConvergenceBenchmark(
+    function=aryl_halide_ChlorTrifluour_IodoMeth,
     optimal_target_values={"yield": 68.24812709999999},
     settings=benchmark_config,
 )
