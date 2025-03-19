@@ -147,7 +147,7 @@ def abstract_hartmann_tl_noise(
     )
 
     results = []
-    for p in percentages:
+    for p in [0, *percentages]:
         results.append(
             simulate_scenarios(
                 {
@@ -157,21 +157,13 @@ def abstract_hartmann_tl_noise(
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                ]
+                if p > 0
+                else None,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
+                n_mc_iterations=settings.n_mc_iterations if p == 0 else None,
                 impute_mode="error",
             )
         )
-    # No training data and non-TL campaign
-    results.append(
-        simulate_scenarios(
-            {"0": tl_campaign, "non-TL": nontl_campaign},
-            lookup,
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-        )
-    )
     return pd.concat(results)
