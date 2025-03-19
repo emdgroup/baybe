@@ -1,6 +1,6 @@
 """Benchmark on ArylHalides data with two distinct arylhalides as TL tasks.
 
-This file provides the basic structure such that one can easily create different
+This module provides the basic structure for creating different
 benchmarks by changing the source and target tasks. The benchmark compares TL and
 non-TL campaigns.
 
