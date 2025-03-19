@@ -116,14 +116,13 @@ def abstract_arylhalides_tl_substance_benchmark(
 
     lookup = create_lookup(data, target_tasks)
     initial_data = create_initial_data(data, source_tasks)
+    objective = create_objective()
 
     tl_campaign = Campaign(
         searchspace=searchspace,
-        objective=create_objective(),
+        objective=objective,
     )
-    nontl_campaign = Campaign(
-        searchspace=searchspace_nontl, objective=create_objective()
-    )
+    nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     results = []
     for p in percentages:
