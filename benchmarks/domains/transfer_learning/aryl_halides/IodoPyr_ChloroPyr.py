@@ -1,7 +1,7 @@
 """Aryl-Halide benchmark for transfer learning.
 
-As source parameter, this benchmark uses 2-iodopyridine.
-As target parameter, this benchmark uses 3-chloropyridine.
+Source task: 2-iodopyridine
+Target task: 3-chloropyridine
 """
 
 from __future__ import annotations
