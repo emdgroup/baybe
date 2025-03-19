@@ -26,8 +26,7 @@ from benchmarks.definition import ConvergenceBenchmarkSettings
 
 def get_data() -> pd.DataFrame:
     """Load the data for the benchmark."""
-    data_path = DATA_PATH / "ArylHalides"
-    data = pd.read_table(data_path / "data.csv", sep=",").dropna(
+    data = pd.read_table(DATA_PATH / "ArylHalides" / "data.csv", sep=",").dropna(
         subset=["base", "ligand", "additive", "aryl_halide"]
     )
     # Only keep relevant columns
