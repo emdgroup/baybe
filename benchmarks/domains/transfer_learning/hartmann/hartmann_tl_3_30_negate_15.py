@@ -21,7 +21,6 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
     noise_std of 0.15.
     """
     negate = True
-    dim = 3
     functions = {
         "Target_Function": lambda x: hartmann(x, negate=negate),
         "Source_Function": lambda x: hartmann(x, negate=False, noise_std=0.15),
@@ -30,7 +29,6 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
         settings=settings,
         functions=functions,
         points_per_dim=30,
-        dim=dim,
         percentages=[0.01, 0.02, 0.05, 0.1, 0.2],
         negate=negate,
     )
