@@ -96,9 +96,9 @@ def abstract_arylhalides_tl_substance_benchmark(
     """Abstract benchmark function comparing TL and non-TL campaigns.
 
     Inputs:
-        base:           Substance with MORDRED encoding
-        ligand:         Substance with MORDRED encoding
-        additive:       Substance with MORDRED encoding
+        base:           Substance parameter
+        ligand:         Substance parameter
+        additive:       Substance parameter
         aryl_halide:    Task parameter
     Output:             Continuous (yield)
     Objective:          Maximization
