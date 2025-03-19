@@ -11,7 +11,7 @@ target tasks respectively.
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable
+from collections.abc import Collection, Iterable, Sequence
 
 import pandas as pd
 
@@ -46,8 +46,8 @@ def load_data() -> pd.DataFrame:
 
 def make_searchspace(
     data: pd.DataFrame,
-    target_tasks: Collection[str] | None = None,
-    source_tasks: Collection[str] | None = None,
+    target_tasks: Sequence[str] | None = None,
+    source_tasks: Sequence[str] | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -63,7 +63,7 @@ def make_searchspace(
         params.append(
             TaskParameter(
                 name="aryl_halide",
-                values=target_tasks + source_tasks,
+                values=[*target_tasks, *source_tasks],
                 active_values=target_tasks,
             )
         )
