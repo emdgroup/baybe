@@ -121,11 +121,10 @@ def direct_arylation_tl_temperature(
 
     lookup = make_lookup(data)
     initial_data = make_initial_data(data)
+    objective = make_objective()
 
-    tl_campaign = Campaign(searchspace=searchspace, objective=make_objective())
-    non_tl_campaign = Campaign(
-        searchspace=searchspace_nontl, objective=make_objective()
-    )
+    tl_campaign = Campaign(searchspace=searchspace, objective=objective)
+    non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     results = []
     for p in [0, 0.01, 0.05, 0.1, 0.2]:
