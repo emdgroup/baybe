@@ -53,7 +53,7 @@ def grid_locations(points_per_dim: int) -> dict[str, np.ndarray]:
     }
 
 
-def get_data(
+def generate_data(
     functions: dict[str, Callable], grid: dict[str, np.ndarray]
 ) -> pd.DataFrame:
     """Generate data for benchmark."""
@@ -71,7 +71,7 @@ def get_data(
     return pd.concat(lookups)
 
 
-def create_searchspace(
+def make_searchspace(
     grid_locations: dict[str, np.ndarray], use_task_parameter: bool
 ) -> SearchSpace:
     """Create search space for the benchmark."""
@@ -93,19 +93,19 @@ def create_searchspace(
     return SearchSpace.from_product(parameters=params)
 
 
-def create_objective(negate: bool) -> SingleTargetObjective:
+def make_objective(negate: bool) -> SingleTargetObjective:
     """Create the objective for the benchmark."""
     return SingleTargetObjective(
         target=NumericalTarget(name="Target", mode="MAX" if negate else "MIN")
     )
 
 
-def create_lookup(data: pd.DataFrame) -> pd.DataFrame:
+def make_lookup(data: pd.DataFrame) -> pd.DataFrame:
     """Create the lookup for the benchmark."""
     return data[data["Function"] == "Target_Function"]
 
 
-def create_initial_data(data: pd.DataFrame) -> pd.DataFrame:
+def make_initial_data(data: pd.DataFrame) -> pd.DataFrame:
     """Create the initial data for the benchmark."""
     return data[data["Function"] == "Source_Function"]
 
@@ -128,15 +128,15 @@ def abstract_hartmann_tl_noise(
 
     """
     grid = grid_locations(points_per_dim)
-    data = get_data(functions, grid)
+    data = generate_data(functions, grid)
 
-    searchspace_nontl = create_searchspace(grid, use_task_parameter=False)
-    searchspace_tl = create_searchspace(grid, use_task_parameter=True)
+    searchspace_nontl = make_searchspace(grid, use_task_parameter=False)
+    searchspace_tl = make_searchspace(grid, use_task_parameter=True)
 
-    initial_data = create_initial_data(data)
-    lookup = create_lookup(data)
+    initial_data = make_initial_data(data)
+    lookup = make_lookup(data)
 
-    objective = create_objective(negate)
+    objective = make_objective(negate)
     tl_campaign = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
