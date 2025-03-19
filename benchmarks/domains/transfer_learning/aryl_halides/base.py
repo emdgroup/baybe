@@ -1,4 +1,4 @@
-"""Benchmark on ArylHalides data with two distinct arylhalides as TL tasks.
+"""Benchmark on aryl halides data with two distinct aryl halides as TL tasks.
 
 This module provides the basic structure for creating different
 benchmarks by changing the source and target tasks. The benchmark compares TL and
@@ -37,7 +37,7 @@ def get_data() -> pd.DataFrame:
         "yield",
     ]
     data = pd.read_table(
-        DATA_PATH / "ArylHalides" / "data.csv", sep=",", usecols=relevant_columns
+        DATA_PATH / "aryl_halide" / "data.csv", sep=",", usecols=relevant_columns
     ).dropna(subset=["base", "ligand", "additive", "aryl_halide"])
     return data
 
@@ -83,7 +83,7 @@ def create_initial_data(data: pd.DataFrame, source_tasks: list[str]) -> pd.DataF
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
-def abstract_arylhalides_tl_substance_benchmark(
+def abstract_aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
     source_tasks: list[str],
     target_tasks: list[str],
