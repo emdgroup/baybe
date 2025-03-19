@@ -38,7 +38,7 @@ def aryl_halide_IodoPyr_ChloroPyr(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
-    n_doe_iterations=17,
+    n_doe_iterations=20,
     n_mc_iterations=50,
 )
 
