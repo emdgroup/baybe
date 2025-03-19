@@ -11,7 +11,7 @@ target tasks respectively.
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Sequence
 
 import pandas as pd
 
@@ -60,10 +60,12 @@ def make_searchspace(
     ]
     use_task_parameter = target_tasks is not None and source_tasks is not None
     if use_task_parameter:
+        assert target_tasks is not None and source_tasks is not None  # mypy
+        all_tasks = [s for s in source_tasks] + [t for t in target_tasks]
         params.append(
             TaskParameter(
                 name="aryl_halide",
-                values=[*target_tasks, *source_tasks],
+                values=all_tasks,
                 active_values=target_tasks,
             )
         )
@@ -75,23 +77,21 @@ def make_objective() -> SingleTargetObjective:
     return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
-def make_lookup(data: pd.DataFrame, target_tasks: Collection[str]) -> pd.DataFrame:
+def make_lookup(data: pd.DataFrame, target_tasks: Sequence[str]) -> pd.DataFrame:
     """Create the lookup for the benchmark."""
     return data[data["aryl_halide"].isin(target_tasks)]
 
 
-def make_initial_data(
-    data: pd.DataFrame, source_tasks: Collection[str]
-) -> pd.DataFrame:
+def make_initial_data(data: pd.DataFrame, source_tasks: Sequence[str]) -> pd.DataFrame:
     """Create the initial data for the benchmark."""
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
 def abstract_aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
-    source_tasks: Collection[str],
-    target_tasks: Collection[str],
-    percentages: Iterable[float],
+    source_tasks: Sequence[str],
+    target_tasks: Sequence[str],
+    percentages: Sequence[float],
 ) -> pd.DataFrame:
     """Abstract benchmark function comparing TL and non-TL campaigns.
 
