@@ -5,7 +5,7 @@ benchmarks by changing the source and target tasks. The benchmark compares TL an
 non-TL campaigns.
 
 By convention, the benchmarks are named in the format "SourceHalides-TargetHalides.py"
-where SourceHalides and TargetHalides are abbreviations of the used source and target
+where `SourceHalides` and `TargetHalides` are abbreviations of the used source and target
 tasks respectively.
 """
 
