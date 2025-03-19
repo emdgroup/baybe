@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -130,7 +130,7 @@ def abstract_easom_tl_noise(
     settings: ConvergenceBenchmarkSettings,
     functions: dict[str, Callable],
     points_per_dim: int,
-    percentages: list[float],
+    percentages: Iterable[float],
     negate: bool,
 ) -> pd.DataFrame:
     """Benchmark function comparing TL and non-TL campaigns.
