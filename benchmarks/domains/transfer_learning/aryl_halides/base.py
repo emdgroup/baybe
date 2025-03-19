@@ -5,8 +5,8 @@ benchmarks by changing the source and target tasks. The benchmark compares TL an
 non-TL campaigns.
 
 By convention, the benchmarks are named in the format "SourceHalides-TargetHalides.py"
-where `SourceHalides` and `TargetHalides` are abbreviations of the used source and target
-tasks respectively.
+where `SourceHalides` and `TargetHalides` are abbreviations of the used source and
+target tasks respectively.
 """
 
 from __future__ import annotations
@@ -26,22 +26,19 @@ from benchmarks.definition import ConvergenceBenchmarkSettings
 
 def get_data() -> pd.DataFrame:
     """Load the data for the benchmark."""
-    data = pd.read_table(DATA_PATH / "ArylHalides" / "data.csv", sep=",").dropna(
-        subset=["base", "ligand", "additive", "aryl_halide"]
-    )
-    # Only keep relevant columns
-    data = data[
-        [
-            "base",
-            "ligand",
-            "additive",
-            "ligand_smiles",
-            "base_smiles",
-            "additive_smiles",
-            "aryl_halide",
-            "yield",
-        ]
+    relevant_columns = [
+        "base",
+        "ligand",
+        "additive",
+        "ligand_smiles",
+        "base_smiles",
+        "additive_smiles",
+        "aryl_halide",
+        "yield",
     ]
+    data = pd.read_table(
+        DATA_PATH / "ArylHalides" / "data.csv", sep=",", usecols=relevant_columns
+    ).dropna(subset=["base", "ligand", "additive", "aryl_halide"])
     return data
 
 
