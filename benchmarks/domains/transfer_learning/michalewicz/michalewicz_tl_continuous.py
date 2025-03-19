@@ -145,7 +145,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 else None,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations if p == 0 else None,
+                n_mc_iterations=settings.n_mc_iterations if p == 0 else 1,
                 impute_mode="error",
             )
         )
