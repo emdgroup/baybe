@@ -11,6 +11,8 @@ target tasks respectively.
 
 from __future__ import annotations
 
+from collections.abc import Collection, Iterable
+
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -44,9 +46,8 @@ def load_data() -> pd.DataFrame:
 
 def make_searchspace(
     data: pd.DataFrame,
-    use_task_parameter: bool,
-    target_tasks: list[str],
-    source_tasks: list[str],
+    target_tasks: Collection[str] | None = None,
+    source_tasks: Collection[str] | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -57,6 +58,7 @@ def make_searchspace(
         )
         for substance in ["base", "ligand", "additive"]
     ]
+    use_task_parameter = target_tasks is not None and source_tasks is not None
     if use_task_parameter:
         params.append(
             TaskParameter(
@@ -73,21 +75,23 @@ def make_objective() -> SingleTargetObjective:
     return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
-def make_lookup(data: pd.DataFrame, target_tasks: list[str]) -> pd.DataFrame:
+def make_lookup(data: pd.DataFrame, target_tasks: Collection[str]) -> pd.DataFrame:
     """Create the lookup for the benchmark."""
     return data[data["aryl_halide"].isin(target_tasks)]
 
 
-def make_initial_data(data: pd.DataFrame, source_tasks: list[str]) -> pd.DataFrame:
+def make_initial_data(
+    data: pd.DataFrame, source_tasks: Collection[str]
+) -> pd.DataFrame:
     """Create the initial data for the benchmark."""
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
 def abstract_aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
-    source_tasks: list[str],
-    target_tasks: list[str],
-    percentages: list[float],
+    source_tasks: Collection[str],
+    target_tasks: Collection[str],
+    percentages: Iterable[float],
 ) -> pd.DataFrame:
     """Abstract benchmark function comparing TL and non-TL campaigns.
 
@@ -103,16 +107,10 @@ def abstract_aryl_halide_tl_substance_benchmark(
 
     searchspace = make_searchspace(
         data=data,
-        use_task_parameter=True,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
     )
-    searchspace_nontl = make_searchspace(
-        data=data,
-        use_task_parameter=False,
-        source_tasks=source_tasks,
-        target_tasks=target_tasks,
-    )
+    searchspace_nontl = make_searchspace(data=data)
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
