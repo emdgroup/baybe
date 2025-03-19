@@ -114,7 +114,6 @@ def abstract_hartmann_tl_noise(
     settings: ConvergenceBenchmarkSettings,
     functions: dict[str, Callable],
     points_per_dim: int,
-    dim: int,
     percentages: list[float],
     negate: bool,
 ) -> pd.DataFrame:
@@ -128,7 +127,7 @@ def abstract_hartmann_tl_noise(
     Output: continuous
 
     """
-    grid = grid_locations(points_per_dim, dim)
+    grid = grid_locations(points_per_dim)
     data = get_data(functions, grid)
 
     searchspace_nontl = create_searchspace(grid, use_task_parameter=False)
