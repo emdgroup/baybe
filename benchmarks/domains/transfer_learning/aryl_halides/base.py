@@ -11,6 +11,8 @@ target tasks respectively.
 
 from __future__ import annotations
 
+from collections.abc import Collection, Iterable
+
 import pandas as pd
 
 from baybe.campaign import Campaign
@@ -45,8 +47,8 @@ def load_data() -> pd.DataFrame:
 def make_searchspace(
     data: pd.DataFrame,
     use_task_parameter: bool,
-    target_tasks: list[str],
-    source_tasks: list[str],
+    target_tasks: Collection[str],
+    source_tasks: Collection[str],
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -73,21 +75,23 @@ def make_objective() -> SingleTargetObjective:
     return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
-def make_lookup(data: pd.DataFrame, target_tasks: list[str]) -> pd.DataFrame:
+def make_lookup(data: pd.DataFrame, target_tasks: Collection[str]) -> pd.DataFrame:
     """Create the lookup for the benchmark."""
     return data[data["aryl_halide"].isin(target_tasks)]
 
 
-def make_initial_data(data: pd.DataFrame, source_tasks: list[str]) -> pd.DataFrame:
+def make_initial_data(
+    data: pd.DataFrame, source_tasks: Collection[str]
+) -> pd.DataFrame:
     """Create the initial data for the benchmark."""
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
 def abstract_aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
-    source_tasks: list[str],
-    target_tasks: list[str],
-    percentages: list[float],
+    source_tasks: Collection[str],
+    target_tasks: Collection[str],
+    percentages: Iterable[float],
 ) -> pd.DataFrame:
     """Abstract benchmark function comparing TL and non-TL campaigns.
 
