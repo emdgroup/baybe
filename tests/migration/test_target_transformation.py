@@ -165,6 +165,6 @@ def test_transformation_chaining():
     t3 = AbsoluteTransformation()
 
     c = ChainedTransformation(t1, t2)
-    t = c.append(t3)
+    t = c.append(t3).append(c)
 
-    assert t == ChainedTransformation(t1, t2, t3)
+    assert t == ChainedTransformation(t1, t2, t3, t1, t2)
