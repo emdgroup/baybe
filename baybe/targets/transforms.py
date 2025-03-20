@@ -53,7 +53,12 @@ class ChainedTransformation(Transformation):
     def append(
         self, transformation: TransformationProtocol, /
     ) -> ChainedTransformation:
-        return ChainedTransformation(*self.transformations, transformation)
+        addendum = (
+            transformation.transformations
+            if isinstance(transformation, ChainedTransformation)
+            else [transformation]
+        )
+        return ChainedTransformation(*self.transformations, *addendum)
 
     @override
     def transform(self, x: Tensor, /) -> Tensor:
