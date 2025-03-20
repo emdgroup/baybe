@@ -11,6 +11,7 @@ import pandas as pd
 from attrs import define
 
 from baybe.exceptions import (
+    IncompatibleAcquisitionFunctionError,
     UnidentifiedSubclassError,
 )
 from baybe.objectives.base import Objective
@@ -73,6 +74,12 @@ class AcquisitionFunction(ABC, SerialMixin):
         :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
         """
         from baybe.acquisition._builder import BotorchAcquisitionFunctionBuilder
+
+        if pending_experiments is not None and not self.supports_pending_experiments:
+            raise IncompatibleAcquisitionFunctionError(
+                f"The chosen acquisition function of type '{self.__class__.__name__}' "
+                f"does not support pending experiments."
+            )
 
         return BotorchAcquisitionFunctionBuilder(
             self, surrogate, searchspace, objective, measurements, pending_experiments
