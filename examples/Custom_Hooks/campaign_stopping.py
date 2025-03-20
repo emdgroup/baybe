@@ -151,8 +151,8 @@ def stop_on_PI(
     n_pis_over_required = math.ceil(len(candidates_comp_rep) * PI_REQUIRED_FRACTION)
     if n_pis_over < n_pis_over_required:
         raise CampaignStoppedException(
-            f"Less than {PI_REQUIRED_FRACTION*100:.0f}% of candidates are above the PI "
-            f"threshold of {PI_THRESHOLD*100:.0f}% - Stopping the campaign."
+            f"Less than {PI_REQUIRED_FRACTION * 100:.0f}% of candidates are above the PI "
+            f"threshold of {PI_THRESHOLD * 100:.0f}% - Stopping the campaign."
         )
 
 

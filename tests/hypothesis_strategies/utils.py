@@ -27,9 +27,9 @@ def intervals(
     exclude_fully_unbounded: bool = False,
 ):
     """Generate :class:`baybe.utils.interval.Interval`."""
-    assert not all(
-        (exclude_bounded, exclude_half_bounded, exclude_fully_unbounded)
-    ), "At least one Interval type must be allowed."
+    assert not all((exclude_bounded, exclude_half_bounded, exclude_fully_unbounded)), (
+        "At least one Interval type must be allowed."
+    )
 
     # Draw the interval type from the allowed types
     type_gate = {
