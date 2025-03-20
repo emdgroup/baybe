@@ -1,7 +1,109 @@
 """Functions for bound transforms."""
 
+from __future__ import annotations
+
+import functools
+from abc import ABC
+from typing import Protocol, runtime_checkable
+
 import numpy as np
+from attrs import define, field
+from attrs.validators import deep_iterable, instance_of
 from numpy.typing import ArrayLike
+from torch import Tensor
+from typing_extensions import override
+
+from baybe.utils.basic import to_tuple
+
+
+def compose_two(f, g):
+    return lambda *a, **kw: g(f(*a, **kw))
+
+
+def compose(*fs):
+    return functools.reduce(compose_two, fs)
+
+
+@runtime_checkable
+class TransformationProtocol(Protocol):
+    def transform(self, x: Tensor, /) -> Tensor: ...
+
+
+class Transformation(TransformationProtocol, ABC):
+    def append(
+        self, transformation: TransformationProtocol, /
+    ) -> ChainedTransformation:
+        return ChainedTransformation(self, transformation)
+
+    def abs(self) -> Transformation:
+        self.append(AbsoluteTransformation())
+
+
+@define
+class ChainedTransformation(Transformation):
+    transformations: tuple[TransformationProtocol, ...] = field(
+        converter=to_tuple,
+        validator=deep_iterable(member_validator=instance_of(TransformationProtocol)),
+    )
+
+    def __init__(self, *transformations: TransformationProtocol):
+        self.__attrs_init__(transformations)
+
+    @override
+    def append(
+        self, transformation: TransformationProtocol, /
+    ) -> ChainedTransformation:
+        return ChainedTransformation(*self.transformations, transformation)
+
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        return compose(*(t.transform for t in self.transformations))(x)
+
+
+@define
+class ClampingTransformation(Transformation):
+    min: float | None = field(default=None)
+    max: float | None = field(default=None)
+
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        return x.clamp(self.min, self.max)
+
+
+@define(slots=False)
+class AffineTransformation(Transformation):
+    factor: float = field(default=1.0)
+    shift: float = field(default=0.0)
+    shift_first: bool = field(default=False)
+
+    @classmethod
+    def from_unit_interval(cls, lower: float, upper: float) -> AffineTransformation:
+        return AffineTransformation(
+            shift=-lower, factor=1 / (upper - lower), shift_first=True
+        )
+
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        if self.shift_first:
+            return (x + self.shift) * self.factor
+        else:
+            return x * self.factor + self.shift
+
+
+@define(slots=False)
+class BellTransformation(Transformation):
+    center: float = field(default=0.0)
+    width: float = field(default=1.0)
+
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
+
+
+class AbsoluteTransformation(Transformation):
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        return x.abs()
 
 
 def linear_transform(
