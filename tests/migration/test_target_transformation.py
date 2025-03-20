@@ -12,25 +12,34 @@ from baybe.targets.transforms import (
     BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
+    bell_transform,
+    linear_transform,
+    triangular_transform,
 )
+
+
+def sample_input() -> pd.Series:
+    return pd.Series(np.linspace(-10, 10, 20))
 
 
 @pytest.fixture
 def series() -> pd.Series:
-    return pd.Series(np.linspace(-10, 10, 20))
+    return sample_input()
 
 
 @pytest.mark.parametrize(
-    ("legacy", "modern"),
+    ("legacy", "modern", "expected"),
     [
         param(
             LegacyTarget("t", "MAX"),
             ModernTarget("t"),
+            sample_input(),
             id="max",
         ),
         param(
             LegacyTarget("t", "MAX", (0, 1), "LINEAR"),
             ModernTarget("t", ClampingTransformation(min=0, max=1)),
+            linear_transform(sample_input(), 0, 1, descending=False),
             id="max_clamped",
         ),
         param(
@@ -42,15 +51,15 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
         ),
         param(
+            # NOTE: Minimization transformation without bounds is not possible with
+            #   legacy interface."
             None,
             ModernTarget("t", AffineTransformation(factor=-1)),
-            marks=pytest.mark.xfail(
-                reason="Minimization transformation without bounds "
-                "is not possible with legacy interface."
-            ),
+            -sample_input(),
             id="min_no_bounds",
         ),
         param(
@@ -59,6 +68,7 @@ def series() -> pd.Series:
             #   of the acquisition function.
             LegacyTarget("t", "MIN"),
             ModernTarget("t"),
+            sample_input(),
             id="min",
         ),
         param(
@@ -70,6 +80,7 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
@@ -81,26 +92,31 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget("t", BellTransformation()),
+            bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget("t", BellTransformation(center=2)),
+            bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget("t", BellTransformation(width=5)),
+            bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget("t", BellTransformation(center=4, width=2)),
+            bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
         param(
@@ -113,6 +129,7 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            triangular_transform(sample_input(), -1, 1),
             id="match_triangular_unit_centered",
         ),
         param(
@@ -126,6 +143,7 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            triangular_transform(sample_input(), 1, 3),
             id="match_triangular_unit_shifted",
         ),
         param(
@@ -138,6 +156,7 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            triangular_transform(sample_input(), -5, 5),
             id="match_triangular_scaled_centered",
         ),
         param(
@@ -151,12 +170,18 @@ def series() -> pd.Series:
                     ClampingTransformation(min=0, max=1),
                 ),
             ),
+            triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
         ),
     ],
 )
-def test_target_transformation(series, legacy: LegacyTarget, modern: ModernTarget):
-    assert_series_equal(legacy.transform(series), modern.transform(series))
+def test_target_transformation(
+    series, legacy: LegacyTarget, modern: ModernTarget, expected
+):
+    transformed_modern = modern.transform(series)
+    if legacy is not None:
+        assert_series_equal(transformed_modern, legacy.transform(series))
+    assert_series_equal(transformed_modern, pd.Series(expected))
 
 
 def test_transformation_chaining():
