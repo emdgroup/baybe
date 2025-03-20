@@ -157,3 +157,14 @@ def series() -> pd.Series:
 )
 def test_target_transformation(series, legacy: LegacyTarget, modern: ModernTarget):
     assert_series_equal(legacy.transform(series), modern.transform(series))
+
+
+def test_transformation_chaining():
+    t1 = AffineTransformation()
+    t2 = ClampingTransformation()
+    t3 = AbsoluteTransformation()
+
+    c = ChainedTransformation(t1, t2)
+    t = c.append(t3)
+
+    assert t == ChainedTransformation(t1, t2, t3)
