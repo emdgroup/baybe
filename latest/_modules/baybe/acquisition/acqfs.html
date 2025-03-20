@@ -1420,7 +1420,7 @@
 
     <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qLogNEHVI&quot;</span>
 
-    <span class="n">ref_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+    <span class="n">reference_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="n">convert_to_float</span><span class="p">)</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The reference point for computing the hypervolume improvement.</span>
@@ -1435,6 +1435,15 @@
 
     <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">bool</span><span class="p">))</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto-prune candidates that are unlikely to be the best.&quot;&quot;&quot;</span>
+
+    <span class="nd">@override</span>
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="c1"># While BoTorch&#39;s acquisition function also expects a `ref_point` argument,</span>
+        <span class="c1"># the attribute defined here is more general and can hence not be directly</span>
+        <span class="c1"># matched. Thus, we bypass the auto-matching mechanism and handle it manually.</span>
+        <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">flds</span><span class="o">.</span><span class="n">reference_point</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
 
 <div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement.compute_ref_point">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.compute_ref_point">[docs]</a>

@@ -1043,8 +1043,6 @@
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">signature</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -1055,9 +1053,6 @@
     <span class="n">UnidentifiedSubclassError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.desirability</span> <span class="kn">import</span> <span class="n">DesirabilityObjective</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.pareto</span> <span class="kn">import</span> <span class="n">ParetoObjective</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.single</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span> <span class="nn">baybe.serialization.core</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">converter</span><span class="p">,</span>
@@ -1066,11 +1061,8 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.serialization.mixin</span> <span class="kn">import</span> <span class="n">SerialMixin</span>
 <span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">SurrogateProtocol</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.enum</span> <span class="kn">import</span> <span class="n">TargetMode</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.numerical</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">classproperty</span><span class="p">,</span> <span class="n">match_attributes</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">classproperty</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">is_abstract</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">to_tensor</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BotorchAcquisitionFunction</span>
@@ -1117,138 +1109,23 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BotorchAcquisitionFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the botorch-ready representation of the function.</span>
 
 <span class="sd">        The required structure of `measurements` is specified in</span>
 <span class="sd">        :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">botorch.acquisition</span> <span class="k">as</span> <span class="nn">bo_acqf</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
-        <span class="kn">from</span> <span class="nn">botorch.acquisition.multi_objective</span> <span class="kn">import</span> <span class="n">WeightedMCMultiOutputObjective</span>
-        <span class="kn">from</span> <span class="nn">botorch.acquisition.objective</span> <span class="kn">import</span> <span class="n">LinearMCObjective</span>
+        <span class="kn">from</span> <span class="nn">baybe.acquisition._builder</span> <span class="kn">import</span> <span class="n">BotorchAcquisitionFunctionBuilder</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.acquisition.acqfs</span> <span class="kn">import</span> <span class="p">(</span>
-            <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">,</span>
-            <span class="n">qThompsonSampling</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Retrieve botorch acquisition function class and match attributes</span>
-        <span class="n">acqf_cls</span> <span class="o">=</span> <span class="n">_get_botorch_acqf_class</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="n">params_dict</span> <span class="o">=</span> <span class="n">match_attributes</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">acqf_cls</span><span class="o">.</span><span class="fm">__init__</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_non_botorch_attrs</span>
-        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-        <span class="c1"># Create botorch surrogate model</span>
-        <span class="n">bo_surrogate</span> <span class="o">=</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">()</span>
-
-        <span class="c1"># Get computational data representation</span>
-        <span class="n">train_x</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-
-        <span class="c1"># Collect remaining (context-specific) parameters</span>
-        <span class="n">signature_params</span> <span class="o">=</span> <span class="n">signature</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
-        <span class="n">additional_params</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bo_surrogate</span>
-        <span class="k">if</span> <span class="s2">&quot;X_baseline&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
-            <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;X_baseline&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_x</span>
-        <span class="k">if</span> <span class="s2">&quot;mc_points&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
-            <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;mc_points&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">get_integration_points</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="k">if</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_pending_experiments</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The chosen acquisition function of type &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;does not support pending experiments.&quot;</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="n">pending_experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supports_pending_experiments</span><span class="p">:</span>
-                <span class="n">pending_x</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">pending_experiments</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;X_pending&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">pending_x</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Pending experiments were provided but the chosen acquisition &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;function &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not support this.&quot;</span>
-                <span class="p">)</span>
 
-        <span class="c1"># Add acquisition objective / best observed value</span>
-        <span class="k">match</span> <span class="n">objective</span><span class="p">:</span>
-            <span class="k">case</span> <span class="n">SingleTargetObjective</span><span class="p">(</span><span class="n">NumericalTarget</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span><span class="p">)):</span>
-                <span class="c1"># Adjust best_f</span>
-                <span class="k">if</span> <span class="s2">&quot;best_f&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
-                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;best_f&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">bo_surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-                    <span class="p">)</span>
-                    <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-                        <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;best_f&quot;</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mf">1.0</span>
-
-                <span class="c1"># Adjust objective</span>
-                <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span>
-                    <span class="n">acqf_cls</span><span class="p">,</span>
-                    <span class="p">(</span>
-                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qNegIntegratedPosteriorVariance</span><span class="p">,</span>
-                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">PosteriorStandardDeviation</span><span class="p">,</span>
-                        <span class="n">bo_acqf</span><span class="o">.</span><span class="n">qPosteriorStandardDeviation</span><span class="p">,</span>
-                    <span class="p">),</span>
-                <span class="p">):</span>
-                    <span class="c1"># The active learning acqfs are valid but no changes based on the</span>
-                    <span class="c1"># target direction are required.</span>
-                    <span class="k">pass</span>
-                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">AnalyticAcquisitionFunction</span><span class="p">):</span>
-                    <span class="c1"># Minimize acqfs in case the target should be minimized.</span>
-                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;maximize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-                <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">,</span> <span class="n">bo_acqf</span><span class="o">.</span><span class="n">MCAcquisitionFunction</span><span class="p">):</span>
-                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LinearMCObjective</span><span class="p">(</span>
-                        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">1.0</span><span class="p">])</span>
-                    <span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Unsupported acquisition function type: </span><span class="si">{</span><span class="n">acqf_cls</span><span class="si">}</span><span class="s2">.&quot;</span>
-                    <span class="p">)</span>
-            <span class="k">case</span> <span class="n">SingleTargetObjective</span><span class="p">()</span> <span class="o">|</span> <span class="n">DesirabilityObjective</span><span class="p">():</span>
-                <span class="k">if</span> <span class="s2">&quot;best_f&quot;</span> <span class="ow">in</span> <span class="n">signature_params</span><span class="p">:</span>
-                    <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;best_f&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">bo_surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">train_x</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-                    <span class="p">)</span>
-            <span class="k">case</span> <span class="n">ParetoObjective</span><span class="p">():</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">&quot;Pareto optimization currently supports the &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-                        <span class="sa">f</span><span class="s2">&quot;acquisition function only.&quot;</span>
-                    <span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
-                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">NumericalTarget</span><span class="p">)</span>
-                    <span class="ow">and</span> <span class="n">t</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="n">TargetMode</span><span class="o">.</span><span class="n">MAX</span><span class="p">,</span> <span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span>
-                <span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-                        <span class="s2">&quot;Pareto optimization currently supports &quot;</span>
-                        <span class="s2">&quot;maximization/minimization targets only.&quot;</span>
-                    <span class="p">)</span>
-                <span class="n">maximize</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="n">TargetMode</span><span class="o">.</span><span class="n">MAX</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>  <span class="c1"># type: ignore[attr-defined]</span>
-                <span class="n">multiplier</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span> <span class="k">if</span> <span class="n">m</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">maximize</span><span class="p">]</span>
-                <span class="n">additional_params</span><span class="p">[</span><span class="s2">&quot;objective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">WeightedMCMultiOutputObjective</span><span class="p">(</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">multiplier</span><span class="p">)</span>
-                <span class="p">)</span>
-                <span class="n">train_y</span> <span class="o">=</span> <span class="n">measurements</span><span class="p">[[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">]]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref_point</span> <span class="o">:=</span> <span class="n">params_dict</span><span class="p">[</span><span class="s2">&quot;ref_point&quot;</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">):</span>
-                    <span class="n">ref_point</span> <span class="o">=</span> <span class="p">[</span>
-                        <span class="n">p</span> <span class="o">*</span> <span class="n">m</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ref_point</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="p">]</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;factor&quot;</span><span class="p">:</span> <span class="n">ref_point</span><span class="p">}</span> <span class="k">if</span> <span class="n">ref_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-                    <span class="n">ref_point</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">compute_ref_point</span><span class="p">(</span><span class="n">train_y</span><span class="p">,</span> <span class="n">maximize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">*</span> <span class="n">multiplier</span>
-                    <span class="p">)</span>
-                <span class="n">params_dict</span><span class="p">[</span><span class="s2">&quot;ref_point&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ref_point</span>
-
-            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported objective type: </span><span class="si">{</span><span class="n">objective</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">params_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additional_params</span><span class="p">)</span>
-
-        <span class="n">acqf</span> <span class="o">=</span> <span class="n">acqf_cls</span><span class="p">(</span><span class="o">**</span><span class="n">params_dict</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qThompsonSampling</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">acqf</span><span class="p">,</span> <span class="s2">&quot;_default_sample_shape&quot;</span><span class="p">)</span>
-            <span class="n">acqf</span><span class="o">.</span><span class="n">_default_sample_shape</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">n_mc_samples</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="n">acqf</span></div>
+        <span class="k">return</span> <span class="n">BotorchAcquisitionFunctionBuilder</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
 </div>
 
 
