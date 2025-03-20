@@ -127,7 +127,7 @@ def direct_arylation_tl_temperature(
     non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     results = []
-    for p in [0, 0.01, 0.05, 0.1, 0.2]:
+    for p in [0, 0.01, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
                 {
@@ -152,7 +152,7 @@ def direct_arylation_tl_temperature(
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=20,
-    n_mc_iterations=50,
+    n_mc_iterations=40,
 )
 
 direct_arylation_tl_temperature_benchmark = ConvergenceBenchmark(

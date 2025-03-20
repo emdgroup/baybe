@@ -147,7 +147,7 @@ def abstract_hartmann_tl_noise(
     )
 
     results = []
-    for p in [0, *percentages]:
+    for p in percentages:
         results.append(
             simulate_scenarios(
                 {
@@ -157,12 +157,9 @@ def abstract_hartmann_tl_noise(
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ]
-                if p > 0
-                else None,
+                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations if p == 0 else 1,
                 impute_mode="error",
             )
         )

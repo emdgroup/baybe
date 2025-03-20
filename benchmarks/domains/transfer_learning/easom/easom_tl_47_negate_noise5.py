@@ -29,7 +29,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         settings=settings,
         functions=functions,
         points_per_dim=47,
-        percentages=[0.01, 0.05, 0.2],
+        percentages=[0, 0.01, 0.1, 0.2],
         negate=negate,
     )
 
@@ -37,7 +37,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=20,
-    n_mc_iterations=50,
+    n_mc_iterations=40,
 )
 
 easom_tl_47_negate_noise5_benchmark = ConvergenceBenchmark(

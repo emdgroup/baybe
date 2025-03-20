@@ -29,7 +29,7 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
         settings=settings,
         functions=functions,
         points_per_dim=30,
-        percentages=[0.01, 0.02, 0.05, 0.1, 0.2],
+        percentages=[0, 0.01, 0.1, 0.2],
         negate=negate,
     )
 
@@ -37,7 +37,7 @@ def hartmann_tl_3_30_negate_15(settings: ConvergenceBenchmarkSettings) -> pd.Dat
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=20,
-    n_mc_iterations=50,
+    n_mc_iterations=40,
 )
 
 hartmann_tl_3_30_negate_15_benchmark = ConvergenceBenchmark(

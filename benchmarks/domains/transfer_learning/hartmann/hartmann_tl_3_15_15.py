@@ -29,7 +29,7 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         settings=settings,
         functions=functions,
         points_per_dim=15,
-        percentages=[0.01, 0.05, 0.1, 0.2],
+        percentages=[0, 0.01, 0.1, 0.2],
         negate=negate,
     )
 
@@ -37,11 +37,11 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=20,
-    n_mc_iterations=50,
+    n_mc_iterations=40,
 )
 
 hartmann_tl_3_15_15_benchmark = ConvergenceBenchmark(
     function=hartmann_tl_3_15_15,
-    optimal_target_values={"Target": 3.851831124860353},
+    optimal_target_values={"Target": -3.851831124860353},
     settings=benchmark_config,
 )

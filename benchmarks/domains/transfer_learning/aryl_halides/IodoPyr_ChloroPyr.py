@@ -32,14 +32,14 @@ def aryl_halide_IodoPyr_ChloroPyr(
         settings=settings,
         source_tasks=["2-iodopyridine"],
         target_tasks=["3-chloropyridine"],
-        percentages=[0.01, 0.05, 0.1, 0.2],
+        percentages=[0, 0.01, 0.1, 0.2],
     )
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=20,
-    n_mc_iterations=50,
+    n_mc_iterations=40,
 )
 
 aryl_halide_IodoPyr_ChloroPyr_benchmark = ConvergenceBenchmark(
