@@ -53,6 +53,7 @@ class BotorchAcquisitionArgs:
     beta: float | None = field(default=None, validator=opt_v(float))
     maximize: bool | None = field(default=None, validator=opt_v(bool))
     mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
+    num_fantasies: int | None = field(default=None, validator=opt_v(int))
     objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
     prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
     ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
