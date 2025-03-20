@@ -9,7 +9,6 @@ from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
-    BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
     bell_transform,
@@ -97,79 +96,49 @@ def series() -> pd.Series:
         ),
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
-            ModernTarget("t", BellTransformation()),
+            ModernTarget.match_bell("t", center=0, width=1),
             bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "BELL"),
-            ModernTarget("t", BellTransformation(center=2)),
+            ModernTarget.match_bell("t", center=2, width=1),
             bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
-            ModernTarget("t", BellTransformation(width=5)),
+            ModernTarget.match_bell("t", center=0, width=5),
             bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "BELL"),
-            ModernTarget("t", BellTransformation(center=4, width=2)),
+            ModernTarget.match_bell("t", center=4, width=2),
             bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AbsoluteTransformation(),
-                    AffineTransformation(factor=-1, shift=1),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.match_triangular("t", (-1, 1)),
             triangular_transform(sample_input(), -1, 1),
             id="match_triangular_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AffineTransformation.from_unit_interval(2, 3),
-                    AbsoluteTransformation(),
-                    AffineTransformation(factor=-1, shift=1),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.match_triangular("t", (1, 3)),
             triangular_transform(sample_input(), 1, 3),
             id="match_triangular_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AbsoluteTransformation(),
-                    AffineTransformation(factor=-1 / 5, shift=1),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.match_triangular("t", (-5, 5)),
             triangular_transform(sample_input(), -5, 5),
             id="match_triangular_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AffineTransformation.from_unit_interval(4, 6),
-                    AbsoluteTransformation(),
-                    AffineTransformation(factor=-1, shift=1),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.match_triangular("t", (2, 6)),
             triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
         ),

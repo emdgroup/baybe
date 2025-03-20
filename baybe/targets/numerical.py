@@ -1,7 +1,10 @@
 """Numerical targets."""
 
+from __future__ import annotations
+
 import gc
 import warnings
+from collections.abc import Iterable
 
 import pandas as pd
 import torch
@@ -10,7 +13,15 @@ from typing_extensions import override
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
-from baybe.targets.transforms import TransformationProtocol
+from baybe.targets.transforms import (
+    AbsoluteTransformation,
+    AffineTransformation,
+    BellTransformation,
+    ChainedTransformation,
+    ClampingTransformation,
+    TransformationProtocol,
+)
+from baybe.utils.interval import Interval
 
 
 @define(frozen=True)
@@ -19,6 +30,25 @@ class NumericalTarget(Target, SerialMixin):
 
     transformation: TransformationProtocol | None = field(default=None)
     """An optional target transformation."""
+
+    @classmethod
+    def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
+        interval = Interval.create(cutoffs)
+        return NumericalTarget(
+            name,
+            ChainedTransformation(
+                AffineTransformation.from_unit_interval(
+                    interval.center, interval.upper
+                ),
+                AbsoluteTransformation(),
+                AffineTransformation(factor=-1, shift=1),
+                ClampingTransformation(min=0, max=1),
+            ),
+        )
+
+    @classmethod
+    def match_bell(cls, name: str, center: float, width: float) -> NumericalTarget:
+        return NumericalTarget(name, BellTransformation(center, width))
 
     @override
     def transform(
