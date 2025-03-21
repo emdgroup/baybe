@@ -27,7 +27,7 @@ from baybe.recommenders import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_fake_measurements
 

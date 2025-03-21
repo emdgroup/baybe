@@ -25,7 +25,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import NGBoostSurrogate
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment Setup

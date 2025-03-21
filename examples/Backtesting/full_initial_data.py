@@ -22,7 +22,7 @@ from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 ### Parameters for a full simulation loop
 

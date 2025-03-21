@@ -20,7 +20,7 @@ from baybe import Campaign
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.plotting import create_example_plots
 

@@ -17,7 +17,7 @@ from typing_extensions import override
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.dataframe import pretty_print_df, transform_target_columns

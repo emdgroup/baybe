@@ -3,7 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.targets.enum import TargetMode, TargetTransformation
 
 

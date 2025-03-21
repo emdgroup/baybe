@@ -139,7 +139,7 @@ providing a few specific example may help to convey the concept:
 * Since {class}`Intervals <baybe.utils.interval.Interval>` can be created _implicitly_,
     it is enough the specify their bound values directly:
     ```python
-    from baybe.targets import NumericalTarget
+    from baybe.targets._deprecated import NumericalTarget
     from baybe.utils.interval import Interval
 
     t1 = NumericalTarget(name="T", mode="MAX", bounds=Interval(0, 1))
@@ -152,7 +152,7 @@ providing a few specific example may help to convey the concept:
 * Conversion to enums happens automatically whenever needed;
     therefore, providing a raw string instead is sufficient:
     ```python
-    from baybe.targets import NumericalTarget, TargetMode
+    from baybe.targets._deprecated import NumericalTarget, TargetMode
 
     t1 = NumericalTarget(name="T", mode=TargetMode.MAX)
     t2 = NumericalTarget(name="T", mode="MAX")
@@ -258,7 +258,7 @@ This hierarchical structure can be directly replicated in the serialization stri
 
 ```python
 from baybe.objectives import DesirabilityObjective
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 objective = DesirabilityObjective(
     targets=[

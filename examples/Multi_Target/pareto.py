@@ -21,7 +21,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.random import set_random_seed
 

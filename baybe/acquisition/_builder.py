@@ -30,8 +30,8 @@ from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
+from baybe.targets._deprecated import NumericalTarget
 from baybe.targets.enum import TargetMode
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import to_tensor
 

@@ -23,7 +23,7 @@ Below is a visualization of possible choices for `transformation`, where `lower`
 ### MIN and MAX mode
 Here are two examples for simple maximization and minimization targets:
 ```python
-from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
+from baybe.targets._deprecated import NumericalTarget, TargetMode, TargetTransformation
 
 max_target = NumericalTarget(
     name="Target_1",
@@ -55,7 +55,7 @@ Both targets are configured such that the midpoint of `bounds` (in this case 50)
 becomes the optimal value:
 
 ```python
-from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
+from baybe.targets._deprecated import NumericalTarget, TargetMode, TargetTransformation
 
 match_targetA = NumericalTarget(
     name="Target_3A",

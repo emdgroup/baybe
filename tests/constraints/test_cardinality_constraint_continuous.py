@@ -20,7 +20,7 @@ from baybe.recommenders import BotorchRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace, SubspaceContinuous
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 
 def _validate_cardinality_constrained_batch(

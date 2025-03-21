@@ -2,7 +2,7 @@
 
 import hypothesis.strategies as st
 
-from baybe.targets import _VALID_TRANSFORMATIONS, NumericalTarget
+from baybe.targets._deprecated import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.utils.interval import Interval

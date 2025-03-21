@@ -11,7 +11,7 @@ from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 
 @patch.object(GaussianProcessSurrogate, "_fit")

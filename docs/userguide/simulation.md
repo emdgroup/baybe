@@ -36,7 +36,7 @@ import pandas as pd
 
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 searchspace = SearchSpace.from_product(
     [
@@ -90,7 +90,7 @@ import pandas as pd
 
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 
 searchspace = SearchSpace.from_product(
     [

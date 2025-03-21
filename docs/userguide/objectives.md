@@ -12,7 +12,7 @@ In this scenario, the fact that only one target shall be considered in the desig
 communicated to BayBE by wrapping the target into a
 [`SingleTargetObjective`](baybe.objectives.single.SingleTargetObjective):
 ```python
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.objectives import SingleTargetObjective
 
 target = NumericalTarget(name="Yield", mode="MAX")
@@ -86,7 +86,7 @@ In the example below, we consider three different targets (all associated with a
 different goal) and give twice as much importance to the first target relative to each 
 of the other two:
 ```python
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
 target_1 = NumericalTarget(name="t_1", mode="MIN", bounds=(0, 100))
@@ -130,7 +130,7 @@ points is optimal with respect to a particular preference model.
 To set up a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), simply
 specify the corresponding target objects:
 ```python
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.objectives import ParetoObjective
 
 target_1 = NumericalTarget(name="t_1", mode="MIN")

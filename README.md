@@ -70,7 +70,7 @@ In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
 which we wrap into a `SingleTargetObjective`:
 
 ```python
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.objectives import SingleTargetObjective
 
 target = NumericalTarget(

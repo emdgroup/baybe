@@ -15,7 +15,7 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,
     VARNAME_TELEMETRY_USERNAME,

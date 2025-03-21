@@ -33,7 +33,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.simulation import simulate_scenarios
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget
 from baybe.utils import register_hooks
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import create_example_plots
