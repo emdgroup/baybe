@@ -15,8 +15,34 @@ from typing_extensions import override
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode, TargetTransformation
 from baybe.utils.interval import Interval, convert_bounds
+
+
+class TargetMode(Enum):
+    """Available modes for targets."""
+
+    MIN = "MIN"
+    """The target is to be minimized."""
+
+    MAX = "MAX"
+    """The target is to be maximized."""
+
+    MATCH = "MATCH"
+    """The target should be close to a given value."""
+
+
+class TargetTransformation(Enum):
+    """Available target transformations."""
+
+    LINEAR = "LINEAR"
+    """Linear transformation."""
+
+    TRIANGULAR = "TRIANGULAR"
+    """Transformation using triangular-shaped function."""
+
+    BELL = "BELL"
+    """Transformation using bell-shaped function."""
+
 
 _VALID_TRANSFORMATIONS: dict[TargetMode, Sequence[TargetTransformation]] = {
     TargetMode.MAX: (TargetTransformation.LINEAR,),
@@ -270,29 +296,3 @@ def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))
 
     return res
-
-
-class TargetMode(Enum):
-    """Available modes for targets."""
-
-    MIN = "MIN"
-    """The target is to be minimized."""
-
-    MAX = "MAX"
-    """The target is to be maximized."""
-
-    MATCH = "MATCH"
-    """The target should be close to a given value."""
-
-
-class TargetTransformation(Enum):
-    """Available target transformations."""
-
-    LINEAR = "LINEAR"
-    """Linear transformation."""
-
-    TRIANGULAR = "TRIANGULAR"
-    """Transformation using triangular-shaped function."""
-
-    BELL = "BELL"
-    """Transformation using bell-shaped function."""
