@@ -9,7 +9,8 @@ from typing import Protocol, runtime_checkable
 
 import torch
 from attrs import define, field
-from attrs.validators import deep_iterable, instance_of
+from attrs.converters import optional
+from attrs.validators import deep_iterable, instance_of, is_callable
 from torch import Tensor
 from typing_extensions import override
 
@@ -136,7 +137,7 @@ class ChainedTransformation(Transformation):
 class GenericTransformation(Transformation):
     """A generic transformation applying an arbitrary torch callable."""
 
-    transformation: TensorCallable = field()
+    transformation: TensorCallable = field(validator=is_callable())
     """The torch callable to be applied."""
 
     @override
@@ -148,10 +149,10 @@ class GenericTransformation(Transformation):
 class ClampingTransformation(Transformation):
     """A transformation clamping values between specified cutoffs."""
 
-    min: float | None = field(default=None)
+    min: float | None = field(default=None, converter=optional(float))
     """The lower cutoff value."""
 
-    max: float | None = field(default=None)
+    max: float | None = field(default=None, converter=optional(float))
     """The upper cutoff value."""
 
     @override
@@ -163,13 +164,13 @@ class ClampingTransformation(Transformation):
 class AffineTransformation(Transformation):
     """An affine transformation."""
 
-    factor: float = field(default=1.0)
+    factor: float = field(default=1.0, converter=float)
     """The multiplicative factor of the transformation."""
 
-    shift: float = field(default=0.0)
+    shift: float = field(default=0.0, converter=float)
     """The constant shift of the transformation."""
 
-    shift_first: bool = field(default=False)
+    shift_first: bool = field(default=False, validator=instance_of(bool))
     """Boolean flag determining if the shift or the scaling is applied first."""
 
     @classmethod
@@ -212,10 +213,10 @@ class AffineTransformation(Transformation):
 class BellTransformation(Transformation):
     """A Gaussian bell curve transformation."""
 
-    center: float = field(default=0.0)
+    center: float = field(default=0.0, converter=float)
     """The center point of the bell curve."""
 
-    width: float = field(default=1.0)
+    width: float = field(default=1.0, converter=float)
     """The width of the bell curve."""
 
     @override
