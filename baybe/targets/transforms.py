@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import functools
 from abc import ABC
-from typing import Protocol, runtime_checkable
 from collections.abc import Callable
+from typing import Protocol, runtime_checkable
 
 import numpy as np
 import torch
@@ -26,6 +26,10 @@ def compose_two(f, g):
 
 def compose(*fs):
     return functools.reduce(compose_two, fs)
+
+
+def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
+    return x if isinstance(x, Transformation) else GenericTransformation(x)
 
 
 @runtime_checkable
