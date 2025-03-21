@@ -5,8 +5,10 @@ from __future__ import annotations
 import functools
 from abc import ABC
 from typing import Protocol, runtime_checkable
+from collections.abc import Callable
 
 import numpy as np
+import torch
 from attrs import define, field
 from attrs.validators import deep_iterable, instance_of
 from numpy.typing import ArrayLike
@@ -14,6 +16,8 @@ from torch import Tensor
 from typing_extensions import override
 
 from baybe.utils.basic import to_tuple
+
+TensorCallable = Callable[[torch.Tensor], torch.Tensor]
 
 
 def compose_two(f, g):
@@ -63,6 +67,15 @@ class ChainedTransformation(Transformation):
     @override
     def transform(self, x: Tensor, /) -> Tensor:
         return compose(*(t.transform for t in self.transformations))(x)
+
+
+@define
+class GenericTransformation(Transformation):
+    transformation: TensorCallable = field()
+
+    @override
+    def transform(self, x: Tensor, /) -> Tensor:
+        return self.transformation(x)
 
 
 @define
