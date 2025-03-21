@@ -58,6 +58,14 @@ def series() -> pd.Series:
             id="min_no_bounds",
         ),
         param(
+            # NOTE: Minimization transformation without bounds is not possible with
+            #   legacy interface."
+            None,
+            ModernTarget("t", minimize=True),
+            -sample_input(),
+            id="min_no_bounds_with_flag",
+        ),
+        param(
             # NOTE: Minimization without bounds has no effect on the transformation
             #   of the legacy target since minimization is handled in the construction
             #   of the acquisition function.

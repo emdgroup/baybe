@@ -18,6 +18,7 @@ from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
+    ChainedTransformation,
     ClampingTransformation,
     TransformationProtocol,
     convert_transformation,
@@ -33,6 +34,8 @@ class NumericalTarget(Target, SerialMixin):
         default=None, converter=optional(convert_transformation)
     )
     """An optional target transformation."""
+
+    minimize: bool = field(default=False, kw_only=True)
 
     @classmethod
     def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
@@ -85,9 +88,16 @@ class NumericalTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
-        if self.transformation is not None:
+        if (trans := self.transformation) is not None or self.minimize:
+            if self.minimize:
+                if trans is None:
+                    trans = AffineTransformation(factor=-1)
+                else:
+                    trans = ChainedTransformation(
+                        trans, AffineTransformation(factor=-1)
+                    )
             return pd.Series(
-                self.transformation.transform(torch.from_numpy(series.to_numpy())),
+                trans.transform(torch.from_numpy(series.to_numpy())),
                 index=series.index,
                 name=series.name,
             )
