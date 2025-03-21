@@ -174,3 +174,29 @@ def test_generic_transformation(series):
     transformed = t1.transform(series)
     assert_series_equal(transformed, t2.transform(series))
     assert_series_equal(transformed, t3.transform(series))
+
+
+def test_transformation_addition(series):
+    t1 = ModernTarget(
+        "t",
+        ChainedTransformation(AbsoluteTransformation(), AffineTransformation(shift=1)),
+    )
+    t2 = ModernTarget("t", AbsoluteTransformation() + 1)
+    t3 = ModernTarget("t", AbsoluteTransformation() + AffineTransformation(shift=1))
+
+    transformed = t1.transform(series)
+    assert_series_equal(transformed, t2.transform(series))
+    assert_series_equal(transformed, t3.transform(series))
+
+
+def test_transformation_multiplication(series):
+    t1 = ModernTarget(
+        "t",
+        ChainedTransformation(AbsoluteTransformation(), AffineTransformation(factor=2)),
+    )
+    t2 = ModernTarget("t", AbsoluteTransformation() * 2)
+    t3 = ModernTarget("t", AbsoluteTransformation() + AffineTransformation(factor=2))
+
+    transformed = t1.transform(series)
+    assert_series_equal(transformed, t2.transform(series))
+    assert_series_equal(transformed, t3.transform(series))
