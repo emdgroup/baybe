@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import torch
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of, is_callable
-from torch import Tensor
 from typing_extensions import override
 
 from baybe.targets._deprecated import (  # noqa: F401
@@ -20,8 +18,11 @@ from baybe.targets._deprecated import (  # noqa: F401
 )
 from baybe.utils.basic import compose, to_tuple
 
-TensorCallable = Callable[[torch.Tensor], torch.Tensor]
-"""Type alias for a torch-based function mapping from reals to reals."""
+if TYPE_CHECKING:
+    from torch import Tensor
+
+    TensorCallable = Callable[[Tensor], Tensor]
+    """Type alias for a torch-based function mapping from reals to reals."""
 
 
 def convert_transformation(
@@ -179,6 +180,7 @@ class AffineTransformation(Transformation):
             unit interval.
 
         Example:
+            >>> import torch
             >>> from baybe.targets.transforms import AffineTransformation
             >>> t = AffineTransformation.from_unit_interval(3, 7)
             >>> t.transform(torch.tensor([3, 7]))

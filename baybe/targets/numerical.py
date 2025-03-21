@@ -7,7 +7,6 @@ import warnings
 from collections.abc import Iterable
 
 import pandas as pd
-import torch
 from attrs import define, field
 from attrs.converters import optional
 from attrs.validators import instance_of
@@ -121,6 +120,8 @@ class NumericalTarget(Target, SerialMixin):
 
         # When a transformation is specified, apply it
         if (trans := self.transformation) is not None or self.minimize:
+            import torch
+
             if self.minimize:
                 if trans is None:
                     trans = AffineTransformation(factor=-1)
