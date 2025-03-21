@@ -28,8 +28,10 @@ def compose(*fs):
     return functools.reduce(compose_two, fs)
 
 
-def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
-    return x if isinstance(x, Transformation) else GenericTransformation(x)
+def convert_transformation(
+    x: TransformationProtocol | TensorCallable, /
+) -> TransformationProtocol:
+    return x if isinstance(x, TransformationProtocol) else GenericTransformation(x)
 
 
 @runtime_checkable
