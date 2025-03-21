@@ -43,6 +43,12 @@ class Transformation(TransformationProtocol, ABC):
     ) -> ChainedTransformation:
         return ChainedTransformation(self, transformation)
 
+    def negate(self) -> Transformation:
+        return self + AffineTransformation(factor=-1)
+
+    def clamp(self, min: float | None, max: float | None) -> Transformation:
+        return self + ClampingTransformation(min, max)
+
     def abs(self) -> Transformation:
         self.append(AbsoluteTransformation())
 
