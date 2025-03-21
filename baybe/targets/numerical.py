@@ -130,7 +130,7 @@ class NumericalTarget(Target, SerialMixin):
                         trans, AffineTransformation(factor=-1)
                     )
             return pd.Series(
-                trans.transform(torch.from_numpy(series.to_numpy())),
+                trans(torch.from_numpy(series.to_numpy())),
                 index=series.index,
                 name=series.name,
             )

@@ -36,7 +36,7 @@ def convert_transformation(
 class TransformationProtocol(Protocol):
     """Type protocol specifying the interface transformations need to implement."""
 
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
 
 
@@ -46,7 +46,7 @@ class Transformation(TransformationProtocol, ABC):
 
     @override
     @abstractmethod
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
 
     def append(
@@ -121,8 +121,8 @@ class ChainedTransformation(Transformation):
         return ChainedTransformation(*self.transformations, *addendum)
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
-        return compose(*(t.transform for t in self.transformations))(x)
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return compose(*(t.__call__ for t in self.transformations))(x)
 
 
 @define
@@ -133,7 +133,7 @@ class GenericTransformation(Transformation):
     """The torch callable to be applied."""
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         return self.transformation(x)
 
 
@@ -148,7 +148,7 @@ class ClampingTransformation(Transformation):
     """The upper cutoff value."""
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         return x.clamp(self.min, self.max)
 
 
@@ -182,10 +182,10 @@ class AffineTransformation(Transformation):
         Example:
             >>> import torch
             >>> from baybe.targets.transforms import AffineTransformation
-            >>> t = AffineTransformation.from_unit_interval(3, 7)
-            >>> t.transform(torch.tensor([3, 7]))
+            >>> transform = AffineTransformation.from_unit_interval(3, 7)
+            >>> transform(torch.tensor([3, 7]))
             tensor([0., 1.])
-            >>> t.transform(torch.tensor([7, 3]))
+            >>> transform(torch.tensor([7, 3]))
             tensor([1., 0.])
         """
         return AffineTransformation(
@@ -195,7 +195,7 @@ class AffineTransformation(Transformation):
         )
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         if self.shift_first:
             return (x + self.shift) * self.factor
         else:
@@ -213,7 +213,7 @@ class BellTransformation(Transformation):
     """The width of the bell curve."""
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
 
 
@@ -221,5 +221,5 @@ class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
     @override
-    def transform(self, x: Tensor, /) -> Tensor:
+    def __call__(self, x: Tensor, /) -> Tensor:
         return x.abs()
