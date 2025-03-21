@@ -54,6 +54,19 @@ class NumericalTarget(Target, SerialMixin):
     def match_bell(cls, name: str, center: float, width: float) -> NumericalTarget:
         return NumericalTarget(name, BellTransformation(center, width))
 
+    @classmethod
+    def clamped_affine(
+        cls, name: str, cutoffs: Iterable[float], *, descending: bool = False
+    ) -> NumericalTarget:
+        bounds = Interval.create(cutoffs).to_tuple()
+        if descending:
+            bounds = bounds[::-1]
+        return NumericalTarget(
+            name,
+            AffineTransformation.from_unit_interval(*bounds)
+            + ClampingTransformation(min=0, max=1),
+        )
+
     @override
     def transform(
         self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
