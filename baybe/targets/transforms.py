@@ -77,15 +77,17 @@ class Transformation(TransformationProtocol, ABC):
         """Take the absolute value of the output of the transformation."""
         return self + AbsoluteTransformation()
 
-    def __add__(self, other: Transformation | int | float) -> ChainedTransformation:
+    def __add__(
+        self, other: TransformationProtocol | int | float
+    ) -> ChainedTransformation:
         """Chain another transformation or shift the output of the current one."""
-        if isinstance(other, Transformation):
+        if isinstance(other, TransformationProtocol):
             return ChainedTransformation(self, other)
         if isinstance(other, (int, float)):
             return self + AffineTransformation(shift=other)
         return NotImplemented
 
-    def __mul__(self, other: Transformation) -> ChainedTransformation:
+    def __mul__(self, other: TransformationProtocol) -> ChainedTransformation:
         """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
             return self + AffineTransformation(factor=other)
