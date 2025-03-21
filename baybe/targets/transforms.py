@@ -46,6 +46,18 @@ class Transformation(TransformationProtocol, ABC):
     def abs(self) -> Transformation:
         self.append(AbsoluteTransformation())
 
+    def __add__(self, other):
+        if isinstance(other, Transformation):
+            return ChainedTransformation(self, other)
+        if isinstance(other, (int, float)):
+            return self + AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return self + AffineTransformation(factor=other)
+        return NotImplemented
+
 
 @define
 class ChainedTransformation(Transformation):
