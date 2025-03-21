@@ -25,7 +25,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements, to_tensor
 
 ### Experiment Setup

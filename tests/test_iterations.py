@@ -48,7 +48,7 @@ from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
 from .conftest import run_iterations

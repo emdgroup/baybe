@@ -8,7 +8,7 @@ from pytest import param
 
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 
 t1 = NumericalTarget("t1", mode="MAX", bounds=(0, 1))

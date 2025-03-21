@@ -34,7 +34,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
 
 

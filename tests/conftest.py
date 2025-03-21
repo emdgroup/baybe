@@ -68,7 +68,7 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
 from baybe.telemetry import (
     VARNAME_TELEMETRY_ENABLED,

@@ -5,7 +5,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.targets.enum import TargetMode
 
 

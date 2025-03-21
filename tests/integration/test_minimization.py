@@ -11,7 +11,7 @@ from baybe.acquisition.base import AcquisitionFunction
 from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
 

@@ -23,7 +23,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
 

@@ -10,7 +10,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 
 
 class TestInvalidObjectiveCreation:

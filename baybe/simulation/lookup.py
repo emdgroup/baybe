@@ -54,7 +54,7 @@ def look_up_targets(
 
     Example:
         >>> import pandas as pd
-        >>> from baybe.targets._deprecated import NumericalTarget
+        >>> from baybe.targets.numerical import NumericalTarget
         >>> from baybe.simulation.lookup import look_up_targets
         >>>
         >>> targets = [NumericalTarget("target", "MAX")]

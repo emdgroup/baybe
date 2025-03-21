@@ -14,7 +14,7 @@ from baybe import Campaign
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment setup and creating the searchspace

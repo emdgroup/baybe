@@ -22,7 +22,7 @@ from baybe.parameters import (
     SubstanceParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment setup

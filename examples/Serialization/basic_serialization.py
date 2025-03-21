@@ -22,7 +22,7 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 
 ### Experiment setup
 

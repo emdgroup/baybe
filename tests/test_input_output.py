@@ -8,7 +8,7 @@ from pytest import param
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
 

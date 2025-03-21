@@ -35,7 +35,7 @@ from baybe.recommenders import (
 )
 from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
 from baybe.utils.plotting import create_example_plots

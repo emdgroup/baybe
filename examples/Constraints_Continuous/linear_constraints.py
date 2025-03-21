@@ -21,7 +21,7 @@ from baybe import Campaign
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function

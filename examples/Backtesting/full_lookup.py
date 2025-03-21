@@ -23,7 +23,7 @@ from baybe.parameters import (
 from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
-from baybe.targets._deprecated import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.plotting import create_example_plots
 
 ### Parameters for a full simulation loop
