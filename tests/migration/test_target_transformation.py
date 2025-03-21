@@ -45,13 +45,7 @@ def series() -> pd.Series:
         ),
         param(
             LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AffineTransformation.from_unit_interval(2, 5),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.clamped_affine("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
         ),
@@ -74,25 +68,13 @@ def series() -> pd.Series:
         ),
         param(
             LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AffineTransformation(factor=-1, shift=1),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.clamped_affine("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
             LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
-            ModernTarget(
-                "t",
-                ChainedTransformation(
-                    AffineTransformation.from_unit_interval(5, 2),
-                    ClampingTransformation(min=0, max=1),
-                ),
-            ),
+            ModernTarget.clamped_affine("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),
