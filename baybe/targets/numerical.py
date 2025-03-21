@@ -10,6 +10,7 @@ import pandas as pd
 import torch
 from attrs import define, field
 from attrs.converters import optional
+from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin
@@ -35,10 +36,20 @@ class NumericalTarget(Target, SerialMixin):
     )
     """An optional target transformation."""
 
-    minimize: bool = field(default=False, kw_only=True)
+    minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
 
     @classmethod
     def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
+        """Create a target to match a given setpoint using a triangular transformation.
+
+        Args:
+            name: The name of the target.
+            cutoffs: The cutoff values where the output of the triangular transformation
+                reaches zero.
+
+        Returns:
+            The target with applied triangular matching transformation.
+        """
         interval = Interval.create(cutoffs)
         return NumericalTarget(
             name,
@@ -50,12 +61,33 @@ class NumericalTarget(Target, SerialMixin):
 
     @classmethod
     def match_bell(cls, name: str, center: float, width: float) -> NumericalTarget:
+        """Create a target to match a given setpoint using a bell transformation.
+
+        Args:
+            name: The name of the target.
+            center: The center point of the bell curve.
+            width: The width of the bell curve.
+
+        Returns:
+            The target with applied bell matching transformation.
+        """
         return NumericalTarget(name, BellTransformation(center, width))
 
     @classmethod
     def clamped_affine(
         cls, name: str, cutoffs: Iterable[float], *, descending: bool = False
     ) -> NumericalTarget:
+        """Create a target that is affine in a given range and clamped to 0/1 outside.
+
+        Args:
+            name: The name of the target.
+            cutoffs: The cutoff values defining the affine region.
+            descending: Boolean flag indicating if the transformation is ascending
+                or descending in the affine region.
+
+        Returns:
+            The target with applied clamped linear transformation.
+        """
         bounds = Interval.create(cutoffs).to_tuple()
         if descending:
             bounds = bounds[::-1]

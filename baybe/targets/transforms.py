@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import functools
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
 
@@ -21,43 +21,63 @@ from baybe.targets._deprecated import (  # noqa: F401
 from baybe.utils.basic import to_tuple
 
 TensorCallable = Callable[[torch.Tensor], torch.Tensor]
+"""Type alias for a torch-based function mapping from reals to reals."""
 
 
-def compose_two(f, g):
+def compose_two(f, g, /):
+    """Compose two given functions (first function is applied first)."""
     return lambda *a, **kw: g(f(*a, **kw))
 
 
 def compose(*fs):
+    """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
 
 
 def convert_transformation(
     x: TransformationProtocol | TensorCallable, /
 ) -> TransformationProtocol:
+    """Autowrap a torch callable as transformation (with transformation passthrough)."""
     return x if isinstance(x, TransformationProtocol) else GenericTransformation(x)
 
 
 @runtime_checkable
 class TransformationProtocol(Protocol):
-    def transform(self, x: Tensor, /) -> Tensor: ...
+    """Type protocol specifying the interface transformations need to implement."""
+
+    def transform(self, x: Tensor, /) -> Tensor:
+        """Transform a given input tensor."""
 
 
+@define
 class Transformation(TransformationProtocol, ABC):
+    """Abstract base class for all transformations."""
+
+    @override
+    @abstractmethod
+    def transform(self, x: Tensor, /) -> Tensor:
+        """Transform a given input tensor."""
+
     def append(
         self, transformation: TransformationProtocol, /
     ) -> ChainedTransformation:
+        """Chain another transformation with the existing one."""
         return self + transformation
 
     def negate(self) -> Transformation:
+        """Negate the output of the transformation."""
         return self + AffineTransformation(factor=-1)
 
     def clamp(self, min: float | None, max: float | None) -> Transformation:
+        """Clamp the output of the transformation."""
         return self + ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
+        """Take the absolute value of the output of the transformation."""
         return self + AbsoluteTransformation()
 
     def __add__(self, other):
+        """Chain another transformation or shift the output of the current one."""
         if isinstance(other, Transformation):
             return ChainedTransformation(self, other)
         if isinstance(other, (int, float)):
@@ -65,12 +85,14 @@ class Transformation(TransformationProtocol, ABC):
         return NotImplemented
 
     def __mul__(self, other):
+        """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
             return self + AffineTransformation(factor=other)
         return NotImplemented
 
     @classmethod
     def __torch_function__(cls, func, types, args=(), kwargs=None):
+        """Chain the transformation with a given torch callable."""
         if not (
             len(args) == 1 and isinstance(args[0], Transformation) and kwargs is None
         ):
@@ -83,10 +105,13 @@ class Transformation(TransformationProtocol, ABC):
 
 @define
 class ChainedTransformation(Transformation):
+    """A chained transformation composing several individual transformations."""
+
     transformations: tuple[TransformationProtocol, ...] = field(
         converter=to_tuple,
         validator=deep_iterable(member_validator=instance_of(TransformationProtocol)),
     )
+    """The transformations to be composed."""
 
     def __init__(self, *transformations: TransformationProtocol):
         self.__attrs_init__(transformations)
@@ -109,7 +134,10 @@ class ChainedTransformation(Transformation):
 
 @define
 class GenericTransformation(Transformation):
+    """A generic transformation applying an arbitrary torch callable."""
+
     transformation: TensorCallable = field()
+    """The torch callable to be applied."""
 
     @override
     def transform(self, x: Tensor, /) -> Tensor:
@@ -118,8 +146,13 @@ class GenericTransformation(Transformation):
 
 @define
 class ClampingTransformation(Transformation):
+    """A transformation clamping values between specified cutoffs."""
+
     min: float | None = field(default=None)
+    """The lower cutoff value."""
+
     max: float | None = field(default=None)
+    """The upper cutoff value."""
 
     @override
     def transform(self, x: Tensor, /) -> Tensor:
@@ -128,14 +161,43 @@ class ClampingTransformation(Transformation):
 
 @define(slots=False)
 class AffineTransformation(Transformation):
+    """An affine transformation."""
+
     factor: float = field(default=1.0)
+    """The multiplicative factor of the transformation."""
+
     shift: float = field(default=0.0)
+    """The constant shift of the transformation."""
+
     shift_first: bool = field(default=False)
+    """Boolean flag determining if the shift or the scaling is applied first."""
 
     @classmethod
-    def from_unit_interval(cls, lower: float, upper: float) -> AffineTransformation:
+    def from_unit_interval(
+        cls, mapped_to_zero: float, mapped_to_one: float
+    ) -> AffineTransformation:
+        """Create an affine transform by specifying reference points mapped to 0/1.
+
+        Args:
+            mapped_to_zero: The input value that will be mapped to zero.
+            mapped_to_one: The input value that will be mapped to one.
+
+        Returns:
+            An affine transformation calibrated to map the specified values to the
+            unit interval.
+
+        Example:
+            >>> from baybe.targets.transforms import AffineTransformation
+            >>> t = AffineTransformation.from_unit_interval(3, 7)
+            >>> t.transform(torch.tensor([3, 7]))
+            tensor([0., 1.])
+            >>> t.transform(torch.tensor([7, 3]))
+            tensor([1., 0.])
+        """
         return AffineTransformation(
-            shift=-lower, factor=1 / (upper - lower), shift_first=True
+            shift=-mapped_to_zero,
+            factor=1 / (mapped_to_one - mapped_to_zero),
+            shift_first=True,
         )
 
     @override
@@ -148,8 +210,13 @@ class AffineTransformation(Transformation):
 
 @define(slots=False)
 class BellTransformation(Transformation):
+    """A Gaussian bell curve transformation."""
+
     center: float = field(default=0.0)
+    """The center point of the bell curve."""
+
     width: float = field(default=1.0)
+    """The width of the bell curve."""
 
     @override
     def transform(self, x: Tensor, /) -> Tensor:
@@ -157,6 +224,8 @@ class BellTransformation(Transformation):
 
 
 class AbsoluteTransformation(Transformation):
+    """A transformation computing absolute values."""
+
     @override
     def transform(self, x: Tensor, /) -> Tensor:
         return x.abs()
