@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
@@ -11,6 +12,7 @@ from baybe.targets.transforms import (
     AffineTransformation,
     ChainedTransformation,
     ClampingTransformation,
+    GenericTransformation,
     bell_transform,
     linear_transform,
     triangular_transform,
@@ -162,3 +164,9 @@ def test_transformation_chaining():
     t = c.append(t3).append(c)
 
     assert t == ChainedTransformation(t1, t2, t3, t1, t2)
+
+
+def test_generic_transformation(series):
+    t1 = ModernTarget("t", AbsoluteTransformation())
+    t2 = ModernTarget("t", GenericTransformation(torch.abs))
+    assert_series_equal(t1.transform(series), t2.transform(series))
