@@ -3,6 +3,7 @@
 import gc
 import warnings
 from collections.abc import Callable, Sequence
+from enum import Enum
 from functools import partial
 from typing import Any, cast
 
@@ -269,3 +270,29 @@ def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
     res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))
 
     return res
+
+
+class TargetMode(Enum):
+    """Available modes for targets."""
+
+    MIN = "MIN"
+    """The target is to be minimized."""
+
+    MAX = "MAX"
+    """The target is to be maximized."""
+
+    MATCH = "MATCH"
+    """The target should be close to a given value."""
+
+
+class TargetTransformation(Enum):
+    """Available target transformations."""
+
+    LINEAR = "LINEAR"
+    """Linear transformation."""
+
+    TRIANGULAR = "TRIANGULAR"
+    """Transformation using triangular-shaped function."""
+
+    BELL = "BELL"
+    """Transformation using bell-shaped function."""
