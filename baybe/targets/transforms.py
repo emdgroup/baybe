@@ -24,12 +24,12 @@ TensorCallable = Callable[[torch.Tensor], torch.Tensor]
 """Type alias for a torch-based function mapping from reals to reals."""
 
 
-def compose_two(f, g, /):
+def compose_two(f: Callable, g: Callable, /) -> Callable:
     """Compose two given functions (first function is applied first)."""
     return lambda *a, **kw: g(f(*a, **kw))
 
 
-def compose(*fs):
+def compose(*fs: Callable) -> Callable:
     """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
 
@@ -76,7 +76,7 @@ class Transformation(TransformationProtocol, ABC):
         """Take the absolute value of the output of the transformation."""
         return self + AbsoluteTransformation()
 
-    def __add__(self, other):
+    def __add__(self, other: Transformation | int | float) -> ChainedTransformation:
         """Chain another transformation or shift the output of the current one."""
         if isinstance(other, Transformation):
             return ChainedTransformation(self, other)
@@ -84,7 +84,7 @@ class Transformation(TransformationProtocol, ABC):
             return self + AffineTransformation(shift=other)
         return NotImplemented
 
-    def __mul__(self, other):
+    def __mul__(self, other: Transformation) -> ChainedTransformation:
         """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
             return self + AffineTransformation(factor=other)
