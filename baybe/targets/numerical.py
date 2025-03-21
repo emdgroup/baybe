@@ -18,7 +18,6 @@ from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
-    ChainedTransformation,
     ClampingTransformation,
     TransformationProtocol,
     convert_transformation,
@@ -40,14 +39,10 @@ class NumericalTarget(Target, SerialMixin):
         interval = Interval.create(cutoffs)
         return NumericalTarget(
             name,
-            ChainedTransformation(
-                AffineTransformation.from_unit_interval(
-                    interval.center, interval.upper
-                ),
-                AbsoluteTransformation(),
-                AffineTransformation(factor=-1, shift=1),
-                ClampingTransformation(min=0, max=1),
-            ),
+            AffineTransformation.from_unit_interval(interval.center, interval.upper)
+            + AbsoluteTransformation()
+            + AffineTransformation(factor=-1, shift=1)
+            + ClampingTransformation(min=0, max=1),
         )
 
     @classmethod
@@ -62,9 +57,7 @@ class NumericalTarget(Target, SerialMixin):
         if descending:
             bounds = bounds[::-1]
         return NumericalTarget(
-            name,
-            AffineTransformation.from_unit_interval(*bounds)
-            + ClampingTransformation(min=0, max=1),
+            name, AffineTransformation.from_unit_interval(*bounds).clamp(0, 1)
         )
 
     @override

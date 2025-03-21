@@ -41,7 +41,7 @@ class Transformation(TransformationProtocol, ABC):
     def append(
         self, transformation: TransformationProtocol, /
     ) -> ChainedTransformation:
-        return ChainedTransformation(self, transformation)
+        return self + transformation
 
     def negate(self) -> Transformation:
         return self + AffineTransformation(factor=-1)
@@ -50,7 +50,7 @@ class Transformation(TransformationProtocol, ABC):
         return self + ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
-        self.append(AbsoluteTransformation())
+        return self + AbsoluteTransformation()
 
     def __add__(self, other):
         if isinstance(other, Transformation):
