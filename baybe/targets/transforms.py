@@ -1,82 +1,224 @@
 """Functions for bound transforms."""
 
-import numpy as np
-from numpy.typing import ArrayLike
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from attrs import define, field
+from attrs.converters import optional
+from attrs.validators import deep_iterable, instance_of, is_callable
+from typing_extensions import override
+
+from baybe.targets._deprecated import (  # noqa: F401
+    bell_transform,
+    linear_transform,
+    triangular_transform,
+)
+from baybe.utils.basic import compose, to_tuple
+
+if TYPE_CHECKING:
+    from torch import Tensor
+
+    TensorCallable = Callable[[Tensor], Tensor]
+    """Type alias for a torch-based function mapping from reals to reals."""
 
 
-def linear_transform(
-    arr: ArrayLike, lower: float, upper: float, descending: bool
-) -> np.ndarray:
-    """Linearly map values in a specified interval ``[lower, upper]`` to ``[0, 1]``.
-
-    Outside the specified interval, the function remains constant.
-    That is, 0 or 1, depending on the side and selected mode.
-
-    Args:
-        arr: The values to be mapped.
-        lower: The lower boundary of the linear mapping interval.
-        upper: The upper boundary of the linear mapping interval.
-        descending: If ``True``, the function values decrease from 1 to 0 in the
-            specified interval. If ``False``, they increase from 0 to 1.
-
-    Returns:
-        A new array containing the transformed values.
-    """
-    arr = np.asarray(arr)
-    if descending:
-        res = (upper - arr) / (upper - lower)
-        res[arr > upper] = 0.0
-        res[arr < lower] = 1.0
-    else:
-        res = (arr - lower) / (upper - lower)
-        res[arr > upper] = 1.0
-        res[arr < lower] = 0.0
-
-    return res
+def convert_transformation(
+    x: TransformationProtocol | TensorCallable, /
+) -> TransformationProtocol:
+    """Autowrap a torch callable as transformation (with transformation passthrough)."""
+    return x if isinstance(x, TransformationProtocol) else GenericTransformation(x)
 
 
-def triangular_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """Map values to the interval ``[0, 1]`` in a "triangular" fashion.
+@runtime_checkable
+class TransformationProtocol(Protocol):
+    """Type protocol specifying the interface transformations need to implement."""
 
-    The shape of the function is "triangular" in that is 0 outside a specified interval
-    and linearly increases to 1 from both interval ends, reaching the value 1 at the
-    center of the interval.
-
-    Args:
-        arr: The values to be mapped.
-        lower: The lower end of the triangle interval. Below, the mapped values are 0.
-        upper:The upper end of the triangle interval. Above, the mapped values are 0.
-
-    Returns:
-        A new array containing the transformed values.
-    """
-    arr = np.asarray(arr)
-    mid = lower + (upper - lower) / 2
-    res = (arr - lower) / (mid - lower)
-    res[arr > mid] = (upper - arr[arr > mid]) / (upper - mid)
-    res[arr > upper] = 0.0
-    res[arr < lower] = 0.0
-
-    return res
+    def __call__(self, x: Tensor, /) -> Tensor:
+        """Transform a given input tensor."""
 
 
-def bell_transform(arr: ArrayLike, lower: float, upper: float) -> np.ndarray:
-    """Map values to the interval ``[0, 1]`` in a "Gaussian bell" fashion.
+@define
+class Transformation(TransformationProtocol, ABC):
+    """Abstract base class for all transformations."""
 
-    The shape of the function is "Gaussian bell curve", specified through the boundary
-    values of the sigma interval. Reaches the maximum value of 1 at the interval center.
+    @override
+    @abstractmethod
+    def __call__(self, x: Tensor, /) -> Tensor:
+        """Transform a given input tensor."""
 
-    Args:
-        arr: The values to be mapped.
-        lower: The input value corresponding to the upper sigma interval boundary.
-        upper: The input value corresponding to the lower sigma interval boundary.
+    def append(
+        self, transformation: TransformationProtocol, /
+    ) -> ChainedTransformation:
+        """Chain another transformation with the existing one."""
+        return self + transformation
 
-    Returns:
-        A new array containing the transformed values.
-    """
-    arr = np.asarray(arr)
-    mean = np.mean([lower, upper])
-    std = (upper - lower) / 2
-    res = np.exp(-((arr - mean) ** 2) / (2.0 * std**2))
+    def negate(self) -> Transformation:
+        """Negate the output of the transformation."""
+        return self + AffineTransformation(factor=-1)
 
-    return res
+    def clamp(self, min: float | None, max: float | None) -> Transformation:
+        """Clamp the output of the transformation."""
+        return self + ClampingTransformation(min, max)
+
+    def abs(self) -> Transformation:
+        """Take the absolute value of the output of the transformation."""
+        return self + AbsoluteTransformation()
+
+    def __add__(
+        self, other: TransformationProtocol | int | float
+    ) -> ChainedTransformation:
+        """Chain another transformation or shift the output of the current one."""
+        if isinstance(other, TransformationProtocol):
+            return ChainedTransformation(self, other)
+        if isinstance(other, (int, float)):
+            return self + AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __mul__(self, other: TransformationProtocol) -> ChainedTransformation:
+        """Scale the output of the transformation."""
+        if isinstance(other, (int, float)):
+            return self + AffineTransformation(factor=other)
+        return NotImplemented
+
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        """Chain the transformation with a given torch callable."""
+        if not (
+            len(args) == 1 and isinstance(args[0], Transformation) and kwargs is None
+        ):
+            raise ValueError(
+                "Composing transformations with torch operations is only supported "
+                "if the transformation enters as the only (positional) argument."
+            )
+        return args[0] + GenericTransformation(func)
+
+
+@define(init=False)
+class ChainedTransformation(Transformation):
+    """A chained transformation composing several individual transformations."""
+
+    transformations: tuple[TransformationProtocol, ...] = field(
+        converter=to_tuple,
+        validator=deep_iterable(member_validator=instance_of(TransformationProtocol)),
+    )
+    """The transformations to be composed."""
+
+    def __init__(self, *transformations: TransformationProtocol):
+        self.__attrs_init__(transformations)
+
+    @override
+    def append(
+        self, transformation: TransformationProtocol, /
+    ) -> ChainedTransformation:
+        addendum = (
+            transformation.transformations
+            if isinstance(transformation, ChainedTransformation)
+            else [transformation]
+        )
+        return ChainedTransformation(*self.transformations, *addendum)
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return compose(*(t.__call__ for t in self.transformations))(x)
+
+
+@define
+class GenericTransformation(Transformation):
+    """A generic transformation applying an arbitrary torch callable."""
+
+    transformation: TensorCallable = field(validator=is_callable())
+    """The torch callable to be applied."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return self.transformation(x)
+
+
+@define
+class ClampingTransformation(Transformation):
+    """A transformation clamping values between specified cutoffs."""
+
+    min: float | None = field(default=None, converter=optional(float))
+    """The lower cutoff value."""
+
+    max: float | None = field(default=None, converter=optional(float))
+    """The upper cutoff value."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.clamp(self.min, self.max)
+
+
+@define(slots=False)
+class AffineTransformation(Transformation):
+    """An affine transformation."""
+
+    factor: float = field(default=1.0, converter=float)
+    """The multiplicative factor of the transformation."""
+
+    shift: float = field(default=0.0, converter=float)
+    """The constant shift of the transformation."""
+
+    shift_first: bool = field(default=False, validator=instance_of(bool))
+    """Boolean flag determining if the shift or the scaling is applied first."""
+
+    @classmethod
+    def from_unit_interval(
+        cls, mapped_to_zero: float, mapped_to_one: float
+    ) -> AffineTransformation:
+        """Create an affine transform by specifying reference points mapped to 0/1.
+
+        Args:
+            mapped_to_zero: The input value that will be mapped to zero.
+            mapped_to_one: The input value that will be mapped to one.
+
+        Returns:
+            An affine transformation calibrated to map the specified values to the
+            unit interval.
+
+        Example:
+            >>> from baybe.targets.transforms import AffineTransformation
+            >>> transform = AffineTransformation.from_unit_interval(3, 7)
+            >>> transform(torch.tensor([3, 7]))
+            tensor([0., 1.])
+            >>> transform(torch.tensor([7, 3]))
+            tensor([1., 0.])
+        """
+        return AffineTransformation(
+            shift=-mapped_to_zero,
+            factor=1 / (mapped_to_one - mapped_to_zero),
+            shift_first=True,
+        )
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        if self.shift_first:
+            return (x + self.shift) * self.factor
+        else:
+            return x * self.factor + self.shift
+
+
+@define(slots=False)
+class BellTransformation(Transformation):
+    """A Gaussian bell curve transformation."""
+
+    center: float = field(default=0.0, converter=float)
+    """The center point of the bell curve."""
+
+    width: float = field(default=1.0, converter=float)
+    """The width of the bell curve."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
+
+
+class AbsoluteTransformation(Transformation):
+    """A transformation computing absolute values."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.abs()
