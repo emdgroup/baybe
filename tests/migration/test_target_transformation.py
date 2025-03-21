@@ -169,4 +169,8 @@ def test_transformation_chaining():
 def test_generic_transformation(series):
     t1 = ModernTarget("t", AbsoluteTransformation())
     t2 = ModernTarget("t", GenericTransformation(torch.abs))
-    assert_series_equal(t1.transform(series), t2.transform(series))
+    t3 = ModernTarget("t", torch.abs)
+
+    transformed = t1.transform(series)
+    assert_series_equal(transformed, t2.transform(series))
+    assert_series_equal(transformed, t3.transform(series))

@@ -9,6 +9,7 @@ from collections.abc import Iterable
 import pandas as pd
 import torch
 from attrs import define, field
+from attrs.converters import optional
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin
@@ -20,6 +21,7 @@ from baybe.targets.transforms import (
     ChainedTransformation,
     ClampingTransformation,
     TransformationProtocol,
+    convert_transformation,
 )
 from baybe.utils.interval import Interval
 
@@ -28,7 +30,9 @@ from baybe.utils.interval import Interval
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    transformation: TransformationProtocol | None = field(default=None)
+    transformation: TransformationProtocol | None = field(
+        default=None, converter=optional(convert_transformation)
+    )
     """An optional target transformation."""
 
     @classmethod
