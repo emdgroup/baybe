@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import functools
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Protocol, runtime_checkable
@@ -19,20 +18,10 @@ from baybe.targets._deprecated import (  # noqa: F401
     linear_transform,
     triangular_transform,
 )
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import compose, to_tuple
 
 TensorCallable = Callable[[torch.Tensor], torch.Tensor]
 """Type alias for a torch-based function mapping from reals to reals."""
-
-
-def compose_two(f: Callable, g: Callable, /) -> Callable:
-    """Compose two given functions (first function is applied first)."""
-    return lambda *a, **kw: g(f(*a, **kw))
-
-
-def compose(*fs: Callable) -> Callable:
-    """Compose an arbitrary number of functions (first function is applied first)."""
-    return functools.reduce(compose_two, fs)
 
 
 def convert_transformation(
