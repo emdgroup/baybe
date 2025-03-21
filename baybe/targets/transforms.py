@@ -58,6 +58,17 @@ class Transformation(TransformationProtocol, ABC):
             return self + AffineTransformation(factor=other)
         return NotImplemented
 
+    @classmethod
+    def __torch_function__(cls, func, types, args=(), kwargs=None):
+        if not (
+            len(args) == 1 and isinstance(args[0], Transformation) and kwargs is None
+        ):
+            raise ValueError(
+                "Composing transformations with torch operations is only supported "
+                "if the transformation enters as the only (positional) argument."
+            )
+        return args[0] + GenericTransformation(func)
+
 
 @define
 class ChainedTransformation(Transformation):

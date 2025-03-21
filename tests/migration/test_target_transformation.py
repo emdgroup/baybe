@@ -200,3 +200,16 @@ def test_transformation_multiplication(series):
     transformed = t1.transform(series)
     assert_series_equal(transformed, t2.transform(series))
     assert_series_equal(transformed, t3.transform(series))
+
+
+def test_torch_overloading(series):
+    t1 = ModernTarget(
+        "t", AffineTransformation(factor=2) + GenericTransformation(torch.abs)
+    )
+    t2 = ModernTarget("t", torch.abs(AffineTransformation(factor=2)))
+    assert_series_equal(t1.transform(series), t2.transform(series))
+
+
+def test_invalid_torch_overloading():
+    with pytest.raises(ValueError, match="enters as the only"):
+        torch.add(AbsoluteTransformation(), 2)
