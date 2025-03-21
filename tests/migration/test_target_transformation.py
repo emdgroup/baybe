@@ -1,3 +1,5 @@
+"""Target transformation tests."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -139,6 +141,7 @@ def series() -> pd.Series:
 def test_target_transformation(
     series, legacy: LegacyTarget, modern: ModernTarget, expected
 ):
+    """The legacy and modern target variants transform equally."""
     transformed_modern = modern.transform(series)
     if legacy is not None:
         assert_series_equal(transformed_modern, legacy.transform(series))
@@ -146,6 +149,7 @@ def test_target_transformation(
 
 
 def test_transformation_chaining():
+    """Transformation chaining and flattening works as expected."""
     t1 = AffineTransformation()
     t2 = ClampingTransformation()
     t3 = AbsoluteTransformation()
@@ -157,6 +161,7 @@ def test_transformation_chaining():
 
 
 def test_generic_transformation(series):
+    """Torch callables can be used to specify generic transformations."""
     t1 = ModernTarget("t", AbsoluteTransformation())
     t2 = ModernTarget("t", GenericTransformation(torch.abs))
     t3 = ModernTarget("t", torch.abs)
@@ -167,6 +172,7 @@ def test_generic_transformation(series):
 
 
 def test_transformation_addition(series):
+    """Adding transformations results in chaining/shifting."""
     t1 = ModernTarget(
         "t",
         ChainedTransformation(AbsoluteTransformation(), AffineTransformation(shift=1)),
@@ -180,6 +186,7 @@ def test_transformation_addition(series):
 
 
 def test_transformation_multiplication(series):
+    """Multiplying transformations results in scaling."""
     t1 = ModernTarget(
         "t",
         ChainedTransformation(AbsoluteTransformation(), AffineTransformation(factor=2)),
@@ -193,6 +200,7 @@ def test_transformation_multiplication(series):
 
 
 def test_torch_overloading(series):
+    """Transformations can be passed to torch callables for chaining."""
     t1 = ModernTarget(
         "t", AffineTransformation(factor=2) + GenericTransformation(torch.abs)
     )
@@ -201,5 +209,6 @@ def test_torch_overloading(series):
 
 
 def test_invalid_torch_overloading():
+    """Chaining torch callables works only with one-argument callables."""
     with pytest.raises(ValueError, match="enters as the only"):
         torch.add(AbsoluteTransformation(), 2)
