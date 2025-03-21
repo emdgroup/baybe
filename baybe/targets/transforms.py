@@ -106,7 +106,7 @@ class Transformation(TransformationProtocol, ABC):
         return args[0] + GenericTransformation(func)
 
 
-@define
+@define(init=False)
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
