@@ -13,7 +13,47 @@ on:
           - "All"
           - "Default"
       synthetic_2C1D_1C:
-        description: "synthetic_2C1D_1C benchmark"
+        description: "synthetic_2C1D_1C"
+        required: false
+        default: false
+        type: boolean
+      aryl_halide_ChlorTrifluour_IodoMeth:
+        description: "aryl_halide_ChlorTrifluour_IodMeth"
+        required: false
+        default: false
+        type: boolean
+      aryl_halide_IodoPyr_ChloroPyr:
+        description: "aryl_halide_IodoPyr_ChloroPyr"
+        required: false
+        default: false
+        type: boolean
+      direct_arylation_tl_temperature:
+        description: "direct_arylation_tl_temperature"
+        required: false
+        default: false
+        type: boolean
+      easom_tl_71_noise5:
+        description: "easom_tl_71_noise5"
+        required: false
+        default: false
+        type: boolean
+      easom_tl_47_negate_noise5:
+        description: "easom_tl_47_negate_noise5"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_30_negate_15:
+        description: "hartmann_tl_3_30_negate_15"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_15_15:
+        description: "hartmann_tl_3_15_15"
+        required: false
+        default: false
+        type: boolean
+      michalewicz_tl_continuous:
+        description: "michalewicz_tl_continuous"
         required: false
         default: false
         type: boolean
