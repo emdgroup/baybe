@@ -19,6 +19,7 @@ BayesianLinearSurrogate
       ~BayesianLinearSurrogate.from_dict
       ~BayesianLinearSurrogate.from_json
       ~BayesianLinearSurrogate.posterior
+      ~BayesianLinearSurrogate.posterior_stats
       ~BayesianLinearSurrogate.replicate
       ~BayesianLinearSurrogate.to_botorch
       ~BayesianLinearSurrogate.to_dict

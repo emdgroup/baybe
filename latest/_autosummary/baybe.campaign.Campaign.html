@@ -766,6 +766,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.surrogates.base.html">baybe.surrogates.base</a><input class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><div class="visually-hidden">Toggle navigation of baybe.surrogates.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
@@ -1083,22 +1084,25 @@ series of measurements and the iterative sequence of events involved.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.get_surrogate" title="baybe.campaign.Campaign.get_surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_surrogate</span></code></a>([batch_size, pending_experiments])</p></td>
 <td><p>Get the current surrogate model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior" title="baybe.campaign.Campaign.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior" title="baybe.campaign.Campaign.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>([candidates])</p></td>
 <td><p>Get the posterior predictive distribution for the given candidates.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.recommend" title="baybe.campaign.Campaign.recommend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommend</span></code></a>(batch_size[, pending_experiments])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior_stats" title="baybe.campaign.Campaign.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>([candidates, stats])</p></td>
+<td><p>Return posterior statistics for each target.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.recommend" title="baybe.campaign.Campaign.recommend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommend</span></code></a>(batch_size[, pending_experiments])</p></td>
 <td><p>Provide the recommendations for the next batch of experiments.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_dict" title="baybe.campaign.Campaign.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_dict" title="baybe.campaign.Campaign.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_json" title="baybe.campaign.Campaign.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_json" title="baybe.campaign.Campaign.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates" title="baybe.campaign.Campaign.toggle_discrete_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_discrete_candidates</span></code></a>(constraints, exclude)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates" title="baybe.campaign.Campaign.toggle_discrete_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_discrete_candidates</span></code></a>(constraints, exclude)</p></td>
 <td><p>In-/exclude certain discrete points in/from the candidate set.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
 <td><p>Validate a given campaign configuration JSON.</p></td>
 </tr>
 </tbody>
@@ -1264,12 +1268,14 @@ transformed quantities and not the original untransformed target(s).</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.campaign.Campaign.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Get the posterior predictive distribution for the given candidates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.campaign.Campaign.posterior.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type">pd.DataFrame</span>) – The candidate points in experimental recommendations.
-For details, see <a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.posterior()</span></code></a>.</p>
+<dd class="field-odd"><p><span class="target" id="baybe.campaign.Campaign.posterior.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type">pd.DataFrame | None</span>) – The candidate points in experimental recommendations. If not
+provided, the posterior for the existing campaign measurements is
+returned. For details, see
+<a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.posterior()</span></code></a>.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="baybe.exceptions.IncompatibilityError.html#baybe.exceptions.IncompatibilityError" title="baybe.exceptions.IncompatibilityError"><strong>IncompatibilityError</strong></a> – If the underlying surrogate model exposes no
@@ -1281,6 +1287,37 @@ For details, see <a class="reference internal" href="baybe.surrogates.base.Surro
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Posterior</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.posterior_stats">
+<span class="sig-name descname"><span class="pre">posterior_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'std'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'var'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mode'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('mean',</span> <span class="pre">'std')</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.posterior_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.posterior_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return posterior statistics for each target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.campaign.Campaign.posterior_stats.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]</span>) – The candidate points in experimental representation. If not
+provided, the statistics of the existing campaign measurements are
+calculated. For details, see
+<a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior_stats" title="baybe.surrogates.base.Surrogate.posterior_stats"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.posterior_stats()</span></code></a>.</p></li>
+<li><p><span class="target" id="baybe.campaign.Campaign.posterior_stats.params.stats"></span><strong>stats</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[<code class="docutils literal notranslate"><span class="pre">'mean'</span></code>, <code class="docutils literal notranslate"><span class="pre">'std'</span></code>, <code class="docutils literal notranslate"><span class="pre">'var'</span></code>, <code class="docutils literal notranslate"><span class="pre">'mode'</span></code>]]]</span>) – Sequence indicating which statistics to compute. Also accepts
+floats, for which the corresponding quantile point will be computed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If a requested quantile is outside the open interval (0,1).</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.13)"><strong>TypeError</strong></a> – If the posterior utilized by the surrogate does not support
+    a requested statistic.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dataframe with posterior statistics for each target and candidate.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1523,6 +1560,7 @@ a <a class="reference internal" href="baybe.searchspace.continuous.SubspaceConti
 <li><a class="reference internal" href="#baybe.campaign.Campaign.from_json"><code class="docutils literal notranslate"><span class="pre">Campaign.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.get_surrogate"><code class="docutils literal notranslate"><span class="pre">Campaign.get_surrogate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.posterior"><code class="docutils literal notranslate"><span class="pre">Campaign.posterior()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.posterior_stats"><code class="docutils literal notranslate"><span class="pre">Campaign.posterior_stats()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.recommend"><code class="docutils literal notranslate"><span class="pre">Campaign.recommend()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.to_dict"><code class="docutils literal notranslate"><span class="pre">Campaign.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.to_json"><code class="docutils literal notranslate"><span class="pre">Campaign.to_json()</span></code></a></li>

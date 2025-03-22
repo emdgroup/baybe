@@ -19,6 +19,7 @@ NGBoostSurrogate
       ~NGBoostSurrogate.from_dict
       ~NGBoostSurrogate.from_json
       ~NGBoostSurrogate.posterior
+      ~NGBoostSurrogate.posterior_stats
       ~NGBoostSurrogate.replicate
       ~NGBoostSurrogate.to_botorch
       ~NGBoostSurrogate.to_dict

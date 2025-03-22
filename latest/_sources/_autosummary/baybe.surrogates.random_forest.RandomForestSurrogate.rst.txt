@@ -19,6 +19,7 @@ RandomForestSurrogate
       ~RandomForestSurrogate.from_dict
       ~RandomForestSurrogate.from_json
       ~RandomForestSurrogate.posterior
+      ~RandomForestSurrogate.posterior_stats
       ~RandomForestSurrogate.replicate
       ~RandomForestSurrogate.to_botorch
       ~RandomForestSurrogate.to_dict

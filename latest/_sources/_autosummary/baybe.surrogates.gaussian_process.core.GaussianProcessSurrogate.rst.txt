@@ -20,6 +20,7 @@ GaussianProcessSurrogate
       ~GaussianProcessSurrogate.from_json
       ~GaussianProcessSurrogate.from_preset
       ~GaussianProcessSurrogate.posterior
+      ~GaussianProcessSurrogate.posterior_stats
       ~GaussianProcessSurrogate.replicate
       ~GaussianProcessSurrogate.to_botorch
       ~GaussianProcessSurrogate.to_dict

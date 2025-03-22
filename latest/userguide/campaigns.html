@@ -766,6 +766,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.html">baybe.surrogates.base</a><input class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><div class="visually-hidden">Toggle navigation of baybe.surrogates.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
@@ -1056,9 +1057,9 @@ It further serves as the primary interface for interacting with BayBE as a user
 since it is responsible for handling experimental data, making recommendations, adding
 measurements, and most other user-related tasks.</p>
 <section id="creating-a-campaign">
-<h2>Creating a campaign<a class="headerlink" href="#creating-a-campaign" title="Link to this heading">¶</a></h2>
+<h2>Creating a Campaign<a class="headerlink" href="#creating-a-campaign" title="Link to this heading">¶</a></h2>
 <section id="basic-creation">
-<h3>Basic creation<a class="headerlink" href="#basic-creation" title="Link to this heading">¶</a></h3>
+<h3>Basic Creation<a class="headerlink" href="#basic-creation" title="Link to this heading">¶</a></h3>
 <p>Creating a campaign requires specifying at least two pieces of information that
 describe the underlying optimization problem at hand:</p>
 <div class="table-wrapper colwidths-auto docutils container">
@@ -1093,7 +1094,7 @@ optimization
 </div>
 </section>
 <section id="creation-from-a-json-config">
-<h3>Creation from a JSON config<a class="headerlink" href="#creation-from-a-json-config" title="Link to this heading">¶</a></h3>
+<h3>Creation From a JSON Config<a class="headerlink" href="#creation-from-a-json-config" title="Link to this heading">¶</a></h3>
 <p>Instead of using the default constructor, it is also possible to create a <code class="docutils literal notranslate"><span class="pre">Campaign</span></code>
 from a JSON configuration string via
 <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.from_config" title="baybe.campaign.Campaign.from_config"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">Campaign.from_config</span></code></span></a>.
@@ -1107,7 +1108,7 @@ For more details and a full exemplary config, we refer to the corresponding
 </section>
 </section>
 <section id="getting-recommendations">
-<h2>Getting recommendations<a class="headerlink" href="#getting-recommendations" title="Link to this heading">¶</a></h2>
+<h2>Getting Recommendations<a class="headerlink" href="#getting-recommendations" title="Link to this heading">¶</a></h2>
 <section id="basics">
 <h3>Basics<a class="headerlink" href="#basics" title="Link to this heading">¶</a></h3>
 <p>To obtain a recommendation for the next batch of experiments, we can query the
@@ -1150,7 +1151,7 @@ with the three parameters <code class="docutils literal notranslate"><span class
 </table>
 </div>
 <div class="important admonition">
-<p class="admonition-title">Batch optimization</p>
+<p class="admonition-title">Batch Optimization</p>
 <p>In general, the parameter configurations in a recommended batch are <strong>jointly</strong>
 optimized and therefore tailored to the specific batch size requested.
 This means that for two batches of different requested sizes, the smaller batch will not
@@ -1171,7 +1172,7 @@ is not capable of joint optimization. Currently, the
 is the only recommender available that performs joint optimization.</p>
 </div>
 <div class="note admonition">
-<p class="admonition-title">Sequential vs. parallel experimentation</p>
+<p class="admonition-title">Sequential vs. Parallel Experimentation</p>
 <p>If you have a fixed experimental budget but the luxury of choosing
 whether to run your experiments sequentially or in parallel, sequential
 experimentation will give you the better overall results in expectation.
@@ -1199,7 +1200,7 @@ workflows</span></a>).</p></li>
 </ul>
 </section>
 <section id="caching-of-recommendations">
-<h3>Caching of recommendations<a class="headerlink" href="#caching-of-recommendations" title="Link to this heading">¶</a></h3>
+<h3>Caching of Recommendations<a class="headerlink" href="#caching-of-recommendations" title="Link to this heading">¶</a></h3>
 <p>The <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> object caches the last batch of recommendations returned, in order to
 avoid unnecessary computations for subsequent queries between which the status
 of the campaign has not changed.
@@ -1210,7 +1211,7 @@ experiments requested (see note above).</p>
 </section>
 </section>
 <section id="adding-measurements">
-<span id="am"></span><h2>Adding measurements<a class="headerlink" href="#adding-measurements" title="Link to this heading">¶</a></h2>
+<span id="am"></span><h2>Adding Measurements<a class="headerlink" href="#adding-measurements" title="Link to this heading">¶</a></h2>
 <p>Available experimental data can be added at any time during the campaign lifecycle using
 the <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements" title="baybe.campaign.Campaign.add_measurements"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">add_measurements</span></code></span></a> method,
 which expects a <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> containing the values of the used experimental parameters
@@ -1266,6 +1267,104 @@ This requirement can be disabled using the method’s
 <code class="docutils literal notranslate"><span class="pre">numerical_measurements_must_be_within_tolerance</span></code> flag.</p>
 </div>
 </section>
+<section id="predictive-statistics">
+<h2>Predictive Statistics<a class="headerlink" href="#predictive-statistics" title="Link to this heading">¶</a></h2>
+<p>You might be interested in statistics about the predicted target values for your
+recommendations, or indeed for any set of possible candidate points. The
+<a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior_stats" title="baybe.campaign.Campaign.posterior_stats"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">Campaign.posterior_stats</span></code></span></a> and
+<a class="reference internal" href="../_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior_stats" title="baybe.surrogates.base.Surrogate.posterior_stats"><span class="xref myst py py-meth"><code class="docutils literal notranslate"><span class="pre">Surrogate.posterior_stats</span></code></span></a> methods
+provide a simple interface for this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">stats</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">posterior_stats</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This will return a table with mean and standard deviation (and possibly other
+statistics) of the target predictions for the provided candidates:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p></p></th>
+<th class="head text-left"><p>Yield_mean</p></th>
+<th class="head text-left"><p>Yield_std</p></th>
+<th class="head text-left"><p>Selectivity_mean</p></th>
+<th class="head text-left"><p>Selectivity_std</p></th>
+<th class="head"><p>…</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p>15</p></td>
+<td class="text-left"><p>83.54</p></td>
+<td class="text-left"><p>5.23</p></td>
+<td class="text-left"><p>91.22</p></td>
+<td class="text-left"><p>7.42</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>18</p></td>
+<td class="text-left"><p>56.12</p></td>
+<td class="text-left"><p>2.34</p></td>
+<td class="text-left"><p>87.32</p></td>
+<td class="text-left"><p>12.38</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>9</p></td>
+<td class="text-left"><p>59.10</p></td>
+<td class="text-left"><p>5.34</p></td>
+<td class="text-left"><p>83.72</p></td>
+<td class="text-left"><p>9.62</p></td>
+<td><p>…</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>You can also provide an optional sequence of statistic names to compute other
+statistics. If a float is provided, the corresponding quantile points will be
+calculated:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">stats</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">posterior_stats</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">stats</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p></p></th>
+<th class="head text-left"><p>Yield_mode</p></th>
+<th class="head text-left"><p>Yield_Q_0.5</p></th>
+<th class="head text-left"><p>Selectivity_mode</p></th>
+<th class="head text-left"><p>Selectivity_Q_0.5</p></th>
+<th class="head"><p>…</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p>15</p></td>
+<td class="text-left"><p>83.54</p></td>
+<td class="text-left"><p>83.54</p></td>
+<td class="text-left"><p>91.22</p></td>
+<td class="text-left"><p>91.22</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p>18</p></td>
+<td class="text-left"><p>56.12</p></td>
+<td class="text-left"><p>56.12</p></td>
+<td class="text-left"><p>87.32</p></td>
+<td class="text-left"><p>87.32</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p>9</p></td>
+<td class="text-left"><p>59.10</p></td>
+<td class="text-left"><p>59.10</p></td>
+<td class="text-left"><p>83.72</p></td>
+<td class="text-left"><p>83.72</p></td>
+<td><p>…</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Posterior Statistics with Desirability Objectives</p>
+<p>A <a class="reference internal" href="../_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective" title="baybe.objectives.desirability.DesirabilityObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code></span></a>
+scalarizes all targets into one single quantity called “Desirability”. As a result,
+the posterior statistics are only shown for this quantity, and not for individual
+targets.</p>
+</div>
+</section>
 <section id="serialization">
 <h2>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h2>
 <p>Like other BayBE objects, <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Campaigns</span></code></span></a> can be (de-)serialized
@@ -1299,7 +1398,7 @@ experimentation at a later point in time:</p>
 </ol>
 </section>
 <section id="further-information">
-<h2>Further information<a class="headerlink" href="#further-information" title="Link to this heading">¶</a></h2>
+<h2>Further Information<a class="headerlink" href="#further-information" title="Link to this heading">¶</a></h2>
 <p>Campaigns are created as a first step in most of our
 <a class="reference internal" href="../examples/examples.html"><span class="doc std std-doc">examples</span></a>.
 For more details on how to define campaigns for a specific use case, we thus propose
@@ -1363,20 +1462,21 @@ to have a look at the most suitable example.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Campaigns</a><ul>
-<li><a class="reference internal" href="#creating-a-campaign">Creating a campaign</a><ul>
-<li><a class="reference internal" href="#basic-creation">Basic creation</a></li>
-<li><a class="reference internal" href="#creation-from-a-json-config">Creation from a JSON config</a></li>
+<li><a class="reference internal" href="#creating-a-campaign">Creating a Campaign</a><ul>
+<li><a class="reference internal" href="#basic-creation">Basic Creation</a></li>
+<li><a class="reference internal" href="#creation-from-a-json-config">Creation From a JSON Config</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#getting-recommendations">Getting recommendations</a><ul>
+<li><a class="reference internal" href="#getting-recommendations">Getting Recommendations</a><ul>
 <li><a class="reference internal" href="#basics">Basics</a></li>
 <li><a class="reference internal" href="#candidate-control-in-discrete-spaces">Candidate Control in Discrete Spaces</a></li>
-<li><a class="reference internal" href="#caching-of-recommendations">Caching of recommendations</a></li>
+<li><a class="reference internal" href="#caching-of-recommendations">Caching of Recommendations</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#adding-measurements">Adding measurements</a></li>
+<li><a class="reference internal" href="#adding-measurements">Adding Measurements</a></li>
+<li><a class="reference internal" href="#predictive-statistics">Predictive Statistics</a></li>
 <li><a class="reference internal" href="#serialization">Serialization</a></li>
-<li><a class="reference internal" href="#further-information">Further information</a></li>
+<li><a class="reference internal" href="#further-information">Further Information</a></li>
 </ul>
 </li>
 </ul>

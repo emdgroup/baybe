@@ -765,6 +765,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.html">baybe.surrogates.base</a><input class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><div class="visually-hidden">Toggle navigation of baybe.surrogates.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
@@ -1042,7 +1043,7 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
@@ -1071,7 +1072,7 @@
     <span class="n">validate_searchspace_from_config</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">SurrogateProtocol</span>
+<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">PosteriorStatistic</span><span class="p">,</span> <span class="n">SurrogateProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">baybe.telemetry</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">TELEM_LABELS</span><span class="p">,</span>
@@ -1563,12 +1564,14 @@
 
 <div class="viewcode-block" id="Campaign.posterior">
 <a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior">[docs]</a>
-    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the posterior predictive distribution for the given candidates.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            candidates: The candidate points in experimental recommendations.</span>
-<span class="sd">                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
+<span class="sd">            candidates: The candidate points in experimental recommendations. If not</span>
+<span class="sd">                provided, the posterior for the existing campaign measurements is</span>
+<span class="sd">                returned. For details, see</span>
+<span class="sd">                :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            IncompatibilityError: If the underlying surrogate model exposes no</span>
@@ -1578,6 +1581,9 @@
 <span class="sd">            Posterior: The corresponding posterior object.</span>
 <span class="sd">            For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">candidates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]]</span>
+
         <span class="n">surrogate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">method_name</span> <span class="o">:=</span> <span class="s2">&quot;posterior&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
@@ -1585,10 +1591,45 @@
                 <span class="sa">f</span><span class="s2">&quot;provide a &#39;</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&#39; method.&quot;</span>
             <span class="p">)</span>
 
-        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span></div>
 
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Campaign.posterior_stats">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior_stats">[docs]</a>
+    <span class="k">def</span> <span class="nf">posterior_stats</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">stats</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PosteriorStatistic</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">),</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return posterior statistics for each target.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidates: The candidate points in experimental representation. If not</span>
+<span class="sd">                provided, the statistics of the existing campaign measurements are</span>
+<span class="sd">                calculated. For details, see</span>
+<span class="sd">                :meth:`baybe.surrogates.base.Surrogate.posterior_stats`.</span>
+<span class="sd">            stats: Sequence indicating which statistics to compute. Also accepts</span>
+<span class="sd">                floats, for which the corresponding quantile point will be computed.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If a requested quantile is outside the open interval (0,1).</span>
+<span class="sd">            TypeError: If the posterior utilized by the surrogate does not support</span>
+<span class="sd">                a requested statistic.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dataframe with posterior statistics for each target and candidate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">candidates</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]]</span>
+
+        <span class="n">surrogate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">method_name</span> <span class="o">:=</span> <span class="s2">&quot;posterior_stats&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The used surrogate type &#39;</span><span class="si">{</span><span class="n">surrogate</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;provide a &#39;</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&#39; method.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior_stats</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">stats</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Campaign.get_surrogate">

@@ -766,6 +766,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.html">baybe.surrogates.base</a><input class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><div class="visually-hidden">Toggle navigation of baybe.surrogates.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
@@ -1266,22 +1267,22 @@ It also prints what happens to internal data.</p>
 
 Recommended measurements with fake measured results:
 
-    Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-141    33    OK         1.0        -6.0  42.506529  62.225319  54.587170
-40     22   bad         4.0        -9.0  17.969221  80.083670  53.325425
-72     22  good         6.0        -9.0  53.837321  27.397836  52.236458
+    Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+62     22       good         2.0        -3.0  57.164560  14.198374  52.832529
+146    33         OK         2.0        -3.0   8.681197  48.933426  56.710012
+114    22  very good         1.0        -3.0  89.939644  77.879200  52.231355
 
 Internal measurement database with desirability values:
 
-  Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33    OK         1.0        -6.0  42.506529  62.225319  54.587170   
-1    22   bad         4.0        -9.0  17.969221  80.083670  53.325425   
-2    22  good         6.0        -9.0  53.837321  27.397836  52.236458   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    22       good         2.0        -3.0  57.164560  14.198374  52.832529   
+1    33         OK         2.0        -3.0   8.681197  48.933426  56.710012   
+2    22  very good         1.0        -3.0  89.939644  77.879200  52.231355   
 
    BatchNr  FitNr  Desirability  
-0        1    NaN      0.554458  
-1        1    NaN      0.556720  
-2        1    NaN      0.795762  
+0        1    NaN      0.796981  
+1        1    NaN      0.363319  
+2        1    NaN      0.767252  
 
 
 
@@ -1292,62 +1293,68 @@ Recommended measurements with fake measured results:
 
       Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
 index                                                                         
-76       22      good         8.0        -9.0  79.689309  92.945391  56.619328
-100      22  very bad         6.0        -9.0  17.464581  22.209534  53.263660
-73       22      good         6.0        -6.0   5.550332   8.614656  56.806284
+94       22  very bad         3.0        -3.0  41.670588  35.374354  52.949610
+30       22       bad         1.0        -3.0  54.294284  43.479255  55.225542
+87       22  very bad         1.0        -1.0  51.294120  75.007131  53.704095
 
 Internal measurement database with desirability values:
 
-  Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33        OK         1.0        -6.0  42.506529  62.225319  54.587170   
-1    22       bad         4.0        -9.0  17.969221  80.083670  53.325425   
-2    22      good         6.0        -9.0  53.837321  27.397836  52.236458   
-3    22      good         8.0        -9.0  79.689309  92.945391  56.619328   
-4    22  very bad         6.0        -9.0  17.464581  22.209534  53.263660   
-5    22      good         6.0        -6.0   5.550332   8.614656  56.806284   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    22       good         2.0        -3.0  57.164560  14.198374  52.832529   
+1    33         OK         2.0        -3.0   8.681197  48.933426  56.710012   
+2    22  very good         1.0        -3.0  89.939644  77.879200  52.231355   
+3    22   very bad         3.0        -3.0  41.670588  35.374354  52.949610   
+4    22        bad         1.0        -3.0  54.294284  43.479255  55.225542   
+5    22   very bad         1.0        -1.0  51.294120  75.007131  53.704095   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.554458  
-1        1    1.0      0.556720  
-2        1    1.0      0.795762  
-3        2    NaN      0.423278  
-4        2    NaN      0.675389  
-5        2    NaN      0.431431  
+0        1    1.0      0.796981  
+1        1    1.0      0.363319  
+2        1    1.0      0.767252  
+3        2    NaN      0.716769  
+4        2    NaN      0.569144  
+5        2    NaN      0.608588  
 
 
 #### ITERATION 3 ####
 
 Recommended measurements with fake measured results:
 
-      Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-index                                                                         
-16       22        OK         6.0        -9.0  62.406672  75.421478  54.555283
-233      33  very bad         3.0        -6.0  97.235003  97.514083  56.081016
-140      33        OK         1.0        -9.0  81.195664  42.953715  56.366608
+      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
+index                                                                  
+89       22   very bad         2.0        -6.0  82.313392  42.005168   
+18       22         OK         6.0        -3.0  95.071894  84.207886   
+276      33  very good        10.0        -9.0  25.445185  38.346920   
+
+        Target_3  
+index             
+89     53.395096  
+18     53.868883  
+276    55.682363  
 
 Internal measurement database with desirability values:
 
-  Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-0    33        OK         1.0        -6.0  42.506529  62.225319  54.587170   
-1    22       bad         4.0        -9.0  17.969221  80.083670  53.325425   
-2    22      good         6.0        -9.0  53.837321  27.397836  52.236458   
-3    22      good         8.0        -9.0  79.689309  92.945391  56.619328   
-4    22  very bad         6.0        -9.0  17.464581  22.209534  53.263660   
-5    22      good         6.0        -6.0   5.550332   8.614656  56.806284   
-6    22        OK         6.0        -9.0  62.406672  75.421478  54.555283   
-7    33  very bad         3.0        -6.0  97.235003  97.514083  56.081016   
-8    33        OK         1.0        -9.0  81.195664  42.953715  56.366608   
+  Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+0    22       good         2.0        -3.0  57.164560  14.198374  52.832529   
+1    33         OK         2.0        -3.0   8.681197  48.933426  56.710012   
+2    22  very good         1.0        -3.0  89.939644  77.879200  52.231355   
+3    22   very bad         3.0        -3.0  41.670588  35.374354  52.949610   
+4    22        bad         1.0        -3.0  54.294284  43.479255  55.225542   
+5    22   very bad         1.0        -1.0  51.294120  75.007131  53.704095   
+6    22   very bad         2.0        -6.0  82.313392  42.005168  53.395096   
+7    22         OK         6.0        -3.0  95.071894  84.207886  53.868883   
+8    33  very good        10.0        -9.0  25.445185  38.346920  55.682363   
 
    BatchNr  FitNr  Desirability  
-0        1    1.0      0.554458  
-1        1    1.0      0.556720  
-2        1    1.0      0.795762  
-3        2    2.0      0.423278  
-4        2    2.0      0.675389  
-5        2    2.0      0.431431  
-6        3    NaN      0.570170  
-7        3    NaN      0.485832  
-8        3    NaN      0.543219  
+0        1    1.0      0.796981  
+1        1    1.0      0.363319  
+2        1    1.0      0.767252  
+3        2    2.0      0.716769  
+4        2    2.0      0.569144  
+5        2    2.0      0.608588  
+6        3    NaN      0.757082  
+7        3    NaN      0.666501  
+8        3    NaN      0.488747  
 </pre></div>
 </div>
 </section>

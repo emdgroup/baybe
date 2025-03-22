@@ -20,6 +20,7 @@ CompositeSurrogate
       ~CompositeSurrogate.from_json
       ~CompositeSurrogate.from_replication
       ~CompositeSurrogate.posterior
+      ~CompositeSurrogate.posterior_stats
       ~CompositeSurrogate.to_botorch
       ~CompositeSurrogate.to_dict
       ~CompositeSurrogate.to_json

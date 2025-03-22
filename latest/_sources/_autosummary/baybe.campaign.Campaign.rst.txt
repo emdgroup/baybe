@@ -21,6 +21,7 @@ Campaign
       ~Campaign.from_json
       ~Campaign.get_surrogate
       ~Campaign.posterior
+      ~Campaign.posterior_stats
       ~Campaign.recommend
       ~Campaign.to_dict
       ~Campaign.to_json

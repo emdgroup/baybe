@@ -5,6 +5,14 @@ baybe.surrogates.base
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      PosteriorStatistic
+   
    
 
    

@@ -21,6 +21,7 @@ BetaBernoulliMultiArmedBanditSurrogate
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior_means
       ~BetaBernoulliMultiArmedBanditSurrogate.posterior_modes
+      ~BetaBernoulliMultiArmedBanditSurrogate.posterior_stats
       ~BetaBernoulliMultiArmedBanditSurrogate.replicate
       ~BetaBernoulliMultiArmedBanditSurrogate.to_botorch
       ~BetaBernoulliMultiArmedBanditSurrogate.to_dict

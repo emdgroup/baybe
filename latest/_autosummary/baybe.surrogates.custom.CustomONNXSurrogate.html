@@ -766,6 +766,7 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.surrogates.base.html">baybe.surrogates.base</a><input class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><div class="visually-hidden">Toggle navigation of baybe.surrogates.base</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
@@ -1069,22 +1070,25 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.from_json" title="baybe.surrogates.custom.CustomONNXSurrogate.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(string)</p></td>
 <td><p>Create an object from its JSON representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior" title="baybe.surrogates.custom.CustomONNXSurrogate.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates, /)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior" title="baybe.surrogates.custom.CustomONNXSurrogate.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates)</p></td>
 <td><p>Compute the posterior for candidates in experimental representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.replicate" title="baybe.surrogates.custom.CustomONNXSurrogate.replicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replicate</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats" title="baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>(candidates[, stats])</p></td>
+<td><p>Return posterior statistics for each target.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.replicate" title="baybe.surrogates.custom.CustomONNXSurrogate.replicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replicate</span></code></a>()</p></td>
 <td><p>Make the surrogate handle multiple targets via replication.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_botorch" title="baybe.surrogates.custom.CustomONNXSurrogate.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_botorch" title="baybe.surrogates.custom.CustomONNXSurrogate.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
 <td><p>Create the botorch-ready representation of the fitted model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_dict" title="baybe.surrogates.custom.CustomONNXSurrogate.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_dict" title="baybe.surrogates.custom.CustomONNXSurrogate.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_json" title="baybe.surrogates.custom.CustomONNXSurrogate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_json" title="baybe.surrogates.custom.CustomONNXSurrogate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility" title="baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_compatibility</span></code></a>(searchspace)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility" title="baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_compatibility</span></code></a>(searchspace)</p></td>
 <td><p>Validate if the class is compatible with a given search space.</p></td>
 </tr>
 </tbody>
@@ -1191,7 +1195,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.surrogates.custom.CustomONNXSurrogate.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the posterior for candidates in experimental representation.</p>
 <p>Takes a dataframe of parameter configurations in <strong>experimental representation</strong>
 and returns the corresponding posterior object. Therefore, the method serves as
@@ -1205,7 +1209,7 @@ the user-facing entry point for accessing model predictions.</p>
 <dd class="field-even"><p><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError" title="baybe.exceptions.ModelNotTrainedError"><strong>ModelNotTrainedError</strong></a> – When called before the model has been trained.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.13.1.dev29+g44b6400)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.13.1.dev32+g9c1c759)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.Posterior</span></code> object representing the posterior
@@ -1213,6 +1217,36 @@ distribution at the given candidate points, where the posterior is also
 described in <strong>experimental representation</strong>. That is, the posterior values
 lie in the same domain as the modelled targets/objective on which the
 surrogate was trained via <a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.fit" title="baybe.surrogates.base.Surrogate.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.fit()</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats">
+<span class="sig-name descname"><span class="pre">posterior_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stats</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><span class="pre">Sequence</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'mean'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'std'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'var'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'mode'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('mean',</span> <span class="pre">'std')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Return posterior statistics for each target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – The candidate points in experimental representation.
+For details, see <a class="reference internal" href="baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.surrogates.base.Surrogate.posterior()</span></code></a>.</p></li>
+<li><p><span class="target" id="baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats.params.stats"></span><strong>stats</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Sequence" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[<code class="docutils literal notranslate"><span class="pre">'mean'</span></code>, <code class="docutils literal notranslate"><span class="pre">'std'</span></code>, <code class="docutils literal notranslate"><span class="pre">'var'</span></code>, <code class="docutils literal notranslate"><span class="pre">'mode'</span></code>]]]</span>) – Sequence indicating which statistics to compute. Also accepts
+floats, for which the corresponding quantile point will be computed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError" title="baybe.exceptions.ModelNotTrainedError"><strong>ModelNotTrainedError</strong></a> – When called before the model has been trained.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If a requested quantile is outside the open interval (0,1).</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.13)"><strong>TypeError</strong></a> – If the posterior utilized by the surrogate does not support
+    a requested statistic.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dataframe with posterior statistics for each target and candidate.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1239,13 +1273,13 @@ it as a single-target surrogate and applying the same replication mechanism.</p>
 <dt class="sig sig-object py" id="baybe.surrogates.custom.CustomONNXSurrogate.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Create the botorch-ready representation of the fitted model.</p>
-<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev29+g44b6400)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
+<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev32+g9c1c759)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
 configured such that it can be called with candidate points in <strong>computational
 representation</strong>, that is, input of the form as obtained via
 <a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.transform" title="baybe.searchspace.core.SearchSpace.transform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.searchspace.core.SearchSpace.transform()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev29+g44b6400)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.13.1.dev32+g9c1c759)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1385,6 +1419,7 @@ learning.</p>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.from_dict"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.from_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.from_json"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.posterior()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.posterior_stats"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.posterior_stats()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.replicate"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.replicate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_botorch"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.to_botorch()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.surrogates.custom.CustomONNXSurrogate.to_dict"><code class="docutils literal notranslate"><span class="pre">CustomONNXSurrogate.to_dict()</span></code></a></li>
