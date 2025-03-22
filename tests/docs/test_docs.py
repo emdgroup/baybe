@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
-from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 
 from .utils import extract_code_blocks
 
@@ -42,20 +41,10 @@ def test_code_executability(file: Path, campaign):
 
 # TODO: Needs a refactoring (files codeblocks should be auto-detected)
 @pytest.mark.parametrize("file", doc_files_pseudocode, ids=doc_files_pseudocode)
-@pytest.mark.parametrize(
-    "recommender",
-    [
-        TwoPhaseMetaRecommender(
-            initial_recommender=RandomRecommender(), recommender=RandomRecommender()
-        )
-    ],
-)
 def test_pseudocode_executability(file: Path, searchspace, objective, recommender):
     """The pseudocode blocks in the file are a valid python script when using fixtures.
 
     Blocks surrounded with "triple-backticks" are included.
-    Due to a bug related to the serialization of the default recommender, this currently
-    uses a non-default recommender.
     """
     userguide_pseudocode = "\n".join(extract_code_blocks(file, include_tilde=True))
     exec(userguide_pseudocode)

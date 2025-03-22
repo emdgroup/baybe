@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from enum import Enum, auto
-from typing import TYPE_CHECKING, ClassVar, Protocol
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
 import cattrs
 import pandas as pd
@@ -21,6 +22,7 @@ from joblib.hashing import hash
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
+from baybe.objectives import DesirabilityObjective
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -42,6 +44,9 @@ if TYPE_CHECKING:
     from torch import Tensor
 
     from baybe.surrogates.composite import CompositeSurrogate
+
+PosteriorStatistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
+"""Type alias for requestable statistics (a float yields the corresponding quantile)."""
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
@@ -218,7 +223,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return scaler
 
-    def posterior(self, candidates: pd.DataFrame, /) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame) -> Posterior:
         """Compute the posterior for candidates in experimental representation.
 
         Takes a dataframe of parameter configurations in **experimental representation**
@@ -305,6 +310,86 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             where the posterior is described on the scale dictated by the output scaler
             obtained via :meth:`baybe.surrogates.base.Surrogate._make_output_scaler`.
         """
+
+    def posterior_stats(
+        self,
+        candidates: pd.DataFrame,
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
+    ) -> pd.DataFrame:
+        """Return posterior statistics for each target.
+
+        Args:
+            candidates: The candidate points in experimental representation.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            stats: Sequence indicating which statistics to compute. Also accepts
+                floats, for which the corresponding quantile point will be computed.
+
+        Raises:
+            ModelNotTrainedError: When called before the model has been trained.
+            ValueError: If a requested quantile is outside the open interval (0,1).
+            TypeError: If the posterior utilized by the surrogate does not support
+                a requested statistic.
+
+        Returns:
+            A dataframe with posterior statistics for each target and candidate.
+        """
+        if self._objective is None:
+            raise ModelNotTrainedError(
+                "The surrogate must be trained before a posterior can be computed."
+            )
+
+        stat: PosteriorStatistic
+        for stat in (x for x in stats if isinstance(x, float)):
+            if not 0.0 < stat < 1.0:
+                raise ValueError(
+                    f"Posterior quantile statistics can only be computed for quantiles "
+                    f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
+                    f"part of '{stats=}'."
+                )
+        posterior = self.posterior(candidates)
+
+        match self._objective:
+            case DesirabilityObjective():
+                # TODO: Once desirability also supports posterior transforms this check
+                #  here will have to depend on the configuration of the objective and
+                #  whether it uses the transforms or not.
+                targets = ["Desirability"]
+            case _:
+                targets = [t.name for t in self._objective.targets]
+
+        import torch
+
+        result = pd.DataFrame(index=candidates.index)
+        with torch.no_grad():
+            for k, target_name in enumerate(targets):
+                for stat in stats:
+                    try:
+                        if isinstance(stat, float):  # Calculate quantile statistic
+                            stat_name = f"Q_{stat}"
+                            vals = posterior.quantile(torch.tensor(stat))
+                        else:  # Calculate non-quantile statistic
+                            stat_name = stat
+                            vals = getattr(
+                                posterior,
+                                stat if stat not in ["std", "var"] else "variance",
+                            )
+                    except (AttributeError, NotImplementedError) as e:
+                        # We could arrive here because an invalid statistics string has
+                        # been requested or because a quantile point has been requested,
+                        # but the posterior type does not implement quantiles.
+                        raise TypeError(
+                            f"The utilized posterior of type "
+                            f"'{posterior.__class__.__name__}' does not support the "
+                            f"statistic associated with the requested input '{stat}'."
+                        ) from e
+
+                    if stat == "std":
+                        vals = torch.sqrt(vals)
+
+                    numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
+                    result[f"{target_name}_{stat_name}"] = numpyvals[:, k]
+
+        return result
 
     @override
     def fit(
