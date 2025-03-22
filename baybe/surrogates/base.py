@@ -46,9 +46,7 @@ if TYPE_CHECKING:
     from baybe.surrogates.composite import CompositeSurrogate
 
 PosteriorStatistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
-"""Type alias for requestable posterior statistics.
-
-A float will result in the corresponding quantile points."""
+"""Type alias for requestable statistics (a float yields the corresponding quantile)."""
 
 _ONNX_ENCODING = "latin-1"
 """Constant signifying the encoding for onnx byte strings in pretrained models.
