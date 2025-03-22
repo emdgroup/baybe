@@ -313,6 +313,60 @@ class Campaign(SerialMixin):
             self._cached_recommendation, data, self.parameters
         )
 
+    def update_measurements(
+        self,
+        data: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool = True,
+    ) -> None:
+        """Update previously added measurements.
+
+        This can be useful to correct mistakes or update target measurements. The
+        match to existing data entries is made based on the index. This will reset
+        the `FitNr` of the corresponding measurement and reset cached recommendations.
+
+        Args:
+            data: The measurement data to be updated (with filled values for targets).
+            numerical_measurements_must_be_within_tolerance: Flag indicating if
+                numerical parameters need to be within their tolerances.
+
+        Raises:
+            ValueError: If data contains duplicated indices.
+            ValueError: If data contains indices not present in existing measurements.
+        """
+        # Validate target and parameter input values
+        validate_target_input(data, self.targets)
+        validate_parameter_input(
+            data, self.parameters, numerical_measurements_must_be_within_tolerance
+        )
+        data.__class__ = _ValidatedDataFrame
+
+        # Block duplicate input indices
+        if len(set(data.index)) != len(data.index):
+            raise ValueError(
+                "The input dataframe containing the measurement updates has duplicated "
+                "indices. Please ensure that all updates for a given measurement are "
+                "made in a single combined entry."
+            )
+
+        # Allow only existing indices
+        if nonmatching_idxs := set(data.index).difference(self._measurements_exp.index):
+            raise ValueError(
+                f"Updating measurements requires indices matching the "
+                f"existing measurements. The following indices were in the input, but "
+                f"are not found in the existing entries: {nonmatching_idxs}"
+            )
+
+        # Perform the update
+        cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
+        matching_idxs = [
+            idx for idx in data.index if idx in self._measurements_exp.index
+        ]
+        self._measurements_exp.loc[matching_idxs, cols] = data.loc[matching_idxs, cols]
+
+        # Reset fit number and cached recommendations
+        self._measurements_exp.loc[matching_idxs, "FitNr"] = np.nan
+        self._cached_recommendation = pd.DataFrame()
+
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
         constraints: Collection[DiscreteConstraint] | pd.DataFrame,
