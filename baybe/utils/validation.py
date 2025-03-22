@@ -83,7 +83,8 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
         targets: The allowed targets.
 
     Raises:
-        ValueError: If the input dataframe is empty.
+        ValueError: If data is empty.
+        ValueError: If data misses columns for a target.
         ValueError: If any target data contain NaN.
         TypeError: If any numerical target data contain non-numeric values.
         ValueError: If any binary target data contain values not part of the targets'
@@ -93,6 +94,12 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
 
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
+
+    if missing := {t.name for t in targets}.difference(data.columns):
+        raise ValueError(
+            f"The input dataframe is missing columns for the following targets: "
+            f"{missing}"
+        )
 
     for t in targets:
         if data[t.name].isna().any():
@@ -130,12 +137,19 @@ def validate_parameter_input(
             parameter-specific tolerance.
 
     Raises:
-        ValueError: If the input dataframe is empty.
+        ValueError: If data is empty.
+        ValueError: If data misses columns for a parameter.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
+
+    if missing := {p.name for p in parameters}.difference(data.columns):
+        raise ValueError(
+            f"The input dataframe is missing columns for the following parameters: "
+            f"{missing}"
+        )
 
     for p in parameters:
         if data[p.name].isna().any():
