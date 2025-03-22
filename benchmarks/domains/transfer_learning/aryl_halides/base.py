@@ -61,7 +61,7 @@ def make_searchspace(
     use_task_parameter = target_tasks is not None and source_tasks is not None
     if use_task_parameter:
         assert target_tasks is not None and source_tasks is not None  # mypy
-        all_tasks = [s for s in source_tasks] + [t for t in target_tasks]
+        all_tasks = [*source_tasks, *target_tasks]
         params.append(
             TaskParameter(
                 name="aryl_halide",
