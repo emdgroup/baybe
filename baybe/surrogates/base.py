@@ -32,7 +32,7 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import block_singletons, to_tensor
 from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
@@ -444,6 +444,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
+
+        # Block partial measurements
+        block_singletons(measurements, objective.targets)
 
         # Remember the training context
         self._searchspace = searchspace

@@ -91,6 +91,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
             allowed values.
     """
     from baybe.targets import BinaryTarget, NumericalTarget
+    from baybe.utils.dataframe import MeasurementStatus
 
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
@@ -104,17 +105,24 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     for t in targets:
         if data[t.name].isna().any():
             raise ValueError(
-                f"The target '{t.name}' has missing values in the provided dataframe."
+                f"The target '{t.name}' has missing values in the provided dataframe. "
+                f"Pending or failed measurements cannot be NaN and instead need to be "
+                f"indicated via the 'MeasurementStatus' enum."
             )
 
         if isinstance(t, NumericalTarget):
-            if data[t.name].dtype.kind not in "iufb":
-                raise TypeError(
-                    f"The numerical target '{t.name}' has non-numeric entries in the "
-                    f"provided dataframe."
-                )
+            for val in data[t.name]:
+                if not (
+                    isinstance(val, (int, float, bool))
+                    or isinstance(val, MeasurementStatus)
+                ):
+                    raise TypeError(
+                        f"The numerical target '{t.name}' has unsupported entries. "
+                        f"Only numerical values or singletons from the "
+                        f"'MeasurementStatus' enum are allowed."
+                    )
         elif isinstance(t, BinaryTarget):
-            allowed = {t.failure_value, t.success_value}
+            allowed = {t.failure_value, t.success_value, *MeasurementStatus}
             if invalid := set(data[t.name].unique()) - allowed:
                 raise ValueError(
                     f"The binary target '{t.name}' has invalid entries {invalid} "

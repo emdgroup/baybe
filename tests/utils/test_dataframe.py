@@ -9,9 +9,13 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import (
+    MeasurementStatus,
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
+    block_singletons,
+    drop_singletons,
     fuzzy_row_match,
 )
 
@@ -170,3 +174,29 @@ def test_invalid_fuzzy_row_match(searchspace, invalid):
     match = f"corresponding column in the {invalid} dataframe."
     with pytest.raises(ValueError, match=match):
         fuzzy_row_match(left_df, right_df, searchspace.parameters)
+
+
+def test_measurement_singletons():
+    """Correct treatment of rows with pending or failed measurements."""
+    df = pd.DataFrame(
+        {
+            "A": [MeasurementStatus.PENDING, 2, 3, 4, 5],
+            "B": ["a", "b", "b", "a", MeasurementStatus.FAILED],
+            "C": [55, 44, 33, 22, 11],
+        },
+        index=[123, 2, 3, 4, 5],
+    )
+    targets = [
+        NumericalTarget(name="A", mode="MAX"),
+        BinaryTarget(name="B", success_value="a", failure_value="b"),
+    ]
+
+    # Test singleton block
+    with pytest.raises(
+        ValueError, match=r"Bad input in the rows with these indices: \[123, 5\]"
+    ):
+        block_singletons(df, targets)
+
+    # Test singleton removal
+    df_new = drop_singletons(df, targets)
+    assert_frame_equal(df.iloc[1:-1, :], df_new, check_dtype=False)

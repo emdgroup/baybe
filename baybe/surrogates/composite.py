@@ -18,6 +18,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
+from baybe.utils.dataframe import drop_singletons
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
@@ -97,8 +98,11 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         measurements: pd.DataFrame,
     ) -> None:
         for target in objective.targets:
+            # Drop impartial measurements for the respective target
+            measurements_filtered = drop_singletons(measurements, [target])
+
             self.surrogates[target.name].fit(
-                searchspace, target.to_objective(), measurements
+                searchspace, target.to_objective(), measurements_filtered
             )
         self._target_names = tuple(t.name for t in objective.targets)
 

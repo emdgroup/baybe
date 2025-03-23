@@ -24,7 +24,7 @@ from tenacity import (
 from torch._C import _LinAlgError
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.acquisition import qLogExpectedImprovement
+from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -42,6 +42,7 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.kernels import MaternKernel
+from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import (
@@ -698,9 +699,12 @@ def fixture_default_streaming_sequential_meta_recommender():
 
 
 @pytest.fixture(name="acqf")
-def fixture_default_acquisition_function():
+def fixture_default_acquisition_function(objective):
     """The default acquisition function to be used if not specified differently."""
-    return qLogExpectedImprovement()
+    if isinstance(objective, ParetoObjective):
+        return qLogNEHVI()
+    else:
+        return qLogEI()
 
 
 @pytest.fixture(name="lengthscale_prior")

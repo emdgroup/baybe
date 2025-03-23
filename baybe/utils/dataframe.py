@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import warnings
 from collections.abc import Callable, Iterable, Sequence
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
@@ -24,6 +25,13 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
+
+
+class MeasurementStatus(Enum):
+    """Singletons for different measurement stati."""
+
+    FAILED = "FAILED"
+    PENDING = "PENDING"
 
 
 @overload
@@ -805,3 +813,50 @@ def arrays_to_dataframes(
 
 class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
+
+
+def drop_singletons(data: pd.DataFrame, targets: Iterable[Target]) -> pd.DataFrame:
+    """Drop entries with unusable targets identified by the MeasurementStatus enum.
+
+    Args:
+        data: Measurements in experimental representation.
+        targets: The targets to check.
+
+    Returns:
+        A copy of the original DataFrame with rows removed if they contain
+        a MeasurementStatus in any target column.
+    """
+    target_cols = [t.name for t in targets]
+    mask = data[target_cols].map(lambda x: isinstance(x, MeasurementStatus)).any(axis=1)
+    result = data.loc[~mask].copy()
+
+    # Attempt to recast columns to a numeric dtype if they are 'object'
+    for col in target_cols:
+        if result[col].dtype == "object":
+            try:
+                result[col] = pd.to_numeric(result[col], errors="raise")
+            except ValueError:
+                pass
+
+    return result
+
+
+def block_singletons(data: pd.DataFrame, targets: Iterable[Target]) -> None:
+    """Raise error if any target inputs contain MeasurementStatus.
+
+    Args:
+        data: Measurements in experimental representation.
+        targets: The targets to check.
+
+    Raises:
+        ValueError: If any row contains a MeasurementStatus in the target columns.
+    """
+    target_cols = [t.name for t in targets]
+    mask = data[target_cols].map(lambda x: isinstance(x, MeasurementStatus)).any(axis=1)
+
+    if mask.any():
+        raise ValueError(
+            f"Incomplete measurements identified by 'MeasurementStatus' were found in "
+            f"the input, but are not supported. Bad input in the rows with these "
+            f"indices: {data.index[mask].tolist()}"
+        )
