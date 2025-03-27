@@ -20,9 +20,9 @@ from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
     make_gp_from_preset,
 )
-from baybe.surrogates.gaussian_process.presets.default import (
-    DefaultKernelFactory,
-    _default_noise_factory,
+from baybe.surrogates.gaussian_process.presets.edbo import (
+    EDBOKernelFactory,
+    _edbo_noise_factory,
 )
 from baybe.utils.plotting import to_string
 
@@ -98,7 +98,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
-        factory=DefaultKernelFactory,
+        factory=EDBOKernelFactory,
         converter=to_kernel_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
@@ -187,7 +187,7 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
-        noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
+        noise_prior = _edbo_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
