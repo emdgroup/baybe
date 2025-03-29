@@ -52,7 +52,7 @@ def to_tensor(
         device: The device to move the tensor(s) to.
 
     Returns:
-        Either a single tensor or a tuple of tensors, depending on input.
+        The provided array(s)/dataframe(s) represented as tensor(s).
     """
     def _convert_single(data: Any) -> torch.Tensor:
         if isinstance(data, torch.Tensor):
@@ -738,6 +738,14 @@ def arrays_to_dataframes(
     [Callable[[_ArrayLike], _ArrayLike]], Callable[[pd.DataFrame], pd.DataFrame]
 ]:
     """Make a decorator for labeling the input/output columns of array-based callables.
+
+    Useful for creating parameter-to-target lookups from array-based logic.
+    The decorator transforms a callable designed to work with unlabelled arrays such
+    that it can operate with dataframes instead. The original callable is expected to
+    accept and return two-dimensional arrays. When decorated, the callable accepts and
+    returns dataframes whose columns are mapped to the corresponding arrays based on the
+    specified label sequences.
+
 
     Args:
         input_labels: The sequence of labels for the input columns.
