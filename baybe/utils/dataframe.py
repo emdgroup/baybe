@@ -54,6 +54,7 @@ def to_tensor(
     Returns:
         The provided array(s)/dataframe(s) represented as tensor(s).
     """
+
     def _convert_single(data: Any) -> torch.Tensor:
         if isinstance(data, torch.Tensor):
             # If it's already a tensor, just move it to the right device
@@ -71,7 +72,7 @@ def to_tensor(
             tensor = tensor.to(device)
         elif torch.cuda.is_available():
             # Default to CUDA if available and no device specified
-            tensor = tensor.to('cuda')
+            tensor = tensor.to("cuda")
 
         return tensor
 
@@ -86,25 +87,26 @@ def from_tensor(
     tensor: torch.Tensor | tuple[torch.Tensor, ...],
 ) -> np.ndarray | tuple[np.ndarray, ...]:
     """Convert PyTorch tensor(s) to NumPy array(s).
-    
+
     Args:
         tensor: The tensor or tuple of tensors to convert.
-        
+
     Returns:
         The converted NumPy array(s).
     """
+
     def _convert_single(t: torch.Tensor) -> np.ndarray:
         # First move to CPU if needed
         if t.is_cuda:
             t = t.cpu()
-        
+
         # Then detach if needed
         if t.requires_grad:
             t = t.detach()
-            
+
         # Finally convert to numpy
         return t.numpy()
-    
+
     # Handle single tensor or tuple of tensors
     if isinstance(tensor, tuple):
         return tuple(_convert_single(t) for t in tensor)
@@ -768,6 +770,7 @@ def arrays_to_dataframes(
             array_in = df[list(input_labels)].to_numpy()
             if use_torch:
                 import torch
+
                 with torch.no_grad():
                     result = fn(torch.from_numpy(array_in))
                     # Move to CPU before converting to numpy
