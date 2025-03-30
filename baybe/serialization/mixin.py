@@ -3,8 +3,6 @@
 import json
 from typing import TypeVar
 
-import torch
-
 from baybe.serialization.core import converter
 
 _T = TypeVar("_T")
@@ -31,10 +29,6 @@ class SerialMixin:
         Returns:
             The reconstructed object.
         """
-        # Handle device conversion for deserialization
-        if "device" in dictionary and isinstance(dictionary["device"], str):
-            dictionary["device"] = torch.device(dictionary["device"])
-
         return converter.structure(dictionary, cls)
 
     def to_json(self) -> str:
