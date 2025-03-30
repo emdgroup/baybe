@@ -5,6 +5,7 @@ import warnings
 from abc import ABC
 
 import pandas as pd
+import torch
 from attrs import define, field, fields
 from typing_extensions import override
 
@@ -17,6 +18,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, SurrogateProtocol
+from baybe.utils.device_mode import cpu_only_mode, device_mode
 
 
 @define
@@ -98,42 +100,56 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        if objective is None:
-            raise NotImplementedError(
-                f"Recommenders of type '{BayesianRecommender.__name__}' require "
-                f"that an objective is specified."
-            )
-
-        if (measurements is None) or (len(measurements) == 0):
-            raise NotImplementedError(
-                f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
-                f"empty training data."
-            )
-
-        if (
-            isinstance(self._surrogate_model, IndependentGaussianSurrogate)
-            and batch_size > 1
-        ):
-            raise InvalidSurrogateModelError(
-                f"The specified surrogate model of type "
-                f"'{self._surrogate_model.__class__.__name__}' "
-                f"cannot be used for batch recommendation."
-            )
-
-        if isinstance(self._surrogate_model, CustomONNXSurrogate):
-            CustomONNXSurrogate.validate_compatibility(searchspace)
-
-        self._setup_botorch_acqf(
-            searchspace, objective, measurements, pending_experiments
+        # Choose the appropriate context manager based on device
+        context_manager = (
+            cpu_only_mode
+            if hasattr(self, "device") and "cpu" in str(self.device)
+            else device_mode
         )
 
-        return super().recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
-        )
+        # Use the context manager
+        with context_manager():
+            if objective is None:
+                raise NotImplementedError(
+                    f"Recommenders of type '{BayesianRecommender.__name__}' require "
+                    f"that an objective is specified."
+                )
+
+            if (measurements is None) or (len(measurements) == 0):
+                raise NotImplementedError(
+                    f"Recommenders of type '{BayesianRecommender.__name__}' "
+                    f"do not support "
+                    f"empty training data."
+                )
+
+            if (
+                isinstance(self._surrogate_model, IndependentGaussianSurrogate)
+                and batch_size > 1
+            ):
+                raise InvalidSurrogateModelError(
+                    f"The specified surrogate model of type "
+                    f"'{self._surrogate_model.__class__.__name__}' "
+                    f"cannot be used for batch recommendation."
+                )
+
+            if isinstance(self._surrogate_model, CustomONNXSurrogate):
+                CustomONNXSurrogate.validate_compatibility(searchspace)
+
+            # Clear caches
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+            self._setup_botorch_acqf(
+                searchspace, objective, measurements, pending_experiments
+            )
+
+            return super().recommend(
+                batch_size=batch_size,
+                searchspace=searchspace,
+                objective=objective,
+                measurements=measurements,
+                pending_experiments=pending_experiments,
+            )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -25,7 +25,7 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.device_mode import single_device_mode
+from baybe.utils.device_mode import force_to_device, single_device_mode
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
@@ -152,24 +152,11 @@ class BotorchRecommender(BayesianRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_tensor = self._to_device(to_tensor(candidates_comp))
 
-        # ------------------- NEW LINES FOR GPU CONSISTENCY -------------------
-        # Ensure the acquisition function is on the correct device
-        if hasattr(self._botorch_acqf, "to"):
-            self._botorch_acqf = self._botorch_acqf.to(self.device)
-            # Properly clear GPyTorch's cached Tensors on device move
-            if (
-                hasattr(self._botorch_acqf, "model")
-                and hasattr(self._botorch_acqf.model, "prediction_strategy")
-                and hasattr(
-                    self._botorch_acqf.model.prediction_strategy, "_memoize_cache"
-                )
-            ):
-                self._botorch_acqf.model.prediction_strategy._memoize_cache = {}
-        # ---------------------------------------------------------------------
-
-        points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, candidates_tensor
-        )
+        # Use force_to_device to ensure all tensors are on the same device
+        with force_to_device(self._botorch_acqf, self.device):
+            points, _ = optimize_acqf_discrete(
+                self._botorch_acqf, batch_size, candidates_tensor
+            )
 
         # Ensure the output points are moved to CPU before converting to NumPy
         points = points.detach().cpu()
@@ -286,6 +273,27 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf_mixed
 
+        # Before optimizing, explicitly force everything to the correct device
+        if hasattr(self, "device") and self.device is not None:
+            torch.cuda.empty_cache()  # Clear CUDA cache
+
+            # Move model and acquisition function to CPU first if using CPU
+            # This helps avoid mixed device tensors
+            device_str = str(self.device)
+            if "cpu" in device_str:
+                # If using CPU, first move everything to CPU
+                if (
+                    hasattr(self._botorch_acqf, "model")
+                    and self._botorch_acqf.model is not None
+                ):
+                    self._botorch_acqf.model = self._botorch_acqf.model.to("cpu")
+                    if hasattr(self._botorch_acqf.model, "train_inputs"):
+                        self._botorch_acqf.model.train_inputs = tuple(
+                            x.to("cpu") for x in self._botorch_acqf.model.train_inputs
+                        )
+                # Also move the acquisition function
+                self._botorch_acqf = self._botorch_acqf.to("cpu")
+
         # Transform discrete candidates
         candidates_comp = searchspace.discrete.transform(candidates_exp)
 
@@ -309,19 +317,9 @@ class BotorchRecommender(BayesianRecommender):
             torch.from_numpy(searchspace.comp_rep_bounds.values)
         )
 
-        # ------------------- NEW LINES FOR GPU CONSISTENCY -------------------
-        # Move the acquisition function onto the device and reset internal caches
+        # Force the acquisition function to device before optimizing
         if hasattr(self._botorch_acqf, "to"):
             self._botorch_acqf = self._botorch_acqf.to(self.device)
-            if (
-                hasattr(self._botorch_acqf, "model")
-                and hasattr(self._botorch_acqf.model, "prediction_strategy")
-                and hasattr(
-                    self._botorch_acqf.model.prediction_strategy, "_memoize_cache"
-                )
-            ):
-                self._botorch_acqf.model.prediction_strategy._memoize_cache = {}
-        # ---------------------------------------------------------------------
 
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
@@ -420,20 +418,27 @@ class BotorchRecommender(BayesianRecommender):
                 searchspace, objective, measurements, pending_experiments
             )
 
-            # Move model components to device
+            # Move model components to device - ENSURE COMPLETE DEVICE CONSISTENCY
             if hasattr(self._surrogate_model, "to"):
+                # First force the model and all components to CPU
+                self._surrogate_model = self._surrogate_model.to("cpu")
+
+                # Then move everything to the target device
                 self._surrogate_model = self._surrogate_model.to(self.device)
 
-                # Move all model parameters to device
+                # Ensure all model parameters are on the correct device
                 for param in self._surrogate_model.parameters():
                     param.data = param.data.to(self.device)
 
-                # Move the kernel to device if it exists
+                # Move all covariance module components to device
                 if hasattr(self._surrogate_model, "covar_module"):
                     self._surrogate_model.covar_module = (
                         self._surrogate_model.covar_module.to(self.device)
                     )
+
+                    # Handle kernels
                     if hasattr(self._surrogate_model.covar_module, "kernels"):
+                        # Handle each kernel individually
                         self._surrogate_model.covar_module.kernels = tuple(
                             k.to(self.device)
                             for k in self._surrogate_model.covar_module.kernels
@@ -446,7 +451,22 @@ class BotorchRecommender(BayesianRecommender):
                             for param in k.parameters():
                                 param.data = param.data.to(self.device)
 
-                # Move likelihood
+                    # Handle linear operators which are causing the device mismatch
+                    if hasattr(self._surrogate_model.covar_module, "linear_ops"):
+                        linear_ops = []
+                        for op in self._surrogate_model.covar_module.linear_ops:
+                            try:
+                                # Move to CPU first
+                                op_cpu = op.to("cpu")
+                                # Then to target device
+                                op_device = op_cpu.to(self.device)
+                                linear_ops.append(op_device)
+                            except Exception:
+                                # If that fails, try to rebuild from scratch later
+                                linear_ops.append(op)
+                        self._surrogate_model.covar_module.linear_ops = linear_ops
+
+                # Move likelihood to device
                 if hasattr(self._surrogate_model, "likelihood"):
                     self._surrogate_model.likelihood = (
                         self._surrogate_model.likelihood.to(self.device)
@@ -455,7 +475,7 @@ class BotorchRecommender(BayesianRecommender):
                     for param in self._surrogate_model.likelihood.parameters():
                         param.data = param.data.to(self.device)
 
-                # Move training data
+                # Move training data to device
                 if hasattr(self._surrogate_model, "train_inputs"):
                     self._surrogate_model.train_inputs = tuple(
                         x.to(self.device) if torch.is_tensor(x) else x
@@ -467,15 +487,32 @@ class BotorchRecommender(BayesianRecommender):
                             self._surrogate_model.train_targets.to(self.device)
                         )
 
-            # Move acquisition function and its components to device
+            # Clear model caches
+            if (
+                hasattr(self._surrogate_model, "prediction_strategy")
+                and self._surrogate_model.prediction_strategy is not None
+            ):
+                # Clear cache attributes
+                if hasattr(self._surrogate_model.prediction_strategy, "_memoize_cache"):
+                    self._surrogate_model.prediction_strategy._memoize_cache = {}
+                if hasattr(self._surrogate_model.prediction_strategy, "_mean_cache"):
+                    self._surrogate_model.prediction_strategy._mean_cache = None
+                if hasattr(self._surrogate_model.prediction_strategy, "_covar_cache"):
+                    self._surrogate_model.prediction_strategy._covar_cache = None
+
+            # Move acquisition function to device with careful error handling
             if hasattr(self._botorch_acqf, "to"):
                 try:
+                    # First force to CPU
+                    self._botorch_acqf = self._botorch_acqf.to("cpu")
+                    # Then move to target device
                     self._botorch_acqf = self._botorch_acqf.to(self.device)
-                    # Move all parameters of the acquisition function
+
+                    # Ensure all parameters are on device
                     for param in self._botorch_acqf.parameters():
                         param.data = param.data.to(self.device)
 
-                    # Move X_pending to the correct device if it exists
+                    # Handle X_pending
                     if (
                         hasattr(self._botorch_acqf, "X_pending")
                         and self._botorch_acqf.X_pending is not None
@@ -483,6 +520,49 @@ class BotorchRecommender(BayesianRecommender):
                         self._botorch_acqf.X_pending = self._botorch_acqf.X_pending.to(
                             self.device
                         )
+
+                    # Force move model to device again
+                    if hasattr(self._botorch_acqf, "model"):
+                        # Force move to CPU first
+                        self._botorch_acqf.model = self._botorch_acqf.model.to("cpu")
+                        # Then to target device
+                        self._botorch_acqf.model = self._botorch_acqf.model.to(
+                            self.device
+                        )
+
+                        # Handle model's covar_module
+                        if hasattr(self._botorch_acqf.model, "covar_module"):
+                            self._botorch_acqf.model.covar_module = (
+                                self._botorch_acqf.model.covar_module.to(self.device)
+                            )
+
+                            # Handle linear operators that cause the device mismatch
+                            if hasattr(
+                                self._botorch_acqf.model.covar_module, "linear_ops"
+                            ):
+                                linear_ops = []
+                                for (
+                                    op
+                                ) in self._botorch_acqf.model.covar_module.linear_ops:
+                                    try:
+                                        # Move to CPU first
+                                        op_cpu = op.to("cpu")
+                                        # Then to target device
+                                        op_device = op_cpu.to(self.device)
+                                        linear_ops.append(op_device)
+                                    except Exception:
+                                        # If that fails, try to rebuild later
+                                        linear_ops.append(op)
+                                self._botorch_acqf.model.covar_module.linear_ops = (
+                                    linear_ops
+                                )
+
+                        # Force train inputs to device
+                        if hasattr(self._botorch_acqf.model, "train_inputs"):
+                            self._botorch_acqf.model.train_inputs = tuple(
+                                x.to(self.device) if torch.is_tensor(x) else x
+                                for x in self._botorch_acqf.model.train_inputs
+                            )
                 except (TypeError, AttributeError):
                     # Handle non-tensor attributes
                     for attr_name, value in self._botorch_acqf.__dict__.items():
@@ -494,28 +574,68 @@ class BotorchRecommender(BayesianRecommender):
                             value, (str, int, float, pd.DataFrame)
                         ):
                             try:
+                                # First to CPU
+                                temp_value = value.to("cpu")
+                                # Then to target device
                                 setattr(
-                                    self._botorch_acqf, attr_name, value.to(self.device)
+                                    self._botorch_acqf,
+                                    attr_name,
+                                    temp_value.to(self.device),
                                 )
                             except Exception:
                                 pass
-                        # Special handling for X_pending if it's in a nested attribute
-                        elif (
-                            attr_name == "model"
-                            and hasattr(value, "X_pending")
-                            and value.X_pending is not None
-                        ):
-                            value.X_pending = value.X_pending.to(self.device)
+                        # Special handling for model
+                        elif attr_name == "model" and value is not None:
+                            try:
+                                # Force to CPU
+                                model_cpu = value.to("cpu")
+                                # Then to device
+                                model_device = model_cpu.to(self.device)
+                                setattr(self._botorch_acqf, attr_name, model_device)
 
-            # Clear ALL caches
-            for obj in [self._surrogate_model, self._botorch_acqf]:
-                if hasattr(obj, "prediction_strategy"):
-                    if hasattr(obj.prediction_strategy, "_memoize_cache"):
-                        obj.prediction_strategy._memoize_cache = {}
-                    if hasattr(obj.prediction_strategy, "_mean_cache"):
-                        obj.prediction_strategy._mean_cache = None
-                    if hasattr(obj.prediction_strategy, "_covar_cache"):
-                        obj.prediction_strategy._covar_cache = None
+                                # Handle X_pending
+                                if (
+                                    hasattr(value, "X_pending")
+                                    and value.X_pending is not None
+                                ):
+                                    value.X_pending = value.X_pending.to(self.device)
+
+                                # Handle linear_ops
+                                if hasattr(value, "covar_module") and hasattr(
+                                    value.covar_module, "linear_ops"
+                                ):
+                                    linear_ops = []
+                                    for op in value.covar_module.linear_ops:
+                                        try:
+                                            op_cpu = op.to("cpu")
+                                            op_device = op_cpu.to(self.device)
+                                            linear_ops.append(op_device)
+                                        except Exception:
+                                            linear_ops.append(op)
+                                    value.covar_module.linear_ops = linear_ops
+                            except Exception:
+                                pass
+
+            # Force model to do a forward pass to rebuild caches on the correct device
+            if (
+                hasattr(self._botorch_acqf, "model")
+                and self._botorch_acqf.model is not None
+                and hasattr(self._botorch_acqf.model, "train_inputs")
+            ):
+                try:
+                    dummy_x = next(iter(self._botorch_acqf.model.train_inputs))
+                    if dummy_x is not None:
+                        with torch.no_grad():
+                            # This will rebuild prediction strategies and caches
+                            # on the correct device
+                            _ = self._botorch_acqf.model(dummy_x[:1])
+
+                        # Force to device again after forward pass
+                        self._botorch_acqf.model = self._botorch_acqf.model.to(
+                            self.device
+                        )
+                except (StopIteration, TypeError, IndexError):
+                    pass
 
             # Force garbage collection
             gc.collect()
