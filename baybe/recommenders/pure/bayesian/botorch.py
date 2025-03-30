@@ -122,18 +122,6 @@ class BotorchRecommender(BayesianRecommender):
                 f"Hybrid sampling percentage needs to be between 0 and 1 but is {value}"
             )
 
-    def _to_device(self, tensor: torch.Tensor) -> torch.Tensor:
-        """Move tensors to the specified device.
-
-        Args:
-            tensor: The tensor to move to the device.
-
-        Returns:
-            The tensor on the specified device.
-        """
-        # Use the to_device function directly
-        return to_device(tensor, self.device)
-
     @override
     def __str__(self) -> str:
         fields = [
@@ -200,7 +188,7 @@ class BotorchRecommender(BayesianRecommender):
 
         # determine the next set of points to be tested
         candidates_comp = subspace_discrete.transform(candidates_exp)
-        candidates_tensor = self._to_device(to_tensor(candidates_comp))
+        candidates_tensor = to_device(to_tensor(candidates_comp), self.device)
 
         points, _ = optimize_acqf_discrete(
             self._botorch_acqf, batch_size, candidates_tensor
@@ -394,8 +382,8 @@ class BotorchRecommender(BayesianRecommender):
             self._botorch_acqf = self._botorch_acqf.to(self.device)
 
         # Get bounds as a tensor and move to the recommender's device
-        bounds_tensor = self._to_device(
-            torch.from_numpy(subspace_continuous.comp_rep_bounds.values)
+        bounds_tensor = to_device(
+            torch.from_numpy(subspace_continuous.comp_rep_bounds.values), self.device
         )
 
         # Find any fixed parameters
@@ -581,8 +569,8 @@ class BotorchRecommender(BayesianRecommender):
         fixed_features_list = candidates_comp.to_dict("records")
 
         # Convert bounds to a tensor and move to selected device
-        bounds_tensor = self._to_device(
-            torch.from_numpy(searchspace.comp_rep_bounds.values)
+        bounds_tensor = to_device(
+            torch.from_numpy(searchspace.comp_rep_bounds.values), self.device
         )
 
         # Process equality constraints if they exist
