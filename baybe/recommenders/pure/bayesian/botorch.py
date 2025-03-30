@@ -25,7 +25,7 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.device_mode import force_to_device, single_device_mode
+from baybe.utils.device_mode import single_device_mode
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
@@ -110,6 +110,10 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The tensor on the specified device.
         """
+        # If we're using CPU, first clear CUDA cache to avoid memory leaks
+        if self.device == torch.device("cpu") and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         return tensor.to(self.device) if self.device is not None else tensor
 
     @override
@@ -148,15 +152,21 @@ class BotorchRecommender(BayesianRecommender):
 
         from botorch.optim import optimize_acqf_discrete
 
+        # Ensure acquisition function is on the correct device if possible
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+
+        # Clear CUDA cache before heavy computations
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         # determine the next set of points to be tested
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_tensor = self._to_device(to_tensor(candidates_comp))
 
-        # Use force_to_device to ensure all tensors are on the same device
-        with force_to_device(self._botorch_acqf, self.device):
-            points, _ = optimize_acqf_discrete(
-                self._botorch_acqf, batch_size, candidates_tensor
-            )
+        points, _ = optimize_acqf_discrete(
+            self._botorch_acqf, batch_size, candidates_tensor
+        )
 
         # Ensure the output points are moved to CPU before converting to NumPy
         points = points.detach().cpu()
@@ -207,29 +217,65 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf
 
+        # Move acquisition function to the device
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+
+        # Get bounds as a tensor and move to the recommender's device
+        bounds_tensor = self._to_device(
+            torch.from_numpy(subspace_continuous.comp_rep_bounds.values)
+        )
+
+        # Process equality constraints if they exist
+        equality_constraints = None
+        if subspace_continuous.constraints_lin_eq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in subspace_continuous.constraints_lin_eq:
+                # Get constraint in BoTorch format
+                idxs, coeffs, rhs = c.to_botorch(subspace_continuous.parameters)
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            equality_constraints = processed_constraints or None
+
+        # Process inequality constraints if they exist
+        inequality_constraints = None
+        if subspace_continuous.constraints_lin_ineq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in subspace_continuous.constraints_lin_ineq:
+                # Get constraint in BoTorch format
+                idxs, coeffs, rhs = c.to_botorch(subspace_continuous.parameters)
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            inequality_constraints = processed_constraints or None
+
+        # Perform optimization
         points, _ = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=self._to_device(
-                torch.from_numpy(subspace_continuous.comp_rep_bounds.values)
-            ),
+            bounds=bounds_tensor,
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
-            equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_eq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_ineq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
             sequential=self.sequential_continuous,
         )
 
-        # Return optimized points as dataframe
-        rec = pd.DataFrame(points, columns=subspace_continuous.parameter_names)
+        # Move output points to CPU before returning as DataFrame
+        rec = pd.DataFrame(
+            points.cpu().numpy(), columns=subspace_continuous.parameter_names
+        )
         return rec
 
     @override
@@ -317,7 +363,47 @@ class BotorchRecommender(BayesianRecommender):
             torch.from_numpy(searchspace.comp_rep_bounds.values)
         )
 
-        # Force the acquisition function to device before optimizing
+        # Process equality constraints if they exist
+        equality_constraints = None
+        if searchspace.continuous.constraints_lin_eq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in searchspace.continuous.constraints_lin_eq:
+                # Get constraint in BoTorch format with index offset
+                idxs, coeffs, rhs = c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=len(candidates_comp.columns),
+                )
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            equality_constraints = processed_constraints or None
+
+        # Process inequality constraints if they exist
+        inequality_constraints = None
+        if searchspace.continuous.constraints_lin_ineq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in searchspace.continuous.constraints_lin_ineq:
+                # Get constraint in BoTorch format with index offset
+                idxs, coeffs, rhs = c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=num_comp_columns,
+                )
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            inequality_constraints = processed_constraints or None
+
+        # Move acquisition function to the device
         if hasattr(self._botorch_acqf, "to"):
             self._botorch_acqf = self._botorch_acqf.to(self.device)
 
@@ -328,22 +414,8 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,
-            equality_constraints=[
-                c.to_botorch(
-                    searchspace.continuous.parameters,
-                    idx_offset=len(candidates_comp.columns),
-                )
-                for c in searchspace.continuous.constraints_lin_eq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
-            inequality_constraints=[
-                c.to_botorch(
-                    searchspace.continuous.parameters,
-                    idx_offset=num_comp_columns,
-                )
-                for c in searchspace.continuous.constraints_lin_ineq
-            ]
-            or None,  # TODO: https://github.com/pytorch/botorch/issues/2042
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
         )
 
         # Move points to CPU and detach before converting to numpy
@@ -403,241 +475,33 @@ class BotorchRecommender(BayesianRecommender):
     ) -> None:
         """Set up the BoTorch acquisition function."""
         with single_device_mode(state=True):  # Force everything to same device
-            # First ensure all input tensors are on the correct device
-            if hasattr(self, "device"):
-                # Move measurements and pending experiments to device if they're tensors
-                if measurements is not None and torch.is_tensor(measurements):
-                    measurements = measurements.to(self.device)
-                if pending_experiments is not None and torch.is_tensor(
-                    pending_experiments
-                ):
-                    pending_experiments = pending_experiments.to(self.device)
+            # Important: Clear CUDA cache before setup to avoid memory conflicts
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             # Call parent setup
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
 
-            # Move model components to device - ENSURE COMPLETE DEVICE CONSISTENCY
-            if hasattr(self._surrogate_model, "to"):
-                # First force the model and all components to CPU
-                self._surrogate_model = self._surrogate_model.to("cpu")
+            # Move everything to the device and handle potential issues
+            if hasattr(self, "device") and self.device is not None:
+                # Force the acquisition function to the correct device if possible
+                if hasattr(self, "_botorch_acqf") and self._botorch_acqf is not None:
+                    if hasattr(self._botorch_acqf, "to"):
+                        self._botorch_acqf = self._botorch_acqf.to(self.device)
 
-                # Then move everything to the target device
-                self._surrogate_model = self._surrogate_model.to(self.device)
+                # Don't try to move the surrogate model directly since it might
+                # not support it. Instead, we'll focus on the botorch_model if
+                #  it exists
+                if (
+                    hasattr(self, "_botorch_model")
+                    and self._botorch_model is not None
+                    and hasattr(self._botorch_model, "to")
+                ):
+                    self._botorch_model = self._botorch_model.to(self.device)
 
-                # Ensure all model parameters are on the correct device
-                for param in self._surrogate_model.parameters():
-                    param.data = param.data.to(self.device)
-
-                # Move all covariance module components to device
-                if hasattr(self._surrogate_model, "covar_module"):
-                    self._surrogate_model.covar_module = (
-                        self._surrogate_model.covar_module.to(self.device)
-                    )
-
-                    # Handle kernels
-                    if hasattr(self._surrogate_model.covar_module, "kernels"):
-                        # Handle each kernel individually
-                        self._surrogate_model.covar_module.kernels = tuple(
-                            k.to(self.device)
-                            for k in self._surrogate_model.covar_module.kernels
-                        )
-                        # Move base kernels and their components
-                        for k in self._surrogate_model.covar_module.kernels:
-                            if hasattr(k, "base_kernel"):
-                                k.base_kernel = k.base_kernel.to(self.device)
-                            # Move all parameters of the kernel
-                            for param in k.parameters():
-                                param.data = param.data.to(self.device)
-
-                    # Handle linear operators which are causing the device mismatch
-                    if hasattr(self._surrogate_model.covar_module, "linear_ops"):
-                        linear_ops = []
-                        for op in self._surrogate_model.covar_module.linear_ops:
-                            try:
-                                # Move to CPU first
-                                op_cpu = op.to("cpu")
-                                # Then to target device
-                                op_device = op_cpu.to(self.device)
-                                linear_ops.append(op_device)
-                            except Exception:
-                                # If that fails, try to rebuild from scratch later
-                                linear_ops.append(op)
-                        self._surrogate_model.covar_module.linear_ops = linear_ops
-
-                # Move likelihood to device
-                if hasattr(self._surrogate_model, "likelihood"):
-                    self._surrogate_model.likelihood = (
-                        self._surrogate_model.likelihood.to(self.device)
-                    )
-                    # Move all likelihood parameters
-                    for param in self._surrogate_model.likelihood.parameters():
-                        param.data = param.data.to(self.device)
-
-                # Move training data to device
-                if hasattr(self._surrogate_model, "train_inputs"):
-                    self._surrogate_model.train_inputs = tuple(
-                        x.to(self.device) if torch.is_tensor(x) else x
-                        for x in self._surrogate_model.train_inputs
-                    )
-                if hasattr(self._surrogate_model, "train_targets"):
-                    if torch.is_tensor(self._surrogate_model.train_targets):
-                        self._surrogate_model.train_targets = (
-                            self._surrogate_model.train_targets.to(self.device)
-                        )
-
-            # Clear model caches
-            if (
-                hasattr(self._surrogate_model, "prediction_strategy")
-                and self._surrogate_model.prediction_strategy is not None
-            ):
-                # Clear cache attributes
-                if hasattr(self._surrogate_model.prediction_strategy, "_memoize_cache"):
-                    self._surrogate_model.prediction_strategy._memoize_cache = {}
-                if hasattr(self._surrogate_model.prediction_strategy, "_mean_cache"):
-                    self._surrogate_model.prediction_strategy._mean_cache = None
-                if hasattr(self._surrogate_model.prediction_strategy, "_covar_cache"):
-                    self._surrogate_model.prediction_strategy._covar_cache = None
-
-            # Move acquisition function to device with careful error handling
-            if hasattr(self._botorch_acqf, "to"):
-                try:
-                    # First force to CPU
-                    self._botorch_acqf = self._botorch_acqf.to("cpu")
-                    # Then move to target device
-                    self._botorch_acqf = self._botorch_acqf.to(self.device)
-
-                    # Ensure all parameters are on device
-                    for param in self._botorch_acqf.parameters():
-                        param.data = param.data.to(self.device)
-
-                    # Handle X_pending
-                    if (
-                        hasattr(self._botorch_acqf, "X_pending")
-                        and self._botorch_acqf.X_pending is not None
-                    ):
-                        self._botorch_acqf.X_pending = self._botorch_acqf.X_pending.to(
-                            self.device
-                        )
-
-                    # Force move model to device again
-                    if hasattr(self._botorch_acqf, "model"):
-                        # Force move to CPU first
-                        self._botorch_acqf.model = self._botorch_acqf.model.to("cpu")
-                        # Then to target device
-                        self._botorch_acqf.model = self._botorch_acqf.model.to(
-                            self.device
-                        )
-
-                        # Handle model's covar_module
-                        if hasattr(self._botorch_acqf.model, "covar_module"):
-                            self._botorch_acqf.model.covar_module = (
-                                self._botorch_acqf.model.covar_module.to(self.device)
-                            )
-
-                            # Handle linear operators that cause the device mismatch
-                            if hasattr(
-                                self._botorch_acqf.model.covar_module, "linear_ops"
-                            ):
-                                linear_ops = []
-                                for (
-                                    op
-                                ) in self._botorch_acqf.model.covar_module.linear_ops:
-                                    try:
-                                        # Move to CPU first
-                                        op_cpu = op.to("cpu")
-                                        # Then to target device
-                                        op_device = op_cpu.to(self.device)
-                                        linear_ops.append(op_device)
-                                    except Exception:
-                                        # If that fails, try to rebuild later
-                                        linear_ops.append(op)
-                                self._botorch_acqf.model.covar_module.linear_ops = (
-                                    linear_ops
-                                )
-
-                        # Force train inputs to device
-                        if hasattr(self._botorch_acqf.model, "train_inputs"):
-                            self._botorch_acqf.model.train_inputs = tuple(
-                                x.to(self.device) if torch.is_tensor(x) else x
-                                for x in self._botorch_acqf.model.train_inputs
-                            )
-                except (TypeError, AttributeError):
-                    # Handle non-tensor attributes
-                    for attr_name, value in self._botorch_acqf.__dict__.items():
-                        if isinstance(value, torch.Tensor):
-                            setattr(
-                                self._botorch_acqf, attr_name, value.to(self.device)
-                            )
-                        elif hasattr(value, "to") and not isinstance(
-                            value, (str, int, float, pd.DataFrame)
-                        ):
-                            try:
-                                # First to CPU
-                                temp_value = value.to("cpu")
-                                # Then to target device
-                                setattr(
-                                    self._botorch_acqf,
-                                    attr_name,
-                                    temp_value.to(self.device),
-                                )
-                            except Exception:
-                                pass
-                        # Special handling for model
-                        elif attr_name == "model" and value is not None:
-                            try:
-                                # Force to CPU
-                                model_cpu = value.to("cpu")
-                                # Then to device
-                                model_device = model_cpu.to(self.device)
-                                setattr(self._botorch_acqf, attr_name, model_device)
-
-                                # Handle X_pending
-                                if (
-                                    hasattr(value, "X_pending")
-                                    and value.X_pending is not None
-                                ):
-                                    value.X_pending = value.X_pending.to(self.device)
-
-                                # Handle linear_ops
-                                if hasattr(value, "covar_module") and hasattr(
-                                    value.covar_module, "linear_ops"
-                                ):
-                                    linear_ops = []
-                                    for op in value.covar_module.linear_ops:
-                                        try:
-                                            op_cpu = op.to("cpu")
-                                            op_device = op_cpu.to(self.device)
-                                            linear_ops.append(op_device)
-                                        except Exception:
-                                            linear_ops.append(op)
-                                    value.covar_module.linear_ops = linear_ops
-                            except Exception:
-                                pass
-
-            # Force model to do a forward pass to rebuild caches on the correct device
-            if (
-                hasattr(self._botorch_acqf, "model")
-                and self._botorch_acqf.model is not None
-                and hasattr(self._botorch_acqf.model, "train_inputs")
-            ):
-                try:
-                    dummy_x = next(iter(self._botorch_acqf.model.train_inputs))
-                    if dummy_x is not None:
-                        with torch.no_grad():
-                            # This will rebuild prediction strategies and caches
-                            # on the correct device
-                            _ = self._botorch_acqf.model(dummy_x[:1])
-
-                        # Force to device again after forward pass
-                        self._botorch_acqf.model = self._botorch_acqf.model.to(
-                            self.device
-                        )
-                except (StopIteration, TypeError, IndexError):
-                    pass
-
-            # Force garbage collection
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+                # Force garbage collection
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
