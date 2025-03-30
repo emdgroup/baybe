@@ -35,7 +35,12 @@ from baybe.searchspace import (
     SubspaceDiscrete,
 )
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.device_mode import single_device_mode
+from baybe.utils.device_utils import (
+    clear_gpu_memory,
+    device_context,
+    get_default_device,
+    to_device,
+)
 from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
@@ -94,9 +99,7 @@ class BotorchRecommender(BayesianRecommender):
 
     device: torch.device | None = field(
         default=None,
-        converter=lambda x: torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if x is None
-        else x,
+        converter=lambda x: get_default_device() if x is None else x,
     )
     """The device to use for computations. If None, uses CUDA if available, else CPU."""
 
@@ -132,9 +135,9 @@ class BotorchRecommender(BayesianRecommender):
         """
         # If we're using CPU, first clear CUDA cache to avoid memory leaks
         if self.device == torch.device("cpu") and torch.cuda.is_available():
-            torch.cuda.empty_cache()
+            clear_gpu_memory()
 
-        return tensor.to(self.device) if self.device is not None else tensor
+        return to_device(tensor, self.device)
 
     @override
     def __str__(self) -> str:
@@ -750,11 +753,7 @@ class BotorchRecommender(BayesianRecommender):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Set up the BoTorch acquisition function."""
-        with single_device_mode(state=True):  # Force everything to same device
-            # Important: Clear CUDA cache before setup to avoid memory conflicts
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-
+        with device_context(self.device):  # Force everything to same device
             # Call parent setup with original device setting
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
@@ -767,12 +766,11 @@ class BotorchRecommender(BayesianRecommender):
                 and self._botorch_acqf is not None
                 and hasattr(self._botorch_acqf, "model")
                 and self._botorch_acqf.model is not None
-                and hasattr(self, "device")
             ):
                 model = self._botorch_acqf.model
 
                 # Move model to the intended device
-                model = model.to(self.device)
+                model = to_device(model, self.device)
 
                 # Detach the prediction strategy so we can rebuild it
                 if hasattr(model, "prediction_strategy"):
@@ -808,7 +806,7 @@ class BotorchRecommender(BayesianRecommender):
                 self._botorch_acqf.model = model
 
                 # Move the entire acquisition function to the device
-                self._botorch_acqf = self._botorch_acqf.to(self.device)
+                self._botorch_acqf = to_device(self._botorch_acqf, self.device)
 
             # Force garbage collection
             gc.collect()

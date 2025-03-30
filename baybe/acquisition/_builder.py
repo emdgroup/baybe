@@ -1,6 +1,5 @@
 """Functionality for building BoTorch acquisition functions."""
 
-import gc
 import warnings
 from collections.abc import Callable, Iterable
 from functools import cached_property
@@ -18,7 +17,6 @@ from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjectiv
 from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.models.model import Model
-from gpytorch.settings import debug, fast_computations
 from gpytorch.utils.warnings import GPInputWarning
 from torch import Tensor
 
@@ -38,7 +36,12 @@ from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.device_mode import single_device_mode
+from baybe.utils.device_utils import (
+    clear_gpu_memory,
+    device_mode,
+    get_default_device,
+    to_device,
+)
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -97,11 +100,11 @@ class BotorchAcquisitionFunctionBuilder:
 
     def __attrs_post_init__(self) -> None:
         """Initialize the building process."""
-        # Use provided device or get from surrogate
+        # Use provided device or get default
         if self.device is None:
             self.device = getattr(self.surrogate, "device", None)
             if self.device is None and torch.cuda.is_available():
-                self.device = torch.device("cuda:0")
+                self.device = get_default_device()
 
         # Retrieve botorch acquisition function class and match attributes
         self._botorch_acqf_cls = _get_botorch_acqf_class(type(self.acqf))
@@ -112,27 +115,22 @@ class BotorchAcquisitionFunctionBuilder:
             ignore=self.acqf._non_botorch_attrs,
         )
 
-        # Pre-populate the acqf arguments with the content of the BayBE acqf
         # Use device_mode to ensure consistent device usage during to_botorch
-        with warnings.catch_warnings(), single_device_mode(True), debug(
-            True
-        ), fast_computations(solves=False):
+        with warnings.catch_warnings(), device_mode(True):
             warnings.filterwarnings("ignore", category=GPInputWarning)
             bo_surrogate = self.surrogate.to_botorch()
 
-            # Move surrogate to device if needed
-            if self.device is not None:
-                bo_surrogate = bo_surrogate.to(self.device)
+            # Move surrogate to device using to_device utility
+            bo_surrogate = to_device(bo_surrogate, self.device)
 
         self._args = BotorchAcquisitionArgs(model=bo_surrogate, **args)
 
     @cached_property
     def _botorch_surrogate(self) -> Model:
         """The botorch surrogate object."""
-        with single_device_mode(True):
+        with device_mode(True):
             model = self.surrogate.to_botorch()
-            if self.device is not None:
-                model = model.to(self.device)
+            model = to_device(model, self.device)
             return model
 
     @property
@@ -158,8 +156,8 @@ class BotorchAcquisitionFunctionBuilder:
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
-        # Use single_device_mode to ensure consistent device usage
-        with single_device_mode(True):
+        # Use device_mode to ensure consistent device usage
+        with device_mode(True):
             # Set context-specific parameters
             self._set_best_f()
             self._invert_optimization_direction()
@@ -171,19 +169,16 @@ class BotorchAcquisitionFunctionBuilder:
             botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
             self.set_default_sample_shape(botorch_acqf)
 
-            # Ensure the acquisition function is on the correct device
-            if self.device is not None:
-                botorch_acqf = botorch_acqf.to(self.device)
+            # Use to_device for moving to the right device
+            botorch_acqf = to_device(botorch_acqf, self.device)
 
-                # Move all tensor attributes to the correct device
-                for name, param in botorch_acqf.__dict__.items():
-                    if isinstance(param, torch.Tensor):
-                        botorch_acqf.__dict__[name] = param.to(self.device)
+            # Move all tensor attributes to the correct device
+            for name, param in botorch_acqf.__dict__.items():
+                if isinstance(param, torch.Tensor):
+                    botorch_acqf.__dict__[name] = to_device(param, self.device)
 
-            # Force garbage collection
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            # Clean up memory
+            clear_gpu_memory()
 
             return botorch_acqf
 

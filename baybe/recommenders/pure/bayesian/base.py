@@ -28,7 +28,7 @@ from baybe.surrogates.base import (
     SurrogateProtocol,
 )
 from baybe.utils.dataframe import _ValidatedDataFrame
-from baybe.utils.device_mode import single_device_mode
+from baybe.utils.device_utils import clear_gpu_memory, device_context, device_mode
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 
@@ -119,9 +119,9 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
-        """Create the acquisition function for the current training data."""  # noqa: E501
-        # Use single_device_mode to ensure consistent device handling during setup
-        with single_device_mode(True):
+        """Create the acquisition function for the current training data."""
+        # Use device_mode to ensure consistent device handling during setup
+        with device_mode(True):
             self._objective = objective
             acqf = self._get_acquisition_function(objective)
 
@@ -134,8 +134,7 @@ class BayesianRecommender(PureRecommender, ABC):
             surrogate = self.get_surrogate(searchspace, objective, measurements)
 
             # Clear CUDA cache before creating acquisition function
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            clear_gpu_memory()
 
             self._botorch_acqf = acqf.to_botorch(
                 surrogate,
@@ -154,8 +153,11 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # Use device_mode to ensure consistent device usage throughout
-        with single_device_mode(True):
+        # Get the device if this recommender has one
+        device = getattr(self, "device", None)
+
+        # Use device_context for consistent device management
+        with device_context(device):
             if objective is None:
                 raise NotImplementedError(
                     f"Recommenders of type '{BayesianRecommender.__name__}' require "

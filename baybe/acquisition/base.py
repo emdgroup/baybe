@@ -8,7 +8,6 @@ from abc import ABC
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
-import torch
 from attrs import define
 
 from baybe.exceptions import (
@@ -26,7 +25,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
-from baybe.utils.device_mode import single_device_mode
+from baybe.utils.device_utils import clear_gpu_memory, device_context
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -83,11 +82,11 @@ class AcquisitionFunction(ABC, SerialMixin):
                 f"does not support pending experiments."
             )
 
-        # Wrap the builder in single_device_mode to ensure consistent device usage
-        with single_device_mode(True):
-            # Get the device from the surrogate if available
-            device = getattr(surrogate, "device", None)
+        # Get the device from the surrogate if available
+        device = getattr(surrogate, "device", None)
 
+        # Use device_context for consistent device management
+        with device_context(device):
             # Create the acquisition function builder and build the function
             builder = BotorchAcquisitionFunctionBuilder(
                 self,
@@ -102,14 +101,8 @@ class AcquisitionFunction(ABC, SerialMixin):
             # Build the acquisition function
             acqf = builder.build()
 
-            # Force garbage collection before returning
-            gc.collect()
-            if (
-                device is not None
-                and str(device).startswith("cuda")
-                and torch.cuda.is_available()
-            ):
-                torch.cuda.empty_cache()
+            # Clear GPU memory explicitly, though device_context will do this too
+            clear_gpu_memory()
 
             return acqf
 
