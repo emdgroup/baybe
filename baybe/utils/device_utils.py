@@ -1,6 +1,7 @@
 """Utilities for device management across BayBE."""
 
 import gc
+import os
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
@@ -33,12 +34,23 @@ class _SingleDeviceMode:
 
 
 def get_default_device() -> torch.device:
-    """Get the default device (CPU).
+    """Get the default device (CUDA if explicitly enabled, otherwise CPU).
+
+    Respects the BAYBE_USE_GPU environment variable:
+    - If set to "true", attempts to use CUDA when available
+    - If set to "false" or unset, uses CPU
 
     Returns:
         torch.device: The default device for computations.
     """
-    return torch.device("cpu")
+    # Check if GPU usage is explicitly enabled via environment variable
+    use_gpu_env = os.environ.get("BAYBE_USE_GPU", "").lower()
+
+    # Only try to use CUDA if explicitly requested and available
+    if use_gpu_env == "true" and torch.cuda.is_available():
+        return torch.device("cuda")
+    else:
+        return torch.device("cpu")
 
 
 def to_device(obj: Any, device: torch.device | str | None = None) -> Any:
