@@ -246,7 +246,7 @@ class BotorchRecommender(BayesianRecommender):
                 function is used with a batch size > 1.
 
         Returns:
-            A dataframe containing the recommendations as individual rows.
+            A pandas DataFrame containing the recommendations as individual rows.
         """
         assert self._objective is not None
         if (
@@ -259,6 +259,10 @@ class BotorchRecommender(BayesianRecommender):
             )
 
         points, _ = self._recommend_continuous_torch(subspace_continuous, batch_size)
+
+        # Before returning DataFrame, ensure points are on CPU
+        if torch.cuda.is_available() and hasattr(points, "is_cuda") and points.is_cuda:
+            points = points.detach().cpu()
 
         return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
 
@@ -336,6 +340,11 @@ class BotorchRecommender(BayesianRecommender):
         )
 
         points, acqf_value = self._optimize_continuous_subspaces(subspaces, batch_size)
+
+        # Ensure points are on CPU for numpy/pandas operations
+        if torch.cuda.is_available() and points.is_cuda:
+            points = points.detach().cpu()
+            acqf_value = acqf_value.detach().cpu()
 
         # Check if any minimum cardinality constraints are violated
         if not is_cardinality_fulfilled(
@@ -448,6 +457,15 @@ class BotorchRecommender(BayesianRecommender):
             sequential=self.sequential_continuous,
         )
 
+        # Move points to CPU if they're on CUDA and we need CPU tensors for testing
+        if torch.cuda.is_available() and points.is_cuda:
+            # Make a copy to avoid modifying the original
+            points_cpu = points.detach().cpu()
+            acqf_values_cpu = acqf_values.detach().cpu()
+            # For testing, return CPU tensors
+            if self.device == torch.device("cpu"):
+                return points_cpu, acqf_values_cpu
+
         return points, acqf_values
 
     @override
@@ -502,16 +520,47 @@ class BotorchRecommender(BayesianRecommender):
             # This helps avoid mixed device tensors
             device_str = str(self.device)
             if "cpu" in device_str:
+                # Force a complete reset of all CUDA tensors
+                torch.cuda.empty_cache()
+
                 # If using CPU, first move everything to CPU
                 if (
                     hasattr(self._botorch_acqf, "model")
                     and self._botorch_acqf.model is not None
                 ):
+                    # Move model to CPU first
                     self._botorch_acqf.model = self._botorch_acqf.model.to("cpu")
+
+                    # Reset all caches
+                    if hasattr(self._botorch_acqf.model, "prediction_strategy"):
+                        strat = self._botorch_acqf.model.prediction_strategy
+                        if strat is not None:
+                            # Reset all caches
+                            for attr in dir(strat):
+                                if attr.endswith("_cache") and hasattr(strat, attr):
+                                    if isinstance(getattr(strat, attr), dict):
+                                        setattr(strat, attr, {})
+                                    else:
+                                        setattr(strat, attr, None)
+
+                    # Move all training inputs to CPU
                     if hasattr(self._botorch_acqf.model, "train_inputs"):
                         self._botorch_acqf.model.train_inputs = tuple(
                             x.to("cpu") for x in self._botorch_acqf.model.train_inputs
                         )
+
+                    # Move targets to CPU
+                    if hasattr(self._botorch_acqf.model, "train_targets"):
+                        self._botorch_acqf.model.train_targets = (
+                            self._botorch_acqf.model.train_targets.to("cpu")
+                        )
+
+                    # Move likelihood to CPU
+                    if hasattr(self._botorch_acqf.model, "likelihood"):
+                        self._botorch_acqf.model.likelihood = (
+                            self._botorch_acqf.model.likelihood.to("cpu")
+                        )
+
                 # Also move the acquisition function
                 self._botorch_acqf = self._botorch_acqf.to("cpu")
 
@@ -597,8 +646,8 @@ class BotorchRecommender(BayesianRecommender):
             inequality_constraints=inequality_constraints,
         )
 
-        # Move points to CPU and detach before converting to numpy
-        if points.is_cuda:
+        # Ensure points are on CPU before any numpy operations or DataFrame creation
+        if torch.cuda.is_available() and hasattr(points, "is_cuda") and points.is_cuda:
             points = points.detach().cpu()
 
         # Align candidates with search space index. Done via including the search space
@@ -680,8 +729,13 @@ class BotorchRecommender(BayesianRecommender):
                 "of finding a feasible solution."
             )
 
-        # Find the best option f
-        best_idx = np.argmax(acqf_values_all)
+        # Move all tensors to CPU before using numpy functions
+        acqf_values_cpu = [acqf.detach().cpu() for acqf in acqf_values_all]
+
+        # Find the best option using numpy - now with CPU tensors
+        acqf_values_np = [v.numpy() for v in acqf_values_cpu]
+        best_idx = np.argmax(acqf_values_np)
+
         points = points_all[best_idx]
         acqf_value = acqf_values_all[best_idx]
 
@@ -692,7 +746,7 @@ class BotorchRecommender(BayesianRecommender):
         searchspace: SearchSpace,
         objective: Objective,
         measurements: pd.DataFrame | None,
-        pending_experiments: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Set up the BoTorch acquisition function."""
         with single_device_mode(state=True):  # Force everything to same device
@@ -700,29 +754,62 @@ class BotorchRecommender(BayesianRecommender):
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-            # Call parent setup
+            # Call parent setup with original device setting
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
 
-            # Move everything to the device and handle potential issues
-            if hasattr(self, "device") and self.device is not None:
-                # Force the acquisition function to the correct device if possible
-                if hasattr(self, "_botorch_acqf") and self._botorch_acqf is not None:
-                    if hasattr(self._botorch_acqf, "to"):
-                        self._botorch_acqf = self._botorch_acqf.to(self.device)
+            # After setup is complete, if we have an acquisition function,
+            # recreate the prediction strategy with a forced device
+            if (
+                hasattr(self, "_botorch_acqf")
+                and self._botorch_acqf is not None
+                and hasattr(self._botorch_acqf, "model")
+                and self._botorch_acqf.model is not None
+                and hasattr(self, "device")
+            ):
+                model = self._botorch_acqf.model
 
-                # Don't try to move the surrogate model directly since it might
-                # not support it. Instead, we'll focus on the botorch_model if
-                #  it exists
-                if (
-                    hasattr(self, "_botorch_model")
-                    and self._botorch_model is not None
-                    and hasattr(self._botorch_model, "to")
-                ):
-                    self._botorch_model = self._botorch_model.to(self.device)
+                # Move model to the intended device
+                model = model.to(self.device)
 
-                # Force garbage collection
-                gc.collect()
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+                # Detach the prediction strategy so we can rebuild it
+                if hasattr(model, "prediction_strategy"):
+                    model.prediction_strategy = None
+
+                # Force rebuild of prediction strategy on the correct device
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    try:
+                        # Move all training data to the device
+                        train_x = model.train_inputs[0].to(self.device)
+                        train_y = model.train_targets.to(self.device)
+
+                        # Put model in eval mode
+                        model.eval()
+
+                        # Force a forward pass to rebuild prediction strategy
+                        with torch.no_grad():
+                            output = model(train_x)
+                            _ = model.likelihood(output)
+
+                            # For ExactGP models, explicitly rebuild prediction strategy
+                            if hasattr(model, "exact_prediction_strategy"):
+                                model.prediction_strategy = (
+                                    model.exact_prediction_strategy(
+                                        train_x, train_y, model.likelihood
+                                    )
+                                )
+                    except Exception as e:
+                        # If there's an error rebuilding, just log it and continue
+                        print(f"Error rebuilding prediction strategy: {e}")
+
+                # Update the model in the acquisition function
+                self._botorch_acqf.model = model
+
+                # Move the entire acquisition function to the device
+                self._botorch_acqf = self._botorch_acqf.to(self.device)
+
+            # Force garbage collection
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
