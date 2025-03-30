@@ -80,36 +80,6 @@ def to_tensor(
         return tuple(_convert_single(arg) for arg in args)
 
 
-def from_tensor(
-    tensor: torch.Tensor | tuple[torch.Tensor, ...],
-) -> np.ndarray | tuple[np.ndarray, ...]:
-    """Convert PyTorch tensor(s) to NumPy array(s).
-
-    Args:
-        tensor: The tensor or tuple of tensors to convert.
-
-    Returns:
-        The converted NumPy array(s).
-    """
-
-    def _convert_single(t: torch.Tensor) -> np.ndarray:
-        # First move to CPU if needed
-        if t.is_cuda:
-            t = t.cpu()
-
-        # Then detach if needed
-        if t.requires_grad:
-            t = t.detach()
-
-        # Finally convert to numpy
-        return t.numpy()
-
-    # Handle single tensor or tuple of tensors
-    if isinstance(tensor, tuple):
-        return tuple(_convert_single(t) for t in tensor)
-    return _convert_single(tensor)
-
-
 def add_fake_measurements(
     data: pd.DataFrame,
     targets: Iterable[Target],
