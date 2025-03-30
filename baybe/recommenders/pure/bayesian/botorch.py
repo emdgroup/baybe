@@ -355,14 +355,59 @@ class BotorchRecommender(BayesianRecommender):
         # Use single_device_mode to enforce consistency during setup
         with single_device_mode(state=True):
             # 1. Ensure the surrogate model is on the target device FIRST.
-            #    This is crucial so that to_botorch correctly infers the device.
             if hasattr(self._surrogate_model, "to") and hasattr(self, "device"):
-                # Move the main model object (handles parameters/buffers if nn.Module)
+                # Move the main model object - this handles parameters and buffers
                 self._surrogate_model = self._surrogate_model.to(self.device)
-                # Explicitly move modules if it has a modules() iterator
-                if hasattr(self._surrogate_model, "modules"):
-                    for component in self._surrogate_model.modules():
-                        component.to(self.device)
+
+                # Explicitly move key GPyTorch components AFTER the main .to() call
+                # This ensures components potentially created/cached are also moved
+                if (
+                    hasattr(self._surrogate_model, "likelihood")
+                    and self._surrogate_model.likelihood is not None
+                ):
+                    self._surrogate_model.likelihood = (
+                        self._surrogate_model.likelihood.to(self.device)
+                    )
+
+                if (
+                    hasattr(self._surrogate_model, "mean_module")
+                    and self._surrogate_model.mean_module is not None
+                ):
+                    self._surrogate_model.mean_module = (
+                        self._surrogate_model.mean_module.to(self.device)
+                    )
+
+                if (
+                    hasattr(self._surrogate_model, "covar_module")
+                    and self._surrogate_model.covar_module is not None
+                ):
+                    # Move the entire covariance module and its parameters/submodules
+                    self._surrogate_model.covar_module = (
+                        self._surrogate_model.covar_module.to(self.device)
+                    )
+                    # Additionally, explicitly iterate through potential nested kernels
+                    # This helps ensure components within Sum/Product kernels are moved
+                    if hasattr(self._surrogate_model.covar_module, "kernels"):
+                        current_kernels = []
+                        for k in self._surrogate_model.covar_module.kernels:
+                            moved_k = k.to(self.device)
+                            # Also move base_kernel if it exists within k
+                            if hasattr(moved_k, "base_kernel"):
+                                moved_k.base_kernel = moved_k.base_kernel.to(
+                                    self.device
+                                )
+                            current_kernels.append(moved_k)
+                        # Ensure the kernels attribute is updated (might be tuple)
+                        self._surrogate_model.covar_module.kernels = tuple(
+                            current_kernels
+                        )
+
+                    elif hasattr(self._surrogate_model.covar_module, "base_kernel"):
+                        self._surrogate_model.covar_module.base_kernel = (
+                            self._surrogate_model.covar_module.base_kernel.to(
+                                self.device
+                            )
+                        )
 
                 # Explicitly move training data if stored as tensors
                 if hasattr(self._surrogate_model, "train_inputs"):
@@ -376,22 +421,17 @@ class BotorchRecommender(BayesianRecommender):
                             self._surrogate_model.train_targets.to(self.device)
                         )
 
-            # 2. Call the parent setup, which will call to_botorch.
-            # to_botorch should now correctly use the device from the moved surrogate.
+            # 2. Call the parent setup -> Calls to_botorch
             # Use explicit super call for clarity
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
 
-            # 3. Ensure the created BoTorch acquisition function is on the
-            # target device.
+            # 3. Ensure the created BoTorch acquisition function is on the target device
+            # (Safeguard - moving the acqf object and direct tensor attributes)
             if hasattr(self._botorch_acqf, "to") and hasattr(self, "device"):
-                # Move the main acqf object (handles params/buffers if nn.Module)
                 if isinstance(self._botorch_acqf, torch.nn.Module):
                     self._botorch_acqf.to(self.device)
-
-                # Also attempt to move other direct tensor attributes (like X_pending)
-                # This ensures tensors possibly created by to_botorch are moved.
                 for attr_name, value in self._botorch_acqf.__dict__.items():
                     if isinstance(value, torch.Tensor):
                         current_device = getattr(value, "device", None)
@@ -401,17 +441,13 @@ class BotorchRecommender(BayesianRecommender):
                                     self._botorch_acqf, attr_name, value.to(self.device)
                                 )
                             except Exception:
-                                # Ignore potential errors for non-movable/leaf tensors
-                                pass
+                                pass  # Ignore errors
 
             # 4. Clear caches after potential device moves
-            # Clear surrogate model prediction cache
             if hasattr(self._surrogate_model, "prediction_strategy") and hasattr(
                 self._surrogate_model.prediction_strategy, "_memoize_cache"
             ):
                 self._surrogate_model.prediction_strategy._memoize_cache = {}
-
-            # Clear acquisition function model prediction cache and posterior cache
             if hasattr(self._botorch_acqf, "model") and hasattr(
                 self._botorch_acqf.model, "prediction_strategy"
             ):
