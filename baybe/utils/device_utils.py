@@ -5,8 +5,6 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
 
-import numpy as np
-import pandas as pd
 import torch
 from gpytorch.settings import debug, fast_computations
 
@@ -119,40 +117,3 @@ def device_context(
         finally:
             # Clear GPU memory after operations
             clear_gpu_memory()
-
-
-def to_tensor(
-    *args: Any,
-    device: torch.device | str | None = None,
-) -> torch.Tensor | tuple[torch.Tensor, ...]:
-    """Convert one or multiple inputs to PyTorch tensors.
-
-    Args:
-        *args: One or multiple inputs to convert to tensors.
-        device: The device to move the tensor(s) to.
-
-    Returns:
-        The provided array(s)/dataframe(s) represented as tensor(s).
-    """
-    if device is None:
-        device = get_default_device()
-    elif isinstance(device, str):
-        device = torch.device(device)
-
-    def _convert_single(data: Any) -> torch.Tensor:
-        if isinstance(data, torch.Tensor):
-            return to_device(data, device)
-        elif isinstance(data, pd.DataFrame):
-            tensor = torch.tensor(data.values.astype(np.float64))
-        elif isinstance(data, np.ndarray):
-            tensor = torch.from_numpy(data.astype(np.float64))
-        else:
-            tensor = torch.tensor(data, dtype=torch.float64)
-
-        return to_device(tensor, device)
-
-    # Handle single or multiple inputs
-    if len(args) == 1:
-        return _convert_single(args[0])
-    else:
-        return tuple(_convert_single(arg) for arg in args)
