@@ -3,7 +3,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-import torch
 from gpytorch.settings import debug, fast_computations
 
 
@@ -48,40 +47,3 @@ def device_mode(state: bool = True) -> Generator[None, None, None]:
     """
     with single_device_mode(state), debug(state), fast_computations(solves=False):
         yield
-
-
-@contextmanager
-def cpu_only_mode() -> Generator[None, None, None]:
-    """Force PyTorch to use CPU only, even if CUDA is available.
-
-    This context manager temporarily patches torch.Tensor.cuda and other CUDA
-    related functions to prevent any operations from using CUDA. This is useful
-    when you want to ensure that all operations happen on CPU.
-
-    Yields:
-        None
-    """
-    # Save original functions
-    original_tensor_cuda = torch.Tensor.cuda
-    original_is_available = torch.cuda.is_available
-
-    try:
-        # Patch functions to force CPU usage
-        def dummy_cuda(self, *args, **kwargs):
-            return self.to("cpu")
-
-        def dummy_is_available():
-            return False
-
-        # Apply patches
-        torch.Tensor.cuda = dummy_cuda
-        torch.cuda.is_available = dummy_is_available
-
-        # Run with patched functions
-        with device_mode(True):
-            yield
-
-    finally:
-        # Restore original functions
-        torch.Tensor.cuda = original_tensor_cuda
-        torch.cuda.is_available = original_is_available

@@ -741,6 +741,7 @@ class BotorchRecommender(BayesianRecommender):
 
         return points, acqf_value
 
+    @override
     def _setup_botorch_acqf(
         self,
         searchspace: SearchSpace,
