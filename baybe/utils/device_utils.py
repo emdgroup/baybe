@@ -33,12 +33,12 @@ class _SingleDeviceMode:
 
 
 def get_default_device() -> torch.device:
-    """Get the default device (CUDA if available, otherwise CPU).
+    """Get the default device (CPU).
 
     Returns:
         torch.device: The default device for computations.
     """
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    return torch.device("cpu")
 
 
 def to_device(obj: Any, device: torch.device | str | None = None) -> Any:
