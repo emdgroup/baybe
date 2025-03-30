@@ -5,7 +5,6 @@ import warnings
 from abc import ABC
 
 import pandas as pd
-import torch
 from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
@@ -28,7 +27,6 @@ from baybe.surrogates.base import (
     SurrogateProtocol,
 )
 from baybe.utils.dataframe import _ValidatedDataFrame
-from baybe.utils.device_utils import clear_gpu_memory, device_context, device_mode
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 
@@ -119,30 +117,24 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
-        """Create the acquisition function for the current training data."""
-        # Use device_mode to ensure consistent device handling during setup
-        with device_mode(True):
-            self._objective = objective
-            acqf = self._get_acquisition_function(objective)
+        """Create the acquisition function for the current training data."""  # noqa: E501
+        self._objective = objective
+        acqf = self._get_acquisition_function(objective)
 
-            if objective.is_multi_output and not acqf.supports_multi_output:
-                raise IncompatibleAcquisitionFunctionError(
-                    f"You attempted to use a single-output acquisition function in a "
-                    f"{len(objective.targets)}-target multi-output context."
-                )
-
-            surrogate = self.get_surrogate(searchspace, objective, measurements)
-
-            # Clear CUDA cache before creating acquisition function
-            clear_gpu_memory()
-
-            self._botorch_acqf = acqf.to_botorch(
-                surrogate,
-                searchspace,
-                objective,
-                measurements,
-                pending_experiments,
+        if objective.is_multi_output and not acqf.supports_multi_output:
+            raise IncompatibleAcquisitionFunctionError(
+                f"You attempted to use a single-output acquisition function in a "
+                f"{len(objective.targets)}-target multi-output context."
             )
+
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
+        self._botorch_acqf = acqf.to_botorch(
+            surrogate,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
+        )
 
     @override
     def recommend(
@@ -153,62 +145,52 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # Get the device if this recommender has one
-        device = getattr(self, "device", None)
-
-        # Use device_context for consistent device management
-        with device_context(device):
-            if objective is None:
-                raise NotImplementedError(
-                    f"Recommenders of type '{BayesianRecommender.__name__}' require "
-                    f"that an objective is specified."
-                )
-
-            # Experimental input validation
-            if (measurements is None) or measurements.empty:
-                raise NotImplementedError(
-                    f"Recommenders of type '{BayesianRecommender.__name__}' "
-                    f"do not support "
-                    f"empty training data."
-                )
-            if not isinstance(measurements, _ValidatedDataFrame):
-                validate_target_input(measurements, objective.targets)
-                validate_parameter_input(measurements, searchspace.parameters)
-                measurements.__class__ = _ValidatedDataFrame
-            if pending_experiments is not None and not isinstance(
-                pending_experiments, _ValidatedDataFrame
-            ):
-                validate_parameter_input(pending_experiments, searchspace.parameters)
-                pending_experiments.__class__ = _ValidatedDataFrame
-
-            if (
-                isinstance(self._surrogate_model, IndependentGaussianSurrogate)
-                and batch_size > 1
-            ):
-                raise InvalidSurrogateModelError(
-                    f"The specified surrogate model of type "
-                    f"'{self._surrogate_model.__class__.__name__}' "
-                    f"cannot be used for batch recommendation."
-                )
-
-            if isinstance(self._surrogate_model, CustomONNXSurrogate):
-                CustomONNXSurrogate.validate_compatibility(searchspace)
-
-            # Clear caches before setup
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-
-            self._setup_botorch_acqf(
-                searchspace, objective, measurements, pending_experiments
+        if objective is None:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' require "
+                f"that an objective is specified."
             )
 
-            return super().recommend(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
+        # Experimental input validation
+        if (measurements is None) or measurements.empty:
+            raise NotImplementedError(
+                f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
+                f"empty training data."
             )
+        if not isinstance(measurements, _ValidatedDataFrame):
+            validate_target_input(measurements, objective.targets)
+            validate_parameter_input(measurements, searchspace.parameters)
+            measurements.__class__ = _ValidatedDataFrame
+        if pending_experiments is not None and not isinstance(
+            pending_experiments, _ValidatedDataFrame
+        ):
+            validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments.__class__ = _ValidatedDataFrame
+
+        if (
+            isinstance(self._surrogate_model, IndependentGaussianSurrogate)
+            and batch_size > 1
+        ):
+            raise InvalidSurrogateModelError(
+                f"The specified surrogate model of type "
+                f"'{self._surrogate_model.__class__.__name__}' "
+                f"cannot be used for batch recommendation."
+            )
+
+        if isinstance(self._surrogate_model, CustomONNXSurrogate):
+            CustomONNXSurrogate.validate_compatibility(searchspace)
+
+        self._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
+
+        return super().recommend(
+            batch_size=batch_size,
+            searchspace=searchspace,
+            objective=objective,
+            measurements=measurements,
+            pending_experiments=pending_experiments,
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
