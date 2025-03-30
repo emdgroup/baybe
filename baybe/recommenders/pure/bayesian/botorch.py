@@ -450,6 +450,15 @@ class BotorchRecommender(BayesianRecommender):
                     # Move all parameters of the acquisition function
                     for param in self._botorch_acqf.parameters():
                         param.data = param.data.to(self.device)
+
+                    # Move X_pending to the correct device if it exists
+                    if (
+                        hasattr(self._botorch_acqf, "X_pending")
+                        and self._botorch_acqf.X_pending is not None
+                    ):
+                        self._botorch_acqf.X_pending = self._botorch_acqf.X_pending.to(
+                            self.device
+                        )
                 except (TypeError, AttributeError):
                     # Handle non-tensor attributes
                     for attr_name, value in self._botorch_acqf.__dict__.items():
@@ -466,6 +475,13 @@ class BotorchRecommender(BayesianRecommender):
                                 )
                             except Exception:
                                 pass
+                        # Special handling for X_pending if it's in a nested attribute
+                        elif (
+                            attr_name == "model"
+                            and hasattr(value, "X_pending")
+                            and value.X_pending is not None
+                        ):
+                            value.X_pending = value.X_pending.to(self.device)
 
             # Clear ALL caches
             for obj in [self._surrogate_model, self._botorch_acqf]:
