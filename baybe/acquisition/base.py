@@ -5,10 +5,10 @@ from __future__ import annotations
 import gc
 import warnings
 from abc import ABC
-from inspect import signature
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
+import torch
 from attrs import define
 
 from baybe.exceptions import (
@@ -16,8 +16,6 @@ from baybe.exceptions import (
     UnidentifiedSubclassError,
 )
 from baybe.objectives.base import Objective
-from baybe.objectives.desirability import DesirabilityObjective
-from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
     converter,
@@ -26,11 +24,9 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
-from baybe.targets.enum import TargetMode
-from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import classproperty, match_attributes
+from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.device_mode import single_device_mode
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -57,6 +53,11 @@ class AcquisitionFunction(ABC, SerialMixin):
         return cls.supports_batching
 
     @classproperty
+    def supports_multi_output(cls) -> bool:
+        """Flag indicating whether multiple outputs are supported."""
+        return "Hypervolume" in cls.__name__  # type: ignore[attr-defined]
+
+    @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
         """Names of attributes that are not passed to the BoTorch constructor."""
         return ()
@@ -68,181 +69,46 @@ class AcquisitionFunction(ABC, SerialMixin):
         objective: Objective,
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
-    ):
-        """Create the botorch-ready representation of the function."""
-        import warnings
+    ) -> BotorchAcquisitionFunction:
+        """Create the botorch-ready representation of the function.
 
-        import botorch.acquisition as bo_acqf
-        import torch
-        from botorch.acquisition.objective import LinearMCObjective
-        from gpytorch.settings import debug, fast_computations
-        from gpytorch.utils.warnings import GPInputWarning
+        The required structure of `measurements` is specified in
+        :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+        """
+        from baybe.acquisition._builder import BotorchAcquisitionFunctionBuilder
 
-        from baybe.acquisition.acqfs import qThompsonSampling
-        from baybe.utils.device_mode import single_device_mode
+        if pending_experiments is not None and not self.supports_pending_experiments:
+            raise IncompatibleAcquisitionFunctionError(
+                f"The chosen acquisition function of type '{self.__class__.__name__}' "
+                f"does not support pending experiments."
+            )
 
-        # Get device from surrogate and ensure it's set
-        device = getattr(surrogate, "device", None)
-        if device is None and torch.cuda.is_available():
-            device = torch.device("cuda:0")
+        # Wrap the builder in single_device_mode to ensure consistent device usage
+        with single_device_mode(True):
+            # Get the device from the surrogate if available
+            device = getattr(surrogate, "device", None)
 
-        # Create botorch surrogate model
-        with warnings.catch_warnings(), single_device_mode(True), debug(
-            True
-        ), fast_computations(solves=False):
-            warnings.filterwarnings("ignore", category=GPInputWarning)
-            bo_surrogate = surrogate.to_botorch()
-
-            if device is not None:
-                bo_surrogate = bo_surrogate.to(device)
-
-                # Move all model components to device
-                if hasattr(bo_surrogate, "covar_module"):
-                    bo_surrogate.covar_module = bo_surrogate.covar_module.to(device)
-                    if hasattr(bo_surrogate.covar_module, "kernels"):
-                        bo_surrogate.covar_module.kernels = tuple(
-                            k.to(device) for k in bo_surrogate.covar_module.kernels
-                        )
-                        # Move base kernels
-                        for k in bo_surrogate.covar_module.kernels:
-                            if hasattr(k, "base_kernel"):
-                                k.base_kernel = k.base_kernel.to(device)
-
-                # Move training data
-                if hasattr(bo_surrogate, "train_inputs"):
-                    bo_surrogate.train_inputs = tuple(
-                        x.to(device) for x in bo_surrogate.train_inputs
-                    )
-                if hasattr(bo_surrogate, "train_targets"):
-                    bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
-
-                # Move likelihood
-                if (
-                    hasattr(bo_surrogate, "likelihood")
-                    and bo_surrogate.likelihood is not None
-                ):
-                    bo_surrogate.likelihood = bo_surrogate.likelihood.to(device)
-
-            # Convert measurements to tensor and move to device
-            train_x = to_tensor(
-                searchspace.transform(measurements, allow_extra=True),
+            # Create the acquisition function builder and build the function
+            builder = BotorchAcquisitionFunctionBuilder(
+                self,
+                surrogate,
+                searchspace,
+                objective,
+                measurements,
+                pending_experiments,
                 device=device,
             )
 
-            # Force a dummy forward pass to re-compute the prediction strategy caches
-            with torch.no_grad():
-                try:
-                    _ = bo_surrogate(train_x)
-                except Exception:
-                    pass
+            # Build the acquisition function
+            acqf = builder.build()
 
-            # Move model to device again after forward pass
-            if device is not None:
-                bo_surrogate = bo_surrogate.to(device)
-
-            # Get botorch acquisition function class and match attributes
-            acqf_cls = _get_botorch_acqf_class(type(self))
-            params_dict = match_attributes(
-                self, acqf_cls.__init__, ignore=self._non_botorch_attrs
-            )[0]
-
-            # Collect remaining (context-specific) parameters
-            signature_params = signature(acqf_cls).parameters
-            additional_params = {}
-            additional_params["model"] = bo_surrogate
-            if "X_baseline" in signature_params:
-                additional_params["X_baseline"] = train_x
-
-            # Initialize X_pending with correct device and dtype
-            if pending_experiments is not None:
-                if self.supports_pending_experiments:
-                    pending_x = searchspace.transform(
-                        pending_experiments, allow_extra=True
-                    )
-                    pending_tensor = to_tensor(pending_x, device=device)
-                    # Ensure pending tensor matches train_x dtype
-                    pending_tensor = pending_tensor.to(dtype=train_x.dtype)
-                    additional_params["X_pending"] = pending_tensor
-                else:
-                    raise IncompatibleAcquisitionFunctionError(
-                        f"Pending experiments were provided but the chosen acquisition "
-                        f"function '{self.__class__.__name__}' does not support this."
-                    )
-            else:
-                # Initialize empty X_pending tensor with matching device and dtype
-                additional_params["X_pending"] = torch.empty(
-                    (0, train_x.shape[1]), device=device, dtype=train_x.dtype
-                )
-
-            if "mc_points" in signature_params:
-                mc_points = to_tensor(
-                    self.get_integration_points(searchspace),  # type: ignore[attr-defined]
-                    device=device,
-                )
-                # Ensure mc_points matches dtype
-                mc_points = mc_points.to(dtype=train_x.dtype)
-                additional_params["mc_points"] = mc_points
-
-            # Add acquisition objective / best observed value
-            match objective:
-                case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                    # Adjust best_f
-                    if "best_f" in signature_params:
-                        # Move to CPU before converting to item
-                        additional_params["best_f"] = (
-                            bo_surrogate.posterior(train_x).mean.cpu().min().item()
-                        )
-                        if issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
-                            additional_params["best_f"] *= -1.0
-
-                    # Adjust objective
-                    if issubclass(
-                        acqf_cls,
-                        (
-                            bo_acqf.qNegIntegratedPosteriorVariance,
-                            bo_acqf.PosteriorStandardDeviation,
-                            bo_acqf.qPosteriorStandardDeviation,
-                        ),
-                    ):
-                        pass
-                    elif issubclass(acqf_cls, bo_acqf.AnalyticAcquisitionFunction):
-                        additional_params["maximize"] = False
-                    elif issubclass(acqf_cls, bo_acqf.MCAcquisitionFunction):
-                        additional_params["objective"] = LinearMCObjective(
-                            torch.tensor([-1.0], device=device)
-                        )
-                    else:
-                        raise ValueError(
-                            f"Unsupported acquisition function type: {acqf_cls}."
-                        )
-                case SingleTargetObjective() | DesirabilityObjective():
-                    if "best_f" in signature_params:
-                        # Move to CPU before converting to item
-                        additional_params["best_f"] = (
-                            bo_surrogate.posterior(train_x).mean.cpu().max().item()
-                        )
-                case _:
-                    raise ValueError(f"Unsupported objective type: {objective}")
-
-            params_dict.update(additional_params)
-
-            # Create acquisition function and ensure it's on the correct device
-            acqf = acqf_cls(**params_dict)
-            if device is not None:
-                acqf = acqf.to(device)
-
-            if isinstance(self, qThompsonSampling):
-                assert hasattr(acqf, "_default_sample_shape")
-                acqf._default_sample_shape = torch.Size([self.n_mc_samples])
-
-            # Final device and dtype check for all tensors
-            for name, param in acqf.__dict__.items():
-                if isinstance(param, torch.Tensor):
-                    acqf.__dict__[name] = param.to(device=device, dtype=train_x.dtype)
-
-            # Force garbage collection
+            # Force garbage collection before returning
             gc.collect()
-            if torch.cuda.is_available():
+            if (
+                device is not None
+                and str(device).startswith("cuda")
+                and torch.cuda.is_available()
+            ):
                 torch.cuda.empty_cache()
 
             return acqf
@@ -255,7 +121,9 @@ def _get_botorch_acqf_class(
     import botorch
 
     for cls in baybe_acqf_cls.mro():
-        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False):
+        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False) or getattr(
+            botorch.acquisition.multi_objective, cls.__name__, False
+        ):
             if is_abstract(acqf_cls):
                 continue
             return acqf_cls  # type: ignore

@@ -37,11 +37,13 @@ The following provides a non-comprehensive overview:
 
 - 🛠️ Custom parameter encodings: Improve your campaign with domain knowledge
 - 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
-- 🎯 Single and multiple targets with min, max and match objectives
+- 🎯 Numerical and binary targets with min, max and match objectives
+- ⚖️  Multi-target support via Pareto optimization and desirability scalarization
 - 🔍 Insights: Easily analyze feature importance and model behavior
 - 🎭 Hybrid (mixed continuous and discrete) spaces
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
+- 🔢 Cardinality constraints: Control the number of active factors in your design
 - 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
 - 🎓 Active learning: Perform smart data acquisition campaigns
 - ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
@@ -78,8 +80,8 @@ target = NumericalTarget(
 objective = SingleTargetObjective(target=target)
 ```
 In cases where we are confronted with multiple (potentially conflicting) targets,
-the `DesirabilityObjective` can be used instead. It allows to define additional
-settings, such as how these targets should be balanced.
+the `ParetoObjective` or `DesirabilityObjective` can be used instead.
+These allow to define additional settings, such as how the targets should be balanced.
 For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
 of the user guide.

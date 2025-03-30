@@ -1,10 +1,24 @@
 """Tests for dataframe utilities."""
 
+from contextlib import nullcontext
+
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
+from pytest import param
 
-from baybe.utils.dataframe import add_noise_to_perturb_degenerate_rows
+from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.utils.dataframe import (
+    add_noise_to_perturb_degenerate_rows,
+    add_parameter_noise,
+    fuzzy_row_match,
+)
+
+
+@pytest.fixture()
+def n_grid_points():
+    return 5
 
 
 def test_degenerate_rows():
@@ -41,3 +55,118 @@ def test_degenerate_rows_invalid_input():
     # Add noise
     with pytest.raises(TypeError):
         add_noise_to_perturb_degenerate_rows(df)
+
+
+@pytest.mark.parametrize(
+    ("parameter_names", "noise", "duplicated"),
+    [
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            False,
+            True,
+            id="discrete_num_noiseless_duplicated",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            False,
+            False,
+            id="discrete_num_noiseless_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Some_Setting"],
+            True,
+            False,
+            id="discrete_num_noisy_unique",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Some_Setting"],
+            False,
+            False,
+            id="discrete_cat",
+        ),
+        param(
+            ["Categorical_1", "Switch_1", "Conti_finite1"],
+            False,
+            False,
+            id="hybrid_cat",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            False,
+            False,
+            id="hybrid_num_noiseless_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            True,
+            False,
+            id="hybrid_num_noisy_unique",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            False,
+            True,
+            id="hybrid_num_noiseless_duplicated",
+        ),
+    ],
+)
+def test_fuzzy_row_match(searchspace, noise, duplicated):
+    """Fuzzy row matching returns expected indices."""
+    left_df = searchspace.discrete.exp_rep.copy()
+    selected = np.random.choice(left_df.index, 4, replace=False)
+    right_df = left_df.loc[selected].reset_index(drop=True)
+
+    context = nullcontext()
+    if duplicated:
+        # Set one of the input values to exactly the midpoint between two values to
+        # cause a degenerate match
+        vals = searchspace.get_parameters_by_name(["Num_disc_1"])[0].values
+        right_df.loc[0, "Num_disc_1"] = vals[0] + (vals[1] - vals[0]) / 2.0
+        context = pytest.warns(SearchSpaceMatchWarning, match="multiple matches")
+
+    if noise:
+        add_parameter_noise(
+            right_df,
+            searchspace.discrete.parameters,
+            noise_type="relative_percent",
+            noise_level=0.1,
+        )
+
+    with context as c:
+        matched = fuzzy_row_match(left_df, right_df, searchspace.parameters)
+
+    if duplicated:
+        # Assert correct identification of problematic df parts
+        w = next(x for x in c if isinstance(x.message, SearchSpaceMatchWarning)).message
+        assert_frame_equal(right_df.loc[[0]], w.data)
+
+        # Ignore problematic indices for subsequent equality check
+        selected = selected[1:]
+        matched = matched[1:]
+
+    assert set(selected) == set(matched), (selected, matched)
+
+
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        param(["Categorical_1", "Categorical_2", "Switch_1"], id="discrete"),
+        param(["Categorical_1", "Num_disc_1", "Conti_finite1"], id="hybrid"),
+    ],
+)
+@pytest.mark.parametrize("invalid", ["left", "right"])
+def test_invalid_fuzzy_row_match(searchspace, invalid):
+    """Returns expected errors when dataframes don't contain all expected columns."""
+    left_df = searchspace.discrete.exp_rep.copy()
+    selected = np.random.choice(left_df.index, 4, replace=False)
+    right_df = left_df.loc[selected].copy()
+
+    # Drop first column
+    if invalid == "left":
+        left_df = left_df.iloc[:, 1:]
+    else:
+        right_df = right_df.iloc[:, 1:]
+
+    match = f"corresponding column in the {invalid} dataframe."
+    with pytest.raises(ValueError, match=match):
+        fuzzy_row_match(left_df, right_df, searchspace.parameters)

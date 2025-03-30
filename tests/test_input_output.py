@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import param
 
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
@@ -10,44 +11,46 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import add_fake_measurements
 
-# List of tests that are expected to fail (still missing implementation etc)
-param_xfails = []
-target_xfails = []
-
 
 @pytest.mark.parametrize(
-    "bad_val",
-    [1337, np.nan, "asd"],
-    ids=["not_within_tol", "nan", "string_instead_float"],
+    "bad_val, parameter_names",
+    [
+        param(1337, ["Num_disc_1"], id="num_param_outside_tol"),
+        param(np.nan, ["Num_disc_1"], id="num_param_nan"),
+        param("asd", ["Num_disc_1"], id="num_param_str"),
+        param("asd", ["Categorical_1"], id="cat_param_invalid_cat"),
+        param(np.nan, ["Categorical_1"], id="cat_param_nan"),
+        param(1337, ["Categorical_1"], id="cat_param_num"),
+        param("asd", ["Custom_1"], id="custom_param_invalid_cat"),
+        param(np.nan, ["Custom_1"], id="custom_param_nan"),
+        param(1337, ["Custom_1"], id="custom_param_num"),
+        param("asd", ["Task"], id="task_param_invalid_cat"),
+        param(np.nan, ["Task"], id="task_param_nan"),
+        param(1337, ["Task"], id="task_param_num"),
+    ],
 )
-def test_bad_parameter_input_value(campaign, good_reference_values, bad_val, request):
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
     """Test attempting to read in an invalid parameter value."""
-    if request.node.callspec.id in param_xfails:
-        pytest.xfail()
-
-    rec = campaign.recommend(batch_size=3)
-    add_fake_measurements(
-        rec,
-        campaign.targets,
-        good_reference_values=good_reference_values,
-    )
-
     # Add an invalid value
-    rec.Num_disc_1.iloc[0] = bad_val
+    fake_measurements[campaign.parameters[0].name].iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
-        campaign.add_measurements(rec)
+        campaign.add_measurements(fake_measurements)
 
 
 @pytest.mark.parametrize(
-    "bad_val",
-    [np.nan, "asd"],
-    ids=["nan", "string_instead_float"],
+    "bad_val, target_names",
+    [
+        param(np.nan, ["Target_max"], id="num_target_nan"),
+        param("asd", ["Target_max"], id="num_target_str"),
+        param(np.nan, ["Target_binary"], id="binary_target_nan"),
+        param(1337, ["Target_binary"], id="binary_target_num"),
+        param("asd", ["Target_binary"], id="binary_target_str"),
+    ],
 )
-def test_bad_target_input_value(campaign, good_reference_values, bad_val, request):
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+def test_bad_target_input_value(campaign, good_reference_values, bad_val):
     """Test attempting to read in an invalid target value."""
-    if request.node.callspec.id in target_xfails:
-        pytest.xfail()
-
     rec = campaign.recommend(batch_size=3)
     add_fake_measurements(
         rec,
@@ -56,7 +59,7 @@ def test_bad_target_input_value(campaign, good_reference_values, bad_val, reques
     )
 
     # Add an invalid value
-    rec.Target_max.iloc[0] = bad_val
+    rec[campaign.targets[0].name].iloc[0] = bad_val
     with pytest.raises((ValueError, TypeError)):
         campaign.add_measurements(rec)
 

@@ -71,7 +71,7 @@ class DiscreteSumConstraint(DiscreteConstraint):
 
     # class variables
     numerical_only: ClassVar[bool] = True
-    # see base class.
+    # See base class.
 
     # object variables
     condition: ThresholdCondition = field()
@@ -99,7 +99,7 @@ class DiscreteProductConstraint(DiscreteConstraint):
 
     # class variables
     numerical_only: ClassVar[bool] = True
-    # see base class.
+    # See base class.
 
     # object variables
     condition: ThresholdCondition = field()

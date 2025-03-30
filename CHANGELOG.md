@@ -9,17 +9,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
+- `SHAPInsight` now supports the `waterfall` plot type
+- `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
+  `qLogNoisyExpectedHypervolumeImprovement` acquisition function
+- `Surrogate.replicate` method for making single-target surrogate models multi-target
+  compatible
+- `CompositeSurrogate` class for composing multi-target surrogates from single-target
+  surrogates
+- `is_multi_output` attribute to `Objective`
+- `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
+- `n_outputs` property to `Objective`
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
+  constraints are violated
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of cardinality constraints
+- Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
+  to both `ContinuousCardinalityConstraint`and `SubspaceContinuous` for iterating
+  over cardinality-constrained parameter sets
+- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
+  `ContinuousCardinalityConstraint` for handling inactivity ranges
+- Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
+  validating cardinality constraints
+- Utility `is_inactive` for determining if parameters are inactive
+- Cardinality constraints sections to the user guide
+- `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
+  support restricting the search space via `active_values`, while `values` continue to 
+  identify allowed measurement inputs
+- `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
+  providing statistical measures about the target predictions of a given set of
+  candidates
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
   `supports_batching` and `supports_pending_experiments`
+- `SHAPInsight` now allows explanation input that has additional columns compared to 
+  the background data (will be ignored)
+- `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
+  measurements to the search space between 4x and 40x
+- The default value for `sequential_continuous` in `BotorchRecommender` has been 
+  changed to `True`
+- For label-like parameters, `SubspaceDiscrete` now only includes parameter values 
+  that are in `active_values`
+- Model scaling now uses the parameter bounds instead of the search space bounds
+- `benchmarks` module now accepts a list of domains to be executed
+- Construction of BoTorch acquisition functions has been redesigned from ground up
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
 
+### Removed
+- `fuzzy_row_match` will no longer warn about entries not matching to the search space 
+
 ## [0.12.2] - 2025-01-31
 ### Changed
 - More robust settings for the GP fitting
+- The `beta` parameter of `UCB` and `qUCB` can now also take negative values
 
 ## [0.12.1] - 2025-01-29
 ### Changed

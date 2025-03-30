@@ -124,12 +124,16 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.utils.basic._C"),
     (r"py:class", "baybe.utils.basic._T"),
     (r"py:class", "baybe.utils.basic._U"),
+    (r"py:class", "baybe.surrogates.composite._SurrogateGetter"),
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
+    (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
+    ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
 ]
 
 # Ignore the following links when checking inks for viability

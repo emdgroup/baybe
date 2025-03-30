@@ -2,6 +2,7 @@
 
 import gc
 from abc import ABC, abstractmethod
+from typing import ClassVar
 
 import cattrs
 import pandas as pd
@@ -23,10 +24,18 @@ from baybe.targets.base import Target
 class Objective(ABC, SerialMixin):
     """Abstract base class for all objectives."""
 
+    is_multi_output: ClassVar[bool]
+    """Class variable indicating if the objective produces multiple outputs."""
+
     @property
     @abstractmethod
     def targets(self) -> tuple[Target, ...]:
         """The targets included in the objective."""
+
+    @property
+    @abstractmethod
+    def n_outputs(self) -> int:
+        """The number of outputs of the objective."""
 
     @abstractmethod
     def transform(

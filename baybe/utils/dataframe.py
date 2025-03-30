@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import functools
-import logging
-from collections.abc import Callable, Collection, Iterable, Sequence
+import warnings
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
 import torch
 
+from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
@@ -23,10 +24,6 @@ if TYPE_CHECKING:
 
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
-
-
-# Logging
-_logger = logging.getLogger(__name__)
 
 
 @overload
@@ -115,7 +112,7 @@ def from_tensor(
 
 def add_fake_measurements(
     data: pd.DataFrame,
-    targets: Collection[Target],
+    targets: Iterable[Target],
     good_reference_values: dict[str, list] | None = None,
     good_intervals: dict[str, tuple[float, float]] | None = None,
     bad_intervals: dict[str, tuple[float, float]] | None = None,
@@ -323,6 +320,55 @@ def add_parameter_noise(
     return data
 
 
+def create_fake_input(
+    parameters: Iterable[Parameter],
+    targets: Iterable[Target],
+    n_rows: int = 1,
+    **kwargs: Any,
+) -> pd.DataFrame:
+    """Create fake valid input for :meth:`baybe.campaign.Campaign.add_measurements`.
+
+    If noisy parameter values are desired, it is recommended to apply
+    :func:`baybe.utils.dataframe.add_parameter_noise` to the output of this function.
+
+    Args:
+        parameters: The parameters.
+        targets: The targets.
+        n_rows: Number of desired rows.
+        **kwargs: Additional arguments to be passed to
+            :func:`baybe.utils.dataframe.add_fake_measurements`.
+
+    Returns:
+        Dataframe corresponding to fake measurement input.
+
+    Raises:
+        ValueError: If less than one row was requested.
+    """
+    # Assert at least one fake entry is being generated
+    if n_rows < 1:
+        raise ValueError(
+            f"'{create_fake_input.__name__}' must at least create one row, but the "
+            f"requested number was: {n_rows}."
+        )
+
+    # Create fake parameter values from their definitions
+    content = {}
+    for p in parameters:
+        if p.is_discrete:
+            vals = np.random.choice(p.values, n_rows, replace=True)
+        else:
+            vals = np.random.uniform(p.bounds.lower, p.bounds.upper, n_rows)
+
+        content[p.name] = vals
+
+    data = pd.DataFrame.from_dict(content)
+
+    # Add fake target values
+    add_fake_measurements(data, targets, **kwargs)
+
+    return data
+
+
 def df_drop_single_value_columns(
     df: pd.DataFrame, lst_exclude: list = None
 ) -> pd.DataFrame:
@@ -461,98 +507,95 @@ def fuzzy_row_match(
     left_df: pd.DataFrame,
     right_df: pd.DataFrame,
     parameters: Sequence[Parameter],
-    numerical_measurements_must_be_within_tolerance: bool,
 ) -> pd.Index:
-    """Match row of the right dataframe to the rows of the left dataframe.
+    """Match rows of the right dataframe to rows of the left dataframe.
 
-    This is useful for validity checks and to automatically match measurements to
-    entries in the search space, e.g. to detect which ones have been measured.
-    For categorical parameters, there needs to be an exact match with any of the
-    allowed values. For numerical parameters, the user can decide via a flag
-    whether values outside the tolerance should be accepted.
+    This is useful for matching measurements to entries in the search space, e.g. to
+    detect which ones have been measured. For categorical parameters, there needs to be
+    an exact match with any of the allowed values. For numerical parameters, the points
+    with the smallest deviation are considered.
+
+    Note:
+        This function assumes that the dataframes contain only allowed values as
+        specified in the parameter objects. No further validation to assert this is
+        done.
 
     Args:
         left_df: The data that serves as lookup reference.
-        right_df: The data that should be checked for matching rows in the left
-            dataframe.
-        parameters: List of baybe parameter objects that are needed to identify
-            potential tolerances.
-        numerical_measurements_must_be_within_tolerance: If ``True``, numerical
-            parameters are matched with the search space elements only if there is a
-            match within the parameter tolerance. If ``False``, the closest match is
-            considered, irrespective of the distance.
+        right_df: The data that is checked for matching rows in the left dataframe.
+        parameters: Parameter objects that identify the relevant column names and how
+            matching is performed.
 
     Returns:
         The index of the matching rows in ``left_df``.
 
     Raises:
-        ValueError: If some rows are present in the right but not in the left dataframe.
-        ValueError: If the input data has invalid values.
+        ValueError: If either ``left_df`` or ``right_df`` does not contain columns for
+            each entry in parameters.
     """
-    # Assert that all parameters appear in the given dataframe
-    if not all(col in right_df.columns for col in left_df.columns):
+    # Separate columns types
+    cat_cols = {p.name for p in parameters if (not p.is_numerical and p.is_discrete)}
+    num_cols = {p.name for p in parameters if (p.is_numerical and p.is_discrete)}
+    non_discrete_cols = {p.name for p in parameters if not p.is_discrete}
+
+    # Assert that all parameters appear in the given dataframes
+    if diff := (cat_cols | num_cols).difference(left_df.columns):
         raise ValueError(
-            "For fuzzy row matching all rows of the right dataframe need to be present"
-            " in the left dataframe."
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the left dataframe. Parameters not found: {diff})"
+        )
+    if diff := (cat_cols | num_cols).difference(right_df.columns):
+        raise ValueError(
+            f"For fuzzy row matching, all discrete parameters need to have a "
+            f"corresponding column in the right dataframe. Parameters not found: "
+            f"{diff})"
         )
 
-    inds_matched = []
+    provided_cols = {p.name for p in parameters}
+    allowed_cols = cat_cols | num_cols | non_discrete_cols
+    assert allowed_cols == provided_cols, (
+        f"There are parameter types that would be silently ignored: "
+        f"{provided_cols.difference(allowed_cols)}"
+    )
 
-    # Iterate over all input rows
-    for ind, row in right_df.iterrows():
-        # Check if the row represents a valid input
-        valid = True
-        for param in parameters:
-            if param.is_numerical:
-                if numerical_measurements_must_be_within_tolerance:
-                    valid &= param.is_in_range(row[param.name])
-            else:
-                valid &= param.is_in_range(row[param.name])
-            if not valid:
-                raise ValueError(
-                    f"Input data on row with the index {row.name} has invalid "
-                    f"values in parameter '{param.name}'. "
-                    f"For categorical parameters, values need to exactly match a "
-                    f"valid choice defined in your config. "
-                    f"For numerical parameters, a match is accepted only if "
-                    f"the input value is within the specified tolerance/range. Set "
-                    f"the flag 'numerical_measurements_must_be_within_tolerance' "
-                    f"to 'False' to disable this behavior."
-                )
+    # Initialize the match matrix. We will later filter it down using other
+    # matrices (representing the matches for individual parameters) via logical 'and'.
+    match_matrix = pd.DataFrame(
+        True, index=right_df.index, columns=left_df.index, dtype=bool
+    )
 
-        # Differentiate category-like and discrete numerical parameters
-        cat_cols = [p.name for p in parameters if not p.is_numerical]
-        num_cols = [p.name for p in parameters if (p.is_numerical and p.is_discrete)]
+    # Match categorical parameters
+    for col in cat_cols:
+        # Per categorical parameter, this identifies matches between all elements of
+        # left and right and stores them in a matrix.
+        match_matrix &= right_df[col].values[:, None] == left_df[col].values[None, :]
 
-        # Discrete parameters must match exactly
-        match = left_df[cat_cols].eq(row[cat_cols]).all(axis=1, skipna=False)
+    # Match numerical parameters
+    for col in num_cols:
+        # Per numerical parameter, this identifies the rows with the smallest absolute
+        # difference and records them in a matrix.
+        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        min_diff = abs_diff.min(axis=1, keepdims=True)
+        match_matrix &= abs_diff == min_diff
 
-        # For numeric parameters, match the entry with the smallest deviation
-        # TODO: allow alternative distance metrics
-        for col in num_cols:
-            abs_diff = (left_df[col] - row[col]).abs()
-            match &= abs_diff == abs_diff.min()
+    # Find the matching indices. If a right row is not matched to any of the rows in
+    # left, idxmax would return the first index of left_df. Hence, we remember these
+    # cases and drop them explicitly.
+    matched_indices = pd.Index(match_matrix.idxmax(axis=1).values)
+    mask_no_match = ~match_matrix.any(axis=1)
+    matched_indices = matched_indices[~mask_no_match]
 
-        # We expect exactly one match. If that's not the case, print a warning.
-        inds_found = left_df.index[match].to_list()
-        if len(inds_found) == 0 and len(num_cols) > 0:
-            _logger.warning(
-                "Input row with index %s could not be matched to the search space. "
-                "This could indicate that something went wrong.",
-                ind,
-            )
-        elif len(inds_found) > 1:
-            _logger.warning(
-                "Input row with index %s has multiple matches with "
-                "the search space. This could indicate that something went wrong. "
-                "Matching only first occurrence.",
-                ind,
-            )
-            inds_matched.append(inds_found[0])
-        else:
-            inds_matched.extend(inds_found)
+    mask_multiple_matches = match_matrix.sum(axis=1) > 1
+    if multiple_match_indices := right_df.index[mask_multiple_matches].tolist():
+        w = SearchSpaceMatchWarning(
+            f"Some input rows have multiple matches with the search space. "
+            f"Matching only first occurrence for these rows. Indices with multiple "
+            f"matches: {multiple_match_indices}",
+            right_df.loc[multiple_match_indices],
+        )
+        warnings.warn(w)
 
-    return pd.Index(inds_matched)
+    return matched_indices
 
 
 def pretty_print_df(
@@ -649,6 +692,31 @@ def get_transform_objects(
         )
 
     return [p for p in objects if p.name in df]
+
+
+def transform_target_columns(
+    df: pd.DataFrame,
+    targets: Sequence[Target],
+    /,
+    *,
+    allow_missing: bool = False,
+    allow_extra: bool = False,
+) -> pd.DataFrame:
+    """Transform the columns of a dataframe that correspond to objects of type :class:`~baybe.targets.base.Target`.
+
+    For more details, see :func:`baybe.utils.dataframe.get_transform_objects`.
+    """  # noqa: E501
+    # Extract the relevant part of the dataframe
+    targets = get_transform_objects(
+        df, targets, allow_missing=allow_missing, allow_extra=allow_extra
+    )
+    transformed = df[[t.name for t in targets]].copy()
+
+    # Transform all targets individually
+    for target in targets:
+        transformed[target.name] = target.transform(df[target.name])
+
+    return transformed
 
 
 def filter_df(
@@ -784,3 +852,7 @@ def arrays_to_dataframes(
         return wrapper
 
     return decorator
+
+
+class _ValidatedDataFrame(pd.DataFrame):
+    """Wrapper indicating the underlying experimental data was already validated."""

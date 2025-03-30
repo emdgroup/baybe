@@ -3,7 +3,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
+from baybe._optional.info import POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
     ContinuousLinearConstraint,
@@ -21,6 +23,10 @@ from baybe.searchspace import (
     SearchSpaceType,
     SubspaceContinuous,
     SubspaceDiscrete,
+)
+from baybe.searchspace.discrete import (
+    parameter_cartesian_prod_pandas,
+    parameter_cartesian_prod_polars,
 )
 
 
@@ -221,8 +227,20 @@ def test_invalid_constraint_parameter_combos():
             "Fraction_1",
             "Solvent_1",
             "Custom_1",
-        ]
+        ],
+        [
+            "Categorical_1_subset",
+            "Categorical_2",
+            "Frame_A",
+            "Some_Setting",
+            "Num_disc_1",
+            "Fraction_1",
+            "Solvent_1_subset",
+            "Custom_1_subset",
+            "Task",
+        ],
     ],
+    ids=["simple", "with_active_values"],
 )
 def test_searchspace_memory_estimate(searchspace: SearchSpace):
     """The memory estimate doesn't differ by more than 5% from the actual memory."""
@@ -268,3 +286,60 @@ def test_cardinality_constraints_with_overlapping_parameters():
                 ),
             ),
         )
+
+
+def test_cardinality_constraint_with_invalid_parameter_bounds():
+    """Imposing a cardinality constraint on a parameter whose range does not include
+    zero raises an error."""  # noqa
+    parameters = (
+        NumericalContinuousParameter("c1", (0, 1)),
+        NumericalContinuousParameter("c2", (1, 2)),
+    )
+    with pytest.raises(ValueError, match="must include zero"):
+        SubspaceContinuous(
+            parameters=parameters,
+            constraints_nonlin=(
+                ContinuousCardinalityConstraint(
+                    parameters=["c1", "c2"],
+                    max_cardinality=1,
+                ),
+            ),
+        )
+
+
+@pytest.mark.skipif(
+    not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [
+        [
+            "Categorical_1",
+            "Categorical_2",
+            "Custom_1",
+            "Solvent_1",
+            "Solvent_2",
+            "Fraction_1",
+        ],
+        [
+            "Categorical_1_subset",
+            "Categorical_2",
+            "Custom_1_subset",
+            "Solvent_1_subset",
+            "Solvent_2",
+            "Fraction_1",
+        ],
+    ],
+    ids=["simple", "with_active_values"],
+)
+def test_polars_pandas_equivalence(parameters):
+    """Search spaces created with Polars and Pandas are identical."""
+    # Do Polars product
+    ldf = parameter_cartesian_prod_polars(parameters)
+    df_pl = ldf.collect()
+
+    # Do Pandas product
+    df_pd = parameter_cartesian_prod_pandas(parameters)
+
+    # Assert equality
+    assert_frame_equal(df_pl.to_pandas(), df_pd)

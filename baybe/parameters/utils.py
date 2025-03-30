@@ -1,11 +1,19 @@
 """Parameter utilities."""
 
 from collections.abc import Callable, Collection
+from functools import partial
 from typing import Any, TypeVar
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
+from attrs import evolve
 
 from baybe.parameters.base import Parameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+)
+from baybe.utils.interval import Interval
 
 _TParameter = TypeVar("_TParameter", bound=Parameter)
 
@@ -87,3 +95,106 @@ def get_parameters_from_dataframe(
 def sort_parameters(parameters: Collection[Parameter]) -> tuple[Parameter, ...]:
     """Sort parameters alphabetically by their names."""
     return tuple(sorted(parameters, key=lambda p: p.name))
+
+
+def activate_parameter(
+    parameter: NumericalContinuousParameter, thresholds: Interval
+) -> NumericalContinuousParameter:
+    """Force-activates a given parameter by moving its bounds away from zero.
+
+    A parameter is considered active if its value falls outside the specified threshold
+    interval. Force-activating a parameter adjusts its range to ensure it cannot take
+    values within this interval. Parameters that are inherently active, due to their
+    original value ranges not overlapping with the inactivity interval, remain
+    unchanged.
+
+    Important:
+        A parameter whose range includes zero but extends beyond the threshold interval
+        on both sides remains unchanged, because the corresponding activated parameter
+        would no longer have a continuous value range.
+
+    Args:
+        parameter: The parameter to be activated.
+        thresholds: The considered parameter (in)activity thresholds.
+
+    Returns:
+        A copy of the parameter with adjusted bounds.
+
+    Raises:
+        ValueError: If the threshold interval does not contain zero.
+        ValueError: If the parameter cannot be activated since both its bounds are
+            in the inactive range.
+        NotImplementedError: In situations that cannot be encountered in a regular
+            recommendation context since prevented by other validation measures (for
+            example, edge case of an activation that would result in a single active
+            point when the open inactive interval aligns on one side with the parameter
+            bounds). For such situations, the behavior of the function is not defined.
+    """
+
+    def is_fraction(value: float, reference: float) -> bool:
+        """Check if the given value is a fraction of a specified reference value."""
+        if value == 0.0:
+            return reference == 0.0
+        return reference / value > 1.0
+
+    lower_bound = parameter.bounds.lower
+    upper_bound = parameter.bounds.upper
+
+    if not thresholds.contains(0.0):
+        raise ValueError(
+            f"The thresholds must cover zero but ({thresholds.lower}, "
+            f"{thresholds.upper}) was given."
+        )
+
+    if not (
+        is_fraction(thresholds.lower, lower_bound)
+        and is_fraction(thresholds.upper, upper_bound)
+    ):
+        raise NotImplementedError(
+            "This function is implemented only for the case when "
+            "thresholds is a proper sub-interval of the parameter bounds."
+        )
+
+    # Callable checking whether the argument is within the inactive range
+    _is_inactive = partial(
+        is_inactive,
+        lower_threshold=thresholds.lower,
+        upper_threshold=thresholds.upper,
+    )
+
+    # When the upper bound is in inactive range, move it to the lower threshold of the
+    # inactive region
+    if not _is_inactive(lower_bound) and _is_inactive(upper_bound):
+        return evolve(parameter, bounds=(lower_bound, thresholds.lower))
+
+    # When the lower bound is in inactive range, move it to the upper threshold of
+    # the inactive region
+    if not _is_inactive(upper_bound) and _is_inactive(lower_bound):
+        return evolve(parameter, bounds=(thresholds.upper, upper_bound))
+
+    # When the parameter is already trivially active (or activating it would tear
+    # its value range apart)
+    return parameter
+
+
+def is_inactive(
+    x: npt.ArrayLike, /, lower_threshold: npt.ArrayLike, upper_threshold: npt.ArrayLike
+) -> np.ndarray:
+    """Check if the given values are inactive (i.e. can be treated as zero).
+
+    A value is considered inactive when at least one of the following is true:
+    * The value lies in the open interval specified by the given thresholds.
+    * The value is zero.
+
+    Args:
+        x: An array-like object containing numeric values.
+        lower_threshold: The (broadcastable) lower thresholds of the inactive regions.
+        upper_threshold: The (broadcastable) upper thresholds of the inactive regions.
+
+    Returns:
+        A Boolean-valued numpy array indicating which elements are inactive.
+    """
+    x = np.asarray(x)
+    lower_threshold = np.asarray(lower_threshold)
+    upper_threshold = np.asarray(upper_threshold)
+    return ((x > lower_threshold) & (x < upper_threshold)) | (x == 0.0)

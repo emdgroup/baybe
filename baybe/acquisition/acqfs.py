@@ -4,20 +4,20 @@ import gc
 import math
 from typing import ClassVar
 
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
 from attrs import define, field, fields
-from attrs.validators import ge, gt, instance_of, le
+from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.searchspace import SearchSpace
-from baybe.utils.basic import classproperty
-from baybe.utils.sampling_algorithms import (
-    DiscreteSamplingMethod,
-    sample_numerical_df,
-)
+from baybe.utils.basic import classproperty, convert_to_float
+from baybe.utils.sampling_algorithms import DiscreteSamplingMethod, sample_numerical_df
+from baybe.utils.validation import finite_float
 
 
 ########################################################################################
@@ -264,12 +264,15 @@ class UpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "UCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
     """Trade-off parameter for mean and variance.
 
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
+    * ``beta > 0``: Rewards uncertainty, takes more risk.
+      Limit ``inf``: Pure exploration
+    * ``beta < 0``: Punishes uncertainty, takes less risk.
+      Limit ``-inf``: Pure exploitation
+    * ``beta = 0``: Discards knowledge about uncertainty, i.e. neither rewards nor
+      punishes it, is risk-neutral.
     """
 
 
@@ -279,13 +282,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
 
     abbreviation: ClassVar[str] = "qUCB"
 
-    beta: float = field(converter=float, validator=ge(0.0), default=0.2)
-    """Trade-off parameter for mean and variance.
-
-    A value of zero makes the acquisition mechanism consider the posterior predictive
-    mean only, resulting in pure exploitation. Higher values shift the focus more and
-    more toward exploration.
-    """
+    beta: float = field(converter=float, validator=finite_float, default=0.2)
+    """See :paramref:`UpperConfidenceBound.beta`."""
 
 
 @define(frozen=True)
@@ -318,6 +316,96 @@ class qThompsonSampling(qSimpleRegret):
     @classproperty
     def supports_batching(cls) -> bool:
         return False
+
+
+########################################################################################
+### Hypervolume Improvement
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    reference_point: float | tuple[float, ...] | None = field(
+        default=None, converter=optional_c(convert_to_float)
+    )
+    """The reference point for computing the hypervolume improvement.
+
+    * When omitted, a default reference point is computed based on the provided data.
+    * When specified as a float, the value is interpreted as a multiplicative factor
+      determining the reference point location based on the difference between the best
+      and worst target configuration in the provided data.
+    * When specified as an iterable, the contained values are directly interpreted as
+      the coordinates of the reference point.
+    """
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        # While BoTorch's acquisition function also expects a `ref_point` argument,
+        # the attribute defined here is more general and can hence not be directly
+        # matched. Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(qLogNoisyExpectedHypervolumeImprovement)
+        return (flds.reference_point.name,)
+
+    @staticmethod
+    def compute_ref_point(
+        array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
+    ) -> np.ndarray:
+        """Compute a reference point for a given set of of target configurations.
+
+        The reference point is positioned relative to the worst point in the direction
+        coming from the best point:
+
+        * A factor of 0.0 results in the reference point being the worst point.
+        * A factor > 0.0 moves the reference point further away from both worst and best
+          points. (A factor of 1.0 exactly mirrors the best around the worst point.)
+        * A factor < 0.0 moves the reference point closer to the best point.
+          (A factor of -1.0 exactly places the reference point onto the best point.)
+
+        Example:
+            >>> from baybe.acquisition import qLogNEHVI
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, True], 0.1)
+            array([-0.2,  9. ])
+
+            >>> qLogNEHVI.compute_ref_point([[0, 10], [2, 20]], [True, False], 0.2)
+            array([-0.4, 22. ])
+
+        Args:
+            array: A 2-D array-like where each row represents a target configuration.
+            maximize: A 1-D boolean array indicating which targets are to be maximized.
+            factor: A numeric value controlling the location of the reference point.
+
+        Raises:
+            ValueError: If the given target configuration array is not two-dimensional.
+            ValueError: If the given Boolean array is not one-dimensional.
+
+        Returns:
+            The computed reference point.
+        """
+        if np.ndim(array) != 2:
+            raise ValueError(
+                "The specified data array must have exactly two dimensions."
+            )
+        if np.ndim(maximize) != 1:
+            raise ValueError(
+                "The specified Boolean array must have exactly one dimension."
+            )
+
+        # Convert arrays
+        array = np.asarray(array)
+        maximize = np.where(maximize, 1.0, -1.0)
+
+        # Compute bounds
+        array = array * maximize[None, :]
+        min = np.min(array, axis=0)
+        max = np.max(array, axis=0)
+
+        return (min - factor * (max - min)) * maximize
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

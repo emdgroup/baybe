@@ -2,14 +2,85 @@ name: Run Benchmark
 
 on:
   workflow_dispatch:
+    inputs:
+      group_selection:
+        description: "Group of Benchmarks to Run:"
+        required: true
+        default: "All"
+        type: choice
+        options:
+          - "Manually Selected"
+          - "All"
+          - "Default"
+      synthetic_2C1D_1C:
+        description: "synthetic_2C1D_1C benchmark"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  add-runner:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
+    steps:
+      - name: Build matrix from inputs
+        if: ${{ github.event.inputs.group_selection == 'Manually Selected' || github.event.inputs.group_selection == 'All' }}
+        id: build_matrix_from_inputs
+        run: |
+          benchmarks_to_execute='{"benchmark_list": ['
+          run_all_benchmarks=${{ github.event.inputs.group_selection == 'All' }}
+
+          for key in $(echo '${{ toJson(github.event.inputs) }}' | jq -r 'keys_unsorted[]'); do
+            if [ "$key" != "group_selection" ]; then
+              value=$(echo '${{ toJson(github.event.inputs) }}' | jq -r --arg k "$key" '.[$k]')
+              if [ "$value" = "true" ] || [ "$run_all_benchmarks" = "true" ]; then
+                benchmarks_to_execute="$benchmarks_to_execute \"$key\","
+              fi
+            fi
+          done
+          benchmarks_to_execute=$(echo "$benchmarks_to_execute" | sed 's/,$//')
+          benchmarks_to_execute="$benchmarks_to_execute ]}"
+
+          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
+
+      - name: Build matrix from group
+        if: ${{ github.event.inputs.group_selection != 'Manually Selected' && github.event.inputs.group_selection != 'All' }}
+        id: build_matrix_from_group
+        run: |
+          benchmarks_to_execute='{"benchmark_list": []}'
+          run_all_benchmarks="${{ github.event.inputs.group_selection }}"
+
+          if [ "$run_all_benchmarks" = "Default" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
+          fi
+
+          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
+
+      - name: Set benchmarks output
+        id: set_benchmarks
+        run: |
+          echo 'benchmarks_to_execute=${{ env.benchmarks_to_execute }}' >> "$GITHUB_OUTPUT"
+          number_of_tasks=$(echo '${{ env.benchmarks_to_execute }}' | jq '.benchmark_list | length')
+
+          if [ "$number_of_tasks" -le 0 ]; then
+            echo "Please run at least one benchmark"
+            exit 1
+          fi
+
+  add-runner:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
     steps:
       - name: Generate a token
         id: generate-token
@@ -28,16 +99,20 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
       - name: Execute Lambda function
         run: |
-          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "XL", "repository": "${{ github.repository }}" }'  response.json
-          cat response.json
+          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "M", "repository": "${{ github.repository }}" }'  response.json
+
           if ! grep -q '"statusCode": 200' response.json; then
             echo "Lambda function failed. statusCode is not 200."
             exit 1
           fi
 
   benchmark-test:
-    needs: add-runner
+    needs: [prepare, add-runner]
     runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
+    timeout-minutes: 1440
     env:
       BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
     steps:
@@ -51,4 +126,4 @@ jobs:
       - name: Benchmark
         run: |
           pip install '.[benchmarking]'
-          python -m benchmarks
+          python -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"

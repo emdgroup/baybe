@@ -4,17 +4,25 @@ from contextlib import nullcontext
 
 import pandas as pd
 import pytest
+from pandas.testing import assert_index_equal
 from pytest import param
 
+from baybe.acquisition import qLogEI, qLogNEHVI, qTS
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
+from baybe.objectives import DesirabilityObjective, ParetoObjective
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.surrogates import (
+    BetaBernoulliMultiArmedBanditSurrogate,
+    GaussianProcessSurrogate,
+)
+from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.basic import UNSPECIFIED
 
 from .conftest import run_iterations
@@ -113,3 +121,124 @@ def test_setting_allow_flags(flag, space_type, value):
 
     with pytest.raises(ValueError) if expect_error else nullcontext():
         Campaign(parameter, **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
+    [
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            NumericalTarget("t1", "MAX").to_objective(),
+            GaussianProcessSurrogate(),
+            qLogEI(),
+            3,
+            id="single_target",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            DesirabilityObjective(
+                (
+                    NumericalTarget("t1", "MAX", bounds=(0, 1)),
+                    NumericalTarget("t2", "MIN", bounds=(0, 1)),
+                )
+            ),
+            GaussianProcessSurrogate(),
+            qLogEI(),
+            3,
+            id="desirability",
+        ),
+        param(
+            ["Categorical_1", "Num_disc_1", "Conti_finite1"],
+            ParetoObjective(
+                (NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN"))
+            ),
+            GaussianProcessSurrogate(),
+            qLogNEHVI(),
+            3,
+            id="pareto",
+        ),
+        param(
+            ["Categorical_1"],
+            BinaryTarget(name="Target_binary").to_objective(),
+            BetaBernoulliMultiArmedBanditSurrogate(),
+            qTS(),
+            1,
+            id="bernoulli",
+        ),
+    ],
+)
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
+    """Posterior statistics have expected shape, index and columns."""
+    objective = ongoing_campaign.objective
+    tested_stats = ["mean", "std", "var"]
+    test_quantiles = not isinstance(objective.targets[0], BinaryTarget)
+    if test_quantiles:
+        tested_stats += [0.05, 0.95]
+
+    stats = ongoing_campaign.posterior_stats(
+        ongoing_campaign.measurements, tested_stats
+    )
+
+    # Assert number of entries and index
+    (
+        assert_index_equal(ongoing_campaign.measurements.index, stats.index),
+        (ongoing_campaign.measurements.index, stats.index),
+    )
+
+    # Assert expected columns are present.
+    match objective:
+        case DesirabilityObjective():
+            targets = ["Desirability"]
+        case _:
+            targets = [t.name for t in objective.targets]
+
+    for t in targets:
+        for stat in tested_stats:
+            stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
+            assert (
+                sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1
+            ), f"{t}_{stat_name} not in the returned posterior statistics"
+
+    # Assert no NaN's present
+    assert not stats.isna().any().any()
+
+    if not test_quantiles:
+        # Assert correct error for unsupported quantile calculation
+        with pytest.raises(
+            TypeError, match="does not support the statistic associated"
+        ):
+            ongoing_campaign.posterior_stats(ongoing_campaign.measurements, [0.1])
+
+
+@pytest.mark.parametrize(
+    ("stats", "error", "match"),
+    [
+        param(
+            ["invalid"],
+            TypeError,
+            "does not support the statistic associated",
+            id="invalid_stat",
+        ),
+        param(
+            [-0.1],
+            ValueError,
+            "quantile statistics can only be",
+            id="quantile_too_small",
+        ),
+        param(
+            [1.1],
+            ValueError,
+            "quantile statistics can only be",
+            id="quantile_too_large",
+        ),
+    ],
+)
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
+    """Invalid inputs for posterior statistics raise expected exceptions."""
+    with pytest.raises(error, match=match):
+        ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)

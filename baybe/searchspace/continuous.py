@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import gc
+import math
 import warnings
-from collections.abc import Collection, Sequence
-from itertools import chain
+from collections.abc import Collection, Iterator, Sequence
+from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, evolve, field, fields
 from typing_extensions import override
 
 from baybe.constraints import (
@@ -19,11 +20,17 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import ContinuousConstraint, ContinuousNonlinearConstraint
 from baybe.constraints.validation import (
+    validate_cardinality_constraint_parameter_bounds,
     validate_cardinality_constraints_are_nonoverlapping,
 )
 from baybe.parameters import NumericalContinuousParameter
 from baybe.parameters.base import ContinuousParameter
-from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
+from baybe.parameters.numerical import _FixedNumericalContinuousParameter
+from baybe.parameters.utils import (
+    activate_parameter,
+    get_parameters_from_dataframe,
+    sort_parameters,
+)
 from baybe.searchspace.validation import (
     validate_parameter_names,
 )
@@ -134,6 +141,23 @@ class SubspaceContinuous(SerialMixin):
                 f"the 'operator' for all list items should be '>=' or '<='."
             )
 
+    @property
+    def n_inactive_parameter_combinations(self) -> int:
+        """The number of possible inactive parameter combinations."""
+        return math.prod(
+            c.n_inactive_parameter_combinations for c in self.constraints_cardinality
+        )
+
+    def inactive_parameter_combinations(self) -> Iterator[frozenset[str]]:
+        """Get an iterator over all possible combinations of inactive parameters."""
+        for combination in product(
+            *[
+                con.inactive_parameter_combinations()
+                for con in self.constraints_cardinality
+            ]
+        ):
+            yield frozenset(chain(*combination))
+
     @constraints_nonlin.validator
     def _validate_constraints_nonlin(self, _, __) -> None:
         """Validate nonlinear constraints."""
@@ -141,6 +165,9 @@ class SubspaceContinuous(SerialMixin):
         validate_cardinality_constraints_are_nonoverlapping(
             self.constraints_cardinality
         )
+
+        for con in self.constraints_cardinality:
+            validate_cardinality_constraint_parameter_bounds(con, self.parameters)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
@@ -278,6 +305,12 @@ class SubspaceContinuous(SerialMixin):
         return tuple(chain.from_iterable(p.comp_rep_columns for p in self.parameters))
 
     @property
+    def parameter_names_in_cardinality_constraints(self) -> frozenset[str]:
+        """The names of all parameters affected by cardinality constraints."""
+        names_per_constraint = (c.parameters for c in self.constraints_cardinality)
+        return frozenset(chain(*names_per_constraint))
+
+    @property
     def comp_rep_bounds(self) -> pd.DataFrame:
         """The minimum and maximum values of the computational representation."""
         return pd.DataFrame(
@@ -285,6 +318,11 @@ class SubspaceContinuous(SerialMixin):
             index=["min", "max"],
             dtype=DTypeFloatNumpy,
         )
+
+    @property
+    def scaling_bounds(self) -> pd.DataFrame:
+        """The bounds used for scaling the surrogate model input."""
+        return self.comp_rep_bounds
 
     def _drop_parameters(self, parameter_names: Collection[str]) -> SubspaceContinuous:
         """Create a copy of the subspace with certain parameters removed.
@@ -306,6 +344,71 @@ class SubspaceContinuous(SerialMixin):
                 c._drop_parameters(parameter_names)
                 for c in self.constraints_lin_ineq
                 if set(c.parameters) - set(parameter_names)
+            ],
+        )
+
+    def _enforce_cardinality_constraints(
+        self,
+        inactive_parameter_names: Collection[str],
+    ) -> SubspaceContinuous:
+        """Create a copy of the subspace with fixed inactive parameters.
+
+        The returned subspace requires no cardinality constraints since – for the
+        given separation of parameter into active an inactive sets – the
+        cardinality constraints are implemented by fixing the inactive parameters to
+        zero and bounding the active parameters away from zero.
+
+        Args:
+            inactive_parameter_names: The names of the parameter to be inactivated.
+
+        Returns:
+            A new subspace with fixed inactive parameters and no cardinality
+            constraints.
+        """
+        # Extract active parameters involved in cardinality constraints
+        active_parameter_names = (
+            self.parameter_names_in_cardinality_constraints.difference(
+                inactive_parameter_names
+            )
+        )
+
+        # Adjust parameters depending on their in-/activity assignment
+        adjusted_parameters: list[ContinuousParameter] = []
+        p_adjusted: ContinuousParameter
+        for p in self.parameters:
+            if p.name in inactive_parameter_names:
+                p_adjusted = _FixedNumericalContinuousParameter(name=p.name, value=0.0)
+
+            elif p.name in active_parameter_names:
+                constraints = [
+                    c for c in self.constraints_cardinality if p.name in c.parameters
+                ]
+
+                # Constraint validation should have ensured that each parameter can
+                # be part of at most one cardinality constraint
+                assert len(constraints) == 1
+                constraint = constraints[0]
+
+                # If the corresponding constraint enforces a minimum cardinality,
+                # force-activate the parameter
+                if constraint.min_cardinality > 0:
+                    p_adjusted = activate_parameter(
+                        p, constraint.get_absolute_thresholds(p.bounds)
+                    )
+                else:
+                    p_adjusted = p
+            else:
+                p_adjusted = p
+
+            adjusted_parameters.append(p_adjusted)
+
+        return evolve(
+            self,
+            parameters=adjusted_parameters,
+            constraints_nonlin=[
+                c
+                for c in self.constraints_nonlin
+                if not isinstance(c, ContinuousCardinalityConstraint)
             ],
         )
 
@@ -442,6 +545,7 @@ class SubspaceContinuous(SerialMixin):
                 f"Use '{SubspaceContinuous._sample_from_bounds.__name__}' "
                 f"or '{SubspaceContinuous._sample_from_polytope.__name__}' instead."
             )
+        from botorch.exceptions.errors import InfeasibilityError
 
         # List to store the created samples
         samples: list[pd.DataFrame] = []
@@ -453,16 +557,23 @@ class SubspaceContinuous(SerialMixin):
             # Randomly set some parameters inactive
             inactive_params_sample = self._sample_inactive_parameters(1)[0]
 
-            # Remove the inactive parameters from the search space
-            subspace_without_cardinality_constraint = self._drop_parameters(
-                inactive_params_sample
+            # Remove the inactive parameters from the search space. In the first
+            # step, the active parameters get activated and inactive parameters are
+            # fixed to zero. The first step helps ensure active parameters stay
+            # non-zero, especially when one boundary is zero. The second step is
+            # optional and it helps reduce the parameter space with certain
+            # computational cost.
+            subspace_without_cardinality_constraint = (
+                self._enforce_cardinality_constraints(
+                    inactive_params_sample
+                )._drop_parameters(inactive_params_sample)
             )
 
             # Sample from the reduced space
             try:
                 sample = subspace_without_cardinality_constraint.sample_uniform(1)
                 samples.append(sample)
-            except ValueError:
+            except InfeasibilityError:
                 n_fails += 1
 
             # Avoid infinite loop

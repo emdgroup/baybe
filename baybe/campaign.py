@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
@@ -33,7 +33,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -42,8 +42,9 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
-from baybe.utils.dataframe import filter_df, fuzzy_row_match
+from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_match
 from baybe.utils.plotting import to_string
+from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
     from botorch.posteriors import Posterior
@@ -180,7 +181,7 @@ class Campaign(SerialMixin):
             index=self.searchspace.discrete.exp_rep.index,
             columns=_METADATA_COLUMNS,
         )
-        df.loc[:, _EXCLUDED] = self.searchspace.discrete._excluded
+
         return df
 
     @override
@@ -264,48 +265,25 @@ class Campaign(SerialMixin):
         Each addition of data is considered a new batch. Added results are checked for
         validity. Categorical values need to have an exact match. For numerical values,
         a campaign flag determines if values that lie outside a specified tolerance
-        are accepted.
-        Note that this modifies the provided data in-place.
+        are accepted. Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input` and
+        :func:`baybe.utils.validation.validate_parameter_input`.
 
         Args:
             data: The data to be added (with filled values for targets). Preferably
                 created via :func:`baybe.campaign.Campaign.recommend`.
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
-
-        Raises:
-            ValueError: If one of the targets has missing values or NaNs in the provided
-                dataframe.
-            TypeError: If the target has non-numeric entries in the provided dataframe.
         """
         # Invalidate recommendation cache first (in case of uncaught exceptions below)
         self._cached_recommendation = pd.DataFrame()
 
-        # Check if all targets have valid values
-        for target in self.targets:
-            if data[target.name].isna().any():
-                raise ValueError(
-                    f"The target '{target.name}' has missing values or NaNs in the "
-                    f"provided dataframe. Missing target values are not supported."
-                )
-            if data[target.name].dtype.kind not in "iufb":
-                raise TypeError(
-                    f"The target '{target.name}' has non-numeric entries in the "
-                    f"provided dataframe. Non-numeric target values are not supported."
-                )
-
-        # Check if all targets have valid values
-        for param in self.parameters:
-            if data[param.name].isna().any():
-                raise ValueError(
-                    f"The parameter '{param.name}' has missing values or NaNs in the "
-                    f"provided dataframe. Missing parameter values are not supported."
-                )
-            if param.is_numerical and (data[param.name].dtype.kind not in "iufb"):
-                raise TypeError(
-                    f"The numerical parameter '{param.name}' has non-numeric entries in"
-                    f" the provided dataframe."
-                )
+        # Validate target and parameter input values
+        validate_target_input(data, self.targets)
+        validate_parameter_input(
+            data, self.parameters, numerical_measurements_must_be_within_tolerance
+        )
+        data.__class__ = _ValidatedDataFrame
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -320,20 +298,14 @@ class Campaign(SerialMixin):
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             idxs_matched = fuzzy_row_match(
-                self.searchspace.discrete.exp_rep,
-                data,
-                self.parameters,
-                numerical_measurements_must_be_within_tolerance,
+                self.searchspace.discrete.exp_rep, data, self.parameters
             )
             self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
         # Telemetry
         telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
         telemetry_record_recommended_measurement_percentage(
-            self._cached_recommendation,
-            data,
-            self.parameters,
-            numerical_measurements_must_be_within_tolerance,
+            self._cached_recommendation, data, self.parameters
         )
 
     def toggle_discrete_candidates(  # noqa: DOC501
@@ -423,8 +395,10 @@ class Campaign(SerialMixin):
             )
 
         # Invalidate cached recommendation if pending experiments are provided
-        if (pending_experiments is not None) and (len(pending_experiments) > 0):
+        if (pending_experiments is not None) and not pending_experiments.empty:
             self._cached_recommendation = pd.DataFrame()
+            validate_parameter_input(pending_experiments, self.parameters)
+            pending_experiments.__class__ = _ValidatedDataFrame
 
         # If there are cached recommendations and the batch size of those is equal to
         # the previously requested one, we just return those
@@ -532,12 +506,14 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame | None = None) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            candidates: The candidate points in experimental recommendations. If not
+                provided, the posterior for the existing campaign measurements is
+                returned. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
         Raises:
             IncompatibilityError: If the underlying surrogate model exposes no
@@ -547,6 +523,9 @@ class Campaign(SerialMixin):
             Posterior: The corresponding posterior object.
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
             raise IncompatibilityError(
@@ -554,10 +533,42 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        import torch
+        return surrogate.posterior(candidates)
 
-        with torch.no_grad():
-            return surrogate.posterior(candidates)
+    def posterior_stats(
+        self,
+        candidates: pd.DataFrame | None = None,
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
+    ) -> pd.DataFrame:
+        """Return posterior statistics for each target.
+
+        Args:
+            candidates: The candidate points in experimental representation. If not
+                provided, the statistics of the existing campaign measurements are
+                calculated. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior_stats`.
+            stats: Sequence indicating which statistics to compute. Also accepts
+                floats, for which the corresponding quantile point will be computed.
+
+        Raises:
+            ValueError: If a requested quantile is outside the open interval (0,1).
+            TypeError: If the posterior utilized by the surrogate does not support
+                a requested statistic.
+
+        Returns:
+            A dataframe with posterior statistics for each target and candidate.
+        """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior_stats"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
+
+        return surrogate.posterior_stats(candidates, stats)
 
     def get_surrogate(
         self,

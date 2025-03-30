@@ -24,7 +24,7 @@ from tenacity import (
 from torch._C import _LinAlgError
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.acquisition import qExpectedImprovement
+from baybe.acquisition import qLogExpectedImprovement
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -77,7 +77,11 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
-from baybe.utils.dataframe import add_fake_measurements, add_parameter_noise
+from baybe.utils.dataframe import (
+    add_fake_measurements,
+    add_parameter_noise,
+    create_fake_input,
+)
 from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
@@ -164,6 +168,18 @@ def fixture_batch_size(request):
     return request.param
 
 
+@pytest.fixture(name="n_fake_measurements")
+def fixture_n_fake_measurements(batch_size):
+    """Number of rows for :func:`baybe.utils.dataframe.create_fake_input`."""
+    return batch_size
+
+
+@pytest.fixture(name="fake_measurements")
+def fixture_fake_measurements(parameters, targets, batch_size):
+    """Artificially created valid measurements."""
+    return create_fake_input(parameters, targets, batch_size)
+
+
 @pytest.fixture(
     params=[5, pytest.param(8, marks=pytest.mark.slow)],
     name="n_grid_points",
@@ -226,6 +242,12 @@ def fixture_parameters(
             encoding="OHE",
         ),
         CategoricalParameter(
+            name="Categorical_1_subset",
+            values=("A", "B", "C"),
+            encoding="OHE",
+            active_values=("A"),
+        ),
+        CategoricalParameter(
             name="Categorical_2",
             values=("bad", "OK", "good"),
             encoding="INT",
@@ -249,7 +271,7 @@ def fixture_parameters(
             values=mock_categories,
         ),
         CategoricalParameter(
-            name="SomeSetting",
+            name="Some_Setting",
             values=("slow", "normal", "fast"),
             encoding="INT",
         ),
@@ -257,6 +279,10 @@ def fixture_parameters(
             name="Num_disc_1",
             values=(1, 2, 7),
             tolerance=0.3,
+        ),
+        NumericalDiscreteParameter(
+            name="Num_disc_2",
+            values=(-1.1, -1, 0, 1, 1.1),
         ),
         NumericalDiscreteParameter(
             name="Fraction_1",
@@ -305,6 +331,18 @@ def fixture_parameters(
             ),
         ),
         CustomDiscreteParameter(
+            name="Custom_1_subset",
+            data=pd.DataFrame(
+                {
+                    "D1": [1.1, 1.4, 1.7],
+                    "D2": [11, 23, 55],
+                    "D3": [-4, -13, 4],
+                },
+                index=["mol1", "mol2", "mol3"],
+            ),
+            active_values=("mol1", "mol3"),
+        ),
+        CustomDiscreteParameter(
             name="Custom_2",
             data=pd.DataFrame(
                 {
@@ -333,6 +371,17 @@ def fixture_parameters(
             ],
             *[
                 SubstanceParameter(
+                    name=f"Solvent_{k + 1}_subset",
+                    data=mock_substances,
+                    active_values=(
+                        list(mock_substances.keys())[0],
+                        list(mock_substances.keys())[-1],
+                    ),
+                )
+                for k in range(3)
+            ],
+            *[
+                SubstanceParameter(
                     name=f"Substance_1_{encoding.name}",
                     data=mock_substances,
                     encoding=encoding,
@@ -349,7 +398,26 @@ def fixture_parameters(
                 )
                 for k in range(3)
             ],
+            *[
+                CategoricalParameter(
+                    name=f"Solvent_{k + 1}_subset",
+                    values=tuple(mock_substances.keys()),
+                    active_values=(
+                        list(mock_substances.keys())[0],
+                        list(mock_substances.keys())[-1],
+                    ),
+                )
+                for k in range(3)
+            ],
         ]
+
+    # Check that only valid parameter names have been specified, otherwise they would
+    # be silently ignored by the test.
+    all_valid_names = [p.name for p in valid_parameters]
+    invalid_names = [p for p in parameter_names if p not in all_valid_names]
+    assert (
+        not invalid_names
+    ), f"Invalid name in fixture 'parameter_names': {invalid_names}"
 
     return [p for p in valid_parameters if p.name in parameter_names]
 
@@ -632,7 +700,7 @@ def fixture_default_streaming_sequential_meta_recommender():
 @pytest.fixture(name="acqf")
 def fixture_default_acquisition_function():
     """The default acquisition function to be used if not specified differently."""
-    return qExpectedImprovement()
+    return qLogExpectedImprovement()
 
 
 @pytest.fixture(name="lengthscale_prior")
@@ -880,7 +948,6 @@ def run_iterations(
     with temporary_seed(int(time.time())):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
-            # dont use parameter noise for these tests
 
             add_fake_measurements(rec, campaign.targets)
             if add_noise and (k % 2):

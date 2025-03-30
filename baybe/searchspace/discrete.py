@@ -19,25 +19,14 @@ from typing_extensions import override
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError, OptionalImportError
-from baybe.parameters import (
-    CategoricalParameter,
-    NumericalDiscreteParameter,
-    TaskParameter,
-)
-from baybe.parameters.base import DiscreteParameter, Parameter
+from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
-from baybe.searchspace.validation import (
-    validate_parameter_names,
-    validate_parameters,
-)
+from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
-from baybe.utils.dataframe import (
-    df_drop_single_value_columns,
-    get_transform_objects,
-    pretty_print_df,
-)
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.plotting import to_string
@@ -99,10 +88,6 @@ class SubspaceDiscrete(SerialMixin):
     exp_rep: pd.DataFrame = field(eq=eq_dataframe)
     """The experimental representation of the subspace."""
 
-    # TODO: remove when refactoring active values mechanism
-    _excluded: pd.Series = field(init=False, eq=eq_dataframe)
-    """Temporary workaround for handling inactive ``TaskParameter`` values."""
-
     empty_encoding: bool = field(default=False)
     """Flag encoding whether an empty encoding is used."""
 
@@ -154,27 +139,10 @@ class SubspaceDiscrete(SerialMixin):
                 "This is not allowed, as it can lead to hard-to-detect bugs."
             )
 
-    @_excluded.default
-    def _default_excluded(self) -> pd.Series:
-        """Exclude inactive tasks from search."""
-        return ~self._on_task_configurations()
-
     @comp_rep.default
     def _default_comp_rep(self) -> pd.DataFrame:
         """Create the default computational representation."""
-        # Create a dataframe containing the computational parameter representation
-        comp_rep = self.transform(self.exp_rep)
-
-        # Ignore all columns that do not carry any covariate information
-        # TODO[12758]: This logic needs to be refined, i.e. when should we drop columns
-        #   and when not (can have undesired/unexpected side-effects). Should this be
-        #   configurable at the parameter level? A hotfix was made to exclude task
-        #   parameters, but this needs to be revisited as well.
-        comp_rep = df_drop_single_value_columns(
-            comp_rep, [p.name for p in self.parameters if isinstance(p, TaskParameter)]
-        )
-
-        return comp_rep
+        return self.transform(self.exp_rep)
 
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no continuous part."""
@@ -182,24 +150,10 @@ class SubspaceDiscrete(SerialMixin):
 
         return SearchSpace(discrete=self)
 
-    def _on_task_configurations(self) -> pd.Series:
-        """Retrieve the parameter configurations for the active tasks."""
-        # TODO [16932]: This only works for a single parameter
-        try:
-            task_param = next(
-                p for p in self.parameters if isinstance(p, TaskParameter)
-            )
-        except StopIteration:
-            return pd.Series(True, index=self.exp_rep.index)
-        return self.exp_rep[task_param.name].isin(task_param.active_values)
-
     @classmethod
     def empty(cls) -> SubspaceDiscrete:
         """Create an empty discrete subspace."""
-        return SubspaceDiscrete(
-            parameters=[],
-            exp_rep=pd.DataFrame(),
-        )
+        return SubspaceDiscrete(parameters=[], exp_rep=pd.DataFrame())
 
     @classmethod
     def from_parameter(cls, parameter: DiscreteParameter) -> SubspaceDiscrete:
@@ -555,6 +509,15 @@ class SubspaceDiscrete(SerialMixin):
         """The minimum and maximum values of the computational representation."""
         return pd.DataFrame({"min": self.comp_rep.min(), "max": self.comp_rep.max()}).T
 
+    @property
+    def scaling_bounds(self) -> pd.DataFrame:
+        """The bounds used for scaling the surrogate model input."""
+        return (
+            pd.concat([p.comp_df.agg(["min", "max"]) for p in self.parameters], axis=1)
+            if self.parameters
+            else pd.DataFrame(index=["min", "max"])
+        )
+
     @staticmethod
     def estimate_product_space_size(
         parameters: Sequence[DiscreteParameter],
@@ -570,7 +533,7 @@ class SubspaceDiscrete(SerialMixin):
         # Compute the dataframe shapes
         n_cols_exp = len(parameters)
         n_cols_comp = sum(p.comp_df.shape[1] for p in parameters)
-        n_rows = prod(p.comp_df.shape[0] for p in parameters)
+        n_rows = prod(len(p.active_values) for p in parameters)
 
         # Comp rep space is estimated as the size of float times the number of matrix
         # elements in the comp rep. The latter is the total number of parameter
@@ -585,9 +548,9 @@ class SubspaceDiscrete(SerialMixin):
         # divided by the number of values for the respective parameter. Contributions of
         # all parameters are summed up.
         exp_rep_bytes = sum(
-            pd.DataFrame(p.values).memory_usage(index=False, deep=True).sum()
+            pd.DataFrame(p.active_values).memory_usage(index=False, deep=True).sum()
             * n_rows
-            / p.comp_df.shape[0]
+            / len(p.active_values)
             for p in parameters
         )
 
@@ -605,7 +568,7 @@ class SubspaceDiscrete(SerialMixin):
             The candidate parameter settings both in experimental and computational
             representation.
         """
-        return self.exp_rep.loc[~self._excluded], self.comp_rep.loc[~self._excluded]
+        return self.exp_rep, self.comp_rep
 
     def transform(
         self,
@@ -739,25 +702,24 @@ def _apply_constraint_filter_polars(
     return ldf, mask_missing
 
 
-def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyFrame:
-    """Create the Cartesian product of all parameter values using Polars.
-
-    Ignores continuous parameters.
+def parameter_cartesian_prod_polars(
+    parameters: Sequence[DiscreteParameter],
+) -> pl.LazyFrame:
+    """Create the Cartesian product of discrete parameter values using Polars.
 
     Args:
-        parameters: List of parameter objects.
+        parameters: List of discrete parameter objects.
 
     Returns:
         A lazy dataframe containing all possible discrete parameter value combinations.
     """
     from baybe._optional.polars import polars as pl
 
-    discrete_parameters = [p for p in parameters if p.is_discrete]
-    if not discrete_parameters:
+    if not parameters:
         return pl.LazyFrame()
 
     # Convert each parameter to a lazy dataframe for cross-join operation
-    param_frames = [pl.LazyFrame({p.name: p.values}) for p in discrete_parameters]  # type:ignore[attr-defined]
+    param_frames = [pl.LazyFrame({p.name: p.active_values}) for p in parameters]
 
     # Handling edge cases
     if len(param_frames) == 1:
@@ -772,25 +734,21 @@ def parameter_cartesian_prod_polars(parameters: Sequence[Parameter]) -> pl.LazyF
 
 
 def parameter_cartesian_prod_pandas(
-    parameters: Sequence[Parameter],
+    parameters: Sequence[DiscreteParameter],
 ) -> pd.DataFrame:
-    """Create the Cartesian product of all parameter values using Pandas.
-
-    Ignores continuous parameters.
+    """Create the Cartesian product of discrete parameter values using Pandas.
 
     Args:
-        parameters: List of parameter objects.
+        parameters: List of discrete parameter objects.
 
     Returns:
         A dataframe containing all possible discrete parameter value combinations.
     """
-    discrete_parameters = [p for p in parameters if p.is_discrete]
-    if not discrete_parameters:
+    if not parameters:
         return pd.DataFrame()
 
     index = pd.MultiIndex.from_product(
-        [p.values for p in discrete_parameters],  # type:ignore[attr-defined]
-        names=[p.name for p in discrete_parameters],
+        [p.active_values for p in parameters], names=[p.name for p in parameters]
     )
     ret = pd.DataFrame(index=index).reset_index()
 
