@@ -124,38 +124,7 @@ class BotorchAcquisitionFunctionBuilder:
             if self.device is not None:
                 bo_surrogate = bo_surrogate.to(self.device)
 
-                # Move all components to device
-                if hasattr(bo_surrogate, "covar_module"):
-                    bo_surrogate.covar_module = bo_surrogate.covar_module.to(
-                        self.device
-                    )
-                    if hasattr(bo_surrogate.covar_module, "kernels"):
-                        bo_surrogate.covar_module.kernels = tuple(
-                            k.to(self.device) for k in bo_surrogate.covar_module.kernels
-                        )
-                        # Move base kernels
-                        for k in bo_surrogate.covar_module.kernels:
-                            if hasattr(k, "base_kernel"):
-                                k.base_kernel = k.base_kernel.to(self.device)
-
-                # Move training data
-                if hasattr(bo_surrogate, "train_inputs"):
-                    bo_surrogate.train_inputs = tuple(
-                        x.to(self.device) for x in bo_surrogate.train_inputs
-                    )
-                if hasattr(bo_surrogate, "train_targets"):
-                    bo_surrogate.train_targets = bo_surrogate.train_targets.to(
-                        self.device
-                    )
-
-                # Move likelihood
-                if (
-                    hasattr(bo_surrogate, "likelihood")
-                    and bo_surrogate.likelihood is not None
-                ):
-                    bo_surrogate.likelihood = bo_surrogate.likelihood.to(self.device)
-
-            self._args = BotorchAcquisitionArgs(model=bo_surrogate, **args)
+        self._args = BotorchAcquisitionArgs(model=bo_surrogate, **args)
 
     @cached_property
     def _botorch_surrogate(self) -> Model:
