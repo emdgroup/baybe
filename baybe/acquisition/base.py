@@ -70,53 +70,62 @@ class AcquisitionFunction(ABC, SerialMixin):
         pending_experiments: pd.DataFrame | None = None,
     ):
         """Create the botorch-ready representation of the function."""
+        import warnings
+
         import botorch.acquisition as bo_acqf
         import torch
         from botorch.acquisition.objective import LinearMCObjective
-        from gpytorch.utils.warnings import GPInputWarning
-        from baybe.acquisition.acqfs import qThompsonSampling
-        import warnings
         from gpytorch.settings import debug, fast_computations
+        from gpytorch.utils.warnings import GPInputWarning
+
+        from baybe.acquisition.acqfs import qThompsonSampling
         from baybe.utils.device_mode import single_device_mode
 
-        # Get device from surrogate and ensure it's set
+        # Get device from surrogate. Default to CPU if not specified or None.
         device = getattr(surrogate, "device", None)
-        if device is None and torch.cuda.is_available():
-            device = torch.device("cuda:0")
-        
-        # Create botorch surrogate model
-        with warnings.catch_warnings(), single_device_mode(True), debug(True), fast_computations(solves=False):
-            warnings.filterwarnings('ignore', category=GPInputWarning)
-            bo_surrogate = surrogate.to_botorch()
-            
-            if device is not None:
-                bo_surrogate = bo_surrogate.to(device)
-                
-                # Move all model components to device
-                if hasattr(bo_surrogate, "covar_module"):
-                    bo_surrogate.covar_module = bo_surrogate.covar_module.to(device)
-                    if hasattr(bo_surrogate.covar_module, "kernels"):
-                        bo_surrogate.covar_module.kernels = tuple(
-                            k.to(device) for k in bo_surrogate.covar_module.kernels
-                        )
-                        # Move base kernels
-                        for k in bo_surrogate.covar_module.kernels:
-                            if hasattr(k, "base_kernel"):
-                                k.base_kernel = k.base_kernel.to(device)
-                
-                # Move training data
-                if hasattr(bo_surrogate, "train_inputs"):
-                    bo_surrogate.train_inputs = tuple(
-                        x.to(device) for x in bo_surrogate.train_inputs
-                    )
-                if hasattr(bo_surrogate, "train_targets"):
-                    bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
-                
-                # Move likelihood
-                if hasattr(bo_surrogate, "likelihood") and bo_surrogate.likelihood is not None:
-                    bo_surrogate.likelihood = bo_surrogate.likelihood.to(device)
+        if device is None:
+            device = torch.device("cpu")
+        elif isinstance(device, str):  # Ensure it's a torch.device object
+            device = torch.device(device)
 
-            # Get computational data representation (ensure tensor is on surrogate.device)
+        # Create botorch surrogate model
+        with warnings.catch_warnings(), single_device_mode(True), debug(
+            True
+        ), fast_computations(solves=False):
+            warnings.filterwarnings("ignore", category=GPInputWarning)
+            bo_surrogate = surrogate.to_botorch()
+
+            # Move all model components to device
+            bo_surrogate = bo_surrogate.to(device)
+
+            # Move all model components to device
+            if hasattr(bo_surrogate, "covar_module"):
+                bo_surrogate.covar_module = bo_surrogate.covar_module.to(device)
+                if hasattr(bo_surrogate.covar_module, "kernels"):
+                    bo_surrogate.covar_module.kernels = tuple(
+                        k.to(device) for k in bo_surrogate.covar_module.kernels
+                    )
+                    # Move base kernels
+                    for k in bo_surrogate.covar_module.kernels:
+                        if hasattr(k, "base_kernel"):
+                            k.base_kernel = k.base_kernel.to(device)
+
+            # Move training data
+            if hasattr(bo_surrogate, "train_inputs"):
+                bo_surrogate.train_inputs = tuple(
+                    x.to(device) for x in bo_surrogate.train_inputs
+                )
+            if hasattr(bo_surrogate, "train_targets"):
+                bo_surrogate.train_targets = bo_surrogate.train_targets.to(device)
+
+            # Move likelihood
+            if (
+                hasattr(bo_surrogate, "likelihood")
+                and bo_surrogate.likelihood is not None
+            ):
+                bo_surrogate.likelihood = bo_surrogate.likelihood.to(device)
+
+            # Convert data to tensor on device
             train_x = to_tensor(
                 searchspace.transform(measurements, allow_extra=True),
                 device=device,
@@ -130,8 +139,7 @@ class AcquisitionFunction(ABC, SerialMixin):
                     pass
 
             # Move model to device again after forward pass
-            if device is not None:
-                bo_surrogate = bo_surrogate.to(device)
+            bo_surrogate = bo_surrogate.to(device)
 
             # Get botorch acquisition function class and match attributes
             acqf_cls = _get_botorch_acqf_class(type(self))
@@ -149,7 +157,9 @@ class AcquisitionFunction(ABC, SerialMixin):
             # Initialize X_pending with correct device and dtype
             if pending_experiments is not None:
                 if self.supports_pending_experiments:
-                    pending_x = searchspace.transform(pending_experiments, allow_extra=True)
+                    pending_x = searchspace.transform(
+                        pending_experiments, allow_extra=True
+                    )
                     pending_tensor = to_tensor(pending_x, device=device)
                     # Ensure pending tensor matches train_x dtype
                     pending_tensor = pending_tensor.to(dtype=train_x.dtype)
@@ -162,9 +172,7 @@ class AcquisitionFunction(ABC, SerialMixin):
             else:
                 # Initialize empty X_pending tensor with matching device and dtype
                 additional_params["X_pending"] = torch.empty(
-                    (0, train_x.shape[1]), 
-                    device=device, 
-                    dtype=train_x.dtype
+                    (0, train_x.shape[1]), device=device, dtype=train_x.dtype
                 )
 
             if "mc_points" in signature_params:
@@ -221,8 +229,7 @@ class AcquisitionFunction(ABC, SerialMixin):
 
             # Create acquisition function and ensure it's on the correct device
             acqf = acqf_cls(**params_dict)
-            if device is not None:
-                acqf = acqf.to(device)
+            acqf = acqf.to(device)
 
             if isinstance(self, qThompsonSampling):
                 assert hasattr(acqf, "_default_sample_shape")
