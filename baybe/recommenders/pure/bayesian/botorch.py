@@ -118,7 +118,7 @@ class BotorchRecommender(BayesianRecommender):
         subspace_discrete: SubspaceDiscrete,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.DataFrame:
+    ) -> pd.Index:
         """Generate recommendations from a discrete search space.
 
         Args:
@@ -188,8 +188,8 @@ class BotorchRecommender(BayesianRecommender):
             )["index"]
         )
 
-        # Return the experimental representation using the found indices
-        return candidates_exp.loc[idxs]
+        # Convert idxs (which is a pd.Index) to actual indices in candidates_exp
+        return idxs  # This returns just the indices
 
     @override
     def _recommend_continuous(

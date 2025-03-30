@@ -273,7 +273,10 @@ class PureRecommender(ABC, RecommenderProtocol):
             idxs = self._recommend_discrete(
                 searchspace.discrete, candidates_exp, batch_size
             )
-            return idxs
+            rec = searchspace.discrete.exp_rep.loc[idxs, :]  # Convert to DataFrame
+
+        # Return recommendations
+        return rec
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
