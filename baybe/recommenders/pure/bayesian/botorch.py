@@ -252,7 +252,30 @@ class BotorchRecommender(BayesianRecommender):
         candidates_exp: pd.DataFrame,
         batch_size: int,
     ) -> pd.DataFrame:
-        """Recommend points using the optimize_acqf_mixed function of BoTorch."""
+        """Recommend points using the ``optimize_acqf_mixed`` function of BoTorch.
+
+        This functions samples points from the discrete subspace, performs optimization
+        in the continuous subspace with these points being fixed and returns the best
+        found solution.
+        **Important**: This performs a brute-force calculation by fixing every possible
+        assignment of discrete variables and optimizing the continuous subspace for
+        each of them. It is thus computationally expensive.
+        **Note**: This function implicitly assumes that discrete search space parts in
+        the respective data frame come first and continuous parts come second.
+
+        Args:
+            searchspace: The search space in which the recommendations should be made.
+            candidates_exp: The experimental representation of the candidates
+                of the discrete subspace.
+            batch_size: The size of the calculated batch.
+
+        Raises:
+            IncompatibleAcquisitionFunctionError: If a non-Monte Carlo acquisition
+                function is used with a batch size > 1.
+
+        Returns:
+            The recommended points.
+        """
         # For batch size > 1, the acqf needs to support batching
         if batch_size > 1 and not self.acquisition_function.supports_batching:
             raise IncompatibleAcquisitionFunctionError(
@@ -275,7 +298,8 @@ class BotorchRecommender(BayesianRecommender):
                 candidates_comp, n_candidates, method=self.hybrid_sampler
             )
 
-        # Ensure candidate columns are in the expected format
+        # Prepare all considered discrete configurations in the
+        # List[Dict[int, float]] format expected by BoTorch.
         num_comp_columns = len(candidates_comp.columns)
         candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
         fixed_features_list = candidates_comp.to_dict("records")

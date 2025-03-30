@@ -84,12 +84,15 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             )
 
         # We are in a hybrid setting now
-        
+
         # Enforce both sub-recommenders use the same device.
         common_device = self.disc_recommender.device
         self.cont_recommender.device = common_device
 
-        # Sample a single continuous point and convert it to a tensor on the common device.
+        # We will attach continuous parts to discrete parts and the other way round.
+        # To make things simple, we sample a single point in the continuous space which
+        # will then be attached to every discrete point when the acquisition function
+        # is evaluated.
         cont_part = searchspace.continuous.sample_uniform(1)
         cont_part_tensor = to_tensor(cont_part, device=common_device).unsqueeze(-2)
 
@@ -117,9 +120,12 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             self.disc_recommender._botorch_acqf = disc_acqf_part.to(common_device)
             # Reset prediction strategy cache if present so that any cached tensors
             # (e.g. mean_cache) are recomputed on the correct device.
-            if (hasattr(self.disc_recommender._botorch_acqf, "model") and
-                hasattr(self.disc_recommender._botorch_acqf.model, "prediction_strategy")):
-                self.disc_recommender._botorch_acqf.model.prediction_strategy._mean_cache = None
+            if hasattr(self.disc_recommender._botorch_acqf, "model") and hasattr(
+                self.disc_recommender._botorch_acqf.model, "prediction_strategy"
+            ):
+                (
+                    self.disc_recommender._botorch_acqf.model.prediction_strategy._mean_cache
+                ) = None
 
         # Call the private function of the discrete recommender and get the indices
         disc_rec_idx = self.disc_recommender._recommend_discrete(
@@ -128,7 +134,9 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             batch_size=batch_size,
         )
 
-        # Get one random discrete point and convert it to a tensor on the common device.
+        # Get one random discrete point that will be attached when evaluating the
+        # acquisition function in the discrete space and convert it to a tensor
+        # on the common device.
         disc_part = searchspace.discrete.comp_rep.loc[disc_rec_idx].sample(1)
         disc_part_tensor = to_tensor(disc_part, device=common_device).unsqueeze(-2)
 
@@ -148,9 +156,12 @@ class NaiveHybridSpaceRecommender(PureRecommender):
         self.cont_recommender._botorch_acqf = cont_acqf_part.to(common_device)
         # Reset prediction strategy cache if present so that any cached tensors
         # are recomputed on the correct device.
-        if (hasattr(self.cont_recommender._botorch_acqf, "model") and
-            hasattr(self.cont_recommender._botorch_acqf.model, "prediction_strategy")):
-            self.cont_recommender._botorch_acqf.model.prediction_strategy._mean_cache = None
+        if hasattr(self.cont_recommender._botorch_acqf, "model") and hasattr(
+            self.cont_recommender._botorch_acqf.model, "prediction_strategy"
+        ):
+            (
+                self.cont_recommender._botorch_acqf.model.prediction_strategy._mean_cache
+            ) = None
 
         # Call the private function of the continuous recommender
         rec_cont = self.cont_recommender._recommend_continuous(
