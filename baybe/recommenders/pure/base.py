@@ -273,7 +273,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Get recommendations
         if is_hybrid_space:
             with device_context(
-                getattr(self, "device", None), memory_management="after_only"
+                device=getattr(self, "device", None), manage_memory=True
             ):
                 rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
 
