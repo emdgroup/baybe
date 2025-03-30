@@ -15,6 +15,7 @@ from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
+from baybe.utils.device_utils import to_device
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -54,7 +55,6 @@ def to_tensor(
 
     def _convert_single(data: Any) -> torch.Tensor:
         if isinstance(data, torch.Tensor):
-            # If it's already a tensor, just move it to the right device
             tensor = data
         elif isinstance(data, pd.DataFrame):
             # Convert DataFrame to numpy first
@@ -64,14 +64,7 @@ def to_tensor(
         else:
             tensor = torch.tensor(data, dtype=torch.float64)
 
-        # Move to specified device if provided
-        if device is not None:
-            tensor = tensor.to(device)
-        elif torch.cuda.is_available():
-            # Default to CUDA if available and no device specified
-            tensor = tensor.to("cuda")
-
-        return tensor
+        return to_device(tensor, device)
 
     # Handle single or multiple inputs
     if len(args) == 1:

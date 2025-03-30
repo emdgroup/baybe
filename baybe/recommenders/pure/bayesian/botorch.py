@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gc
 import math
 import warnings
 from collections.abc import Collection, Iterable
@@ -36,7 +35,6 @@ from baybe.searchspace import (
 )
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.device_utils import (
-    clear_gpu_memory,
     device_context,
     get_default_device,
     to_device,
@@ -133,10 +131,7 @@ class BotorchRecommender(BayesianRecommender):
         Returns:
             The tensor on the specified device.
         """
-        # If we're using CPU, first clear CUDA cache to avoid memory leaks
-        if self.device == torch.device("cpu") and torch.cuda.is_available():
-            clear_gpu_memory()
-
+        # Use the to_device function directly
         return to_device(tensor, self.device)
 
     @override
@@ -753,8 +748,7 @@ class BotorchRecommender(BayesianRecommender):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Set up the BoTorch acquisition function."""
-        with device_context(self.device):  # Force everything to same device
-            # Call parent setup with original device setting
+        with device_context(self.device):
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
@@ -807,8 +801,3 @@ class BotorchRecommender(BayesianRecommender):
 
                 # Move the entire acquisition function to the device
                 self._botorch_acqf = to_device(self._botorch_acqf, self.device)
-
-            # Force garbage collection
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()

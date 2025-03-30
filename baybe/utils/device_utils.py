@@ -9,8 +9,8 @@ import torch
 from gpytorch.settings import debug, fast_computations
 
 
-class single_device_mode:
-    """Context manager that forces all operations to happen on a single device."""
+class _SingleDeviceMode:
+    """Internal context manager that forces operations to happen on a single device."""
 
     _global_value = False
 
@@ -30,26 +30,6 @@ class single_device_mode:
     def on(cls) -> bool:
         """Return whether single device mode is currently enabled."""
         return cls._global_value
-
-
-@contextmanager
-def device_mode(state: bool = True) -> Generator[None, None, None]:
-    """Context manager that forces all operations to happen on a single device.
-
-    This combines multiple GPyTorch settings to ensure consistent device usage:
-    - single_device_mode: Forces operations to stay on one device
-    - debug: Enables additional device checks
-    - fast_computations(solves=False): Prevents some caching that can lead
-    to device mismatches
-
-    Args:
-        state: If True, enable single device mode. If False, disable it.
-
-    Yields:
-        None: This context manager doesn't yield a value.
-    """
-    with single_device_mode(state), debug(state), fast_computations(solves=False):
-        yield
 
 
 def get_default_device() -> torch.device:
@@ -92,13 +72,16 @@ def clear_gpu_memory() -> None:
 @contextmanager
 def device_context(
     device: torch.device | str | None = None,
+    manage_memory: bool = True,
+    enforce_single_device: bool = True,
 ) -> Generator[torch.device, None, None]:
     """Context manager for performing operations on a specific device.
 
-    Combines device_mode with memory management and consistent device handling.
-
     Args:
         device: The device to use. If None, uses the default device.
+        manage_memory: If True, clears GPU memory before and after operations.
+        enforce_single_device: If True, enforces single device usage with additional
+                               GPyTorch settings.
 
     Yields:
         torch.device: The active device for use within the context.
@@ -108,12 +91,28 @@ def device_context(
     elif isinstance(device, str):
         device = torch.device(device)
 
-    with device_mode(True):
-        # Clear GPU memory before operations
+    # Handle GPyTorch settings for consistent device usage
+    managers = []
+    if enforce_single_device:
+        managers.extend(
+            [_SingleDeviceMode(True), debug(True), fast_computations(solves=False)]
+        )
+
+    # Clear memory if requested
+    if manage_memory:
         clear_gpu_memory()
 
-        try:
-            yield device
-        finally:
-            # Clear GPU memory after operations
+    try:
+        # Apply all context managers
+        for manager in managers:
+            manager.__enter__()
+
+        yield device
+    finally:
+        # Exit all context managers in reverse order
+        for manager in reversed(managers):
+            manager.__exit__(None, None, None)
+
+        # Clean up memory after operations if requested
+        if manage_memory:
             clear_gpu_memory()

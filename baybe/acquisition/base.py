@@ -25,7 +25,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
-from baybe.utils.device_utils import clear_gpu_memory, device_context
+from baybe.utils.device_utils import device_context
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -85,7 +85,6 @@ class AcquisitionFunction(ABC, SerialMixin):
         # Get the device from the surrogate if available
         device = getattr(surrogate, "device", None)
 
-        # Use device_context for consistent device management
         with device_context(device):
             # Create the acquisition function builder and build the function
             builder = BotorchAcquisitionFunctionBuilder(
@@ -100,9 +99,6 @@ class AcquisitionFunction(ABC, SerialMixin):
 
             # Build the acquisition function
             acqf = builder.build()
-
-            # Clear GPU memory explicitly, though device_context will do this too
-            clear_gpu_memory()
 
             return acqf
 

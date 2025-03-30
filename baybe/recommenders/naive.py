@@ -145,7 +145,7 @@ class NaiveHybridSpaceRecommender(PureRecommender):
             searchspace, objective, measurements, pending_experiments
         )
 
-        # Construct the continuous space as a standalone acquisition function.
+        # Construct the continuous space as a standalone space
         cont_acqf_part = PartialAcquisitionFunction(
             botorch_acqf=self.cont_recommender._botorch_acqf,
             pinned_part=disc_part_tensor,

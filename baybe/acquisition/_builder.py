@@ -37,8 +37,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.device_utils import (
-    clear_gpu_memory,
-    device_mode,
+    device_context,
     get_default_device,
     to_device,
 )
@@ -116,7 +115,9 @@ class BotorchAcquisitionFunctionBuilder:
         )
 
         # Use device_mode to ensure consistent device usage during to_botorch
-        with warnings.catch_warnings(), device_mode(True):
+        with warnings.catch_warnings(), device_context(
+            self.device, enforce_single_device=True, manage_memory=False
+        ):
             warnings.filterwarnings("ignore", category=GPInputWarning)
             bo_surrogate = self.surrogate.to_botorch()
 
@@ -128,7 +129,9 @@ class BotorchAcquisitionFunctionBuilder:
     @cached_property
     def _botorch_surrogate(self) -> Model:
         """The botorch surrogate object."""
-        with device_mode(True):
+        with device_context(
+            self.device, enforce_single_device=True, manage_memory=False
+        ):
             model = self.surrogate.to_botorch()
             model = to_device(model, self.device)
             return model
@@ -156,8 +159,10 @@ class BotorchAcquisitionFunctionBuilder:
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
-        # Use device_mode to ensure consistent device usage
-        with device_mode(True):
+        # Replace device_mode with device_context
+        with device_context(
+            self.device, enforce_single_device=True, manage_memory=False
+        ):
             # Set context-specific parameters
             self._set_best_f()
             self._invert_optimization_direction()
@@ -176,9 +181,6 @@ class BotorchAcquisitionFunctionBuilder:
             for name, param in botorch_acqf.__dict__.items():
                 if isinstance(param, torch.Tensor):
                     botorch_acqf.__dict__[name] = to_device(param, self.device)
-
-            # Clean up memory
-            clear_gpu_memory()
 
             return botorch_acqf
 
