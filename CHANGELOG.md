@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
+- `funcy` dependency
 
 ## [0.12.2] - 2025-01-31
 ### Changed
