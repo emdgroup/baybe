@@ -27,18 +27,18 @@ def infer_version() -> str:  # pragma: no cover
     # ----------------------------------------------------------------------------------
     # Attempt 2:
     # If the package is not installed, try to replicate the version on the fly, using
-    # the same logic by invoking setuptools_scm.
-    from pathlib import Path
-
-    from setuptools_scm import get_version
-
+    # the same logic by invoking setuptools_scm (provided the latter is installed).
     try:
+        from pathlib import Path
+
+        from setuptools_scm import get_version
+
         return get_version(
             root=str(Path(__path__[0]).parent),
             version_scheme="post-release",
             local_scheme="dirty-tag",
         )
-    except LookupError:
+    except (LookupError, ImportError):
         pass
 
     # ----------------------------------------------------------------------------------
