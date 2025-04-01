@@ -1250,15 +1250,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base                        Ligand  \
-342       p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine   
-403       p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
-171  Butyornitrile  Potassium acetate                     BrettPhos   
+         Solvent             Base                        Ligand  Temperature  \
+45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+230         DMAc   Cesium acetate                     BrettPhos        105.0   
+52   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
 
-     Temperature  Concentration  
-342         90.0          0.057  
-403        120.0          0.100  
-171         90.0          0.057  
+     Concentration  
+45           0.057  
+230          0.153  
+52           0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1267,15 +1267,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-342       p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine   
-403       p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
-171  Butyornitrile  Potassium acetate                     BrettPhos   
+         Solvent             Base                        Ligand  Temperature  \
+45   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+230         DMAc   Cesium acetate                     BrettPhos        105.0   
+52   Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
 
-     Temperature  Concentration      yield  
-342         90.0          0.057  16.480904  
-403        120.0          0.100  26.478496  
-171         90.0          0.057  22.168165  
+     Concentration      yield  
+45           0.057   5.869793  
+230          0.153   0.993411  
+52           0.100  24.893504  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
