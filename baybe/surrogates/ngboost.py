@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
-from ngboost import NGBRegressor
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
@@ -19,6 +18,8 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
 
+    from baybe._optional.ngboost import NGBRegressor
+
 
 @catch_constant_targets
 @define
@@ -31,15 +32,18 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 
-    model_params: dict[str, Any] = field(
-        factory=dict,
-        converter=dict,
-        validator=get_model_params_validator(NGBRegressor.__init__),
-    )
+    model_params: dict[str, Any] = field(factory=dict, converter=dict)
     """Optional model parameter that will be passed to the surrogate constructor."""
 
     _model: NGBRegressor | None = field(init=False, default=None, eq=False)
     """The actual model."""
+
+    @model_params.validator
+    def _validate_model_params(self, attr, value) -> None:
+        from baybe._optional.ngboost import NGBRegressor
+
+        validator = get_model_params_validator(NGBRegressor.__init__)
+        validator(self, attr, value)
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}
@@ -80,6 +84,8 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        from baybe._optional.ngboost import NGBRegressor
+
         self._model = NGBRegressor(**(self.model_params)).fit(train_x, train_y.ravel())
 
     @override

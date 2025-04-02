@@ -34,7 +34,6 @@ dependencies = [
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
-    "ngboost>=0.3.12,<1",
     "numpy>=1.24.1,<2",
     "pandas>=1.4.2,<3",
     "scikit-learn>=1.1.1,<2",
@@ -88,6 +87,7 @@ dev = [
     "baybe[simulation]",
     "baybe[test]",
     "baybe[benchmarking]",
+    "ngboost>=0.3.12,<1",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
