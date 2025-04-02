@@ -121,6 +121,7 @@ examples = [
     "baybe[simulation]", # Required for some of the examples
     "matplotlib>=3.7.3,!=3.9.1",
     "openpyxl>=3.0.9",
+    "ngboost>=0.3.12,<1",
     "pillow>=10.0.1", # Necessary due to vulnerability
     "plotly>=5.10.0",
     "seaborn>=0.12.2",
