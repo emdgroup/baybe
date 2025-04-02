@@ -164,7 +164,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        from sklearn_extra.cluster import KMedoids
+        from baybe._optional.sklearn_extra import KMedoids
 
         return KMedoids
 
