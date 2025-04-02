@@ -16,6 +16,7 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.utils.dataframe import _ValidatedDataFrame
+from baybe.utils.device_utils import device_context, to_device
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 _DEPRECATION_ERROR_MESSAGE = (
@@ -235,7 +236,7 @@ class PureRecommender(ABC, RecommenderProtocol):
         self,
         searchspace: SearchSpace,
         batch_size: int,
-        pending_experiments: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Obtain recommendations in search spaces with a discrete part.
 
@@ -271,7 +272,28 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Get recommendations
         if is_hybrid_space:
-            rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+            with device_context(
+                device=getattr(self, "device", None), manage_memory=True
+            ):
+                rec = self._recommend_hybrid(searchspace, candidates_exp, batch_size)
+
+                # Ensure model and acquisition function are placed on the correct device
+                if (
+                    hasattr(self, "_botorch_acqf")
+                    and getattr(self._botorch_acqf, "model", None) is not None
+                    and hasattr(self, "device")
+                ):
+                    # Use to_device utility for consistent device placement
+                    self._botorch_acqf.model = to_device(
+                        self._botorch_acqf.model, self.device
+                    )
+
+                    # Reset prediction strategy in a cleaner way if it exists
+                    if hasattr(self._botorch_acqf.model, "prediction_strategy"):
+                        # Setting to None will force GP to recreate it on next inference
+                        self._botorch_acqf.model.prediction_strategy = None
+
+            return rec
         else:
             idxs = self._recommend_discrete(
                 searchspace.discrete, candidates_exp, batch_size

@@ -25,6 +25,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
+from baybe.utils.device_utils import device_context
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -81,9 +82,25 @@ class AcquisitionFunction(ABC, SerialMixin):
                 f"does not support pending experiments."
             )
 
-        return BotorchAcquisitionFunctionBuilder(
-            self, surrogate, searchspace, objective, measurements, pending_experiments
-        ).build()
+        # Get the device from the surrogate if available
+        device = getattr(surrogate, "device", None)
+
+        with device_context(device):
+            # Create the acquisition function builder and build the function
+            builder = BotorchAcquisitionFunctionBuilder(
+                self,
+                surrogate,
+                searchspace,
+                objective,
+                measurements,
+                pending_experiments,
+                device=device,
+            )
+
+            # Build the acquisition function
+            acqf = builder.build()
+
+            return acqf
 
 
 def _get_botorch_acqf_class(
