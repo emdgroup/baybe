@@ -65,6 +65,16 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # for vulnerabilities by pip-audit
 
 [project.optional-dependencies]
+all = [
+    "baybe[chem]",
+    "baybe[examples]",
+    "baybe[insights]",
+    "baybe[onnx]",
+    "baybe[polars]",
+    "baybe[simulation]",
+    "ngboost>=0.3.12,<1",
+]
+
 chem = [
     "scikit-fingerprints>=1.13.1",
 ]
@@ -76,18 +86,12 @@ onnx = [
 ]
 
 dev = [
-    "baybe[chem]",
+    "baybe[all]",
     "baybe[docs]",
-    "baybe[examples]",
-    "baybe[insights]",
     "baybe[lint]",
     "baybe[mypy]",
-    "baybe[onnx]",
-    "baybe[polars]",
-    "baybe[simulation]",
     "baybe[test]",
     "baybe[benchmarking]",
-    "ngboost>=0.3.12,<1",
     "pip-audit>=2.5.5",
     "tox-uv>=1.7.0",
     "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962

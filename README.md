@@ -297,6 +297,7 @@ pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
+- `all`: Installs all optional **user-facing** dependencies.
 - `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
