@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
+- Provide version fallback in case scm fails to infer version during installation
 
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
