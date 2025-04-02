@@ -2,6 +2,7 @@
 
 import gc
 import math
+from abc import ABC
 from typing import ClassVar
 
 import numpy as np
@@ -286,6 +287,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
     """See :paramref:`UpperConfidenceBound.beta`."""
 
 
+########################################################################################
+### ThompsonSampling
 @define(frozen=True)
 class qThompsonSampling(qSimpleRegret):
     """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based.
@@ -321,10 +324,8 @@ class qThompsonSampling(qSimpleRegret):
 ########################################################################################
 ### Hypervolume Improvement
 @define(frozen=True)
-class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
-    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
-
-    abbreviation: ClassVar[str] = "qLogNEHVI"
+class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
+    """Expected hypervolume improvement base class."""
 
     reference_point: float | tuple[float, ...] | None = field(
         default=None, converter=optional_c(convert_to_float)
@@ -338,9 +339,6 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     * When specified as an iterable, the contained values are directly interpreted as
       the coordinates of the reference point.
     """
-
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
 
     @override
     @classproperty
@@ -406,6 +404,26 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
         max = np.max(array, axis=0)
 
         return (min - factor * (max - min)) * maximize
+
+
+@define(frozen=True)
+class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
