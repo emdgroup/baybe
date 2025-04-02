@@ -115,7 +115,7 @@ print(campaign)
 
 N_ITERATIONS = 3
 for kIter in range(N_ITERATIONS):
-    print(f"\n\n#### ITERATION {kIter+1} ####")
+    print(f"\n\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(

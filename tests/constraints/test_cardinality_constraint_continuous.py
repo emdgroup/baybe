@@ -126,7 +126,7 @@ def test_polytope_sampling_with_cardinality_constraint():
     TOLERANCE = 1e-3
 
     parameters = [
-        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(0, 1))
+        NumericalContinuousParameter(name=f"x_{i + 1}", bounds=(0, 1))
         for i in range(N_PARAMETERS)
     ]
     params_equality = ["x_1", "x_2", "x_3", "x_4"]
@@ -191,7 +191,9 @@ def test_min_cardinality_warning():
     upper_bound = 0.5
     stepsize = 0.05
     parameters = [
-        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(lower_bound, upper_bound))
+        NumericalContinuousParameter(
+            name=f"x_{i + 1}", bounds=(lower_bound, upper_bound)
+        )
         for i in range(N_PARAMETERS)
     ]
 
@@ -245,7 +247,7 @@ def test_empty_constraints_after_cardinality_constraint():
     N_PARAMETERS = 2
 
     parameters = [
-        NumericalContinuousParameter(name=f"x_{i+1}", bounds=(0, 1))
+        NumericalContinuousParameter(name=f"x_{i + 1}", bounds=(0, 1))
         for i in range(N_PARAMETERS)
     ]
     constraints = [

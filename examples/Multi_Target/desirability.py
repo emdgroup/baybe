@@ -111,7 +111,7 @@ for kIter in range(N_ITERATIONS):
     campaign.add_measurements(rec)
     desirability = campaign.objective.transform(campaign.measurements, allow_extra=True)
 
-    print(f"\n\n#### ITERATION {kIter+1} ####")
+    print(f"\n\n#### ITERATION {kIter + 1} ####")
     print("\nRecommended measurements with fake measured results:\n")
     print(rec)
     print("\nInternal measurement database with desirability values:\n")
