@@ -32,7 +32,6 @@ dependencies = [
     "botorch>=0.13.0,<1",
     "cattrs>=24.1.0",
     "exceptiongroup",
-    "funcy>=1.17,<2",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
     "ngboost>=0.3.12,<1",
@@ -136,7 +135,6 @@ lint = [
 mypy = [
     "mypy>=1.10.1",
     "pandas-stubs>=2.2.2.240603",
-    "funcy-stubs>=0.1.1",
     "types-seaborn>=0.13.2.20240618"
 ]
 
