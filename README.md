@@ -309,7 +309,7 @@ The available groups are:
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
 - `benchmarking`: Required for running the benchmarking module.
-- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
+- `dev`: All of the above plus `uv`, `tox-uv` and `pip-audit`. For code contributors.
 
 ## 📡 Telemetry
 BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 
