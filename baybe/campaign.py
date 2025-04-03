@@ -42,8 +42,8 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_match
-from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
