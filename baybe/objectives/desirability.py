@@ -20,9 +20,9 @@ from baybe.objectives.validation import validate_target_names
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, to_tuple
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df, transform_target_columns
 from baybe.utils.numerical import geom_mean
-from baybe.utils.plotting import to_string
 from baybe.utils.validation import finite_float
 
 

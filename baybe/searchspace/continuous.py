@@ -36,9 +36,9 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
-from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace

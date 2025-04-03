@@ -24,7 +24,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
