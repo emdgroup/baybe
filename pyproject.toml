@@ -65,7 +65,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # for vulnerabilities by pip-audit
 
 [project.optional-dependencies]
-all = [
+extra = [
     "baybe[chem]",
     "baybe[examples]",
     "baybe[insights]",
@@ -86,7 +86,7 @@ onnx = [
 ]
 
 dev = [
-    "baybe[all]",
+    "baybe[extra]",
     "baybe[docs]",
     "baybe[lint]",
     "baybe[mypy]",
