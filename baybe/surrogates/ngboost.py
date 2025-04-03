@@ -18,8 +18,6 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
 
-    from baybe._optional.ngboost import NGBRegressor
-
 
 @catch_constant_targets
 @define
@@ -35,7 +33,9 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     model_params: dict[str, Any] = field(factory=dict, converter=dict)
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: NGBRegressor | None = field(init=False, default=None, eq=False)
+    # TODO: Type should be `NGBRegressor | None` but is currently
+    #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @model_params.validator
