@@ -2,11 +2,12 @@
 
 import pytest
 
-from baybe._optional.info import ONNX_INSTALLED
+from baybe._optional.info import NGBOOST_INSTALLED, ONNX_INSTALLED
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.utils.basic import get_subclasses
 
@@ -18,6 +19,8 @@ def test_surrogate_serialization(request, surrogate_cls):
         if not ONNX_INSTALLED:
             pytest.skip("Optional onnx dependency not installed.")
         surrogate = request.getfixturevalue("onnx_surrogate")
+    elif issubclass(surrogate_cls, NGBoostSurrogate) and not NGBOOST_INSTALLED:
+        pytest.skip("Optional ngboost dependency not installed.")
     else:
         surrogate = surrogate_cls()
 
