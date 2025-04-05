@@ -25,7 +25,7 @@ from baybe.serialization import (
     block_serialization_hook,
     converter,
 )
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 
 
 @define

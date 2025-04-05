@@ -9,7 +9,11 @@ from pytest import param
 
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.exceptions import InvalidSurrogateModelError, UnusedObjectWarning
+from baybe.exceptions import (
+    InvalidSurrogateModelError,
+    OptionalImportError,
+    UnusedObjectWarning,
+)
 from baybe.kernels.base import Kernel
 from baybe.kernels.basic import (
     LinearKernel,
@@ -56,15 +60,20 @@ from .conftest import run_iterations
 ########################################################################################
 # Settings of the individual components to be tested
 ########################################################################################
-valid_surrogate_models = [
-    cls()
-    for cls in get_subclasses(Surrogate)
-    if (
-        not issubclass(cls, CustomONNXSurrogate)
-        and not issubclass(cls, BetaBernoulliMultiArmedBanditSurrogate)
-    )
-]
+valid_surrogate_models = []
+for cls in get_subclasses(Surrogate):
+    if issubclass(cls, CustomONNXSurrogate) or issubclass(
+        cls, BetaBernoulliMultiArmedBanditSurrogate
+    ):
+        continue
+    try:
+        p = param(cls(), id=cls.__name__)
+    except OptionalImportError:
+        p = param(cls, marks=pytest.mark.skip(reason="missing optional dependency"))
+    valid_surrogate_models.append(p)
+
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
+
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_discrete_recommenders = [
@@ -284,11 +293,7 @@ def test_kernel_factories(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize(
-    "surrogate_model",
-    valid_surrogate_models,
-    ids=[c.__class__ for c in valid_surrogate_models],
-)
+@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
 def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
     context = nullcontext()
     if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
