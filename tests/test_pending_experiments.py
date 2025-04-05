@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe._optional.info import SCIKIT_LEARN_EXTRA_INSTALLED
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import IncompatibleAcquisitionFunctionError, UnusedObjectWarning
 from baybe.recommenders import (
@@ -36,7 +37,15 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
             FPSRecommender(),
             id="fps_discrete",
         ),
-        param(_discrete_params, PAMClusteringRecommender(), id="pam_discrete"),
+        param(
+            _discrete_params,
+            PAMClusteringRecommender(),
+            id="pam_discrete",
+            marks=pytest.mark.skipif(
+                not SCIKIT_LEARN_EXTRA_INSTALLED,
+                reason="Optional scikit-learn-extra dependency not installed",
+            ),
+        ),
         param(
             _discrete_params,
             KMeansClusteringRecommender(),

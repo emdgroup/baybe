@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.exceptions import OptionalImportError
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace.core import SearchSpace
@@ -37,9 +38,12 @@ def test_nonbayesian_recommender_with_measurements(recommender, searchspace):
             f"'{recommender.__class__.__name__}' does not utilize any training data"
         ),
     ):
-        recommender.recommend(
-            batch_size=1, searchspace=searchspace, measurements=measurements
-        )
+        try:
+            recommender.recommend(
+                batch_size=1, searchspace=searchspace, measurements=measurements
+            )
+        except OptionalImportError:
+            pytest.skip("Optional dependency not installed.")
 
 
 @pytest.mark.parametrize("recommender", nonpredictive_recommenders)
@@ -49,6 +53,9 @@ def test_nonbayesian_recommender_with_objective(recommender, searchspace):
         UserWarning,
         match=(f"'{recommender.__class__.__name__}' does not consider any objectives"),
     ):
-        recommender.recommend(
-            batch_size=1, searchspace=searchspace, objective=objective
-        )
+        try:
+            recommender.recommend(
+                batch_size=1, searchspace=searchspace, objective=objective
+            )
+        except OptionalImportError:
+            pytest.skip("Optional dependency not installed.")

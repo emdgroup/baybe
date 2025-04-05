@@ -311,7 +311,10 @@ def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
 )
 def test_initial_recommenders(campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
-        run_iterations(campaign, n_iterations, batch_size)
+        try:
+            run_iterations(campaign, n_iterations, batch_size)
+        except OptionalImportError:
+            pytest.skip("missing optional dependency")
 
 
 @pytest.mark.slow
@@ -327,7 +330,10 @@ def test_targets(campaign, n_iterations, batch_size):
     ids=[c.__class__ for c in valid_discrete_recommenders],
 )
 def test_recommenders_discrete(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+    try:
+        run_iterations(campaign, n_iterations, batch_size)
+    except OptionalImportError:
+        pytest.skip("missing optional dependency")
 
 
 @pytest.mark.slow
@@ -370,7 +376,10 @@ def test_recommenders_continuous(campaign, n_iterations, batch_size):
     ids=["hybrid_params", "hybrid_params_with_active_values"],
 )
 def test_recommenders_hybrid(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+    try:
+        run_iterations(campaign, n_iterations, batch_size)
+    except OptionalImportError:
+        pytest.skip("missing optional dependency")
 
 
 @pytest.mark.parametrize(
