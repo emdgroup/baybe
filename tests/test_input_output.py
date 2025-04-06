@@ -41,9 +41,7 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
 @pytest.mark.parametrize(
     "bad_val, target_names",
     [
-        param(np.nan, ["Target_max"], id="num_target_nan"),
         param("asd", ["Target_max"], id="num_target_str"),
-        param(np.nan, ["Target_binary"], id="binary_target_nan"),
         param(1337, ["Target_binary"], id="binary_target_num"),
         param("asd", ["Target_binary"], id="binary_target_str"),
     ],

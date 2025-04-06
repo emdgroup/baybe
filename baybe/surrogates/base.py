@@ -33,7 +33,8 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import handle_invalid_target_values, to_tensor
+from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -444,6 +445,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise NotImplementedError(
                 "Continuous search spaces are currently only supported by GPs."
             )
+
+        # Block partial measurements
+        handle_invalid_target_values(measurements, objective.targets)
 
         # Remember the training context
         self._searchspace = searchspace

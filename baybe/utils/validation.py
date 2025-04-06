@@ -6,6 +6,7 @@ import math
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 import pandas as pd
 from attrs import Attribute
 
@@ -85,10 +86,9 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
     Raises:
         ValueError: If data is empty.
         ValueError: If data misses columns for a target.
-        ValueError: If any target data contain NaN.
         TypeError: If any numerical target data contain non-numeric values.
         ValueError: If any binary target data contain values not part of the targets'
-            allowed values.
+            allowed values or NaN.
     """
     from baybe.targets import BinaryTarget, NumericalTarget
 
@@ -102,11 +102,6 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
         )
 
     for t in targets:
-        if data[t.name].isna().any():
-            raise ValueError(
-                f"The target '{t.name}' has missing values in the provided dataframe."
-            )
-
         if isinstance(t, NumericalTarget):
             if data[t.name].dtype.kind not in "iufb":
                 raise TypeError(
@@ -114,7 +109,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
                     f"provided dataframe."
                 )
         elif isinstance(t, BinaryTarget):
-            allowed = {t.failure_value, t.success_value}
+            allowed = {t.failure_value, t.success_value, np.nan}
             if invalid := set(data[t.name].unique()) - allowed:
                 raise ValueError(
                     f"The binary target '{t.name}' has invalid entries {invalid} "
