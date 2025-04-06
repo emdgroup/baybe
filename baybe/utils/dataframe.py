@@ -805,3 +805,32 @@ def arrays_to_dataframes(
 
 class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
+
+
+def handle_invalid_target_values(
+    data: pd.DataFrame, targets: Iterable[Target], drop: bool = False
+) -> pd.DataFrame:
+    """Handle invalid target inputs by dropping corresponding rows or raising an error.
+
+    Args:
+        data: Measurements in experimental representation.
+        targets: The targets to check.
+        drop: Whether to drop the corresponding rows and not raise an error.
+
+    Raises:
+        ValueError: If any row contains a MeasurementStatus in the target columns.
+
+    Returns:
+        If drop=True this returns the modified dataframe.
+    """
+    cols = [t.name for t in targets]
+    mask = data[cols].isna().any(axis=1)
+
+    if (not drop) and mask.any():
+        raise ValueError(
+            f"Incomplete measurements identified by NaN were found in the input, "
+            f"but are not supported. Bad input in the rows with these "
+            f"indices: {data.index[mask].tolist()}"
+        )
+
+    return data.loc[~mask]

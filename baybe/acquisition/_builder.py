@@ -33,7 +33,7 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import handle_invalid_target_values, to_tensor
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -126,9 +126,17 @@ class BotorchAcquisitionFunctionBuilder:
 
     @cached_property
     def _train_y(self) -> pd.DataFrame:
-        """The training target values."""
-        return self.objective.transform(
+        """The training target values.
+
+        Only completely measured points are considered.
+        """
+        transformed = self.objective.transform(
             self.measurements[[t.name for t in self.objective.targets]]
+        )
+        return handle_invalid_target_values(
+            transformed,
+            self.objective.targets,
+            drop=True,
         )
 
     def build(self) -> BoAcquisitionFunction:
