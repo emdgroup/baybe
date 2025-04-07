@@ -12,6 +12,7 @@ from baybe.acquisition.acqfs import (
     qLogExpectedImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
+    qLogNParEGO,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedImprovement,
     qPosteriorStandardDeviation,
@@ -68,6 +69,8 @@ __all__ = [
     "qThompsonSampling",
     # Hypervolume Improvement
     "qLogNoisyExpectedHypervolumeImprovement",
+    # ParEGO
+    "qLogNParEGO",
     ######################### Abbreviations
     # Knowledge Gradient
     "qKG",

@@ -319,12 +319,26 @@ class qThompsonSampling(qSimpleRegret):
 
 
 ########################################################################################
+### Pareto Efficient Global Optimization (Chebyshev scalarization of objectives)
+@define(frozen=True)
+class qLogNParEGO(AcquisitionFunction):
+    """Pareto ranking via Chebyshev scalarization of the objectives."""
+
+    abbreviation: ClassVar[str] = "qLogNParEGO"
+    supports_multi_output: ClassVar[bool] = True
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+
+########################################################################################
 ### Hypervolume Improvement
 @define(frozen=True)
 class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
+    supports_multi_output: ClassVar[bool] = True
 
     reference_point: float | tuple[float, ...] | None = field(
         default=None, converter=optional_c(convert_to_float)
