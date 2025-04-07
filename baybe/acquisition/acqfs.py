@@ -355,6 +355,9 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
       the coordinates of the reference point.
     """
 
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
     @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
@@ -427,18 +430,12 @@ class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
 
     abbreviation: ClassVar[str] = "qNEHVI"
 
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
-
 
 @define(frozen=True)
 class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
-
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
