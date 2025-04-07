@@ -197,9 +197,9 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     for t in targets:
         for stat in tested_stats:
             stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
-            assert (
-                sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1
-            ), f"{t}_{stat_name} not in the returned posterior statistics"
+            assert sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1, (
+                f"{t}_{stat_name} not in the returned posterior statistics"
+            )
 
     # Assert no NaN's present
     assert not stats.isna().any().any()
