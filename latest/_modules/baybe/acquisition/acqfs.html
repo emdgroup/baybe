@@ -378,6 +378,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qExpectedImprovement.html">qExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qKnowledgeGradient.html">qKnowledgeGradient</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogExpectedImprovement.html">qLogExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNParEGO.html">qLogNParEGO</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
@@ -1412,6 +1413,22 @@
 
 
 <span class="c1">########################################################################################</span>
+<span class="c1">### Pareto Efficient Global Optimization (Chebyshev scalarization of targets)</span>
+<div class="viewcode-block" id="qLogNParEGO">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNParEGO.html#baybe.acquisition.acqfs.qLogNParEGO">[docs]</a>
+<span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">qLogNParEGO</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pareto optimization via Chebyshev scalarization of the targets.&quot;&quot;&quot;</span>
+
+    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qLogNParEGO&quot;</span>
+    <span class="n">supports_multi_output</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">prune_baseline</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">bool</span><span class="p">))</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Auto-prune candidates that are unlikely to be the best.&quot;&quot;&quot;</span></div>
+
+
+
+<span class="c1">########################################################################################</span>
 <span class="c1">### Hypervolume Improvement</span>
 <div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement">[docs]</a>
@@ -1420,6 +1437,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmic Monte Carlo based noisy expected hypervolume improvement.&quot;&quot;&quot;</span>
 
     <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qLogNEHVI&quot;</span>
+    <span class="n">supports_multi_output</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">reference_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="n">optional_c</span><span class="p">(</span><span class="n">convert_to_float</span><span class="p">)</span>

@@ -379,6 +379,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qExpectedImprovement.html">qExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qKnowledgeGradient.html">qKnowledgeGradient</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogExpectedImprovement.html">qLogExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNParEGO.html">qLogNParEGO</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">qNegIntegratedPosteriorVariance</a></li>
@@ -1096,8 +1097,8 @@ uncertainty.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.abbreviation" title="baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.abbreviation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">abbreviation</span></code></a></p></td>
 <td><p>An alternative name for type resolution.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.supports_multi_output" title="baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
+<td><p>Whether this acquisition function can handle models with multiple outputs.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1176,7 +1177,7 @@ sampling of the continuous part will always be random.</p>
 <a class="reference internal" href="baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend" title="baybe.recommenders.base.RecommenderProtocol.recommend"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.recommenders.base.RecommenderProtocol.recommend()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.13.1.dev44+gda6ee3a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.1.dev50+g39dd171)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1230,6 +1231,12 @@ sampling of the continuous part will always be random.</p>
 <span class="sig-name descname"><span class="pre">sampling_n_points</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> <span class="pre">|</span> <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></em><a class="headerlink" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.sampling_n_points" title="Link to this definition">¶</a></dt>
 <dd><p>Number of data points sampled for integrating the posterior.</p>
 <p>Cannot be used if <cite>sampling_fraction</cite> is not <cite>None</cite>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.supports_multi_output">
+<span class="sig-name descname"><span class="pre">supports_multi_output</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.supports_multi_output" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this acquisition function can handle models with multiple outputs.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1304,6 +1311,7 @@ sampling of the continuous part will always be random.</p>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.sampling_fraction"><code class="docutils literal notranslate"><span class="pre">qNegIntegratedPosteriorVariance.sampling_fraction</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.sampling_method"><code class="docutils literal notranslate"><span class="pre">qNegIntegratedPosteriorVariance.sampling_method</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.sampling_n_points"><code class="docutils literal notranslate"><span class="pre">qNegIntegratedPosteriorVariance.sampling_n_points</span></code></a></li>
+<li><a class="reference internal" href="#baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.supports_multi_output"><code class="docutils literal notranslate"><span class="pre">qNegIntegratedPosteriorVariance.supports_multi_output</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qLogNoisyExpectedImprovement" href="baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html" /><link rel="prev" title="qLogExpectedImprovement" href="baybe.acquisition.acqfs.qLogExpectedImprovement.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="qLogNoisyExpectedImprovement" href="baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html" /><link rel="prev" title="qLogNParEGO" href="baybe.acquisition.acqfs.qLogNParEGO.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>qLogNoisyExpectedHypervolumeImprovement - BayBE documentation</title>
@@ -379,6 +379,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qExpectedImprovement.html">qExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qKnowledgeGradient.html">qKnowledgeGradient</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogExpectedImprovement.html">qLogExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNParEGO.html">qLogNParEGO</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
@@ -1091,8 +1092,8 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.abbreviation" title="baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.abbreviation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">abbreviation</span></code></a></p></td>
 <td><p>An alternative name for type resolution.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.supports_multi_output" title="baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
+<td><p>Whether this acquisition function can handle models with multiple outputs.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1196,7 +1197,7 @@ points. (A factor of 1.0 exactly mirrors the best around the worst point.)</p></
 <a class="reference internal" href="baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend" title="baybe.recommenders.base.RecommenderProtocol.recommend"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.recommenders.base.RecommenderProtocol.recommend()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.13.1.dev44+gda6ee3a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.1.dev50+g39dd171)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1252,6 +1253,12 @@ the coordinates of the reference point.</p></li>
 </ul>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.supports_multi_output">
+<span class="sig-name descname"><span class="pre">supports_multi_output</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.supports_multi_output" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this acquisition function can handle models with multiple outputs.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -1270,14 +1277,14 @@ the coordinates of the reference point.</p></li>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="baybe.acquisition.acqfs.qLogExpectedImprovement.html">
+          <a class="prev-page" href="baybe.acquisition.acqfs.qLogNParEGO.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">qLogExpectedImprovement</div>
+                <div class="title">qLogNParEGO</div>
                 
               </div>
             </a>
@@ -1323,6 +1330,7 @@ the coordinates of the reference point.</p></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.abbreviation"><code class="docutils literal notranslate"><span class="pre">qLogNoisyExpectedHypervolumeImprovement.abbreviation</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.prune_baseline"><code class="docutils literal notranslate"><span class="pre">qLogNoisyExpectedHypervolumeImprovement.prune_baseline</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.reference_point"><code class="docutils literal notranslate"><span class="pre">qLogNoisyExpectedHypervolumeImprovement.reference_point</span></code></a></li>
+<li><a class="reference internal" href="#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.supports_multi_output"><code class="docutils literal notranslate"><span class="pre">qLogNoisyExpectedHypervolumeImprovement.supports_multi_output</span></code></a></li>
 </ul>
 </li>
 </ul>

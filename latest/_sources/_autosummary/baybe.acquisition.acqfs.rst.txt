@@ -28,6 +28,7 @@ baybe.acquisition.acqfs
       qExpectedImprovement
       qKnowledgeGradient
       qLogExpectedImprovement
+      qLogNParEGO
       qLogNoisyExpectedHypervolumeImprovement
       qLogNoisyExpectedImprovement
       qNegIntegratedPosteriorVariance

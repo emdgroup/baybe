@@ -379,6 +379,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qExpectedImprovement.html">qExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qKnowledgeGradient.html">qKnowledgeGradient</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogExpectedImprovement.html">qLogExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNParEGO.html">qLogNParEGO</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
@@ -1082,8 +1083,8 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.abbreviation" title="baybe.acquisition.acqfs.qSimpleRegret.abbreviation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">abbreviation</span></code></a></p></td>
 <td><p>An alternative name for type resolution.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.supports_multi_output" title="baybe.acquisition.acqfs.qSimpleRegret.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
+<td><p>Whether this acquisition function can handle models with multiple outputs.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1139,7 +1140,7 @@
 <a class="reference internal" href="baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend" title="baybe.recommenders.base.RecommenderProtocol.recommend"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.recommenders.base.RecommenderProtocol.recommend()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.13.1.dev44+gda6ee3a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.1.dev50+g39dd171)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1173,6 +1174,12 @@
 <dt class="sig sig-object py" id="baybe.acquisition.acqfs.qSimpleRegret.abbreviation">
 <span class="sig-name descname"><span class="pre">abbreviation</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'qSR'</span></em><a class="headerlink" href="#baybe.acquisition.acqfs.qSimpleRegret.abbreviation" title="Link to this definition">¶</a></dt>
 <dd><p>An alternative name for type resolution.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="baybe.acquisition.acqfs.qSimpleRegret.supports_multi_output">
+<span class="sig-name descname"><span class="pre">supports_multi_output</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#baybe.acquisition.acqfs.qSimpleRegret.supports_multi_output" title="Link to this definition">¶</a></dt>
+<dd><p>Whether this acquisition function can handle models with multiple outputs.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1243,6 +1250,7 @@
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.to_dict"><code class="docutils literal notranslate"><span class="pre">qSimpleRegret.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.to_json"><code class="docutils literal notranslate"><span class="pre">qSimpleRegret.to_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.abbreviation"><code class="docutils literal notranslate"><span class="pre">qSimpleRegret.abbreviation</span></code></a></li>
+<li><a class="reference internal" href="#baybe.acquisition.acqfs.qSimpleRegret.supports_multi_output"><code class="docutils literal notranslate"><span class="pre">qSimpleRegret.supports_multi_output</span></code></a></li>
 </ul>
 </li>
 </ul>

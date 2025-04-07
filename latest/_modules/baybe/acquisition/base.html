@@ -378,6 +378,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qExpectedImprovement.html">qExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qKnowledgeGradient.html">qKnowledgeGradient</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogExpectedImprovement.html">qLogExpectedImprovement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNParEGO.html">qLogNParEGO</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
@@ -1078,6 +1079,9 @@
     <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An alternative name for type resolution.&quot;&quot;&quot;</span>
 
+    <span class="n">supports_multi_output</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether this acquisition function can handle models with multiple outputs.&quot;&quot;&quot;</span>
+
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">supports_batching</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating whether batch recommendation is supported.&quot;&quot;&quot;</span>
@@ -1090,11 +1094,6 @@
 <span class="sd">        This is based on the same mechanism underlying batched recommendations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">supports_batching</span>
-
-    <span class="nd">@classproperty</span>
-    <span class="k">def</span> <span class="nf">supports_multi_output</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating whether multiple outputs are supported.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="s2">&quot;Hypervolume&quot;</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># type: ignore[attr-defined]</span>
 
     <span class="nd">@classproperty</span>
     <span class="k">def</span> <span class="nf">_non_botorch_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -1138,8 +1137,10 @@
     <span class="kn">import</span> <span class="nn">botorch</span>
 
     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">baybe_acqf_cls</span><span class="o">.</span><span class="n">mro</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">acqf_cls</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">botorch</span><span class="o">.</span><span class="n">acquisition</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span>
-            <span class="n">botorch</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">multi_objective</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">acqf_cls</span> <span class="o">:=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">botorch</span><span class="o">.</span><span class="n">acquisition</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">botorch</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">multi_objective</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">botorch</span><span class="o">.</span><span class="n">acquisition</span><span class="o">.</span><span class="n">multi_objective</span><span class="o">.</span><span class="n">parego</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="n">is_abstract</span><span class="p">(</span><span class="n">acqf_cls</span><span class="p">):</span>
                 <span class="k">continue</span>
