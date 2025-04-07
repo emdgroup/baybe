@@ -37,6 +37,9 @@ class AcquisitionFunction(ABC, SerialMixin):
     abbreviation: ClassVar[str]
     """An alternative name for type resolution."""
 
+    supports_multi_output: ClassVar[bool] = False
+    """Whether this acquisition function can handle models with multiple outputs."""
+
     @classproperty
     def supports_batching(cls) -> bool:
         """Flag indicating whether batch recommendation is supported."""
@@ -49,11 +52,6 @@ class AcquisitionFunction(ABC, SerialMixin):
         This is based on the same mechanism underlying batched recommendations.
         """
         return cls.supports_batching
-
-    @classproperty
-    def supports_multi_output(cls) -> bool:
-        """Flag indicating whether multiple outputs are supported."""
-        return "Hypervolume" in cls.__name__  # type: ignore[attr-defined]
 
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
@@ -93,8 +91,10 @@ def _get_botorch_acqf_class(
     import botorch
 
     for cls in baybe_acqf_cls.mro():
-        if acqf_cls := getattr(botorch.acquisition, cls.__name__, False) or getattr(
-            botorch.acquisition.multi_objective, cls.__name__, False
+        if (
+            acqf_cls := getattr(botorch.acquisition, cls.__name__, False)
+            or getattr(botorch.acquisition.multi_objective, cls.__name__, False)
+            or getattr(botorch.acquisition.multi_objective.parego, cls.__name__, False)
         ):
             if is_abstract(acqf_cls):
                 continue

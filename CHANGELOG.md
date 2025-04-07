@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `qPSTD` acquisition function
 - `SHAPInsight` now supports the `waterfall` plot type
 - `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
-  `qLogNoisyExpectedHypervolumeImprovement` acquisition function
+  `qLogNoisyExpectedHypervolumeImprovement` / `qLogNParEGO` acquisition functions
 - `Surrogate.replicate` method for making single-target surrogate models multi-target
   compatible
 - `CompositeSurrogate` class for composing multi-target surrogates from single-target
