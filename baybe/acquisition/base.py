@@ -38,7 +38,7 @@ class AcquisitionFunction(ABC, SerialMixin):
     """An alternative name for type resolution."""
 
     supports_multi_output: ClassVar[bool] = False
-    """Whether this acqf can handle models with multiple outputs."""
+    """Whether this acquisition function can handle models with multiple outputs."""
 
     @classproperty
     def supports_batching(cls) -> bool:
