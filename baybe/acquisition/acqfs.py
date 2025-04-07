@@ -319,10 +319,10 @@ class qThompsonSampling(qSimpleRegret):
 
 
 ########################################################################################
-### Pareto Efficient Global Optimization (Chebyshev scalarization of objectives)
+### Pareto Efficient Global Optimization (Chebyshev scalarization of targets)
 @define(frozen=True)
 class qLogNParEGO(AcquisitionFunction):
-    """Pareto ranking via Chebyshev scalarization of the objectives."""
+    """Pareto optimization via Chebyshev scalarization of the targets."""
 
     abbreviation: ClassVar[str] = "qLogNParEGO"
     supports_multi_output: ClassVar[bool] = True
