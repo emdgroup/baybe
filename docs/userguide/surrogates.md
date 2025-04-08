@@ -18,7 +18,8 @@ available within BayBE:
 * [`NGBoostSurrogate`](baybe.surrogates.ngboost.NGBoostSurrogate)
 * [`RandomForestSurrogate`](baybe.surrogates.random_forest.RandomForestSurrogate)
 
-## Multi-output Modeling
+(multi_output_modeling)= 
+## Multi-Output Modeling
 Depending on the use case at hand, it may be necessary to model multiple output
 variables simultaneously. However, not all surrogate types natively provide (joint)
 predictive distributions for more than one variable, as indicated by their
@@ -51,6 +52,8 @@ However, there are very few cases where such an explicit conversion is required.
 using a single-output surrogate model in a multi-output context would trivially fail, and
 because BayBE cares deeply about its users' lives, it automatically performs this conversion
 for you behind the scenes:
+
+(auto_replication)=
 ```{admonition} Auto-Replication
 :class: important
 
