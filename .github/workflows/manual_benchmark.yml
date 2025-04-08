@@ -147,6 +147,7 @@ jobs:
           fi
 
   benchmark-test:
+    name: run
     needs: [prepare, add-runner]
     runs-on: self-hosted
     strategy:
