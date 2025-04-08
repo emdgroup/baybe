@@ -126,7 +126,7 @@ def direct_arylation_tl_temperature(
     non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     results = []
-    for p in [0, 0.01, 0.05, 0.1, 0.2]:
+    for p in [0.01, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
                 {
@@ -136,15 +136,22 @@ def direct_arylation_tl_temperature(
                 lookup,
                 initial_data=[
                     initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ]
-                if p > 0
-                else None,
+                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations if p == 0 else 1,
                 impute_mode="error",
             )
         )
+    results.append(
+        simulate_scenarios(
+            {"0": tl_campaign, "0_naive": non_tl_campaign},
+            lookup,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
     return pd.concat(results)
 
 
