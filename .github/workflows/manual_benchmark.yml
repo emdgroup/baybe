@@ -26,6 +26,11 @@ on:
         required: false
         default: false
         type: boolean
+      aryl_halide_CT_I_BM_tl:
+        description: "aryl_halide_CT_I_BM_tl"
+        required: false
+        default: false
+        type: boolean
       direct_arylation_tl_temperature:
         description: "direct_arylation_tl_temperature"
         required: false
