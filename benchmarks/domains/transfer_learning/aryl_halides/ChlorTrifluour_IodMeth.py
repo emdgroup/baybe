@@ -32,7 +32,7 @@ def aryl_halide_ChlorTrifluour_IodoMeth(
         settings=settings,
         source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
         target_tasks=["1-iodo-4-methoxybenzene"],
-        percentages=[0.01, 0.05, 0.1, 0.2],
+        percentages=[0.01, 0.1, 0.2],
     )
 
 
