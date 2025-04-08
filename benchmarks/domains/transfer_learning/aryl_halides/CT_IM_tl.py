@@ -1,7 +1,7 @@
-"""Aryl halide benchmark for transfer learning.
+"""Aryl Halide benchmark for transfer learning.
 
-Source task: 2-iodopyridine
-Target task: 3-chloropyridine
+Source task: 1-chloro-4-(trifluoromethyl)benzene
+Target task: 1-iodo-4-methoxybenzene
 """
 
 from __future__ import annotations
@@ -17,21 +17,21 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 )
 
 
-def aryl_halide_IodoPyr_ChloroPyr(
+def aryl_halide_CT_IM_tl(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Actual benchmark function.
 
     Optimal Inputs:
-        base:       "P2Et",
-        ligand:     "t-BuXPhos",
-        additive:   "4-phenylisoxazole"
-    Optimal Output: 68.76495224
+        base:       "MTBD",
+        ligand:     "AdBrettPhos",
+        additive:   "N,N-dibenzylisoxazol-3-amine"
+    Optimal Output: 68.24812709999999
     """
     return abstract_aryl_halide_tl_substance_benchmark(
         settings=settings,
-        source_tasks=["2-iodopyridine"],
-        target_tasks=["3-chloropyridine"],
+        source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
+        target_tasks=["1-iodo-4-methoxybenzene"],
         percentages=[0.01, 0.1, 0.2],
     )
 
@@ -42,8 +42,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=100,
 )
 
-aryl_halide_IodoPyr_ChloroPyr_benchmark = ConvergenceBenchmark(
-    function=aryl_halide_IodoPyr_ChloroPyr,
-    optimal_target_values={"yield": 68.76495224},
+aryl_halide_CT_IM_tl_benchmark = ConvergenceBenchmark(
+    function=aryl_halide_CT_IM_tl,
+    optimal_target_values={"yield": 68.24812709999999},
     settings=benchmark_config,
 )

@@ -16,13 +16,13 @@ on:
         required: false
         default: false
         type: boolean
-      aryl_halide_ChlorTrifluour_IodoMeth:
-        description: "aryl_halide_ChlorTrifluour_IodMeth"
+      aryl_halide_CT_IM_tl:
+        description: "aryl_halide_CT_IM_tl"
         required: false
         default: false
         type: boolean
-      aryl_halide_IodoPyr_ChloroPyr:
-        description: "aryl_halide_IodoPyr_ChloroPyr"
+      aryl_halide_IP_CP_tl:
+        description: "aryl_halide_IP_CP_tl"
         required: false
         default: false
         type: boolean
