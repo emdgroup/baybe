@@ -4,7 +4,7 @@ This module provides the basic structure for creating different
 benchmarks by changing the source and target tasks. The benchmark compares TL and
 non-TL campaigns.
 
-By convention, the benchmarks are named in the format "SourceHalides-TargetHalides.py"
+By convention, the benchmarks are named in the format "SourceHalides_TargetHalides.py"
 where `SourceHalides` and `TargetHalides` are abbreviations of the used source and
 target tasks respectively.
 """
