@@ -1,4 +1,4 @@
-"""Benchmark on Directl Arylation data for transfer learning.
+"""Benchmark on Direct Arylation data for transfer learning.
 
 This benchmark uses one temperature as source and another temperature as target.
 """
