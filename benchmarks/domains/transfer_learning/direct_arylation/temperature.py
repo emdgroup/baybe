@@ -50,7 +50,6 @@ def make_searchspace(
         NumericalDiscreteParameter(
             name="Concentration",
             values=sorted(data["Concentration"].unique()),
-            tolerance=0.001,
         ),
     ]
     if use_task_parameter:
