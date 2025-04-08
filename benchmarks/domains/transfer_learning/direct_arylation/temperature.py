@@ -71,7 +71,13 @@ def make_objective() -> SingleTargetObjective:
 
 
 def make_lookup(data: pd.DataFrame) -> pd.DataFrame:
-    """Create the lookup for the benchmark."""
+    """Create the lookup for the benchmark.
+
+    Note that we filter the data to only include the target tasks.
+    Without the filtering, there would be multiple entries for the same parameter
+    configuration. Since this might yield issues for the non-transfer learning
+    campaigns, we filter the data to only include the target tasks.
+    """
     return data[data["Temp_C"] == "105"]
 
 
