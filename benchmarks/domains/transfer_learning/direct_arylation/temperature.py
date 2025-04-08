@@ -28,9 +28,11 @@ from benchmarks.definition.convergence import ConvergenceBenchmark
 def load_data() -> pd.DataFrame:
     """Load data for benchmark."""
     data = pd.read_table(
-        DATA_PATH / "direct_arylation" / "data.csv", sep=",", index_col=0
+        DATA_PATH / "direct_arylation" / "data.csv",
+        sep=",",
+        index_col=0,
+        dtype={"Temp_C": str},
     )
-    data["Temp_C"] = data["Temp_C"].astype(str)
     return data
 
 
