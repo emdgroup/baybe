@@ -128,7 +128,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
     results = []
 
-    for p in [0, 1, 10, 25, 50, 100]:
+    for p in [1, 10, 50, 100]:
         results.append(
             simulate_scenarios(
                 {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
@@ -140,15 +140,22 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                         functions["Source_Function"], "Source_Function", p
                     )
                     for _ in range(settings.n_mc_iterations)
-                ]
-                if p > 0
-                else None,
+                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations if p == 0 else 1,
                 impute_mode="error",
             )
         )
+    results.append(
+        simulate_scenarios(
+            {"0": campaign_tl, "0_naive": campaign_nontl},
+            lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+        )
+    )
     return pd.concat(results)
 
 
