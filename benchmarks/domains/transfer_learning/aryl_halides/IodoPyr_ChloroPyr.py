@@ -1,4 +1,4 @@
-"""Aryl-Halide benchmark for transfer learning.
+"""Aryl halide benchmark for transfer learning.
 
 Source task: 2-iodopyridine
 Target task: 3-chloropyridine
