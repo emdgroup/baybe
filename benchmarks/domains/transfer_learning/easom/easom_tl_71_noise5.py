@@ -29,7 +29,7 @@ def easom_tl_71_noise5(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         settings=settings,
         functions=functions,
         points_per_dim=71,
-        percentages=[0.01, 0.05, 0.1, 0.2],
+        percentages=[0.01, 0.1, 0.2],
         negate=negate,
     )
 
