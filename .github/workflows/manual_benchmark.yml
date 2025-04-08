@@ -11,7 +11,6 @@ on:
         options:
           - "Manually Selected"
           - "All"
-          - "Default"
       synthetic_2C1D_1C:
         description: "synthetic_2C1D_1C"
         required: false
@@ -58,9 +57,6 @@ on:
         default: false
         type: boolean
 
-env:
-  DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
-
 permissions:
   contents: read
   id-token: write
@@ -72,7 +68,6 @@ jobs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
     steps:
       - name: Build matrix from inputs
-        if: ${{ github.event.inputs.group_selection == 'Manually Selected' || github.event.inputs.group_selection == 'All' }}
         id: build_matrix_from_inputs
         run: |
           benchmarks_to_execute='{"benchmark_list": ['
@@ -88,19 +83,6 @@ jobs:
           done
           benchmarks_to_execute=$(echo "$benchmarks_to_execute" | sed 's/,$//')
           benchmarks_to_execute="$benchmarks_to_execute ]}"
-
-          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
-
-      - name: Build matrix from group
-        if: ${{ github.event.inputs.group_selection != 'Manually Selected' && github.event.inputs.group_selection != 'All' }}
-        id: build_matrix_from_group
-        run: |
-          benchmarks_to_execute='{"benchmark_list": []}'
-          run_all_benchmarks="${{ github.event.inputs.group_selection }}"
-
-          if [ "$run_all_benchmarks" = "Default" ]; then
-            benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
-          fi
 
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
 
