@@ -32,7 +32,7 @@ def aryl_halide_IodoPyr_ChloroPyr(
         settings=settings,
         source_tasks=["2-iodopyridine"],
         target_tasks=["3-chloropyridine"],
-        percentages=[0.01, 0.05, 0.1, 0.2],
+        percentages=[0.01, 0.1, 0.2],
     )
 
 
