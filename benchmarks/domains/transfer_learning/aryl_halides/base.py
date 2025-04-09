@@ -88,7 +88,7 @@ def make_initial_data(data: pd.DataFrame, source_tasks: Sequence[str]) -> pd.Dat
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
-def abstract_aryl_halide_tl_substance_benchmark(
+def aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
     source_tasks: Sequence[str],
     target_tasks: Sequence[str],

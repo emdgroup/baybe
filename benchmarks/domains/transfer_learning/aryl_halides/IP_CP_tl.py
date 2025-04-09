@@ -13,7 +13,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
-    abstract_aryl_halide_tl_substance_benchmark,
+    aryl_halide_tl_substance_benchmark,
 )
 
 
@@ -28,7 +28,7 @@ def aryl_halide_IP_CP_tl(
         additive:   "4-phenylisoxazole"
     Optimal Output: 68.76495224
     """
-    return abstract_aryl_halide_tl_substance_benchmark(
+    return aryl_halide_tl_substance_benchmark(
         settings=settings,
         source_tasks=["2-iodopyridine"],
         target_tasks=["3-chloropyridine"],
