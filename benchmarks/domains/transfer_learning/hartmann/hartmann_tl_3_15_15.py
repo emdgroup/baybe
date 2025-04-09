@@ -9,8 +9,8 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.hartmann.base import (
-    abstract_hartmann_tl_noise,
     hartmann,
+    hartmann_tl_noise,
 )
 
 
@@ -25,7 +25,7 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         "Target_Function": lambda x: hartmann(x, negate=negate),
         "Source_Function": lambda x: hartmann(x, negate=negate, noise_std=0.15),
     }
-    return abstract_hartmann_tl_noise(
+    return hartmann_tl_noise(
         settings=settings,
         functions=functions,
         points_per_dim=15,
