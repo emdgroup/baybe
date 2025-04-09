@@ -10,10 +10,13 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode
-from baybe.targets.numerical import NumericalTarget
-from baybe.utils.dataframe import pretty_print_df, transform_target_columns
+from baybe.utils.dataframe import (
+    pretty_print_df,
+    transform_target_columns,
+)
 from baybe.utils.plotting import to_string
 
 

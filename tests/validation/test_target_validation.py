@@ -3,8 +3,8 @@
 import pytest
 from pytest import param
 
+from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.numerical import NumericalTarget
 
 
 @pytest.mark.parametrize(

@@ -353,3 +353,13 @@ def convert_to_float(
     if isinstance(x, Iterable):
         return cattrs.structure(x, tuple[float, ...])
     return float(x)
+
+
+def compose_two(f: Callable, g: Callable, /) -> Callable:
+    """Compose two given functions (first function is applied first)."""
+    return lambda *a, **kw: g(f(*a, **kw))
+
+
+def compose(*fs: Callable) -> Callable:
+    """Compose an arbitrary number of functions (first function is applied first)."""
+    return functools.reduce(compose_two, fs)

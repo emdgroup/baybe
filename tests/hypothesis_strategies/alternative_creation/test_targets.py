@@ -3,8 +3,8 @@
 import pytest
 from pytest import param
 
+from baybe.targets import NumericalTarget
 from baybe.targets.enum import TargetMode, TargetTransformation
-from baybe.targets.numerical import NumericalTarget
 
 
 @pytest.mark.parametrize(
