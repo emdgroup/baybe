@@ -93,23 +93,6 @@ def make_searchspace(
     return SearchSpace.from_product(parameters=params)
 
 
-def make_objective(negate: bool) -> SingleTargetObjective:
-    """Create the objective for the benchmark."""
-    return SingleTargetObjective(
-        target=NumericalTarget(name="Target", mode="MAX" if negate else "MIN")
-    )
-
-
-def make_lookup(data: pd.DataFrame) -> pd.DataFrame:
-    """Create the lookup for the benchmark."""
-    return data[data["Function"] == "Target_Function"]
-
-
-def make_initial_data(data: pd.DataFrame) -> pd.DataFrame:
-    """Create the initial data for the benchmark."""
-    return data[data["Function"] == "Source_Function"]
-
-
 def hartmann_tl_noise(
     settings: ConvergenceBenchmarkSettings,
     functions: dict[str, Callable],
@@ -133,10 +116,12 @@ def hartmann_tl_noise(
     searchspace_nontl = make_searchspace(grid, use_task_parameter=False)
     searchspace_tl = make_searchspace(grid, use_task_parameter=True)
 
-    initial_data = make_initial_data(data)
-    lookup = make_lookup(data)
+    initial_data = data[data["Function"] == "Source_Function"]
+    lookup = data[data["Function"] == "Target_Function"]
 
-    objective = make_objective(negate)
+    objective = SingleTargetObjective(
+        target=NumericalTarget(name="Target", mode="MAX" if negate else "MIN")
+    )
     tl_campaign = Campaign(
         searchspace=searchspace_tl,
         objective=objective,
