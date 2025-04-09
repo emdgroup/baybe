@@ -297,7 +297,7 @@ pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
-- `extra`: Installs all optional **user-facing** dependencies.
+- `extras`: Installs all dependencies required for optional features.
 - `benchmarking`: Required for running the benchmarking module.
 - `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
 - `docs`: Required for creating the documentation.

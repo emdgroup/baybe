@@ -68,7 +68,7 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # the same version pin should be used everywhere.
 
 [project.optional-dependencies]
-extra = [
+extras = [
     "baybe[chem]",
     "baybe[examples]",
     "baybe[insights]",
