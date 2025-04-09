@@ -85,7 +85,7 @@ onnx = [
 ]
 
 dev = [
-    "baybe[extra]",
+    "baybe[examples]",
     "baybe[docs]",
     "baybe[lint]",
     "baybe[mypy]",
