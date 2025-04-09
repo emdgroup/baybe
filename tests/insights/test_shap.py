@@ -10,7 +10,7 @@ import pytest
 from pytest import mark
 
 from baybe._optional.info import INSIGHTS_INSTALLED
-from baybe.exceptions import IncompatibleExplainerError
+from baybe.exceptions import IncompatibleExplainerError, EmptyMeasurementsError
 
 if not INSIGHTS_INSTALLED:
     pytest.skip("Optional insights package not installed.", allow_module_level=True)
@@ -175,7 +175,7 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
     """Test explanations for campaigns with updated measurements."""
     with pytest.raises(
-        ValueError,
+        EmptyMeasurementsError,
         match="The campaign does not contain any measurements.",
     ):
         SHAPInsight.from_campaign(campaign)
