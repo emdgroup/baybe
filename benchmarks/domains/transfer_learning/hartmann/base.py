@@ -20,7 +20,7 @@ from benchmarks.definition import (
 
 
 def hartmann(X: np.ndarray, negate: bool, noise_std: float = 0) -> float:
-    """Reimplementation of the Hartmann function."""
+    """Reimplementation of the three-dimensional Hartmann function."""
     x = np.array(X).ravel()
     A = np.array(
         [[3.0, 10.0, 30.0], [0.1, 10.0, 35.0], [3.0, 10.0, 30.0], [0.1, 10.0, 35.0]]
