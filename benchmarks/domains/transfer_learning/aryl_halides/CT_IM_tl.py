@@ -20,13 +20,28 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 def aryl_halide_CT_IM_tl(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Actual benchmark function.
+    """Benchmark function for transfer learning with aryl halide reactions.
 
-    Optimal Inputs:
-        base:       "MTBD",
-        ligand:     "AdBrettPhos",
-        additive:   "N,N-dibenzylisoxazol-3-amine"
-    Optimal Output: 68.24812709999999
+    Key characteristics:
+    • Compares transfer learning vs. non-transfer learning approaches
+    • Source task: 1-chloro-4-(trifluoromethyl)benzene
+    • Target task: 1-iodo-4-methoxybenzene
+    • Tests varying amounts of source data:
+      - 1% of source data
+      - 5% of source data
+      - 10% of source data
+      - 20% of source data
+    • Optimal parameters:
+      - Base: "MTBD"
+      - Ligand: "AdBrettPhos"
+      - Additive: "N,N-dibenzylisoxazol-3-amine"
+    • Optimal yield: 68.25%
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results
     """
     return aryl_halide_tl_substance_benchmark(
         settings=settings,
