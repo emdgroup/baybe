@@ -6,7 +6,7 @@ from baybe.exceptions import OptionalImportError
 try:
     from ngboost import NGBRegressor
 except ModuleNotFoundError as ex:
-    raise OptionalImportError(_ERROR_MESSAGE.format("ngboost")) from ex
+    raise OptionalImportError(_ERROR_MESSAGE.format(package="ngboost")) from ex
 
 __all__ = [
     "NGBRegressor",
