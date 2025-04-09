@@ -19,7 +19,7 @@ from botorch.models.model import Model
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
-    qLogNoisyExpectedHypervolumeImprovement,
+    _ExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
@@ -218,7 +218,7 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.ref_point.name not in self._signature:
             return
 
-        assert isinstance(self.acqf, qLogNoisyExpectedHypervolumeImprovement)
+        assert isinstance(self.acqf, _ExpectedHypervolumeImprovement)
 
         if isinstance(ref_point := self.acqf.reference_point, Iterable):
             self._args.ref_point = torch.tensor(
