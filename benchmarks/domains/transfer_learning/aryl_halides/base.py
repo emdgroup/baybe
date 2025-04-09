@@ -72,11 +72,6 @@ def make_searchspace(
     return SearchSpace.from_product(parameters=params)
 
 
-def make_objective() -> SingleTargetObjective:
-    """Create the objective for the benchmark."""
-    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
-
-
 def make_lookup(data: pd.DataFrame, target_tasks: Sequence[str]) -> pd.DataFrame:
     """Create the lookup for the benchmark.
 
@@ -120,7 +115,7 @@ def abstract_aryl_halide_tl_substance_benchmark(
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
-    objective = make_objective()
+    objective = SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
     tl_campaign = Campaign(
         searchspace=searchspace,
