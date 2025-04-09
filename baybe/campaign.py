@@ -17,7 +17,11 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
+from baybe.exceptions import (
+    EmptyMeasurementsError,
+    IncompatibilityError,
+    NotEnoughPointsLeftError,
+)
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -559,6 +563,13 @@ class Campaign(SerialMixin):
             A dataframe with posterior statistics for each target and candidate.
         """
         if candidates is None:
+            if self.measurements.empty:
+                raise EmptyMeasurementsError(
+                    f"No candidates were provided and the campaign measurements are "
+                    f"empty. '{self.posterior_stats.__name__}' cannot be computed in "
+                    f"this case."
+                )
+
             candidates = self.measurements[[p.name for p in self.parameters]]
 
         surrogate = self.get_surrogate()
