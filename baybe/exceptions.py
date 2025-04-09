@@ -89,8 +89,8 @@ class EmptySearchSpaceError(Exception):
     """The created search space contains no parameters."""
 
 
-class EmptyMeasurementsError(Exception):
-    """The measurements are emtpy."""
+class NoMeasurementsError(Exception):
+    """A context expected measurements but none were available."""
 
 
 class NothingToSimulateError(Exception):

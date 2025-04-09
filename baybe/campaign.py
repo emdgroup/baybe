@@ -18,8 +18,8 @@ from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import (
-    EmptyMeasurementsError,
     IncompatibilityError,
+    NoMeasurementsError,
     NotEnoughPointsLeftError,
 )
 from baybe.objectives.base import Objective, to_objective
@@ -564,10 +564,10 @@ class Campaign(SerialMixin):
         """
         if candidates is None:
             if self.measurements.empty:
-                raise EmptyMeasurementsError(
-                    f"No candidates were provided and the campaign measurements are "
-                    f"empty. '{self.posterior_stats.__name__}' cannot be computed in "
-                    f"this case."
+                raise NoMeasurementsError(
+                    f"No candidates were provided and the campaign has no measurements "
+                    f"yet. '{self.posterior_stats.__name__}' has no candidates to "
+                    f"compute statistics for in this case."
                 )
 
             candidates = self.measurements[[p.name for p in self.parameters]]
