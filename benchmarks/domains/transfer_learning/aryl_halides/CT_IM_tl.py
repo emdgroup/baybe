@@ -13,7 +13,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
-    abstract_aryl_halide_tl_substance_benchmark,
+    aryl_halide_tl_substance_benchmark,
 )
 
 
@@ -28,7 +28,7 @@ def aryl_halide_CT_IM_tl(
         additive:   "N,N-dibenzylisoxazol-3-amine"
     Optimal Output: 68.24812709999999
     """
-    return abstract_aryl_halide_tl_substance_benchmark(
+    return aryl_halide_tl_substance_benchmark(
         settings=settings,
         source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
         target_tasks=["1-iodo-4-methoxybenzene"],
