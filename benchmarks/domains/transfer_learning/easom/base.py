@@ -127,7 +127,7 @@ def make_initial_data(data: pd.DataFrame) -> pd.DataFrame:
     return data[data["Function"] == "Source_Function"]
 
 
-def abstract_easom_tl_noise(
+def easom_tl_noise(
     settings: ConvergenceBenchmarkSettings,
     functions: dict[str, Callable],
     points_per_dim: int,

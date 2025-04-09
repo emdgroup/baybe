@@ -9,8 +9,8 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.domains.transfer_learning.easom.base import (
-    abstract_easom_tl_noise,
     easom,
+    easom_tl_noise,
 )
 
 
@@ -25,7 +25,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": lambda x: easom(x, negate=negate),
         "Source_Function": lambda x: easom(x, noise_std=0.05, negate=negate),
     }
-    return abstract_easom_tl_noise(
+    return easom_tl_noise(
         settings=settings,
         functions=functions,
         points_per_dim=47,
