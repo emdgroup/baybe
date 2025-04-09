@@ -36,6 +36,7 @@ baybe.exceptions
       MinimumCardinalityViolatedWarning
       ModelNotTrainedError
       NoMCAcquisitionFunctionError
+      NoMeasurementsError
       NoRecommendersLeftError
       NotEnoughPointsLeftError
       NothingToSimulateError

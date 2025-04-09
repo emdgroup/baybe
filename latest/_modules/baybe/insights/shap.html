@@ -475,6 +475,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
@@ -1050,7 +1051,7 @@
 
 <span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
 <span class="kn">from</span> <span class="nn">baybe._optional.insights</span> <span class="kn">import</span> <span class="n">shap</span>
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibleExplainerError</span>
+<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibleExplainerError</span><span class="p">,</span> <span class="n">NoMeasurementsError</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.recommenders.base</span> <span class="kn">import</span> <span class="n">RecommenderProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
@@ -1242,7 +1243,7 @@
 <span class="sd">            ValueError: If the campaign does not contain any measurements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">campaign</span><span class="o">.</span><span class="n">measurements</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The campaign does not contain any measurements.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">NoMeasurementsError</span><span class="p">(</span><span class="s2">&quot;The campaign does not contain any measurements.&quot;</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">measurements</span><span class="p">[[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">campaign</span><span class="o">.</span><span class="n">parameters</span><span class="p">]]</span>
         <span class="n">background_data</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="n">use_comp_rep</span> <span class="k">else</span> <span class="n">data</span>
 

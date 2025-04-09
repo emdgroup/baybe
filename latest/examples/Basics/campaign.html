@@ -476,6 +476,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
@@ -1131,9 +1132,9 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-        Solvent                Base         Ligand  Temperature  Concentration
-95  Butyl Ester  Potassium pivalate      BrettPhos        105.0          0.153
-87  Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos        120.0          0.057
+           Solvent             Base         Ligand  Temperature  Concentration
+258           DMAc  Cesium pivalate      BrettPhos        120.0          0.057
+139  Butyornitrile  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.100
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1146,13 +1147,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-        Solvent                Base         Ligand  Temperature  \
-95  Butyl Ester  Potassium pivalate      BrettPhos        105.0   
-87  Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos        120.0   
+           Solvent             Base         Ligand  Temperature  \
+258           DMAc  Cesium pivalate      BrettPhos        120.0   
+139  Butyornitrile  Cesium pivalate  (t-Bu)PhCPhos        105.0   
 
-    Concentration      yield  
-95          0.153   5.781746  
-87          0.057  28.982994  
+     Concentration     yield  
+258          0.057  3.080844  
+139          0.100  5.830753  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

@@ -476,6 +476,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
@@ -1089,31 +1090,34 @@
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html#baybe.exceptions.NoMCAcquisitionFunctionError" title="baybe.exceptions.NoMCAcquisitionFunctionError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoMCAcquisitionFunctionError</span></code></a></p></td>
 <td><p>A Monte Carlo acquisition function is required but an analytical acquisition function has been selected by the user.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html#baybe.exceptions.NoRecommendersLeftError" title="baybe.exceptions.NoRecommendersLeftError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoRecommendersLeftError</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.NoMeasurementsError.html#baybe.exceptions.NoMeasurementsError" title="baybe.exceptions.NoMeasurementsError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoMeasurementsError</span></code></a></p></td>
+<td><p>A context expected measurements but none were available.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html#baybe.exceptions.NoRecommendersLeftError" title="baybe.exceptions.NoRecommendersLeftError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoRecommendersLeftError</span></code></a></p></td>
 <td><p>A recommender is requested by a meta recommender but there are no recommenders left.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html#baybe.exceptions.NotEnoughPointsLeftError" title="baybe.exceptions.NotEnoughPointsLeftError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotEnoughPointsLeftError</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html#baybe.exceptions.NotEnoughPointsLeftError" title="baybe.exceptions.NotEnoughPointsLeftError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NotEnoughPointsLeftError</span></code></a></p></td>
 <td><p>More recommendations are requested than there are viable parameter configurations left in the search space.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html#baybe.exceptions.NothingToSimulateError" title="baybe.exceptions.NothingToSimulateError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NothingToSimulateError</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html#baybe.exceptions.NothingToSimulateError" title="baybe.exceptions.NothingToSimulateError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NothingToSimulateError</span></code></a></p></td>
 <td><p>There is nothing to simulate because there are no testable configurations.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html#baybe.exceptions.NumericalUnderflowError" title="baybe.exceptions.NumericalUnderflowError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NumericalUnderflowError</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html#baybe.exceptions.NumericalUnderflowError" title="baybe.exceptions.NumericalUnderflowError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NumericalUnderflowError</span></code></a></p></td>
 <td><p>A computation would lead to numerical underflow.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError" title="baybe.exceptions.OptionalImportError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptionalImportError</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError" title="baybe.exceptions.OptionalImportError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">OptionalImportError</span></code></a></p></td>
 <td><p>An attempt was made to import an optional but uninstalled dependency.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.SearchSpaceMatchWarning.html#baybe.exceptions.SearchSpaceMatchWarning" title="baybe.exceptions.SearchSpaceMatchWarning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SearchSpaceMatchWarning</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.SearchSpaceMatchWarning.html#baybe.exceptions.SearchSpaceMatchWarning" title="baybe.exceptions.SearchSpaceMatchWarning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SearchSpaceMatchWarning</span></code></a></p></td>
 <td><p>When trying to match data to entries in the search space, something unexpected happened.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.UnidentifiedSubclassError.html#baybe.exceptions.UnidentifiedSubclassError" title="baybe.exceptions.UnidentifiedSubclassError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnidentifiedSubclassError</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.UnidentifiedSubclassError.html#baybe.exceptions.UnidentifiedSubclassError" title="baybe.exceptions.UnidentifiedSubclassError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnidentifiedSubclassError</span></code></a></p></td>
 <td><p>A specified subclass cannot be found in the given class hierarchy.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.UnmatchedAttributeError.html#baybe.exceptions.UnmatchedAttributeError" title="baybe.exceptions.UnmatchedAttributeError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnmatchedAttributeError</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.UnmatchedAttributeError.html#baybe.exceptions.UnmatchedAttributeError" title="baybe.exceptions.UnmatchedAttributeError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnmatchedAttributeError</span></code></a></p></td>
 <td><p>An attribute cannot be matched against a certain callable signature.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning" title="baybe.exceptions.UnusedObjectWarning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnusedObjectWarning</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning" title="baybe.exceptions.UnusedObjectWarning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">UnusedObjectWarning</span></code></a></p></td>
 <td><p>A method or function was called with undesired arguments which indicates an unintended user fault.</p></td>
 </tr>
 </tbody>
