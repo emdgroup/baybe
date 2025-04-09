@@ -51,6 +51,21 @@ on:
         required: false
         default: false
         type: boolean
+      hartmann_3d:
+        description: "hartmann_3d"
+        required: false
+        default: false
+        type: boolean
+      hartmann_6d:
+        description: "hartmann_6d"
+        required: false
+        default: false
+        type: boolean
+      hartmann_3d_discretized:
+        description: "hartmann_3d_discretized"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
