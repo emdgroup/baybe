@@ -254,22 +254,22 @@ for kIter in range(N_ITERATIONS):
     
     Recommended measurements with fake measured results:
     
-        Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
-    114    22  very good         1.0        -3.0  51.051144  79.471371  53.564131
-    120    22  very good         3.0        -9.0  80.076712  27.243248  56.905487
-    190    33        bad         8.0        -3.0  58.611139  93.285140  55.347834
+        Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    180    33       bad         4.0        -9.0  23.775989   2.773275  55.372166
+    182    33       bad         4.0        -3.0  13.352442  21.910725  54.753174
+    110    22  very bad        10.0        -3.0  56.580444  85.800716  55.468814
     
     Internal measurement database with desirability values:
     
-      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-    0    22  very good         1.0        -3.0  51.051144  79.471371  53.564131   
-    1    22  very good         3.0        -9.0  80.076712  27.243248  56.905487   
-    2    33        bad         8.0        -3.0  58.611139  93.285140  55.347834   
+      Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    33       bad         4.0        -9.0  23.775989   2.773275  55.372166   
+    1    33       bad         4.0        -3.0  13.352442  21.910725  54.753174   
+    2    22  very bad        10.0        -3.0  56.580444  85.800716  55.468814   
     
        BatchNr  FitNr  Desirability  
-    0        1    NaN      0.608546  
-    1        1    NaN      0.536851  
-    2        1    NaN      0.469294  
+    0        1    NaN      0.578885  
+    1        1    NaN      0.564752  
+    2        1    NaN      0.471453  
 
 
     
@@ -278,76 +278,64 @@ for kIter in range(N_ITERATIONS):
     
     Recommended measurements with fake measured results:
     
-          Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
-    index                                                                  
-    122      22  very good         3.0        -3.0  11.591708  42.770947   
-    115      22  very good         1.0        -1.0  52.907346  29.042208   
-    86       22   very bad         1.0        -3.0  16.747924  69.312095   
-    
-            Target_3  
-    index             
-    122    56.244623  
-    115    54.563215  
-    86     53.499144  
+          Cat_1 Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    index                                                                     
+    181      33   bad         4.0        -6.0  40.106137  72.793840  55.120698
+    148      33    OK         3.0        -9.0  28.952076   1.831997  51.440311
+    208      33  good         4.0        -9.0  77.111440  22.624520  53.486545
     
     Internal measurement database with desirability values:
     
-      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-    0    22  very good         1.0        -3.0  51.051144  79.471371  53.564131   
-    1    22  very good         3.0        -9.0  80.076712  27.243248  56.905487   
-    2    33        bad         8.0        -3.0  58.611139  93.285140  55.347834   
-    3    22  very good         3.0        -3.0  11.591708  42.770947  56.244623   
-    4    22  very good         1.0        -1.0  52.907346  29.042208  54.563215   
-    5    22   very bad         1.0        -3.0  16.747924  69.312095  53.499144   
+      Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    33       bad         4.0        -9.0  23.775989   2.773275  55.372166   
+    1    33       bad         4.0        -3.0  13.352442  21.910725  54.753174   
+    2    22  very bad        10.0        -3.0  56.580444  85.800716  55.468814   
+    3    33       bad         4.0        -6.0  40.106137  72.793840  55.120698   
+    4    33        OK         3.0        -9.0  28.952076   1.831997  51.440311   
+    5    33      good         4.0        -9.0  77.111440  22.624520  53.486545   
     
        BatchNr  FitNr  Desirability  
-    0        1    1.0      0.608546  
-    1        1    1.0      0.536851  
-    2        1    1.0      0.469294  
-    3        2    NaN      0.412711  
-    4        2    NaN      0.643357  
-    5        2    NaN      0.564551  
+    0        1    1.0      0.578885  
+    1        1    1.0      0.564752  
+    2        1    1.0      0.471453  
+    3        2    NaN      0.489760  
+    4        2    NaN      0.829856  
+    5        2    NaN      0.779480  
     
     
     #### ITERATION 3 ####
     
     Recommended measurements with fake measured results:
     
-          Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2  \
-    index                                                                  
-    255      33  very good         1.0        -1.0  37.599486  35.415583   
-    136      22  very good        10.0        -9.0  55.069389  64.657033   
-    16       22         OK         6.0        -9.0  36.642192  28.563325   
-    
-            Target_3  
-    index             
-    255    52.061643  
-    136    55.089434  
-    16     52.848276  
+          Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3
+    index                                                                         
+    140      33        OK         1.0        -9.0  38.405756  65.160808  52.030002
+    154      33        OK         4.0        -3.0  10.317174  60.680093  51.715076
+    236      33  very bad         4.0        -9.0   8.135739  43.495267  54.527800
     
     Internal measurement database with desirability values:
     
-      Cat_1      Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
-    0    22  very good         1.0        -3.0  51.051144  79.471371  53.564131   
-    1    22  very good         3.0        -9.0  80.076712  27.243248  56.905487   
-    2    33        bad         8.0        -3.0  58.611139  93.285140  55.347834   
-    3    22  very good         3.0        -3.0  11.591708  42.770947  56.244623   
-    4    22  very good         1.0        -1.0  52.907346  29.042208  54.563215   
-    5    22   very bad         1.0        -3.0  16.747924  69.312095  53.499144   
-    6    33  very good         1.0        -1.0  37.599486  35.415583  52.061643   
-    7    22  very good        10.0        -9.0  55.069389  64.657033  55.089434   
-    8    22         OK         6.0        -9.0  36.642192  28.563325  52.848276   
+      Cat_1     Cat_2  Num_disc_1  Num_disc_2   Target_1   Target_2   Target_3  \
+    0    33       bad         4.0        -9.0  23.775989   2.773275  55.372166   
+    1    33       bad         4.0        -3.0  13.352442  21.910725  54.753174   
+    2    22  very bad        10.0        -3.0  56.580444  85.800716  55.468814   
+    3    33       bad         4.0        -6.0  40.106137  72.793840  55.120698   
+    4    33        OK         3.0        -9.0  28.952076   1.831997  51.440311   
+    5    33      good         4.0        -9.0  77.111440  22.624520  53.486545   
+    6    33        OK         1.0        -9.0  38.405756  65.160808  52.030002   
+    7    33        OK         4.0        -3.0  10.317174  60.680093  51.715076   
+    8    33  very bad         4.0        -9.0   8.135739  43.495267  54.527800   
     
        BatchNr  FitNr  Desirability  
-    0        1    1.0      0.608546  
-    1        1    1.0      0.536851  
-    2        1    1.0      0.469294  
-    3        2    2.0      0.412711  
-    4        2    2.0      0.643357  
-    5        2    2.0      0.564551  
-    6        3    NaN      0.755471  
-    7        3    NaN      0.538234  
-    8        3    NaN      0.726293  
+    0        1    1.0      0.578885  
+    1        1    1.0      0.564752  
+    2        1    1.0      0.471453  
+    3        2    2.0      0.489760  
+    4        2    2.0      0.829856  
+    5        2    2.0      0.779480  
+    6        3    NaN      0.699022  
+    7        3    NaN      0.664995  
+    8        3    NaN      0.527463  
 
 
 ## Addendum: Description of `transformation` functions

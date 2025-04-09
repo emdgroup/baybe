@@ -127,9 +127,9 @@ searchspace = SearchSpace.from_product(
 )
 ```
 
-    /home/runner/work/baybe/baybe/.tox/docs-py310/lib/python3.10/site-
-packages/baybe/utils/chemistry.py:126: DeprecationWarning: Substance encoding 'RDKIT' is
-deprecated and will be disabled in a future version. Use 'RDKIT2DDESCRIPTORS' instead.
+    /home/runner/work/baybe/baybe/baybe/utils/chemistry.py:126: DeprecationWarning:
+Substance encoding 'RDKIT' is deprecated and will be disabled in a future version. Use
+'RDKIT2DDESCRIPTORS' instead.
       warnings.warn(
 
 

@@ -47,8 +47,6 @@ baybe.utils
 
    numerical
 
-   plotting
-
    random
 
    sampling_algorithms

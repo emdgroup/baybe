@@ -46,8 +46,8 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
-from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
+from examples.utils import create_example_plots
 ```
 
 ## Settings
