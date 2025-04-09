@@ -112,7 +112,7 @@ class BotorchAcquisitionFunctionBuilder:
     def _maximize_flags(self) -> list[bool]:
         """Booleans indicating which target is to be minimized/maximized."""
         assert is_all_instance(self.objective.targets, NumericalTarget)
-        return [t.mode is TargetMode.MAX for t in self.objective.targets]
+        return [t.mode is not TargetMode.MIN for t in self.objective.targets]
 
     @property
     def _multiplier(self) -> list[float]:
@@ -127,7 +127,9 @@ class BotorchAcquisitionFunctionBuilder:
     @cached_property
     def _train_y(self) -> pd.DataFrame:
         """The training target values."""
-        return self.measurements[[t.name for t in self.objective.targets]]
+        return self.objective.transform(
+            self.measurements[[t.name for t in self.objective.targets]]
+        )
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
