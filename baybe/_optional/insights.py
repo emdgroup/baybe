@@ -5,12 +5,7 @@ from baybe.exceptions import OptionalImportError
 try:
     import shap
 except ModuleNotFoundError as ex:
-    raise OptionalImportError(
-        "Explainer functionality is unavailable because 'insights' is not installed."
-        " Consider installing BayBE with 'insights' dependency, e.g. via "
-        "`pip install baybe[insights]`.",
-        name="shap",
-    ) from ex
+    raise OptionalImportError(name="shap", group="insights") from ex
 
 __all__ = [
     "shap",

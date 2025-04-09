@@ -5,13 +5,7 @@ from baybe.exceptions import OptionalImportError
 try:
     import xyzpy
 except ModuleNotFoundError as ex:
-    raise OptionalImportError(
-        "Batch scenario simulation is unavailable because 'xyzpy' is not "
-        "installed. "
-        "Consider installing BayBE with 'simulation' dependency, "
-        "e.g. via `pip install baybe[simulation]`.",
-        name="xyzpy",
-    ) from ex
+    raise OptionalImportError(name="xyzpy", group="simulation") from ex
 
 __all__ = [
     "xyzpy",
