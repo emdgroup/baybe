@@ -8,9 +8,12 @@ from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective
 from baybe.objectives.validation import validate_target_names
 from baybe.targets.base import Target
+from baybe.targets.enum import TargetMode
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
 
@@ -32,6 +35,16 @@ class ParetoObjective(Objective):
         alias="targets",
     )
     "The targets considered by the objective."
+
+    @_targets.validator
+    def _validate_targets(self, _, targets: tuple[Target, ...]) -> None:
+        if any(
+            isinstance(t, NumericalTarget) and t.mode is TargetMode.MATCH
+            for t in targets
+        ):
+            raise IncompatibilityError(
+                "Match targets are not yet supported for Pareto optimization."
+            )
 
     @override
     @property
