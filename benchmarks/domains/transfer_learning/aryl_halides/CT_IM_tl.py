@@ -39,7 +39,7 @@ def aryl_halide_CT_IM_tl(
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=30,
-    n_mc_iterations=100,
+    n_mc_iterations=50,
 )
 
 aryl_halide_CT_IM_tl_benchmark = ConvergenceBenchmark(
