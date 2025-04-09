@@ -34,7 +34,6 @@ dependencies = [
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
-    "ngboost>=0.3.12,<1",
     "numpy>=1.24.1,<2",
     "pandas>=1.4.2,<3",
     "scikit-learn>=1.1.1,<2",
@@ -66,6 +65,15 @@ Issues = "https://github.com/emdgroup/baybe/issues/"
 # for vulnerabilities by pip-audit
 
 [project.optional-dependencies]
+extras = [
+    "baybe[chem]",
+    "baybe[insights]",
+    "baybe[onnx]",
+    "baybe[polars]",
+    "baybe[simulation]",
+    "ngboost>=0.3.12,<1",
+]
+
 chem = [
     "scikit-fingerprints>=1.13.1",
 ]
@@ -77,15 +85,10 @@ onnx = [
 ]
 
 dev = [
-    "baybe[chem]",
-    "baybe[docs]",
     "baybe[examples]",
-    "baybe[insights]",
+    "baybe[docs]",
     "baybe[lint]",
     "baybe[mypy]",
-    "baybe[onnx]",
-    "baybe[polars]",
-    "baybe[simulation]",
     "baybe[test]",
     "baybe[benchmarking]",
     "pip-audit>=2.5.5",
@@ -112,9 +115,7 @@ docs = [
 ]
 
 examples = [
-    "baybe[chem]", # Required for some of the examples
-    "baybe[onnx]", # Required for some of the examples
-    "baybe[simulation]", # Required for some of the examples
+    "baybe[extras]",
     "matplotlib>=3.7.3,!=3.9.1",
     "openpyxl>=3.0.9",
     "pillow>=10.0.1", # Necessary due to vulnerability

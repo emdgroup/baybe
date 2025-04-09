@@ -27,7 +27,7 @@ from baybe.searchspace.discrete import (
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.telemetry import TELEM_LABELS, telemetry_record_value
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 
 
 class SearchSpaceType(Enum):

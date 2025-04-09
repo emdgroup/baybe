@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `extras` for installing all dependencies required for optional features
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
@@ -55,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
+- `ngboost` is now an optional dependency
+- `create_example_plots`, `to_string` and `indent` have been relocated within utils
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target

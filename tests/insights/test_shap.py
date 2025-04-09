@@ -7,7 +7,6 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from matplotlib import pyplot as plt
 from pytest import mark
 
 from baybe._optional.info import INSIGHTS_INSTALLED
@@ -16,6 +15,8 @@ from baybe.exceptions import IncompatibleExplainerError
 if not INSIGHTS_INSTALLED:
     pytest.skip("Optional insights package not installed.", allow_module_level=True)
 
+
+from matplotlib import pyplot as plt
 
 from baybe import insights
 from baybe._optional.insights import shap
