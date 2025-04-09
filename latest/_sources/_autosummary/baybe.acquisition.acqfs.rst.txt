@@ -32,6 +32,7 @@ baybe.acquisition.acqfs
       qLogNoisyExpectedHypervolumeImprovement
       qLogNoisyExpectedImprovement
       qNegIntegratedPosteriorVariance
+      qNoisyExpectedHypervolumeImprovement
       qNoisyExpectedImprovement
       qPosteriorStandardDeviation
       qProbabilityOfImprovement

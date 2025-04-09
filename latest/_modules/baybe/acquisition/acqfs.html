@@ -382,6 +382,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html">qLogNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedImprovement.html">qLogNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNegIntegratedPosteriorVariance.html">qNegIntegratedPosteriorVariance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedHypervolumeImprovement.html">qNoisyExpectedHypervolumeImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedImprovement.html">qNoisyExpectedImprovement</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qPosteriorStandardDeviation.html">qPosteriorStandardDeviation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.acquisition.acqfs.qProbabilityOfImprovement.html">qProbabilityOfImprovement</a></li>
@@ -1042,6 +1043,7 @@
 
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">ClassVar</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -1377,6 +1379,8 @@
 
 
 
+<span class="c1">########################################################################################</span>
+<span class="c1">### ThompsonSampling</span>
 <div class="viewcode-block" id="qThompsonSampling">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qThompsonSampling.html#baybe.acquisition.acqfs.qThompsonSampling">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1430,13 +1434,10 @@
 
 <span class="c1">########################################################################################</span>
 <span class="c1">### Hypervolume Improvement</span>
-<div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement">
-<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmic Monte Carlo based noisy expected hypervolume improvement.&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">_ExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">AcquisitionFunction</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Expected hypervolume improvement base class.&quot;&quot;&quot;</span>
 
-    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qLogNEHVI&quot;</span>
     <span class="n">supports_multi_output</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">reference_point</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1464,8 +1465,6 @@
         <span class="n">flds</span> <span class="o">=</span> <span class="n">fields</span><span class="p">(</span><span class="n">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">flds</span><span class="o">.</span><span class="n">reference_point</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
 
-<div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement.compute_ref_point">
-<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.compute_ref_point">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">compute_ref_point</span><span class="p">(</span>
         <span class="n">array</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">maximize</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="n">factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
@@ -1520,8 +1519,26 @@
         <span class="nb">min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="nb">max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="p">(</span><span class="nb">min</span> <span class="o">-</span> <span class="n">factor</span> <span class="o">*</span> <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">))</span> <span class="o">*</span> <span class="n">maximize</span></div>
-</div>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">min</span> <span class="o">-</span> <span class="n">factor</span> <span class="o">*</span> <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">))</span> <span class="o">*</span> <span class="n">maximize</span>
+
+
+<div class="viewcode-block" id="qNoisyExpectedHypervolumeImprovement">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qNoisyExpectedHypervolumeImprovement">[docs]</a>
+<span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">qNoisyExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">_ExpectedHypervolumeImprovement</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monte Carlo based noisy expected hypervolume improvement.&quot;&quot;&quot;</span>
+
+    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qNEHVI&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="qLogNoisyExpectedHypervolumeImprovement">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement.html#baybe.acquisition.acqfs.qLogNoisyExpectedHypervolumeImprovement">[docs]</a>
+<span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">qLogNoisyExpectedHypervolumeImprovement</span><span class="p">(</span><span class="n">_ExpectedHypervolumeImprovement</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logarithmic Monte Carlo based noisy expected hypervolume improvement.&quot;&quot;&quot;</span>
+
+    <span class="n">abbreviation</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;qLogNEHVI&quot;</span></div>
 
 
 

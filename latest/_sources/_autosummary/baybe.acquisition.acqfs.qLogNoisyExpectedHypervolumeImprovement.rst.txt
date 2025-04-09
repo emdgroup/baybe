@@ -30,9 +30,9 @@ qLogNoisyExpectedHypervolumeImprovement
 
    .. autosummary::
    
-      ~qLogNoisyExpectedHypervolumeImprovement.reference_point
-      ~qLogNoisyExpectedHypervolumeImprovement.prune_baseline
       ~qLogNoisyExpectedHypervolumeImprovement.abbreviation
+      ~qLogNoisyExpectedHypervolumeImprovement.prune_baseline
+      ~qLogNoisyExpectedHypervolumeImprovement.reference_point
       ~qLogNoisyExpectedHypervolumeImprovement.supports_multi_output
    
    
