@@ -41,11 +41,6 @@ on:
         required: false
         default: false
         type: boolean
-      hartmann_tl_3_30_negate_15:
-        description: "hartmann_tl_3_30_negate_15"
-        required: false
-        default: false
-        type: boolean
       hartmann_tl_3_15_15:
         description: "hartmann_tl_3_15_15"
         required: false
