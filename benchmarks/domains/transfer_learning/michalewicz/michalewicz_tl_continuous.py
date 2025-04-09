@@ -102,12 +102,24 @@ def make_initial_data(
 
 
 def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function comparing TL and non-TL campaigns.
+    """Benchmark function for transfer learning with the Michalewicz function in 5D.
 
-    Inputs:
-        x0,...,x4   Discrete numerical parameter [0,pi]
-        Function    Discrete task parameter
-    Output: continuous
+    Key characteristics:
+    • Compares transfer learning vs. non-transfer learning approaches
+    • Uses two versions of Michalewicz function:
+      - Target: standard negated Michalewicz
+      - Source: negated Michalewicz with added noise (noise_std=0.15)
+    • Tests varying amounts of source data (1, 10, 50, 100 points)
+    • Includes baseline with no transfer learning (0 points)
+    • Creates two campaign types:
+      - Transfer learning: with task parameter to distinguish data sources
+      - Non-transfer learning (naive): without task parameter
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results for all test cases
     """
     functions = {
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),

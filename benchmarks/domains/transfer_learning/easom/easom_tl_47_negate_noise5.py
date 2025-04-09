@@ -15,10 +15,24 @@ from benchmarks.domains.transfer_learning.easom.base import (
 
 
 def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Actual benchmark function.
+    """Benchmark function for transfer learning with the Easom function.
 
-    Compares two negated versions of the Easom function, where one has a
-    noise_std of 0.05.
+    Key characteristics:
+    • Compares two negated versions of Easom function:
+      - Target: standard negated Easom
+      - Source: negated Easom with added noise (noise_std=0.05)
+    • Uses 47 points per dimension
+    • Tests transfer learning with different source data percentages:
+      - 1% of source data
+      - 5% of source data
+      - 10% of source data
+      - 20% of source data
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results
     """
     negate = True
     functions = {
