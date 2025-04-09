@@ -52,10 +52,10 @@ def easom(x: np.ndarray, noise_std: float = 0.0, negate: bool = False):
         * math.cos(x[1])
         * math.exp(-((x[0] - math.pi) ** 2) - (x[1] - math.pi) ** 2)
     )
-    if noise_std > 0:
-        y += np.random.normal(loc=0.0, scale=noise_std, size=1)[0]
     if negate:
         y = y * -1
+    if noise_std > 0:
+        y += np.random.normal(loc=0.0, scale=noise_std, size=1)[0]
     return y
 
 
