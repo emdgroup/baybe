@@ -42,8 +42,8 @@ def test_nonbayesian_recommender_with_measurements(recommender, searchspace):
             recommender.recommend(
                 batch_size=1, searchspace=searchspace, measurements=measurements
             )
-        except OptionalImportError:
-            pytest.skip("Optional dependency not installed.")
+        except OptionalImportError as e:
+            pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
 @pytest.mark.parametrize("recommender", nonpredictive_recommenders)
@@ -57,5 +57,5 @@ def test_nonbayesian_recommender_with_objective(recommender, searchspace):
             recommender.recommend(
                 batch_size=1, searchspace=searchspace, objective=objective
             )
-        except OptionalImportError:
-            pytest.skip("Optional dependency not installed.")
+        except OptionalImportError as e:
+            pytest.skip(f"Optional dependency '{e.name}' not installed.")

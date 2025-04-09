@@ -13,7 +13,8 @@ except ModuleNotFoundError as ex:
         "Chemistry functionality is unavailable because the necessary optional "
         "dependencies are not installed. "
         "Consider installing BayBE with 'chem' dependency, "
-        "e.g. via `pip install baybe[chem]`."
+        "e.g. via `pip install baybe[chem]`.",
+        name="scikit-fingerprints",
     ) from ex
 
 __all__ = [

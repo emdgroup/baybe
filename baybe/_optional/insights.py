@@ -8,7 +8,8 @@ except ModuleNotFoundError as ex:
     raise OptionalImportError(
         "Explainer functionality is unavailable because 'insights' is not installed."
         " Consider installing BayBE with 'insights' dependency, e.g. via "
-        "`pip install baybe[insights]`."
+        "`pip install baybe[insights]`.",
+        name="shap",
     ) from ex
 
 __all__ = [

@@ -9,7 +9,8 @@ except ModuleNotFoundError as ex:
         "Custom surrogate models are unavailable because 'onnxruntime' is not "
         "installed. "
         "Consider installing BayBE with 'onnx' dependency, "
-        "e.g. via `pip install baybe[onnx]`."
+        "e.g. via `pip install baybe[onnx]`.",
+        package="onnxruntime",
     ) from ex
 
 __all__ = [

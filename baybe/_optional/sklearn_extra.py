@@ -7,7 +7,8 @@ try:
     from sklearn_extra.cluster import KMedoids
 except ModuleNotFoundError as ex:
     raise OptionalImportError(
-        _ERROR_MESSAGE.format(package="scikit-learn-extra")
+        _ERROR_MESSAGE.format(package="scikit-learn-extra"),
+        name="scikit-learn-extra",
     ) from ex
 
 __all__ = [

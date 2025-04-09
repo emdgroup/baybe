@@ -9,7 +9,8 @@ except ModuleNotFoundError as ex:
         "Batch scenario simulation is unavailable because 'xyzpy' is not "
         "installed. "
         "Consider installing BayBE with 'simulation' dependency, "
-        "e.g. via `pip install baybe[simulation]`."
+        "e.g. via `pip install baybe[simulation]`.",
+        name="xyzpy",
     ) from ex
 
 __all__ = [
