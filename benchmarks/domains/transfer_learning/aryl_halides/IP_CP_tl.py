@@ -20,13 +20,28 @@ from benchmarks.domains.transfer_learning.aryl_halides.base import (
 def aryl_halide_IP_CP_tl(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Actual benchmark function.
+    """Benchmark function for transfer learning with aryl halide reactions.
 
-    Optimal Inputs:
-        base:       "P2Et",
-        ligand:     "t-BuXPhos",
-        additive:   "4-phenylisoxazole"
-    Optimal Output: 68.76495224
+    Key characteristics:
+    • Compares transfer learning vs. non-transfer learning approaches
+    • Source task: 2-iodopyridine
+    • Target task: 3-chloropyridine
+    • Tests varying amounts of source data:
+      - 1% of source data
+      - 5% of source data
+      - 10% of source data
+      - 20% of source data
+    • Optimal parameters:
+      - Base: "P2Et"
+      - Ligand: "t-BuXPhos"
+      - Additive: "4-phenylisoxazole"
+    • Optimal yield: 68.76%
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results
     """
     return aryl_halide_tl_substance_benchmark(
         settings=settings,

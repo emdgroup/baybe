@@ -91,29 +91,28 @@ def direct_arylation_tl_temperature(
 ) -> pd.DataFrame:
     """Benchmark on Direct Arylation data for transfer learning.
 
-    Inputs:
-        Solvent         Substance with `RDKIT2DDESCRIPTORS` encoding
-        Base            Substance with `RDKIT2DDESCRIPTORS` encoding
-        Ligand          Substance with `RDKIT2DDESCRIPTORS` encoding
-        Concentration   Numerical discrete
-        Temp_C          Discrete task parameter
-    Output: continuous
-    Objective: Maximization
-    Optimal Inputs: [
-        {
-            Base:           "Cesium acetate",
-            Ligand:         "SCHEMBL15068049",
-            Solvent:        "DMAc",
-            Concentration:  0.153
-        },
-        {
-            Base:           "Cesium pivalate",
-            Ligand:         "SCHEMBL15068049",
-            Solvent:        "DMAc",
-            Concentration:  0.153
-        },
-    ]
-    Optimal Output: 100.0
+    Key characteristics:
+    • Uses one temperature as source (90°C and 120°C) and another as target (105°C)
+    • Compares transfer learning vs. non-transfer learning approaches
+    • Tests varying amounts of source data:
+      - 1% of source data
+      - 10% of source data
+      - 20% of source data
+    • Includes baseline with no transfer learning (0% source data)
+    • Parameters:
+      - Solvent: Substance with RDKIT2DDESCRIPTORS encoding
+      - Base: Substance with RDKIT2DDESCRIPTORS encoding
+      - Ligand: Substance with RDKIT2DDESCRIPTORS encoding
+      - Concentration: Numerical discrete
+      - Temp_C: Task parameter (90°C, 105°C, 120°C)
+    • Target: Reaction yield (continuous)
+    • Objective: Maximization
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results for all test cases
     """
     data = load_data()
 

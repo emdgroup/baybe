@@ -15,10 +15,23 @@ from benchmarks.domains.transfer_learning.hartmann.base import (
 
 
 def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Actual benchmark function.
+    """Benchmark function for transfer learning with the Hartmann function in 3D.
 
-    Compares two versions of the Hartmann function, where one has a
-    noise_std of 0.15.
+    Key characteristics:
+    • Compares two versions of Hartmann function:
+      - Target: standard Hartmann
+      - Source: Hartmann with added noise (noise_std=0.15)
+    • Uses 15 points per dimension
+    • Tests transfer learning with different source data percentages:
+      - 1% of source data
+      - 10% of source data
+      - 20% of source data
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+
+    Returns:
+        DataFrame containing benchmark results
     """
     negate = False
     functions = {
