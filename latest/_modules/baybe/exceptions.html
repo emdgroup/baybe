@@ -1037,6 +1037,8 @@
           <h1>Source code for baybe.exceptions</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Custom exceptions and warnings.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
@@ -1198,7 +1200,31 @@
 <div class="viewcode-block" id="OptionalImportError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError">[docs]</a>
 <span class="k">class</span> <span class="nc">OptionalImportError</span><span class="p">(</span><span class="ne">ImportError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;An attempt was made to import an optional but uninstalled dependency.&quot;&quot;&quot;</span></div>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An attempt was made to import an optional but uninstalled dependency.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OptionalImportError.__init__">
+<a class="viewcode-back" href="../../_autosummary/baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">group</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># If no message has been explicitly set, create it from the context</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">group_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;`pip install &#39;baybe[</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">]&#39;` or &quot;</span> <span class="k">if</span> <span class="n">group</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The requested functionality requires the optional &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; package, which is currently not installed. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Please install the dependency and try again. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;You can do so manually (e.g. `pip install </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">`) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or using an appropriate optional dependency group &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(e.g. </span><span class="si">{</span><span class="n">group_str</span><span class="si">}</span><span class="s2">`pip install &#39;baybe[extras]&#39;`).&quot;</span>
+            <span class="p">)</span></div>
+</div>
 
 
 
