@@ -57,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
 - `ngboost` and `scikit-learn-extra` are now optional dependencies
+- `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
 
 ### Fixed
@@ -66,7 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 - `funcy` dependency
-- `setuptools-scm` as a runtime dependency
 
 ## [0.12.2] - 2025-01-31
 ### Changed

@@ -309,7 +309,7 @@ The available groups are:
 - `insights`: Required for built-in model and campaign analysis (e.g. using [SHAP](https://shap.readthedocs.io/)).
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
-- `dev`: All of the above plus `uv`, `tox-uv` and `pip-audit`. For code contributors.
+- `dev`: All of the above plus dev tools. For code contributors.
 
 ## 📡 Telemetry
 BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 
