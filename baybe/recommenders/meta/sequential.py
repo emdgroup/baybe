@@ -235,7 +235,7 @@ class SequentialMetaRecommender(BaseSequentialMetaRecommender):
             return self.recommenders[idx]
         except IndexError as ex:
             raise NoRecommendersLeftError(
-                f"A total of {self._step+1} recommender(s) was/were requested but "
+                f"A total of {self._step + 1} recommender(s) was/were requested but "
                 f"the provided sequence contains only {self._step} element(s). "
                 f"Add more recommenders or adjust the "
                 f"'{fields(SequentialMetaRecommender).mode.name}' attribute."
@@ -292,8 +292,8 @@ class StreamingSequentialMetaRecommender(BaseSequentialMetaRecommender):
                 self._last_recommender = next(self._iterator)
             except StopIteration as ex:
                 raise NoRecommendersLeftError(
-                    f"A total of {self._step+1} recommender(s) was/were requested but "
-                    f"the provided iterator provided only {self._step} element(s). "
+                    f"A total of {self._step + 1} recommender(s) was/were requested "
+                    f"but the provided iterator provided only {self._step} element(s). "
                 ) from ex
             self._position_of_latest_recommender = self._step
 

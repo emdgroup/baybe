@@ -364,8 +364,7 @@ class SHAPInsight:
 
         if plot_type not in SHAP_PLOTS:
             raise ValueError(
-                f"Invalid plot type: '{plot_type}'. "
-                f"Available options: {SHAP_PLOTS}."
+                f"Invalid plot type: '{plot_type}'. Available options: {SHAP_PLOTS}."
             )
         plot_func = getattr(shap.plots, plot_type)
 

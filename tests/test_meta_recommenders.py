@@ -97,7 +97,7 @@ def test_sequential_meta_recommender(cls, mode):
         # Selection with smaller training size raises an error
         with pytest.raises(
             RuntimeError,
-            match=f"decreased from {training_size} to {training_size-1}",
+            match=f"decreased from {training_size} to {training_size - 1}",
         ):
             select_recommender(meta_recommender, training_size - 1)
 
