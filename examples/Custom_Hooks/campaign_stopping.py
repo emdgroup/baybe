@@ -138,15 +138,11 @@ def stop_on_PI(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
+    candidates = searchspace.discrete.exp_rep
+    surrogate = self.get_surrogate(searchspace, objective, measurements)
     acqf = ProbabilityOfImprovement()
     with torch.no_grad():
-        pi = acqf.evaluate(
-            searchspace.discrete.exp_rep,
-            self._surrogate_model,
-            searchspace,
-            objective,
-            measurements,
-        )
+        pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
 
     n_pis_over = (pi > PI_THRESHOLD).sum()
     n_pis_over_required = math.ceil(len(pi) * PI_REQUIRED_FRACTION)
