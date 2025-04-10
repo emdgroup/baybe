@@ -35,7 +35,6 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils import register_hooks
-from baybe.utils.dataframe import to_tensor
 from baybe.utils.plotting import create_example_plots
 
 ### Temporary
@@ -140,15 +139,17 @@ def stop_on_PI(
             f"accepted."
         )
     acqf = ProbabilityOfImprovement()
-    botorch_acqf = acqf.to_botorch(
-        self._surrogate_model, searchspace, objective, measurements
-    )
-    _, candidates_comp_rep = searchspace.discrete.get_candidates()
-    comp_rep_tensor = to_tensor(candidates_comp_rep).unsqueeze(1)
-    acqf_values = botorch_acqf(comp_rep_tensor)
+    with torch.no_grad():
+        pi = acqf.evaluate(
+            searchspace.discrete.exp_rep,
+            self._surrogate_model,
+            searchspace,
+            objective,
+            measurements,
+        )
 
-    n_pis_over = torch.sum(acqf_values > PI_THRESHOLD)
-    n_pis_over_required = math.ceil(len(candidates_comp_rep) * PI_REQUIRED_FRACTION)
+    n_pis_over = (pi > PI_THRESHOLD).sum()
+    n_pis_over_required = math.ceil(len(pi) * PI_REQUIRED_FRACTION)
     if n_pis_over < n_pis_over_required:
         raise CampaignStoppedException(
             f"Less than {PI_REQUIRED_FRACTION*100:.0f}% of candidates are above the PI "

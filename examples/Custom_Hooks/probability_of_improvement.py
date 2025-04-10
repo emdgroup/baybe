@@ -37,7 +37,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
-from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
+from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.plotting import create_example_plots
 from baybe.utils.random import set_random_seed
 
@@ -81,13 +81,15 @@ def extract_pi(
             f"accepted."
         )
     acqf = ProbabilityOfImprovement()
-    botorch_acqf = acqf.to_botorch(
-        self._surrogate_model, searchspace, objective, measurements
-    )
-    comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
     with torch.no_grad():
-        pi = botorch_acqf(comp_rep_tensor)
-    pi_per_iteration.append(pi.numpy())
+        pi = acqf.evaluate(
+            searchspace.discrete.exp_rep,
+            self._surrogate_model,
+            searchspace,
+            objective,
+            measurements,
+        )
+    pi_per_iteration.append(pi.to_numpy())
 
 
 ### Monkeypatching
