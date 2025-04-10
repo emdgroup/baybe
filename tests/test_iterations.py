@@ -313,8 +313,8 @@ def test_initial_recommenders(campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
         try:
             run_iterations(campaign, n_iterations, batch_size)
-        except OptionalImportError:
-            pytest.skip("missing optional dependency")
+        except OptionalImportError as e:
+            pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
 @pytest.mark.slow
@@ -332,8 +332,8 @@ def test_targets(campaign, n_iterations, batch_size):
 def test_recommenders_discrete(campaign, n_iterations, batch_size):
     try:
         run_iterations(campaign, n_iterations, batch_size)
-    except OptionalImportError:
-        pytest.skip("missing optional dependency")
+    except OptionalImportError as e:
+        pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
 @pytest.mark.slow
@@ -378,8 +378,8 @@ def test_recommenders_continuous(campaign, n_iterations, batch_size):
 def test_recommenders_hybrid(campaign, n_iterations, batch_size):
     try:
         run_iterations(campaign, n_iterations, batch_size)
-    except OptionalImportError:
-        pytest.skip("missing optional dependency")
+    except OptionalImportError as e:
+        pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
 @pytest.mark.parametrize(

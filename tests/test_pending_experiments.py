@@ -43,7 +43,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
             id="pam_discrete",
             marks=pytest.mark.skipif(
                 not SCIKIT_LEARN_EXTRA_INSTALLED,
-                reason="Optional scikit-learn-extra dependency not installed",
+                reason="Optional dependency 'scikit-learn-extra' not installed",
             ),
         ),
         param(
