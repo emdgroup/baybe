@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
-- `ngboost` is now an optional dependency
+- `ngboost` and `scikit-learn-extra` are now optional dependencies
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
 
 ### Fixed

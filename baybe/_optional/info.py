@@ -5,13 +5,6 @@ import sys
 from contextlib import contextmanager
 from importlib.util import find_spec
 
-_ERROR_MESSAGE = (
-    "The requested functionality requires the optional '{package}' package, "
-    "which is currently not installed. Please install the dependency and try again. "
-    "You can do so manually (e.g. `pip install {package}`) or using an appropriate "
-    "optional dependency group like 'extras' (e.g. `pip install 'baybe[extras]'`)."
-)
-
 
 @contextmanager
 def exclude_sys_path(path: str, /):  # noqa: DOC402, DOC404
@@ -39,6 +32,7 @@ with exclude_sys_path(os.getcwd()):
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None
     RUFF_INSTALLED = find_spec("ruff") is not None
+    SCIKIT_LEARN_EXTRA_INSTALLED = find_spec("scikit-learn-extra") is not None
     SHAP_INSTALLED = find_spec("shap") is not None
     SKFP_INSTALLED = find_spec("skfp") is not None  # scikit-fingerprints
     STREAMLIT_INSTALLED = find_spec("streamlit") is not None
