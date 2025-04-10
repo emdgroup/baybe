@@ -7,7 +7,7 @@ import warnings
 from abc import ABC
 from collections.abc import Iterable
 from inspect import signature
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal, overload
 
 import pandas as pd
 from attrs import define
@@ -207,6 +207,81 @@ class AcquisitionFunction(ABC, SerialMixin):
             acqf._default_sample_shape = torch.Size([self.n_mc_samples])
 
         return acqf
+
+    @overload
+    def evaluate(
+        self,
+        candidates: pd.DataFrame,
+        surrogate: SurrogateProtocol,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+        *,
+        jointly: Literal[True],
+    ) -> float: ...
+
+    @overload
+    def evaluate(
+        self,
+        candidates: pd.DataFrame,
+        surrogate: SurrogateProtocol,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+        *,
+        jointly: Literal[False] = False,
+    ) -> pd.Series: ...
+
+    def evaluate(
+        self,
+        candidates: pd.DataFrame,
+        surrogate: SurrogateProtocol,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+        *,
+        jointly: bool = False,
+    ) -> pd.Series | float:
+        """Get the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            surrogate: The surrogate model to use for the acquisition function.
+            searchspace: The search space.
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            objective: The objective.
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            measurements: Available experimentation data.
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            pending_experiments: Optional pending experiments.
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            jointly: If ``False``, the acquisition values are computed for each
+                candidate separately. If ``True``, a single joint acquisition value is
+                computed for the entire candidate set.
+
+        Returns:
+            Depending on the joint mode, either a single batch acquisition value or a
+            series of individual acquisition values.
+        """
+        import torch
+
+        # Assemble the Botorch acquisition function and its input
+        botorch_acqf = self.to_botorch(
+            surrogate, searchspace, objective, measurements, pending_experiments
+        )
+        comp = to_tensor(searchspace.transform(candidates))
+
+        # Depending on joint mode, evaluate using t- or q-batching
+        in_ = comp if jointly else comp.unsqueeze(-2)
+        with torch.no_grad():
+            out = botorch_acqf(in_)
+        if jointly:
+            return out.item()
+        return pd.Series(out.numpy(), index=candidates.index)
 
 
 def _get_botorch_acqf_class(
