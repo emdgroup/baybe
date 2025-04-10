@@ -214,6 +214,48 @@ class BayesianRecommender(PureRecommender, ABC):
             pending_experiments=pending_experiments,
         )
 
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.Series:
+        """Compute the acquisition values for the given candidates."""
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
+        acqf = self._get_acquisition_function(objective)
+        return acqf.evaluate(
+            candidates,
+            surrogate,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
+            jointly=False,
+        )
+
+    def joint_acquisition_value(
+        self,
+        candidates: pd.DataFrame,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> float:
+        """Compute the joint acquisition value for the given candidate batch."""
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
+        acqf = self._get_acquisition_function(objective)
+        return acqf.evaluate(
+            candidates,
+            surrogate,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
+            jointly=True,
+        )
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

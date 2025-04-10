@@ -6,7 +6,7 @@ import gc
 import json
 from collections.abc import Callable, Collection
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
@@ -46,7 +46,6 @@ from baybe.utils.dataframe import (
     _ValidatedDataFrame,
     filter_df,
     fuzzy_row_match,
-    to_tensor,
 )
 from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
@@ -610,6 +609,26 @@ class Campaign(SerialMixin):
             pending_experiments,
         )
 
+    def _get_bayesian_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> BayesianRecommender:
+        """Get the current Bayesian recommender (if available).
+
+        For details on the method arguments, see :meth:`_get_non_meta_recommender`.
+        """
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
+        if not isinstance(recommender, BayesianRecommender):
+            raise IncompatibilityError(
+                f"The current recommender is of type "
+                f"'{recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model or acquisition values. Both objects are "
+                f"only available for recommender subclasses of "
+                f"'{BayesianRecommender.__name__}'."
+            )
+        return recommender
+
     def get_acquisition_function(
         self,
         batch_size: int | None = None,
@@ -631,91 +650,82 @@ class Campaign(SerialMixin):
         Returns:
             The acquisition function of the current recommender.
         """
-        # Validate setting
         if self.objective is None:
             raise IncompatibilityError(
                 "Acquisition values can only be computed if an objective has "
                 "been defined."
             )
 
-        # Extract the recommender
-        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
-        if not isinstance(recommender, BayesianRecommender):
-            raise IncompatibilityError(
-                f"The current recommender is of type "
-                f"'{recommender.__class__.__name__}', which does not provide "
-                f"a surrogate model and hence no acquisition values. Both objects are "
-                f"only available for recommender subclasses of "
-                f"'{BayesianRecommender.__name__}'."
-            )
-
-        # Extract the acquisition function
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
         return recommender.get_acquisition_function(
             self.searchspace, self.objective, self.measurements, pending_experiments
         )
 
-    @overload
     def acquisition_values(
         self,
         candidates: pd.DataFrame | None = None,
         *,
-        joint: Literal[False],
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.Series: ...
-
-    @overload
-    def acquisition_values(
-        self,
-        candidates: pd.DataFrame | None = None,
-        *,
-        joint: Literal[True],
-        batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> float: ...
-
-    def acquisition_values(
-        self,
-        candidates: pd.DataFrame | None = None,
-        *,
-        joint: bool = False,
-        batch_size: int | None = None,
-        pending_experiments: pd.DataFrame | None = None,
-    ) -> pd.Series | float:
-        """Get the acquisition values for the given candidates.
+    ) -> pd.Series:
+        """Compute the acquisition values for the given candidates.
 
         Args:
             candidates: The candidate points in experimental recommendations.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
-            joint: If ``False``, the acquisition values are computed for each candidate
-                separately. If ``True``, a single joint acquisition value is computed
-                for the entire candidate set.
             batch_size: See :meth:`recommend`.
                 Only required when using meta recommenders that demand it.
             pending_experiments: See :meth:`recommend`.
                 Only required when using meta recommenders that demand it.
 
         Returns:
-            In joint mode, a single acquisition value. Otherwise, a series of individual
-            acquisition values.
+            A series of individual acquisition values, one for each candidate.
         """
         if candidates is None:
             candidates = self.measurements[[p.name for p in self.parameters]]
 
-        acqf = self.get_acquisition_function(batch_size, pending_experiments)
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.acquisition_values(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+        )
 
-        # Transform candidates to computation representation for function evaluation
-        comp = to_tensor(self.searchspace.transform(candidates))
+    def joint_acquisition_value(
+        self,
+        candidates: pd.DataFrame | None = None,
+        *,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> float:
+        """Compute the joint acquisition values for the given candidate batch.
 
-        import torch
+        Args:
+            candidates: The candidate points in experimental recommendations.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
 
-        # Depending on joint mode, evaluate using t- or q-batching
-        input = comp if joint else comp.unsqueeze(-2)
-        with torch.no_grad():
-            out = acqf(input)
-        if joint:
-            return out.item()
-        return pd.Series(out.numpy(), index=candidates.index)
+        Returns:
+            The joint acquisition value of the batch.
+        """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.joint_acquisition_value(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+        )
 
 
 def _add_version(dict_: dict) -> dict:
