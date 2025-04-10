@@ -14,7 +14,7 @@ from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify_ensemble_predictor, catch_constant_targets
 from baybe.surrogates.validation import get_model_params_validator
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
     from botorch.models.ensemble import EnsemblePosterior

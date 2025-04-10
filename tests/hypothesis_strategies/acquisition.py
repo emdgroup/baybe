@@ -15,6 +15,7 @@ from baybe.acquisition import (
     qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
     qNegIntegratedPosteriorVariance,
+    qNoisyExpectedHypervolumeImprovement,
     qNoisyExpectedImprovement,
     qPosteriorStandardDeviation,
     qProbabilityOfImprovement,
@@ -47,7 +48,7 @@ def _qNIPV_strategy(draw: st.DrawFn):
 
 
 @st.composite
-def _ref_points(draw: st.DrawFn):
+def _reference_points(draw: st.DrawFn):
     """Draw reference points for hypervolume improvement acquisition functions."""
     if draw(st.booleans()):
         return draw(st.lists(finite_floats(), min_size=1))
@@ -75,8 +76,13 @@ acquisition_functions = st.one_of(
     st.builds(qLogNoisyExpectedImprovement, prune_baseline=st.booleans()),
     _qNIPV_strategy(),
     st.builds(
+        qNoisyExpectedHypervolumeImprovement,
+        prune_baseline=st.booleans(),
+        reference_point=_reference_points(),
+    ),
+    st.builds(
         qLogNoisyExpectedHypervolumeImprovement,
         prune_baseline=st.booleans(),
-        ref_point=_ref_points(),
+        reference_point=_reference_points(),
     ),
 )

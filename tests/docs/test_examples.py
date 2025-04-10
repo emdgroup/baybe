@@ -28,7 +28,8 @@ def test_example(example: str):
     monkeypatching in some examples affecting other tests if they were executed in the
     same environment.
     """
-    subprocess.run(["python", example], check=True)
+    env = os.environ | {"PYTHONPATH": os.getcwd()}
+    subprocess.run(["python", example], check=True, env=env)
 
 
 if _SMOKE_TEST_CACHE is not None:

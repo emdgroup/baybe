@@ -28,8 +28,8 @@ from baybe.parameters import (
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
+from baybe.utils.conversion import to_string
 from baybe.utils.numerical import DTypeFloatONNX
-from baybe.utils.plotting import to_string
 
 if TYPE_CHECKING:
     import onnxruntime as ort

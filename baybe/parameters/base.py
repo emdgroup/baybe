@@ -21,6 +21,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.basic import to_tuple
 
 if TYPE_CHECKING:
     from baybe.searchspace.continuous import SubspaceContinuous
@@ -176,7 +177,10 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
 
     # object variables
     _active_values: tuple[str, ...] | None = field(
-        default=None, converter=optional_c(tuple), kw_only=True, alias="active_values"
+        default=None,
+        converter=optional_c(to_tuple),
+        kw_only=True,
+        alias="active_values",
     )
     """Optional labels identifying the ones which should be actively recommended."""
 

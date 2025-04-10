@@ -1,5 +1,7 @@
 """Custom exceptions and warnings."""
 
+from typing import Any
+
 import pandas as pd
 from attr.validators import instance_of
 from attrs import define, field
@@ -89,6 +91,10 @@ class EmptySearchSpaceError(Exception):
     """The created search space contains no parameters."""
 
 
+class NoMeasurementsError(Exception):
+    """A context expected measurements but none were available."""
+
+
 class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
 
@@ -105,6 +111,27 @@ class NumericalUnderflowError(Exception):
 
 class OptionalImportError(ImportError):
     """An attempt was made to import an optional but uninstalled dependency."""
+
+    def __init__(
+        self,
+        *args: Any,
+        name: str | None = None,
+        path: str | None = None,
+        group: str | None = None,
+    ):
+        super().__init__(*args, name=name, path=path)
+
+        # If no message has been explicitly set, create it from the context
+        if self.msg is None and name is not None:
+            group_str = f"`pip install 'baybe[{group}]'` or " if group else ""
+            self.msg = (
+                f"The requested functionality requires the optional "
+                f"'{self.name}' package, which is currently not installed. "
+                f"Please install the dependency and try again. "
+                f"You can do so manually (e.g. `pip install {self.name}`) "
+                f"or using an appropriate optional dependency group "
+                f"(e.g. {group_str}`pip install 'baybe[extras]'`)."
+            )
 
 
 class DeprecationError(Exception):

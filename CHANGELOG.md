@@ -6,12 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `extras` for installing all dependencies required for optional features
 - `BCUT2D` encoding for `SubstanceParameter`
 - Stored benchmarking results now include the Python environment and version
 - `qPSTD` acquisition function
 - `SHAPInsight` now supports the `waterfall` plot type
 - `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
-  `qLogNoisyExpectedHypervolumeImprovement` acquisition function
+  `qNoisyExpectedHypervolumeImprovement` / `qLogNoisyExpectedHypervolumeImprovement` /
+  `qLogNParEGO` acquisition functions
 - `Surrogate.replicate` method for making single-target surrogate models multi-target
   compatible
 - `CompositeSurrogate` class for composing multi-target surrogates from single-target
@@ -36,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
   support restricting the search space via `active_values`, while `values` continue to 
   identify allowed measurement inputs
+- `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
+  providing statistical measures about the target predictions of a given set of
+  candidates
 - `Campaign.get_acquisition_function` and `BayesianRecommender.get_acquisition_function`
   convenience methods for retrieving the underlying acquisition function
 - `AcquisitionFunction.evaluate` convenience method for computing acquisition values
@@ -55,12 +60,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that are in `active_values`
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
+- Construction of BoTorch acquisition functions has been redesigned from ground up
+- `ngboost` and `scikit-learn-extra` are now optional dependencies
+- `create_example_plots`, `to_string` and `indent` have been relocated within utils
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
+- Provide version fallback in case scm fails to infer version during installation
 
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
+- `funcy` dependency
 
 ## [0.12.2] - 2025-01-31
 ### Changed

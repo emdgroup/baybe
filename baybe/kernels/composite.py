@@ -12,6 +12,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
+from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
 
 
@@ -53,7 +54,7 @@ class AdditiveKernel(CompositeKernel):
     """A kernel representing the sum of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
-        converter=tuple,
+        converter=to_tuple,
         validator=deep_iterable(
             member_validator=instance_of(Kernel), iterable_validator=min_len(2)
         ),
@@ -70,7 +71,7 @@ class ProductKernel(CompositeKernel):
     """A kernel representing the product of a collection of base kernels."""
 
     base_kernels: tuple[Kernel, ...] = field(
-        converter=tuple,
+        converter=to_tuple,
         validator=deep_iterable(
             member_validator=instance_of(Kernel), iterable_validator=min_len(2)
         ),
