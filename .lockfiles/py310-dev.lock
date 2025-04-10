@@ -845,7 +845,7 @@ setuptools==71.1.0
     # via
     #   jupyterlab
     #   setuptools-scm
-setuptools-scm==8.1.0
+setuptools-scm==8.2.0
     # via baybe (pyproject.toml)
 shap==0.46.0
     # via baybe (pyproject.toml)
