@@ -137,7 +137,7 @@ docutils==0.21.2
     #   sphinx
     #   sphinx-paramlinks
     #   sphinxcontrib-bibtex
-e3fp==1.2.5
+e3fp==1.2.7
     # via scikit-fingerprints
 et-xmlfile==1.1.0
     # via openpyxl
@@ -346,7 +346,7 @@ lazy-loader==0.4
     # via scikit-image
 license-expression==30.3.0
     # via cyclonedx-python-lib
-lifelines==0.29.0
+lifelines==0.30.0
     # via ngboost
 lime==0.2.0.1
     # via shap
@@ -354,7 +354,7 @@ linear-operator==0.6
     # via
     #   botorch
     #   gpytorch
-llvmlite==0.43.0
+llvmlite==0.44.0
     # via numba
 locket==1.0.0
     # via partd
@@ -441,11 +441,11 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numba==0.60.0
+numba==0.61.2
     # via
     #   scikit-fingerprints
     #   shap
-numpy==1.26.4
+numpy==2.2.4
     # via
     #   baybe (pyproject.toml)
     #   altair
@@ -475,7 +475,6 @@ numpy==1.26.4
     #   scikit-fingerprints
     #   scikit-image
     #   scikit-learn
-    #   scikit-learn-extra
     #   scipy
     #   seaborn
     #   shap
@@ -522,7 +521,7 @@ onnx==1.16.1
     #   skl2onnx
 onnxconverter-common==1.13.0
     # via skl2onnx
-onnxruntime==1.18.1
+onnxruntime==1.21.0
     # via baybe (pyproject.toml)
 openpyxl==3.1.5
     # via baybe (pyproject.toml)
@@ -762,9 +761,10 @@ pyzmq==26.0.3
     #   jupyter-client
     #   jupyter-console
     #   jupyter-server
-rdkit==2024.3.3
+rdkit==2024.9.5
     # via
     #   descriptastorus
+    #   e3fp
     #   mordredcommunity
     #   scikit-fingerprints
 referencing==0.35.1
@@ -801,7 +801,7 @@ ruff==0.5.2
     # via baybe (pyproject.toml)
 s3transfer==0.10.4
     # via boto3
-scikit-fingerprints==1.13.1
+scikit-fingerprints==1.15.0
     # via baybe (pyproject.toml)
 scikit-image==0.25.0
     # via lime
@@ -812,11 +812,8 @@ scikit-learn==1.5.1
     #   lime
     #   ngboost
     #   scikit-fingerprints
-    #   scikit-learn-extra
     #   shap
     #   skl2onnx
-scikit-learn-extra==0.3.0
-    # via baybe (pyproject.toml)
 scipy==1.14.0
     # via
     #   baybe (pyproject.toml)
@@ -833,7 +830,6 @@ scipy==1.14.0
     #   scikit-fingerprints
     #   scikit-image
     #   scikit-learn
-    #   scikit-learn-extra
     #   shap
 sdaxen-python-utilities==0.1.5
     # via e3fp
@@ -1016,7 +1012,7 @@ types-python-dateutil==2.9.0.20240316
     # via arrow
 types-pytz==2024.1.0.20240417
     # via pandas-stubs
-types-seaborn==0.13.2.20240618
+types-seaborn==0.13.2.20250111
     # via baybe (pyproject.toml)
 typing-extensions==4.12.2
     # via

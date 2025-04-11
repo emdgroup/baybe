@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
   providing statistical measures about the target predictions of a given set of
   candidates
+- Support for NumPy 2.0+
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
@@ -56,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
-- `ngboost` and `scikit-learn-extra` are now optional dependencies
+- `ngboost` is now an optional dependency
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
 
@@ -67,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 - `funcy` dependency
+- `scikit-learn-extra` dependency, `KMedoids` was adapted and reimplemented instead
 
 ## [0.12.2] - 2025-01-31
 ### Changed

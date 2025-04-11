@@ -10,8 +10,7 @@ The issues often contain a reference to `semaphore`, e.g.
 `UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown`. 
 While we do not know the exact source of the problem, it seems to be related to linked
 libraries that need to be compiled from source when no `macOS-arm64` binaries are
-available. Packages that seem to have regular problems are `sklearn-extra`, `pymatgen`
-and `matminer`.
+available. Packages that seem to have regular problems are `pymatgen` or `matminer`.
 
 ```{admonition} Suggested Fix
 :class: tip

@@ -32,7 +32,6 @@ with exclude_sys_path(os.getcwd()):
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None
     RUFF_INSTALLED = find_spec("ruff") is not None
-    SCIKIT_LEARN_EXTRA_INSTALLED = find_spec("scikit-learn-extra") is not None
     SHAP_INSTALLED = find_spec("shap") is not None
     SKFP_INSTALLED = find_spec("skfp") is not None  # scikit-fingerprints
     STREAMLIT_INSTALLED = find_spec("streamlit") is not None
