@@ -70,7 +70,6 @@ extras = [
     "baybe[polars]",
     "baybe[simulation]",
     "ngboost>=0.3.12,<1",
-    "scikit-learn-extra>=0.3.0,<1",
 ]
 
 chem = [
