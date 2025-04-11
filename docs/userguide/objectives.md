@@ -140,7 +140,8 @@ objective = ParetoObjective(targets=[target_1, target_2])
 
 ```{admonition} Convenience Multi-Output Casting
 :class: tip
-`ParetoObjective` requires a [multi-output surrogate model](multi_output_modeling). 
+[`ParetoObjective`](baybe.objectives.pareto.ParetoObjective) requires a 
+[multi-output surrogate model](multi_output_modeling). 
 If you attempt to use a  single-output model, BayBE will automatically turn it into a 
 [`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate) 
 using [independent replicates](auto_replication).
