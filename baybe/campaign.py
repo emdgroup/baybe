@@ -330,8 +330,9 @@ class Campaign(SerialMixin):
                 numerical parameters need to be within their tolerances.
 
         Raises:
-            ValueError: If data contains duplicated indices.
-            ValueError: If data contains indices not present in existing measurements.
+            ValueError: If the given data contains duplicated indices.
+            ValueError: If the given data contains indices not present in existing
+                measurements.
         """
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
@@ -341,7 +342,7 @@ class Campaign(SerialMixin):
         data.__class__ = _ValidatedDataFrame
 
         # Block duplicate input indices
-        if len(set(data.index)) != len(data.index):
+        if data.index.has_duplicates:
             raise ValueError(
                 "The input dataframe containing the measurement updates has duplicated "
                 "indices. Please ensure that all updates for a given measurement are "

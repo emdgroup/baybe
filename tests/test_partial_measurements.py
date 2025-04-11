@@ -1,4 +1,4 @@
-"""Tests pending experiments mechanism."""
+"""Tests for partial measurements."""
 
 from contextlib import nullcontext
 
@@ -34,12 +34,12 @@ from baybe.targets import NumericalTarget
 @pytest.mark.parametrize("n_iterations", [2], ids=["i2"])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-def test_pending_measurements(ongoing_campaign, objective):
+def test_partial_measurements(ongoing_campaign, objective):
     c = ongoing_campaign
     m = c.measurements
     ts = c.targets
 
-    # Mark some measurements as pending and failed
+    # Mark some measurements as unmeasured / failed
     m.iloc[0, m.columns.get_loc(ts[0].name)] = np.nan
     m.iloc[-1, m.columns.get_loc(ts[-1].name)] = np.nan
     c.update_measurements(m)

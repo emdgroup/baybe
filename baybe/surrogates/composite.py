@@ -98,7 +98,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         measurements: pd.DataFrame,
     ) -> None:
         for target in objective.targets:
-            # Drop impartial measurements for the respective target
+            # Drop partial measurements for the respective target
             measurements_filtered = handle_invalid_target_values(
                 measurements, [target], drop=True
             )

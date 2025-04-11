@@ -84,8 +84,8 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
         targets: The allowed targets.
 
     Raises:
-        ValueError: If data is empty.
-        ValueError: If data misses columns for a target.
+        ValueError: If the data is empty.
+        ValueError: If the data misses columns for a target.
         TypeError: If any numerical target data contain non-numeric values.
         ValueError: If any binary target data contain values not part of the targets'
             allowed values or NaN.
@@ -132,8 +132,8 @@ def validate_parameter_input(
             parameter-specific tolerance.
 
     Raises:
-        ValueError: If data is empty.
-        ValueError: If data misses columns for a parameter.
+        ValueError: If the data is empty.
+        ValueError: If the data misses columns for a parameter.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
