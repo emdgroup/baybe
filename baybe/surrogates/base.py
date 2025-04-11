@@ -33,7 +33,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import handle_invalid_target_values, to_tensor
+from baybe.utils.dataframe import handle_invalid_column_values, to_tensor
 from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
@@ -447,7 +447,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         # Block partial measurements
-        handle_invalid_target_values(measurements, objective.targets)
+        handle_invalid_column_values(measurements, [t.name for t in objective.targets])
 
         # Remember the training context
         self._searchspace = searchspace

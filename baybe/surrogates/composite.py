@@ -18,7 +18,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import handle_invalid_target_values
+from baybe.utils.dataframe import handle_invalid_column_values
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
@@ -99,8 +99,8 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     ) -> None:
         for target in objective.targets:
             # Drop partial measurements for the respective target
-            measurements_filtered = handle_invalid_target_values(
-                measurements, [target], drop=True
+            measurements_filtered = handle_invalid_column_values(
+                measurements, [target.name], drop=True
             )
 
             self.surrogates[target.name].fit(
