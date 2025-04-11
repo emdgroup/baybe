@@ -124,6 +124,30 @@ def test_setting_allow_flags(flag, space_type, value):
 
 
 @pytest.mark.parametrize(
+    "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_update_measurements(ongoing_campaign):
+    """Updating measurements makes the expected changes."""
+    p_name, t_name = "Num_disc_1", ongoing_campaign.targets[0].name
+    updated = ongoing_campaign.measurements.iloc[[0], :]
+
+    # Perform the update
+    updated.iloc[0, updated.columns.get_loc(p_name)] = 1337
+    updated.iloc[0, updated.columns.get_loc(t_name)] = 1337
+    ongoing_campaign.update_measurements(
+        updated, numerical_measurements_must_be_within_tolerance=False
+    )
+
+    # Make sure values are updated and resets have been made
+    meas = ongoing_campaign.measurements
+    assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
+    assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
+    assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
+    assert ongoing_campaign._cached_recommendation.empty
+
+
+@pytest.mark.parametrize(
     ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
     [
         param(

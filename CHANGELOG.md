@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
   providing statistical measures about the target predictions of a given set of
   candidates
+- Composite surrogates now drop rows containing NaNs (separately for each target), 
+  effectively enabling partial measurements
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
@@ -59,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ngboost` and `scikit-learn-extra` are now optional dependencies
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
+- Targets are now allowed to contain NaN, deferring failure to runtime
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
