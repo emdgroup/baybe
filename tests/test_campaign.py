@@ -128,6 +128,7 @@ def test_setting_allow_flags(flag, space_type, value):
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 def test_update_measurements(ongoing_campaign):
+    """Updating measurements makes the expected changes."""
     p_name, t_name = "Num_disc_1", ongoing_campaign.targets[0].name
     updated = ongoing_campaign.measurements.iloc[[0], :]
 

@@ -815,10 +815,11 @@ def handle_invalid_target_values(
     Args:
         data: Measurements in experimental representation.
         targets: The targets to check.
-        drop: Whether to drop the corresponding rows and not raise an error.
+        drop: Whether to drop the corresponding rows instead of raising an error.
 
     Raises:
-        ValueError: If any row contains a MeasurementStatus in the target columns.
+        ValueError: If any row contains NaN in the target columns. Only relevant
+            if ``drop=False``.
 
     Returns:
         If drop=True this returns the modified dataframe.
