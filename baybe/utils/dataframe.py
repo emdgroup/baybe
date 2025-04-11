@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import warnings
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
@@ -807,14 +807,14 @@ class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
 
 
-def handle_invalid_target_values(
-    data: pd.DataFrame, targets: Iterable[Target], drop: bool = False
+def handle_invalid_column_values(
+    data: pd.DataFrame, cols: Collection[str], drop: bool = False
 ) -> pd.DataFrame:
-    """Handle invalid target inputs by dropping corresponding rows or raising an error.
+    """Handle invalid inputs by dropping corresponding rows or raising an error.
 
     Args:
         data: Measurements in experimental representation.
-        targets: The targets to check.
+        cols: The column names to check.
         drop: Whether to drop the corresponding rows instead of raising an error.
 
     Raises:
@@ -822,9 +822,8 @@ def handle_invalid_target_values(
             if ``drop=False``.
 
     Returns:
-        If drop=True this returns the modified dataframe.
+        If ``drop=True`` this returns the original (potentially modified) dataframe.
     """
-    cols = [t.name for t in targets]
     mask = data[cols].isna().any(axis=1)
 
     if (not drop) and mask.any():

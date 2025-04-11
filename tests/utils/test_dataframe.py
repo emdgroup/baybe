@@ -14,7 +14,7 @@ from baybe.utils.dataframe import (
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
     fuzzy_row_match,
-    handle_invalid_target_values,
+    handle_invalid_column_values,
 )
 
 
@@ -193,8 +193,8 @@ def test_measurement_singletons():
     with pytest.raises(
         ValueError, match=r"Bad input in the rows with these indices: \[123, 5\]"
     ):
-        handle_invalid_target_values(df, targets)
+        handle_invalid_column_values(df, [t.name for t in targets])
 
     # Test NaN removal
-    df_new = handle_invalid_target_values(df, targets, drop=True)
+    df_new = handle_invalid_column_values(df, [t.name for t in targets], drop=True)
     assert_frame_equal(df.iloc[1:-1, :], df_new)
