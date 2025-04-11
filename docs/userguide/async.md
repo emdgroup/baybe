@@ -92,19 +92,26 @@ As a simple example, consider a campaign with medical background aimed at creati
 drug formulation. Typically, there are quick initial analytics performed on the 
 formulation, followed by *in vitro* experiments followed by mouse *in vivo* experiments.
 Without the ability to use partial measurements, you would have to wait until the slow 
-mouse experiment for a given recommendation is measured until you could utilize it as 
-measurement in the recommendation loop. Furthermore, if the fast measurements are 
-already unpromising, the slower target measurements are possibly never performed at all.
+mouse experiment for a given recommendation is measured until you could utilize any of 
+the other (faster) experimental outcomes for that recommendation. Furthermore, if the fast 
+measurements are already unpromising, the slower target measurements are possibly never 
+performed at all.
 
 In BayBE, you can leverage results even if they are only partial. This is indicated 
-by setting the corresponding target measurement value to NaN (by using 
-[`numpy.nan`](numpy.nan)). Let us consider this 3-batch of recommendations, assuming 
+by setting the corresponding target measurement value to NaN. There are several ways to indicate this, e.g.:
+* [`numpy.nan`](numpy.nan)
+* [`pandas.NA`](pandas.NA)
+* `None`
+* `float("nan")`
+
+Let us consider this 3-batch of recommendations, assuming 
 we need to measure "Target_1", "Target_2" and "Target_3":
 ```python
 import numpy as np
+import pandas as pd
 
 rec = campaign.recommend(batch_size=3)
-# resetting the index to have easier access via .loc later
+# Resetting the index to have easier access via .loc later
 measurements = rec.reset_index(drop=True)
 
 # Add measurement results
@@ -117,12 +124,12 @@ measurements.loc[1, "Target_2"] = np.nan  # not measured yet
 measurements.loc[1, "Target_3"] = 12.2
 
 measurements.loc[2, "Target_1"] = 11.4
-measurements.loc[2, "Target_2"] = np.nan  # not measured yet
-measurements.loc[2, "Target_3"] = np.nan  # not measured yet
+measurements.loc[2, "Target_2"] = pd.NA  # not measured yet
+measurements.loc[2, "Target_3"] = None  # not measured yet
 
 measurements
 
-# proceed with campaign.add_measurements ...
+# Proceed with campaign.add_measurements ...
 ```
 
 | Param_1 | Param_2 | ...  | Target_1 | Target_2 | Target_3 |
