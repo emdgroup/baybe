@@ -49,6 +49,8 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 
+from baybe.utils.numerical import DTypeFloatNumpy
+
 
 def _compute_inertia(distances):
     """Compute inertia of new samples. Inertia is defined as the sum of the
@@ -67,7 +69,9 @@ def _compute_inertia(distances):
     # to closest cluster centers
     inertia = np.sum(np.min(distances, axis=1))
 
-    return inertia
+    # Due to a change in numpy>=2, this would otherwise have a different data type
+    # depending on the numpy version
+    return float(inertia)
 
 
 class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
@@ -132,7 +136,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Examples:
     --------
-    >>> from baybe.utils.clustering_algorithms import KMedoids; import numpy as np
+    >>> from baybe.utils.clustering_algorithms import KMedoids
+    >>> import numpy as np
 
     >>> X = np.asarray([[1, 2], [1, 4], [1, 0],
     ...                 [4, 2], [4, 4], [4, 0]])
@@ -241,7 +246,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
         self.n_features_in_ = X.shape[1]
         if self.n_clusters > X.shape[0]:
             raise ValueError(
@@ -377,7 +382,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -407,7 +412,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape = (n_query,)
             Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -447,7 +452,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # to every other point. These are the initial medoids.
             medoids = np.argpartition(np.sum(D, axis=1), n_clusters - 1)[:n_clusters]
         elif self.init == "build":  # Build initialization
-            medoids = _build(D, n_clusters).astype(np.int64)
+            medoids = _build(D, n_clusters).astype(int)
         else:
             raise ValueError(f"init value '{self.init}' not recognized")
 
@@ -611,4 +616,4 @@ def _build(D, n_clusters):
         for id_j in range(sample_size):
             Dj[id_j] = min(Dj[id_j], D[id_j, new_medoid[0]])
 
-    return np.array(medoid_idxs)
+    return np.array(medoid_idxs, dtype=int)
