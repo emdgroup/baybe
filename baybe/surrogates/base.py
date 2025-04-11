@@ -34,7 +34,6 @@ from baybe.serialization.core import (
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_invalid_column_values, to_tensor
-from baybe.utils.plotting import to_string
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
