@@ -44,7 +44,7 @@ The following provides a non-comprehensive overview:
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
 - 🔢 Cardinality constraints: Control the number of active factors in your design
-- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
+- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments and partial measurements
 - 🎓 Active learning: Perform smart data acquisition campaigns
 - ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
