@@ -18,7 +18,6 @@ from types import MethodType
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
 from botorch.test_functions.synthetic import Hartmann
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
@@ -83,8 +82,7 @@ def extract_pi(
     candidates = searchspace.discrete.exp_rep
     surrogate = self.get_surrogate(searchspace, objective, measurements)
     acqf = ProbabilityOfImprovement()
-    with torch.no_grad():
-        pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
+    pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
     pi_per_iteration.append(pi.to_numpy())
 
 

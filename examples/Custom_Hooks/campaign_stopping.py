@@ -18,7 +18,6 @@ import warnings
 
 import pandas as pd
 import seaborn as sns
-import torch
 
 from baybe import Campaign
 from baybe.acquisition import ProbabilityOfImprovement
@@ -141,8 +140,7 @@ def stop_on_PI(
     candidates = searchspace.discrete.exp_rep
     surrogate = self.get_surrogate(searchspace, objective, measurements)
     acqf = ProbabilityOfImprovement()
-    with torch.no_grad():
-        pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
+    pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
 
     n_pis_over = (pi > PI_THRESHOLD).sum()
     n_pis_over_required = math.ceil(len(pi) * PI_REQUIRED_FRACTION)
