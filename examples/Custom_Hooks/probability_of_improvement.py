@@ -18,13 +18,12 @@ from types import MethodType
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
 from botorch.test_functions.synthetic import Hartmann
 from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import gaussian_kde
 
-from baybe.acquisition import ProbabilityOfImprovement
+from baybe.acquisition.acqfs import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
@@ -37,7 +36,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
-from baybe.utils.dataframe import arrays_to_dataframes, to_tensor
+from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.random import set_random_seed
 from examples.utils import create_example_plots
 
@@ -80,14 +79,12 @@ def extract_pi(
             f"Currently, only search spaces of type '{SearchSpaceType.DISCRETE}' are "
             f"accepted."
         )
+    candidates, _ = searchspace.discrete.get_candidates()
     acqf = ProbabilityOfImprovement()
-    botorch_acqf = acqf.to_botorch(
-        self._surrogate_model, searchspace, objective, measurements
+    pi = self.acquisition_values(
+        candidates, searchspace, objective, measurements, acquisition_function=acqf
     )
-    comp_rep_tensor = to_tensor(searchspace.discrete.comp_rep).unsqueeze(1)
-    with torch.no_grad():
-        pi = botorch_acqf(comp_rep_tensor)
-    pi_per_iteration.append(pi.numpy())
+    pi_per_iteration.append(pi.to_numpy())
 
 
 ### Monkeypatching
@@ -136,6 +133,7 @@ campaign = Campaign(
     searchspace=searchspace,
     recommender=recommender,
     objective=objective,
+    allow_recommending_already_recommended=True,
 )
 
 

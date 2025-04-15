@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
   providing statistical measures about the target predictions of a given set of
   candidates
+- `Campaign.get_acquisition_function` and `BayesianRecommender.get_acquisition_function`
+  convenience methods for retrieving the underlying acquisition function
+- `AcquisitionFunction.evaluate` convenience method for computing acquisition values
+  from candidates in experimental representation
+- `acquisition_values` and `joint_acquisition_value` convenience methods to
+  `Campaign` and `BayesianRecommender` for computing acquisition values
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 

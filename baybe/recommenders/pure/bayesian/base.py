@@ -1,8 +1,11 @@
 """Base class for all Bayesian recommenders."""
 
+from __future__ import annotations
+
 import gc
 import warnings
 from abc import ABC
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from attrs import define, field, fields
@@ -28,6 +31,9 @@ from baybe.surrogates.base import (
 )
 from baybe.utils.dataframe import _ValidatedDataFrame
 from baybe.utils.validation import validate_parameter_input, validate_target_input
+
+if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 
 
 def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
@@ -136,6 +142,22 @@ class BayesianRecommender(PureRecommender, ABC):
             pending_experiments,
         )
 
+    def get_acquisition_function(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> BoAcquisitionFunction:
+        """Get the acquisition function for the given recommendation context.
+
+        For details on the method arguments, see :meth:`recommend`.
+        """
+        self._setup_botorch_acqf(
+            searchspace, objective, measurements, pending_experiments
+        )
+        return self._botorch_acqf
+
     @override
     def recommend(
         self,
@@ -190,6 +212,74 @@ class BayesianRecommender(PureRecommender, ABC):
             objective=objective,
             measurements=measurements,
             pending_experiments=pending_experiments,
+        )
+
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+        acquisition_function: AcquisitionFunction | None = None,
+    ) -> pd.Series:
+        """Compute the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental representation.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            searchspace:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            objective:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            measurements:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            pending_experiments:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
+
+        Returns:
+            A series of individual acquisition values, one for each candidate.
+        """
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
+        acqf = acquisition_function or self._get_acquisition_function(objective)
+        return acqf.evaluate(
+            candidates,
+            surrogate,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
+            jointly=False,
+        )
+
+    def joint_acquisition_value(  # noqa: DOC101, DOC103
+        self,
+        candidates: pd.DataFrame,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame,
+        pending_experiments: pd.DataFrame | None = None,
+        acquisition_function: AcquisitionFunction | None = None,
+    ) -> float:
+        """Compute the joint acquisition value for the given candidate batch.
+
+        For details on the method arguments, see :meth:`acquisition_values`.
+
+        Returns:
+            The joint acquisition value of the batch.
+        """
+        surrogate = self.get_surrogate(searchspace, objective, measurements)
+        acqf = acquisition_function or self._get_acquisition_function(objective)
+        return acqf.evaluate(
+            candidates,
+            surrogate,
+            searchspace,
+            objective,
+            measurements,
+            pending_experiments,
+            jointly=True,
         )
 
 

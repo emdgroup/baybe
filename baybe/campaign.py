@@ -51,6 +51,7 @@ from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_matc
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction
     from botorch.posteriors import Posterior
 
 # Metadata columns
@@ -595,7 +596,8 @@ class Campaign(SerialMixin):
                 Only required when using meta recommenders that demand it.
 
         Raises:
-            RuntimeError: If the current recommender does not provide a surrogate model.
+            IncompatibilityError: If the current recommender does not provide a
+                surrogate model.
 
         Returns:
             Surrogate: The surrogate of the current recommender.
@@ -612,29 +614,156 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        recommender: RecommenderProtocol
-        if isinstance(self.recommender, MetaRecommender):
-            recommender = self.recommender.get_non_meta_recommender(
-                batch_size,
-                self.searchspace,
-                self.objective,
-                self.measurements,
-                pending_experiments,
-            )
-        else:
-            recommender = self.recommender
-
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
         if isinstance(recommender, BayesianRecommender):
             return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
         else:
-            raise RuntimeError(
+            raise IncompatibilityError(
                 f"The current recommender is of type "
                 f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )
+
+    def _get_non_meta_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> RecommenderProtocol:
+        """Get the current recommender.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Returns:
+            The recommender for the current recommendation context.
+        """
+        if not isinstance(self.recommender, MetaRecommender):
+            return self.recommender
+        return self.recommender.get_non_meta_recommender(
+            batch_size,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+        )
+
+    def _get_bayesian_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> BayesianRecommender:
+        """Get the current Bayesian recommender (if available).
+
+        For details on the method arguments, see :meth:`_get_non_meta_recommender`.
+        """
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
+        if not isinstance(recommender, BayesianRecommender):
+            raise IncompatibilityError(
+                f"The current recommender is of type "
+                f"'{recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model or acquisition values. Both objects are "
+                f"only available for recommender subclasses of "
+                f"'{BayesianRecommender.__name__}'."
+            )
+        return recommender
+
+    def get_acquisition_function(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> AcquisitionFunction:
+        """Get the current acquisition function.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Raises:
+            IncompatibilityError: If no objective has been specified.
+            IncompatibilityError: If the current recommender does not use an acquisition
+                function.
+
+        Returns:
+            The acquisition function of the current recommender.
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                "Acquisition values can only be computed if an objective has "
+                "been defined."
+            )
+
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        return recommender.get_acquisition_function(
+            self.searchspace, self.objective, self.measurements, pending_experiments
+        )
+
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
+        *,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.Series:
+        """Compute the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental representation.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Returns:
+            A series of individual acquisition values, one for each candidate.
+        """
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.acquisition_values(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+            acquisition_function,
+        )
+
+    def joint_acquisition_value(  # noqa: DOC101, DOC103
+        self,
+        candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
+        *,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> float:
+        """Compute the joint acquisition values for the given candidate batch.
+
+        For details on the method arguments, see :meth:`acquisition_values`.
+
+        Returns:
+            The joint acquisition value of the batch.
+        """
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.joint_acquisition_value(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+            acquisition_function,
+        )
 
 
 def _add_version(dict_: dict) -> dict:

@@ -7,7 +7,7 @@ import pytest
 from pandas.testing import assert_index_equal
 from pytest import param
 
-from baybe.acquisition import qLogEI, qLogNEHVI, qTS
+from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
@@ -242,3 +242,24 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
     """Invalid inputs for posterior statistics raise expected exceptions."""
     with pytest.raises(error, match=match):
         ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)
+
+
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+def test_acquisition_value_computation(ongoing_campaign: Campaign):
+    """Acquisition values have the expected shape."""
+    df = ongoing_campaign.searchspace.discrete.exp_rep
+    assert not df.empty
+
+    # Using campaign acquisition function
+    acqfs = ongoing_campaign.acquisition_values(df)
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df)
+    assert isinstance(joint_acqf, float)
+
+    # Using separate acquisition function
+    acqfs = ongoing_campaign.acquisition_values(df, qUCB())
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df, qUCB())
+    assert isinstance(joint_acqf, float)
