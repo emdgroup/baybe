@@ -1047,9 +1047,32 @@
 
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.validation</span> <span class="kn">import</span> <span class="n">validate_target_names</span>
+<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span><span class="p">,</span> <span class="n">TargetMode</span>
 <span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">to_tuple</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">transform_target_columns</span>
+
+
+<span class="k">def</span> <span class="nf">_block_minmax_transforms</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">__</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An attrs-compatible validator to assert that a target has no transform.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the target has a transform.</span>
+<span class="sd">    &quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">NumericalTarget</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">mode</span>
+        <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span>
+            <span class="n">TargetMode</span><span class="o">.</span><span class="n">MAX</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="ow">and</span> <span class="n">target</span><span class="o">.</span><span class="n">transformation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">ParetoObjective</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; does not support transforms for targets &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;with modes &#39;</span><span class="si">{</span><span class="n">TargetMode</span><span class="o">.</span><span class="n">MIN</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; or &#39;</span><span class="si">{</span><span class="n">TargetMode</span><span class="o">.</span><span class="n">MAX</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Please use untransformed/unbounded targets in this case.&quot;</span>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="ParetoObjective">
@@ -1065,7 +1088,9 @@
         <span class="n">converter</span><span class="o">=</span><span class="n">to_tuple</span><span class="p">,</span>
         <span class="n">validator</span><span class="o">=</span><span class="p">[</span>
             <span class="n">min_len</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
-            <span class="n">deep_iterable</span><span class="p">(</span><span class="n">member_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">Target</span><span class="p">)),</span>
+            <span class="n">deep_iterable</span><span class="p">(</span>
+                <span class="n">member_validator</span><span class="o">=</span><span class="p">(</span><span class="n">instance_of</span><span class="p">(</span><span class="n">Target</span><span class="p">),</span> <span class="n">_block_minmax_transforms</span><span class="p">)</span>
+            <span class="p">),</span>
             <span class="n">validate_target_names</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;targets&quot;</span><span class="p">,</span>
