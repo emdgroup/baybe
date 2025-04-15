@@ -808,13 +808,13 @@ class _ValidatedDataFrame(pd.DataFrame):
 
 
 def handle_missing_values(
-    data: pd.DataFrame, cols: Collection[str], drop: bool = False
+    data: pd.DataFrame, columns: Collection[str], drop: bool = False
 ) -> pd.DataFrame:
-    """Handle invalid inputs by dropping corresponding rows or raising an error.
+    """Handle missing inputs by dropping corresponding rows or raising an error.
 
     Args:
-        data: Measurements in experimental representation.
-        cols: The column names to check.
+        data: Data to be checked.
+        columns: The column names to check.
         drop: Whether to drop the corresponding rows instead of raising an error.
 
     Raises:
@@ -822,9 +822,10 @@ def handle_missing_values(
             if ``drop=False``.
 
     Returns:
-        If ``drop=True`` this returns the original (potentially modified) dataframe.
+        In case of no errors or if ``drop=True``, this returns the original
+        (potentially modified) dataframe.
     """
-    mask = data[cols].isna().any(axis=1)
+    mask = data[columns].isna().any(axis=1)
 
     if (not drop) and mask.any():
         raise ValueError(
