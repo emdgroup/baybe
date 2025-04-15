@@ -249,8 +249,10 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
-    acqfs = ongoing_campaign.acquisition_values()
-    assert_index_equal(acqfs.index, ongoing_campaign.measurements.index)
+    df = ongoing_campaign.searchspace.discrete.exp_rep
+    assert not df.empty
 
-    joint_acqf = ongoing_campaign.joint_acquisition_value()
+    acqfs = ongoing_campaign.acquisition_values(df)
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df)
     assert isinstance(joint_acqf, float)

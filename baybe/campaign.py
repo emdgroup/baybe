@@ -707,7 +707,7 @@ class Campaign(SerialMixin):
 
     def acquisition_values(
         self,
-        candidates: pd.DataFrame | None = None,
+        candidates: pd.DataFrame,
         *,
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
@@ -725,9 +725,6 @@ class Campaign(SerialMixin):
         Returns:
             A series of individual acquisition values, one for each candidate.
         """
-        if candidates is None:
-            candidates = self.measurements[[p.name for p in self.parameters]]
-
         recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
         assert self.objective is not None
         return recommender.acquisition_values(
@@ -740,7 +737,7 @@ class Campaign(SerialMixin):
 
     def joint_acquisition_value(
         self,
-        candidates: pd.DataFrame | None = None,
+        candidates: pd.DataFrame,
         *,
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
@@ -758,9 +755,6 @@ class Campaign(SerialMixin):
         Returns:
             The joint acquisition value of the batch.
         """
-        if candidates is None:
-            candidates = self.measurements[[p.name for p in self.parameters]]
-
         recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
         assert self.objective is not None
         return recommender.joint_acquisition_value(
