@@ -7,7 +7,7 @@ import pytest
 from pandas.testing import assert_index_equal
 from pytest import param
 
-from baybe.acquisition import qLogEI, qLogNEHVI, qTS
+from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
@@ -252,7 +252,14 @@ def test_acquisition_value_computation(ongoing_campaign: Campaign):
     df = ongoing_campaign.searchspace.discrete.exp_rep
     assert not df.empty
 
+    # Using campaign acquisition function
     acqfs = ongoing_campaign.acquisition_values(df)
     assert_index_equal(acqfs.index, df.index)
     joint_acqf = ongoing_campaign.joint_acquisition_value(df)
+    assert isinstance(joint_acqf, float)
+
+    # Using separate acquisition function
+    acqfs = ongoing_campaign.acquisition_values(df, qUCB())
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df, qUCB())
     assert isinstance(joint_acqf, float)

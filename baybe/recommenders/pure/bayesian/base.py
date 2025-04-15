@@ -221,10 +221,11 @@ class BayesianRecommender(PureRecommender, ABC):
         objective: Objective,
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
+        acquisition_function: AcquisitionFunction | None = None,
     ) -> pd.Series:
         """Compute the acquisition values for the given candidates."""
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(objective)
         return acqf.evaluate(
             candidates,
             surrogate,
@@ -242,10 +243,11 @@ class BayesianRecommender(PureRecommender, ABC):
         objective: Objective,
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
+        acquisition_function: AcquisitionFunction | None = None,
     ) -> float:
         """Compute the joint acquisition value for the given candidate batch."""
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(objective)
         return acqf.evaluate(
             candidates,
             surrogate,

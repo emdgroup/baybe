@@ -708,6 +708,7 @@ class Campaign(SerialMixin):
     def acquisition_values(
         self,
         candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
@@ -717,6 +718,8 @@ class Campaign(SerialMixin):
         Args:
             candidates: The candidate points in experimental recommendations.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
             batch_size: See :meth:`recommend`.
                 Only required when using meta recommenders that demand it.
             pending_experiments: See :meth:`recommend`.
@@ -733,11 +736,13 @@ class Campaign(SerialMixin):
             self.objective,
             self.measurements,
             pending_experiments,
+            acquisition_function,
         )
 
     def joint_acquisition_value(
         self,
         candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
         *,
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
@@ -747,6 +752,8 @@ class Campaign(SerialMixin):
         Args:
             candidates: The candidate points in experimental recommendations.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
             batch_size: See :meth:`recommend`.
                 Only required when using meta recommenders that demand it.
             pending_experiments: See :meth:`recommend`.
@@ -763,6 +770,7 @@ class Campaign(SerialMixin):
             self.objective,
             self.measurements,
             pending_experiments,
+            acquisition_function,
         )
 
 

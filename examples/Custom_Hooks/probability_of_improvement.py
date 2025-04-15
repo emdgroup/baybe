@@ -23,7 +23,7 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import gaussian_kde
 
-from baybe.acquisition import ProbabilityOfImprovement
+from baybe.acquisition.acqfs import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
@@ -80,9 +80,10 @@ def extract_pi(
             f"accepted."
         )
     candidates = searchspace.discrete.exp_rep
-    surrogate = self.get_surrogate(searchspace, objective, measurements)
     acqf = ProbabilityOfImprovement()
-    pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
+    pi = self.acquisition_values(
+        candidates, searchspace, objective, measurements, acquisition_function=acqf
+    )
     pi_per_iteration.append(pi.to_numpy())
 
 

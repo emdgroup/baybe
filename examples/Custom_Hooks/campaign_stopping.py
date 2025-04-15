@@ -138,9 +138,10 @@ def stop_on_PI(
             f"accepted."
         )
     candidates = searchspace.discrete.exp_rep
-    surrogate = self.get_surrogate(searchspace, objective, measurements)
     acqf = ProbabilityOfImprovement()
-    pi = acqf.evaluate(candidates, surrogate, searchspace, objective, measurements)
+    pi = self.acquisition_values(
+        candidates, searchspace, objective, measurements, acquisition_function=acqf
+    )
 
     n_pis_over = (pi > PI_THRESHOLD).sum()
     n_pis_over_required = math.ceil(len(pi) * PI_REQUIRED_FRACTION)
