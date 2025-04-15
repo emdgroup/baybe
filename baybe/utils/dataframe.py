@@ -822,8 +822,7 @@ def handle_missing_values(
             if ``drop=False``.
 
     Returns:
-        In case of no errors or if ``drop=True``, this returns the original
-        (potentially modified) dataframe.
+        A new dataframe with the rows containing NaN dropped.
     """
     mask = data[columns].isna().any(axis=1)
 
