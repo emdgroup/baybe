@@ -246,7 +246,7 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
 
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
-@pytest.mark.parametrize("batch_size", [1], ids=["b3"])
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):
     """Acquisition values have the expected shape."""
     acqfs = ongoing_campaign.acquisition_values()
