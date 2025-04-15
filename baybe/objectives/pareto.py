@@ -32,9 +32,9 @@ def _block_minmax_transforms(_, __, target: Target) -> None:  # noqa: DOC101, DO
         and target.transformation is not None
     ):
         raise ValueError(
-            f"{ParetoObjective.__name__} does not support transforms for targets with "
-            f"modes {TargetMode.MIN.name} or {TargetMode.MAX.name}. Please use "
-            f"untransformed / unbounded targets in this case."
+            f"'{ParetoObjective.__name__}' does not support transforms for targets "
+            f"with modes '{TargetMode.MIN.name}' or '{TargetMode.MAX.name}'. "
+            f"Please use untransformed/unbounded targets in this case."
         )
 
 

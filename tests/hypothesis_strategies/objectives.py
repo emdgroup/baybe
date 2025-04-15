@@ -15,7 +15,7 @@ from ..hypothesis_strategies.utils import intervals as st_intervals
 
 _intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
 
-_targets = st.lists(
+_target_lists = st.lists(
     numerical_targets(_intervals), min_size=2, unique_by=lambda t: t.name
 )
 
@@ -28,7 +28,7 @@ def single_target_objectives():
 @st.composite
 def desirability_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.desirability.DesirabilityObjective`."""
-    targets = draw(_targets)
+    targets = draw(_target_lists)
     weights = draw(
         st.lists(
             finite_floats(min_value=0.0, exclude_min=True),
@@ -41,15 +41,8 @@ def desirability_objectives(draw: st.DrawFn):
 
 
 @st.composite
-def _pareto_target(draw: st.DrawFn):
-    """Generate :class:`baybe.targets.numerical.NumericalTarget`.
-
-    Args:
-        draw: Hypothesis draw object.
-
-    Returns:
-        _type_: _description_
-    """
+def _pareto_targets(draw: st.DrawFn):
+    """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
     name = draw(st.text(min_size=1))
     mode = draw(st.sampled_from(TargetMode))
 
@@ -67,10 +60,12 @@ def _pareto_target(draw: st.DrawFn):
     )
 
 
-_pareto_targets = st.lists(_pareto_target(), min_size=2, unique_by=lambda t: t.name)
+_pareto_target_lists = st.lists(
+    _pareto_targets(), min_size=2, unique_by=lambda t: t.name
+)
 
 
 @st.composite
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
-    return ParetoObjective(draw(_pareto_targets))
+    return ParetoObjective(draw(_pareto_target_lists))
