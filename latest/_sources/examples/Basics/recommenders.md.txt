@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base                        Ligand  \
-    102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    422     p-Xylene  Potassium pivalate                     BrettPhos   
-    89   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+               Solvent                Base                        Ligand  \
+    215  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    250           DMAc     Cesium pivalate                 (t-Bu)PhCPhos   
+    67     Butyl Ester   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration  
-    102        105.0          0.057  
-    422        120.0          0.153  
-    89         120.0          0.153  
+    215        120.0          0.153  
+    250        120.0          0.100  
+    67         105.0          0.100  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base                        Ligand  \
-    102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    422     p-Xylene  Potassium pivalate                     BrettPhos   
-    89   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+               Solvent                Base                        Ligand  \
+    215  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    250           DMAc     Cesium pivalate                 (t-Bu)PhCPhos   
+    67     Butyl Ester   Potassium acetate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    102        105.0          0.057   7.708867  
-    422        120.0          0.153  28.366463  
-    89         120.0          0.153  20.991582  
+    215        120.0          0.153  23.396493  
+    250        120.0          0.100   8.950949  
+    67         105.0          0.100   6.790001  
 
 
 
