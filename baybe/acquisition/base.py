@@ -124,7 +124,7 @@ class AcquisitionFunction(ABC, SerialMixin):
         """Get the acquisition values for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
+            candidates: The candidate points in experimental representation.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
             surrogate: The surrogate model to use for the acquisition function.
             searchspace: The search space.
