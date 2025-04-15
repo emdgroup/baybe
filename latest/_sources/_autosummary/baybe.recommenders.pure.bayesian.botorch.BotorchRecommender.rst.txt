@@ -36,7 +36,6 @@ BotorchRecommender
       ~BotorchRecommender.n_raw_samples
       ~BotorchRecommender.max_n_subspaces
       ~BotorchRecommender.acquisition_function
-      ~BotorchRecommender.acquisition_function_cls
       ~BotorchRecommender.allow_recommending_already_measured
       ~BotorchRecommender.allow_recommending_pending_experiments
       ~BotorchRecommender.allow_repeated_recommendations

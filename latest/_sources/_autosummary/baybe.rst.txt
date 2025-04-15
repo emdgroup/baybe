@@ -41,8 +41,6 @@
 
    kernels
 
-   objective
-
    objectives
 
    parameters

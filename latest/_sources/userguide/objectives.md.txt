@@ -1,9 +1,9 @@
 # Objective
 
-Optimization problems involve either a single target quantity of interest or 
-several (potentially conflicting) targets that need to be considered simultaneously.
-BayBE uses the concept of an [`Objective`](baybe.objective.Objective) to allow the user
-to control how these different types of scenarios are handled.
+Optimization problems involve either a single target quantity of interest or several
+(potentially conflicting) targets that need to be considered simultaneously. BayBE uses
+the concept of an [`Objective`](baybe.objectives.base.Objective) to allow the user to
+control how these different types of scenarios are handled.
 
 ## SingleTargetObjective
 The need to optimize a single [`Target`](baybe.targets.base.Target) is the most basic

@@ -31,8 +31,6 @@ baybe.objectives
 
    base
 
-   deprecation
-
    desirability
 
    enum
