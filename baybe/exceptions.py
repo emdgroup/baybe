@@ -95,6 +95,10 @@ class NoMeasurementsError(Exception):
     """A context expected measurements but none were available."""
 
 
+class IncompleteMeasurementsError(Exception):
+    """A context expected complete measurements but none were available."""
+
+
 class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
 

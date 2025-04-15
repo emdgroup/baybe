@@ -6,8 +6,11 @@ import numpy as np
 import pytest
 from pytest import param
 
+from baybe.acquisition import qLogNEHVI
+from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import create_fake_input
 
 
 @pytest.mark.parametrize(
@@ -54,3 +57,37 @@ def test_partial_measurements(ongoing_campaign, objective):
     # Trigger refit
     with context:
         c.recommend(2)
+
+
+@pytest.mark.parametrize(
+    "acqf",
+    [
+        param(qLogNEHVI(), id="ref_point_default"),
+        param(qLogNEHVI(reference_point=[0.4, 0.2]), id="ref_point_provided"),
+    ],
+)
+@pytest.mark.parametrize(
+    "objective",
+    [
+        param(
+            ParetoObjective(
+                [NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")],
+            ),
+            id="pareto",
+        ),
+    ],
+)
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+def test_pareto_ref_point_from_incomplete_measurements(campaign):
+    measurements = create_fake_input(
+        campaign.parameters, campaign.targets, 2
+    ).reset_index(drop=True)
+    measurements.loc[0, "t1"] = None
+    measurements.loc[1, "t2"] = None
+    campaign.add_measurements(measurements)
+
+    context = nullcontext()
+    if campaign.recommender.recommender.acquisition_function.reference_point is None:
+        context = pytest.raises(IncompleteMeasurementsError, match="at least one")
+    with context:
+        campaign.recommend(5)
