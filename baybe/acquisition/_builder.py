@@ -137,11 +137,8 @@ class BotorchAcquisitionFunctionBuilder:
         Raises:
             ValueError: If no complete measurement exists.
         """
-        transformed = self.objective.transform(
-            self.measurements[[t.name for t in self.objective.targets]]
-        )
         configurations = handle_missing_values(
-            transformed,
+            self.measurements[[t.name for t in self.objective.targets]],
             [t.name for t in self.objective.targets],
             drop=True,
         )
@@ -155,10 +152,10 @@ class BotorchAcquisitionFunctionBuilder:
                 f"configuration must have a measured value for all targets. You can "
                 f"fix this by setting the "
                 f"'{fields(_ExpectedHypervolumeImprovement).reference_point.name}' "
-                f"argument of {self.acqf.__class__.__name__} explicitly."
+                f"argument of '{self.acqf.__class__.__name__}' explicitly."
             )
 
-        return configurations
+        return self.objective.transform(configurations)
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
