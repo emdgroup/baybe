@@ -78,7 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 - `funcy` dependency
-- `scikit-learn-extra` dependency, `KMedoids` was adapted and reimplemented instead
+- `scikit-learn-extra` dependency by integrating relevant code parts into `baybe`
 
 ### Expired Deprecations (from 0.9.*)
 - `baybe.objective` namespace 
