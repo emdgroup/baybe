@@ -8,9 +8,9 @@ import cattrs
 import pandas as pd
 from attrs import define
 
-from baybe.objectives.deprecation import structure_objective
 from baybe.serialization.core import (
     converter,
+    get_base_structure_hook,
     unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -70,7 +70,16 @@ def to_objective(x: Target | Objective, /) -> Objective:
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(Objective, structure_objective)
+converter.register_structure_hook(
+    Objective,
+    get_base_structure_hook(
+        Objective,
+        overrides=dict(
+            _target=cattrs.override(rename="target"),
+            _targets=cattrs.override(rename="targets"),
+        ),
+    ),
+)
 converter.register_unstructure_hook(
     Objective,
     lambda x: unstructure_base(
@@ -81,6 +90,5 @@ converter.register_unstructure_hook(
         ),
     ),
 )
-
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

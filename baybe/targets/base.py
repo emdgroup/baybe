@@ -18,7 +18,7 @@ from baybe.serialization import (
 )
 
 if TYPE_CHECKING:
-    from baybe.objective import SingleTargetObjective
+    from baybe.objectives import SingleTargetObjective
 
 
 @define(frozen=True)

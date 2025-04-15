@@ -797,14 +797,12 @@ def fixture_default_config():
             "constraints": []
         },
         "objective": {
-          "mode": "SINGLE",
-          "targets": [
-            {
-              "type": "NumericalTarget",
-              "name": "Yield",
-              "mode": "MAX"
+            "type": "SingleTargetObjective",
+            "target": {
+                "type": "NumericalTarget",
+                "name": "Yield",
+                "mode": "MAX"
             }
-          ]
         },
         "recommender": {
             "type": "TwoPhaseMetaRecommender",
@@ -871,14 +869,12 @@ def fixture_default_simplex_config():
             }
         },
         "objective": {
-          "mode": "SINGLE",
-          "targets": [
-            {
+          "type": "SingleTargetObjective",
+          "target": {
               "type": "NumericalTarget",
               "name": "Yield",
               "mode": "MAX"
             }
-          ]
         }
     }"""
 
