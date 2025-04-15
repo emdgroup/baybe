@@ -162,10 +162,6 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
         with mock.patch("matplotlib.pyplot.show"):
             shap_insight.plot(plot_type, df)
             plt.close()
-    except AttributeError as e:
-        if "no attribute 'colors'" in str(e) and plot_type == "beeswarm":
-            pytest.xfail("SHAP bug")
-        raise e
     except ValueError as e:
         if "zero-size array to reduction" in str(e) and plot_type == "scatter":
             pytest.xfail("SHAP bug")
