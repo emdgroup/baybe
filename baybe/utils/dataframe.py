@@ -807,7 +807,7 @@ class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
 
 
-def handle_invalid_column_values(
+def handle_missing_values(
     data: pd.DataFrame, cols: Collection[str], drop: bool = False
 ) -> pd.DataFrame:
     """Handle invalid inputs by dropping corresponding rows or raising an error.

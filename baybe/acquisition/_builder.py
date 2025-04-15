@@ -33,7 +33,7 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
-from baybe.utils.dataframe import handle_invalid_column_values, to_tensor
+from baybe.utils.dataframe import handle_missing_values, to_tensor
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -133,7 +133,7 @@ class BotorchAcquisitionFunctionBuilder:
         transformed = self.objective.transform(
             self.measurements[[t.name for t in self.objective.targets]]
         )
-        return handle_invalid_column_values(
+        return handle_missing_values(
             transformed,
             [t.name for t in self.objective.targets],
             drop=True,
