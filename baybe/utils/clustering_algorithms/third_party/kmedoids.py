@@ -1,4 +1,4 @@
-"""Additional clustering algorithms"""
+"""KMedoids clustering"""
 
 # KMedoids was adapted from scikit-learn-extra (https://github.com/scikit-learn-contrib/scikit-learn-extra)
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>

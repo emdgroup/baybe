@@ -94,7 +94,7 @@ autosectionlabel_prefix_document = True  # Make sure autosectionlabels are uniqu
 templates_path = ["templates"]
 # Tell sphinx which files should be excluded
 exclude_patterns = ["sdk"]
-autodoc_exclude_modules = ["baybe.utils.clustering_algorithms"]
+autodoc_exclude_modules = ["baybe.utils.clustering_algorithms.third_party.kmedoids"]
 
 # Enable markdown
 # Note that we do not need additional configuration here.
@@ -133,8 +133,8 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     # KMedoids
-    (r"py:.*", r".*clustering_algorithms\.KMedoids.*"),
-    (r"ref:.*", r".*clustering_algorithms\.KMedoids.*"),
+    (r"py:.*", r".*clustering_algorithms.*KMedoids.*"),
+    (r"ref:.*", r".*clustering_algorithms.*KMedoids.*"),
     (r"py:.*", r".*_compute_inertia.*"),
     ("ref", "k_medoids"),
     # Other
