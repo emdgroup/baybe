@@ -218,8 +218,9 @@ In some cases, you may want to examine the specific acquisition function values 
 - {meth}`~baybe.campaign.Campaign.joint_acquisition_value`: Computes the **joint** acquisition value for the entire candidate batch, answering the question _"What is the overall expected utility of running this batch of experiments"?_
 
 ```python
-acq_values = campaign.acquisition_values(rec)
-joint_acq_value = campaign.joint_acquisition_value(rec)
+rec = campaign.recommend(5)
+acq_values = campaign.acquisition_values(rec)  # contains 5 numbers
+joint_acq_value = campaign.joint_acquisition_value(rec)  # contains 1 number
 ```
 
 By default, both methods use the acquisition function of the underlying recommender. However, you can also specify a custom acquisition function if needed:
