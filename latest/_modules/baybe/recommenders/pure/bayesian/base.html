@@ -1037,9 +1037,12 @@
           <h1>Source code for baybe.recommenders.pure.bayesian.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base class for all Bayesian recommenders.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
@@ -1065,6 +1068,9 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">_ValidatedDataFrame</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">validate_parameter_input</span><span class="p">,</span> <span class="n">validate_target_input</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BoAcquisitionFunction</span>
 
 
 <span class="k">def</span> <span class="nf">_autoreplicate</span><span class="p">(</span><span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
@@ -1178,6 +1184,25 @@
             <span class="n">pending_experiments</span><span class="p">,</span>
         <span class="p">)</span>
 
+<div class="viewcode-block" id="BayesianRecommender.get_acquisition_function">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.get_acquisition_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BoAcquisitionFunction</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the acquisition function for the given recommendation context.</span>
+
+<span class="sd">        For details on the method arguments, see :meth:`recommend`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_botorch_acqf</span><span class="p">(</span>
+            <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_botorch_acqf</span></div>
+
+
 <div class="viewcode-block" id="BayesianRecommender.recommend">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.recommend">[docs]</a>
     <span class="nd">@override</span>
@@ -1234,6 +1259,80 @@
             <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
             <span class="n">measurements</span><span class="o">=</span><span class="n">measurements</span><span class="p">,</span>
             <span class="n">pending_experiments</span><span class="o">=</span><span class="n">pending_experiments</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BayesianRecommender.acquisition_values">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.acquisition_values">[docs]</a>
+    <span class="k">def</span> <span class="nf">acquisition_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the acquisition values for the given candidates.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidates: The candidate points in experimental representation.</span>
+<span class="sd">                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
+<span class="sd">            searchspace:</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            objective:</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            measurements:</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            pending_experiments:</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            acquisition_function: The acquisition function to be evaluated.</span>
+<span class="sd">                If not provided, the acquisition function of the recommender is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A series of individual acquisition values, one for each candidate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">surrogate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span>
+        <span class="n">acqf</span> <span class="o">=</span> <span class="n">acquisition_function</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_acquisition_function</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">acqf</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span>
+            <span class="n">surrogate</span><span class="p">,</span>
+            <span class="n">searchspace</span><span class="p">,</span>
+            <span class="n">objective</span><span class="p">,</span>
+            <span class="n">measurements</span><span class="p">,</span>
+            <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="n">jointly</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BayesianRecommender.joint_acquisition_value">
+<a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.joint_acquisition_value">[docs]</a>
+    <span class="k">def</span> <span class="nf">joint_acquisition_value</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the joint acquisition value for the given candidate batch.</span>
+
+<span class="sd">        For details on the method arguments, see :meth:`acquisition_values`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The joint acquisition value of the batch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">surrogate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span>
+        <span class="n">acqf</span> <span class="o">=</span> <span class="n">acquisition_function</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_acquisition_function</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">acqf</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span>
+            <span class="n">surrogate</span><span class="p">,</span>
+            <span class="n">searchspace</span><span class="p">,</span>
+            <span class="n">objective</span><span class="p">,</span>
+            <span class="n">measurements</span><span class="p">,</span>
+            <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="n">jointly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 

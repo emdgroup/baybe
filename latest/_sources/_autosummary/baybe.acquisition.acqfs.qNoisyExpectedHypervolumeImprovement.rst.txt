@@ -16,6 +16,7 @@ qNoisyExpectedHypervolumeImprovement
    
       ~qNoisyExpectedHypervolumeImprovement.__init__
       ~qNoisyExpectedHypervolumeImprovement.compute_ref_point
+      ~qNoisyExpectedHypervolumeImprovement.evaluate
       ~qNoisyExpectedHypervolumeImprovement.from_dict
       ~qNoisyExpectedHypervolumeImprovement.from_json
       ~qNoisyExpectedHypervolumeImprovement.to_botorch

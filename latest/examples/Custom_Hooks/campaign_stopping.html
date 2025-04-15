@@ -1061,7 +1061,6 @@ The underlying use case is taken from the example shown
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="kn">import</span> <span class="nn">torch</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
@@ -1079,7 +1078,6 @@ The underlying use case is taken from the example shown
 <span class="kn">from</span> <span class="nn">baybe.simulation</span> <span class="kn">import</span> <span class="n">simulate_scenarios</span>
 <span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.utils</span> <span class="kn">import</span> <span class="n">register_hooks</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">to_tensor</span>
 <span class="kn">from</span> <span class="nn">examples.utils</span> <span class="kn">import</span> <span class="n">create_example_plots</span>
 </pre></div>
 </div>
@@ -1186,16 +1184,14 @@ threshold.</p>
             <span class="sa">f</span><span class="s2">&quot;Currently, only search spaces of type &#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39; are &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;accepted.&quot;</span>
         <span class="p">)</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">()</span>
     <span class="n">acqf</span> <span class="o">=</span> <span class="n">ProbabilityOfImprovement</span><span class="p">()</span>
-    <span class="n">botorch_acqf</span> <span class="o">=</span> <span class="n">acqf</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span>
+        <span class="n">candidates</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acqf</span>
     <span class="p">)</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">candidates_comp_rep</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">()</span>
-    <span class="n">comp_rep_tensor</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">candidates_comp_rep</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">acqf_values</span> <span class="o">=</span> <span class="n">botorch_acqf</span><span class="p">(</span><span class="n">comp_rep_tensor</span><span class="p">)</span>
 
-    <span class="n">n_pis_over</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">acqf_values</span> <span class="o">&gt;</span> <span class="n">PI_THRESHOLD</span><span class="p">)</span>
-    <span class="n">n_pis_over_required</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates_comp_rep</span><span class="p">)</span> <span class="o">*</span> <span class="n">PI_REQUIRED_FRACTION</span><span class="p">)</span>
+    <span class="n">n_pis_over</span> <span class="o">=</span> <span class="p">(</span><span class="n">pi</span> <span class="o">&gt;</span> <span class="n">PI_THRESHOLD</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">n_pis_over_required</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">PI_REQUIRED_FRACTION</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">n_pis_over</span> <span class="o">&lt;</span> <span class="n">n_pis_over_required</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">CampaignStoppedException</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Less than </span><span class="si">{</span><span class="n">PI_REQUIRED_FRACTION</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% of candidates are above the PI</span>

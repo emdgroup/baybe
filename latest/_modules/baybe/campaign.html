@@ -1088,6 +1088,7 @@
 <span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">validate_parameter_input</span><span class="p">,</span> <span class="n">validate_target_input</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
     <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">Posterior</span>
 
 <span class="c1"># Metadata columns</span>
@@ -1657,7 +1658,8 @@
 <span class="sd">                Only required when using meta recommenders that demand it.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: If the current recommender does not provide a surrogate model.</span>
+<span class="sd">            IncompatibilityError: If the current recommender does not provide a</span>
+<span class="sd">                surrogate model.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Surrogate: The surrogate of the current recommender.</span>
@@ -1674,29 +1676,165 @@
                 <span class="sa">f</span><span class="s2">&quot;No surrogate is available since no &#39;</span><span class="si">{</span><span class="n">Objective</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; is defined.&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">recommender</span><span class="p">:</span> <span class="n">RecommenderProtocol</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="p">,</span> <span class="n">MetaRecommender</span><span class="p">):</span>
-            <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="o">.</span><span class="n">get_non_meta_recommender</span><span class="p">(</span>
-                <span class="n">batch_size</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span>
-                <span class="n">pending_experiments</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span>
-
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_meta_recommender</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">pending_experiments</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommender</span><span class="p">,</span> <span class="n">BayesianRecommender</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The current recommender is of type &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">recommender</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;, which does not provide &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;a surrogate model. Surrogate models are only available for &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;recommender subclasses of &#39;</span><span class="si">{</span><span class="n">BayesianRecommender</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
             <span class="p">)</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_get_non_meta_recommender</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the current recommender.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_size: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+<span class="sd">            pending_experiments: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The recommender for the current recommendation context.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="p">,</span> <span class="n">MetaRecommender</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="o">.</span><span class="n">get_non_meta_recommender</span><span class="p">(</span>
+            <span class="n">batch_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span>
+            <span class="n">pending_experiments</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_bayesian_recommender</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BayesianRecommender</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the current Bayesian recommender (if available).</span>
+
+<span class="sd">        For details on the method arguments, see :meth:`_get_non_meta_recommender`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_meta_recommender</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">pending_experiments</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recommender</span><span class="p">,</span> <span class="n">BayesianRecommender</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The current recommender is of type &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">recommender</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;, which does not provide &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;a surrogate model or acquisition values. Both objects are &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;only available for recommender subclasses of &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">BayesianRecommender</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">recommender</span>
+
+<div class="viewcode-block" id="Campaign.get_acquisition_function">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.get_acquisition_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the current acquisition function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_size: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+<span class="sd">            pending_experiments: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            IncompatibilityError: If no objective has been specified.</span>
+<span class="sd">            IncompatibilityError: If the current recommender does not use an acquisition</span>
+<span class="sd">                function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The acquisition function of the current recommender.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IncompatibilityError</span><span class="p">(</span>
+                <span class="s2">&quot;Acquisition values can only be computed if an objective has &quot;</span>
+                <span class="s2">&quot;been defined.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bayesian_recommender</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">pending_experiments</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">get_acquisition_function</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Campaign.acquisition_values">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.acquisition_values">[docs]</a>
+    <span class="k">def</span> <span class="nf">acquisition_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the acquisition values for the given candidates.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidates: The candidate points in experimental representation.</span>
+<span class="sd">                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
+<span class="sd">            acquisition_function: The acquisition function to be evaluated.</span>
+<span class="sd">                If not provided, the acquisition function of the recommender is used.</span>
+<span class="sd">            batch_size: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+<span class="sd">            pending_experiments: See :meth:`recommend`.</span>
+<span class="sd">                Only required when using meta recommenders that demand it.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A series of individual acquisition values, one for each candidate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bayesian_recommender</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">pending_experiments</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span>
+            <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Campaign.joint_acquisition_value">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.joint_acquisition_value">[docs]</a>
+    <span class="k">def</span> <span class="nf">joint_acquisition_value</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">acquisition_function</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the joint acquisition values for the given candidate batch.</span>
+
+<span class="sd">        For details on the method arguments, see :meth:`acquisition_values`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The joint acquisition value of the batch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bayesian_recommender</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">pending_experiments</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">recommender</span><span class="o">.</span><span class="n">joint_acquisition_value</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">searchspace</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">measurements</span><span class="p">,</span>
+            <span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="n">acquisition_function</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 

@@ -15,6 +15,7 @@ PosteriorMean
    .. autosummary::
    
       ~PosteriorMean.__init__
+      ~PosteriorMean.evaluate
       ~PosteriorMean.from_dict
       ~PosteriorMean.from_json
       ~PosteriorMean.to_botorch

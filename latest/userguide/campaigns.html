@@ -1363,6 +1363,26 @@ the posterior statistics are only shown for this quantity, and not for individua
 targets.</p>
 </div>
 </section>
+<section id="acquisition-function-values">
+<h2>Acquisition Function Values<a class="headerlink" href="#acquisition-function-values" title="Link to this heading">¶</a></h2>
+<p>In some cases, you may want to examine the specific acquisition function values for a given set of candidates. Campaigns provide two straightforward methods for this purpose:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.acquisition_values" title="baybe.campaign.Campaign.acquisition_values"><code class="xref py py-meth docutils literal notranslate"><span class="pre">acquisition_values()</span></code></a>: Computes <strong>individual</strong> acquisition values for each candidate in the set, answering the question <em>“What is the expected utility of running this experiment in isolation?”</em></p></li>
+<li><p><a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.joint_acquisition_value" title="baybe.campaign.Campaign.joint_acquisition_value"><code class="xref py py-meth docutils literal notranslate"><span class="pre">joint_acquisition_value()</span></code></a>: Computes the <strong>joint</strong> acquisition value for the entire candidate batch, answering the question <em>“What is the overall expected utility of running this batch of experiments”?</em></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">acq_values</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>  <span class="c1"># contains 5 numbers</span>
+<span class="n">joint_acq_value</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">joint_acquisition_value</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>  <span class="c1"># contains 1 number</span>
+</pre></div>
+</div>
+<p>By default, both methods use the acquisition function of the underlying recommender. However, you can also specify a custom acquisition function if needed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.acquisition</span> <span class="kn">import</span> <span class="n">UCB</span><span class="p">,</span> <span class="n">qPSTD</span>
+
+<span class="n">acq_values</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">UCB</span><span class="p">())</span>
+<span class="n">joint_acq_value</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">joint_acquisition_value</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">qPSTD</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
 <section id="serialization">
 <h2>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h2>
 <p>Like other BayBE objects, <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Campaigns</span></code></span></a> can be (de-)serialized
@@ -1473,6 +1493,7 @@ to have a look at the most suitable example.</p>
 </li>
 <li><a class="reference internal" href="#adding-measurements">Adding Measurements</a></li>
 <li><a class="reference internal" href="#predictive-statistics">Predictive Statistics</a></li>
+<li><a class="reference internal" href="#acquisition-function-values">Acquisition Function Values</a></li>
 <li><a class="reference internal" href="#serialization">Serialization</a></li>
 <li><a class="reference internal" href="#further-information">Further Information</a></li>
 </ul>

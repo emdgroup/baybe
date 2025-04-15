@@ -1042,7 +1042,7 @@
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span>
@@ -1062,6 +1062,7 @@
 <span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">SurrogateProtocol</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">classproperty</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">is_abstract</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">to_tensor</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BotorchAcquisitionFunction</span>
@@ -1123,6 +1124,84 @@
         <span class="k">return</span> <span class="n">BotorchAcquisitionFunctionBuilder</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
         <span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">()</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">jointly</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">True</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">jointly</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="AcquisitionFunction.evaluate">
+<a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.base.AcquisitionFunction.html#baybe.acquisition.base.AcquisitionFunction.evaluate">[docs]</a>
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span>
+        <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">jointly</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the acquisition values for the given candidates.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidates: The candidate points in experimental representation.</span>
+<span class="sd">                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
+<span class="sd">            surrogate: The surrogate model to use for the acquisition function.</span>
+<span class="sd">            searchspace: The search space.</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            objective: The objective.</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            measurements: Available experimentation data.</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            pending_experiments: Optional pending experiments.</span>
+<span class="sd">                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.</span>
+<span class="sd">            jointly: If ``False``, the acquisition values are computed independently</span>
+<span class="sd">                for each candidate. If ``True``, a single joint acquisition value is</span>
+<span class="sd">                computed for the entire candidate set.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Depending on the joint mode, either a single batch acquisition value or a</span>
+<span class="sd">            series of individual acquisition values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">torch</span>
+
+        <span class="c1"># Assemble the Botorch acquisition function and its input</span>
+        <span class="n">botorch_acqf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">(</span>
+            <span class="n">surrogate</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
+        <span class="p">)</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">candidates</span><span class="p">))</span>
+
+        <span class="c1"># Depending on joint mode, evaluate using t- or q-batching</span>
+        <span class="n">in_</span> <span class="o">=</span> <span class="n">comp</span> <span class="k">if</span> <span class="n">jointly</span> <span class="k">else</span> <span class="n">comp</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">botorch_acqf</span><span class="p">(</span><span class="n">in_</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">jointly</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">numpy</span><span class="p">(),</span> <span class="n">index</span><span class="o">=</span><span class="n">candidates</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div>
 </div>
 
 

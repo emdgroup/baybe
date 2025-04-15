@@ -15,6 +15,7 @@ PosteriorStandardDeviation
    .. autosummary::
    
       ~PosteriorStandardDeviation.__init__
+      ~PosteriorStandardDeviation.evaluate
       ~PosteriorStandardDeviation.from_dict
       ~PosteriorStandardDeviation.from_json
       ~PosteriorStandardDeviation.to_botorch

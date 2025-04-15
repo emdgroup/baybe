@@ -15,7 +15,10 @@ BayesianRecommender
    .. autosummary::
    
       ~BayesianRecommender.__init__
+      ~BayesianRecommender.acquisition_values
+      ~BayesianRecommender.get_acquisition_function
       ~BayesianRecommender.get_surrogate
+      ~BayesianRecommender.joint_acquisition_value
       ~BayesianRecommender.recommend
    
    

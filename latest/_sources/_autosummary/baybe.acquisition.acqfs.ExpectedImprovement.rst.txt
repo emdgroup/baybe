@@ -15,6 +15,7 @@ ExpectedImprovement
    .. autosummary::
    
       ~ExpectedImprovement.__init__
+      ~ExpectedImprovement.evaluate
       ~ExpectedImprovement.from_dict
       ~ExpectedImprovement.from_json
       ~ExpectedImprovement.to_botorch

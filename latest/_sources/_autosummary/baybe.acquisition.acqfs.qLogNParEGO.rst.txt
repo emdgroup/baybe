@@ -15,6 +15,7 @@ qLogNParEGO
    .. autosummary::
    
       ~qLogNParEGO.__init__
+      ~qLogNParEGO.evaluate
       ~qLogNParEGO.from_dict
       ~qLogNParEGO.from_json
       ~qLogNParEGO.to_botorch

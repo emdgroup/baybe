@@ -15,6 +15,7 @@ qLogNoisyExpectedImprovement
    .. autosummary::
    
       ~qLogNoisyExpectedImprovement.__init__
+      ~qLogNoisyExpectedImprovement.evaluate
       ~qLogNoisyExpectedImprovement.from_dict
       ~qLogNoisyExpectedImprovement.from_json
       ~qLogNoisyExpectedImprovement.to_botorch

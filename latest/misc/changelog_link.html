@@ -1086,6 +1086,12 @@ identify allowed measurement inputs</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Campaign.posterior_stats</span></code> and <code class="docutils literal notranslate"><span class="pre">Surrogate.posterior_stats</span></code> as convenience methods for
 providing statistical measures about the target predictions of a given set of
 candidates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Campaign.get_acquisition_function</span></code> and <code class="docutils literal notranslate"><span class="pre">BayesianRecommender.get_acquisition_function</span></code>
+convenience methods for retrieving the underlying acquisition function</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AcquisitionFunction.evaluate</span></code> convenience method for computing acquisition values
+from candidates in experimental representation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">acquisition_values</span></code> and <code class="docutils literal notranslate"><span class="pre">joint_acquisition_value</span></code> convenience methods to
+<code class="docutils literal notranslate"><span class="pre">Campaign</span></code> and <code class="docutils literal notranslate"><span class="pre">BayesianRecommender</span></code> for computing acquisition values</p></li>
 </ul>
 </section>
 <section id="changed">

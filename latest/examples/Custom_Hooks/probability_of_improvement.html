@@ -1062,14 +1062,13 @@ interface and lets us extract the PI achieved after each experimental iteration,
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">botorch.test_functions.synthetic</span> <span class="kn">import</span> <span class="n">Hartmann</span>
 <span class="kn">from</span> <span class="nn">matplotlib.collections</span> <span class="kn">import</span> <span class="n">PolyCollection</span>
 <span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">gaussian_kde</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.acquisition</span> <span class="kn">import</span> <span class="n">ProbabilityOfImprovement</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.acquisition.acqfs</span> <span class="kn">import</span> <span class="n">ProbabilityOfImprovement</span>
 <span class="kn">from</span> <span class="nn">baybe.campaign</span> <span class="kn">import</span> <span class="n">Campaign</span>
 <span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span>
@@ -1082,7 +1081,7 @@ interface and lets us extract the PI achieved after each experimental iteration,
 <span class="kn">from</span> <span class="nn">baybe.surrogates</span> <span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
 <span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">register_hooks</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">arrays_to_dataframes</span><span class="p">,</span> <span class="n">to_tensor</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">arrays_to_dataframes</span>
 <span class="kn">from</span> <span class="nn">baybe.utils.random</span> <span class="kn">import</span> <span class="n">set_random_seed</span>
 <span class="kn">from</span> <span class="nn">examples.utils</span> <span class="kn">import</span> <span class="n">create_example_plots</span>
 </pre></div>
@@ -1126,14 +1125,12 @@ To be able to attach the hook, we need to match its signature to that of
             <span class="sa">f</span><span class="s2">&quot;Currently, only search spaces of type &#39;</span><span class="si">{</span><span class="n">SearchSpaceType</span><span class="o">.</span><span class="n">DISCRETE</span><span class="si">}</span><span class="s2">&#39; are &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;accepted.&quot;</span>
         <span class="p">)</span>
+    <span class="n">candidates</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">get_candidates</span><span class="p">()</span>
     <span class="n">acqf</span> <span class="o">=</span> <span class="n">ProbabilityOfImprovement</span><span class="p">()</span>
-    <span class="n">botorch_acqf</span> <span class="o">=</span> <span class="n">acqf</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span>
+        <span class="n">candidates</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">acquisition_function</span><span class="o">=</span><span class="n">acqf</span>
     <span class="p">)</span>
-    <span class="n">comp_rep_tensor</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">discrete</span><span class="o">.</span><span class="n">comp_rep</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-        <span class="n">pi</span> <span class="o">=</span> <span class="n">botorch_acqf</span><span class="p">(</span><span class="n">comp_rep_tensor</span><span class="p">)</span>
-    <span class="n">pi_per_iteration</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pi</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+    <span class="n">pi_per_iteration</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pi</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
 </pre></div>
 </div>
 </section>
@@ -1184,6 +1181,7 @@ hook mechanics.</p>
     <span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span>
     <span class="n">recommender</span><span class="o">=</span><span class="n">recommender</span><span class="p">,</span>
     <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+    <span class="n">allow_recommending_already_recommended</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 </div>

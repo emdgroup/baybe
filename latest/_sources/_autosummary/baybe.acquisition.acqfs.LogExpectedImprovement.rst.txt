@@ -15,6 +15,7 @@ LogExpectedImprovement
    .. autosummary::
    
       ~LogExpectedImprovement.__init__
+      ~LogExpectedImprovement.evaluate
       ~LogExpectedImprovement.from_dict
       ~LogExpectedImprovement.from_json
       ~LogExpectedImprovement.to_botorch

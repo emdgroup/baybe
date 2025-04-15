@@ -1248,15 +1248,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base                        Ligand  \
-169  Butyornitrile  Potassium acetate                 (t-Bu)PhCPhos   
-348       p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine   
-28     Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
+         Solvent                Base                        Ligand  \
+102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+422     p-Xylene  Potassium pivalate                     BrettPhos   
+89   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration  
-169        120.0          0.100  
-348        120.0          0.057  
-28          90.0          0.100  
+102        105.0          0.057  
+422        120.0          0.153  
+89         120.0          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1265,15 +1265,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-169  Butyornitrile  Potassium acetate                 (t-Bu)PhCPhos   
-348       p-Xylene     Cesium acetate  Di-tert-butylphenylphosphine   
-28     Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
+         Solvent                Base                        Ligand  \
+102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+422     p-Xylene  Potassium pivalate                     BrettPhos   
+89   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration      yield  
-169        120.0          0.100  25.694616  
-348        120.0          0.057   7.569913  
-28          90.0          0.100  16.681492  
+102        105.0          0.057   7.708867  
+422        120.0          0.153  28.366463  
+89         120.0          0.153  20.991582  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

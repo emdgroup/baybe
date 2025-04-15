@@ -15,6 +15,7 @@ qNegIntegratedPosteriorVariance
    .. autosummary::
    
       ~qNegIntegratedPosteriorVariance.__init__
+      ~qNegIntegratedPosteriorVariance.evaluate
       ~qNegIntegratedPosteriorVariance.from_dict
       ~qNegIntegratedPosteriorVariance.from_json
       ~qNegIntegratedPosteriorVariance.get_integration_points

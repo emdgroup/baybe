@@ -15,7 +15,10 @@ BotorchRecommender
    .. autosummary::
    
       ~BotorchRecommender.__init__
+      ~BotorchRecommender.acquisition_values
+      ~BotorchRecommender.get_acquisition_function
       ~BotorchRecommender.get_surrogate
+      ~BotorchRecommender.joint_acquisition_value
       ~BotorchRecommender.recommend
    
    

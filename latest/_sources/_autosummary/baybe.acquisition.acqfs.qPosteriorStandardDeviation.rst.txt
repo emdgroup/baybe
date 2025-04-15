@@ -15,6 +15,7 @@ qPosteriorStandardDeviation
    .. autosummary::
    
       ~qPosteriorStandardDeviation.__init__
+      ~qPosteriorStandardDeviation.evaluate
       ~qPosteriorStandardDeviation.from_dict
       ~qPosteriorStandardDeviation.from_json
       ~qPosteriorStandardDeviation.to_botorch
