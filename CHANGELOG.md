@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign.get_acquisition_function` and `BayesianRecommender.get_acquisition_function`
   convenience methods for retrieving the underlying acquisition function
 - `AcquisitionFunction.evaluate` convenience method for computing acquisition values
+  from candidates in experimental representation
 - `acquisition_values` and `joint_acquisition_value` convenience methods to
   `Campaign` and `BayesianRecommender` for computing acquisition values
 
