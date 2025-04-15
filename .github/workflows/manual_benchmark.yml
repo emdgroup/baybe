@@ -11,15 +11,61 @@ on:
         options:
           - "Manually Selected"
           - "All"
-          - "Default"
       synthetic_2C1D_1C:
-        description: "synthetic_2C1D_1C benchmark"
+        description: "synthetic_2C1D_1C"
         required: false
         default: false
         type: boolean
-
-env:
-  DEFAULT_BENCHMARKS: '["synthetic_2C1D_1C"]'
+      aryl_halide_CT_IM_tl:
+        description: "aryl_halide_CT_IM_tl"
+        required: false
+        default: false
+        type: boolean
+      aryl_halide_IP_CP_tl:
+        description: "aryl_halide_IP_CP_tl"
+        required: false
+        default: false
+        type: boolean
+      aryl_halide_CT_I_BM_tl:
+        description: "aryl_halide_CT_I_BM_tl"
+        required: false
+        default: false
+        type: boolean
+      direct_arylation_tl_temperature:
+        description: "direct_arylation_tl_temperature"
+        required: false
+        default: false
+        type: boolean
+      easom_tl_47_negate_noise5:
+        description: "easom_tl_47_negate_noise5"
+        required: false
+        default: false
+        type: boolean
+      hartmann_tl_3_15_15:
+        description: "hartmann_tl_3_15_15"
+        required: false
+        default: false
+        type: boolean
+      michalewicz_tl_continuous:
+        description: "michalewicz_tl_continuous"
+        required: false
+        default: false
+        type: boolean
+      hartmann_3d:
+        description: "hartmann_3d"
+        required: false
+        default: false
+        type: boolean
+      hartmann_6d:
+        description: "hartmann_6d"
+        required: false
+        default: false
+        type: boolean
+      hartmann_3d_discretized:
+        description: "hartmann_3d_discretized"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -32,7 +78,6 @@ jobs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
     steps:
       - name: Build matrix from inputs
-        if: ${{ github.event.inputs.group_selection == 'Manually Selected' || github.event.inputs.group_selection == 'All' }}
         id: build_matrix_from_inputs
         run: |
           benchmarks_to_execute='{"benchmark_list": ['
@@ -48,19 +93,6 @@ jobs:
           done
           benchmarks_to_execute=$(echo "$benchmarks_to_execute" | sed 's/,$//')
           benchmarks_to_execute="$benchmarks_to_execute ]}"
-
-          echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
-
-      - name: Build matrix from group
-        if: ${{ github.event.inputs.group_selection != 'Manually Selected' && github.event.inputs.group_selection != 'All' }}
-        id: build_matrix_from_group
-        run: |
-          benchmarks_to_execute='{"benchmark_list": []}'
-          run_all_benchmarks="${{ github.event.inputs.group_selection }}"
-
-          if [ "$run_all_benchmarks" = "Default" ]; then
-            benchmarks_to_execute='{"benchmark_list": ${{ env.DEFAULT_BENCHMARKS }} }'
-          fi
 
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
 
@@ -107,6 +139,7 @@ jobs:
           fi
 
   benchmark-test:
+    name: run
     needs: [prepare, add-runner]
     runs-on: self-hosted
     strategy:
