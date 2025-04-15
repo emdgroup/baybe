@@ -359,13 +359,10 @@ class Campaign(SerialMixin):
 
         # Perform the update
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
-        matching_idxs = [
-            idx for idx in data.index if idx in self._measurements_exp.index
-        ]
-        self._measurements_exp.loc[matching_idxs, cols] = data.loc[matching_idxs, cols]
+        self._measurements_exp.loc[data.index, cols] = data[cols]
 
         # Reset fit number and cached recommendations
-        self._measurements_exp.loc[matching_idxs, "FitNr"] = np.nan
+        self._measurements_exp.loc[data.index, "FitNr"] = np.nan
         self._cached_recommendation = pd.DataFrame()
 
     def toggle_discrete_candidates(  # noqa: DOC501
