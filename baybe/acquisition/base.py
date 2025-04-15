@@ -135,8 +135,8 @@ class AcquisitionFunction(ABC, SerialMixin):
                 See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
             pending_experiments: Optional pending experiments.
                 See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
-            jointly: If ``False``, the acquisition values are computed for each
-                candidate separately. If ``True``, a single joint acquisition value is
+            jointly: If ``False``, the acquisition values are computed independently
+                for each candidate. If ``True``, a single joint acquisition value is
                 computed for the entire candidate set.
 
         Returns:
