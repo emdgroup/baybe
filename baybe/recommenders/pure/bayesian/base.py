@@ -223,7 +223,25 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
         acquisition_function: AcquisitionFunction | None = None,
     ) -> pd.Series:
-        """Compute the acquisition values for the given candidates."""
+        """Compute the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental representation.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            searchspace:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            objective:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            measurements:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            pending_experiments:
+                See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
+
+        Returns:
+            A series of individual acquisition values, one for each candidate.
+        """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         acqf = acquisition_function or self._get_acquisition_function(objective)
         return acqf.evaluate(
@@ -236,7 +254,7 @@ class BayesianRecommender(PureRecommender, ABC):
             jointly=False,
         )
 
-    def joint_acquisition_value(
+    def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
         candidates: pd.DataFrame,
         searchspace: SearchSpace,
@@ -245,7 +263,13 @@ class BayesianRecommender(PureRecommender, ABC):
         pending_experiments: pd.DataFrame | None = None,
         acquisition_function: AcquisitionFunction | None = None,
     ) -> float:
-        """Compute the joint acquisition value for the given candidate batch."""
+        """Compute the joint acquisition value for the given candidate batch.
+
+        For details on the method arguments, see :meth:`acquisition_values`.
+
+        Returns:
+            The joint acquisition value of the batch.
+        """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         acqf = acquisition_function or self._get_acquisition_function(objective)
         return acqf.evaluate(

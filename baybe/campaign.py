@@ -716,7 +716,7 @@ class Campaign(SerialMixin):
         """Compute the acquisition values for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
+            candidates: The candidate points in experimental representation.
                 For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
             acquisition_function: The acquisition function to be evaluated.
                 If not provided, the acquisition function of the recommender is used.
@@ -739,7 +739,7 @@ class Campaign(SerialMixin):
             acquisition_function,
         )
 
-    def joint_acquisition_value(
+    def joint_acquisition_value(  # noqa: DOC101, DOC103
         self,
         candidates: pd.DataFrame,
         acquisition_function: AcquisitionFunction | None = None,
@@ -749,15 +749,7 @@ class Campaign(SerialMixin):
     ) -> float:
         """Compute the joint acquisition values for the given candidate batch.
 
-        Args:
-            candidates: The candidate points in experimental recommendations.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
-            acquisition_function: The acquisition function to be evaluated.
-                If not provided, the acquisition function of the recommender is used.
-            batch_size: See :meth:`recommend`.
-                Only required when using meta recommenders that demand it.
-            pending_experiments: See :meth:`recommend`.
-                Only required when using meta recommenders that demand it.
+        For details on the method arguments, see :meth:`acquisition_values`.
 
         Returns:
             The joint acquisition value of the batch.
