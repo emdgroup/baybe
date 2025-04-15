@@ -210,6 +210,27 @@ the posterior statistics are only shown for this quantity, and not for individua
 targets.
 ```
 
+## Acquisition Function Values
+
+In some cases, you may want to examine the specific acquisition function values for a given set of candidates. Campaigns provide two straightforward methods for this purpose:
+
+- {meth}`~baybe.campaign.Campaign.acquisition_values`: Computes **individual** acquisition values for each candidate in the set, answering the question _"What is the expected utility of running this experiment in isolation?"_
+- {meth}`~baybe.campaign.Campaign.joint_acquisition_value`: Computes the **joint** acquisition value for the entire candidate batch, answering the question _"What is the overall expected utility of running this batch of experiments"?_
+
+```python
+acq_values = campaign.acquisition_values(rec)
+joint_acq_value = campaign.joint_acquisition_value(rec)
+```
+
+By default, both methods use the acquisition function of the underlying recommender. However, you can also specify a custom acquisition function if needed:
+
+```python
+from baybe.acquisition import UCB, qPSTD
+
+acq_values = campaign.acquisition_values(rec, UCB())
+joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
+```
+
 ## Serialization
 
 Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 
