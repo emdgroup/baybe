@@ -9,10 +9,12 @@ from pandas.testing import assert_frame_equal
 from pytest import param
 
 from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import (
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
     fuzzy_row_match,
+    handle_missing_values,
 )
 
 
@@ -170,3 +172,29 @@ def test_invalid_fuzzy_row_match(searchspace, invalid):
     match = f"corresponding column in the {invalid} dataframe."
     with pytest.raises(ValueError, match=match):
         fuzzy_row_match(left_df, right_df, searchspace.parameters)
+
+
+def test_measurement_singletons():
+    """Correct treatment of rows with unmeasured targets."""
+    df = pd.DataFrame(
+        {
+            "A": [np.nan, 2, 3, 4, 5],
+            "B": ["a", "b", "b", "a", np.nan],
+            "C": [55, 44, 33, 22, 11],
+        },
+        index=[123, 2, 3, 4, 5],
+    )
+    targets = [
+        NumericalTarget(name="A", mode="MAX"),
+        BinaryTarget(name="B", success_value="a", failure_value="b"),
+    ]
+
+    # Test NaN block
+    with pytest.raises(
+        ValueError, match=r"Bad input in the rows with these indices: \[123, 5\]"
+    ):
+        handle_missing_values(df, [t.name for t in targets])
+
+    # Test NaN removal
+    df_new = handle_missing_values(df, [t.name for t in targets], drop=True)
+    assert_frame_equal(df.iloc[1:-1, :], df_new)

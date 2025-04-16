@@ -9,12 +9,7 @@ try:
     from skfp.preprocessing import ConformerGenerator, MolFromSmilesTransformer
 
 except ModuleNotFoundError as ex:
-    raise OptionalImportError(
-        "Chemistry functionality is unavailable because the necessary optional "
-        "dependencies are not installed. "
-        "Consider installing BayBE with 'chem' dependency, "
-        "e.g. via `pip install baybe[chem]`."
-    ) from ex
+    raise OptionalImportError(name="scikit-fingerprints", group="chem") from ex
 
 __all__ = [
     "Chem",

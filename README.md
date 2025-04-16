@@ -44,7 +44,7 @@ The following provides a non-comprehensive overview:
 - 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
 - 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
 - 🔢 Cardinality constraints: Control the number of active factors in your design
-- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments
+- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments and partial measurements
 - 🎓 Active learning: Perform smart data acquisition campaigns
 - ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
 - 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
@@ -297,6 +297,8 @@ pip install 'baybe[chem,simulation]'
 ```
 
 The available groups are:
+- `extras`: Installs all dependencies required for optional features.
+- `benchmarking`: Required for running the benchmarking module.
 - `chem`: Cheminformatics utilities (e.g. for the `SubstanceParameter`).
 - `docs`: Required for creating the documentation.
 - `examples`: Required for running the examples/streamlit.
@@ -307,8 +309,7 @@ The available groups are:
 - `insights`: Required for built-in model and campaign analysis (e.g. using [SHAP](https://shap.readthedocs.io/)).
 - `simulation`: Enabling the [simulation](https://emdgroup.github.io/baybe/stable/_autosummary/baybe.simulation.html) module.
 - `test`: Required for running the tests.
-- `benchmarking`: Required for running the benchmarking module.
-- `dev`: All of the above plus `tox` and `pip-audit`. For code contributors.
+- `dev`: All of the above plus dev tools. For code contributors.
 
 ## 📡 Telemetry
 BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 

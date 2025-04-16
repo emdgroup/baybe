@@ -7,19 +7,19 @@ ci:
 
 repos:
 - repo: https://github.com/pycqa/flake8
-  rev: 7.1.0
+  rev: 7.2.0
   hooks:
     - id: flake8
       additional_dependencies: [pydoclint==0.5.5]  
       args: [--select=DOC, --config=pydoclint.toml]
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.5.2
+  rev: v0.11.5
   hooks:
   - id: ruff
     args: [--fix, --exit-non-zero-on-fix]
   - id: ruff-format
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.0
+  rev: v3.19.1
   hooks:
   - id: pyupgrade
     args: [--py310-plus]

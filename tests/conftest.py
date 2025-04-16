@@ -24,7 +24,7 @@ from tenacity import (
 from torch._C import _LinAlgError
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.acquisition import qExpectedImprovement
+from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.campaign import Campaign
 from baybe.constraints import (
     ContinuousCardinalityConstraint,
@@ -42,6 +42,7 @@ from baybe.constraints import (
     ThresholdCondition,
 )
 from baybe.kernels import MaternKernel
+from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import (
@@ -364,7 +365,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 SubstanceParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     data=mock_substances,
                 )
                 for k in range(3)
@@ -393,7 +394,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 CategoricalParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     values=tuple(mock_substances.keys()),
                 )
                 for k in range(3)
@@ -415,9 +416,9 @@ def fixture_parameters(
     # be silently ignored by the test.
     all_valid_names = [p.name for p in valid_parameters]
     invalid_names = [p for p in parameter_names if p not in all_valid_names]
-    assert (
-        not invalid_names
-    ), f"Invalid name in fixture 'parameter_names': {invalid_names}"
+    assert not invalid_names, (
+        f"Invalid name in fixture 'parameter_names': {invalid_names}"
+    )
 
     return [p for p in valid_parameters if p.name in parameter_names]
 
@@ -698,9 +699,12 @@ def fixture_default_streaming_sequential_meta_recommender():
 
 
 @pytest.fixture(name="acqf")
-def fixture_default_acquisition_function():
+def fixture_default_acquisition_function(objective):
     """The default acquisition function to be used if not specified differently."""
-    return qExpectedImprovement()
+    if isinstance(objective, ParetoObjective):
+        return qLogNEHVI()
+    else:
+        return qLogEI()
 
 
 @pytest.fixture(name="lengthscale_prior")
@@ -797,14 +801,12 @@ def fixture_default_config():
             "constraints": []
         },
         "objective": {
-          "mode": "SINGLE",
-          "targets": [
-            {
-              "type": "NumericalTarget",
-              "name": "Yield",
-              "mode": "MAX"
+            "type": "SingleTargetObjective",
+            "target": {
+                "type": "NumericalTarget",
+                "name": "Yield",
+                "mode": "MAX"
             }
-          ]
         },
         "recommender": {
             "type": "TwoPhaseMetaRecommender",
@@ -871,14 +873,12 @@ def fixture_default_simplex_config():
             }
         },
         "objective": {
-          "mode": "SINGLE",
-          "targets": [
-            {
+          "type": "SingleTargetObjective",
+          "target": {
               "type": "NumericalTarget",
               "name": "Yield",
               "mode": "MAX"
             }
-          ]
         }
     }"""
 

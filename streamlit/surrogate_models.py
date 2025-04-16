@@ -8,12 +8,13 @@ This means that the displayed function approximation should always look the same
 the input and output locations/scales are changed.
 """  # noqa: D415
 
+from functools import partial
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
-from funcy import rpartial
 
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
@@ -137,12 +138,12 @@ def main():
     set_random_seed(st_random_seed)
 
     # Construct the specific test function
-    fun = rpartial(
+    fun = partial(
         test_functions[st_function_name],
-        st_lower_parameter_limit,
-        st_upper_parameter_limit,
-        st_function_amplitude,
-        st_function_bias,
+        x_min=st_lower_parameter_limit,
+        x_max=st_upper_parameter_limit,
+        amplitude=st_function_amplitude,
+        bias=st_function_bias,
     )
 
     # Create the training data

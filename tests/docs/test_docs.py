@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
-from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 
 from .utils import extract_code_blocks
 
@@ -22,7 +21,7 @@ doc_files_pseudocode = list(map(str, [Path("docs/userguide/campaigns.md")]))
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
-def test_code_executability(file: Path, campaign):
+def test_code_executability(file: Path, campaign, searchspace, objective, recommender):
     """The code blocks in the file become a valid python script when concatenated.
 
     Blocks surrounded with "triple-tilde" are ignored. Fixtures made available to this
@@ -36,26 +35,22 @@ def test_code_executability(file: Path, campaign):
     # be the same, as otherwise exec uses separate scopes for specific patterns within
     # the snippet (e.g. list comprehensions) causing unknown name errors despite
     # correct import.
-    namespace = {"__builtins__": __builtins__, "campaign": campaign}
+    namespace = {
+        "__builtins__": __builtins__,
+        "campaign": campaign,
+        "searchspace": searchspace,
+        "objective": objective,
+        "recommender": recommender,
+    }
     exec(userguide_code, namespace, namespace)
 
 
 # TODO: Needs a refactoring (files codeblocks should be auto-detected)
 @pytest.mark.parametrize("file", doc_files_pseudocode, ids=doc_files_pseudocode)
-@pytest.mark.parametrize(
-    "recommender",
-    [
-        TwoPhaseMetaRecommender(
-            initial_recommender=RandomRecommender(), recommender=RandomRecommender()
-        )
-    ],
-)
 def test_pseudocode_executability(file: Path, searchspace, objective, recommender):
     """The pseudocode blocks in the file are a valid python script when using fixtures.
 
     Blocks surrounded with "triple-backticks" are included.
-    Due to a bug related to the serialization of the default recommender, this currently
-    uses a non-default recommender.
     """
     userguide_pseudocode = "\n".join(extract_code_blocks(file, include_tilde=True))
     exec(userguide_pseudocode)

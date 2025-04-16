@@ -13,11 +13,11 @@ from baybe.objectives.base import Objective
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     pretty_print_df,
     transform_target_columns,
 )
-from baybe.utils.plotting import to_string
 
 
 @define(frozen=True, slots=False)

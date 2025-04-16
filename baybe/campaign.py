@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
@@ -17,7 +17,11 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import IncompatibilityError, NotEnoughPointsLeftError
+from baybe.exceptions import (
+    IncompatibilityError,
+    NoMeasurementsError,
+    NotEnoughPointsLeftError,
+)
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
 from baybe.recommenders.base import RecommenderProtocol
@@ -33,7 +37,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.surrogates.base import SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.telemetry import (
     TELEM_LABELS,
@@ -42,11 +46,12 @@ from baybe.telemetry import (
 )
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_match
-from baybe.utils.plotting import to_string
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
+    from botorch.acquisition import AcquisitionFunction
     from botorch.posteriors import Posterior
 
 # Metadata columns
@@ -308,6 +313,58 @@ class Campaign(SerialMixin):
             self._cached_recommendation, data, self.parameters
         )
 
+    def update_measurements(
+        self,
+        data: pd.DataFrame,
+        numerical_measurements_must_be_within_tolerance: bool = True,
+    ) -> None:
+        """Update previously added measurements.
+
+        This can be useful to correct mistakes or update target measurements. The
+        match to existing data entries is made based on the index. This will reset
+        the `FitNr` of the corresponding measurement and reset cached recommendations.
+
+        Args:
+            data: The measurement data to be updated (with filled values for targets).
+            numerical_measurements_must_be_within_tolerance: Flag indicating if
+                numerical parameters need to be within their tolerances.
+
+        Raises:
+            ValueError: If the given data contains duplicated indices.
+            ValueError: If the given data contains indices not present in existing
+                measurements.
+        """
+        # Validate target and parameter input values
+        validate_target_input(data, self.targets)
+        validate_parameter_input(
+            data, self.parameters, numerical_measurements_must_be_within_tolerance
+        )
+        data.__class__ = _ValidatedDataFrame
+
+        # Block duplicate input indices
+        if data.index.has_duplicates:
+            raise ValueError(
+                "The input dataframe containing the measurement updates has duplicated "
+                "indices. Please ensure that all updates for a given measurement are "
+                "made in a single combined entry."
+            )
+
+        # Allow only existing indices
+        if nonmatching_idxs := set(data.index).difference(self._measurements_exp.index):
+            raise ValueError(
+                f"Updating measurements requires indices matching the "
+                f"existing measurements. The following indices were in the input, but "
+                f"are not found in the existing entries: {nonmatching_idxs}"
+            )
+
+        # Perform the update
+        cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
+        self._measurements_exp.loc[data.index, cols] = data[cols]
+
+        # Reset fit number and cached recommendations
+        self._measurements_exp.loc[data.index, "FitNr"] = np.nan
+        self._cached_recommendation = pd.DataFrame()
+
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
         constraints: Collection[DiscreteConstraint] | pd.DataFrame,
@@ -506,12 +563,14 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame | None = None) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
         Args:
-            candidates: The candidate points in experimental recommendations.
-                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            candidates: The candidate points in experimental recommendations. If not
+                provided, the posterior for the existing campaign measurements is
+                returned. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
         Raises:
             IncompatibilityError: If the underlying surrogate model exposes no
@@ -521,6 +580,9 @@ class Campaign(SerialMixin):
             Posterior: The corresponding posterior object.
             For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
         """
+        if candidates is None:
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
         surrogate = self.get_surrogate()
         if not hasattr(surrogate, method_name := "posterior"):
             raise IncompatibilityError(
@@ -528,10 +590,49 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        import torch
+        return surrogate.posterior(candidates)
 
-        with torch.no_grad():
-            return surrogate.posterior(candidates)
+    def posterior_stats(
+        self,
+        candidates: pd.DataFrame | None = None,
+        stats: Sequence[PosteriorStatistic] = ("mean", "std"),
+    ) -> pd.DataFrame:
+        """Return posterior statistics for each target.
+
+        Args:
+            candidates: The candidate points in experimental representation. If not
+                provided, the statistics of the existing campaign measurements are
+                calculated. For details, see
+                :meth:`baybe.surrogates.base.Surrogate.posterior_stats`.
+            stats: Sequence indicating which statistics to compute. Also accepts
+                floats, for which the corresponding quantile point will be computed.
+
+        Raises:
+            ValueError: If a requested quantile is outside the open interval (0,1).
+            TypeError: If the posterior utilized by the surrogate does not support
+                a requested statistic.
+
+        Returns:
+            A dataframe with posterior statistics for each target and candidate.
+        """
+        if candidates is None:
+            if self.measurements.empty:
+                raise NoMeasurementsError(
+                    f"No candidates were provided and the campaign has no measurements "
+                    f"yet. '{self.posterior_stats.__name__}' has no candidates to "
+                    f"compute statistics for in this case."
+                )
+
+            candidates = self.measurements[[p.name for p in self.parameters]]
+
+        surrogate = self.get_surrogate()
+        if not hasattr(surrogate, method_name := "posterior_stats"):
+            raise IncompatibilityError(
+                f"The used surrogate type '{surrogate.__class__.__name__}' does not "
+                f"provide a '{method_name}' method."
+            )
+
+        return surrogate.posterior_stats(candidates, stats)
 
     def get_surrogate(
         self,
@@ -547,7 +648,8 @@ class Campaign(SerialMixin):
                 Only required when using meta recommenders that demand it.
 
         Raises:
-            RuntimeError: If the current recommender does not provide a surrogate model.
+            IncompatibilityError: If the current recommender does not provide a
+                surrogate model.
 
         Returns:
             Surrogate: The surrogate of the current recommender.
@@ -564,29 +666,156 @@ class Campaign(SerialMixin):
                 f"No surrogate is available since no '{Objective.__name__}' is defined."
             )
 
-        recommender: RecommenderProtocol
-        if isinstance(self.recommender, MetaRecommender):
-            recommender = self.recommender.get_non_meta_recommender(
-                batch_size,
-                self.searchspace,
-                self.objective,
-                self.measurements,
-                pending_experiments,
-            )
-        else:
-            recommender = self.recommender
-
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
         if isinstance(recommender, BayesianRecommender):
             return recommender.get_surrogate(
                 self.searchspace, self.objective, self.measurements
             )
         else:
-            raise RuntimeError(
+            raise IncompatibilityError(
                 f"The current recommender is of type "
                 f"'{recommender.__class__.__name__}', which does not provide "
                 f"a surrogate model. Surrogate models are only available for "
                 f"recommender subclasses of '{BayesianRecommender.__name__}'."
             )
+
+    def _get_non_meta_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> RecommenderProtocol:
+        """Get the current recommender.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Returns:
+            The recommender for the current recommendation context.
+        """
+        if not isinstance(self.recommender, MetaRecommender):
+            return self.recommender
+        return self.recommender.get_non_meta_recommender(
+            batch_size,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+        )
+
+    def _get_bayesian_recommender(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> BayesianRecommender:
+        """Get the current Bayesian recommender (if available).
+
+        For details on the method arguments, see :meth:`_get_non_meta_recommender`.
+        """
+        recommender = self._get_non_meta_recommender(batch_size, pending_experiments)
+        if not isinstance(recommender, BayesianRecommender):
+            raise IncompatibilityError(
+                f"The current recommender is of type "
+                f"'{recommender.__class__.__name__}', which does not provide "
+                f"a surrogate model or acquisition values. Both objects are "
+                f"only available for recommender subclasses of "
+                f"'{BayesianRecommender.__name__}'."
+            )
+        return recommender
+
+    def get_acquisition_function(
+        self,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> AcquisitionFunction:
+        """Get the current acquisition function.
+
+        Args:
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Raises:
+            IncompatibilityError: If no objective has been specified.
+            IncompatibilityError: If the current recommender does not use an acquisition
+                function.
+
+        Returns:
+            The acquisition function of the current recommender.
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                "Acquisition values can only be computed if an objective has "
+                "been defined."
+            )
+
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        return recommender.get_acquisition_function(
+            self.searchspace, self.objective, self.measurements, pending_experiments
+        )
+
+    def acquisition_values(
+        self,
+        candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
+        *,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> pd.Series:
+        """Compute the acquisition values for the given candidates.
+
+        Args:
+            candidates: The candidate points in experimental representation.
+                For details, see :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            acquisition_function: The acquisition function to be evaluated.
+                If not provided, the acquisition function of the recommender is used.
+            batch_size: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+            pending_experiments: See :meth:`recommend`.
+                Only required when using meta recommenders that demand it.
+
+        Returns:
+            A series of individual acquisition values, one for each candidate.
+        """
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.acquisition_values(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+            acquisition_function,
+        )
+
+    def joint_acquisition_value(  # noqa: DOC101, DOC103
+        self,
+        candidates: pd.DataFrame,
+        acquisition_function: AcquisitionFunction | None = None,
+        *,
+        batch_size: int | None = None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> float:
+        """Compute the joint acquisition values for the given candidate batch.
+
+        For details on the method arguments, see :meth:`acquisition_values`.
+
+        Returns:
+            The joint acquisition value of the batch.
+        """
+        recommender = self._get_bayesian_recommender(batch_size, pending_experiments)
+        assert self.objective is not None
+        return recommender.joint_acquisition_value(
+            candidates,
+            self.searchspace,
+            self.objective,
+            self.measurements,
+            pending_experiments,
+            acquisition_function,
+        )
 
 
 def _add_version(dict_: dict) -> dict:
