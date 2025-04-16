@@ -1252,15 +1252,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent                Base         Ligand  Temperature  \
-97   Butyl Ester  Potassium pivalate      BrettPhos        120.0   
-247         DMAc     Cesium pivalate  (t-Bu)PhCPhos        105.0   
-10   Butyl Ester      Cesium acetate      BrettPhos         90.0   
-
-     Concentration  
-97             0.1  
-247            0.1  
-10             0.1  
+           Solvent                Base     Ligand  Temperature  Concentration
+149  Butyornitrile     Cesium pivalate  BrettPhos        105.0          0.153
+309           DMAc  Potassium pivalate  BrettPhos        105.0          0.057
+68     Butyl Ester   Potassium acetate  BrettPhos        105.0          0.153
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1269,15 +1264,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base         Ligand  Temperature  \
-97   Butyl Ester  Potassium pivalate      BrettPhos        120.0   
-247         DMAc     Cesium pivalate  (t-Bu)PhCPhos        105.0   
-10   Butyl Ester      Cesium acetate      BrettPhos         90.0   
+           Solvent                Base     Ligand  Temperature  Concentration  \
+149  Butyornitrile     Cesium pivalate  BrettPhos        105.0          0.153   
+309           DMAc  Potassium pivalate  BrettPhos        105.0          0.057   
+68     Butyl Ester   Potassium acetate  BrettPhos        105.0          0.153   
 
-     Concentration      yield  
-97             0.1  32.622053  
-247            0.1  15.633447  
-10             0.1  32.351269  
+         yield  
+149  25.199335  
+309  26.509517  
+68   22.624447  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

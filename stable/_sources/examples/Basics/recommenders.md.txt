@@ -154,7 +154,7 @@ print(recommender)
                    Kernel factory: DefaultKernelFactory()
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
-             Sequential continuous: False
+             Sequential continuous: True
              Hybrid sampler: None
              Sampling percentage: 1.0
        Switch after: 1
@@ -246,15 +246,10 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent                Base                        Ligand  Temperature  \
-    404  p-Xylene   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-    320      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-    364  p-Xylene     Cesium pivalate                     BrettPhos        105.0   
-    
-         Concentration  
-    404          0.153  
-    320          0.153  
-    364          0.100  
+               Solvent                Base     Ligand  Temperature  Concentration
+    149  Butyornitrile     Cesium pivalate  BrettPhos        105.0          0.153
+    309           DMAc  Potassium pivalate  BrettPhos        105.0          0.057
+    68     Butyl Ester   Potassium acetate  BrettPhos        105.0          0.153
 
 
 
@@ -267,15 +262,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent                Base                        Ligand  Temperature  \
-    404  p-Xylene   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-    320      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-    364  p-Xylene     Cesium pivalate                     BrettPhos        105.0   
+               Solvent                Base     Ligand  Temperature  Concentration  \
+    149  Butyornitrile     Cesium pivalate  BrettPhos        105.0          0.153   
+    309           DMAc  Potassium pivalate  BrettPhos        105.0          0.057   
+    68     Butyl Ester   Potassium acetate  BrettPhos        105.0          0.153   
     
-         Concentration      yield  
-    404          0.153   7.407393  
-    320          0.153   5.806633  
-    364          0.100  32.722349  
+             yield  
+    149  25.199335  
+    309  26.509517  
+    68   22.624447  
 
 
 

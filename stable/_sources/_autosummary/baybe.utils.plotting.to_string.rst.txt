@@ -1,6 +1,0 @@
-baybe.utils.plotting.to\_string
-===============================
-
-.. currentmodule:: baybe.utils.plotting
-
-.. autofunction:: to_string

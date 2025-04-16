@@ -1,6 +1,0 @@
-baybe.utils.plotting.indent
-===========================
-
-.. currentmodule:: baybe.utils.plotting
-
-.. autofunction:: indent

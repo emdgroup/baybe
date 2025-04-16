@@ -1,0 +1,33 @@
+/*This file contains the options for changing the generated HTML Output*/
+
+/*Remove border around logo*/
+.sidebar-logo-container {
+    margin: 0;
+}
+
+.sidebar-search-container {
+    margin-top: 0;
+}
+
+a.sidebar-brand {
+    padding: 0;
+}
+
+/*Reduce left and right margins*/
+
+.sidebar-drawer {
+    width: calc(10%);
+}
+
+.content {
+    width: calc(90%);
+}
+
+/*The color of the "Search" placeholder in the sidebar*/
+.sidebar-search::placeholder {
+    color: #ffdcb9;
+}
+
+thead {
+    color: #ffffff;
+}

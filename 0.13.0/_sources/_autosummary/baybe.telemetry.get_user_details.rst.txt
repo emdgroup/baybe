@@ -1,0 +1,6 @@
+baybe.telemetry.get\_user\_details
+==================================
+
+.. currentmodule:: baybe.telemetry
+
+.. autofunction:: get_user_details

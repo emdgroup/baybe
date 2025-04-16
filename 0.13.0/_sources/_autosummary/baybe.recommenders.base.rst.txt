@@ -1,0 +1,31 @@
+baybe.recommenders.base
+=======================
+
+.. automodule:: baybe.recommenders.base
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      RecommenderProtocol
+   
+   
+
+   
+   
+   
+
+
+

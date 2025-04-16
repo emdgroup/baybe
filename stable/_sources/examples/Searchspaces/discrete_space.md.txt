@@ -87,7 +87,7 @@ We use the data of the test function to deduce bounds and number of parameters.
 ```python
 parameters = [
     NumericalDiscreteParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,
     )
@@ -146,8 +146,8 @@ print(measurements)
     
     
     Recommended experiments with measured values: 
-              x_1       x_2       x_3       x_4      Target
-    11  -5.120000 -5.120000  1.706667  5.120000  102.376050
-    166  1.706667  1.706667 -1.706667  1.706667   62.407637
-    1   -5.120000 -5.120000 -5.120000 -1.706667  102.376050
+              x_1       x_2       x_3       x_4     Target
+    209  5.120000 -1.706667 -5.120000 -1.706667  89.053246
+    122 -1.706667  5.120000  1.706667  1.706667  75.730442
+    222  5.120000 -1.706667  5.120000  1.706667  89.053246
 

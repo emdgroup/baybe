@@ -1,0 +1,6 @@
+baybe.surrogates.utils.batchify\_ensemble\_predictor
+====================================================
+
+.. currentmodule:: baybe.surrogates.utils
+
+.. autofunction:: batchify_ensemble_predictor

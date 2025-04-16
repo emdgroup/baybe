@@ -1,0 +1,44 @@
+DiscreteProductConstraint
+=========================
+
+.. currentmodule:: baybe.constraints.discrete
+
+.. autoclass:: DiscreteProductConstraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DiscreteProductConstraint.__init__
+      ~DiscreteProductConstraint.from_dict
+      ~DiscreteProductConstraint.from_json
+      ~DiscreteProductConstraint.get_invalid
+      ~DiscreteProductConstraint.get_invalid_polars
+      ~DiscreteProductConstraint.get_valid
+      ~DiscreteProductConstraint.summary
+      ~DiscreteProductConstraint.to_dict
+      ~DiscreteProductConstraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DiscreteProductConstraint.condition
+      ~DiscreteProductConstraint.eval_during_augmentation
+      ~DiscreteProductConstraint.eval_during_creation
+      ~DiscreteProductConstraint.eval_during_modeling
+      ~DiscreteProductConstraint.is_continuous
+      ~DiscreteProductConstraint.is_discrete
+      ~DiscreteProductConstraint.numerical_only
+      ~DiscreteProductConstraint.parameters
+   
+   

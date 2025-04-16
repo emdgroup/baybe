@@ -1,0 +1,6 @@
+baybe.searchspace.core.to\_searchspace
+======================================
+
+.. currentmodule:: baybe.searchspace.core
+
+.. autofunction:: to_searchspace
