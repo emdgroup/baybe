@@ -24,7 +24,7 @@ from baybe.searchspace import SearchSpace
 # The resulting space would have 20^10 entries, requiring around 745 TB of memory for
 # both experimental and computational representation of the search space.
 parameters = [
-    NumericalDiscreteParameter(name=f"p{k+1}", values=np.linspace(0, 100, 20))
+    NumericalDiscreteParameter(name=f"p{k + 1}", values=np.linspace(0, 100, 20))
     for k in range(10)
 ]
 
