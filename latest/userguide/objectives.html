@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1060,7 +1062,7 @@ in the optimization problem.
 Because this fairly trivial conversion step requires no additional user configuration,
 we provide a convenience constructor for it:</p>
 <div class="tip admonition">
-<p class="admonition-title">Convenience construction and implicit conversion</p>
+<p class="admonition-title">Convenience Construction and Implicit Conversion</p>
 <ul>
 <li><p>The conversion from a single <a class="reference internal" href="../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target" title="baybe.targets.base.Target"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Target</span></code></span></a> to a
 <a class="reference internal" href="../_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective" title="baybe.objectives.single.SingleTargetObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code></span></a> describes a
@@ -1085,7 +1087,7 @@ enables the combination of multiple targets via scalarization into a single nume
 value (commonly referred to as the <em>overall desirability</em>), a method also utilized in
 classical DOE.</p>
 <div class="attention admonition">
-<p class="admonition-title">Mandatory target bounds</p>
+<p class="admonition-title">Mandatory Target Bounds</p>
 <p>Since measurements of different targets can vary arbitrarily in scale, all targets
 passed to a
 <a class="reference internal" href="../_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective" title="baybe.objectives.desirability.DesirabilityObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code></span></a> must be
@@ -1146,7 +1148,7 @@ multiple conflicting targets. Unlike the
 targets into a single scalar value but instead seeks to identify the Pareto front – the
 set of <em>non-dominated</em> target configurations.</p>
 <div class="tip admonition">
-<p class="admonition-title">Non-dominated Configurations</p>
+<p class="admonition-title">Non-Dominated Configurations</p>
 <p>A target configuration is considered non-dominated (or Pareto-optimal) if no other
 configuration is better in <em>all</em> targets.</p>
 </div>
@@ -1170,6 +1172,14 @@ specify the corresponding target objects:</p>
 <span class="n">target_2</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;t_2&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MAX&quot;</span><span class="p">)</span>
 <span class="n">objective</span> <span class="o">=</span> <span class="n">ParetoObjective</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">target_1</span><span class="p">,</span> <span class="n">target_2</span><span class="p">])</span>
 </pre></div>
+</div>
+<div class="tip admonition">
+<p class="admonition-title">Convenience Multi-Output Casting</p>
+<p><a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">ParetoObjective</span></code></span></a> requires a
+<a class="reference internal" href="surrogates.html#multi-output-modeling"><span class="std std-ref">multi-output surrogate model</span></a>.
+If you attempt to use a  single-output model, BayBE will automatically turn it into a
+<a class="reference internal" href="../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate" title="baybe.surrogates.composite.CompositeSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogate</span></code></span></a>
+using <a class="reference internal" href="surrogates.html#auto-replication"><span class="std std-ref">independent replicates</span></a>.</p>
 </div>
 </section>
 </section>

@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1073,13 +1075,16 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html#baybe.utils.dataframe.get_transform_objects" title="baybe.utils.dataframe.get_transform_objects"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_transform_objects</span></code></a>(df, objects, /, *[, ...])</p></td>
 <td><p>Extract the objects relevant for transforming a given dataframe.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html#baybe.utils.dataframe.pretty_print_df" title="baybe.utils.dataframe.pretty_print_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty_print_df</span></code></a>(df[, max_rows, max_columns, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values" title="baybe.utils.dataframe.handle_missing_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_missing_values</span></code></a>(data, columns[, drop])</p></td>
+<td><p>Handle missing inputs by dropping corresponding rows or raising an error.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html#baybe.utils.dataframe.pretty_print_df" title="baybe.utils.dataframe.pretty_print_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretty_print_df</span></code></a>(df[, max_rows, max_columns, ...])</p></td>
 <td><p>Convert a dataframe into a pretty/readable format.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html#baybe.utils.dataframe.to_tensor" title="baybe.utils.dataframe.to_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tensor</span></code></a>(*x)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html#baybe.utils.dataframe.to_tensor" title="baybe.utils.dataframe.to_tensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_tensor</span></code></a>(*x)</p></td>
 <td><p>Convert numpy arrays and pandas dataframes to tensors.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="baybe.utils.dataframe.transform_target_columns.html#baybe.utils.dataframe.transform_target_columns" title="baybe.utils.dataframe.transform_target_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_target_columns</span></code></a>(df, targets, /, *)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.utils.dataframe.transform_target_columns.html#baybe.utils.dataframe.transform_target_columns" title="baybe.utils.dataframe.transform_target_columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform_target_columns</span></code></a>(df, targets, /, *)</p></td>
 <td><p>Transform the columns of a dataframe that correspond to objects of type <a class="reference internal" href="baybe.targets.base.Target.html#baybe.targets.base.Target" title="baybe.targets.base.Target"><code class="xref py py-class docutils literal notranslate"><span class="pre">Target</span></code></a>.</p></td>
 </tr>
 </tbody>

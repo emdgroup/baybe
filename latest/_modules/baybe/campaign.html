@@ -469,6 +469,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -922,6 +923,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1351,6 +1353,61 @@
         <span class="n">telemetry_record_recommended_measurement_percentage</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span>
         <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Campaign.update_measurements">
+<a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements">[docs]</a>
+    <span class="k">def</span> <span class="nf">update_measurements</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">numerical_measurements_must_be_within_tolerance</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update previously added measurements.</span>
+
+<span class="sd">        This can be useful to correct mistakes or update target measurements. The</span>
+<span class="sd">        match to existing data entries is made based on the index. This will reset</span>
+<span class="sd">        the `FitNr` of the corresponding measurement and reset cached recommendations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: The measurement data to be updated (with filled values for targets).</span>
+<span class="sd">            numerical_measurements_must_be_within_tolerance: Flag indicating if</span>
+<span class="sd">                numerical parameters need to be within their tolerances.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the given data contains duplicated indices.</span>
+<span class="sd">            ValueError: If the given data contains indices not present in existing</span>
+<span class="sd">                measurements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate target and parameter input values</span>
+        <span class="n">validate_target_input</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="n">validate_parameter_input</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">numerical_measurements_must_be_within_tolerance</span>
+        <span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">_ValidatedDataFrame</span>
+
+        <span class="c1"># Block duplicate input indices</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">has_duplicates</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;The input dataframe containing the measurement updates has duplicated &quot;</span>
+                <span class="s2">&quot;indices. Please ensure that all updates for a given measurement are &quot;</span>
+                <span class="s2">&quot;made in a single combined entry.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Allow only existing indices</span>
+        <span class="k">if</span> <span class="n">nonmatching_idxs</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Updating measurements requires indices matching the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;existing measurements. The following indices were in the input, but &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;are not found in the existing entries: </span><span class="si">{</span><span class="n">nonmatching_idxs</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Perform the update</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+
+        <span class="c1"># Reset fit number and cached recommendations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_measurements_exp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">&quot;FitNr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_recommendation</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="Campaign.toggle_discrete_candidates">

@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1116,7 +1118,101 @@ and start the next recommendation, marking the other half pending:</p>
 </section>
 <section id="adding-partial-results">
 <h2>Adding Partial Results<a class="headerlink" href="#adding-partial-results" title="Link to this heading">¶</a></h2>
-<p>This functionality is under development as part of multi-target models.</p>
+<p>A <em>partial result</em> is possible if you have multiple targets, but only measured the
+outcome for some of those. This is a common occurrence, especially if the different
+target measurements correspond to experiments that differ in complexity or duration.</p>
+<p>As a simple example, consider a campaign with medical background aimed at creating a
+drug formulation. Typically, there are quick initial analytics performed on the
+formulation, followed by <em>in vitro</em> experiments followed by mouse <em>in vivo</em> experiments.
+Without the ability to use partial measurements, you would have to wait until the slow
+mouse experiment for a given recommendation is measured until you could utilize any of
+the other (faster) experimental outcomes for that recommendation. Furthermore, if the fast
+measurements are already unpromising, the slower target measurements are possibly never
+performed at all.</p>
+<p>In BayBE, you can leverage results even if they are only partial. This is indicated
+by setting the corresponding target measurement value to NaN. There are several ways to indicate this, e.g.:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://numpy.org/doc/stable/reference/constants.html#numpy.nan" title="NumPy 2.2"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">numpy.nan</span></code></span></a></p></li>
+<li><p><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.NA.html#pandas.NA" title="pandas 2.2.3"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">pandas.NA</span></code></span></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">float(&quot;nan&quot;)</span></code></p></li>
+</ul>
+<p>Let us consider this 3-batch of recommendations, assuming
+we need to measure “Target_1”, “Target_2” and “Target_3”:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="n">rec</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="c1"># Resetting the index to have easier access via .loc later</span>
+<span class="n">measurements</span> <span class="o">=</span> <span class="n">rec</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Add measurement results</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Target_1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.3</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Target_2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Target_3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">11.1</span>
+
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Target_1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">7.1</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Target_2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>  <span class="c1"># not measured yet</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Target_3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">12.2</span>
+
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Target_1&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">11.4</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Target_2&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">NA</span>  <span class="c1"># not measured yet</span>
+<span class="n">measurements</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;Target_3&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># not measured yet</span>
+
+<span class="n">measurements</span>
+
+<span class="c1"># Proceed with campaign.add_measurements ...</span>
+</pre></div>
+</div>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-left"><p>Param_1</p></th>
+<th class="head text-left"><p>Param_2</p></th>
+<th class="head"><p>…</p></th>
+<th class="head text-right"><p>Target_1</p></th>
+<th class="head text-right"><p>Target_2</p></th>
+<th class="head text-right"><p>Target_3</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-left"><p>on</p></td>
+<td class="text-left"><p>1.1</p></td>
+<td><p>…</p></td>
+<td class="text-right"><p>10.3</p></td>
+<td class="text-right"><p>0.5</p></td>
+<td class="text-right"><p>11.1</p></td>
+</tr>
+<tr class="row-odd"><td class="text-left"><p>on</p></td>
+<td class="text-left"><p>3.8</p></td>
+<td><p>…</p></td>
+<td class="text-right"><p>7.1</p></td>
+<td class="text-right"><p>NaN</p></td>
+<td class="text-right"><p>12.2</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>off</p></td>
+<td class="text-left"><p>2.9</p></td>
+<td><p>…</p></td>
+<td class="text-right"><p>11.4</p></td>
+<td class="text-right"><p>NaN</p></td>
+<td class="text-right"><p>NaN</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Internally, the incomplete rows are dropped when fitting a surrogate model for each
+target. If you use an unsupported surrogate model, an error will be thrown at runtime.</p>
+<div class="important admonition">
+<p class="admonition-title">Limitations</p>
+<p>The described method only works if the surrogate model uses a separate data basis
+for each target. This is e.g. the case if you use the
+<a class="reference internal" href="../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate" title="baybe.surrogates.composite.CompositeSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogate</span></code></span></a>
+to enable multi-output modeling required by the
+<a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">ParetoObjective</span></code></span></a>. For details, see
+<a class="reference internal" href="surrogates.html#multi-output-modeling"><span class="std std-ref">multi-output modeling</span></a>.</p>
+<p>The <a class="reference internal" href="../_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective" title="baybe.objectives.desirability.DesirabilityObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code></span></a> does
+not currently utilize multi-output models and hence does not support partial results.</p>
+</div>
 </section>
 </section>
 

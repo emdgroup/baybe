@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1068,16 +1070,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0 -0.177040 -0.497832  0.518627 -0.745987
-1  0.001157  0.221750  0.293045 -0.803019
-2  0.013945 -0.616415  0.053642  0.199708
-3 -0.814939 -0.997977 -0.692848 -0.203359
-4 -0.232741  0.259437 -0.207188  0.138970
-5  0.127992 -0.714251 -0.922017  0.906502
-6 -0.100243 -0.750980  0.356688 -0.224347
-7 -0.826891  0.468877 -0.969210  0.629999
-8 -0.980046  0.711093 -0.318352 -0.902824
-9 -0.448283 -0.268340 -0.911110  0.075331
+0  0.832610  0.707135  0.888148 -0.190585
+1  0.540551 -0.034277  0.835038 -0.631620
+2  0.781886 -0.734777 -0.429963  0.417389
+3  0.243418  0.105445  0.332287  0.311194
+4  0.662130  0.000062 -0.716536  0.981621
+5 -0.320379 -0.982537 -0.268745 -0.602916
+6  0.877100 -0.786170  0.302361  0.610330
+7  0.817733 -0.874608  0.204412  0.906127
+8  0.910425 -0.076356 -0.028696  0.373395
+9 -0.726040  0.146724 -0.100898  0.775181
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.

@@ -30,6 +30,7 @@ baybe.exceptions
       IncompatibleExplainerError
       IncompatibleSearchSpaceError
       IncompatibleSurrogateError
+      IncompleteMeasurementsError
       InfeasibilityError
       InvalidSurrogateModelError
       InvalidTargetValueError

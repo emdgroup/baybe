@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1084,6 +1086,8 @@ convenience methods for retrieving the underlying acquisition function</p></li>
 from candidates in experimental representation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">acquisition_values</span></code> and <code class="docutils literal notranslate"><span class="pre">joint_acquisition_value</span></code> convenience methods to
 <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> and <code class="docutils literal notranslate"><span class="pre">BayesianRecommender</span></code> for computing acquisition values</p></li>
+<li><p>Composite surrogates now drop rows containing NaNs (separately for each target),
+effectively enabling partial measurements</p></li>
 </ul>
 </section>
 <section id="changed">
@@ -1105,6 +1109,8 @@ that are in <code class="docutils literal notranslate"><span class="pre">active_
 <li><p><code class="docutils literal notranslate"><span class="pre">ngboost</span></code> and <code class="docutils literal notranslate"><span class="pre">scikit-learn-extra</span></code> are now optional dependencies</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">setuptools-scm</span></code> is now an optional dependency, used for improved version inference</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">create_example_plots</span></code>, <code class="docutils literal notranslate"><span class="pre">to_string</span></code> and <code class="docutils literal notranslate"><span class="pre">indent</span></code> have been relocated within utils</p></li>
+<li><p>Targets are now allowed to contain NaN, deferring potential failure to attempted
+recommendation instead of data ingestion</p></li>
 </ul>
 </section>
 <section id="fixed">

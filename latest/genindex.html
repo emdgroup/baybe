@@ -468,6 +468,7 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -921,6 +922,7 @@
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1153,6 +1155,8 @@
 </li>
           <li><a href="_autosummary/baybe.exceptions.IncompatibleSurrogateError.html#baybe.exceptions.IncompatibleSurrogateError.__init__">(baybe.exceptions.IncompatibleSurrogateError method)</a>
 </li>
+          <li><a href="_autosummary/baybe.exceptions.IncompleteMeasurementsError.html#baybe.exceptions.IncompleteMeasurementsError.__init__">(baybe.exceptions.IncompleteMeasurementsError method)</a>
+</li>
           <li><a href="_autosummary/baybe.exceptions.InfeasibilityError.html#baybe.exceptions.InfeasibilityError.__init__">(baybe.exceptions.InfeasibilityError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html#baybe.exceptions.InvalidSurrogateModelError.__init__">(baybe.exceptions.InvalidSurrogateModelError method)</a>
@@ -1364,6 +1368,8 @@
           <li><a href="_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html#baybe.exceptions.IncompatibleSearchSpaceError.__new__">(baybe.exceptions.IncompatibleSearchSpaceError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.IncompatibleSurrogateError.html#baybe.exceptions.IncompatibleSurrogateError.__new__">(baybe.exceptions.IncompatibleSurrogateError method)</a>
+</li>
+          <li><a href="_autosummary/baybe.exceptions.IncompleteMeasurementsError.html#baybe.exceptions.IncompleteMeasurementsError.__new__">(baybe.exceptions.IncompleteMeasurementsError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.InfeasibilityError.html#baybe.exceptions.InfeasibilityError.__new__">(baybe.exceptions.InfeasibilityError method)</a>
 </li>
@@ -2721,6 +2727,8 @@
 </li>
         <li><a href="_autosummary/baybe.utils.augmentation.df_apply_permutation_augmentation.html#baybe.utils.augmentation.df_apply_permutation_augmentation.params.column_groups">column_groups (baybe.utils.augmentation.df_apply_permutation_augmentation parameter)</a>, <a href="_autosummary/baybe.utils.augmentation.html#baybe.utils.augmentation.df_apply_permutation_augmentation.params.column_groups">[1]</a>
 </li>
+        <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values.params.columns">columns (baybe.utils.dataframe.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.handle_missing_values.params.columns">[1]</a>
+</li>
         <li><a href="_autosummary/baybe.utils.scaling.ColumnTransformer.html#baybe.utils.scaling.ColumnTransformer">ColumnTransformer (class in baybe.utils.scaling)</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint.combiner">combiner (baybe.constraints.discrete.DiscreteExcludeConstraint attribute)</a>
@@ -2926,6 +2934,8 @@
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.data">data (baybe.campaign.Campaign.add_measurements parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.data">[1]</a>
 
         <ul>
+          <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements.params.data">(baybe.campaign.Campaign.update_measurements parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements.params.data">[1]</a>
+</li>
           <li><a href="_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid.params.data">(baybe.constraints.base.DiscreteConstraint.get_invalid parameter)</a>, <a href="_autosummary/baybe.constraints.base.DiscreteConstraint.html#baybe.constraints.base.DiscreteConstraint.get_invalid.params.data">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition.evaluate.params.data">(baybe.constraints.conditions.Condition.evaluate parameter)</a>, <a href="_autosummary/baybe.constraints.conditions.Condition.html#baybe.constraints.conditions.Condition.evaluate.params.data">[1]</a>
@@ -2967,6 +2977,8 @@
           <li><a href="_autosummary/baybe.utils.dataframe.add_fake_measurements.html#baybe.utils.dataframe.add_fake_measurements.params.data">(baybe.utils.dataframe.add_fake_measurements parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_fake_measurements.params.data">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.data">(baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.data">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values.params.data">(baybe.utils.dataframe.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.handle_missing_values.params.data">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_parameter_input.params.data">(baybe.utils.validation.validate_parameter_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input.params.data">[1]</a>
 </li>
@@ -3300,6 +3312,8 @@
         <li><a href="_autosummary/baybe.utils.sampling_algorithms.DiscreteSamplingMethod.html#baybe.utils.sampling_algorithms.DiscreteSamplingMethod">DiscreteSamplingMethod (class in baybe.utils.sampling_algorithms)</a>
 </li>
         <li><a href="_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint">DiscreteSumConstraint (class in baybe.constraints.discrete)</a>
+</li>
+        <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values.params.drop">drop (baybe.utils.dataframe.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.handle_missing_values.params.drop">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.toggle_discrete_candidates.params.dry_run">dry_run (baybe.campaign.Campaign.toggle_discrete_candidates parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.toggle_discrete_candidates.params.dry_run">[1]</a>
 </li>
@@ -4281,10 +4295,12 @@
 </li>
         <li><a href="_autosummary/baybe.priors.basic.HalfNormalPrior.html#baybe.priors.basic.HalfNormalPrior">HalfNormalPrior (class in baybe.priors.basic)</a>
 </li>
-        <li><a href="_autosummary/baybe.utils.conversion.html#baybe.utils.conversion.to_string.params.header">header (baybe.utils.conversion.to_string parameter)</a>, <a href="_autosummary/baybe.utils.conversion.to_string.html#baybe.utils.conversion.to_string.params.header">[1]</a>
+        <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values">handle_missing_values() (in module baybe.utils.dataframe)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.utils.conversion.html#baybe.utils.conversion.to_string.params.header">header (baybe.utils.conversion.to_string parameter)</a>, <a href="_autosummary/baybe.utils.conversion.to_string.html#baybe.utils.conversion.to_string.params.header">[1]</a>
+</li>
         <li><a href="_autosummary/baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory">hilberts_factory() (in module baybe.utils.basic)</a>
 </li>
         <li><a href="_autosummary/baybe.searchspace.core.SearchSpaceType.html#baybe.searchspace.core.SearchSpaceType.HYBRID">HYBRID (baybe.searchspace.core.SearchSpaceType attribute)</a>
@@ -4330,6 +4346,8 @@
         <li><a href="_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html#baybe.exceptions.IncompatibleSearchSpaceError">IncompatibleSearchSpaceError</a>
 </li>
         <li><a href="_autosummary/baybe.exceptions.IncompatibleSurrogateError.html#baybe.exceptions.IncompatibleSurrogateError">IncompatibleSurrogateError</a>
+</li>
+        <li><a href="_autosummary/baybe.exceptions.IncompleteMeasurementsError.html#baybe.exceptions.IncompleteMeasurementsError">IncompleteMeasurementsError</a>
 </li>
         <li><a href="_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html#baybe.surrogates.base.IndependentGaussianSurrogate">IndependentGaussianSurrogate (class in baybe.surrogates.base)</a>
 </li>
@@ -5316,14 +5334,14 @@
 </li>
         <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.noise_level">noise_level (baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.noise_level">[1]</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.simulation.core.html#baybe.simulation.core.simulate_experiment.params.noise_percent">noise_percent (baybe.simulation.core.simulate_experiment parameter)</a>, <a href="_autosummary/baybe.simulation.core.simulate_experiment.html#baybe.simulation.core.simulate_experiment.params.noise_percent">[1]</a>
 
         <ul>
           <li><a href="_autosummary/baybe.simulation.scenarios.html#baybe.simulation.scenarios.simulate_scenarios.params.noise_percent">(baybe.simulation.scenarios.simulate_scenarios parameter)</a>, <a href="_autosummary/baybe.simulation.scenarios.simulate_scenarios.html#baybe.simulation.scenarios.simulate_scenarios.params.noise_percent">[1]</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">noise_ratio (baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.params.noise_ratio">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.utils.dataframe.add_parameter_noise.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">noise_type (baybe.utils.dataframe.add_parameter_noise parameter)</a>, <a href="_autosummary/baybe.utils.dataframe.html#baybe.utils.dataframe.add_parameter_noise.params.noise_type">[1]</a>
@@ -5363,6 +5381,8 @@
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.numerical_measurements_must_be_within_tolerance">numerical_measurements_must_be_within_tolerance (baybe.campaign.Campaign.add_measurements parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.add_measurements.params.numerical_measurements_must_be_within_tolerance">[1]</a>
 
         <ul>
+          <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements.params.numerical_measurements_must_be_within_tolerance">(baybe.campaign.Campaign.update_measurements parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements.params.numerical_measurements_must_be_within_tolerance">[1]</a>
+</li>
           <li><a href="_autosummary/baybe.utils.validation.html#baybe.utils.validation.validate_parameter_input.params.numerical_measurements_must_be_within_tolerance">(baybe.utils.validation.validate_parameter_input parameter)</a>, <a href="_autosummary/baybe.utils.validation.validate_parameter_input.html#baybe.utils.validation.validate_parameter_input.params.numerical_measurements_must_be_within_tolerance">[1]</a>
 </li>
         </ul></li>
@@ -7533,6 +7553,8 @@
         <li><a href="_autosummary/baybe.serialization.core.unstructure_base.html#baybe.serialization.core.unstructure_base">unstructure_base() (in module baybe.serialization.core)</a>
 </li>
         <li><a href="_autosummary/baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning">UnusedObjectWarning</a>
+</li>
+        <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.update_measurements">update_measurements() (baybe.campaign.Campaign method)</a>
 </li>
         <li><a href="_autosummary/baybe.targets.transforms.bell_transform.html#baybe.targets.transforms.bell_transform.params.upper">upper (baybe.targets.transforms.bell_transform parameter)</a>, <a href="_autosummary/baybe.targets.transforms.html#baybe.targets.transforms.bell_transform.params.upper">[1]</a>
 

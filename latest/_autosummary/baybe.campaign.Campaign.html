@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1101,7 +1103,10 @@ series of measurements and the iterative sequence of events involved.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates" title="baybe.campaign.Campaign.toggle_discrete_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_discrete_candidates</span></code></a>(constraints, exclude)</p></td>
 <td><p>In-/exclude certain discrete points in/from the candidate set.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.update_measurements" title="baybe.campaign.Campaign.update_measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_measurements</span></code></a>(data[, ...])</p></td>
+<td><p>Update previously added measurements.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
 <td><p>Validate a given campaign configuration JSON.</p></td>
 </tr>
 </tbody>
@@ -1474,6 +1479,34 @@ specified filter.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.update_measurements">
+<span class="sig-name descname"><span class="pre">update_measurements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">numerical_measurements_must_be_within_tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.update_measurements"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.update_measurements" title="Link to this definition">¶</a></dt>
+<dd><p>Update previously added measurements.</p>
+<p>This can be useful to correct mistakes or update target measurements. The
+match to existing data entries is made based on the index. This will reset
+the <cite>FitNr</cite> of the corresponding measurement and reset cached recommendations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.campaign.Campaign.update_measurements.params.data"></span><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.2.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – The measurement data to be updated (with filled values for targets).</p></li>
+<li><p><span class="target" id="baybe.campaign.Campaign.update_measurements.params.numerical_measurements_must_be_within_tolerance"></span><strong>numerical_measurements_must_be_within_tolerance</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – Flag indicating if
+numerical parameters need to be within their tolerances.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If the given data contains duplicated indices.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If the given data contains indices not present in existing
+    measurements.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="baybe.campaign.Campaign.validate_config">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">validate_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_json</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.validate_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.validate_config" title="Link to this definition">¶</a></dt>
 <dd><p>Validate a given campaign configuration JSON.</p>
@@ -1638,6 +1671,7 @@ a <a class="reference internal" href="baybe.searchspace.continuous.SubspaceConti
 <li><a class="reference internal" href="#baybe.campaign.Campaign.to_dict"><code class="docutils literal notranslate"><span class="pre">Campaign.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.to_json"><code class="docutils literal notranslate"><span class="pre">Campaign.to_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates"><code class="docutils literal notranslate"><span class="pre">Campaign.toggle_discrete_candidates()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.update_measurements"><code class="docutils literal notranslate"><span class="pre">Campaign.update_measurements()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.validate_config"><code class="docutils literal notranslate"><span class="pre">Campaign.validate_config()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_measured"><code class="docutils literal notranslate"><span class="pre">Campaign.allow_recommending_already_measured</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.allow_recommending_already_recommended"><code class="docutils literal notranslate"><span class="pre">Campaign.allow_recommending_already_recommended</span></code></a></li>

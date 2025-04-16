@@ -470,6 +470,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleExplainerError.html">baybe.exceptions.IncompatibleExplainerError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html">baybe.exceptions.IncompatibleSearchSpaceError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html">baybe.exceptions.IncompatibleSurrogateError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
@@ -923,6 +924,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.filter_df.html">baybe.utils.dataframe.filter_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.fuzzy_row_match.html">baybe.utils.dataframe.fuzzy_row_match</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.get_transform_objects.html">baybe.utils.dataframe.get_transform_objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.handle_missing_values.html">baybe.utils.dataframe.handle_missing_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.pretty_print_df.html">baybe.utils.dataframe.pretty_print_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.to_tensor.html">baybe.utils.dataframe.to_tensor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
@@ -1054,7 +1056,7 @@ available within BayBE:</p>
 </ul>
 </section>
 <section id="multi-output-modeling">
-<h2>Multi-output Modeling<a class="headerlink" href="#multi-output-modeling" title="Link to this heading">¶</a></h2>
+<span id="id1"></span><h2>Multi-Output Modeling<a class="headerlink" href="#multi-output-modeling" title="Link to this heading">¶</a></h2>
 <p>Depending on the use case at hand, it may be necessary to model multiple output
 variables simultaneously. However, not all surrogate types natively provide (joint)
 predictive distributions for more than one variable, as indicated by their
@@ -1084,7 +1086,7 @@ convenience constructor:</p>
 using a single-output surrogate model in a multi-output context would trivially fail, and
 because BayBE cares deeply about its users’ lives, it automatically performs this conversion
 for you behind the scenes:</p>
-<div class="important admonition">
+<div class="important admonition" id="auto-replication">
 <p class="admonition-title">Auto-Replication</p>
 <p>When using a single-output surrogate model in a multi-output context, BayBE
 automatically replicates the surrogate on the fly.</p>
@@ -1218,7 +1220,7 @@ corresponding <a class="reference internal" href="../examples/Custom_Surrogates/
             <ul>
 <li><a class="reference internal" href="#">Surrogates</a><ul>
 <li><a class="reference internal" href="#available-models">Available Models</a></li>
-<li><a class="reference internal" href="#multi-output-modeling">Multi-output Modeling</a><ul>
+<li><a class="reference internal" href="#multi-output-modeling">Multi-Output Modeling</a><ul>
 <li><a class="reference internal" href="#surrogate-replication">Surrogate Replication</a></li>
 <li><a class="reference internal" href="#composite-surrogates">Composite Surrogates</a></li>
 </ul>
