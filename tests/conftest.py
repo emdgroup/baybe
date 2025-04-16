@@ -365,7 +365,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 SubstanceParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     data=mock_substances,
                 )
                 for k in range(3)
@@ -394,7 +394,7 @@ def fixture_parameters(
         valid_parameters += [
             *[
                 CategoricalParameter(
-                    name=f"Solvent_{k+1}",
+                    name=f"Solvent_{k + 1}",
                     values=tuple(mock_substances.keys()),
                 )
                 for k in range(3)
@@ -416,9 +416,9 @@ def fixture_parameters(
     # be silently ignored by the test.
     all_valid_names = [p.name for p in valid_parameters]
     invalid_names = [p for p in parameter_names if p not in all_valid_names]
-    assert (
-        not invalid_names
-    ), f"Invalid name in fixture 'parameter_names': {invalid_names}"
+    assert not invalid_names, (
+        f"Invalid name in fixture 'parameter_names': {invalid_names}"
+    )
 
     return [p for p in valid_parameters if p.name in parameter_names]
 

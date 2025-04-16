@@ -232,8 +232,7 @@ class ContinuousCardinalityConstraint(
         """
         if not bounds.contains(0.0):
             raise ValueError(
-                f"The specified interval must contain zero. "
-                f"Given: {bounds.to_tuple()}."
+                f"The specified interval must contain zero. Given: {bounds.to_tuple()}."
             )
 
         return Interval(

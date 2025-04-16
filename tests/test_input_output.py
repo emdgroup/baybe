@@ -76,11 +76,11 @@ def test_recommendation_is_not_ordered(n_values, n_parameters):
     """
     # Set up custom df with entries monotonically increasing
     values = list(range(n_values))
-    df = pd.DataFrame({f"p{k+1}": values for k in range(n_parameters)})
+    df = pd.DataFrame({f"p{k + 1}": values for k in range(n_parameters)})
     searchspace = SearchSpace.from_dataframe(
         df,
         parameters=[
-            NumericalDiscreteParameter(name=f"p{k+1}", values=values)
+            NumericalDiscreteParameter(name=f"p{k + 1}", values=values)
             for k in range(n_parameters)
         ],
     )
