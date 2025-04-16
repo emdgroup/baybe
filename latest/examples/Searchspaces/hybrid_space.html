@@ -1136,7 +1136,7 @@ keyword!</p>
 <p>Construct the continuous parameters as <code class="docutils literal notranslate"><span class="pre">NumericContinuous</span></code> parameters.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cont_parameters</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">NumericalContinuousParameter</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">BOUNDS</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span> <span class="n">BOUNDS</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">]),</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">CONT_INDICES</span>
@@ -1146,7 +1146,7 @@ keyword!</p>
 <p>Construct the discrete parameters as <code class="docutils literal notranslate"><span class="pre">NumericalDiscreteParameters</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">disc_parameters</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">NumericalDiscreteParameter</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">BOUNDS</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span> <span class="n">BOUNDS</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span> <span class="n">POINTS_PER_DIM</span><span class="p">)),</span>
         <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1206,9 +1206,9 @@ We use the default choices, which is the <code class="docutils literal notransla
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with measured values: 
      x_1   x_2   x_3       x_4       x_5       x_6      Target
-17  0.00  5.12  5.12 -1.066235 -1.392428 -1.410868  100.043066
-21  5.12  0.00 -5.12  1.738537  1.948104 -3.119052   88.311771
-19  5.12 -5.12  0.00  2.225908  1.782280  2.498950  108.702880
+19  5.12 -5.12  0.00 -0.374852  3.954123  2.967559  100.115518
+24  5.12  5.12 -5.12 -2.491053  1.671073  2.961512  139.576067
+17  0.00  5.12  5.12  0.419435 -0.548931 -2.985033  105.558298
 </pre></div>
 </div>
 </section>

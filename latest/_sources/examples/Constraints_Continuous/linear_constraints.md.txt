@@ -67,7 +67,7 @@ We use that data of the test function to deduce bounds and number of parameters.
 ```python
 parameters = [
     NumericalContinuousParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in range(DIMENSION)

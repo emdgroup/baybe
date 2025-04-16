@@ -115,7 +115,7 @@ Construct the continuous parameters as `NumericContinuous` parameters.
 ```python
 cont_parameters = [
     NumericalContinuousParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         bounds=(BOUNDS[0, k], BOUNDS[1, k]),
     )
     for k in CONT_INDICES
@@ -128,7 +128,7 @@ Construct the discrete parameters as `NumericalDiscreteParameters`.
 ```python
 disc_parameters = [
     NumericalDiscreteParameter(
-        name=f"x_{k+1}",
+        name=f"x_{k + 1}",
         values=list(np.linspace(BOUNDS[0, k], BOUNDS[1, k], POINTS_PER_DIM)),
         tolerance=0.01,
     )
@@ -204,7 +204,7 @@ print(measurements)
     
     Recommended experiments with measured values: 
          x_1   x_2   x_3       x_4       x_5       x_6      Target
-    17  0.00  5.12  5.12 -1.066235 -1.392428 -1.410868  100.043066
-    21  5.12  0.00 -5.12  1.738537  1.948104 -3.119052   88.311771
-    19  5.12 -5.12  0.00  2.225908  1.782280  2.498950  108.702880
+    19  5.12 -5.12  0.00 -0.374852  3.954123  2.967559  100.115518
+    24  5.12  5.12 -5.12 -2.491053  1.671073  2.961512  139.576067
+    17  0.00  5.12  5.12  0.419435 -0.548931 -2.985033  105.558298
 

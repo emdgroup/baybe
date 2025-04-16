@@ -1115,7 +1115,7 @@ Note that the searchspace will have <code class="docutils literal notranslate"><
 We use the data of the test function to deduce bounds and number of parameters.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">NumericalDiscreteParameter</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="n">values</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">BOUNDS</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span> <span class="n">BOUNDS</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">k</span><span class="p">],</span> <span class="n">POINTS_PER_DIM</span><span class="p">)),</span>
         <span class="n">tolerance</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1159,10 +1159,10 @@ We use the data of the test function to deduce bounds and number of parameters.<
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with measured values: 
-          x_1       x_2       x_3       x_4      Target
-236  5.120000  1.706667  5.120000 -5.120000  102.376050
-46  -5.120000  1.706667  5.120000  1.706667   89.053246
-104 -1.706667  1.706667  1.706667 -5.120000   75.730442
+         x_1       x_2       x_3       x_4      Target
+82 -1.706667 -1.706667 -5.120000  1.706667   75.730442
+32 -5.120000  1.706667 -5.120000 -5.120000  102.376050
+91 -1.706667 -1.706667  1.706667  5.120000   75.730442
 </pre></div>
 </div>
 </section>

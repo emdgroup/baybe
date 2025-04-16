@@ -1066,7 +1066,7 @@
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">NumericalContinuousParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">BOUNDS</span><span class="p">)</span>
+    <span class="n">NumericalContinuousParameter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x_</span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">BOUNDS</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">DIMENSION</span><span class="p">)</span>
 <span class="p">]</span>
 </pre></div>
@@ -1080,16 +1080,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0  0.423664 -0.543706 -0.853121  0.758345
-1 -0.658911  0.770779  0.866026  0.878485
-2 -0.975025 -0.933089 -0.807298  0.982614
-3 -0.507307 -0.606379  0.908942  0.450166
-4  0.287006 -0.609575 -0.239004 -0.209866
-5  0.648813  0.792252  0.647910 -0.743515
-6 -0.736519 -0.816375 -0.746408  0.138769
-7 -0.424250  0.590326 -0.584604  0.569345
-8  0.287238  0.763568 -0.524157  0.098012
-9  0.173530  0.684027 -0.560197  0.564215
+0  0.743316  0.228497  0.564861 -0.582535
+1 -0.161984 -0.797570  0.382889  0.284240
+2 -0.318887 -0.505632  0.499154 -0.129926
+3  0.134769 -0.758105  0.700471 -0.537403
+4  0.130890  0.270761  0.604032 -0.201215
+5 -0.925040  0.636699  0.951629 -0.474859
+6  0.910277  0.437939  0.901204 -0.783528
+7 -0.711103  0.735688 -0.590692 -0.712737
+8 -0.262722  0.791070 -0.903989  0.340429
+9 -0.263295 -0.297685  0.749520 -0.973665
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.
