@@ -77,19 +77,19 @@ print(campaign)
 
 N_ITERATIONS = 2 if SMOKE_TEST else 5
 for kIter in range(N_ITERATIONS):
-    print(f"\n#### ITERATION {kIter+1} ####")
+    print(f"\n#### ITERATION {kIter + 1} ####")
 
     print("## ASSERTS ##")
     print(
         f"Number entries with both switches on "
-        f"(expected {RESOLUTION*len(dict_solvent)*2*2}): ",
+        f"(expected {RESOLUTION * len(dict_solvent) * 2 * 2}): ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")
             & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
         ).sum(),
     )
     print(
-        f"Number entries with Switch1 off " f"(expected {2*2}):       ",
+        f"Number entries with Switch1 off (expected {2 * 2}):       ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "off")
             & (campaign.searchspace.discrete.exp_rep["Switch2"] == "right")
@@ -97,7 +97,7 @@ for kIter in range(N_ITERATIONS):
     )
     print(
         f"Number entries with Switch2 off "
-        f"(expected {RESOLUTION*len(dict_solvent)}):"
+        f"(expected {RESOLUTION * len(dict_solvent)}):"
         f"      ",
         (
             (campaign.searchspace.discrete.exp_rep["Switch1"] == "on")

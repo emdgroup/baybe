@@ -199,7 +199,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             negative = (value is None) or (value < 0)
         if negative or not isinstance(value, (int, np.integer)):
             raise ValueError(
-                "%s should be a nonnegative integer. " "%s was given" % (desc, value)
+                f"{desc} should be a nonnegative integer. {value} was given"
             )
 
     def _check_init_args(self):
