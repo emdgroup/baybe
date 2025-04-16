@@ -37,6 +37,8 @@ baybe.utils
 
    chemistry
 
+   clustering_algorithms
+
    conversion
 
    dataframe
