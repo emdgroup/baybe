@@ -6,14 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.0] - 2025-04-16
 ### Added
-- `extras` for installing all dependencies required for optional features
-- `BCUT2D` encoding for `SubstanceParameter`
-- Stored benchmarking results now include the Python environment and version
-- `qPSTD` acquisition function
-- `SHAPInsight` now supports the `waterfall` plot type
+- `extras` group for installing all dependencies required for optional features
+- Support for NumPy 2.0+
 - `ParetoObjective` class for Pareto optimization of multiple targets and corresponding
   `qNoisyExpectedHypervolumeImprovement` / `qLogNoisyExpectedHypervolumeImprovement` /
   `qLogNParEGO` acquisition functions
+- Composite surrogates now drop rows containing NaNs (separately for each target), 
+  effectively enabling partial measurements
+- `SubstanceParameter`, `CustomDiscreteParameter` and `CategoricalParameter` now also 
+  support restricting the search space via `active_values`, while `values` continue to 
+  identify allowed measurement inputs
+- `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
+  providing statistical measures about the target predictions of a given set of
+  candidates
+- `acquisition_values` and `joint_acquisition_value` convenience methods to
+  `Campaign` and `BayesianRecommender` for computing acquisition values
+- `Campaign.get_acquisition_function` and `BayesianRecommender.get_acquisition_function`
+  convenience methods for retrieving the underlying acquisition function
+- `AcquisitionFunction.evaluate` convenience method for computing acquisition values
+  from candidates in experimental representation
+- `qPSTD` acquisition function
+- `BCUT2D` encoding for `SubstanceParameter`
+- `SHAPInsight` now supports the `waterfall` plot type
+- Cardinality constraints sections to the user guide
+- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
+- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
+  optimization behavior in the presence of cardinality constraints
 - `Surrogate.replicate` method for making single-target surrogate models multi-target
   compatible
 - `CompositeSurrogate` class for composing multi-target surrogates from single-target
@@ -21,55 +39,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `is_multi_output` attribute to `Objective`
 - `supports_multi_output` attribute/property to `Surrogate`/`AcquisitionFunction`
 - `n_outputs` property to `Objective`
-- `ContinuousCardinalityConstraint` is now compatible with `BotorchRecommender`
-- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
-  constraints are violated
-- Attribute `max_n_subspaces` to `BotorchRecommender`, allowing to control
-  optimization behavior in the presence of cardinality constraints
+- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
+  `ContinuousCardinalityConstraint` for handling inactivity ranges
 - Utilities `inactive_parameter_combinations` and`n_inactive_parameter_combinations` 
   to both `ContinuousCardinalityConstraint`and `SubspaceContinuous` for iterating
   over cardinality-constrained parameter sets
-- Attribute `relative_threshold` and method `get_absolute_thresholds` to 
-  `ContinuousCardinalityConstraint` for handling inactivity ranges
 - Utilities `activate_parameter` and `is_cardinality_fulfilled` for enforcing and
   validating cardinality constraints
 - Utility `is_inactive` for determining if parameters are inactive
-- Cardinality constraints sections to the user guide
-- `SubstanceParameter`, `CustomDisreteParameter` and `CategoricalParameter` now also 
-  support restricting the search space via `active_values`, while `values` continue to 
-  identify allowed measurement inputs
-- `Campaign.posterior_stats` and `Surrogate.posterior_stats` as convenience methods for
-  providing statistical measures about the target predictions of a given set of
-  candidates
-- `Campaign.get_acquisition_function` and `BayesianRecommender.get_acquisition_function`
-  convenience methods for retrieving the underlying acquisition function
-- `AcquisitionFunction.evaluate` convenience method for computing acquisition values
-  from candidates in experimental representation
-- `acquisition_values` and `joint_acquisition_value` convenience methods to
-  `Campaign` and `BayesianRecommender` for computing acquisition values
-- Composite surrogates now drop rows containing NaNs (separately for each target), 
-  effectively enabling partial measurements
-- Support for NumPy 2.0+
+- A `MinimumCardinalityViolatedWarning` is triggered when minimum cardinality
+  constraints are violated
+- Stored benchmarking results now include the Python environment and version
 
 ### Changed
-- Acquisition function indicator `is_mc` has been removed in favor of new indicators 
-  `supports_batching` and `supports_pending_experiments`
-- `SHAPInsight` now allows explanation input that has additional columns compared to 
-  the background data (will be ignored)
-- `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
-  measurements to the search space between 4x and 40x
-- The default value for `sequential_continuous` in `BotorchRecommender` has been 
-  changed to `True`
+- Targets are now allowed to contain NaN, deferring potential failure to attempted 
+  recommendation instead of data ingestion
 - For label-like parameters, `SubspaceDiscrete` now only includes parameter values 
   that are in `active_values`
+- The default value for `sequential_continuous` in `BotorchRecommender` has been 
+  changed to `True`
+- `SHAPInsight` now allows explanation input that has additional columns compared to 
+  the background data (will be ignored)
+- Acquisition function indicator `is_mc` has been removed in favor of new indicators 
+  `supports_batching` and `supports_pending_experiments`
+- `fuzzy_row_match` now uses vectorized operations, resulting in a speedup of matching 
+  measurements to the search space between 4x and 40x
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
 - `ngboost` is now an optional dependency
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
-- Targets are now allowed to contain NaN, deferring potential failure to attempted 
-  recommendation instead of data ingestion
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
