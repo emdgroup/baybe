@@ -371,7 +371,7 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
     def compute_ref_point(
         array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
     ) -> np.ndarray:
-        """Compute a reference point for a given set of of target configurations.
+        """Compute a reference point for a given set of target configurations.
 
         The reference point is positioned relative to the worst point in the direction
         coming from the best point:

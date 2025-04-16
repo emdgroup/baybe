@@ -24,6 +24,7 @@ from baybe.acquisition.acqfs import (
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
+from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
@@ -33,7 +34,7 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
-from baybe.utils.dataframe import to_tensor
+from baybe.utils.dataframe import handle_missing_values, to_tensor
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -125,11 +126,36 @@ class BotorchAcquisitionFunctionBuilder:
         return self.searchspace.transform(self.measurements, allow_extra=True)
 
     @cached_property
-    def _train_y(self) -> pd.DataFrame:
-        """The training target values."""
-        return self.objective.transform(
-            self.measurements[[t.name for t in self.objective.targets]]
+    def _target_configurations(self) -> pd.DataFrame:
+        """The target configurations used for reference point calculation.
+
+        Only completely measured points are considered.
+
+        Returns:
+            A dataframe of target configurations.
+
+        Raises:
+            ValueError: If no complete measurement exists.
+        """
+        configurations = handle_missing_values(
+            self.measurements[[t.name for t in self.objective.targets]],
+            [t.name for t in self.objective.targets],
+            drop=True,
         )
+
+        # TODO: A smarter treatment might be possible in the case that not at least
+        #  one complete measurement exists, e.g. by considering target bounds or other
+        #  heuristics.
+        if configurations.empty:
+            raise IncompleteMeasurementsError(
+                f"For calculating a default reference point, at least one "
+                f"configuration must have a measured value for all targets. You can "
+                f"fix this by setting the "
+                f"'{fields(_ExpectedHypervolumeImprovement).reference_point.name}' "
+                f"argument of '{self.acqf.__class__.__name__}' explicitly."
+            )
+
+        return self.objective.transform(configurations)
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
@@ -230,7 +256,9 @@ class BotorchAcquisitionFunctionBuilder:
             kwargs = {} if ref_point is None else {"factor": ref_point}
             self._args.ref_point = torch.tensor(
                 self.acqf.compute_ref_point(
-                    self._train_y.to_numpy(), self._maximize_flags, **kwargs
+                    self._target_configurations.to_numpy(),
+                    self._maximize_flags,
+                    **kwargs,
                 )
                 * self._multiplier
             )
