@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Campaign` and `BayesianRecommender` for computing acquisition values
 - Composite surrogates now drop rows containing NaNs (separately for each target), 
   effectively enabling partial measurements
+- Support for NumPy 2.0+
 
 ### Changed
 - Acquisition function indicator `is_mc` has been removed in favor of new indicators 
@@ -64,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
-- `ngboost` and `scikit-learn-extra` are now optional dependencies
+- `ngboost` is now an optional dependency
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
 - Targets are now allowed to contain NaN, deferring potential failure to attempted 
@@ -77,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `fuzzy_row_match` will no longer warn about entries not matching to the search space 
 - `funcy` dependency
+- `scikit-learn-extra` dependency by integrating relevant code parts into `baybe`
 
 ### Expired Deprecations (from 0.9.*)
 - `baybe.objective` namespace 
