@@ -13,7 +13,7 @@ import pandas as pd
 from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.enum import TargetMode
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -132,30 +132,9 @@ def add_fake_measurements(
         for target in targets:
             if isinstance(target, BinaryTarget):
                 continue
-            if target.mode is TargetMode.MAX:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
-                ubound = (
-                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
-                )
-                interv = (lbound, ubound)
-            elif target.mode is TargetMode.MIN:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
-                ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
-                interv = (lbound, ubound)
-            elif target.mode is TargetMode.MATCH:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
-                ubound = (
-                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
-                )
-                interv = (
-                    lbound + 0.4 * (ubound - lbound),
-                    lbound + 0.6 * (ubound - lbound),
-                )
-            else:
-                raise ValueError(
-                    "Unrecognized target mode when trying to add fake values."
-                )
-            good_intervals[target.name] = interv
+
+            assert isinstance(target, NumericalTarget) and target.transformation is None
+            good_intervals[target.name] = (0, 33) if target.minimize else (66, 100)
 
     # Set defaults for bad intervals
     if bad_intervals is None:
@@ -163,31 +142,9 @@ def add_fake_measurements(
         for target in targets:
             if isinstance(target, BinaryTarget):
                 continue
-            if target.mode is TargetMode.MAX:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
-                ubound = target.bounds.upper if np.isfinite(target.bounds.upper) else 33
-                interv = (lbound, ubound)
-            elif target.mode is TargetMode.MIN:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 66
-                ubound = (
-                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
-                )
-                interv = (lbound, ubound)
-            elif target.mode is TargetMode.MATCH:
-                lbound = target.bounds.lower if np.isfinite(target.bounds.lower) else 0
-                ubound = (
-                    target.bounds.upper if np.isfinite(target.bounds.upper) else 100
-                )
-                interv = (
-                    # Take as bad values the interval above the good interval
-                    lbound + 0.6 * (ubound - lbound),
-                    lbound + 1.2 * (ubound - lbound),
-                )
-            else:
-                raise ValueError(
-                    "Unrecognized target mode when trying to add fake values."
-                )
-            bad_intervals[target.name] = interv
+
+            assert isinstance(target, NumericalTarget) and target.transformation is None
+            bad_intervals[target.name] = (66, 100) if target.minimize else (0, 33)
 
     # Add the fake data for each target
     for target in targets:
