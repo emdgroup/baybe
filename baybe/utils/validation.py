@@ -91,7 +91,6 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
             allowed values or NaN.
     """
     from baybe.targets import BinaryTarget, NumericalTarget
-    from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
@@ -103,7 +102,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
         )
 
     for t in targets:
-        if isinstance(t, (NumericalTarget, LegacyTarget)):
+        if isinstance(t, NumericalTarget):
             if data[t.name].dtype.kind not in "iufb":
                 raise TypeError(
                     f"The numerical target '{t.name}' has non-numeric entries in the "

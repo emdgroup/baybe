@@ -10,33 +10,9 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.validation import validate_target_names
-from baybe.targets import TargetMode
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
-
-
-def _block_minmax_transforms(_, __, target: Target) -> None:  # noqa: DOC101, DOC103
-    """An attrs-compatible validator to assert that a target has no transform.
-
-    Raises:
-        ValueError: If the target has a transform.
-    """  # noqa: D401
-    if (
-        isinstance(target, LegacyTarget)
-        and target.mode
-        in [
-            TargetMode.MIN,
-            TargetMode.MAX,
-        ]
-        and target.transformation is not None
-    ):
-        raise ValueError(
-            f"'{ParetoObjective.__name__}' does not support transforms for targets "
-            f"with modes '{TargetMode.MIN.name}' or '{TargetMode.MAX.name}'. "
-            f"Please use untransformed/unbounded targets in this case."
-        )
 
 
 @define(frozen=True, slots=False)
@@ -50,9 +26,7 @@ class ParetoObjective(Objective):
         converter=to_tuple,
         validator=[
             min_len(2),
-            deep_iterable(
-                member_validator=(instance_of(Target), _block_minmax_transforms)
-            ),
+            deep_iterable(member_validator=instance_of(Target)),
             validate_target_names,
         ],
         alias="targets",

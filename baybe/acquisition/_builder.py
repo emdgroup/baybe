@@ -13,8 +13,6 @@ from attrs import asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
-from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
-from botorch.acquisition.objective import LinearMCObjective
 from botorch.models.model import Model
 from torch import Tensor
 
@@ -27,13 +25,11 @@ from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
-from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
-from baybe.targets.enum import TargetMode
-from baybe.utils.basic import is_all_instance, match_attributes
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
 
@@ -112,8 +108,7 @@ class BotorchAcquisitionFunctionBuilder:
     @property
     def _maximize_flags(self) -> list[bool]:
         """Booleans indicating which target is to be minimized/maximized."""
-        assert is_all_instance(self.objective.targets, LegacyTarget)
-        return [t.mode is not TargetMode.MIN for t in self.objective.targets]
+        raise NotImplementedError()
 
     @property
     def _multiplier(self) -> list[float]:
@@ -192,21 +187,7 @@ class BotorchAcquisitionFunctionBuilder:
             # In both cases, the setting is independent of the target mode.
             return
 
-        match self.objective:
-            case SingleTargetObjective(LegacyTarget(mode=TargetMode.MIN)):
-                if issubclass(self._botorch_acqf_cls, bo_acqf.MCAcquisitionFunction):
-                    if self._args.best_f is not None:
-                        self._args.best_f *= -1.0
-                    self._args.objective = LinearMCObjective(torch.tensor([-1.0]))
-                elif issubclass(
-                    self._botorch_acqf_cls, bo_acqf.AnalyticAcquisitionFunction
-                ):
-                    self._args.maximize = False
-
-            case ParetoObjective():
-                self._args.objective = WeightedMCMultiOutputObjective(
-                    torch.tensor(self._multiplier)
-                )
+        raise NotImplementedError()
 
     def _set_best_f(self) -> None:
         """Set BoTorch's ``best_f`` argument."""
@@ -218,8 +199,8 @@ class BotorchAcquisitionFunctionBuilder:
         post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
 
         match self.objective:
-            case SingleTargetObjective(LegacyTarget(mode=TargetMode.MIN)):
-                self._args.best_f = post_mean.min().item()
+            case SingleTargetObjective(NumericalTarget(minimize=True)):
+                raise NotImplementedError()
             case SingleTargetObjective() | DesirabilityObjective():
                 self._args.best_f = post_mean.max().item()
 

@@ -9,7 +9,6 @@ import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transforms import (
     AbsoluteTransformation,
@@ -100,7 +99,7 @@ def test_constructor_equivalence_match(transformation):
 def test_target_deserialization():
     """Deserialization also works from legacy arguments."""
     actual = ModernTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
-    expected = LegacyTarget("t", "MATCH", (1, 2))
+    expected = ModernTarget("t", "MATCH", (1, 2))
     assert actual == expected
 
 
@@ -108,19 +107,19 @@ def test_target_deserialization():
     ("legacy", "modern", "expected"),
     [
         param(
-            LegacyTarget("t", "MAX"),
+            ModernTarget("t", "MAX"),
             ModernTarget("t"),
             sample_input(),
             id="max",
         ),
         param(
-            LegacyTarget("t", "MAX", (0, 1), "LINEAR"),
+            ModernTarget("t", "MAX", (0, 1), "LINEAR"),
             ModernTarget("t", ClampingTransformation(min=0, max=1)),
             linear_transform(sample_input(), 0, 1, descending=False),
             id="max_clamped",
         ),
         param(
-            LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
+            ModernTarget("t", "MAX", (2, 5), "LINEAR"),
             ModernTarget.clamped_affine("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
@@ -145,67 +144,67 @@ def test_target_deserialization():
             # NOTE: Minimization without bounds has no effect on the transformation
             #   of the legacy target since minimization is handled in the construction
             #   of the acquisition function.
-            LegacyTarget("t", "MIN"),
+            ModernTarget("t", "MIN"),
             ModernTarget("t"),
             sample_input(),
             id="min",
         ),
         param(
-            LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
+            ModernTarget("t", "MIN", (0, 1), "LINEAR"),
             ModernTarget.clamped_affine("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
-            LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
+            ModernTarget("t", "MIN", (2, 5), "LINEAR"),
             ModernTarget.clamped_affine("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),
         param(
-            LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
+            ModernTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget.match_bell("t", center=0, width=1),
             bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
-            LegacyTarget("t", "MATCH", (1, 3), "BELL"),
+            ModernTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget.match_bell("t", center=2, width=1),
             bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
-            LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
+            ModernTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget.match_bell("t", center=0, width=5),
             bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
-            LegacyTarget("t", "MATCH", (2, 6), "BELL"),
+            ModernTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget.match_bell("t", center=4, width=2),
             bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
         param(
-            LegacyTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (-1, 1)),
             triangular_transform(sample_input(), -1, 1),
             id="match_triangular_unit_centered",
         ),
         param(
-            LegacyTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (1, 3)),
             triangular_transform(sample_input(), 1, 3),
             id="match_triangular_unit_shifted",
         ),
         param(
-            LegacyTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (-5, 5)),
             triangular_transform(sample_input(), -5, 5),
             id="match_triangular_scaled_centered",
         ),
         param(
-            LegacyTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (2, 6)),
             triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
@@ -213,7 +212,7 @@ def test_target_deserialization():
     ],
 )
 def test_target_transformation(
-    series, legacy: LegacyTarget, modern: ModernTarget, expected
+    series, legacy: ModernTarget, modern: ModernTarget, expected
 ):
     """The legacy and modern target variants transform equally."""
     transformed_modern = modern.transform(series)

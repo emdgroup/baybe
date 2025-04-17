@@ -10,9 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     pretty_print_df,
@@ -92,18 +90,9 @@ class SingleTargetObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        out = transform_target_columns(
+        return transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
-
-        # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
-        if (
-            isinstance(t := self._target, LegacyTarget)
-            and t.mode is TargetMode.MIN
-            and t.bounds.is_bounded
-        ):
-            out = -out
-        return out
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

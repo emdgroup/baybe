@@ -18,7 +18,6 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
@@ -96,22 +95,13 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
-        if not is_all_instance(targets, (NumericalTarget, LegacyTarget)):
+        if not is_all_instance(targets, NumericalTarget):
             raise TypeError(
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
         if len({t.name for t in targets}) != len(targets):
             raise ValueError("All target names must be unique.")
-
-        if is_all_instance(targets, LegacyTarget) and not all(
-            target._is_transform_normalized for target in targets
-        ):
-            raise ValueError(
-                "All targets must have normalized computational representations to "
-                "enable the computation of desirability values. This requires having "
-                "appropriate target bounds and transformations in place."
-            )
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103

@@ -232,9 +232,7 @@ def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
     try:
         return _hook(x, _)
     except Exception:
-        from baybe.targets._deprecated import NumericalTarget as LegacyTarget
-
-        return converter.structure(x, LegacyTarget)  # type: ignore[return-value]
+        return NumericalTarget(**x)  # type: ignore[return-value]
 
 
 # <<< Deprecation <<< #
