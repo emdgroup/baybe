@@ -78,9 +78,24 @@ def test_farthest_point_sampling(points: np.ndarray):
         z = min_dist_selected_to_previous >= min_dist_remaining_to_previous
         assert z
 
+    # Also, if the algorithm is set to fully deterministic, the obtained result should
+    # not depend on the particular (random) order in which the points are provided.
+    # That is, running the algorithm on a permutation should still produce the same
+    # sequence of points. The flag `random_tie_break` can adjust the deterministic
+    # behaviour. Note: We establish the check on the point coordinates and not the
+    # selection index, because the latter can still differ in case of duplicated points.
+    #
+    # Examples where this can make a difference is three points forming an equilateral
+    # triangle or four points spanning a unit cube. Here, tie-breaking operations such
+    # as `np.max` can lead to different results depending on the order.
+    permutation_idxs = np.random.permutation(len(points))
+    sorting_idxs = farthest_point_sampling(
+        points[permutation_idxs], len(points), random_tie_break=False
+    )
+    assert np.array_equal(target, points[permutation_idxs][sorting_idxs])
+
     # Because requesting a single point needs special treatment in FPS,
     # we test this as additional case
-    permutation_idxs = np.random.permutation(len(points))
     sorting_idxs = farthest_point_sampling(points[permutation_idxs], 1)
     assert np.array_equal(target[[0]], points[permutation_idxs][sorting_idxs])
 

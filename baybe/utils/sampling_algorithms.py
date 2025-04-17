@@ -13,6 +13,7 @@ def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
+    random_tie_break: bool = True,
 ) -> list[int]:
     """Select a subset of points using farthest point sampling.
 
@@ -31,6 +32,9 @@ def farthest_point_sampling(
               largest distance. If only a single point is requested, a deterministic
               choice is made based on the point coordinates.
             * ``"random"``: The first point is selected uniformly at random.
+        random_tie_break: Determines if points are chosen deterministically or randomly
+            in equidistant situations. If ``True``, a random point is selected from the
+            candidates. If ``False``, the first point is selected deterministically.
 
     Returns:
         A list containing the positional indices of the selected points.
@@ -97,11 +101,15 @@ def farthest_point_sampling(
         # Find for each candidate point the smallest distance to the selected points
         min_dists = np.min(dist, axis=1)
 
-        # Select a random point that has the "largest smallest distance"
-        max_val = np.max(min_dists)
-        max_indices = np.where(min_dists == max_val)[0]
-        random_choice = np.random.choice(max_indices)
-        selected_point_index = remaining_point_indices[random_choice]
+        if random_tie_break:
+            # Select a random point that has the "largest smallest distance"
+            max_val = np.max(min_dists)
+            max_indices = np.where(min_dists == max_val)[0]
+            random_choice = np.random.choice(max_indices)
+            selected_point_index = remaining_point_indices[random_choice]
+        else:
+            # Choose the first point with the "largest smallest distance"
+            selected_point_index = remaining_point_indices[np.argmax(min_dists)]
 
         # Add the chosen point to the selection
         selected_point_indices.append(selected_point_index)
