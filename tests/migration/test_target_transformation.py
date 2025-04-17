@@ -104,6 +104,13 @@ def test_constructor_equivalence_match(transformation):
         assert t1 == t2
 
 
+def test_target_deserialization():
+    """Deserialization also works from legacy arguments."""
+    actual = ModernTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
+    expected = LegacyTarget("t", "MATCH", (1, 2))
+    assert actual == expected
+
+
 @pytest.mark.parametrize(
     ("legacy", "modern", "expected"),
     [

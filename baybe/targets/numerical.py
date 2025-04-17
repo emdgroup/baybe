@@ -12,7 +12,7 @@ from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.serialization import SerialMixin
+from baybe.serialization import SerialMixin, converter
 from baybe.targets._deprecated import TargetTransformation
 from baybe.targets.base import Target
 from baybe.targets.transforms import (
@@ -186,6 +186,24 @@ class NumericalTarget(Target, SerialMixin):
     @override
     def summary(self):
         return {}
+
+
+# >>> Deprecation >>> #
+_hook = converter.get_structure_hook(NumericalTarget)
+
+
+@converter.register_structure_hook
+def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
+    """Accept legacy target argument for backward compatibility."""
+    try:
+        return _hook(x, _)
+    except Exception:
+        from baybe.targets._deprecated import NumericalTarget as LegacyTarget
+
+        return converter.structure(x, LegacyTarget)  # type: ignore[return-value]
+
+
+# <<< Deprecation <<< #
 
 
 gc.collect()
