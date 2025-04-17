@@ -14,7 +14,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin, converter
-from baybe.targets._deprecated import TargetTransformation
+from baybe.targets._deprecated import TargetMode, TargetTransformation
 from baybe.targets.base import Target
 from baybe.targets.transforms import (
     AbsoluteTransformation,
@@ -29,7 +29,7 @@ from baybe.targets.transforms import (
 from baybe.utils.interval import Interval
 
 
-@define(frozen=True)
+@define(frozen=True, init=False)
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
@@ -40,8 +40,8 @@ class NumericalTarget(Target, SerialMixin):
 
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
 
-    def __new__(
-        cls,
+    def __init__(  # noqa: DOC301
+        self,
         name: str,
         transformation_: TransformationProtocol  # underscore to avoid name collision
         | None = None,
@@ -49,7 +49,7 @@ class NumericalTarget(Target, SerialMixin):
         minimize: bool = False,
         **kwargs,
     ):
-        """Create modern or legacy target instance depending on the arguments."""
+        """Translate legacy target specifications."""
         # Check if legacy arguments are provided
         if (
             not (
@@ -59,10 +59,13 @@ class NumericalTarget(Target, SerialMixin):
             or args
             or kwargs
         ):
-            from baybe.targets._deprecated import NumericalTarget as LegacyTarget
-
             # Map legacy arguments to legacy constructor parameter names
-            kw: dict[str, Any] = {"name": name}
+            kw: dict[str, Any] = {
+                "name": name,
+                "mode": None,
+                "bounds": None,
+                "transformation": None,
+            }
             all_args = (transformation_, *args)
             if transformation_ in (
                 *TargetTransformation.__members__.keys(),
@@ -77,10 +80,6 @@ class NumericalTarget(Target, SerialMixin):
                 kw[k] = v
             kw = kw | kwargs
 
-            # Create legacy target instance
-            instance = LegacyTarget.__new__(LegacyTarget)
-            instance.__init__(**kw)  # type: ignore
-
             warnings.warn(
                 "Creating numerical targets by specifying MAX/MIN/MATCH modes has been "
                 "deprecated. For now, you do not need to change your code as we "
@@ -90,9 +89,32 @@ class NumericalTarget(Target, SerialMixin):
                 DeprecationWarning,
             )
 
-            return instance
+            # Translate to modern API
+            mode = TargetMode[kw["mode"]]
+            bounds = kw["bounds"]
+            if mode in (TargetMode.MAX, TargetMode.MIN):
+                if bounds is None:
+                    self.__attrs_init__(kw["name"], minimize=mode == TargetMode.MIN)
+                else:
+                    self.__attrs_init__(
+                        kw["name"],
+                        NumericalTarget.clamped_affine(
+                            "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
+                        ).transformation,
+                    )
+            else:
+                if kw["transformation"] == "BELL":
+                    center = (bounds[1] + bounds[0]) / 2
+                    width = (bounds[1] - bounds[0]) / 2
+                    transformation = BellTransformation(center, width)
+                else:
+                    transformation = NumericalTarget.match_triangular(
+                        "dummy", bounds
+                    ).transformation
+                self.__attrs_init__(kw["name"], transformation)
 
-        return super().__new__(cls)
+        else:
+            self.__attrs_init__(name, transformation_, minimize=minimize)
 
     @classmethod
     def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
