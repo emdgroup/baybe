@@ -14,7 +14,7 @@ from shap import KernelExplainer
 
 from baybe import Campaign
 from baybe._optional.insights import shap
-from baybe.exceptions import IncompatibleExplainerError
+from baybe.exceptions import IncompatibleExplainerError, NoMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
@@ -193,7 +193,7 @@ class SHAPInsight:
             ValueError: If the campaign does not contain any measurements.
         """
         if campaign.measurements.empty:
-            raise ValueError("The campaign does not contain any measurements.")
+            raise NoMeasurementsError("The campaign does not contain any measurements.")
         data = campaign.measurements[[p.name for p in campaign.parameters]]
         background_data = campaign.searchspace.transform(data) if use_comp_rep else data
 
@@ -364,8 +364,7 @@ class SHAPInsight:
 
         if plot_type not in SHAP_PLOTS:
             raise ValueError(
-                f"Invalid plot type: '{plot_type}'. "
-                f"Available options: {SHAP_PLOTS}."
+                f"Invalid plot type: '{plot_type}'. Available options: {SHAP_PLOTS}."
             )
         plot_func = getattr(shap.plots, plot_type)
 

@@ -80,8 +80,7 @@ def _impute_lookup(
         match_vals = np.array(vals)
     else:
         raise IndexError(
-            f"Cannot match the recommended row {row} to any of "
-            f"the rows in the lookup."
+            f"Cannot match the recommended row {row} to any of the rows in the lookup."
         )
 
     return match_vals

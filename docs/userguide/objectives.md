@@ -1,9 +1,9 @@
 # Objective
 
-Optimization problems involve either a single target quantity of interest or 
-several (potentially conflicting) targets that need to be considered simultaneously.
-BayBE uses the concept of an [`Objective`](baybe.objective.Objective) to allow the user
-to control how these different types of scenarios are handled.
+Optimization problems involve either a single target quantity of interest or several
+(potentially conflicting) targets that need to be considered simultaneously. BayBE uses
+the concept of an [`Objective`](baybe.objectives.base.Objective) to allow the user to
+control how these different types of scenarios are handled.
 
 ## SingleTargetObjective
 The need to optimize a single [`Target`](baybe.targets.base.Target) is the most basic
@@ -25,7 +25,7 @@ in the optimization problem.
 Because this fairly trivial conversion step requires no additional user configuration,
 we provide a convenience constructor for it:
 
-````{admonition} Convenience construction and implicit conversion
+````{admonition} Convenience Construction and Implicit Conversion
 :class: tip
 * The conversion from a single [`Target`](baybe.targets.base.Target) to a
 [`SingleTargetObjective`](baybe.objectives.single.SingleTargetObjective) describes a
@@ -47,7 +47,7 @@ enables the combination of multiple targets via scalarization into a single nume
 value (commonly referred to as the *overall desirability*), a method also utilized in
 classical DOE.
 
-```{admonition} Mandatory target bounds
+```{admonition} Mandatory Target Bounds
 :class: attention
 Since measurements of different targets can vary arbitrarily in scale, all targets
 passed to a
@@ -109,7 +109,7 @@ multiple conflicting targets. Unlike the
 targets into a single scalar value but instead seeks to identify the Pareto front – the
 set of *non-dominated* target configurations.
 
-```{admonition} Non-dominated Configurations
+```{admonition} Non-Dominated Configurations
 :class: tip
 A target configuration is considered non-dominated (or Pareto-optimal) if no other
 configuration is better in *all* targets.
@@ -138,3 +138,11 @@ target_2 = NumericalTarget(name="t_2", mode="MAX")
 objective = ParetoObjective(targets=[target_1, target_2])
 ```
 
+```{admonition} Convenience Multi-Output Casting
+:class: tip
+[`ParetoObjective`](baybe.objectives.pareto.ParetoObjective) requires a 
+[multi-output surrogate model](multi_output_modeling). 
+If you attempt to use a  single-output model, BayBE will automatically turn it into a 
+[`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate) 
+using [independent replicates](auto_replication).
+```

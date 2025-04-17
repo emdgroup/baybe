@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import in_, min_len
-from funcy import rpartial
 from numpy.typing import ArrayLike
 from typing_extensions import override
 
@@ -76,9 +75,9 @@ def _is_close(x: ArrayLike, y: ArrayLike, rtol: float, atol: float) -> np.ndarra
 _threshold_operators: dict[str, Callable] = {
     "<": ops.lt,
     "<=": ops.le,
-    "=": rpartial(_is_close, rtol=0.0),
-    "==": rpartial(_is_close, rtol=0.0),
-    "!=": rpartial(_is_not_close, rtol=0.0),
+    "=": partial(_is_close, rtol=0.0),
+    "==": partial(_is_close, rtol=0.0),
+    "!=": partial(_is_not_close, rtol=0.0),
     ">": ops.gt,
     ">=": ops.ge,
 }
@@ -167,10 +166,15 @@ class ThresholdCondition(Condition):
 
     def _make_operator_function(self):
         """Generate a function using operators to filter out undesired rows."""
-        func = rpartial(_threshold_operators[self.operator], self.threshold)
+
+        def evaluate(x: ArrayLike, /, **kwargs) -> Callable:
+            """Evaluate the condition on a given input."""
+            return _threshold_operators[self.operator](x, self.threshold, **kwargs)
+
         if self.operator in _valid_tolerance_operators:
-            func = rpartial(func, atol=self.tolerance)
-        return func
+            return partial(evaluate, atol=self.tolerance)
+
+        return evaluate
 
     @override
     def evaluate(self, data: pd.Series) -> pd.Series:

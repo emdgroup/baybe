@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
 
