@@ -80,6 +80,16 @@ class NumericalTarget(Target, SerialMixin):
             # Create legacy target instance
             instance = LegacyTarget.__new__(LegacyTarget)
             instance.__init__(**kw)  # type: ignore
+
+            warnings.warn(
+                "Creating numerical targets by specifying MAX/MIN/MATCH modes has been "
+                "deprecated. For now, you do not need to change your code as we "
+                "automatically converted your target to the new format. "
+                "However, this functionality will be removed in a future version, so "
+                "please familiarize yourself with the new API.",
+                DeprecationWarning,
+            )
+
             return instance
 
         return super().__new__(cls)

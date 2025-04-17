@@ -249,3 +249,12 @@ def test_migrated_allow_flags(flag, recommender_cls):
 
     with pytest.raises(DeprecationError, match=f"The attribute '{flag}' is no longer"):
         getattr(recommender_cls(), flag)
+
+
+def test_legacy_target_construction():
+    """Constructing a target using legacy arguments raises a warning."""
+    with pytest.warns(
+        DeprecationWarning,
+        match="Creating numerical targets by specifying MAX/MIN/MATCH modes",
+    ):
+        NumericalTarget("t", "MAX")
