@@ -18,6 +18,7 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
@@ -95,7 +96,7 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
-        if not is_all_instance(targets, NumericalTarget):
+        if not is_all_instance(targets, (NumericalTarget, LegacyTarget)):
             raise TypeError(
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."

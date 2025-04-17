@@ -31,8 +31,8 @@ from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
+from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.enum import TargetMode
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
@@ -112,7 +112,7 @@ class BotorchAcquisitionFunctionBuilder:
     @property
     def _maximize_flags(self) -> list[bool]:
         """Booleans indicating which target is to be minimized/maximized."""
-        assert is_all_instance(self.objective.targets, NumericalTarget)
+        assert is_all_instance(self.objective.targets, LegacyTarget)
         return [t.mode is not TargetMode.MIN for t in self.objective.targets]
 
     @property
@@ -193,7 +193,7 @@ class BotorchAcquisitionFunctionBuilder:
             return
 
         match self.objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+            case SingleTargetObjective(LegacyTarget(mode=TargetMode.MIN)):
                 if issubclass(self._botorch_acqf_cls, bo_acqf.MCAcquisitionFunction):
                     if self._args.best_f is not None:
                         self._args.best_f *= -1.0
@@ -218,7 +218,7 @@ class BotorchAcquisitionFunctionBuilder:
         post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
 
         match self.objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
+            case SingleTargetObjective(LegacyTarget(mode=TargetMode.MIN)):
                 self._args.best_f = post_mean.min().item()
             case SingleTargetObjective() | DesirabilityObjective():
                 self._args.best_f = post_mean.max().item()

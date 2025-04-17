@@ -10,7 +10,8 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.validation import validate_target_names
-from baybe.targets import NumericalTarget, TargetMode
+from baybe.targets import TargetMode
+from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
@@ -23,7 +24,7 @@ def _block_minmax_transforms(_, __, target: Target) -> None:  # noqa: DOC101, DO
         ValueError: If the target has a transform.
     """  # noqa: D401
     if (
-        isinstance(target, NumericalTarget)
+        isinstance(target, LegacyTarget)
         and target.mode
         in [
             TargetMode.MIN,

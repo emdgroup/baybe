@@ -10,7 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
-from baybe.targets import NumericalTarget
+from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.base import Target
 from baybe.targets.enum import TargetMode
 from baybe.utils.conversion import to_string
@@ -98,7 +98,7 @@ class SingleTargetObjective(Objective):
 
         # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
         if (
-            isinstance(t := self._target, NumericalTarget)
+            isinstance(t := self._target, LegacyTarget)
             and t.mode is TargetMode.MIN
             and t.bounds.is_bounded
         ):
