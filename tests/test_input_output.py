@@ -84,7 +84,7 @@ def test_recommendation_is_not_ordered(n_values, n_parameters):
             for k in range(n_parameters)
         ],
     )
-    objective = NumericalTarget(name="t", mode="MAX").to_objective()
+    objective = NumericalTarget(name="t").to_objective()
     recommender = BotorchRecommender()
 
     # Add first and last point as measurement, target value is the sum of all parameters

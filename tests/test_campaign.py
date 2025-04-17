@@ -152,7 +152,7 @@ def test_update_measurements(ongoing_campaign):
     [
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
-            NumericalTarget("t1", "MAX").to_objective(),
+            NumericalTarget("t1").to_objective(),
             GaussianProcessSurrogate(),
             qLogEI(),
             3,
@@ -162,8 +162,10 @@ def test_update_measurements(ongoing_campaign):
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             DesirabilityObjective(
                 (
-                    NumericalTarget("t1", "MAX", bounds=(0, 1)),
-                    NumericalTarget("t2", "MIN", bounds=(0, 1)),
+                    NumericalTarget.clamped_affine("t1", cutoffs=(0, 1)),
+                    NumericalTarget.clamped_affine(
+                        "t2", cutoffs=(0, 1), descending=True
+                    ),
                 )
             ),
             GaussianProcessSurrogate(),
@@ -174,7 +176,7 @@ def test_update_measurements(ongoing_campaign):
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             ParetoObjective(
-                (NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN"))
+                (NumericalTarget("t1"), NumericalTarget("t2", minimize=True))
             ),
             GaussianProcessSurrogate(),
             qLogNEHVI(),

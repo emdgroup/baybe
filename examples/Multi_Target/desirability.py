@@ -46,12 +46,8 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # The first target is maximized and while the second one is minimized.
 # Note that in this multi target mode, the user must specify bounds for each target.
 
-Target_1 = NumericalTarget(
-    name="Target_1", mode="MAX", bounds=(0, 100), transformation="LINEAR"
-)
-Target_2 = NumericalTarget(
-    name="Target_2", mode="MIN", bounds=(0, 100), transformation="LINEAR"
-)
+Target_1 = NumericalTarget.clamped_affine("Target_1", cutoffs=(0, 100))
+Target_2 = NumericalTarget.clamped_affine("Target_2", cutoffs=(0, 100), descending=True)
 
 # For each target it is also possible to specify a `target_transform` function.
 # A detailed discussion of this functionality can be found at the end of this example.
@@ -59,9 +55,7 @@ Target_2 = NumericalTarget(
 # In this example, define a third target working with the mode `MATCH`.
 # We furthermore use `target_transform="BELL"`.
 
-Target_3 = NumericalTarget(
-    name="Target_3", mode="MATCH", bounds=(45, 55), transformation="BELL"
-)
+Target_3 = NumericalTarget.match_bell("Target_3", center=50, width=5)
 
 # Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
 # For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal value.

@@ -16,19 +16,21 @@ from baybe.utils.dataframe import create_fake_input
 @pytest.mark.parametrize(
     "objective",
     [
-        param(NumericalTarget("t1", "MAX").to_objective(), id="single_target"),
+        param(NumericalTarget("t1").to_objective(), id="single_target"),
         param(
             DesirabilityObjective(
                 [
-                    NumericalTarget("t1", "MAX", (0, 1)),
-                    NumericalTarget("t2", "MIN", (0, 1)),
+                    NumericalTarget.clamped_affine("t1", cutoffs=(0, 1)),
+                    NumericalTarget.clamped_affine(
+                        "t2", cutoffs=(0, 1), descending=True
+                    ),
                 ]
             ),
             id="desirability",
         ),
         param(
             ParetoObjective(
-                [NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")],
+                [NumericalTarget("t1"), NumericalTarget("t2", minimize=True)],
             ),
             id="pareto",
         ),
@@ -71,7 +73,7 @@ def test_partial_measurements(ongoing_campaign, objective):
     [
         param(
             ParetoObjective(
-                [NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")],
+                [NumericalTarget("t1"), NumericalTarget("t2", minimize=True)],
             ),
             id="pareto",
         ),

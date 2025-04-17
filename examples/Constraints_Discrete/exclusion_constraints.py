@@ -101,7 +101,7 @@ searchspace = SearchSpace.from_product(
     parameters=parameters, constraints=[constraint_1, constraint_2, constraint_3]
 )
 
-objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1"))
 
 ### Creating and printing the campaign
 campaign = Campaign(searchspace=searchspace, objective=objective)

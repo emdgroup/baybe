@@ -433,35 +433,28 @@ def fixture_targets(target_names: list[str]):
     valid_targets = [
         NumericalTarget(
             name="Target_max",
-            mode="MAX",
         ),
         NumericalTarget(
             name="Target_min",
-            mode="MIN",
+            minimize=True,
         ),
-        NumericalTarget(
+        NumericalTarget.clamped_affine(
             name="Target_max_bounded",
-            mode="MAX",
-            bounds=(0, 100),
-            transformation="LINEAR",
+            cutoffs=(0, 100),
         ),
-        NumericalTarget(
+        NumericalTarget.clamped_affine(
             name="Target_min_bounded",
-            mode="MIN",
-            bounds=(0, 100),
-            transformation="LINEAR",
+            cutoffs=(0, 100),
+            descending=True,
         ),
-        NumericalTarget(
+        NumericalTarget.match_bell(
             name="Target_match_bell",
-            mode="MATCH",
-            bounds=(0, 100),
-            transformation="BELL",
+            center=50,
+            width=50,
         ),
-        NumericalTarget(
+        NumericalTarget.match_triangular(
             name="Target_match_triangular",
-            mode="MATCH",
-            bounds=(0, 100),
-            transformation="TRIANGULAR",
+            cutoffs=(0, 100),
         ),
         BinaryTarget(name="Target_binary"),
     ]
@@ -805,7 +798,6 @@ def fixture_default_config():
             "target": {
                 "type": "NumericalTarget",
                 "name": "Yield",
-                "mode": "MAX"
             }
         },
         "recommender": {
@@ -877,7 +869,6 @@ def fixture_default_simplex_config():
           "target": {
               "type": "NumericalTarget",
               "name": "Yield",
-              "mode": "MAX"
             }
         }
     }"""

@@ -97,12 +97,7 @@ def main():
     st_function_name = st.sidebar.selectbox(
         "Test function", list(test_functions.keys())
     )
-    st_target_mode = st.sidebar.radio(
-        "Objective",
-        ["MAX", "MIN"],
-        format_func=lambda x: {"MAX": "Maximization", "MIN": "Minimization"}[x],
-        horizontal=True,
-    )
+    st_minimize = st.sidebar.checkbox("Minimize")
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Model")
     st_surrogate_name = st.sidebar.selectbox(
@@ -168,7 +163,7 @@ def main():
         ),
     )
     searchspace = SearchSpace.from_product(parameters=[parameter])
-    objective = NumericalTarget(name="y", mode=st_target_mode).to_objective()
+    objective = NumericalTarget(name="y", minimize=st_minimize).to_objective()
 
     # Create the surrogate model, acquisition function, and the recommender
     surrogate_model = surrogate_model_classes[st_surrogate_name]()

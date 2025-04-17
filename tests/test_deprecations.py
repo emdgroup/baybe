@@ -140,11 +140,11 @@ def test_constraint_config_deserialization(type_, op):
 
 def test_objective_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    single = SingleTargetObjective(NumericalTarget("A", "MAX"))
+    single = SingleTargetObjective(NumericalTarget("A"))
     desirability = DesirabilityObjective(
         [
-            NumericalTarget("A", "MAX", (0, 1)),
-            NumericalTarget("B", "MIN", (-1, 1)),
+            NumericalTarget.clamped_affine("A", cutoffs=(0, 1)),
+            NumericalTarget.clamped_affine("B", cutoffs=(-1, 1), descending=True),
         ]
     )
 
@@ -175,7 +175,7 @@ def test_deprecated_get_transform_parameters():
 
 def test_target_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    numerical = NumericalTarget("num", "MAX")
+    numerical = NumericalTarget("num")
     binary = BinaryTarget("bin")
 
     # Passing dataframe via `data`

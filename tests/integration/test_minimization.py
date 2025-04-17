@@ -50,12 +50,10 @@ def test_minimization(acqf_cls: AcquisitionFunction):
     set_random_seed(0)
     if acqf_cls.supports_multi_output:
         df_max = pd.DataFrame({"p": values, "t1": values, "t2": values})
-        obj_max = ParetoObjective(
-            [NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MAX")]
-        )
+        obj_max = ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")])
     else:
         df_max = pd.DataFrame({"p": values, "t": values})
-        obj_max = NumericalTarget("t", "MAX").to_objective()
+        obj_max = NumericalTarget("t").to_objective()
     p_min, acqf_max = compute_posterior_and_acqf(acqf_cls, df_max, searchspace, obj_max)
 
     # Minimization of inverted targets
@@ -63,11 +61,11 @@ def test_minimization(acqf_cls: AcquisitionFunction):
     if acqf_cls.supports_multi_output:
         df_min = pd.DataFrame({"p": values, "t1": -values, "t2": -values})
         obj_min = ParetoObjective(
-            [NumericalTarget("t1", "MIN"), NumericalTarget("t2", "MIN")]
+            [NumericalTarget("t1", minimize=True), NumericalTarget("t2", minimize=True)]
         )
     else:
         df_min = pd.DataFrame({"p": values, "t": -values})
-        obj_min = NumericalTarget("t", "MIN").to_objective()
+        obj_min = NumericalTarget("t", minimize=True).to_objective()
     p_max, acqf_min = compute_posterior_and_acqf(acqf_cls, df_min, searchspace, obj_min)
 
     # Both must yield identical posterior (modulo the sign) and acquisition values

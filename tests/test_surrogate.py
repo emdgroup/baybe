@@ -43,8 +43,8 @@ def test_caching(patched, searchspace, objective, fake_measurements):
 )
 def test_composite_surrogates(surrogate):
     """Composition yields a valid surrogate."""
-    t1 = NumericalTarget("t1", "MAX")
-    t2 = NumericalTarget("t2", "MIN")
+    t1 = NumericalTarget("t1")
+    t2 = NumericalTarget("t2", minimize=True)
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
     measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})

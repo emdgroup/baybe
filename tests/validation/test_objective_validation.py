@@ -6,15 +6,14 @@ import pytest
 from cattrs import IterableValidationError
 from pytest import param
 
-from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 
-t1 = NumericalTarget("t1", mode="MAX", bounds=(0, 1))
-t2 = NumericalTarget("t2", mode="MAX", bounds=(0, 1))
-t3 = NumericalTarget("unnormalized", mode="MAX")
+t1 = NumericalTarget.clamped_affine("t1", cutoffs=(0, 1))
+t2 = NumericalTarget.clamped_affine("t2", cutoffs=(0, 1))
+t3 = NumericalTarget("unnormalized")
 t_mock = Mock(spec=Target)
 
 
@@ -77,16 +76,3 @@ def test_invalid_scalarizer(scalarizer):
     """Providing an invalid scalarizer raises an exception."""
     with pytest.raises(ValueError):
         DesirabilityObjective([t1, t2], scalarizer=scalarizer)
-
-
-@pytest.mark.parametrize(
-    "target",
-    [
-        param(NumericalTarget("t2", mode="MAX", bounds=(0, 1)), id="max_bounded"),
-        param(NumericalTarget("t2", mode="MIN", bounds=(0, 1)), id="min_bounded"),
-    ],
-)
-def test_pareto_transformed_targets(target):
-    """Providing a bounded/transformed MIX/MAX target raises an exception."""
-    with pytest.raises(ValueError, match="does not support transforms for"):
-        ParetoObjective([NumericalTarget("t1", mode="MAX"), target])

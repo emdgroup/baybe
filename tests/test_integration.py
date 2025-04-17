@@ -17,7 +17,7 @@ nonpredictive_recommenders = [
 ]
 
 p1 = NumericalDiscreteParameter("p1", [1, 2])
-t1 = NumericalTarget("t1", "MAX")
+t1 = NumericalTarget("t1")
 objective = t1.to_objective()
 measurements = pd.DataFrame(
     {p1.name: p1.values, t1.name: np.random.random(len(p1.values))}
