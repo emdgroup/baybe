@@ -9,7 +9,7 @@ from baybe.exceptions import OptionalImportError
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace.core import SearchSpace
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
 nonpredictive_recommenders = [

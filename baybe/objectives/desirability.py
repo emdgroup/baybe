@@ -17,8 +17,8 @@ from typing_extensions import override
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df, transform_target_columns
@@ -102,12 +102,6 @@ class DesirabilityObjective(Objective):
             )
         if len({t.name for t in targets}) != len(targets):
             raise ValueError("All target names must be unique.")
-        if not all(target._is_transform_normalized for target in targets):
-            raise ValueError(
-                "All targets must have normalized computational representations to "
-                "enable the computation of desirability values. This requires having "
-                "appropriate target bounds and transformations in place."
-            )
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
