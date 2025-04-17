@@ -176,24 +176,24 @@ class NumericalTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
-        if self.transformation is not None or self.minimize:
+        if (trans := self.transformation) is not None or self.minimize:
             import torch
 
             if self.minimize:
-                trans: Transformation
-                if self.transformation is None:
+                if trans is None:
                     trans = AffineTransformation(factor=-1)
                 else:
                     trans = ChainedTransformation(
-                        self.transformation, AffineTransformation(factor=-1)
+                        trans, AffineTransformation(factor=-1)
                     )
+            assert trans is not None
             return pd.Series(
                 trans(torch.from_numpy(series.to_numpy())),
                 index=series.index,
                 name=series.name,
             )
-        else:
-            return series.copy()
+
+        return series.copy()
 
     @override
     def summary(self):
