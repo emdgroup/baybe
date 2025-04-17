@@ -54,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Model scaling now uses the parameter bounds instead of the search space bounds
 - `benchmarks` module now accepts a list of domains to be executed
 - Construction of BoTorch acquisition functions has been redesigned from ground up
+- `random_tie_break` flag added to `farthest_point_sampling`, that toggles between 
+  random or deterministic sampling for equidistant cases
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
