@@ -13,6 +13,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin
+from baybe.targets._deprecated import TargetTransformation
 from baybe.targets.base import Target
 from baybe.targets.transforms import (
     AbsoluteTransformation,
@@ -20,6 +21,7 @@ from baybe.targets.transforms import (
     BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
+    Transformation,
     TransformationProtocol,
     convert_transformation,
 )
@@ -36,6 +38,50 @@ class NumericalTarget(Target, SerialMixin):
     """An optional target transformation."""
 
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
+
+    def __new__(
+        cls,
+        name: str,
+        transformation_: TransformationProtocol  # underscore to avoid name collision
+        | None = None,
+        *args,
+        minimize: bool = False,
+        **kwargs,
+    ):
+        """Create modern or legacy target instance depending on the arguments."""
+        # Check if legacy arguments are provided
+        if (
+            not (
+                isinstance(transformation_, (Transformation, type(None)))
+                or callable(transformation_)
+            )
+            or args
+            or kwargs
+        ):
+            from baybe.targets._deprecated import NumericalTarget as LegacyTarget
+
+            # Map legacy arguments to legacy constructor parameter names
+            kw = {"name": name}
+            all_args = (transformation_, *args)
+            if transformation_ in (
+                *TargetTransformation.__members__.keys(),
+                *TargetTransformation.__members__.values(),
+            ):
+                kw["transformation"] = transformation_
+                all_args = all_args[1:]
+            for k, v in zip(
+                ["mode", "bounds", "transformation"],
+                [v for v in all_args],  # if v is not None],
+            ):
+                kw[k] = v
+            kw = kw | kwargs
+
+            # Create legacy target instance
+            instance = LegacyTarget.__new__(LegacyTarget)
+            instance.__init__(**kw)
+            return instance
+
+        return super().__new__(cls)
 
     @classmethod
     def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
@@ -139,8 +185,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @override
     def summary(self):
-        raise NotImplementedError()
+        return {}
 
 
-# Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

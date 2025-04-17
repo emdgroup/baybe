@@ -1,5 +1,7 @@
 """Target transformation tests."""
 
+from itertools import pairwise
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -28,6 +30,78 @@ def sample_input() -> pd.Series:
 @pytest.fixture
 def series() -> pd.Series:
     return sample_input()
+
+
+@pytest.mark.parametrize("mode", ["MAX", "MIN"])
+def test_constructor_equivalence_min_max(mode):
+    """Calling the new target class with legacy arguments yields the legacy object."""
+    groups = [
+        (
+            LegacyTarget("t", mode),
+            ModernTarget("t", mode),
+            LegacyTarget("t", mode=mode),
+            ModernTarget("t", mode=mode),
+            LegacyTarget(name="t", mode=mode),
+            ModernTarget(name="t", mode=mode),
+        ),
+        (
+            LegacyTarget("t", mode, (1, 2)),
+            ModernTarget("t", mode, (1, 2)),
+            LegacyTarget("t", mode, bounds=(1, 2)),
+            ModernTarget("t", mode, bounds=(1, 2)),
+            LegacyTarget("t", mode=mode, bounds=(1, 2)),
+            ModernTarget("t", mode=mode, bounds=(1, 2)),
+            LegacyTarget(name="t", mode=mode, bounds=(1, 2)),
+            ModernTarget(name="t", mode=mode, bounds=(1, 2)),
+            LegacyTarget("t", mode, (1, 2), "LINEAR"),
+            ModernTarget("t", mode, (1, 2), "LINEAR"),
+            LegacyTarget("t", mode, (1, 2), transformation="LINEAR"),
+            ModernTarget("t", mode, (1, 2), transformation="LINEAR"),
+            LegacyTarget("t", mode, bounds=(1, 2), transformation="LINEAR"),
+            ModernTarget("t", mode, bounds=(1, 2), transformation="LINEAR"),
+            LegacyTarget("t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+            ModernTarget("t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+            LegacyTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+            ModernTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+        ),
+    ]
+    for targets in groups:
+        for t1, t2 in pairwise(targets):
+            assert t1 == t2
+
+
+@pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
+def test_constructor_equivalence_match(transformation):
+    """Calling the new target class with legacy arguments yields the legacy object."""
+    targets = (
+        LegacyTarget("t", "MATCH", (1, 2), transformation),
+        ModernTarget("t", "MATCH", (1, 2), transformation),
+        LegacyTarget("t", "MATCH", (1, 2), transformation=transformation),
+        ModernTarget("t", "MATCH", (1, 2), transformation=transformation),
+        LegacyTarget("t", "MATCH", bounds=(1, 2), transformation=transformation),
+        ModernTarget("t", "MATCH", bounds=(1, 2), transformation=transformation),
+        LegacyTarget("t", mode="MATCH", bounds=(1, 2), transformation=transformation),
+        ModernTarget("t", mode="MATCH", bounds=(1, 2), transformation=transformation),
+        LegacyTarget(
+            name="t", mode="MATCH", bounds=(1, 2), transformation=transformation
+        ),
+        ModernTarget(
+            name="t", mode="MATCH", bounds=(1, 2), transformation=transformation
+        ),
+    )
+    if transformation == "TRIANGULAR":
+        targets += (
+            LegacyTarget("t", "MATCH", (1, 2)),
+            ModernTarget("t", "MATCH", (1, 2)),
+            LegacyTarget("t", "MATCH", bounds=(1, 2)),
+            ModernTarget("t", "MATCH", bounds=(1, 2)),
+            LegacyTarget("t", mode="MATCH", bounds=(1, 2)),
+            ModernTarget("t", mode="MATCH", bounds=(1, 2)),
+            LegacyTarget(name="t", mode="MATCH", bounds=(1, 2)),
+            ModernTarget(name="t", mode="MATCH", bounds=(1, 2)),
+        )
+    for t1, t2 in pairwise(targets):
+        assert t1 == t2
 
 
 @pytest.mark.parametrize(
