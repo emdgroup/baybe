@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Iterable
+from typing import Any
 
 import pandas as pd
 from attrs import define, field
@@ -61,7 +62,7 @@ class NumericalTarget(Target, SerialMixin):
             from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 
             # Map legacy arguments to legacy constructor parameter names
-            kw = {"name": name}
+            kw: dict[str, Any] = {"name": name}
             all_args = (transformation_, *args)
             if transformation_ in (
                 *TargetTransformation.__members__.keys(),
@@ -78,7 +79,7 @@ class NumericalTarget(Target, SerialMixin):
 
             # Create legacy target instance
             instance = LegacyTarget.__new__(LegacyTarget)
-            instance.__init__(**kw)
+            instance.__init__(**kw)  # type: ignore
             return instance
 
         return super().__new__(cls)
@@ -165,15 +166,16 @@ class NumericalTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
-        if (trans := self.transformation) is not None or self.minimize:
+        if self.transformation is not None or self.minimize:
             import torch
 
             if self.minimize:
-                if trans is None:
+                trans: Transformation
+                if self.transformation is None:
                     trans = AffineTransformation(factor=-1)
                 else:
                     trans = ChainedTransformation(
-                        trans, AffineTransformation(factor=-1)
+                        self.transformation, AffineTransformation(factor=-1)
                     )
             return pd.Series(
                 trans(torch.from_numpy(series.to_numpy())),

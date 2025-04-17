@@ -53,7 +53,9 @@ class Dummy:
         return "<dummy>"
 
 
-def is_all_instance(x: Collection[Any], t: type[_T], /) -> TypeGuard[Collection[_T]]:
+def is_all_instance(
+    x: Collection[Any], t: type[_T] | tuple[type[_T], ...], /
+) -> TypeGuard[Collection[_T]]:
     """Typeguard to check if all elements in a collection are of a certain type."""
     # IMPROVE: Ideally, the collection type should itself be abstracted away using a
     #   generic container type, but unclear how to achieve this with the typing system.

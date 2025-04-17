@@ -103,7 +103,10 @@ class DesirabilityObjective(Objective):
             )
         if len({t.name for t in targets}) != len(targets):
             raise ValueError("All target names must be unique.")
-        if not all(target._is_transform_normalized for target in targets):
+
+        if is_all_instance(targets, LegacyTarget) and not all(
+            target._is_transform_normalized for target in targets
+        ):
             raise ValueError(
                 "All targets must have normalized computational representations to "
                 "enable the computation of desirability values. This requires having "
