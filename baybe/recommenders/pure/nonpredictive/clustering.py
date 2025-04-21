@@ -15,7 +15,7 @@ from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
-from baybe.utils.plotting import to_string
+from baybe.utils.conversion import to_string
 
 
 @define
@@ -164,7 +164,7 @@ class PAMClusteringRecommender(SKLearnClusteringRecommender):
     @override
     @staticmethod
     def _get_model_cls() -> type[ClusterMixin]:
-        from sklearn_extra.cluster import KMedoids
+        from baybe.utils.clustering_algorithms import KMedoids
 
         return KMedoids
 

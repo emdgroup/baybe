@@ -6,6 +6,7 @@ import math
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 import pandas as pd
 from attrs import Attribute
 
@@ -83,23 +84,24 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
         targets: The allowed targets.
 
     Raises:
-        ValueError: If the input dataframe is empty.
-        ValueError: If any target data contain NaN.
+        ValueError: If the data is empty.
+        ValueError: If the data misses columns for a target.
         TypeError: If any numerical target data contain non-numeric values.
         ValueError: If any binary target data contain values not part of the targets'
-            allowed values.
+            allowed values or NaN.
     """
     from baybe.targets import BinaryTarget, NumericalTarget
 
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
 
-    for t in targets:
-        if data[t.name].isna().any():
-            raise ValueError(
-                f"The target '{t.name}' has missing values in the provided dataframe."
-            )
+    if missing := {t.name for t in targets}.difference(data.columns):
+        raise ValueError(
+            f"The input dataframe is missing columns for the following targets: "
+            f"{missing}"
+        )
 
+    for t in targets:
         if isinstance(t, NumericalTarget):
             if data[t.name].dtype.kind not in "iufb":
                 raise TypeError(
@@ -107,7 +109,7 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
                     f"provided dataframe."
                 )
         elif isinstance(t, BinaryTarget):
-            allowed = {t.failure_value, t.success_value}
+            allowed = {t.failure_value, t.success_value, np.nan}
             if invalid := set(data[t.name].unique()) - allowed:
                 raise ValueError(
                     f"The binary target '{t.name}' has invalid entries {invalid} "
@@ -130,12 +132,19 @@ def validate_parameter_input(
             parameter-specific tolerance.
 
     Raises:
-        ValueError: If the input dataframe is empty.
+        ValueError: If the data is empty.
+        ValueError: If the data misses columns for a parameter.
         ValueError: If a parameter contains NaN.
         TypeError: If a parameter contains non-numeric values.
     """
     if data.empty:
         raise ValueError("The provided input dataframe cannot be empty.")
+
+    if missing := {p.name for p in parameters}.difference(data.columns):
+        raise ValueError(
+            f"The input dataframe is missing columns for the following parameters: "
+            f"{missing}"
+        )
 
     for p in parameters:
         if data[p.name].isna().any():

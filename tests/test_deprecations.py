@@ -8,7 +8,6 @@ import pytest
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.acquisition.base import AcquisitionFunction
 from baybe.constraints import (
     ContinuousLinearConstraint,
     ContinuousLinearEqualityConstraint,
@@ -16,8 +15,6 @@ from baybe.constraints import (
 )
 from baybe.constraints.base import Constraint
 from baybe.exceptions import DeprecationError
-from baybe.objective import Objective as OldObjective
-from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
@@ -36,67 +33,6 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-
-
-def test_objective_class():
-    """Using the deprecated objective class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        OldObjective(mode="SINGLE", targets=[NumericalTarget(name="a", mode="MAX")])
-
-
-deprecated_objective_config = """
-{
-    "mode": "DESIRABILITY",
-    "targets": [
-        {
-            "type": "NumericalTarget",
-            "name": "Yield",
-            "mode": "MAX",
-            "bounds": [0, 1]
-        },
-        {
-            "type": "NumericalTarget",
-            "name": "Waste",
-            "mode": "MIN",
-            "bounds": [0, 1]
-        }
-    ],
-    "combine_func": "MEAN",
-    "weights": [1, 2]
-}
-"""
-
-
-def test_objective_config_deserialization():
-    """The deprecated objective config format can still be parsed."""
-    expected = DesirabilityObjective(
-        targets=[
-            NumericalTarget("Yield", "MAX", bounds=(0, 1)),
-            NumericalTarget("Waste", "MIN", bounds=(0, 1)),
-        ],
-        scalarizer="MEAN",
-        weights=[1, 2],
-    )
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        actual = Objective.from_json(deprecated_objective_config)
-    assert expected == actual, (expected, actual)
-
-
-@pytest.mark.parametrize("acqf", ("VarUCB", "qVarUCB"))
-def test_acqfs(acqf):
-    """Using the deprecated acqf raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        BotorchRecommender(acquisition_function=acqf)
-
-    with pytest.warns(DeprecationWarning):
-        AcquisitionFunction.from_dict({"type": acqf})
-
-
-def test_acqf_keyword(acqf):
-    """Using the deprecated keyword raises an error."""
-    with pytest.raises(DeprecationError):
-        BotorchRecommender(acquisition_function_cls="qEI")
 
 
 def test_sequentialgreedyrecommender_class():

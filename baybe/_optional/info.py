@@ -27,6 +27,7 @@ with exclude_sys_path(os.getcwd()):
     FLAKE8_INSTALLED = find_spec("flake8") is not None
     LIME_INSTALLED = find_spec("lime") is not None
     ONNX_INSTALLED = find_spec("onnxruntime") is not None
+    NGBOOST_INSTALLED = find_spec("ngboost") is not None
     POLARS_INSTALLED = find_spec("polars") is not None
     PRE_COMMIT_INSTALLED = find_spec("pre_commit") is not None
     PYDOCLINT_INSTALLED = find_spec("pydoclint") is not None

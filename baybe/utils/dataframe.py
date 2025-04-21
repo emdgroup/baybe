@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import warnings
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
@@ -819,3 +819,32 @@ def arrays_to_dataframes(
 
 class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
+
+
+def handle_missing_values(
+    data: pd.DataFrame, columns: Collection[str], drop: bool = False
+) -> pd.DataFrame:
+    """Handle missing inputs by dropping corresponding rows or raising an error.
+
+    Args:
+        data: Data to be checked.
+        columns: The column names to check.
+        drop: Whether to drop the corresponding rows instead of raising an error.
+
+    Raises:
+        ValueError: If any row contains NaN in the target columns. Only relevant
+            if ``drop=False``.
+
+    Returns:
+        A new dataframe with the rows containing NaN dropped.
+    """
+    mask = data[columns].isna().any(axis=1)
+
+    if (not drop) and mask.any():
+        raise ValueError(
+            f"Incomplete measurements identified by NaN were found in the input, "
+            f"but are not supported. Bad input in the rows with these "
+            f"indices: {data.index[mask].tolist()}"
+        )
+
+    return data.loc[~mask]

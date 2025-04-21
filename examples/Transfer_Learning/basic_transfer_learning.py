@@ -22,7 +22,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
-from baybe.utils.plotting import create_example_plots
+from examples.utils import create_example_plots
 
 ### Settings
 
@@ -39,7 +39,7 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimen
 ### Creating the Optimization Objective
 
 # The test functions each have a single output that is to be minimized.
-# The corresponding [Objective](baybe.objective.Objective)
+# The corresponding [Objective](baybe.objectives.base.Objective)
 # is created as follows:
 
 target = NumericalTarget(name="Target", mode="MIN")
@@ -137,7 +137,7 @@ for p in (0.01, 0.02, 0.05, 0.08, 0.2):
     campaign = Campaign(searchspace=searchspace, objective=objective)
     initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
     result_fraction = simulate_scenarios(
-        {f"{int(100*p)}": campaign},
+        {f"{int(100 * p)}": campaign},
         lookup_test_task,
         initial_data=initial_data,
         batch_size=BATCH_SIZE,

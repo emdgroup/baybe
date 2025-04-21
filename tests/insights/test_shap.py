@@ -7,15 +7,16 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from matplotlib import pyplot as plt
 from pytest import mark
 
 from baybe._optional.info import INSIGHTS_INSTALLED
-from baybe.exceptions import IncompatibleExplainerError
+from baybe.exceptions import IncompatibleExplainerError, NoMeasurementsError
 
 if not INSIGHTS_INSTALLED:
     pytest.skip("Optional insights package not installed.", allow_module_level=True)
 
+
+from matplotlib import pyplot as plt
 
 from baybe import insights
 from baybe._optional.insights import shap
@@ -161,10 +162,6 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
         with mock.patch("matplotlib.pyplot.show"):
             shap_insight.plot(plot_type, df)
             plt.close()
-    except AttributeError as e:
-        if "no attribute 'colors'" in str(e) and plot_type == "beeswarm":
-            pytest.xfail("SHAP bug")
-        raise e
     except ValueError as e:
         if "zero-size array to reduction" in str(e) and plot_type == "scatter":
             pytest.xfail("SHAP bug")
@@ -174,7 +171,7 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
     """Test explanations for campaigns with updated measurements."""
     with pytest.raises(
-        ValueError,
+        NoMeasurementsError,
         match="The campaign does not contain any measurements.",
     ):
         SHAPInsight.from_campaign(campaign)

@@ -33,13 +33,13 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.device_utils import (
     device_context,
     get_default_device,
     to_device,
 )
-from baybe.utils.plotting import to_string
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
