@@ -34,7 +34,7 @@ def farthest_point_sampling(
             * ``"random"``: The first point is selected uniformly at random.
         random_tie_break: Determines if points are chosen deterministically or randomly
             in equidistant situations. If ``True``, a random point is selected from the
-            candidates. If ``False``, the first point is selected deterministically.
+            candidates, otherwise the first point is selected.
 
     Returns:
         A list containing the positional indices of the selected points.
@@ -105,11 +105,11 @@ def farthest_point_sampling(
             # Select a random point that has the "largest smallest distance"
             max_val = np.max(min_dists)
             max_indices = np.where(min_dists == max_val)[0]
-            random_choice = np.random.choice(max_indices)
-            selected_point_index = remaining_point_indices[random_choice]
+            choice = np.random.choice(max_indices)
         else:
             # Choose the first point with the "largest smallest distance"
-            selected_point_index = remaining_point_indices[np.argmax(min_dists)]
+            choice = np.argmax(min_dists)
+        selected_point_index = remaining_point_indices[choice]
 
         # Add the chosen point to the selection
         selected_point_indices.append(selected_point_index)
