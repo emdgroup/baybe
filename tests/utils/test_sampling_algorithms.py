@@ -51,8 +51,9 @@ def test_discrete_sampling(fraction, method):
     )
 )
 # Explicitly test scenario with equidistant points (see comments in test body)
+@pytest.mark.parametrize("random_tie_break", [False, True])
 @example(points=np.array([[0, 0], [0, 1], [1, 0], [1, 1]]))
-def test_farthest_point_sampling(points: np.ndarray):
+def test_farthest_point_sampling(points: np.ndarray, random_tie_break: bool):
     """FPS produces the same point sequence regardless of the order in which the
     points are provided. Also, each point fulfills the "farthest point" criterion
     in its respective iteration.
@@ -90,9 +91,10 @@ def test_farthest_point_sampling(points: np.ndarray):
     # as `np.max` can lead to different results depending on the order.
     permutation_idxs = np.random.permutation(len(points))
     sorting_idxs = farthest_point_sampling(
-        points[permutation_idxs], len(points), random_tie_break=False
+        points[permutation_idxs], len(points), random_tie_break=random_tie_break
     )
-    assert np.array_equal(target, points[permutation_idxs][sorting_idxs])
+    if not random_tie_break:
+        assert np.array_equal(target, points[permutation_idxs][sorting_idxs])
 
     # Because requesting a single point needs special treatment in FPS,
     # we test this as additional case

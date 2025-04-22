@@ -54,7 +54,7 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-@define
+@define(kw_only=True)
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
 
