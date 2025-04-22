@@ -36,7 +36,11 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
             FPSRecommender(),
             id="fps_discrete",
         ),
-        param(_discrete_params, PAMClusteringRecommender(), id="pam_discrete"),
+        param(
+            _discrete_params,
+            PAMClusteringRecommender(),
+            id="pam_discrete",
+        ),
         param(
             _discrete_params,
             KMeansClusteringRecommender(),

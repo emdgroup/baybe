@@ -7,7 +7,7 @@ import pytest
 from pandas.testing import assert_index_equal
 from pytest import param
 
-from baybe.acquisition import qLogEI, qLogNEHVI, qTS
+from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
@@ -124,6 +124,30 @@ def test_setting_allow_flags(flag, space_type, value):
 
 
 @pytest.mark.parametrize(
+    "parameter_names", [["Categorical_1", "Categorical_2", "Num_disc_1"]]
+)
+@pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
+def test_update_measurements(ongoing_campaign):
+    """Updating measurements makes the expected changes."""
+    p_name, t_name = "Num_disc_1", ongoing_campaign.targets[0].name
+    updated = ongoing_campaign.measurements.iloc[[0], :]
+
+    # Perform the update
+    updated.iloc[0, updated.columns.get_loc(p_name)] = 1337
+    updated.iloc[0, updated.columns.get_loc(t_name)] = 1337
+    ongoing_campaign.update_measurements(
+        updated, numerical_measurements_must_be_within_tolerance=False
+    )
+
+    # Make sure values are updated and resets have been made
+    meas = ongoing_campaign.measurements
+    assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
+    assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
+    assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
+    assert ongoing_campaign._cached_recommendation.empty
+
+
+@pytest.mark.parametrize(
     ("parameter_names", "objective", "surrogate_model", "acqf", "batch_size"),
     [
         param(
@@ -197,9 +221,9 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     for t in targets:
         for stat in tested_stats:
             stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
-            assert (
-                sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1
-            ), f"{t}_{stat_name} not in the returned posterior statistics"
+            assert sum(f"{t}_{stat_name}" in x for x in stats.columns) == 1, (
+                f"{t}_{stat_name} not in the returned posterior statistics"
+            )
 
     # Assert no NaN's present
     assert not stats.isna().any().any()
@@ -242,3 +266,24 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
     """Invalid inputs for posterior statistics raise expected exceptions."""
     with pytest.raises(error, match=match):
         ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)
+
+
+@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
+@pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
+@pytest.mark.parametrize("batch_size", [3], ids=["b3"])
+def test_acquisition_value_computation(ongoing_campaign: Campaign):
+    """Acquisition values have the expected shape."""
+    df = ongoing_campaign.searchspace.discrete.exp_rep
+    assert not df.empty
+
+    # Using campaign acquisition function
+    acqfs = ongoing_campaign.acquisition_values(df)
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df)
+    assert isinstance(joint_acqf, float)
+
+    # Using separate acquisition function
+    acqfs = ongoing_campaign.acquisition_values(df, qUCB())
+    assert_index_equal(acqfs.index, df.index)
+    joint_acqf = ongoing_campaign.joint_acquisition_value(df, qUCB())
+    assert isinstance(joint_acqf, float)

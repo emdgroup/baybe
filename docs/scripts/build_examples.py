@@ -1,5 +1,6 @@
 """Utility for creating the examples."""
 
+import os
 import shutil
 import textwrap
 from pathlib import Path
@@ -131,15 +132,10 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                 notebook_path,
             ]
             convert_execute.append("--execute")
-
             to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
-
-            check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT)
-            check_call(
-                to_markdown,
-                stdout=DEVNULL,
-                stderr=STDOUT,
-            )
+            env = os.environ | {"PYTHONPATH": os.getcwd()}
+            check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT, env=env)
+            check_call(to_markdown, stdout=DEVNULL, stderr=STDOUT, env=env)
 
             # CLEANUP
             markdown_path = file.with_suffix(".md")

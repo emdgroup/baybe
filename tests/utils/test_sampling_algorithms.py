@@ -26,9 +26,9 @@ def test_discrete_sampling(fraction, method):
     n_points = math.ceil(fraction * len(df))
     sampled = sample_numerical_df(df, n_points, method=method)
 
-    assert (
-        len(sampled) == n_points
-    ), "Sampling did not return expected number of points."
+    assert len(sampled) == n_points, (
+        "Sampling did not return expected number of points."
+    )
     if fraction >= 1.0:
         # Ensure the entire dataframe is contained in the sampled points
         assert (
@@ -36,9 +36,9 @@ def test_discrete_sampling(fraction, method):
         ), "Oversized sampling did not return all original points at least once."
     else:
         # Assure all points are unique
-        assert len(sampled) == len(
-            sampled.drop_duplicates()
-        ), "Undersized sampling did not return unique points."
+        assert len(sampled) == len(sampled.drop_duplicates()), (
+            "Undersized sampling did not return unique points."
+        )
 
 
 @given(

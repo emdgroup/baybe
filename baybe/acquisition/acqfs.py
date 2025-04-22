@@ -2,6 +2,7 @@
 
 import gc
 import math
+from abc import ABC
 from typing import ClassVar
 
 import numpy as np
@@ -286,6 +287,8 @@ class qUpperConfidenceBound(AcquisitionFunction):
     """See :paramref:`UpperConfidenceBound.beta`."""
 
 
+########################################################################################
+### ThompsonSampling
 @define(frozen=True)
 class qThompsonSampling(qSimpleRegret):
     """Thomson sampling, implemented via simple regret. Inherently Monte Carlo based.
@@ -319,12 +322,25 @@ class qThompsonSampling(qSimpleRegret):
 
 
 ########################################################################################
+### Pareto Efficient Global Optimization (Chebyshev scalarization of targets)
+@define(frozen=True)
+class qLogNParEGO(AcquisitionFunction):
+    """Pareto optimization via Chebyshev scalarization of the targets."""
+
+    abbreviation: ClassVar[str] = "qLogNParEGO"
+    supports_multi_output: ClassVar[bool] = True
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
+
+
+########################################################################################
 ### Hypervolume Improvement
 @define(frozen=True)
-class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
-    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
+    """Expected hypervolume improvement base class."""
 
-    abbreviation: ClassVar[str] = "qLogNEHVI"
+    supports_multi_output: ClassVar[bool] = True
 
     reference_point: float | tuple[float, ...] | None = field(
         default=None, converter=optional_c(convert_to_float)
@@ -355,7 +371,7 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
     def compute_ref_point(
         array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
     ) -> np.ndarray:
-        """Compute a reference point for a given set of of target configurations.
+        """Compute a reference point for a given set of target configurations.
 
         The reference point is positioned relative to the worst point in the direction
         coming from the best point:
@@ -406,6 +422,20 @@ class qLogNoisyExpectedHypervolumeImprovement(AcquisitionFunction):
         max = np.max(array, axis=0)
 
         return (min - factor * (max - min)) * maximize
+
+
+@define(frozen=True)
+class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qNEHVI"
+
+
+@define(frozen=True)
+class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogNEHVI"
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

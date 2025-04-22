@@ -30,7 +30,7 @@ optimization
 `Recommender`&nbsp;([class](baybe.recommenders.pure.base.PureRecommender) 
 / [user guide](./recommenders)) to be used.
 
-~~~python
+```python
 from baybe import Campaign
 
 campaign = Campaign(
@@ -38,7 +38,7 @@ campaign = Campaign(
     objective=objective,  # Required
     recommender=recommender,  # Optional
 )
-~~~
+```
 
 ### Creation From a JSON Config
 Instead of using the default constructor, it is also possible to create a `Campaign` 
@@ -61,9 +61,9 @@ campaign via the [`recommend`](baybe.campaign.Campaign.recommend) method.
 It expects a parameter `batch_size` that specifies the desired number of 
 experiments to be conducted.
 
-~~~python
+```python
 rec = campaign.recommend(batch_size=3)
-~~~
+```
 
 Calling the function returns a `DataFrame` with `batch_size` many rows, each
 representing a particular parameter configuration from the campaign's search space.
@@ -146,11 +146,11 @@ If measurements are to be added immediately after a call to `recommend`,
 this is most easily achieved by augmenting the  `DataFrame` returned from that call 
 with the respective target columns.
 
-~~~python
+```python
 rec["Target_max"] = [2, 4, 9]  # 3 values matching the batch_size of 3
 campaign.add_measurements(rec)
 new_rec = campaign.recommend(batch_size=5)
-~~~
+```
 
 After adding the measurements, the corresponding `DataFrame` thus has the following 
 form:
@@ -176,9 +176,9 @@ recommendations, or indeed for any set of possible candidate points. The
 [`Campaign.posterior_stats`](baybe.campaign.Campaign.posterior_stats) and 
 [`Surrogate.posterior_stats`](baybe.surrogates.base.Surrogate.posterior_stats) methods
 provide a simple interface for this:
-~~~python
+```python
 stats = campaign.posterior_stats(rec)
-~~~
+```
 
 This will return a table with mean and standard deviation (and possibly other 
 statistics) of the target predictions for the provided candidates:
@@ -192,9 +192,9 @@ statistics) of the target predictions for the provided candidates:
 You can also provide an optional sequence of statistic names to compute other 
 statistics. If a float is provided, the corresponding quantile points will be 
 calculated:
-~~~python
+```python
 stats = campaign.posterior_stats(rec, stats=["mode", 0.5])
-~~~
+```
 
 |    | Yield_mode | Yield_Q_0.5 | Selectivity_mode | Selectivity_Q_0.5 | ... |
 |---:|:-----------|:------------|:-----------------|:------------------|-----|
@@ -210,6 +210,28 @@ the posterior statistics are only shown for this quantity, and not for individua
 targets.
 ```
 
+## Acquisition Function Values
+
+In some cases, you may want to examine the specific acquisition function values for a given set of candidates. Campaigns provide two straightforward methods for this purpose:
+
+- {meth}`~baybe.campaign.Campaign.acquisition_values`: Computes **individual** acquisition values for each candidate in the set, answering the question _"What is the expected utility of running this experiment in isolation?"_
+- {meth}`~baybe.campaign.Campaign.joint_acquisition_value`: Computes the **joint** acquisition value for the entire candidate batch, answering the question _"What is the overall expected utility of running this batch of experiments"?_
+
+```python
+rec = campaign.recommend(5)
+acq_values = campaign.acquisition_values(rec)  # contains 5 numbers
+joint_acq_value = campaign.joint_acquisition_value(rec)  # contains 1 number
+```
+
+By default, both methods use the acquisition function of the underlying recommender. However, you can also specify a custom acquisition function if needed:
+
+```python
+from baybe.acquisition import UCB, qPSTD
+
+acq_values = campaign.acquisition_values(rec, UCB())
+joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
+```
+
 ## Serialization
 
 Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 
@@ -217,11 +239,11 @@ using their [`from_json`](baybe.serialization.mixin.SerialMixin.from_json)/
 [`to_json`](baybe.serialization.mixin.SerialMixin.to_json) methods, which 
 allow to convert between Python objects and their corresponding representation in JSON 
 format:
-~~~python
+```python
 campaign_json = campaign.to_json()
 reconstructed = Campaign.from_json(campaign_json)
 assert campaign == reconstructed
-~~~
+```
 
 General information on this topic can be found in our 
 [serialization user guide](/userguide/serialization).

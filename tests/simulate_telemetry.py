@@ -7,7 +7,7 @@ import os
 from random import randint
 
 from baybe.campaign import Campaign
-from baybe.objective import Objective
+from baybe.objectives import Objective
 from baybe.parameters import NumericalDiscreteParameter, SubstanceParameter
 from baybe.recommenders import (
     BotorchRecommender,

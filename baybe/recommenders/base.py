@@ -63,7 +63,6 @@ converter.register_unstructure_hook(
         x,
         # TODO: Remove once deprecation got expired:
         overrides=dict(
-            acquisition_function_cls=cattrs.override(omit=True),
             # Temporary workaround (see TODO note above)
             _surrogate_model=cattrs.override(rename="surrogate_model"),
             _current_recommender=cattrs.override(omit=False),

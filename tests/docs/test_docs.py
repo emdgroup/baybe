@@ -21,7 +21,7 @@ doc_files_pseudocode = list(map(str, [Path("docs/userguide/campaigns.md")]))
     not CHEM_INSTALLED, reason="Optional chem dependency not installed."
 )
 @pytest.mark.parametrize("file", doc_files, ids=doc_files)
-def test_code_executability(file: Path, campaign):
+def test_code_executability(file: Path, campaign, searchspace, objective, recommender):
     """The code blocks in the file become a valid python script when concatenated.
 
     Blocks surrounded with "triple-tilde" are ignored. Fixtures made available to this
@@ -35,7 +35,13 @@ def test_code_executability(file: Path, campaign):
     # be the same, as otherwise exec uses separate scopes for specific patterns within
     # the snippet (e.g. list comprehensions) causing unknown name errors despite
     # correct import.
-    namespace = {"__builtins__": __builtins__, "campaign": campaign}
+    namespace = {
+        "__builtins__": __builtins__,
+        "campaign": campaign,
+        "searchspace": searchspace,
+        "objective": objective,
+        "recommender": recommender,
+    }
     exec(userguide_code, namespace, namespace)
 
 
