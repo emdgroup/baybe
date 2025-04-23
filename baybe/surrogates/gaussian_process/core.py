@@ -138,6 +138,26 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # Determine which device the model is on
+        model_device = None
+        if hasattr(self._model, "train_inputs") and self._model.train_inputs:
+            model_device = self._model.train_inputs[0].device
+
+        if model_device is not None:
+            # Move the input tensor to the same device as the model
+            if candidates_comp_scaled.device != model_device:
+                candidates_comp_scaled = candidates_comp_scaled.to(model_device)
+
+            # Also ensure input_transform.indices is on the right device
+            if (
+                hasattr(self._model, "input_transform")
+                and hasattr(self._model.input_transform, "indices")
+                and self._model.input_transform.indices.device != model_device
+            ):
+                self._model.input_transform.indices = (
+                    self._model.input_transform.indices.to(model_device)
+                )
+
         return self._model.posterior(candidates_comp_scaled)
 
     @override
