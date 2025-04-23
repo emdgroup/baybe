@@ -153,6 +153,7 @@ class GaussianProcessSurrogate(Surrogate):
         context = _ModelContext(self._searchspace)
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
+        numerical_idxs = torch.tensor(numerical_idxs, device=train_x.device)
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         input_transform = botorch.models.transforms.Normalize(
