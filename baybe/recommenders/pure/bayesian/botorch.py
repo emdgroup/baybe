@@ -736,13 +736,41 @@ class BotorchRecommender(BayesianRecommender):
         pending_experiments: pd.DataFrame | None = None,
     ) -> None:
         """Set up the BoTorch acquisition function."""
+        import torch
+
+        # Aggressively reset any existing model's state before setup
+        if hasattr(self, "_botorch_acqf") and self._botorch_acqf is not None:
+            if (
+                hasattr(self._botorch_acqf, "model")
+                and self._botorch_acqf.model is not None
+            ):
+                model = self._botorch_acqf.model
+
+                # Clear prediction strategy
+                if hasattr(model, "prediction_strategy"):
+                    model.prediction_strategy = None
+
+                # Move train data to CPU first to avoid mixed device issues
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    model.train_inputs = tuple(x.to("cpu") for x in model.train_inputs)
+
+                if hasattr(model, "train_targets"):
+                    model.train_targets = model.train_targets.to("cpu")
+
+                # Move input transform to CPU as well
+                if hasattr(model, "input_transform"):
+                    model.input_transform = model.input_transform.to("cpu")
+
+                # Update the model in the acquisition function
+                self._botorch_acqf.model = model
+
         with device_context(self.device):
+            # Call parent implementation
             super()._setup_botorch_acqf(
                 searchspace, objective, measurements, pending_experiments
             )
 
-            # After setup is complete, if we have an acquisition function,
-            # recreate the prediction strategy with a forced device
+            # Ensure all components are on the target device
             if (
                 hasattr(self, "_botorch_acqf")
                 and self._botorch_acqf is not None
@@ -751,41 +779,40 @@ class BotorchRecommender(BayesianRecommender):
             ):
                 model = self._botorch_acqf.model
 
-                # Move model to the intended device
-                model = to_device(model, self.device)
-
-                # Detach the prediction strategy so we can rebuild it
+                # First reset prediction strategy
                 if hasattr(model, "prediction_strategy"):
                     model.prediction_strategy = None
 
-                # Force rebuild of prediction strategy on the correct device
+                # Move to the intended device
+                model = model.to(self.device)
+
+                # Ensure all training inputs are on the target device
                 if hasattr(model, "train_inputs") and model.train_inputs:
-                    try:
-                        # Move all training data to the device
-                        train_x = model.train_inputs[0].to(self.device)
-                        train_y = model.train_targets.to(self.device)
+                    model.train_inputs = tuple(
+                        x.to(self.device) for x in model.train_inputs
+                    )
 
-                        # Put model in eval mode
-                        model.eval()
+                if hasattr(model, "train_targets"):
+                    model.train_targets = model.train_targets.to(self.device)
 
-                        # Force a forward pass to rebuild prediction strategy
-                        with torch.no_grad():
-                            output = model(train_x)
-                            _ = model.likelihood(output)
+                # Ensure input transform is on the right device
+                if hasattr(model, "input_transform"):
+                    model.input_transform = model.input_transform.to(self.device)
+                    if hasattr(model.input_transform, "indices"):
+                        model.input_transform.indices = (
+                            model.input_transform.indices.to(self.device)
+                        )
 
-                            # For ExactGP models, explicitly rebuild prediction strategy
-                            if hasattr(model, "exact_prediction_strategy"):
-                                model.prediction_strategy = (
-                                    model.exact_prediction_strategy(
-                                        train_x, train_y, model.likelihood
-                                    )
-                                )
-                    except Exception as e:
-                        # If there's an error rebuilding, just log it and continue
-                        print(f"Error rebuilding prediction strategy: {e}")
+                # Put model in eval mode
+                model.eval()
+
+                # Force rebuild of prediction strategy with dummy forward pass
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    with torch.no_grad():
+                        _ = model(model.train_inputs[0])
 
                 # Update the model in the acquisition function
                 self._botorch_acqf.model = model
 
-                # Move the entire acquisition function to the device
-                self._botorch_acqf = to_device(self._botorch_acqf, self.device)
+                # Finally, move the entire acquisition function to the target device
+                self._botorch_acqf = self._botorch_acqf.to(self.device)

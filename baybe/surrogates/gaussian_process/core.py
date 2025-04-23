@@ -138,24 +138,46 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        # Determine which device the model is on
-        model_device = None
-        if hasattr(self._model, "train_inputs") and self._model.train_inputs:
+        # Ensure input is on the right device - prioritize model's device
+        if (
+            self._model is not None
+            and hasattr(self._model, "train_inputs")
+            and self._model.train_inputs
+        ):
             model_device = self._model.train_inputs[0].device
-
-        if model_device is not None:
-            # Move the input tensor to the same device as the model
             if candidates_comp_scaled.device != model_device:
                 candidates_comp_scaled = candidates_comp_scaled.to(model_device)
 
-            # Also ensure input_transform.indices is on the right device
+        # Reset prediction strategy before making prediction to force rebuild
+        if (
+            hasattr(self._model, "prediction_strategy")
+            and self._model.prediction_strategy is not None
+        ):
+            # Get the current device of prediction strategy components
+            try:
+                # Access a tensor in the prediction strategy to determine its device
+                if hasattr(self._model.prediction_strategy, "mean_cache"):
+                    strat_device = self._model.prediction_strategy.mean_cache.device
+
+                    # If there's a device mismatch, reset the prediction strategy
+                    if candidates_comp_scaled.device != strat_device:
+                        self._model.prediction_strategy = None
+            except Exception:
+                # If any error occurs during this check, play it safe and reset
+                self._model.prediction_strategy = None
+
+        # If input transform has indices, ensure they're on the right device
+        if hasattr(self._model, "input_transform") and hasattr(
+            self._model.input_transform, "indices"
+        ):
             if (
-                hasattr(self._model, "input_transform")
-                and hasattr(self._model.input_transform, "indices")
-                and self._model.input_transform.indices.device != model_device
+                self._model.input_transform.indices.device
+                != candidates_comp_scaled.device
             ):
                 self._model.input_transform.indices = (
-                    self._model.input_transform.indices.to(model_device)
+                    self._model.input_transform.indices.to(
+                        candidates_comp_scaled.device
+                    )
                 )
 
         return self._model.posterior(candidates_comp_scaled)
