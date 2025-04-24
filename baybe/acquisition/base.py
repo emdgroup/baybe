@@ -161,11 +161,32 @@ class AcquisitionFunction(ABC, SerialMixin):
         """
         import torch
 
+        # Get device from surrogate if available
+        device = getattr(surrogate, "device", None)
+
         # Assemble the Botorch acquisition function and its input
         botorch_acqf = self.to_botorch(
             surrogate, searchspace, objective, measurements, pending_experiments
         )
-        comp = to_tensor(searchspace.transform(candidates))
+
+        # Transform candidates and ensure proper device placement
+        comp = to_tensor(searchspace.transform(candidates), device=device)
+
+        # Ensure acquisition function is on the same device as the input
+        if hasattr(botorch_acqf, "model") and botorch_acqf.model is not None:
+            model_device = None
+            if (
+                hasattr(botorch_acqf.model, "train_inputs")
+                and botorch_acqf.model.train_inputs
+            ):
+                model_device = botorch_acqf.model.train_inputs[0].device
+                # Move input tensor to model device if they differ
+                if model_device is not None and comp.device != model_device:
+                    comp = comp.to(model_device)
+
+        # Ensure acqf is on same device if it has a to() method
+        if hasattr(botorch_acqf, "to"):
+            botorch_acqf = botorch_acqf.to(comp.device)
 
         # Depending on joint mode, evaluate using t- or q-batching
         in_ = comp if jointly else comp.unsqueeze(-2)
@@ -173,7 +194,7 @@ class AcquisitionFunction(ABC, SerialMixin):
             out = botorch_acqf(in_)
         if jointly:
             return out.item()
-        return pd.Series(out.numpy(), index=candidates.index)
+        return pd.Series(out.cpu().numpy(), index=candidates.index)
 
 
 def _get_botorch_acqf_class(
