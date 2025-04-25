@@ -1,4 +1,4 @@
-name: Run Benchmark
+name: Benchmark
 
 on:
   workflow_dispatch:
@@ -9,63 +9,14 @@ on:
         default: "All"
         type: choice
         options:
-          - "Manually Selected"
           - "All"
-      synthetic_2C1D_1C:
-        description: "synthetic_2C1D_1C"
-        required: false
-        default: false
-        type: boolean
-      aryl_halide_CT_IM_tl:
-        description: "aryl_halide_CT_IM_tl"
-        required: false
-        default: false
-        type: boolean
-      aryl_halide_IP_CP_tl:
-        description: "aryl_halide_IP_CP_tl"
-        required: false
-        default: false
-        type: boolean
-      aryl_halide_CT_I_BM_tl:
-        description: "aryl_halide_CT_I_BM_tl"
-        required: false
-        default: false
-        type: boolean
-      direct_arylation_tl_temperature:
-        description: "direct_arylation_tl_temperature"
-        required: false
-        default: false
-        type: boolean
-      easom_tl_47_negate_noise5:
-        description: "easom_tl_47_negate_noise5"
-        required: false
-        default: false
-        type: boolean
-      hartmann_tl_3_15_15:
-        description: "hartmann_tl_3_15_15"
-        required: false
-        default: false
-        type: boolean
-      michalewicz_tl_continuous:
-        description: "michalewicz_tl_continuous"
-        required: false
-        default: false
-        type: boolean
-      hartmann_3d:
-        description: "hartmann_3d"
-        required: false
-        default: false
-        type: boolean
-      hartmann_6d:
-        description: "hartmann_6d"
-        required: false
-        default: false
-        type: boolean
-      hartmann_3d_discretized:
-        description: "hartmann_3d_discretized"
-        required: false
-        default: false
-        type: boolean
+          - "Transfer Learning"
+          - "Synthetic"
+
+env:
+  TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous"]'
+  SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  ALL_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
 
 permissions:
   contents: read
@@ -77,24 +28,24 @@ jobs:
     outputs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
     steps:
-      - name: Build matrix from inputs
-        id: build_matrix_from_inputs
+      - name: Build matrix from group
+        id: build_matrix_from_group
         run: |
-          benchmarks_to_execute='{"benchmark_list": ['
-          run_all_benchmarks=${{ github.event.inputs.group_selection == 'All' }}
+          benchmarks_to_execute='{"benchmark_list": []}'
+          run_all_benchmarks="${{ github.event.inputs.group_selection }}"
 
-          for key in $(echo '${{ toJson(github.event.inputs) }}' | jq -r 'keys_unsorted[]'); do
-            if [ "$key" != "group_selection" ]; then
-              value=$(echo '${{ toJson(github.event.inputs) }}' | jq -r --arg k "$key" '.[$k]')
-              if [ "$value" = "true" ] || [ "$run_all_benchmarks" = "true" ]; then
-                benchmarks_to_execute="$benchmarks_to_execute \"$key\","
-              fi
-            fi
-          done
-          benchmarks_to_execute=$(echo "$benchmarks_to_execute" | sed 's/,$//')
-          benchmarks_to_execute="$benchmarks_to_execute ]}"
+          if [ "$run_all_benchmarks" = "Transfer Learning" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_BENCHMARKS }} }'
+          fi
+          if [ "$run_all_benchmarks" = "Synthetic" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.SYNTHETIC_BENCHMARKS }} }'
+          fi
+          if [ "$run_all_benchmarks" = "All" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
+          fi
 
           echo "benchmarks_to_execute=$benchmarks_to_execute" >> "$GITHUB_ENV"
+
 
       - name: Set benchmarks output
         id: set_benchmarks
