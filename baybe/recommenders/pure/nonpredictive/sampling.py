@@ -1,6 +1,7 @@
 """Recommenders based on sampling."""
 
-from typing import ClassVar, Literal
+from enum import Enum
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -54,7 +55,14 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-@define(kw_only=True)
+class FPSInitialization(Enum):
+    """Initialization methods for FPS."""
+
+    FARTHEST = "farthest"
+    RANDOM = "random"
+
+
+@define()
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
 
@@ -62,12 +70,17 @@ class FPSRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
-    initialization: Literal["farthest", "random"] = field(
-        default="farthest", validator=instance_of(str)
+    initialization: FPSInitialization = field(
+        default=FPSInitialization.FARTHEST,
+        converter=FPSInitialization,
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
-    random_tie_break: bool = field(default=True, validator=instance_of(bool))
+    random_tie_break: bool = field(
+        default=True,
+        validator=instance_of(bool),
+        kw_only=True,
+    )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
     @override
@@ -88,7 +101,7 @@ class FPSRecommender(NonPredictiveRecommender):
         ilocs = farthest_point_sampling(
             candidates_scaled,
             batch_size,
-            initialization=self.initialization,
+            initialization=self.initialization.value,
             random_tie_break=self.random_tie_break,
         )
         return candidates_comp.index[ilocs]
