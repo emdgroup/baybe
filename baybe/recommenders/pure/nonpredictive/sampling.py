@@ -56,13 +56,16 @@ class RandomRecommender(NonPredictiveRecommender):
 
 
 class FPSInitialization(Enum):
-    """Initialization methods for FPS."""
+    """Initialization methods for farthest point sampling."""
 
     FARTHEST = "farthest"
+    """Selects the first two points with the largest distance."""
+
     RANDOM = "random"
+    """Selects the first point uniformly at random."""
 
 
-@define()
+@define
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
 
@@ -77,9 +80,7 @@ class FPSRecommender(NonPredictiveRecommender):
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
     random_tie_break: bool = field(
-        default=True,
-        validator=instance_of(bool),
-        kw_only=True,
+        default=True, validator=instance_of(bool), kw_only=True
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
