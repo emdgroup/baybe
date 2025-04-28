@@ -1,9 +1,12 @@
 """Recommenders based on sampling."""
 
+from enum import Enum
 from typing import ClassVar
 
 import numpy as np
 import pandas as pd
+from attrs import define, field
+from attrs.validators import instance_of
 from sklearn.preprocessing import StandardScaler
 from typing_extensions import override
 
@@ -52,12 +55,34 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
+class FPSInitialization(Enum):
+    """Initialization methods for farthest point sampling."""
+
+    FARTHEST = "farthest"
+    """Selects the first two points with the largest distance."""
+
+    RANDOM = "random"
+    """Selects the first point uniformly at random."""
+
+
+@define
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
+
+    initialization: FPSInitialization = field(
+        default=FPSInitialization.FARTHEST,
+        converter=FPSInitialization,
+    )
+    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+
+    random_tie_break: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
     @override
     def _recommend_discrete(
@@ -74,7 +99,12 @@ class FPSRecommender(NonPredictiveRecommender):
         # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(candidates_scaled, batch_size)
+        ilocs = farthest_point_sampling(
+            candidates_scaled,
+            batch_size,
+            initialization=self.initialization.value,
+            random_tie_break=self.random_tie_break,
+        )
         return candidates_comp.index[ilocs]
 
     @override
