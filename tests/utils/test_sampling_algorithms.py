@@ -59,7 +59,9 @@ def test_farthest_point_sampling(points: np.ndarray, random_tie_break: bool):
     in its respective iteration.
     """  # noqa
     # Order the points using FPS
-    sorting_idxs = farthest_point_sampling(points, len(points))
+    sorting_idxs = farthest_point_sampling(
+        points, len(points), random_tie_break=random_tie_break
+    )
     target = points[sorting_idxs]
 
     # For the ordered collection of points, it must hold:
