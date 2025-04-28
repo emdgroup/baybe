@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ngboost` is now an optional dependency
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
-- `random_tie_break` flag added to `farthest_point_sampling`, that toggles between 
+- `random_tie_break` flag added to `farthest_point_sampling`to toggle between 
   random or deterministic sampling for equidistant cases
 - `random_tie_break` and `initialization` keywords added to `FPSRecommender` to
   steer samling in `farthest_point_sampling`
