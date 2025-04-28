@@ -55,7 +55,7 @@ class RandomRecommender(NonPredictiveRecommender):
         return to_string(self.__class__.__name__, *fields)
 
 
-class FPSInitializtion(Enum):
+class FPSInitialization(Enum):
     """Initialization methods for FPS."""
 
     FARTHEST = "farthest"
@@ -70,9 +70,9 @@ class FPSRecommender(NonPredictiveRecommender):
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
     # See base class.
 
-    initialization: FPSInitializtion = field(
-        default=FPSInitializtion.FARTHEST,
-        converter=FPSInitializtion,
+    initialization: FPSInitialization = field(
+        default=FPSInitialization.FARTHEST,
+        converter=FPSInitialization,
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
@@ -101,7 +101,7 @@ class FPSRecommender(NonPredictiveRecommender):
         ilocs = farthest_point_sampling(
             candidates_scaled,
             batch_size,
-            initialization=self.initialization,
+            initialization=self.initialization.value,
             random_tie_break=self.random_tie_break,
         )
         return candidates_comp.index[ilocs]
