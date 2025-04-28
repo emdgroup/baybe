@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `random_tie_break` flag to `farthest_point_sampling` to toggle between 
+  random or deterministic sampling for equidistant cases
+- `random_tie_break` and `initialization` attributes to `FPSRecommender` to
+  control sampling in `farthest_point_sampling`
+
 ## [0.13.0] - 2025-04-16
 ### Added
 - `extras` group for installing all dependencies required for optional features
@@ -70,10 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ngboost` is now an optional dependency
 - `setuptools-scm` is now an optional dependency, used for improved version inference
 - `create_example_plots`, `to_string` and `indent` have been relocated within utils
-- `random_tie_break` flag added to `farthest_point_sampling`to toggle between 
-  random or deterministic sampling for equidistant cases
-- `random_tie_break` and `initialization` keywords added to `FPSRecommender` to
-  steer samling in `farthest_point_sampling`
 
 ### Fixed
 - Incorrect optimization direction with `PSTD` with a single minimization target
