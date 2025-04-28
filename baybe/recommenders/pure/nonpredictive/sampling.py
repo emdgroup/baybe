@@ -65,7 +65,10 @@ class FPSRecommender(NonPredictiveRecommender):
     initialization: Literal["farthest", "random"] = field(
         default="farthest", validator=instance_of(str)
     )
+    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+
     random_tie_break: bool = field(default=True, validator=instance_of(bool))
+    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
     @override
     def _recommend_discrete(

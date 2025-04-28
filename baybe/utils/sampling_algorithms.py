@@ -34,7 +34,8 @@ def farthest_point_sampling(
             * ``"random"``: The first point is selected uniformly at random.
         random_tie_break: Determines if points are chosen deterministically or randomly
             in equidistant situations. If ``True``, a random point is selected from the
-            candidates, otherwise the first point is selected.
+            candidates, otherwise the first point is selected. For non-equidistant
+            points, the point with the largest minimum distance is always selected.
 
     Returns:
         A list containing the positional indices of the selected points.
