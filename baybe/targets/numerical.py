@@ -20,8 +20,8 @@ from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
-    ChainedTransformation,
     ClampingTransformation,
+    IdentityTransformation,
     Transformation,
     TransformationProtocol,
     convert_transformation,
@@ -173,6 +173,15 @@ class NumericalTarget(Target, SerialMixin):
             name, AffineTransformation.from_unit_interval(*bounds).clamp(0, 1)
         )
 
+    @property
+    def total_transformation(self) -> Transformation:
+        """The total applied transformation, including potential negation."""
+        transformation = self.transformation or IdentityTransformation()
+        if self.minimize:
+            return transformation + AffineTransformation(factor=-1)
+        else:
+            return transformation
+
     @override
     def transform(
         self, series: pd.Series | None = None, /, *, data: pd.DataFrame | None = None
@@ -198,19 +207,11 @@ class NumericalTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
-        if (trans := self.transformation) is not None or self.minimize:
+        if (self.transformation is not None) or self.minimize:
             import torch
 
-            if self.minimize:
-                if trans is None:
-                    trans = AffineTransformation(factor=-1)
-                else:
-                    trans = ChainedTransformation(
-                        trans, AffineTransformation(factor=-1)
-                    )
-            assert trans is not None
             return pd.Series(
-                trans(torch.from_numpy(series.to_numpy())),
+                self.total_transformation(torch.from_numpy(series.to_numpy())),
                 index=series.index,
                 name=series.name,
             )

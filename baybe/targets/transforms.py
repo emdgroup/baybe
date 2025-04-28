@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from attrs import define, field
 from attrs.converters import optional
-from attrs.validators import deep_iterable, instance_of, is_callable
+from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
 
 from baybe.targets._deprecated import (  # noqa: F401
@@ -69,8 +69,10 @@ class Transformation(TransformationProtocol, ABC):
 
     def __add__(
         self, other: TransformationProtocol | int | float
-    ) -> ChainedTransformation:
+    ) -> TransformationProtocol:
         """Chain another transformation or shift the output of the current one."""
+        if isinstance(other, IdentityTransformation):
+            return self
         if isinstance(other, TransformationProtocol):
             return ChainedTransformation(self, other)
         if isinstance(other, (int, float)):
@@ -101,8 +103,13 @@ class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
     transformations: tuple[TransformationProtocol, ...] = field(
-        converter=to_tuple,
-        validator=deep_iterable(member_validator=instance_of(TransformationProtocol)),
+        converter=lambda x: to_tuple(
+            t for t in x if not isinstance(t, IdentityTransformation)
+        ),
+        validator=[
+            min_len(2),
+            deep_iterable(member_validator=instance_of(TransformationProtocol)),
+        ],
     )
     """The transformations to be composed."""
 
@@ -135,6 +142,23 @@ class GenericTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return self.transformation(x)
+
+
+@define
+class IdentityTransformation(Transformation):
+    """The identity transformation."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x
+
+    @override
+    def __add__(
+        self, other: TransformationProtocol | int | float
+    ) -> TransformationProtocol:
+        if isinstance(other, (int, float)):
+            return AffineTransformation(shift=other)
+        return other
 
 
 @define

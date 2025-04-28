@@ -16,6 +16,7 @@ from baybe.targets.transforms import (
     ChainedTransformation,
     ClampingTransformation,
     GenericTransformation,
+    IdentityTransformation,
     bell_transform,
     linear_transform,
     triangular_transform,
@@ -231,6 +232,29 @@ def test_transformation_chaining():
     t = c.append(t3).append(c)
 
     assert t == ChainedTransformation(t1, t2, t3, t1, t2)
+
+
+@pytest.mark.parametrize(
+    "transformations",
+    [
+        (AbsoluteTransformation(),),
+        (AbsoluteTransformation(), IdentityTransformation()),
+    ],
+    ids=["single", "single_with_identity"],
+)
+def test_invalid_transformation_chaining(transformations):
+    """A chaining transformation requires at least two involved transformations."""
+    with pytest.raises(ValueError, match="must be >= 2: 1"):
+        ChainedTransformation(*transformations)
+
+
+def test_identity_transformation_chaining():
+    """Chaining an identity transformation has no effect."""
+    t1 = IdentityTransformation()
+    t2 = ClampingTransformation()
+
+    assert t1.append(t2) == t2
+    assert t2.append(t1) == t2
 
 
 def test_generic_transformation(series):
