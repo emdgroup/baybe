@@ -25,6 +25,8 @@ FPSRecommender
 
    .. autosummary::
    
+      ~FPSRecommender.initialization
+      ~FPSRecommender.random_tie_break
       ~FPSRecommender.allow_recommending_already_measured
       ~FPSRecommender.allow_recommending_pending_experiments
       ~FPSRecommender.allow_repeated_recommendations
