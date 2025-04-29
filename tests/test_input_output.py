@@ -47,14 +47,10 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
     ],
 )
 @pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
-def test_bad_target_input_value(campaign, good_reference_values, bad_val):
+def test_bad_target_input_value(campaign, bad_val):
     """Test attempting to read in an invalid target value."""
     rec = campaign.recommend(batch_size=3)
-    add_fake_measurements(
-        rec,
-        campaign.targets,
-        good_reference_values=good_reference_values,
-    )
+    add_fake_measurements(rec, campaign.targets)
 
     # Add an invalid value
     rec[campaign.targets[0].name].iloc[0] = bad_val

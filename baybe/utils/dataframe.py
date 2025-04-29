@@ -66,114 +66,24 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
 
 
 def add_fake_measurements(
-    data: pd.DataFrame,
-    targets: Iterable[Target],
-    good_reference_values: dict[str, list] | None = None,
-    good_intervals: dict[str, tuple[float, float]] | None = None,
-    bad_intervals: dict[str, tuple[float, float]] | None = None,
+    data: pd.DataFrame, targets: Iterable[Target]
 ) -> pd.DataFrame:
-    """Add fake measurements to a dataframe which was the result of a recommendation.
-
-    It is possible to specify "good" values, which will be given a better
-    target value. With this, the algorithm can be driven towards certain optimal values
-    whilst still being random. Useful for testing. Note that the dataframe is changed
-    in-place and also returned.
+    """Add in-place fake target values to a given dataframe.
 
     Args:
-        data: A dataframe containing parameter configurations in experimental
-            representation, for instance, created via
-            :func:`baybe.campaign.Campaign.recommend`.
-        targets: The targets for which fake results should be added to the dataframe.
-        good_reference_values: A dictionary containing parameter names (= dict keys) and
-            respective parameter values (= dict values) that specify what will be
-            considered good parameter settings. Conditions for different parameters are
-            connected via "and" logic, i.e. the targets will only get good values when
-            all parameters have good reference values.
-        good_intervals: A dictionary containing target names (= dict keys) and
-            respective "good" target value ranges (= dict values) in the form of
-            2-tuples. Each target will be assigned a random value in its respective
-            target range whenever the corresponding parameters meet the conditions
-            specified through ``good_reference_values``.
-        bad_intervals: Analogous to ``good_intervals`` but covering the cases where
-            the parameters lie outside the conditions specified through
-            ``good_reference_values``.
+        data: The dataframe which to augment with fake target values.
+        targets: The targets for which fake results should be added.
 
     Returns:
         The modified dataframe.
-
-    Raises:
-        ValueError: If good values for a parameter were specified, but this parameter
-            is not part of the dataframe.
-        ValueError: If the target mode is unrecognized when trying to add fake values.
-        TypeError: If the entries in ``good_reference_values`` are not lists.
     """
-    # Per default, there are no reference values for good parameters
-    if good_reference_values is None:
-        good_reference_values = {}
-
-    # Validate input
-    for param, vals in good_reference_values.items():
-        if param not in data.columns:
-            raise ValueError(
-                f"When adding fake results you specified good "
-                f"values for the parameter '{param}' but this "
-                f"parameter is not in the dataframe."
-            )
-        if not isinstance(vals, list):
-            raise TypeError(
-                f"Entries in parameter 'good_reference_values' "
-                f"(which is a dictionary) must be lists, but you "
-                f"provided {vals}."
-            )
-
-    # Set defaults for good intervals
-    if good_intervals is None:
-        good_intervals = {}
-        for target in targets:
-            if isinstance(target, BinaryTarget):
-                continue
-
-            assert isinstance(target, NumericalTarget) and target.transformation is None
-            good_intervals[target.name] = (0, 33) if target.minimize else (66, 100)
-
-    # Set defaults for bad intervals
-    if bad_intervals is None:
-        bad_intervals = {}
-        for target in targets:
-            if isinstance(target, BinaryTarget):
-                continue
-
-            assert isinstance(target, NumericalTarget) and target.transformation is None
-            bad_intervals[target.name] = (66, 100) if target.minimize else (0, 33)
-
-    # Add the fake data for each target
     for target in targets:
         if isinstance(target, BinaryTarget):
-            # TODO: When refactoring, take into account good and bad intervals
             data[target.name] = np.random.choice(
                 [target.failure_value, target.success_value], size=len(data)
             )
-            continue
-
-        # Add bad values
-        data[target.name] = np.random.uniform(
-            bad_intervals[target.name][0], bad_intervals[target.name][1], len(data)
-        )
-
-        # Create masks that identify locations where to place good values
-        masks = []
-        for param, vals in good_reference_values.items():
-            mask = data[param].isin(vals)
-            masks.append(mask)
-
-        # Overwrite bad values with good ones using the computed masks
-        if len(masks) > 0:
-            final_mask = pd.concat(masks, axis=1).all(axis=1)
-            data.loc[final_mask, target.name] = np.random.uniform(
-                good_intervals[target.name][0],
-                good_intervals[target.name][1],
-                final_mask.sum(),
-            )
+        elif isinstance(target, NumericalTarget):
+            data[target.name] = np.random.uniform(-100, 100, size=len(data))
 
     return data
 

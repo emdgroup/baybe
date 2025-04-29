@@ -196,16 +196,6 @@ def fixture_n_grid_points(request):
     return request.param
 
 
-@pytest.fixture(name="good_reference_values")
-def fixture_good_reference_values():
-    """Define some good reference values.
-
-    These are used by the utility function to
-    generate fake good results. These only make sense for discrete parameters.
-    """
-    return {"Categorical_1": ["B"], "Categorical_2": ["OK"]}
-
-
 @pytest.fixture(name="mock_substances")
 def fixture_mock_substances():
     """A set of test substances."""
