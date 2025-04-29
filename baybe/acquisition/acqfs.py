@@ -369,7 +369,7 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
     @staticmethod
     def compute_ref_point(
-        array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
+        array: npt.ArrayLike, maximize: npt.ArrayLike | None = None, factor: float = 0.1
     ) -> np.ndarray:
         """Compute a reference point for a given set of target configurations.
 
@@ -393,7 +393,8 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
         Args:
             array: A 2-D array-like where each row represents a target configuration.
-            maximize: A 1-D boolean array indicating which targets are to be maximized.
+            maximize: An optional 1-D Boolean array indicating which targets are to be
+                maximized.
             factor: A numeric value controlling the location of the reference point.
 
         Raises:
@@ -407,13 +408,15 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
             raise ValueError(
                 "The specified data array must have exactly two dimensions."
             )
-        if np.ndim(maximize) != 1:
+        if (maximize is not None) and (np.ndim(maximize) != 1):
             raise ValueError(
                 "The specified Boolean array must have exactly one dimension."
             )
 
-        # Convert arrays
+        # Convert arrays and set default optimization direction
         array = np.asarray(array)
+        if maximize is None:
+            maximize = [True for _ in range(array.shape[1])]
         maximize = np.where(maximize, 1.0, -1.0)
 
         # Compute bounds

@@ -24,11 +24,9 @@ from baybe.acquisition.acqfs import (
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives.base import Objective
-from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
@@ -84,7 +82,6 @@ class BotorchAcquisitionFunctionBuilder:
     _args: BotorchAcquisitionArgs = field(init=False)
     _botorch_acqf_cls: BoAcquisitionFunction = field(init=False)
     _signature: MappingProxyType = field(init=False)
-    _set_best_f_called: bool = field(init=False, default=False)
 
     def __attrs_post_init__(self) -> None:
         """Initialize the building process."""
@@ -104,16 +101,6 @@ class BotorchAcquisitionFunctionBuilder:
     def _botorch_surrogate(self) -> Model:
         """The botorch surrogate object."""
         return self.surrogate.to_botorch()
-
-    @property
-    def _maximize_flags(self) -> list[bool]:
-        """Booleans indicating which target is to be minimized/maximized."""
-        raise NotImplementedError()
-
-    @property
-    def _multiplier(self) -> list[float]:
-        """Signs indicating which target is to be minimized/maximized."""
-        return [1.0 if m else -1.0 for m in self._maximize_flags]
 
     @cached_property
     def _train_x(self) -> pd.DataFrame:
@@ -150,7 +137,7 @@ class BotorchAcquisitionFunctionBuilder:
                 f"argument of '{self.acqf.__class__.__name__}' explicitly."
             )
 
-        return self.objective.transform(configurations)
+        return configurations
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
@@ -169,9 +156,6 @@ class BotorchAcquisitionFunctionBuilder:
 
     def _invert_optimization_direction(self) -> None:
         """Invert optimization direction for minimization targets."""
-        # ``best_f`` must have been already set (for the inversion below to work)
-        assert self._set_best_f_called
-
         if issubclass(
             type(self.acqf),
             (
@@ -187,22 +171,20 @@ class BotorchAcquisitionFunctionBuilder:
             # In both cases, the setting is independent of the target mode.
             return
 
-        raise NotImplementedError()
+        self._args.objective = self.objective.to_botorch()
 
     def _set_best_f(self) -> None:
         """Set BoTorch's ``best_f`` argument."""
-        self._set_best_f_called = True
-
         if flds.best_f.name not in self._signature:
             return
 
         post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
 
         match self.objective:
-            case SingleTargetObjective(NumericalTarget(minimize=True)):
-                raise NotImplementedError()
-            case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = post_mean.max().item()
+            case SingleTargetObjective():
+                self._args.best_f = self.objective.to_botorch()(post_mean).max().item()
+            case _:
+                raise NotImplementedError("This line should be impossible to reach.")
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
@@ -230,18 +212,14 @@ class BotorchAcquisitionFunctionBuilder:
         assert isinstance(self.acqf, _ExpectedHypervolumeImprovement)
 
         if isinstance(ref_point := self.acqf.reference_point, Iterable):
-            self._args.ref_point = torch.tensor(
-                [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
-            )
+            self._args.ref_point = torch.tensor(ref_point)
         else:
             kwargs = {} if ref_point is None else {"factor": ref_point}
-            self._args.ref_point = torch.tensor(
+            self._args.ref_point = to_tensor(
                 self.acqf.compute_ref_point(
-                    self._target_configurations.to_numpy(),
-                    self._maximize_flags,
+                    self.objective.to_botorch()(to_tensor(self._target_configurations)),
                     **kwargs,
                 )
-                * self._multiplier
             )
 
     def _set_X_baseline(self) -> None:
