@@ -92,7 +92,7 @@ class Transformation(TransformationProtocol, ABC):
         if isinstance(other, IdentityTransformation):
             return self
         if isinstance(other, TransformationProtocol):
-            return ChainedTransformation(self, other)
+            return ChainedTransformation([self, other])
         if isinstance(other, (int, float)):
             return self + AffineTransformation(shift=other)
         return NotImplemented
@@ -116,7 +116,7 @@ class Transformation(TransformationProtocol, ABC):
         return args[0] + GenericTransformation(func)
 
 
-@define(init=False)
+@define
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
@@ -131,9 +131,6 @@ class ChainedTransformation(Transformation):
     )
     """The transformations to be composed."""
 
-    def __init__(self, *transformations: TransformationProtocol):
-        self.__attrs_init__(transformations)
-
     @override
     def append(
         self, transformation: TransformationProtocol, /
@@ -143,7 +140,7 @@ class ChainedTransformation(Transformation):
             if isinstance(transformation, ChainedTransformation)
             else [transformation]
         )
-        return ChainedTransformation(*self.transformations, *addendum)
+        return ChainedTransformation([*self.transformations, *addendum])
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:

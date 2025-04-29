@@ -228,10 +228,10 @@ def test_transformation_chaining():
     t2 = ClampingTransformation()
     t3 = AbsoluteTransformation()
 
-    c = ChainedTransformation(t1, t2)
+    c = ChainedTransformation([t1, t2])
     t = c.append(t3).append(c)
 
-    assert t == ChainedTransformation(t1, t2, t3, t1, t2)
+    assert t == ChainedTransformation([t1, t2, t3, t1, t2])
 
 
 @pytest.mark.parametrize(
@@ -245,7 +245,7 @@ def test_transformation_chaining():
 def test_invalid_transformation_chaining(transformations):
     """A chaining transformation requires at least two involved transformations."""
     with pytest.raises(ValueError, match="must be >= 2: 1"):
-        ChainedTransformation(*transformations)
+        ChainedTransformation(transformations)
 
 
 def test_identity_transformation_chaining():
@@ -272,7 +272,9 @@ def test_transformation_addition(series):
     """Adding transformations results in chaining/shifting."""
     t1 = ModernTarget(
         "t",
-        ChainedTransformation(AbsoluteTransformation(), AffineTransformation(shift=1)),
+        ChainedTransformation(
+            [AbsoluteTransformation(), AffineTransformation(shift=1)]
+        ),
     )
     t2 = ModernTarget("t", AbsoluteTransformation() + 1)
     t3 = ModernTarget("t", AbsoluteTransformation() + AffineTransformation(shift=1))
@@ -286,7 +288,9 @@ def test_transformation_multiplication(series):
     """Multiplying transformations results in scaling."""
     t1 = ModernTarget(
         "t",
-        ChainedTransformation(AbsoluteTransformation(), AffineTransformation(factor=2)),
+        ChainedTransformation(
+            [AbsoluteTransformation(), AffineTransformation(factor=2)]
+        ),
     )
     t2 = ModernTarget("t", AbsoluteTransformation() * 2)
     t3 = ModernTarget("t", AbsoluteTransformation() + AffineTransformation(factor=2))
