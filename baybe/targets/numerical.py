@@ -90,7 +90,7 @@ class NumericalTarget(Target, SerialMixin):
             )
 
             # Translate to modern API
-            mode = TargetMode[kw["mode"]]
+            mode = TargetMode(kw["mode"])
             bounds = kw["bounds"]
             if mode in (TargetMode.MAX, TargetMode.MIN):
                 if bounds is None:
