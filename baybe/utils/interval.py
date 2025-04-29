@@ -2,6 +2,7 @@
 
 import gc
 from collections.abc import Iterable
+from copy import deepcopy
 from functools import singledispatchmethod
 from typing import TYPE_CHECKING, Any
 
@@ -86,6 +87,11 @@ class Interval(SerialMixin):
     @classmethod
     def create(cls, value: Any):
         """Create an interval from various input types."""
+        # Singledispatch does not play well with forward references, hence
+        #   we use this workaround.
+        if isinstance(value, Interval):
+            return deepcopy(value)
+
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
     @create.register
@@ -97,7 +103,7 @@ class Interval(SerialMixin):
     @create.register
     @classmethod
     def _(cls, bounds: Iterable):
-        """Overloaded implementation for creating an interval of an iterable."""
+        """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
 
     def to_tuple(self) -> tuple[float, float]:

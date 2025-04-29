@@ -117,7 +117,9 @@ class NumericalTarget(Target, SerialMixin):
             self.__attrs_init__(name, transformation_, minimize=minimize)
 
     @classmethod
-    def match_triangular(cls, name: str, cutoffs: Iterable[float]) -> NumericalTarget:
+    def match_triangular(
+        cls, name: str, cutoffs: Interval | Iterable[float]
+    ) -> NumericalTarget:
         """Create a target to match a given setpoint using a triangular transformation.
 
         Args:
@@ -153,7 +155,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @classmethod
     def clamped_affine(
-        cls, name: str, cutoffs: Iterable[float], *, descending: bool = False
+        cls, name: str, cutoffs: Interval | Iterable[float], *, descending: bool = False
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
 
