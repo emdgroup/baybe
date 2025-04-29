@@ -1,10 +1,12 @@
 """Functionality for desirability objectives."""
 
+from __future__ import annotations
+
 import gc
 import warnings
 from collections.abc import Callable
 from functools import cached_property, partial
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import cattrs
 import numpy as np
@@ -24,6 +26,9 @@ from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df, transform_target_columns
 from baybe.utils.numerical import geom_mean
 from baybe.utils.validation import finite_float
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
 
 
 def scalarize(
@@ -139,6 +144,10 @@ class DesirabilityObjective(Objective):
         ]
 
         return to_string("Objective", *fields)
+
+    @override
+    def to_botorch(self) -> MCAcquisitionObjective:
+        raise NotImplementedError()
 
     @override
     def transform(

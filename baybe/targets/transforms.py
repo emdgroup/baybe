@@ -19,6 +19,7 @@ from baybe.targets._deprecated import (  # noqa: F401
 from baybe.utils.basic import compose, to_tuple
 
 if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
     TensorCallable = Callable[[Tensor], Tensor]
@@ -48,6 +49,23 @@ class Transformation(TransformationProtocol, ABC):
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
+
+    def to_botorch(self, *, keep_dimension: bool) -> MCAcquisitionObjective:
+        """Convert to BoTorch representation.
+
+        Args:
+            keep_dimension: Boolean flag specifying whether to keep an explicit
+                dimension for the outputs of the objective.
+
+        Returns:
+            The BoTorch objective.
+        """
+        from botorch.acquisition.objective import GenericMCObjective
+
+        if keep_dimension:
+            return GenericMCObjective(lambda samples, X: self(samples))
+        else:
+            return GenericMCObjective(lambda samples, X: self(samples).squeeze(-1))
 
     def append(
         self, transformation: TransformationProtocol, /

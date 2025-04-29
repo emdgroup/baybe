@@ -1,8 +1,10 @@
 """Functionality for single-target objectives."""
 
+from __future__ import annotations
+
 import gc
 import warnings
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -11,11 +13,15 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     pretty_print_df,
     transform_target_columns,
 )
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
 
 
 @define(frozen=True, slots=False)
@@ -49,6 +55,11 @@ class SingleTargetObjective(Objective):
     @property
     def n_outputs(self) -> int:
         return 1
+
+    @override
+    def to_botorch(self) -> MCAcquisitionObjective:
+        assert isinstance(self._target, NumericalTarget)
+        return self._target.total_transformation.to_botorch(keep_dimension=False)
 
     @override
     def transform(

@@ -1,8 +1,10 @@
 """Base classes for all objectives."""
 
+from __future__ import annotations
+
 import gc
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import cattrs
 import pandas as pd
@@ -15,6 +17,10 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
+
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
@@ -36,6 +42,10 @@ class Objective(ABC, SerialMixin):
     @abstractmethod
     def n_outputs(self) -> int:
         """The number of outputs of the objective."""
+
+    @abstractmethod
+    def to_botorch(self) -> MCAcquisitionObjective:
+        """Convert to BoTorch representation."""
 
     @abstractmethod
     def transform(
