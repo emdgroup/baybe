@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from functools import reduce
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from attrs import define, field
-from attrs.converters import optional
 from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
 
@@ -17,6 +17,7 @@ from baybe.targets._deprecated import (  # noqa: F401
     triangular_transform,
 )
 from baybe.utils.basic import compose, to_tuple
+from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
@@ -44,6 +45,10 @@ class TransformationProtocol(Protocol):
 @define
 class Transformation(TransformationProtocol, ABC):
     """Abstract base class for all transformations."""
+
+    @abstractmethod
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        """Get the image of a certain interval (assuming transformation continuity)."""
 
     @override
     @abstractmethod
@@ -132,6 +137,11 @@ class ChainedTransformation(Transformation):
     """The transformations to be composed."""
 
     @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
+
+    @override
     def append(
         self, transformation: TransformationProtocol, /
     ) -> ChainedTransformation:
@@ -164,6 +174,10 @@ class IdentityTransformation(Transformation):
     """The identity transformation."""
 
     @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        return Interval.create(interval)
+
+    @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x
 
@@ -180,11 +194,19 @@ class IdentityTransformation(Transformation):
 class ClampingTransformation(Transformation):
     """A transformation clamping values between specified cutoffs."""
 
-    min: float | None = field(default=None, converter=optional(float))
+    min: float = field(default=float("-inf"), converter=float)
     """The lower cutoff value."""
 
-    max: float | None = field(default=None, converter=optional(float))
+    max: float = field(default=float("inf"), converter=float)
     """The upper cutoff value."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return Interval(
+            max(min(interval.lower, self.max), self.min),
+            min(max(interval.upper, self.min), self.max),
+        )
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -203,6 +225,21 @@ class AffineTransformation(Transformation):
 
     shift_first: bool = field(default=False, validator=instance_of(bool))
     """Boolean flag determining if the shift or the scaling is applied first."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+
+        import torch
+
+        return Interval(
+            *sorted(
+                [
+                    float(self(torch.tensor(interval.lower))),
+                    float(self(torch.tensor(interval.upper))),
+                ]
+            )
+        )
 
     @classmethod
     def from_unit_interval(
@@ -252,12 +289,36 @@ class BellTransformation(Transformation):
     """The width of the bell curve."""
 
     @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+
+        import torch
+
+        image_lower = float(self(torch.tensor(interval.lower)))
+        image_upper = float(self(torch.tensor(interval.upper)))
+        if interval.contains(self.center):
+            return Interval(min(image_lower, image_upper), 1)
+        else:
+            return Interval(*sorted([image_lower, image_upper]))
+
+    @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
 
 
 class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+
+        image_lower = abs(interval.lower)
+        image_upper = abs(interval.upper)
+        if interval.contains(0):
+            return Interval(0, max(image_lower, image_upper))
+        else:
+            return Interval(*sorted([image_lower, image_upper]))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:

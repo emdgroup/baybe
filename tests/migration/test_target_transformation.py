@@ -13,6 +13,7 @@ from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
+    BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
     GenericTransformation,
@@ -21,6 +22,7 @@ from baybe.targets.transforms import (
     linear_transform,
     triangular_transform,
 )
+from baybe.utils.interval import Interval
 
 
 def sample_input() -> pd.Series:
@@ -313,3 +315,51 @@ def test_invalid_torch_overloading():
     """Chaining torch callables works only with one-argument callables."""
     with pytest.raises(ValueError, match="enters as the only"):
         torch.add(AbsoluteTransformation(), 2)
+
+
+c = 1
+
+id = IdentityTransformation()
+aff = AffineTransformation(factor=2, shift=1)
+clamp = ClampingTransformation(min=2, max=5)
+abs = AbsoluteTransformation()
+bell = BellTransformation(center=c, width=2)
+chain = ChainedTransformation([abs, clamp, aff])
+
+aff_0 = aff(torch.tensor(0))
+aff_1 = aff(torch.tensor(1))
+bell_off_1 = bell(torch.tensor(bell.center + 1))
+bell_off_01 = bell(torch.tensor(bell.center + 0.1))
+
+
+@pytest.mark.parametrize(
+    ("transformation", "bounds", "expected"),
+    [
+        param(id, (None, None), (None, None), id="id_open"),
+        param(id, (0, None), (0, None), id="id_half_open"),
+        param(id, (0, 1), (0, 1), id="id_finite"),
+        param(clamp, (0, 1), (2, 2), id="clamp_left_outside"),
+        param(clamp, (0, 3), (2, 3), id="clamp_left_overlapping"),
+        param(clamp, (3, 4), (3, 4), id="clamp_overlapping"),
+        param(clamp, (4, 6), (4, 5), id="clamp_right_overlapping"),
+        param(clamp, (6, 7), (5, 5), id="clamp_right_outside"),
+        param(aff, (None, None), (None, None), id="affine_open"),
+        param(aff, (0, None), (aff_0, None), id="affine_half_open"),
+        param(aff, (0, 1), (aff_0, aff_1), id="affine_finite"),
+        param(bell, (None, None), (0, 1), id="bell_open"),
+        param(bell, (c, None), (0, 1), id="bell_half_open"),
+        param(bell, (c + 1, None), (0, bell_off_1), id="bell_half_open_reduced"),
+        param(bell, (c + 0.1, c + 1), (bell_off_1, bell_off_01), id="bell_no_center"),
+        param(bell, (c - 0.1, c + 1), (bell_off_1, 1), id="bell_with_center"),
+        param(abs, (None, None), (0, None), id="abs_open"),
+        param(abs, (0, None), (0, None), id="abs_half_open"),
+        param(abs, (0, 1), (0, 1), id="abs_0_1"),
+        param(abs, (0.1, 1), (0.1, 1), id="abs_0.1_1"),
+        param(abs, (-0.1, 1), (0, 1), id="abs_-0.1_1"),
+        param(chain, (-0.1, 3), (5, 7), id="chain"),
+    ],
+)
+def test_image_computation(transformation, bounds, expected):
+    """The image of a transformation is computed correctly."""
+    bounds = (None, None) if bounds is None else bounds
+    assert transformation.get_image(bounds) == Interval.create(expected)
