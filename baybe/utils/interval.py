@@ -27,10 +27,16 @@ class InfiniteIntervalError(Exception):
 class Interval(SerialMixin):
     """Intervals on the real number line."""
 
-    lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
+    lower: float = field(
+        default=float("-inf"),
+        converter=lambda x: float("-inf") if x is None else float(x),
+    )
     """The lower end of the interval."""
 
-    upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
+    upper: float = field(
+        default=float("inf"),
+        converter=lambda x: float("inf") if x is None else float(x),
+    )
     """The upper end of the interval."""
 
     @upper.validator
@@ -97,8 +103,8 @@ class Interval(SerialMixin):
     @create.register
     @classmethod
     def _(cls, _: None):
-        """Overloaded implementation for creating an empty interval."""
-        return Interval(-np.inf, np.inf)
+        """Overloaded implementation for creating an unbounded interval."""
+        return Interval()
 
     @create.register
     @classmethod
