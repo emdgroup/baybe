@@ -27,10 +27,10 @@ def _hartmann_3d(x: np.ndarray) -> np.ndarray:
     """Calculate the Hartmann function in 3D.
 
     Args:
-        x: Input array of shape (n, 3) where n is the number of points
+        x: Input array of shape (n, 3) where n is the number of points.
 
     Returns:
-        Array of function values
+        Array of function values.
     """
     alpha = np.array([1.0, 1.2, 3.0, 3.2])
     A = np.array(
@@ -86,10 +86,10 @@ def hartmann_3d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
       - Default Recommender
 
     Args:
-        settings: Configuration settings for the convergence benchmark
+        settings: Configuration settings for the convergence benchmark.
 
     Returns:
-        DataFrame containing benchmark results
+        DataFrame containing benchmark results.
     """
     parameters = [
         NumericalContinuousParameter("x1", (0.0, 1.0)),

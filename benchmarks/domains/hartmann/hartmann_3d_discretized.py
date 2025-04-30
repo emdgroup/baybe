@@ -23,10 +23,10 @@ def lookup_discretized(df: pd.DataFrame, /) -> pd.DataFrame:
     """Dataframe-based lookup callable for the discretized version.
 
     Args:
-        df: DataFrame containing the discrete parameter values
+        df: DataFrame containing the discrete parameter values.
 
     Returns:
-        DataFrame with calculated target values
+        DataFrame with calculated target values.
     """
     # Convert discrete values to continuous by dividing by the number of discrete steps
     x1_cont = df["x1"].to_numpy()
@@ -58,10 +58,10 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
       - Default Recommender
 
     Args:
-        settings: Configuration settings for the convergence benchmark
+        settings: Configuration settings for the convergence benchmark.
 
     Returns:
-        DataFrame containing benchmark results
+        DataFrame containing benchmark results.
     """
     parameters = [
         NumericalDiscreteParameter("x1", np.linspace(0, 1, 25)),
