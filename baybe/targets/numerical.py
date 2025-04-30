@@ -14,7 +14,11 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin, converter
-from baybe.targets._deprecated import TargetMode, TargetTransformation
+from baybe.targets._deprecated import (
+    _VALID_TRANSFORMATIONS,
+    TargetMode,
+    TargetTransformation,
+)
 from baybe.targets.base import Target
 from baybe.targets.transforms import (
     AbsoluteTransformation,
@@ -26,7 +30,29 @@ from baybe.targets.transforms import (
     TransformationProtocol,
     convert_transformation,
 )
-from baybe.utils.interval import Interval
+from baybe.utils.interval import Interval, convert_bounds
+
+
+@define
+class _LegacyAPI:
+    """Class for parsing legacy targets arguments (for deprecation)."""
+
+    name: str = field(validator=instance_of(str))
+
+    mode: TargetMode = field(converter=TargetMode)
+
+    bounds: Interval = field(default=None, converter=convert_bounds)
+
+    transformation: TargetTransformation | None = field(
+        converter=lambda x: None if x is None else TargetTransformation(x)
+    )
+
+    @transformation.default
+    def _default_transformation(self) -> TargetTransformation | None:
+        """Provide the default transformation for bounded targets."""
+        if self.bounds.is_bounded:
+            return _VALID_TRANSFORMATIONS[self.mode][0]
+        return None
 
 
 @define(frozen=True, init=False)
@@ -41,80 +67,53 @@ class NumericalTarget(Target, SerialMixin):
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
 
     def __init__(  # noqa: DOC301
-        self,
-        name: str,
-        transformation_: TransformationProtocol  # underscore to avoid name collision
-        | None = None,
-        *args,
-        minimize: bool = False,
-        **kwargs,
+        self, name: str, *args, **kwargs
     ):
         """Translate legacy target specifications."""
-        # Check if legacy arguments are provided
-        if (
-            not (
-                isinstance(transformation_, (Transformation, type(None)))
-                or callable(transformation_)
-            )
-            or args
-            or kwargs
-        ):
-            # Map legacy arguments to legacy constructor parameter names
-            kw: dict[str, Any] = {
-                "name": name,
-                "mode": None,
-                "bounds": None,
-                "transformation": None,
-            }
-            all_args = (transformation_, *args)
-            if transformation_ in (
-                *TargetTransformation.__members__.keys(),
-                *TargetTransformation.__members__.values(),
-            ):
-                kw["transformation"] = transformation_
-                all_args = all_args[1:]
-            for k, v in zip(
-                ["mode", "bounds", "transformation"],
-                [v for v in all_args],  # if v is not None],
-            ):
-                kw[k] = v
-            kw = kw | kwargs
+        # Check if legacy or modern API is used
+        try:
+            self.__attrs_init__(name, *args, **kwargs)
+            return
+        except Exception:
+            pass
 
-            warnings.warn(
-                "Creating numerical targets by specifying MAX/MIN/MATCH modes has been "
-                "deprecated. For now, you do not need to change your code as we "
-                "automatically converted your target to the new format. "
-                "However, this functionality will be removed in a future version, so "
-                "please familiarize yourself with the new API.",
-                DeprecationWarning,
-            )
+        # Now we know that the legacy API is used
+        legacy = _LegacyAPI(name, *args, **kwargs)
 
-            # Translate to modern API
-            mode = TargetMode(kw["mode"])
-            bounds = kw["bounds"]
-            if mode in (TargetMode.MAX, TargetMode.MIN):
-                if bounds is None:
-                    self.__attrs_init__(kw["name"], minimize=mode == TargetMode.MIN)
-                else:
-                    self.__attrs_init__(
-                        kw["name"],
-                        NumericalTarget.clamped_affine(
-                            "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
-                        ).transformation,
-                    )
+        warnings.warn(
+            "Creating numerical targets by specifying MAX/MIN/MATCH modes has been "
+            "deprecated. For now, you do not need to change your code as we "
+            "automatically converted your target to the new format. "
+            "However, this functionality will be removed in a future version, so "
+            "please familiarize yourself with the new API.",
+            DeprecationWarning,
+        )
+
+        # Translate to modern API
+        bounds = legacy.bounds
+        if (mode := legacy.mode) in (TargetMode.MAX, TargetMode.MIN):
+            if not bounds.is_bounded:
+                self.__attrs_init__(legacy.name, minimize=mode == TargetMode.MIN)
             else:
-                if kw["transformation"] == "BELL":
-                    center = (bounds[1] + bounds[0]) / 2
-                    width = (bounds[1] - bounds[0]) / 2
-                    transformation = BellTransformation(center, width)
-                else:
-                    transformation = NumericalTarget.match_triangular(
-                        "dummy", bounds
-                    ).transformation
-                self.__attrs_init__(kw["name"], transformation)
-
+                # Use transformation from what would have been the appropriate call
+                self.__attrs_init__(
+                    legacy.name,
+                    NumericalTarget.clamped_affine(
+                        "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
+                    ).transformation,
+                )
         else:
-            self.__attrs_init__(name, transformation_, minimize=minimize)
+            transformation: Transformation
+            if legacy.transformation is TargetTransformation.BELL:
+                center = (bounds.upper + bounds.lower) / 2
+                width = (bounds.upper - bounds.lower) / 2
+                transformation = BellTransformation(center, width)
+            else:
+                # Use transformation from what would have been the appropriate call
+                transformation = NumericalTarget.match_triangular(
+                    "dummy", bounds
+                ).transformation
+            self.__attrs_init__(legacy.name, transformation)
 
     @classmethod
     def match_triangular(
