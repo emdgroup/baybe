@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
+from botorch.test_functions.synthetic import Hartmann
 from pandas import DataFrame
 
 from baybe.campaign import Campaign
@@ -12,35 +12,11 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import arrays_to_dataframes
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
-from benchmarks.domains.hartmann.hartmann_3d import _hartmann_3d
-
-
-def lookup_discretized(df: pd.DataFrame, /) -> pd.DataFrame:
-    """Dataframe-based lookup callable for the discretized version.
-
-    Args:
-        df: DataFrame containing the discrete parameter values.
-
-    Returns:
-        DataFrame with calculated target values.
-    """
-    # Convert discrete values to continuous by dividing by the number of discrete steps
-    x1_cont = df["x1"].to_numpy()
-    x2_cont = df["x2"].to_numpy()
-    x3_cont = df["x3"].to_numpy()
-
-    # Stack into array for the hartmann function
-    points = np.column_stack((x1_cont, x2_cont, x3_cont))
-
-    return pd.DataFrame(
-        _hartmann_3d(points),
-        columns=["target"],
-        index=df.index,
-    )
 
 
 def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame:
@@ -84,6 +60,12 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
             objective=objective,
         ),
     }
+
+    test_function = Hartmann(dim=3, negate=True)
+
+    lookup_discretized = arrays_to_dataframes(
+        [p.name for p in parameters], [target.name], use_torch=True
+    )(test_function)
 
     return simulate_scenarios(
         scenarios,
