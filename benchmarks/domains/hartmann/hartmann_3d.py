@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import numpy as np
-import pandas as pd
+from botorch.test_functions.synthetic import Hartmann
 from pandas import DataFrame
 
 from baybe.campaign import Campaign
@@ -14,6 +14,7 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import arrays_to_dataframes
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -21,52 +22,6 @@ from benchmarks.definition.convergence import (
 
 if TYPE_CHECKING:
     from mpl_toolkits.mplot3d import Axes3D
-
-
-def _hartmann_3d(x: np.ndarray) -> np.ndarray:
-    """Calculate the Hartmann function in 3D.
-
-    Args:
-        x: Input array of shape (n, 3) where n is the number of points.
-
-    Returns:
-        Array of function values.
-    """
-    alpha = np.array([1.0, 1.2, 3.0, 3.2])
-    A = np.array(
-        [
-            [3.0, 10.0, 30.0],
-            [0.1, 10.0, 35.0],
-            [3.0, 10.0, 30.0],
-            [0.1, 10.0, 35.0],
-        ]
-    )
-    P = 1e-4 * np.array(
-        [
-            [3689, 1170, 2673],
-            [4699, 4387, 7470],
-            [1091, 8732, 5547],
-            [381, 5743, 8828],
-        ]
-    )
-
-    outer = 0
-    for i in range(4):
-        inner = 0
-        for j in range(3):
-            inner += A[i, j] * ((x[:, j] - P[i, j]) ** 2)
-        outer += alpha[i] * np.exp(-inner)
-
-    return -outer
-
-
-def lookup(df: pd.DataFrame, /) -> pd.DataFrame:
-    """Dataframe-based lookup callable used as the loop-closing element."""
-    return pd.DataFrame(
-        _hartmann_3d(df[["x1", "x2", "x3"]].to_numpy()),
-        columns=["target"],
-        index=df.index,
-    )
 
 
 def hartmann_3d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
@@ -113,6 +68,12 @@ def hartmann_3d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
         ),
     }
 
+    hartmann = Hartmann(dim=3)
+
+    lookup = arrays_to_dataframes(
+        [p.name for p in parameters], [target.name], use_torch=True
+    )(hartmann)
+
     return simulate_scenarios(
         scenarios,
         lookup,
@@ -149,6 +110,9 @@ if __name__ == "__main__":
     # Create slices for different fixed values of x3
     x3_values = [0.1, 0.3, 0.5, 0.7, 0.9]
 
+    # Instantiate the Hartmann function
+    hartmann_func = Hartmann(dim=3, negate=False)
+
     fig = plt.figure(figsize=(15, 10))
     for i, x3_val in enumerate(x3_values):
         ax: Axes3D = fig.add_subplot(2, 3, i + 1, projection="3d")
@@ -158,7 +122,14 @@ if __name__ == "__main__":
         points = np.column_stack((x1_mesh.ravel(), x2_mesh.ravel(), x3_mesh.ravel()))
 
         # Calculate function values
-        values = _hartmann_3d(points).reshape(x1_mesh.shape)
+        import torch
+
+        values = (
+            hartmann_func(torch.tensor(points, dtype=torch.float64))
+            .detach()
+            .numpy()
+            .reshape(x1_mesh.shape)
+        )
 
         # Plot the surface
         surf = ax.plot_surface(x1_mesh, x2_mesh, values, cmap="viridis")

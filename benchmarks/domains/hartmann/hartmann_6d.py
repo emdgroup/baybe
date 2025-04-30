@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import numpy as np
-import pandas as pd
+from botorch.test_functions.synthetic import Hartmann
 from pandas import DataFrame
 
 from baybe.campaign import Campaign
@@ -12,60 +11,15 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import arrays_to_dataframes
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
 
 
-def _hartmann_6d(x: np.ndarray) -> np.ndarray:
-    """Calculate the Hartmann function in 6D.
-
-    Args:
-        x: Input array of shape (n, 6) where n is the number of points
-
-    Returns:
-        Array of function values
-    """
-    alpha = np.array([1.0, 1.2, 3.0, 3.2])
-    A = np.array(
-        [
-            [10, 3, 17, 3.5, 1.7, 8],
-            [0.05, 10, 17, 0.1, 8, 14],
-            [3, 3.5, 1.7, 10, 17, 8],
-            [17, 8, 0.05, 10, 0.1, 14],
-        ]
-    )
-    P = 1e-4 * np.array(
-        [
-            [1312, 1696, 5569, 124, 8283, 5886],
-            [2329, 4135, 8307, 3736, 1004, 9991],
-            [2348, 1451, 3522, 2883, 3047, 6650],
-            [4047, 8828, 8732, 5743, 1091, 381.0],
-        ]
-    )
-
-    outer = 0
-    for i in range(4):
-        inner = 0
-        for j in range(6):
-            inner += A[i, j] * ((x[:, j] - P[i, j]) ** 2)
-        outer += alpha[i] * np.exp(-inner)
-
-    return -outer
-
-
-def lookup(df: pd.DataFrame, /) -> pd.DataFrame:
-    """Dataframe-based lookup callable used as the loop-closing element."""
-    return pd.DataFrame(
-        _hartmann_6d(df[["x1", "x2", "x3", "x4", "x5", "x6"]].to_numpy()),
-        columns=["target"],
-        index=df.index,
-    )
-
-
 def hartmann_6d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
-    """Benchmark function with the Hartmann 3D test function.
+    """Benchmark function with the Hartmann 6D test function.
 
     Key characteristics:
     • Parameters:
@@ -115,6 +69,12 @@ def hartmann_6d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
             objective=objective,
         ),
     }
+
+    hartmann = Hartmann(dim=6)
+
+    lookup = arrays_to_dataframes(
+        [p.name for p in parameters], [target.name], use_torch=True
+    )(hartmann)
 
     return simulate_scenarios(
         scenarios,
