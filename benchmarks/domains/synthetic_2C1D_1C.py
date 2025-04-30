@@ -68,10 +68,10 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
       - Default Recommender
 
     Args:
-        settings: Configuration settings for the convergence benchmark
+        settings: Configuration settings for the convergence benchmark.
 
     Returns:
-        DataFrame containing benchmark results
+        DataFrame containing benchmark results.
     """
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),

@@ -28,10 +28,10 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
       - 20% of source data
 
     Args:
-        settings: Configuration settings for the convergence benchmark
+        settings: Configuration settings for the convergence benchmark.
 
     Returns:
-        DataFrame containing benchmark results
+        DataFrame containing benchmark results.
     """
     negate = False
     functions = {
