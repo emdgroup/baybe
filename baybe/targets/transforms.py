@@ -7,6 +7,7 @@ from collections.abc import Callable
 from functools import reduce
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import numpy as np
 from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
@@ -305,6 +306,7 @@ class BellTransformation(Transformation):
         return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
 
 
+@define(slots=False)
 class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
@@ -322,3 +324,48 @@ class AbsoluteTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.abs()
+
+
+@define(frozen=True)
+class LogarithmicTransformation(Transformation):
+    """A logarithmic transformation."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return Interval(np.log(interval.lower), np.log(interval.upper))
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.log()
+
+
+@define(frozen=True)
+class ExponentialTransformation(Transformation):
+    """An exponential transformation."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return Interval(np.exp(interval.lower), np.exp(interval.upper))
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.exp()
+
+
+@define(slots=False)
+class PowerTransformation(Transformation):
+    """A transformation computing the power."""
+
+    exponent: float = field(converter=float)
+    """The exponent of the power transformation."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return Interval(interval.lower**self.exponent, interval.upper**self.exponent)
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return x.pow(self.exponent)

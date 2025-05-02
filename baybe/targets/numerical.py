@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from typing import Any
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, evolve, field
 from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
@@ -25,7 +25,10 @@ from baybe.targets.transforms import (
     AffineTransformation,
     BellTransformation,
     ClampingTransformation,
+    ExponentialTransformation,
     IdentityTransformation,
+    LogarithmicTransformation,
+    PowerTransformation,
     Transformation,
     TransformationProtocol,
     convert_transformation,
@@ -265,6 +268,53 @@ class NumericalTarget(Target, SerialMixin):
             return transformation + AffineTransformation(factor=-1)
         else:
             return transformation
+
+    def clamp(self, min: float, max: float) -> NumericalTarget:
+        """Clamp the target to a given range.
+
+        Args:
+            min: The minimum value of the clamping range.
+            max: The maximum value of the clamping range.
+
+        Returns:
+            The clamped target.
+        """
+        return evolve(
+            self, transformation=self.transformation + ClampingTransformation(min, max)
+        )
+
+    def log(self) -> NumericalTarget:
+        """Apply a logarithmic transformation to the target.
+
+        Returns:
+            The target with applied logarithmic transformation.
+        """
+        return evolve(
+            self, transformation=self.transformation + LogarithmicTransformation()
+        )
+
+    def exp(self) -> NumericalTarget:
+        """Apply an exponential transformation to the target.
+
+        Returns:
+            The target with applied exponential transformation.
+        """
+        return evolve(
+            self, transformation=self.transformation + ExponentialTransformation()
+        )
+
+    def power(self, exponent: float) -> NumericalTarget:
+        """Apply a power transformation to the target.
+
+        Args:
+            exponent: The exponent of the power transformation.
+
+        Returns:
+            The target with applied power transformation.
+        """
+        return evolve(
+            self, transformation=self.transformation + PowerTransformation(exponent)
+        )
 
     @override
     def transform(

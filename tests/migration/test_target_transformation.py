@@ -16,8 +16,11 @@ from baybe.targets.transforms import (
     BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
+    ExponentialTransformation,
     GenericTransformation,
     IdentityTransformation,
+    LogarithmicTransformation,
+    PowerTransformation,
     bell_transform,
     linear_transform,
     triangular_transform,
@@ -320,10 +323,13 @@ def test_invalid_torch_overloading():
 c = 1
 
 id = IdentityTransformation()
-aff = AffineTransformation(factor=2, shift=1)
 clamp = ClampingTransformation(min=2, max=5)
-abs = AbsoluteTransformation()
+aff = AffineTransformation(factor=2, shift=1)
 bell = BellTransformation(center=c, width=2)
+abs = AbsoluteTransformation()
+log = LogarithmicTransformation()
+exp = ExponentialTransformation()
+pow = PowerTransformation(0.5)
 chain = ChainedTransformation([abs, clamp, aff])
 
 aff_0 = aff(torch.tensor(0))
@@ -356,6 +362,12 @@ bell_off_01 = bell(torch.tensor(bell.center + 0.1))
         param(abs, (0, 1), (0, 1), id="abs_0_1"),
         param(abs, (0.1, 1), (0.1, 1), id="abs_0.1_1"),
         param(abs, (-0.1, 1), (0, 1), id="abs_-0.1_1"),
+        param(log, (0, None), (None, None), id="log_open"),
+        param(log, (1, np.exp(1)), (0, 1), id="log_unit"),
+        param(exp, (None, None), (0, None), id="exp_open"),
+        param(exp, (0, 1), (1, np.exp(1)), id="exp_unit"),
+        param(pow, (0, None), (0, None), id="pow_open"),
+        param(pow, (1, 4), (1, 2), id="pow_finite"),
         param(chain, (-0.1, 3), (5, 7), id="chain"),
     ],
 )
