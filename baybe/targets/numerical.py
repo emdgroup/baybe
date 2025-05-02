@@ -55,6 +55,37 @@ class _LegacyAPI:
         return None
 
 
+def _translate_legacy_arguments(
+    mode: TargetMode,
+    bounds: Interval,
+    transformation: TargetTransformation | None,
+) -> tuple[TransformationProtocol | None, bool]:
+    """Translate legacy target arguments to modern arguments."""
+    if mode in (TargetMode.MAX, TargetMode.MIN):
+        if not bounds.is_bounded:
+            return (None, mode == TargetMode.MIN)
+        else:
+            # Use transformation from what would have been the appropriate call
+            return (
+                NumericalTarget.clamped_affine(
+                    "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
+                ).transformation,
+                False,
+            )
+    else:
+        transformation: Transformation
+        if transformation is TargetTransformation.BELL:
+            center = (bounds.upper + bounds.lower) / 2
+            width = (bounds.upper - bounds.lower) / 2
+            transformation = BellTransformation(center, width)
+        else:
+            # Use transformation from what would have been the appropriate call
+            transformation = NumericalTarget.match_triangular(
+                "dummy", bounds
+            ).transformation
+        return (transformation, False)
+
+
 @define(frozen=True, init=False)
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
@@ -65,6 +96,7 @@ class NumericalTarget(Target, SerialMixin):
     """An optional target transformation."""
 
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
+    """Boolean flag indicating if the target is to be minimized."""
 
     def __init__(  # noqa: DOC301
         self, name: str, *args, **kwargs
@@ -90,30 +122,73 @@ class NumericalTarget(Target, SerialMixin):
         )
 
         # Translate to modern API
-        bounds = legacy.bounds
-        if (mode := legacy.mode) in (TargetMode.MAX, TargetMode.MIN):
-            if not bounds.is_bounded:
-                self.__attrs_init__(legacy.name, minimize=mode == TargetMode.MIN)
-            else:
-                # Use transformation from what would have been the appropriate call
-                self.__attrs_init__(
-                    legacy.name,
-                    NumericalTarget.clamped_affine(
-                        "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
-                    ).transformation,
-                )
-        else:
-            transformation: Transformation
-            if legacy.transformation is TargetTransformation.BELL:
-                center = (bounds.upper + bounds.lower) / 2
-                width = (bounds.upper - bounds.lower) / 2
-                transformation = BellTransformation(center, width)
-            else:
-                # Use transformation from what would have been the appropriate call
-                transformation = NumericalTarget.match_triangular(
-                    "dummy", bounds
-                ).transformation
-            self.__attrs_init__(legacy.name, transformation)
+        transformation, minimize = _translate_legacy_arguments(
+            legacy.mode, legacy.bounds, legacy.transformation
+        )
+        self.__attrs_init__(legacy.name, transformation, minimize=minimize)
+
+    @classmethod
+    def from_modern_api(
+        cls,
+        name: str,
+        transformation: TransformationProtocol | None = None,
+        *,
+        minimize: bool = False,
+    ) -> NumericalTarget:
+        """A deprecation helper for creating a target explicitly using the modern API.
+
+        Args:
+            name: The name of the target.
+            transformation: An optional transformation.
+            minimize: Boolean flag indicating if the target should be minimized.
+
+        Returns:
+            The created target object.
+        """  # noqa: D401
+        warnings.warn(
+            f"The helper constructor '{cls.from_modern_api.__name__}' is only "
+            f"available during the deprecation phase of the legacy target API and can "
+            f"to obtain type hints and for IDE autocompletion. Once the "
+            f"deprecation phase is over, the regular constructor will take over its "
+            f"role with all typing features.",
+            DeprecationWarning,
+        )
+
+        return cls(name, transformation, minimize=minimize)
+
+    @classmethod
+    def from_legacy_api(
+        cls,
+        name: str,
+        mode: TargetMode,
+        bounds: None | Iterable | Interval = None,
+        transformation: TargetTransformation | None = None,
+    ) -> NumericalTarget:
+        """A deprecation helper for creating a target explicitly using the legacy API.
+
+        Args:
+            name: The name of the target.
+            mode: The target mode (MAX, MIN, MATCH).
+            bounds: Optional target bounds.
+            transformation: An optional target transformation.
+
+        Returns:
+            The created target object.
+        """  # noqa: D401
+        warnings.warn(
+            f"The helper constructor '{cls.from_legacy_api.__name__}' is only "
+            f"available during the deprecation phase of the legacy target API and can "
+            f"to obtain type hints and for IDE autocompletion. Once the "
+            f"deprecation phase is over, please switch to the modern API call using "
+            f"the regular constructor.",
+            DeprecationWarning,
+        )
+
+        bounds = convert_bounds(bounds)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            return cls(name, mode, bounds, transformation)
 
     @classmethod
     def match_triangular(

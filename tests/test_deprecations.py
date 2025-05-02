@@ -258,3 +258,15 @@ def test_legacy_target_construction():
         match="Creating numerical targets by specifying MAX/MIN/MATCH modes",
     ):
         NumericalTarget("t", "MAX")
+
+
+def test_target_deprecation_helpers():
+    """Calling the target deprecation helper constructors raises a warning."""
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_legacy_api'"
+    ):
+        NumericalTarget.from_legacy_api("t", "MIN")
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_modern_api'"
+    ):
+        NumericalTarget.from_modern_api("t", minimize=True)
