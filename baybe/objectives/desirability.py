@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import gc
 import warnings
-from collections.abc import Callable
-from functools import cached_property, partial
+from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar
 
 import cattrs
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from attrs.validators import deep_iterable, gt, instance_of, min_len
@@ -24,45 +22,43 @@ from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df, transform_target_columns
-from baybe.utils.numerical import geom_mean
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
+    from torch import Tensor
 
 
-def scalarize(
-    values: npt.ArrayLike, scalarizer: Scalarizer, weights: npt.ArrayLike
-) -> np.ndarray:
-    """Scalarize the rows of a 2-D array, producing a 1-D array.
+def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
+    """Calculate the geometric mean of an array along a given dimension.
 
     Args:
-        values: The 2-D array whose rows are to be scalarized.
-        scalarizer: The scalarization mechanism to be used.
-        weights: Weights for the columns of the input array.
-
-    Raises:
-        ValueError: If the provided array is not two-dimensional.
-        NotImplementedError: If the requested scalarizer is not implemented.
+        x: A tensor containing the values for the mean computation.
+        weights: A tensor of weights whose shape must be broadcastable to the shape
+            of the input tensor.
+        dim: The dimension along which to compute the geometric mean.
 
     Returns:
-        np.ndarray: A 1-D array containing the scalarized values.
+        A tensor containing the weighted geometric means.
     """
-    if np.ndim(values) != 2:
-        raise ValueError("The provided array must be two-dimensional.")
+    import torch
 
-    func: Callable
+    # Ensure x is a floating-point tensor
+    if not torch.is_floating_point(x):
+        x = x.float()
 
-    if scalarizer is Scalarizer.GEOM_MEAN:
-        func = geom_mean
-    elif scalarizer is Scalarizer.MEAN:
-        func = partial(np.average, axis=1)
-    else:
-        raise NotImplementedError(
-            f"No scalarization mechanism defined for '{scalarizer.name}'."
-        )
+    # Normalize weights
+    normalized_weights = weights / torch.sum(weights)
 
-    return func(values, weights=weights)
+    # Add epsilon to avoid log(0)
+    eps = torch.finfo(x.dtype).eps
+    log_tensor = torch.log(x + eps)
+
+    # Compute the weighted log sum
+    weighted_log_sum = torch.sum(log_tensor * normalized_weights.unsqueeze(0), dim=dim)
+
+    # Convert back from log domain
+    return torch.exp(weighted_log_sum)
 
 
 @define(frozen=True, slots=False)
@@ -105,6 +101,11 @@ class DesirabilityObjective(Objective):
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
+        if unnormalized := {t.name for t in targets if not t.is_normalized}:
+            raise ValueError(
+                f"'{self.__class__.__name__}' can only work with normalized targets. "
+                f"The following targets are not normalized: {unnormalized}."
+            )
 
     @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
@@ -145,7 +146,26 @@ class DesirabilityObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
-        raise NotImplementedError()
+        import torch
+
+        if self.scalarizer is Scalarizer.MEAN:
+            from botorch.acquisition.objective import LinearMCObjective
+
+            return LinearMCObjective(torch.tensor(self._normalized_weights))
+
+        elif self.scalarizer is Scalarizer.GEOM_MEAN:
+            from botorch.acquisition.objective import GenericMCObjective
+
+            return GenericMCObjective(
+                lambda samples, X: _geometric_mean(
+                    samples, torch.tensor(self._normalized_weights)
+                )
+            )
+
+        else:
+            raise NotImplementedError(
+                f"No scalarization mechanism defined for '{self.scalarizer.name}'."
+            )
 
     @override
     def transform(
@@ -192,8 +212,10 @@ class DesirabilityObjective(Objective):
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
+        import torch
+
         # Scalarize the transformed targets into desirability values
-        vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
+        vals = self.to_botorch()(torch.tensor(transformed.values))
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)

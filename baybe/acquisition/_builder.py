@@ -24,6 +24,7 @@ from baybe.acquisition.acqfs import (
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives.base import Objective
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
@@ -181,7 +182,7 @@ class BotorchAcquisitionFunctionBuilder:
         post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
 
         match self.objective:
-            case SingleTargetObjective():
+            case SingleTargetObjective() | DesirabilityObjective():
                 self._args.best_f = self.objective.to_botorch()(post_mean).max().item()
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")

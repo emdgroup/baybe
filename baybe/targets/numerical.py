@@ -175,6 +175,14 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @property
+    def is_normalized(self) -> bool:
+        """Boolean flag indicating if the target is normalized to the unit interval."""
+        return (
+            self.transformation is not None
+            and self.transformation.get_image() == Interval(0, 1)
+        )
+
+    @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
         transformation = self.transformation or IdentityTransformation()

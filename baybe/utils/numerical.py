@@ -1,7 +1,6 @@
 """Utilities for numeric operations."""
 
 import os
-from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -27,21 +26,6 @@ There is no clear documentation but some references can be found here (version 1
  * https://onnx.ai/sklearn-onnx/auto_tutorial/plot_abegin_convert_pipeline.html#converts-the-model
  * https://onnx.ai/sklearn-onnx/auto_tutorial/plot_ebegin_float_double.html
 """  # noqa: E501
-
-
-def geom_mean(arr: np.ndarray, weights: Sequence[float]) -> np.ndarray:
-    """Calculate the (weighted) geometric mean along the second axis of a 2-D array.
-
-    Alternative to ``gmean`` from scipy that avoids logarithms and division errors.
-
-    Args:
-        arr: The array containing the values for the mean computation.
-        weights: Weights for the mean computation.
-
-    Returns:
-        A 1-D array containing the row-wise geometric means of the given array.
-    """
-    return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
 
 
 def closest_element(array: npt.ArrayLike, target: float) -> float:

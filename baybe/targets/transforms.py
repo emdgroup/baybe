@@ -41,14 +41,13 @@ class TransformationProtocol(Protocol):
     def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
 
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        """Get the image of a certain interval (assuming transformation continuity)."""
+
 
 @define
 class Transformation(TransformationProtocol, ABC):
     """Abstract base class for all transformations."""
-
-    @abstractmethod
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        """Get the image of a certain interval (assuming transformation continuity)."""
 
     @override
     @abstractmethod
