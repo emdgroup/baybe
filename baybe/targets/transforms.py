@@ -72,9 +72,7 @@ class Transformation(TransformationProtocol, ABC):
         else:
             return GenericMCObjective(lambda samples, X: self(samples).squeeze(-1))
 
-    def append(
-        self, transformation: TransformationProtocol, /
-    ) -> ChainedTransformation:
+    def append(self, transformation: TransformationProtocol, /) -> Transformation:
         """Chain another transformation with the existing one."""
         return self + transformation
 
@@ -82,17 +80,22 @@ class Transformation(TransformationProtocol, ABC):
         """Negate the output of the transformation."""
         return self + AffineTransformation(factor=-1)
 
-    def clamp(self, min: float | None, max: float | None) -> Transformation:
+    def clamp(
+        self, min: float = float("-inf"), max: float = float("inf")
+    ) -> Transformation:
         """Clamp the output of the transformation."""
+        if min == float("-inf") and max == float("inf"):
+            raise ValueError(
+                "A clamping transformation requires at least one finite boundary value."
+            )
+
         return self + ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
         return self + AbsoluteTransformation()
 
-    def __add__(
-        self, other: TransformationProtocol | int | float
-    ) -> TransformationProtocol:
+    def __add__(self, other: TransformationProtocol | int | float) -> Transformation:
         """Chain another transformation or shift the output of the current one."""
         if isinstance(other, IdentityTransformation):
             return self

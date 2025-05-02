@@ -1,5 +1,7 @@
 """Utilities for handling intervals."""
 
+from __future__ import annotations
+
 import gc
 from collections.abc import Iterable
 from copy import deepcopy
@@ -91,7 +93,7 @@ class Interval(SerialMixin):
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value: Any):
+    def create(cls, value: Any) -> Interval:
         """Create an interval from various input types."""
         # Singledispatch does not play well with forward references, hence
         #   we use this workaround.
@@ -102,13 +104,13 @@ class Interval(SerialMixin):
 
     @create.register
     @classmethod
-    def _(cls, _: None):
+    def _(cls, _: None) -> Interval:
         """Overloaded implementation for creating an unbounded interval."""
         return Interval()
 
     @create.register
     @classmethod
-    def _(cls, bounds: Iterable):
+    def _(cls, bounds: Iterable) -> Interval:
         """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
 
@@ -120,7 +122,7 @@ class Interval(SerialMixin):
         """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self) -> "Tensor":
+    def to_tensor(self) -> Tensor:
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
 
