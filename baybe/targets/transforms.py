@@ -37,7 +37,6 @@ def convert_transformation(x: Transformation | TensorCallable, /) -> Transformat
 class Transformation(ABC):
     """Abstract base class for all transformations."""
 
-    @override
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
@@ -121,7 +120,7 @@ class ChainedTransformation(Transformation):
 
     transformations: tuple[Transformation, ...] = field(
         converter=lambda x: to_tuple(
-            t for t in x if not isinstance(t, IdentityTransformation)
+            t for t in x if not isinstance(t, (IdentityTransformation, type(None)))
         ),
         validator=[
             min_len(2),

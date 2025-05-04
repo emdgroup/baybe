@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from attrs import define, evolve, field
@@ -24,6 +24,7 @@ from baybe.targets.transforms import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
+    ChainedTransformation,
     ClampingTransformation,
     ExponentialTransformation,
     IdentityTransformation,
@@ -73,17 +74,18 @@ def _translate_legacy_arguments(
                 False,
             )
     else:
-        transformation: Transformation
+        modern_transformation: Transformation
         if transformation is TargetTransformation.BELL:
             center = (bounds.upper + bounds.lower) / 2
             width = (bounds.upper - bounds.lower) / 2
-            transformation = BellTransformation(center, width)
+            modern_transformation = BellTransformation(center, width)
         else:
             # Use transformation from what would have been the appropriate call
-            transformation = NumericalTarget.match_triangular(
-                "dummy", bounds
-            ).transformation
-        return (transformation, False)
+            modern_transformation = cast(
+                Transformation,
+                NumericalTarget.match_triangular("dummy", bounds).transformation,
+            )
+        return (modern_transformation, False)
 
 
 @define(frozen=True, init=False)
@@ -276,8 +278,11 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The clamped target.
         """
-        return evolve(
-            self, transformation=self.transformation + ClampingTransformation(min, max)
+        return evolve(  # type: ignore[call-arg]
+            self,
+            transformation=ChainedTransformation(
+                [self.transformation, ClampingTransformation(min, max)]
+            ),
         )
 
     def log(self) -> NumericalTarget:
@@ -286,8 +291,11 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied logarithmic transformation.
         """
-        return evolve(
-            self, transformation=self.transformation + LogarithmicTransformation()
+        return evolve(  # type: ignore[call-arg]
+            self,
+            transformation=ChainedTransformation(
+                [self.transformation, LogarithmicTransformation()]
+            ),
         )
 
     def exp(self) -> NumericalTarget:
@@ -296,8 +304,11 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied exponential transformation.
         """
-        return evolve(
-            self, transformation=self.transformation + ExponentialTransformation()
+        return evolve(  # type: ignore[call-arg]
+            self,
+            transformation=ChainedTransformation(
+                [self.transformation, ExponentialTransformation()]
+            ),
         )
 
     def power(self, exponent: float) -> NumericalTarget:
@@ -309,8 +320,11 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied power transformation.
         """
-        return evolve(
-            self, transformation=self.transformation + PowerTransformation(exponent)
+        return evolve(  # type: ignore[call-arg]
+            self,
+            transformation=ChainedTransformation(
+                [self.transformation, PowerTransformation(exponent)]
+            ),
         )
 
     @override

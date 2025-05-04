@@ -146,7 +146,7 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
     return {k: v for k, v in group.items() if len(v) > 1}
 
 
-def to_tuple(x: Sequence) -> tuple:
+def to_tuple(x: Iterable) -> tuple:
     """Convert any sequence into a tuple.
 
     This wrapper is only used to avoid mypy warnings for attrs converters:

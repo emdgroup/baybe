@@ -85,10 +85,10 @@ class Interval(SerialMixin):
         return not (self.is_left_bounded or self.is_right_bounded)
 
     @property
-    def center(self) -> float | None:
-        """The center of the interval, or ``None`` if the interval is unbounded."""
+    def center(self) -> float:
+        """The center of the interval, or ``nan`` if the interval is unbounded."""
         if not self.is_bounded:
-            return None
+            return float("nan")
         return (self.lower + self.upper) / 2
 
     @singledispatchmethod
