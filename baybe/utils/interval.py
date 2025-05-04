@@ -104,13 +104,13 @@ class Interval(SerialMixin):
 
     @create.register
     @classmethod
-    def _(cls, _: None) -> Interval:
+    def _(cls, _: None):
         """Overloaded implementation for creating an unbounded interval."""
         return Interval()
 
     @create.register
     @classmethod
-    def _(cls, bounds: Iterable) -> Interval:
+    def _(cls, bounds: Iterable):
         """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
 
