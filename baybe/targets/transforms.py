@@ -156,6 +156,12 @@ class GenericTransformation(Transformation):
     """The torch callable to be applied."""
 
     @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        raise NotImplementedError(
+            "Generic transformations do not provide details about their image."
+        )
+
+    @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return self.transformation(x)
 
