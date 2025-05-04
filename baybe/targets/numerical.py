@@ -30,7 +30,6 @@ from baybe.targets.transforms import (
     LogarithmicTransformation,
     PowerTransformation,
     Transformation,
-    TransformationProtocol,
     convert_transformation,
 )
 from baybe.utils.interval import Interval, convert_bounds
@@ -59,10 +58,8 @@ class _LegacyAPI:
 
 
 def _translate_legacy_arguments(
-    mode: TargetMode,
-    bounds: Interval,
-    transformation: TargetTransformation | None,
-) -> tuple[TransformationProtocol | None, bool]:
+    mode: TargetMode, bounds: Interval, transformation: TargetTransformation | None
+) -> tuple[Transformation | None, bool]:
     """Translate legacy target arguments to modern arguments."""
     if mode in (TargetMode.MAX, TargetMode.MIN):
         if not bounds.is_bounded:
@@ -93,7 +90,7 @@ def _translate_legacy_arguments(
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    transformation: TransformationProtocol | None = field(
+    transformation: Transformation | None = field(
         default=None, converter=optional(convert_transformation)
     )
     """An optional target transformation."""
@@ -134,7 +131,7 @@ class NumericalTarget(Target, SerialMixin):
     def from_modern_api(
         cls,
         name: str,
-        transformation: TransformationProtocol | None = None,
+        transformation: Transformation | None = None,
         *,
         minimize: bool = False,
     ) -> NumericalTarget:

@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from functools import reduce
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
 
 import numpy as np
 from attrs import define, field
@@ -28,32 +28,23 @@ if TYPE_CHECKING:
     """Type alias for a torch-based function mapping from reals to reals."""
 
 
-def convert_transformation(
-    x: TransformationProtocol | TensorCallable, /
-) -> TransformationProtocol:
+def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
     """Autowrap a torch callable as transformation (with transformation passthrough)."""
-    return x if isinstance(x, TransformationProtocol) else GenericTransformation(x)
-
-
-@runtime_checkable
-class TransformationProtocol(Protocol):
-    """Type protocol specifying the interface transformations need to implement."""
-
-    def __call__(self, x: Tensor, /) -> Tensor:
-        """Transform a given input tensor."""
-
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        """Get the image of a certain interval (assuming transformation continuity)."""
+    return x if isinstance(x, Transformation) else GenericTransformation(x)
 
 
 @define
-class Transformation(TransformationProtocol, ABC):
+class Transformation(ABC):
     """Abstract base class for all transformations."""
 
     @override
     @abstractmethod
     def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
+
+    @abstractmethod
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        """Get the image of a certain interval (assuming transformation continuity)."""
 
     def to_botorch(self, *, keep_dimension: bool) -> MCAcquisitionObjective:
         """Convert to BoTorch representation.
@@ -72,7 +63,7 @@ class Transformation(TransformationProtocol, ABC):
         else:
             return GenericMCObjective(lambda samples, X: self(samples).squeeze(-1))
 
-    def append(self, transformation: TransformationProtocol, /) -> Transformation:
+    def append(self, transformation: Transformation, /) -> Transformation:
         """Chain another transformation with the existing one."""
         return self + transformation
 
@@ -95,17 +86,17 @@ class Transformation(TransformationProtocol, ABC):
         """Take the absolute value of the output of the transformation."""
         return self + AbsoluteTransformation()
 
-    def __add__(self, other: TransformationProtocol | int | float) -> Transformation:
+    def __add__(self, other: Transformation | int | float) -> Transformation:
         """Chain another transformation or shift the output of the current one."""
         if isinstance(other, IdentityTransformation):
             return self
-        if isinstance(other, TransformationProtocol):
+        if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
         if isinstance(other, (int, float)):
             return self + AffineTransformation(shift=other)
         return NotImplemented
 
-    def __mul__(self, other: TransformationProtocol) -> ChainedTransformation:
+    def __mul__(self, other: Transformation) -> ChainedTransformation:
         """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
             return self + AffineTransformation(factor=other)
@@ -128,13 +119,13 @@ class Transformation(TransformationProtocol, ABC):
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
-    transformations: tuple[TransformationProtocol, ...] = field(
+    transformations: tuple[Transformation, ...] = field(
         converter=lambda x: to_tuple(
             t for t in x if not isinstance(t, IdentityTransformation)
         ),
         validator=[
             min_len(2),
-            deep_iterable(member_validator=instance_of(TransformationProtocol)),
+            deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )
     """The transformations to be composed."""
@@ -145,9 +136,7 @@ class ChainedTransformation(Transformation):
         return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
 
     @override
-    def append(
-        self, transformation: TransformationProtocol, /
-    ) -> ChainedTransformation:
+    def append(self, transformation: Transformation, /) -> ChainedTransformation:
         addendum = (
             transformation.transformations
             if isinstance(transformation, ChainedTransformation)
@@ -185,9 +174,7 @@ class IdentityTransformation(Transformation):
         return x
 
     @override
-    def __add__(
-        self, other: TransformationProtocol | int | float
-    ) -> TransformationProtocol:
+    def __add__(self, other: Transformation | int | float) -> Transformation:
         if isinstance(other, (int, float)):
             return AffineTransformation(shift=other)
         return other
