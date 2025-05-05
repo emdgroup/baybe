@@ -110,4 +110,4 @@ jobs:
       - name: Benchmark
         run: |
           pip install '.[benchmarking]'
-          python -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
+          python -W ignore -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
