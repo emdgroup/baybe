@@ -271,6 +271,22 @@ class NumericalTarget(Target, SerialMixin):
         else:
             return transformation
 
+    def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
+        """Append a new transformation.
+
+        Args:
+            transformation: The transformation to append.
+
+        Returns:
+            A new target with the appended transformation.
+        """
+        return evolve(  # type: ignore[call-arg]
+            self,
+            transformation=transformation
+            if self.transformation is None
+            else ChainedTransformation([self.transformation, transformation]),
+        )
+
     def clamp(
         self, min: float | None = None, max: float | None = None
     ) -> NumericalTarget:
@@ -285,12 +301,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         min = min if min is not None else float("-inf")
         max = max if max is not None else float("inf")
-        return evolve(  # type: ignore[call-arg]
-            self,
-            transformation=ChainedTransformation(
-                [self.transformation, ClampingTransformation(min, max)]
-            ),
-        )
+        return self._append_transformation(ClampingTransformation(min, max))
 
     def log(self) -> NumericalTarget:
         """Apply a logarithmic transformation to the target.
@@ -298,12 +309,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied logarithmic transformation.
         """
-        return evolve(  # type: ignore[call-arg]
-            self,
-            transformation=ChainedTransformation(
-                [self.transformation, LogarithmicTransformation()]
-            ),
-        )
+        return self._append_transformation(LogarithmicTransformation())
 
     def exp(self) -> NumericalTarget:
         """Apply an exponential transformation to the target.
@@ -311,12 +317,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied exponential transformation.
         """
-        return evolve(  # type: ignore[call-arg]
-            self,
-            transformation=ChainedTransformation(
-                [self.transformation, ExponentialTransformation()]
-            ),
-        )
+        return self._append_transformation(ExponentialTransformation())
 
     def power(self, exponent: float) -> NumericalTarget:
         """Apply a power transformation to the target.
@@ -327,12 +328,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied power transformation.
         """
-        return evolve(  # type: ignore[call-arg]
-            self,
-            transformation=ChainedTransformation(
-                [self.transformation, PowerTransformation(exponent)]
-            ),
-        )
+        return self._append_transformation(PowerTransformation(exponent))
 
     @override
     def transform(
