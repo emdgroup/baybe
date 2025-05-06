@@ -1,4 +1,4 @@
-"""Target transformation tests."""
+"""Target tests."""
 
 from itertools import pairwise
 
@@ -99,13 +99,6 @@ def test_constructor_equivalence_match(transformation):
 
     for t1, t2 in pairwise(targets):
         assert t1 == t2
-
-
-def test_target_deserialization():
-    """Deserialization also works from legacy arguments."""
-    actual = ModernTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
-    expected = ModernTarget("t", "MATCH", (1, 2))
-    assert actual == expected
 
 
 @pytest.mark.parametrize(
@@ -319,8 +312,10 @@ def test_invalid_torch_overloading():
         torch.add(AbsoluteTransformation(), 2)
 
 
+# Constants
 c = 1
 
+# Transformations
 id = IdentityTransformation()
 clamp = ClampingTransformation(min=2, max=5)
 aff = AffineTransformation(factor=2, shift=1)
@@ -331,6 +326,7 @@ exp = ExponentialTransformation()
 pow = PowerTransformation(0.5)
 chain = ChainedTransformation([abs, clamp, aff])
 
+# Transformed values
 aff_0 = aff(torch.tensor(0))
 aff_1 = aff(torch.tensor(1))
 bell_off_1 = bell(torch.tensor(bell.center + 1))

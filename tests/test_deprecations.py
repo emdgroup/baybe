@@ -270,3 +270,10 @@ def test_target_deprecation_helpers():
         DeprecationWarning, match="The helper constructor 'from_modern_api'"
     ):
         NumericalTarget.from_modern_api("t", minimize=True)
+
+
+def test_target_legacy_deserialization():
+    """Deserialization also works from legacy arguments."""
+    actual = NumericalTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
+    expected = NumericalTarget("t", "MATCH", (1, 2))
+    assert actual == expected
