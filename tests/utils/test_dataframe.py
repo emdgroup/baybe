@@ -185,7 +185,7 @@ def test_measurement_singletons():
         index=[123, 2, 3, 4, 5],
     )
     targets = [
-        NumericalTarget(name="A", mode="MAX"),
+        NumericalTarget(name="A"),
         BinaryTarget(name="B", success_value="a", failure_value="b"),
     ]
 

@@ -88,7 +88,7 @@ dict_ligand = {
 
 ### Creating the Objective
 
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 
 ### Constructing campaigns for the simulation loop
 
