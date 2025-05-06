@@ -152,7 +152,7 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        da_results = batch_simulator.run_combos(combos)[result_variable]
+        da_results = batch_simulator.run_combos(combos, parallel=True)[result_variable]
 
     df_results = unpack_simulation_results(da_results)
 
