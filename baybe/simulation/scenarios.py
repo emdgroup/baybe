@@ -35,6 +35,7 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
+    execute_in_parallel: bool = True,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -57,6 +58,7 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
+        execute_in_parallel: Whether or not to execute the simulations in parallel.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
@@ -152,7 +154,9 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        da_results = batch_simulator.run_combos(combos, parallel=True)[result_variable]
+        da_results = batch_simulator.run_combos(combos, parallel=execute_in_parallel)[
+            result_variable
+        ]
 
     df_results = unpack_simulation_results(da_results)
 
