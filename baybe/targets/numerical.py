@@ -266,10 +266,7 @@ class NumericalTarget(Target, SerialMixin):
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
         transformation = self.transformation or IdentityTransformation()
-        if self.minimize:
-            return transformation + AffineTransformation(factor=-1)
-        else:
-            return transformation
+        return transformation.negate() if self.minimize else transformation
 
     def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
         """Append a new transformation.
