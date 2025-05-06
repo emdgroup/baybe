@@ -9,6 +9,7 @@ import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
+from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transforms import (
     AbsoluteTransformation,
@@ -373,3 +374,12 @@ def test_image_computation(transformation, bounds, expected):
     """The image of a transformation is computed correctly."""
     bounds = (None, None) if bounds is None else bounds
     assert transformation.get_image(bounds) == Interval.create(expected)
+
+
+def test_target_normalization():
+    """Target normalization works as expected."""
+    t = ModernTarget("t")
+    with pytest.raises(IncompatibilityError, match="Only bounded targets"):
+        t.normalize()
+    assert t.clamp(-5, 2).get_image() == Interval(-5, 2)
+    assert t.clamp(-5, 2).normalize().get_image() == Interval(0, 1)

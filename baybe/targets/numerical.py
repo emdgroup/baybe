@@ -13,6 +13,7 @@ from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
@@ -254,19 +255,20 @@ class NumericalTarget(Target, SerialMixin):
     @property
     def is_normalized(self) -> bool:
         """Boolean flag indicating if the target is normalized to the unit interval."""
-        try:
-            return (
-                self.transformation is not None
-                and self.transformation.get_image() == Interval(0, 1)
-            )
-        except NotImplementedError:
-            return False
+        return self.get_image() == Interval(0, 1)
 
     @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
         transformation = self.transformation or IdentityTransformation()
         return transformation.negate() if self.minimize else transformation
+
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        """Get the image of a certain interval (assuming transformation continuity)."""
+        if self.transformation is None:
+            return Interval()
+
+        return self.transformation.get_image(interval)
 
     def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
         """Append a new transformation.
@@ -282,6 +284,22 @@ class NumericalTarget(Target, SerialMixin):
             transformation=transformation
             if self.transformation is None
             else ChainedTransformation([self.transformation, transformation]),
+        )
+
+    def normalize(self) -> NumericalTarget:
+        """Normalize the target to the unit interval using an affine transformation.
+
+        Raises:
+            IncompatibilityError: If the target is not bounded.
+
+        Returns:
+            The normalized target.
+        """
+        if not self.get_image().is_bounded:
+            raise IncompatibilityError("Only bounded targets can be normalized.")
+
+        return self._append_transformation(
+            AffineTransformation.from_unit_interval(*self.get_image().to_tuple())
         )
 
     def clamp(
