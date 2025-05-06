@@ -151,13 +151,15 @@ def test_constructor_equivalence_match(transformation):
             id="min_no_bounds_with_flag",
         ),
         param(
-            # NOTE: Minimization without bounds has no effect on the transformation
-            #   of the legacy target since minimization is handled in the construction
-            #   of the acquisition function.
-            LegacyTarget("t", "MIN"),
+            # NOTE: Minimization without bounds had no effect on the transformation
+            #   of the legacy target since minimization was handled in the construction
+            #   of the acquisition function:
+            #   * https://github.com/emdgroup/baybe/pull/462
+            #   * https://github.com/emdgroup/baybe/issues/460
+            None,  # should be `LegacyTarget("t", "MIN")` but see explanation above
             ModernTarget("t", "MIN"),
-            ModernTarget("t"),
-            sample_input(),
+            ModernTarget("t", minimize=True),
+            -sample_input(),
             id="min",
         ),
         param(
