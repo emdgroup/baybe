@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
@@ -126,8 +126,13 @@ class DesirabilityObjective(Objective):
             unnormalized := {t.name for t in targets if not t.is_normalized}
         ):
             raise ValueError(
-                f"'{self.__class__.__name__}' can only work with normalized targets. "
-                f"The following targets are not normalized: {unnormalized}."
+                f"By default, '{self.__class__.__name__}' only accepts normalized "
+                f"targets but the following targets are not normalized: "
+                f"{unnormalized}. Either normalize your targets (e.g. using their "
+                f"'{NumericalTarget.normalize.__name__}' method / by specifying "
+                f"a suitable target transformation) or explicitly set "
+                f"'{fields(DesirabilityObjective).require_normalization.name}' to "
+                f"'True' to allow unnormalized targets."
             )
 
     @weights.validator
