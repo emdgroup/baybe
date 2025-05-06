@@ -21,7 +21,7 @@ from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import pretty_print_df, transform_target_columns
+from baybe.utils.dataframe import pretty_print_df, to_tensor, transform_target_columns
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -212,10 +212,8 @@ class DesirabilityObjective(Objective):
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        import torch
-
         # Scalarize the transformed targets into desirability values
-        vals = self.to_botorch()(torch.tensor(transformed.values))
+        vals = self.to_botorch()(to_tensor(transformed.values))
 
         # Store the total desirability in a dataframe column
         transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
