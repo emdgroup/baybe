@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- New target API, including advanced machinery for defining and manipulating target
+  transformations based on the new `Transformation` class hierarchy
+- `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
+  for reproducing the legacy `MATCH` modes
+- `ramp` convenience constructor to `NumericalTarget` for reproducing the legacy
+  behavior when imposing bounds on `MIN`/`MAX` targets
+- Support for accessing posterior information of all target types (e.g. those consider
+  `MATCH` target in the legacy API) as well as targets used in `DesirabilityObjective`
+- `total_transformation` and `is_normalized` properties to `NumericalTarget`
+- `normalize`, `clamp`, `log`, `exp` and `power` methods to `NumericalTarget` for
+  easy creation of transformed targets from existing ones
+- `get_image` method to `NumericalTarget` for computing the images of transformed
+  target value ranges
+- Support for non-normalized targets in `DesirabilityObjective`
+- `Objective.to_botorch` method for converting objectives to BoTorch
+- Tests for migrating to new target API
+
+### Changed
+- The target behavior is no longer defined via a `mode` (i.e. `MIN`, `MAX`, `MATCH` in
+  legacy API) but controlled using a minimization flag and corresponding target
+  transformations. This allows for more flexible target definitions, makes invalid
+  target configurations unrepresentable, and is in line with the definition of
+  mathematical optimization problems. Also, it avoids the need to explicitly specify an
+  irrelevant optimization direction in the context of active learning.
+- Specifying bounds for `Interval` is now optional
+
+### Removed
+- Option to specify reference values for `add_fake_measurements`
+
+### Deprecations
+- Creating targets using a `mode` argument
+
+
 ## [0.13.0] - 2025-04-16
 ### Added
 - `extras` group for installing all dependencies required for optional features
