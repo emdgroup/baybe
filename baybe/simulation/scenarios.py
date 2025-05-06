@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import warnings
 from collections.abc import Callable
 from copy import deepcopy
@@ -13,11 +14,15 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
 from baybe.simulation.core import simulate_experiment
+from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
     from xarray import DataArray
 
 _DEFAULT_SEED = 1337
+
+# Environment variable to control parallel execution
+BAYBE_SIMULATE_IN_PARALLEL = "BAYBE_SIMULATE_IN_PARALLEL"
 
 
 def simulate_scenarios(
@@ -35,7 +40,6 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    execute_in_parallel: bool = True,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -58,13 +62,18 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        execute_in_parallel: Whether or not to execute the simulations in parallel.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
         but with additional columns. See the ``Note`` for details.
 
     Note:
+        This function can be used to simulate multiple scenarios in parallel. This is
+        controlled by an environment variable. If the variable
+        ``BAYBE_SIMULATE_IN_PARALLEL`` is set to ``True``, the simulations will be
+        executed in parallel. Otherwise, the simulations will be executed sequentially.
+        The default is ``False``, hence the simulations will be executed sequentially.
+
         The following additional columns are contained in the dataframe returned by this
         function:
 
@@ -154,7 +163,8 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        da_results = batch_simulator.run_combos(combos, parallel=execute_in_parallel)[
+        parallel = strtobool(os.environ.get(BAYBE_SIMULATE_IN_PARALLEL, "False"))
+        da_results = batch_simulator.run_combos(combos, parallel=parallel)[
             result_variable
         ]
 
