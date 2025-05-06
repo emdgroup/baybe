@@ -89,6 +89,9 @@ class DesirabilityObjective(Objective):
     scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
+    require_normalization: bool = field(default=True, validator=instance_of(bool))
+    """Boolean flag controlling whether the targets must be normalized."""
+
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
@@ -96,12 +99,32 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
+        # Validate target types
         if not is_all_instance(targets, NumericalTarget):
             raise TypeError(
                 f"'{self.__class__.__name__}' currently only supports targets "
                 f"of type '{NumericalTarget.__name__}'."
             )
-        if unnormalized := {t.name for t in targets if not t.is_normalized}:
+
+        # Validate non-negativity when using geometric mean
+        if self.scalarizer is Scalarizer.GEOM_MEAN and (
+            negative := {
+                t.name
+                for t in targets
+                if (tr := t.transformation) is None or tr.get_image().lower < 0
+            }
+        ):
+            raise ValueError(
+                f"Using '{Scalarizer.GEOM_MEAN}' for '{self.__class__.__name__}' "
+                f"requires that all targets are transformed to a non-negative range. "
+                f"However, the images of the following targets cover negative values: "
+                f"{negative}."
+            )
+
+        # Validate normalization
+        if self.require_normalization and (
+            unnormalized := {t.name for t in targets if not t.is_normalized}
+        ):
             raise ValueError(
                 f"'{self.__class__.__name__}' can only work with normalized targets. "
                 f"The following targets are not normalized: {unnormalized}."

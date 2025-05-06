@@ -13,7 +13,8 @@ from baybe.targets.base import Target
 
 t1 = NumericalTarget.ramp("t1", cutoffs=(0, 1))
 t2 = NumericalTarget.ramp("t2", cutoffs=(0, 1))
-t3 = NumericalTarget("unnormalized")
+t3 = NumericalTarget("unnormalized").clamp(min=0)
+t4 = NumericalTarget("negative")
 t_mock = Mock(spec=Target)
 
 
@@ -31,20 +32,21 @@ def test_invalid_target(target):
 
 
 @pytest.mark.parametrize(
-    ("targets", "error"),
+    ("targets", "error", "match"),
     [
-        param(None, TypeError, id="none"),
-        param([t1, "t2"], TypeError, id="wrong_type"),
-        param([t1], ValueError, id="too_short"),
-        param([t1, t1], ValueError, id="duplicate_names"),
-        param([t1, t3], ValueError, id="unnormalized"),
-        param([t1, t_mock], TypeError, id="unsupported_subclass"),
+        param(None, TypeError, "is not iterable", id="none"),
+        param([t1, "t2"], TypeError, "baybe.targets.base.Target", id="wrong_type"),
+        param([t1], ValueError, "must be >= 2: 1", id="too_short"),
+        param([t1, t1], ValueError, "unique names", id="duplicate_names"),
+        param([t1, t3], ValueError, "are not normalized", id="unnormalized"),
+        param([t1, t4], ValueError, "non-negative range", id="negative"),
+        param([t1, t_mock], TypeError, "targets of type", id="unsupported_subclass"),
     ],
 )
-def test_invalid_targets(targets, error):
+def test_invalid_targets(targets, error, match):
     """Providing invalid target objects raises an exception."""
-    with pytest.raises(error):
-        DesirabilityObjective(targets)
+    with pytest.raises(error, match=match):
+        DesirabilityObjective(targets, scalarizer="GEOM_MEAN")
 
 
 @pytest.mark.parametrize(

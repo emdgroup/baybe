@@ -271,7 +271,9 @@ class NumericalTarget(Target, SerialMixin):
         else:
             return transformation
 
-    def clamp(self, min: float, max: float) -> NumericalTarget:
+    def clamp(
+        self, min: float | None = None, max: float | None = None
+    ) -> NumericalTarget:
         """Clamp the target to a given range.
 
         Args:
@@ -281,6 +283,8 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The clamped target.
         """
+        min = min if min is not None else float("-inf")
+        max = max if max is not None else float("inf")
         return evolve(  # type: ignore[call-arg]
             self,
             transformation=ChainedTransformation(
