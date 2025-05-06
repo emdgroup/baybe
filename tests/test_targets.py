@@ -10,6 +10,7 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe.exceptions import IncompatibilityError
+from baybe.targets._deprecated import NumericalTarget as LegacyTarget
 from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transformation import (
     AbsoluteTransformation,
@@ -43,6 +44,8 @@ def test_constructor_equivalence_min_max(mode):
     """Calling the new target class with legacy arguments yields the legacy object."""
     groups = [
         (
+            # ------------
+            # Legacy style
             ModernTarget("t", mode),
             ModernTarget("t", mode=mode),
             ModernTarget(name="t", mode=mode),
@@ -51,6 +54,8 @@ def test_constructor_equivalence_min_max(mode):
             ModernTarget("t", minimize=mode == "MIN"),
         ),
         (
+            # ------------
+            # Legacy style
             ModernTarget("t", mode, (1, 2)),
             ModernTarget("t", mode, bounds=(1, 2)),
             ModernTarget("t", mode=mode, bounds=(1, 2)),
@@ -73,6 +78,8 @@ def test_constructor_equivalence_min_max(mode):
 @pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
 def test_constructor_equivalence_match(transformation):
     """Calling the new target class with legacy arguments yields the legacy object."""
+    # ------------
+    # Legacy style
     targets = (
         ModernTarget("t", "MATCH", (1, 2), transformation),
         ModernTarget("t", "MATCH", (1, 2), transformation=transformation),
@@ -102,21 +109,24 @@ def test_constructor_equivalence_match(transformation):
 
 
 @pytest.mark.parametrize(
-    ("legacy", "modern", "expected"),
+    ("legacy", "deprecation", "modern", "expected"),
     [
         param(
+            LegacyTarget("t", "MAX"),
             ModernTarget("t", "MAX"),
             ModernTarget("t"),
             sample_input(),
             id="max",
         ),
         param(
+            LegacyTarget("t", "MAX", (0, 1), "LINEAR"),
             ModernTarget("t", "MAX", (0, 1), "LINEAR"),
             ModernTarget("t", ClampingTransformation(min=0, max=1)),
             linear_transform(sample_input(), 0, 1, descending=False),
             id="max_clamped",
         ),
         param(
+            LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
             ModernTarget("t", "MAX", (2, 5), "LINEAR"),
             ModernTarget.ramp("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
@@ -126,6 +136,7 @@ def test_constructor_equivalence_match(transformation):
             # NOTE: Minimization transformation without bounds is not possible with
             #   legacy interface."
             None,
+            None,
             ModernTarget("t", AffineTransformation(factor=-1)),
             -sample_input(),
             id="min_no_bounds",
@@ -133,6 +144,7 @@ def test_constructor_equivalence_match(transformation):
         param(
             # NOTE: Minimization transformation without bounds is not possible with
             #   legacy interface."
+            None,
             None,
             ModernTarget("t", minimize=True),
             -sample_input(),
@@ -142,66 +154,77 @@ def test_constructor_equivalence_match(transformation):
             # NOTE: Minimization without bounds has no effect on the transformation
             #   of the legacy target since minimization is handled in the construction
             #   of the acquisition function.
+            LegacyTarget("t", "MIN"),
             ModernTarget("t", "MIN"),
             ModernTarget("t"),
             sample_input(),
             id="min",
         ),
         param(
+            LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
             ModernTarget("t", "MIN", (0, 1), "LINEAR"),
             ModernTarget.ramp("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
+            LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
             ModernTarget("t", "MIN", (2, 5), "LINEAR"),
             ModernTarget.ramp("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),
         param(
+            LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget.match_bell("t", center=0, width=1),
             bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
+            LegacyTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget.match_bell("t", center=2, width=1),
             bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
+            LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget.match_bell("t", center=0, width=5),
             bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
+            LegacyTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget.match_bell("t", center=4, width=2),
             bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
         param(
+            LegacyTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (-1, 1)),
             triangular_transform(sample_input(), -1, 1),
             id="match_triangular_unit_centered",
         ),
         param(
+            LegacyTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (1, 3)),
             triangular_transform(sample_input(), 1, 3),
             id="match_triangular_unit_shifted",
         ),
         param(
+            LegacyTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (-5, 5)),
             triangular_transform(sample_input(), -5, 5),
             id="match_triangular_scaled_centered",
         ),
         param(
+            LegacyTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
             ModernTarget.match_triangular("t", (2, 6)),
             triangular_transform(sample_input(), 2, 6),
@@ -210,13 +233,19 @@ def test_constructor_equivalence_match(transformation):
     ],
 )
 def test_target_transformation(
-    series, legacy: ModernTarget, modern: ModernTarget, expected
+    series,
+    legacy: LegacyTarget,
+    deprecation: ModernTarget,
+    modern: ModernTarget,
+    expected,
 ):
     """The legacy and modern target variants transform equally."""
-    transformed_modern = modern.transform(series)
+    expected = pd.Series(expected)
     if legacy is not None:
-        assert_series_equal(transformed_modern, legacy.transform(series))
-    assert_series_equal(transformed_modern, pd.Series(expected))
+        assert_series_equal(legacy.transform(series), expected)
+    if deprecation is not None:
+        assert_series_equal(deprecation.transform(series), expected)
+    assert_series_equal(modern.transform(series), expected)
 
 
 def test_transformation_chaining():
