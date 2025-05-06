@@ -127,3 +127,17 @@ within `BoTorch` that transform single precision variables to double precision v
 Consequently, this feature is currently only available as an *experimental* feature.
 We are however actively working on fully enabling single precision.
 ```
+
+## EXPERIMENTAL: Executing `simulate_scenarios`in parallel
+The [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function can be configured to run simulations in parallel by setting the environment variable `BAYBE_SIMULATE_IN_PARALLEL` to a truthy value accepted by [`strtobool`](baybe.utils.boolean.strtobool). This affects only the execution of scenario simulations and has no influence on other parts of the code. The default is `False`, so simulations run sequentially.
+
+```bash
+BAYBE_SIMULATE_IN_PARALLEL="True"
+```
+
+While parallel execution usually speeds up computation significantly, especially for multiple Monte Carlo iterations, the performance impact can vary depending on the machine and simulation configuration. In some cases, it might even lead to longer instead of shorter running times due to overhead costs. This behavior is currently under investigation.
+
+```{admonition} Experimental Feature
+:class: warning
+This parallel execution mode is experimental and may change in future releases.
+```
