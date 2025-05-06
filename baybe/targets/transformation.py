@@ -252,7 +252,7 @@ class AffineTransformation(Transformation):
 
         Example:
             >>> import torch
-            >>> from baybe.targets.transforms import AffineTransformation
+            >>> from baybe.targets.transformation import AffineTransformation
             >>> transform = AffineTransformation.from_unit_interval(3, 7)
             >>> transform(torch.tensor([3, 7]))
             tensor([0., 1.])

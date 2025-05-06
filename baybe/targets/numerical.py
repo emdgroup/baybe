@@ -21,7 +21,7 @@ from baybe.targets._deprecated import (
     TargetTransformation,
 )
 from baybe.targets.base import Target
-from baybe.targets.transforms import (
+from baybe.targets.transformation import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,

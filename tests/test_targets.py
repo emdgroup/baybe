@@ -11,7 +11,7 @@ from pytest import param
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget as ModernTarget
-from baybe.targets.transforms import (
+from baybe.targets.transformation import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
