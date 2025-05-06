@@ -143,8 +143,8 @@ def test_objective_transform_interface():
     single = SingleTargetObjective(NumericalTarget("A"))
     desirability = DesirabilityObjective(
         [
-            NumericalTarget.clamped_affine("A", cutoffs=(0, 1)),
-            NumericalTarget.clamped_affine("B", cutoffs=(-1, 1), descending=True),
+            NumericalTarget.ramp("A", cutoffs=(0, 1)),
+            NumericalTarget.ramp("B", cutoffs=(-1, 1), descending=True),
         ]
     )
 

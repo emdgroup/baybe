@@ -61,9 +61,7 @@ def test_constructor_equivalence_min_max(mode):
             ModernTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
             # ------------
             # Modern style
-            ModernTarget.clamped_affine(
-                name="t", cutoffs=(1, 2), descending=mode == "MIN"
-            ),
+            ModernTarget.ramp(name="t", cutoffs=(1, 2), descending=mode == "MIN"),
         ),
     ]
     for targets in groups:
@@ -126,7 +124,7 @@ def test_target_deserialization():
         ),
         param(
             ModernTarget("t", "MAX", (2, 5), "LINEAR"),
-            ModernTarget.clamped_affine("t", (2, 5)),
+            ModernTarget.ramp("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
         ),
@@ -157,13 +155,13 @@ def test_target_deserialization():
         ),
         param(
             ModernTarget("t", "MIN", (0, 1), "LINEAR"),
-            ModernTarget.clamped_affine("t", (0, 1), descending=True),
+            ModernTarget.ramp("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
             ModernTarget("t", "MIN", (2, 5), "LINEAR"),
-            ModernTarget.clamped_affine("t", (2, 5), descending=True),
+            ModernTarget.ramp("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),

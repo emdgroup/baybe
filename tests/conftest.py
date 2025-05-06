@@ -428,11 +428,11 @@ def fixture_targets(target_names: list[str]):
             name="Target_min",
             minimize=True,
         ),
-        NumericalTarget.clamped_affine(
+        NumericalTarget.ramp(
             name="Target_max_bounded",
             cutoffs=(0, 100),
         ),
-        NumericalTarget.clamped_affine(
+        NumericalTarget.ramp(
             name="Target_min_bounded",
             cutoffs=(0, 100),
             descending=True,

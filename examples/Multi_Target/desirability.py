@@ -46,8 +46,8 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 # The first target is maximized and while the second one is minimized.
 # Note that in this multi target mode, the user must specify bounds for each target.
 
-Target_1 = NumericalTarget.clamped_affine("Target_1", cutoffs=(0, 100))
-Target_2 = NumericalTarget.clamped_affine("Target_2", cutoffs=(0, 100), descending=True)
+Target_1 = NumericalTarget.ramp("Target_1", cutoffs=(0, 100))
+Target_2 = NumericalTarget.ramp("Target_2", cutoffs=(0, 100), descending=True)
 
 # For each target it is also possible to specify a `target_transform` function.
 # A detailed discussion of this functionality can be found at the end of this example.

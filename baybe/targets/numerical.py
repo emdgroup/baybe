@@ -68,7 +68,7 @@ def _translate_legacy_arguments(
         else:
             # Use transformation from what would have been the appropriate call
             return (
-                NumericalTarget.clamped_affine(
+                NumericalTarget.ramp(
                     "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
                 ).transformation,
                 False,
@@ -230,7 +230,7 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, BellTransformation(center, width))
 
     @classmethod
-    def clamped_affine(
+    def ramp(
         cls, name: str, cutoffs: Interval | Iterable[float], *, descending: bool = False
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
@@ -242,7 +242,7 @@ class NumericalTarget(Target, SerialMixin):
                 or descending in the affine region.
 
         Returns:
-            The target with applied clamped linear transformation.
+            The target with applied clamped affine transformation.
         """
         bounds = Interval.create(cutoffs).to_tuple()
         if descending:

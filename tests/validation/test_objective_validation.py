@@ -11,8 +11,8 @@ from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 
-t1 = NumericalTarget.clamped_affine("t1", cutoffs=(0, 1))
-t2 = NumericalTarget.clamped_affine("t2", cutoffs=(0, 1))
+t1 = NumericalTarget.ramp("t1", cutoffs=(0, 1))
+t2 = NumericalTarget.ramp("t2", cutoffs=(0, 1))
 t3 = NumericalTarget("unnormalized")
 t_mock = Mock(spec=Target)
 

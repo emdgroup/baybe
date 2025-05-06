@@ -18,11 +18,11 @@ class TestInvalidObjectiveCreation:
 
     # Two example targets used in the tests
     two_targets = [
-        NumericalTarget.clamped_affine(
+        NumericalTarget.ramp(
             name="Target_1",
             cutoffs=(0, 100),
         ),
-        NumericalTarget.clamped_affine(
+        NumericalTarget.ramp(
             name="Target_2",
             cutoffs=(0, 100),
             descending=True,
@@ -89,8 +89,8 @@ def test_desirability_scalarization(values, scalarizer, weights, expected):
     [
         (NumericalTarget("t", minimize=True), 0),
         (NumericalTarget("t"), 1),
-        (NumericalTarget.clamped_affine("t", cutoffs=(0, 1), descending=True), 0),
-        (NumericalTarget.clamped_affine("t", cutoffs=(0, 1)), 1),
+        (NumericalTarget.ramp("t", cutoffs=(0, 1), descending=True), 0),
+        (NumericalTarget.ramp("t", cutoffs=(0, 1)), 1),
     ],
 )
 def test_single_objective(target, opt):
