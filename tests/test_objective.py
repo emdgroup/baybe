@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 
-from baybe.objectives.desirability import DesirabilityObjective, scalarize
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
@@ -72,16 +72,26 @@ class TestInvalidObjectiveCreation:
 @pytest.mark.parametrize(
     ("values", "scalarizer", "weights", "expected"),
     [
-        ([[1, 2]], Scalarizer.MEAN, [1, 1], [1.5]),
-        ([[1, 2]], Scalarizer.MEAN, [1, 2], [5 / 3]),
-        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 1], [np.sqrt(2)]),
-        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 2], [np.power(4, 1 / 3)]),
+        ([[1, 2]], Scalarizer.MEAN, [1, 1], 1.5),
+        ([[1, 2]], Scalarizer.MEAN, [1, 2], 5 / 3),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 1], np.sqrt(2)),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 2], np.power(4, 1 / 3)),
     ],
+    ids=["mean1", "mean2", "geom1", "geom2"],
 )
 def test_desirability_scalarization(values, scalarizer, weights, expected):
     """The desirability scalarization yields the expected result."""
-    actual = scalarize(values, scalarizer, weights)
-    assert np.array_equal(actual, expected), (expected, actual)
+    obj = DesirabilityObjective(
+        [
+            NumericalTarget("t1").clamp(min=0),
+            NumericalTarget("t2").clamp(min=0),
+        ],
+        weights,
+        scalarizer,
+        require_normalization=False,
+    )
+    actual = obj.transform(pd.DataFrame(values, columns=["t1", "t2"])).values.item()
+    assert np.isclose(actual, expected), (expected, actual)
 
 
 @pytest.mark.parametrize(
