@@ -21,9 +21,6 @@ if TYPE_CHECKING:
 
 _DEFAULT_SEED = 1337
 
-# Environment variable to control parallel execution
-BAYBE_PARALLEL_MC_EXECUTION = "BAYBE_PARALLEL_MC_EXECUTION"
-
 
 def simulate_scenarios(
     scenarios: dict[Any, Campaign],
@@ -63,19 +60,19 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        parallel_mc_execution: If specified, overrides the environment variable
-            ``BAYBE_PARALLEL_MC_EXECUTION`` to control parallel execution.
+        parallel_mc_execution: Enforce or prevent parallel execution of monte carlo
+            runs. If this is left unspecified, the behavior is controlled by the
+            environment variable ``BAYBE_PARALLEL_MC_EXECUTION``.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
         but with additional columns. See the ``Note`` for details.
 
     Note:
-        This function can be used to simulate multiple scenarios in parallel. This is
-        controlled by an environment variable. If the variable
-        ``BAYBE_PARALLEL_MC_EXECUTION`` is set to ``True``, the simulations will be
-        executed in parallel. Otherwise, the simulations will be executed sequentially.
-        The default is ``False``, hence the simulations will be executed sequentially.
+        By default, this function simulate multiple monte carlo iterations in
+        parallel. This behavior can be disabled globally by setting the environment
+        variable ``BAYBE_PARALLEL_MC_EXECUTION`` to ``False``, or locally using the
+        ``parallel_mc_execution`` parameter.
 
         The following additional columns are contained in the dataframe returned by this
         function:
@@ -169,7 +166,7 @@ def simulate_scenarios(
         # Use parameter if provided, otherwise use environment variable
         if parallel_mc_execution is None:
             parallel_mc_execution = strtobool(
-                os.environ.get(BAYBE_PARALLEL_MC_EXECUTION, "True")
+                os.environ.get("BAYBE_PARALLEL_MC_EXECUTION", "True")
             )
         da_results = batch_simulator.run_combos(combos, parallel=parallel_mc_execution)[
             result_variable
