@@ -168,10 +168,10 @@ def simulate_scenarios(
         )
         # Use parameter if provided, otherwise use environment variable
         if parallel_mc_execution is None:
-            parallel = strtobool(os.environ.get(BAYBE_PARALLEL_MC_EXECUTION, "True"))
-        else:
-            parallel = parallel_mc_execution
-        da_results = batch_simulator.run_combos(combos, parallel=parallel)[
+            parallel_mc_execution = strtobool(
+                os.environ.get(BAYBE_PARALLEL_MC_EXECUTION, "True")
+            )
+        da_results = batch_simulator.run_combos(combos, parallel=parallel_mc_execution)[
             result_variable
         ]
 
