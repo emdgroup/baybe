@@ -114,7 +114,7 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
-    _task_stratified_outtransform: bool = field(default=False)
+    _task_stratified_outtransform: bool = field(default=True)
     """Flag incication whether task-stratified output transform should be used for
     multi-task model.
 
