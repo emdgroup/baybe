@@ -178,13 +178,11 @@ class GaussianProcessSurrogate(Surrogate):
                 )
             outcome_transform = botorch.models.transforms.outcome.StratifiedStandardize(
                 task_values=torch.tensor(
-                    self._searchspace.discrete.comp_rep[
-                        [
-                            p.name
-                            for p in self._searchspace.parameters
-                            if isinstance(p, TaskParameter)
-                        ][0]
-                    ].unique(),
+                    [
+                        p
+                        for p in self._searchspace.parameters
+                        if isinstance(p, TaskParameter)
+                    ][0].comp_df.values.ravel(),
                     dtype=torch.long,
                 ),
                 stratification_idx=context.task_idx,
