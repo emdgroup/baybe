@@ -128,12 +128,25 @@ Consequently, this feature is currently only available as an *experimental* feat
 We are however actively working on fully enabling single precision.
 ```
 
-## EXPERIMENTAL: Executing `simulate_scenarios`in parallel
-The [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function can be configured to run simulations in parallel by setting the environment variable `BAYBE_SIMULATE_IN_PARALLEL` to a truthy value accepted by [`strtobool`](baybe.utils.boolean.strtobool). This affects only the execution of scenario simulations and has no influence on other parts of the code. The default is `False`, so simulations run sequentially.
+## EXPERIMENTAL: Parallel Monte Carlo Execution in Scenario Simulations
+The [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function can be configured to run multiple Monte Carlo scenario simulations in parallel by setting the environment variable `BAYBE_PARALLEL_MC_EXECUTION` to a truthy value accepted by [`strtobool`](baybe.utils.boolean.strtobool). This affects only the execution of scenario simulations and has no influence on other parts of the code. The default is `True`.
 
 ```bash
-BAYBE_SIMULATE_IN_PARALLEL="True"
+BAYBE_PARALLEL_MC_EXECUTION="False"  # Set this to disable parallel execution
 ```
+
+Alternatively, you can directly specify the `parallel_mc_execution` parameter when calling the function:
+
+```python
+results = simulate_scenarios(
+    scenarios=scenarios,
+    lookup=lookup,
+    n_mc_iterations=10,
+    parallel_mc_execution=False  # Disable parallel execution for this call
+)
+```
+
+The parameter takes precedence over the environment variable when both are specified.
 
 While parallel execution usually speeds up computation significantly, especially for multiple Monte Carlo iterations, the performance impact can vary depending on the machine and simulation configuration. In some cases, it might even lead to longer instead of shorter running times due to overhead costs. This behavior is currently under investigation.
 
