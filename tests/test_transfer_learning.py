@@ -19,12 +19,8 @@ from baybe.targets import NumericalTarget
 from baybe.utils.interval import Interval
 
 
-# @pytest.mark.parametrize("task_stratified_outtransform", [True, False])
-# @pytest.mark.parametrize("observed_test_data", [True, False])
-@pytest.mark.parametrize(
-    "task_stratified_outtransform,observed_test_data",
-    ([True, True], [False, True], [False, False]),
-)
+@pytest.mark.parametrize("task_stratified_outtransform", [True, False])
+@pytest.mark.parametrize("observed_test_data", [True, False])
 def test_recommendation(task_stratified_outtransform: bool, observed_test_data: bool):
     """Test a BO iteration with multi-task model."""
     objective = SingleTargetObjective(target=NumericalTarget(name="y", mode="MAX"))
