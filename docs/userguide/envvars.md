@@ -128,8 +128,8 @@ Consequently, this feature is currently only available as an *experimental* feat
 We are however actively working on fully enabling single precision.
 ```
 
-## EXPERIMENTAL: Parallel Monte Carlo Execution in Scenario Simulations
-The [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function can be configured to run multiple Monte Carlo scenario simulations in parallel by setting the environment variable `BAYBE_PARALLEL_MC_EXECUTION` to a truthy value accepted by [`strtobool`](baybe.utils.boolean.strtobool). This affects only the execution of scenario simulations and has no influence on other parts of the code. The default is `True`.
+## Parallel Monte Carlo Execution in Scenario Simulations
+By default, the [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function is configured to run multiple Monte Carlo scenario simulations in parallel. This can be disabled by setting the environment variable `BAYBE_PARALLEL_MC_EXECUTION` to a value accepted by [`strtobool`](baybe.utils.boolean.strtobool) that evaluates to `False`. Note that this affects only the execution of scenario simulations and has no influence on other parts of the code.
 
 ```bash
 BAYBE_PARALLEL_MC_EXECUTION="False"  # Set this to disable parallel execution
@@ -148,9 +148,7 @@ results = simulate_scenarios(
 
 The parameter takes precedence over the environment variable when both are specified.
 
-While parallel execution usually speeds up computation significantly, especially for multiple Monte Carlo iterations, the performance impact can vary depending on the machine and simulation configuration. In some cases, it might even lead to longer instead of shorter running times due to overhead costs. This behavior is currently under investigation.
-
 ```{admonition} Experimental Feature
 :class: warning
-This parallel execution mode is experimental and may change in future releases.
+While parallel execution usually speeds up computation significantly, the performance impact can vary depending on the machine and simulation configuration. In some cases, it might even lead to longer instead of shorter running times due to overhead costs.
 ```
