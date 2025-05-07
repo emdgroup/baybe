@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 _DEFAULT_SEED = 1337
 
 # Environment variable to control parallel execution
-BAYBE_SIMULATE_IN_PARALLEL = "BAYBE_SIMULATE_IN_PARALLEL"
+BAYBE_PARALLEL_MC_EXECUTION = "BAYBE_PARALLEL_MC_EXECUTION"
 
 
 def simulate_scenarios(
@@ -40,6 +40,7 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
+    parallel_mc_execution: bool | None = None,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -62,6 +63,8 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
+        parallel_mc_execution: If specified, overrides the environment variable
+            ``BAYBE_PARALLEL_MC_EXECUTION`` to control parallel execution.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
@@ -70,7 +73,7 @@ def simulate_scenarios(
     Note:
         This function can be used to simulate multiple scenarios in parallel. This is
         controlled by an environment variable. If the variable
-        ``BAYBE_SIMULATE_IN_PARALLEL`` is set to ``True``, the simulations will be
+        ``BAYBE_PARALLEL_MC_EXECUTION`` is set to ``True``, the simulations will be
         executed in parallel. Otherwise, the simulations will be executed sequentially.
         The default is ``False``, hence the simulations will be executed sequentially.
 
@@ -163,7 +166,11 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        parallel = strtobool(os.environ.get(BAYBE_SIMULATE_IN_PARALLEL, "False"))
+        # Use parameter if provided, otherwise use environment variable
+        if parallel_mc_execution is None:
+            parallel = strtobool(os.environ.get(BAYBE_PARALLEL_MC_EXECUTION, "True"))
+        else:
+            parallel = parallel_mc_execution
         da_results = batch_simulator.run_combos(combos, parallel=parallel)[
             result_variable
         ]
