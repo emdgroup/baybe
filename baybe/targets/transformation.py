@@ -208,7 +208,7 @@ class ClampingTransformation(Transformation):
         return x.clamp(self.min, self.max)
 
 
-@define(slots=False)
+@define(slots=False, init=False)
 class AffineTransformation(Transformation):
     """An affine transformation."""
 
@@ -218,8 +218,14 @@ class AffineTransformation(Transformation):
     shift: float = field(default=0.0, converter=float)
     """The constant shift of the transformation."""
 
-    shift_first: bool = field(default=False, validator=instance_of(bool))
-    """Boolean flag determining if the shift or the scaling is applied first."""
+    def __init__(
+        self,
+        factor: float = 1.0,
+        shift: float = 0.0,
+        shift_first: bool = False,
+    ) -> None:
+        shift = shift * factor if shift_first else shift
+        self.__attrs_init__(factor=factor, shift=shift)
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -267,10 +273,7 @@ class AffineTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        if self.shift_first:
-            return (x + self.shift) * self.factor
-        else:
-            return x * self.factor + self.shift
+        return x * self.factor + self.shift
 
 
 @define(slots=False)

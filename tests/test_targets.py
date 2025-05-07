@@ -27,6 +27,7 @@ from baybe.targets.transformation import (
     linear_transform,
     triangular_transform,
 )
+from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
 
@@ -410,3 +411,13 @@ def test_target_normalization():
         t.normalize()
     assert t.clamp(-5, 2).get_image() == Interval(-5, 2)
     assert t.clamp(-5, 2).normalize().get_image() == Interval(0, 1)
+
+
+def test_affine_transformation_operation_order(series):
+    """The alternative construction yields the correct equivalent transformation."""
+    t1 = AffineTransformation(factor=2, shift=10, shift_first=False)
+    t2 = AffineTransformation(factor=2, shift=5, shift_first=True)
+    tensor = to_tensor(series.values)
+
+    assert t1 == t2
+    assert t1(tensor).equal(t2(tensor))
