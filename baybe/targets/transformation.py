@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from functools import reduce
 from typing import TYPE_CHECKING
 
@@ -17,7 +17,7 @@ from baybe.targets._deprecated import (  # noqa: F401
     linear_transform,
     triangular_transform,
 )
-from baybe.utils.basic import compose, to_tuple
+from baybe.utils.basic import compose, is_all_instance
 from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
@@ -89,6 +89,8 @@ class Transformation(ABC):
         """Chain another transformation or shift the output of the current one."""
         if isinstance(other, IdentityTransformation):
             return self
+        if is_all_instance(t := [self, other], AffineTransformation):
+            return combine_affine_transformations(*t)
         if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
         if isinstance(other, (int, float)):
@@ -114,14 +116,60 @@ class Transformation(ABC):
         return args[0] + GenericTransformation(func)
 
 
+def combine_affine_transformations(
+    t1: AffineTransformation, t2: AffineTransformation, /
+) -> AffineTransformation:
+    """Combine two affine transformations into one."""
+    return AffineTransformation(
+        factor=t2.factor * t1.factor,
+        shift=t2.factor * t1.shift + t2.shift,
+    )
+
+
+def compress_transformations(
+    transformations: Iterable[Transformation], /
+) -> tuple[Transformation, ...]:
+    """Compress any iterable of transformations by removing redundancies.
+
+    Drops identity transformations and combines subsequent affine transformations.
+
+    Args:
+        transformations: An iterable of transformations.
+
+    Returns:
+        The minimum sequence of transformations that is equivalent to the input.
+    """
+    aggregated: list[Transformation] = []
+    last = None
+
+    for t in transformations:
+        # Drop identity transformations
+        if isinstance(t, IdentityTransformation):
+            continue
+
+        # Combine subsequent affine transformations
+        if (
+            aggregated
+            and isinstance(last := aggregated.pop(), AffineTransformation)
+            and isinstance(t, AffineTransformation)
+        ):
+            aggregated.append(combine_affine_transformations(last, t))
+
+        # Keep other transformations
+        else:
+            if last is not None:
+                aggregated.append(last)
+            aggregated.append(t)
+
+    return tuple(aggregated)
+
+
 @define
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
     transformations: tuple[Transformation, ...] = field(
-        converter=lambda x: to_tuple(
-            t for t in x if not isinstance(t, (IdentityTransformation, type(None)))
-        ),
+        converter=compress_transformations,
         validator=[
             min_len(2),
             deep_iterable(member_validator=instance_of(Transformation)),

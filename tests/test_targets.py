@@ -421,3 +421,18 @@ def test_affine_transformation_operation_order(series):
 
     assert t1 == t2
     assert t1(tensor).equal(t2(tensor))
+
+
+def test_affine_transformation_chaining(series):
+    """Chaining affine transformations compressed them."""
+    t1 = AffineTransformation(factor=3, shift=2)
+    t2 = AffineTransformation(factor=4, shift=3)
+
+    chained = t1 + t2
+    chained_factor = t2.factor * t1.factor
+    chained_shift = t2.factor * t1.shift + t2.shift
+    expected = AffineTransformation(factor=chained_factor, shift=chained_shift)
+
+    tensor = to_tensor(series.values)
+    assert chained == expected
+    assert chained(tensor).equal(expected(tensor))
