@@ -71,7 +71,7 @@ def _get_target_transformation(
 
 
 @define(frozen=True)
-class NumericalTarget(Target, SerialMixin):
+class LegacyTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
     # NOTE: The type annotations of `bounds` are correctly overridden by the attrs

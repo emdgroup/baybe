@@ -10,7 +10,7 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe.exceptions import IncompatibilityError
-from baybe.targets._deprecated import NumericalTarget as LegacyTarget
+from baybe.targets._deprecated import LegacyTarget
 from baybe.targets.numerical import NumericalTarget as ModernTarget
 from baybe.targets.transformation import (
     AbsoluteTransformation,
