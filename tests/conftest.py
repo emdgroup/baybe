@@ -787,7 +787,7 @@ def fixture_default_config():
             "type": "SingleTargetObjective",
             "target": {
                 "type": "NumericalTarget",
-                "name": "Yield",
+                "name": "Yield"
             }
         },
         "recommender": {
@@ -858,7 +858,7 @@ def fixture_default_simplex_config():
           "type": "SingleTargetObjective",
           "target": {
               "type": "NumericalTarget",
-              "name": "Yield",
+              "name": "Yield"
             }
         }
     }"""
