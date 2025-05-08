@@ -7,7 +7,6 @@ from typing import ClassVar
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from scipy.stats import multivariate_normal
 from sklearn.base import ClusterMixin
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import StandardScaler
@@ -280,6 +279,8 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         Returns:
             A list with positional indices of the selected candidates.
         """
+        from scipy.stats import multivariate_normal
+
         predicted_clusters = model.predict(candidates_scaled)
         selection = []
         for k_cluster in range(model.n_components):
