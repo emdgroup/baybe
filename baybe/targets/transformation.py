@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from functools import reduce
@@ -12,6 +13,11 @@ from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
 
+from baybe.serialization.core import (
+    converter,
+    get_base_structure_hook,
+    unstructure_base,
+)
 from baybe.targets._deprecated import (  # noqa: F401
     bell_transform,
     linear_transform,
@@ -415,3 +421,13 @@ class PowerTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.pow(self.exponent)
+
+
+# Register (un-)structure hooks
+converter.register_structure_hook(
+    Transformation, get_base_structure_hook(Transformation)
+)
+converter.register_unstructure_hook(Transformation, unstructure_base)
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
