@@ -110,7 +110,7 @@ BAYBE_CACHE_DIR=""
 ```
 you can turn off disk caching entirely.
 
-## EXPERIMENTAL: Floating Point Precision
+## Floating Point Precision
 In general, double precision is recommended because numerical stability during optimization
 can be bad when single precision is used. This impacts gradient-based optimization,
 i.e. search spaces with continuous parameters, more than optimization without gradients.
@@ -126,4 +126,30 @@ even when setting the aforementioned variables. The reason is that there are sev
 within `BoTorch` that transform single precision variables to double precision variables.
 Consequently, this feature is currently only available as an *experimental* feature.
 We are however actively working on fully enabling single precision.
+```
+
+## Parallel Runs in Scenario Simulations
+By default, the [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) function is configured to run in parallel. This can be disabled by setting the environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` to a value accepted by [`strtobool`](baybe.utils.boolean.strtobool) that evaluates to `False`. Note that this affects only the execution of scenario simulations and has no influence on other parts of the code.
+
+```bash
+BAYBE_PARALLEL_SIMULATION_RUNS="False"  # Set this to disable parallel execution
+```
+
+Alternatively, you can directly specify the `parallel_runs` parameter when calling the function:
+
+```python
+results = simulate_scenarios(
+    scenarios=scenarios,
+    lookup=lookup,
+    n_mc_iterations=10,
+    parallel_runs=False  # Disable parallel execution for this call
+)
+```
+
+The parameter takes precedence over the environment variable when both are specified.
+
+```{admonition} Experimental Feature
+:class: warning
+This parallel execution mode is experimental and may change in future releases.
+While parallel execution usually speeds up computation significantly, the performance impact can vary depending on the machine and simulation configuration. In some cases, it might even lead to longer instead of shorter running times due to overhead costs.
 ```
