@@ -148,7 +148,6 @@ results = simulate_scenarios(
 
 The parameter takes precedence over the environment variable when both are specified.
 
-
 ```{admonition} Experimental Feature
 :class: warning
 This parallel execution mode is experimental and may change in future releases.
