@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   target configurations unrepresentable, and is in line with the definition of
   mathematical optimization problems. Also, it avoids the need to explicitly specify an
   irrelevant optimization direction in the context of active learning.
+- Evaluating posteriors using a `DesirabilityObjective` now returns information 
+  for each target instead of for the desirability value
 - Specifying bounds for `Interval` is now optional
 
 ### Removed

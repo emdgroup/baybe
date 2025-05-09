@@ -22,7 +22,6 @@ from joblib.hashing import hash
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
-from baybe.objectives import DesirabilityObjective
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -348,17 +347,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 )
         posterior = self.posterior(candidates)
 
-        match self._objective:
-            case DesirabilityObjective():
-                # TODO: Once desirability also supports posterior transforms this check
-                #  here will have to depend on the configuration of the objective and
-                #  whether it uses the transforms or not.
-                targets = ["Desirability"]
-            case _:
-                targets = [t.name for t in self._objective.targets]
-
         import torch
 
+        targets = [t.name for t in self._objective.targets]
         result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
             for k, target_name in enumerate(targets):

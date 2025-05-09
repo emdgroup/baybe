@@ -212,12 +212,7 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     )
 
     # Assert expected columns are present.
-    match objective:
-        case DesirabilityObjective():
-            targets = ["Desirability"]
-        case _:
-            targets = [t.name for t in objective.targets]
-
+    targets = [t.name for t in objective.targets]
     for t in targets:
         for stat in tested_stats:
             stat_name = f"Q_{stat}" if isinstance(stat, float) else stat
