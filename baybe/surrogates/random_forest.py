@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Collection
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypedDict
 
 import numpy as np
+import numpy.typing as npt
 from attrs import define, field
+from numpy.random import RandomState
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
@@ -19,8 +21,34 @@ if TYPE_CHECKING:
     from botorch.models.ensemble import EnsemblePosterior
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
-    from sklearn.ensemble import RandomForestRegressor
     from torch import Tensor
+
+
+class _RandomForestRegressorParams(TypedDict, total=False):
+    """Optional RandomForestRegressor parameters.
+
+    See :class:`~sklearn.ensemble.RandomForestRegressor`.
+    """
+
+    n_estimators: int
+    criterion: Literal["squared_error", "absolute_error", "friedman_mse", "poisson"]
+    max_depth: int
+    min_samples_split: int | float
+    min_samples_leaf: int | float
+    min_weight_fraction_leaf: float
+    max_features: Literal["sqrt", "log2"] | int | float | None
+    max_leaf_nodes: int | None
+    min_impurity_decrease: float
+    bootstrap: bool
+    oob_score: bool  # Unlike sklearn, we do not allow callables
+    n_jobs: int | None
+    random_state: int | RandomState | None
+    verbose: int
+    warm_start: bool
+    ccp_alpha: float
+    max_samples: int | float | None
+    monotonic_cst: npt.ArrayLike | int | None
+
 
 class _Predictor(Protocol):
     """A basic predictor."""
@@ -36,14 +64,16 @@ class RandomForestSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    model_params: dict[str, Any] = field(
+    model_params: _RandomForestRegressorParams = field(
         factory=dict,
         converter=dict,
-        validator=get_model_params_validator(RandomForestRegressor.__init__),
+        validator=get_model_params_validator(_RandomForestRegressorParams),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
-    _model: RandomForestRegressor | None = field(init=False, default=None, eq=False)
+    # TODO: type should be `RandomForestRegressor | None` but is currently omitted due
+    #  to: https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @override
