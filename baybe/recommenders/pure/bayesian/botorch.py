@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gc
 import math
 import warnings
 from collections.abc import Collection, Iterable
@@ -10,6 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
+import torch
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
@@ -24,6 +24,7 @@ from baybe.exceptions import (
     InfeasibilityError,
     MinimumCardinalityViolatedWarning,
 )
+from baybe.objectives.base import Objective
 from baybe.parameters.numerical import _FixedNumericalContinuousParameter
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import (
@@ -34,6 +35,11 @@ from baybe.searchspace import (
 )
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.device_utils import (
+    device_context,
+    get_default_device,
+    to_device,
+)
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     sample_numerical_df,
@@ -88,6 +94,12 @@ class BotorchRecommender(BayesianRecommender):
     """Number of raw samples drawn for the initialization heuristic in gradient-based
     optimization. **Does not affect purely discrete optimization**.
     """
+
+    device: torch.device | None = field(
+        default=None,
+        converter=lambda x: get_default_device() if x is None else x,
+    )
+    """The device to use for computations. If None, uses CUDA if available, else CPU."""
 
     max_n_subspaces: int = field(default=10, validator=[instance_of(int), ge(1)])
     """Threshold defining the maximum number of subspaces to consider for exhaustive
@@ -166,11 +178,24 @@ class BotorchRecommender(BayesianRecommender):
 
         from botorch.optim import optimize_acqf_discrete
 
+        # Ensure acquisition function is on the correct device if possible
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+
+        # Clear CUDA cache before heavy computations
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         # determine the next set of points to be tested
         candidates_comp = subspace_discrete.transform(candidates_exp)
+        candidates_tensor = to_device(to_tensor(candidates_comp), self.device)
+
         points, _ = optimize_acqf_discrete(
-            self._botorch_acqf, batch_size, to_tensor(candidates_comp)
+            self._botorch_acqf, batch_size, candidates_tensor
         )
+
+        # Ensure the output points are moved to CPU before converting to NumPy
+        points = points.detach().cpu()
 
         # retrieve the index of the points from the input dataframe
         # IMPROVE: The merging procedure is conceptually similar to what
@@ -179,14 +204,15 @@ class BotorchRecommender(BayesianRecommender):
         #   handle continuous parameters, a corresponding utility could be extracted.
         idxs = pd.Index(
             pd.merge(
-                pd.DataFrame(points, columns=candidates_comp.columns),
+                pd.DataFrame(points.numpy(), columns=candidates_comp.columns),
                 candidates_comp.reset_index(),
-                on=list(candidates_comp),
+                on=list(candidates_comp.columns),
                 how="left",
             )["index"]
         )
 
-        return idxs
+        # Convert idxs (which is a pd.Index) to actual indices in candidates_exp
+        return idxs  # This returns just the indices
 
     @override
     def _recommend_continuous(
@@ -206,7 +232,7 @@ class BotorchRecommender(BayesianRecommender):
                 function is used with a batch size > 1.
 
         Returns:
-            A dataframe containing the recommendations as individual rows.
+            A pandas DataFrame containing the recommendations as individual rows.
         """
         assert self._objective is not None
         if (
@@ -219,6 +245,10 @@ class BotorchRecommender(BayesianRecommender):
             )
 
         points, _ = self._recommend_continuous_torch(subspace_continuous, batch_size)
+
+        # Before returning DataFrame, ensure points are on CPU
+        if torch.cuda.is_available() and hasattr(points, "is_cuda") and points.is_cuda:
+            points = points.detach().cpu()
 
         return pd.DataFrame(points, columns=subspace_continuous.parameter_names)
 
@@ -297,6 +327,11 @@ class BotorchRecommender(BayesianRecommender):
 
         points, acqf_value = self._optimize_continuous_subspaces(subspaces, batch_size)
 
+        # Ensure points are on CPU for numpy/pandas operations
+        if torch.cuda.is_available() and points.is_cuda:
+            points = points.detach().cpu()
+            acqf_value = acqf_value.detach().cpu()
+
         # Check if any minimum cardinality constraints are violated
         if not is_cardinality_fulfilled(
             pd.DataFrame(points, columns=subspace_continuous.parameter_names),
@@ -342,11 +377,55 @@ class BotorchRecommender(BayesianRecommender):
                 f"'{ContinuousCardinalityConstraint.__name__}'. "
             )
 
+        # Move acquisition function to the device
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+
+        # Get bounds as a tensor and move to the recommender's device
+        bounds_tensor = to_device(
+            torch.from_numpy(subspace_continuous.comp_rep_bounds.values), self.device
+        )
+
+        # Find any fixed parameters
         fixed_parameters = {
             idx: p.value
             for (idx, p) in enumerate(subspace_continuous.parameters)
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
+
+        # Process equality constraints if they exist
+        equality_constraints = None
+        if subspace_continuous.constraints_lin_eq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in subspace_continuous.constraints_lin_eq:
+                # Get constraint in BoTorch format
+                idxs, coeffs, rhs = c.to_botorch(subspace_continuous.parameters)
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            equality_constraints = processed_constraints or None
+
+        # Process inequality constraints if they exist
+        inequality_constraints = None
+        if subspace_continuous.constraints_lin_ineq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in subspace_continuous.constraints_lin_ineq:
+                # Get constraint in BoTorch format
+                idxs, coeffs, rhs = c.to_botorch(subspace_continuous.parameters)
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            inequality_constraints = processed_constraints or None
 
         # NOTE: The explicit `or None` conversion is added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
@@ -354,23 +433,25 @@ class BotorchRecommender(BayesianRecommender):
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, acqf_values = optimize_acqf(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(subspace_continuous.comp_rep_bounds.values),
+            bounds=bounds_tensor,
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
-            equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_eq
-            ]
-            or None,
-            inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
-                for c in subspace_continuous.constraints_lin_ineq
-            ]
-            or None,
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
             sequential=self.sequential_continuous,
         )
+
+        # Move points to CPU if they're on CUDA and we need CPU tensors for testing
+        if torch.cuda.is_available() and points.is_cuda:
+            # Make a copy to avoid modifying the original
+            points_cpu = points.detach().cpu()
+            acqf_values_cpu = acqf_values.detach().cpu()
+            # For testing, return CPU tensors
+            if self.device == torch.device("cpu"):
+                return points_cpu, acqf_values_cpu
+
         return points, acqf_values
 
     @override
@@ -385,11 +466,9 @@ class BotorchRecommender(BayesianRecommender):
         This functions samples points from the discrete subspace, performs optimization
         in the continuous subspace with these points being fixed and returns the best
         found solution.
-
         **Important**: This performs a brute-force calculation by fixing every possible
         assignment of discrete variables and optimizing the continuous subspace for
         each of them. It is thus computationally expensive.
-
         **Note**: This function implicitly assumes that discrete search space parts in
         the respective data frame come first and continuous parts come second.
 
@@ -419,6 +498,58 @@ class BotorchRecommender(BayesianRecommender):
         import torch
         from botorch.optim import optimize_acqf_mixed
 
+        # Before optimizing, explicitly force everything to the correct device
+        if hasattr(self, "device") and self.device is not None:
+            torch.cuda.empty_cache()  # Clear CUDA cache
+
+            # Move model and acquisition function to CPU first if using CPU
+            # This helps avoid mixed device tensors
+            device_str = str(self.device)
+            if "cpu" in device_str:
+                # Force a complete reset of all CUDA tensors
+                torch.cuda.empty_cache()
+
+                # If using CPU, first move everything to CPU
+                if (
+                    hasattr(self._botorch_acqf, "model")
+                    and self._botorch_acqf.model is not None
+                ):
+                    # Move model to CPU first
+                    self._botorch_acqf.model = self._botorch_acqf.model.to("cpu")
+
+                    # Reset all caches
+                    if hasattr(self._botorch_acqf.model, "prediction_strategy"):
+                        strat = self._botorch_acqf.model.prediction_strategy
+                        if strat is not None:
+                            # Reset all caches
+                            for attr in dir(strat):
+                                if attr.endswith("_cache") and hasattr(strat, attr):
+                                    if isinstance(getattr(strat, attr), dict):
+                                        setattr(strat, attr, {})
+                                    else:
+                                        setattr(strat, attr, None)
+
+                    # Move all training inputs to CPU
+                    if hasattr(self._botorch_acqf.model, "train_inputs"):
+                        self._botorch_acqf.model.train_inputs = tuple(
+                            x.to("cpu") for x in self._botorch_acqf.model.train_inputs
+                        )
+
+                    # Move targets to CPU
+                    if hasattr(self._botorch_acqf.model, "train_targets"):
+                        self._botorch_acqf.model.train_targets = (
+                            self._botorch_acqf.model.train_targets.to("cpu")
+                        )
+
+                    # Move likelihood to CPU
+                    if hasattr(self._botorch_acqf.model, "likelihood"):
+                        self._botorch_acqf.model.likelihood = (
+                            self._botorch_acqf.model.likelihood.to("cpu")
+                        )
+
+                # Also move the acquisition function
+                self._botorch_acqf = self._botorch_acqf.to("cpu")
+
         # Transform discrete candidates
         candidates_comp = searchspace.discrete.transform(candidates_exp)
 
@@ -437,41 +568,79 @@ class BotorchRecommender(BayesianRecommender):
         candidates_comp.columns = list(range(num_comp_columns))  # type: ignore
         fixed_features_list = candidates_comp.to_dict("records")
 
-        # Actual call of the BoTorch optimization routine
+        # Convert bounds to a tensor and move to selected device
+        bounds_tensor = to_device(
+            torch.from_numpy(searchspace.comp_rep_bounds.values), self.device
+        )
+
+        # Process equality constraints if they exist
+        equality_constraints = None
+        if searchspace.continuous.constraints_lin_eq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in searchspace.continuous.constraints_lin_eq:
+                # Get constraint in BoTorch format with index offset
+                idxs, coeffs, rhs = c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=len(candidates_comp.columns),
+                )
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            equality_constraints = processed_constraints or None
+
+        # Process inequality constraints if they exist
+        inequality_constraints = None
+        if searchspace.continuous.constraints_lin_ineq:
+            # Create list to hold constraint tuples
+            processed_constraints = []
+
+            for c in searchspace.continuous.constraints_lin_ineq:
+                # Get constraint in BoTorch format with index offset
+                idxs, coeffs, rhs = c.to_botorch(
+                    searchspace.continuous.parameters,
+                    idx_offset=num_comp_columns,
+                )
+
+                # Move the coefficients tensor to the same device as bounds
+                coeffs = coeffs.to(self.device)
+
+                processed_constraints.append((idxs, coeffs, rhs))
+
+            inequality_constraints = processed_constraints or None
+
+        # Move acquisition function to the device
+        if hasattr(self._botorch_acqf, "to"):
+            self._botorch_acqf = self._botorch_acqf.to(self.device)
+
         # NOTE: The explicit `or None` conversion is added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
         #   For details: https://github.com/pytorch/botorch/issues/2042
         points, _ = optimize_acqf_mixed(
             acq_function=self._botorch_acqf,
-            bounds=torch.from_numpy(searchspace.comp_rep_bounds.values),
+            bounds=bounds_tensor,
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,
-            equality_constraints=[
-                c.to_botorch(
-                    searchspace.continuous.parameters,
-                    idx_offset=len(candidates_comp.columns),
-                )
-                for c in searchspace.continuous.constraints_lin_eq
-            ]
-            or None,
-            inequality_constraints=[
-                c.to_botorch(
-                    searchspace.continuous.parameters,
-                    idx_offset=num_comp_columns,
-                )
-                for c in searchspace.continuous.constraints_lin_ineq
-            ]
-            or None,
+            equality_constraints=equality_constraints,
+            inequality_constraints=inequality_constraints,
         )
+
+        # Ensure points are on CPU before any numpy operations or DataFrame creation
+        if torch.cuda.is_available() and hasattr(points, "is_cuda") and points.is_cuda:
+            points = points.detach().cpu()
 
         # Align candidates with search space index. Done via including the search space
         # index during the merge, which is used later for back-translation into the
         # experimental representation
         merged = pd.merge(
-            pd.DataFrame(points),
+            pd.DataFrame(points.numpy()),  # Now safe to convert to numpy
             candidates_comp.reset_index(),
             on=list(candidates_comp.columns),
             how="left",
@@ -546,13 +715,104 @@ class BotorchRecommender(BayesianRecommender):
                 "of finding a feasible solution."
             )
 
-        # Find the best option f
-        best_idx = np.argmax(acqf_values_all)
+        # Move all tensors to CPU before using numpy functions
+        acqf_values_cpu = [acqf.detach().cpu() for acqf in acqf_values_all]
+
+        # Find the best option using numpy - now with CPU tensors
+        acqf_values_np = [v.numpy() for v in acqf_values_cpu]
+        best_idx = np.argmax(acqf_values_np)
+
         points = points_all[best_idx]
         acqf_value = acqf_values_all[best_idx]
 
         return points, acqf_value
 
+    @override
+    def _setup_botorch_acqf(
+        self,
+        searchspace: SearchSpace,
+        objective: Objective,
+        measurements: pd.DataFrame | None,
+        pending_experiments: pd.DataFrame | None = None,
+    ) -> None:
+        """Set up the BoTorch acquisition function."""
+        import torch
 
-# Collect leftover original slotted classes processed by `attrs.define`
-gc.collect()
+        # Aggressively reset any existing model's state before setup
+        if hasattr(self, "_botorch_acqf") and self._botorch_acqf is not None:
+            if (
+                hasattr(self._botorch_acqf, "model")
+                and self._botorch_acqf.model is not None
+            ):
+                model = self._botorch_acqf.model
+
+                # Clear prediction strategy
+                if hasattr(model, "prediction_strategy"):
+                    model.prediction_strategy = None
+
+                # Move train data to CPU first to avoid mixed device issues
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    model.train_inputs = tuple(x.to("cpu") for x in model.train_inputs)
+
+                if hasattr(model, "train_targets"):
+                    model.train_targets = model.train_targets.to("cpu")
+
+                # Move input transform to CPU as well
+                if hasattr(model, "input_transform"):
+                    model.input_transform = model.input_transform.to("cpu")
+
+                # Update the model in the acquisition function
+                self._botorch_acqf.model = model
+
+        with device_context(self.device):
+            # Call parent implementation
+            super()._setup_botorch_acqf(
+                searchspace, objective, measurements, pending_experiments
+            )
+
+            # Ensure all components are on the target device
+            if (
+                hasattr(self, "_botorch_acqf")
+                and self._botorch_acqf is not None
+                and hasattr(self._botorch_acqf, "model")
+                and self._botorch_acqf.model is not None
+            ):
+                model = self._botorch_acqf.model
+
+                # First reset prediction strategy
+                if hasattr(model, "prediction_strategy"):
+                    model.prediction_strategy = None
+
+                # Move to the intended device
+                model = model.to(self.device)
+
+                # Ensure all training inputs are on the target device
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    model.train_inputs = tuple(
+                        x.to(self.device) for x in model.train_inputs
+                    )
+
+                if hasattr(model, "train_targets"):
+                    model.train_targets = model.train_targets.to(self.device)
+
+                # Ensure input transform is on the right device
+                if hasattr(model, "input_transform"):
+                    model.input_transform = model.input_transform.to(self.device)
+                    if hasattr(model.input_transform, "indices"):
+                        model.input_transform.indices = (
+                            model.input_transform.indices.to(self.device)
+                        )
+
+                # Put model in eval mode
+                model.eval()
+
+                # Force rebuild of prediction strategy with dummy forward pass
+                if hasattr(model, "train_inputs") and model.train_inputs:
+                    with torch.no_grad():
+                        _ = model(model.train_inputs[0])
+
+                # Update the model in the acquisition function
+                self._botorch_acqf.model = model
+
+                # Finally, move the entire acquisition function to the target device
+                self._botorch_acqf = self._botorch_acqf.to(self.device)

@@ -25,6 +25,7 @@ from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import to_tensor
+from baybe.utils.device_utils import device_context
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BotorchAcquisitionFunction
@@ -79,9 +80,25 @@ class AcquisitionFunction(ABC, SerialMixin):
                 f"does not support pending experiments."
             )
 
-        return BotorchAcquisitionFunctionBuilder(
-            self, surrogate, searchspace, objective, measurements, pending_experiments
-        ).build()
+        # Get the device from the surrogate if available
+        device = getattr(surrogate, "device", None)
+
+        with device_context(device):
+            # Create the acquisition function builder and build the function
+            builder = BotorchAcquisitionFunctionBuilder(
+                self,
+                surrogate,
+                searchspace,
+                objective,
+                measurements,
+                pending_experiments,
+                device=device,
+            )
+
+            # Build the acquisition function
+            acqf = builder.build()
+
+            return acqf
 
     @overload
     def evaluate(
@@ -144,11 +161,32 @@ class AcquisitionFunction(ABC, SerialMixin):
         """
         import torch
 
+        # Get device from surrogate if available
+        device = getattr(surrogate, "device", None)
+
         # Assemble the Botorch acquisition function and its input
         botorch_acqf = self.to_botorch(
             surrogate, searchspace, objective, measurements, pending_experiments
         )
-        comp = to_tensor(searchspace.transform(candidates))
+
+        # Transform candidates and ensure proper device placement
+        comp = to_tensor(searchspace.transform(candidates), device=device)
+
+        # Ensure acquisition function is on the same device as the input
+        if hasattr(botorch_acqf, "model") and botorch_acqf.model is not None:
+            model_device = None
+            if (
+                hasattr(botorch_acqf.model, "train_inputs")
+                and botorch_acqf.model.train_inputs
+            ):
+                model_device = botorch_acqf.model.train_inputs[0].device
+                # Move input tensor to model device if they differ
+                if model_device is not None and comp.device != model_device:
+                    comp = comp.to(model_device)
+
+        # Ensure acqf is on same device if it has a to() method
+        if hasattr(botorch_acqf, "to"):
+            botorch_acqf = botorch_acqf.to(comp.device)
 
         # Depending on joint mode, evaluate using t- or q-batching
         in_ = comp if jointly else comp.unsqueeze(-2)
@@ -156,7 +194,7 @@ class AcquisitionFunction(ABC, SerialMixin):
             out = botorch_acqf(in_)
         if jointly:
             return out.item()
-        return pd.Series(out.numpy(), index=candidates.index)
+        return pd.Series(out.cpu().numpy(), index=candidates.index)
 
 
 def _get_botorch_acqf_class(

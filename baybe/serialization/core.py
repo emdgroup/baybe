@@ -9,6 +9,7 @@ from typing import Any, TypeVar, get_type_hints
 import attrs
 import cattrs
 import pandas as pd
+import torch
 from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 from cattrs.strategies import configure_union_passthrough
 
@@ -169,4 +170,14 @@ converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(
 converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
 converter.register_structure_hook(
     timedelta, lambda x, _: timedelta(seconds=float(x.removesuffix("s")))
+)
+
+# Register torch.device serialization hooks
+converter.register_unstructure_hook(
+    torch.device,
+    lambda device: str(device),  # Convert device to string during serialization
+)
+converter.register_structure_hook(
+    torch.device,
+    lambda device_str, _: torch.device(device_str) if device_str is not None else None,
 )
