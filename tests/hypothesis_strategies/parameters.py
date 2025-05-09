@@ -31,7 +31,9 @@ decorrelations = st.one_of(
 parameter_names = st.text(min_size=1)
 """A strategy that generates parameter names."""
 
-categories = st.lists(st.text(min_size=1), min_size=2, unique=True)
+categories = st.lists(
+    st.one_of(st.text(min_size=1), st.booleans()), min_size=2, unique=True
+)
 """A strategy that generates parameter categories."""
 
 
