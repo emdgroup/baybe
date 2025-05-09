@@ -37,7 +37,7 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    parallel_mc_execution: bool | None = None,
+    parallel_runs: bool | None = None,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -60,19 +60,18 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        parallel_mc_execution: Enforce or prevent parallel execution of monte carlo
-            runs. If this is left unspecified, the behavior is controlled by the
-            environment variable ``BAYBE_PARALLEL_MC_EXECUTION``.
+        parallel_runs: If set, then the value of this parameter is handed over to the
+            ``parallel`` argument of the function ``run_combos`` of ``xyzpy``,
+            parallelizing all ``xyzpy`` crops.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
         but with additional columns. See the ``Note`` for details.
 
     Note:
-        By default, this function simulate multiple monte carlo iterations in
-        parallel. This behavior can be disabled globally by setting the environment
-        variable ``BAYBE_PARALLEL_MC_EXECUTION`` to ``False``, or locally using the
-        ``parallel_mc_execution`` parameter.
+        If ``parallel_runs`` is not set, then the value ``True``is used by default. This
+        behavior can be changed by setting the environment variable
+        ``BAYBE_PARALLEL_SIMULATION_RUNS`` to ``False``.
 
         The following additional columns are contained in the dataframe returned by this
         function:
@@ -164,11 +163,11 @@ def simulate_scenarios(
             module="baybe.recommenders.pure.nonpredictive.base",
         )
         # Use parameter if provided, otherwise use environment variable
-        if parallel_mc_execution is None:
-            parallel_mc_execution = strtobool(
-                os.environ.get("BAYBE_PARALLEL_MC_EXECUTION", "True")
+        if parallel_runs is None:
+            parallel_runs = strtobool(
+                os.environ.get("BAYBE_PARALLEL_SIMULATION_RUNS", "True")
             )
-        da_results = batch_simulator.run_combos(combos, parallel=parallel_mc_execution)[
+        da_results = batch_simulator.run_combos(combos, parallel=parallel_runs)[
             result_variable
         ]
 
