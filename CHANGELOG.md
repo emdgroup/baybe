@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
+- Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
+  expected dtypes
+
+### Changed
+- `CategoricalParameter` and `TaskParameter` now also allow Boolean entries as 
+  `values` and `active_values`
+- `SubspaceDiscrete.from_dataframe` now handles purely Boolean columns differently, 
+  inferring a `CategoricalParameter` with `INT` encoding for them
+- `add_measurements`, `update_measurements`, `fuzzy_row_match` and some `.recommend` 
+  calls now operate on dtype-normalized copies of the input if it contained unexpected
+  dtypes for a parameter or target
 
 ### Changed
 - `scikit-learn` and `scipy` are now lazy-loaded
