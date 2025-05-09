@@ -8,7 +8,7 @@ from torch import Tensor
 class AffinePosteriorTransform(PosteriorTransform):
     """An affine posterior transformation."""
 
-    def __init__(self, factor: Tensor, shift: Tensor) -> None:
+    def __init__(self, factor: float, shift: float) -> None:
         super().__init__()
         self.factor = factor
         self.shift = shift

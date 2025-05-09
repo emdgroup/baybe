@@ -289,13 +289,9 @@ class AffineTransformation(Transformation):
         Returns:
             The representation of the transform as BoTorch posterior transform.
         """
-        import torch
-
         from baybe.targets.botorch import AffinePosteriorTransform
 
-        return AffinePosteriorTransform(
-            torch.tensor(self.factor), torch.tensor(self.shift)
-        )
+        return AffinePosteriorTransform(self.factor, self.shift)
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
