@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   random or deterministic sampling for equidistant cases
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
-### Fixed
-- `simulate_scenarios` not making use of fully parallel computation
+
+### Changed
+- `CategoricalParameter` and `TaskParameter` now also allow Boolean entries as 
+  `values` and `active_values`
+- `SubspaceDiscrete.from_dataframe` now handles purely Boolean columns differently, 
+  inferring a `CategoricalParameter` with `INT` encoding for them
+- `fuzzy_row_match` now casts numerical columns to float before distance calculation
 
 ### Fixed
+- `simulate_scenarios` not making use of fully parallel computation
 - Added missing garbage collection call to pareto.py, potentially solving serialization
   issues in certain cases
 
