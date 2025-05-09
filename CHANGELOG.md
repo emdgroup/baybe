@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   random or deterministic sampling for equidistant cases
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
+- Additional transfer learning and synthetic benchmarks
 ### Fixed
 - `simulate_scenarios` not making use of fully parallel computation
 
