@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
-from sklearn.preprocessing import StandardScaler
 from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
@@ -92,6 +91,8 @@ class FPSRecommender(NonPredictiveRecommender):
         batch_size: int,
     ) -> pd.Index:
         # Fit scaler on entire search space
+        from sklearn.preprocessing import StandardScaler
+
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)

@@ -6,7 +6,6 @@ import gc
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from attrs import define, field
-from sklearn.linear_model import ARDRegression
 from typing_extensions import override
 
 from baybe.surrogates.base import IndependentGaussianSurrogate
@@ -15,6 +14,7 @@ from baybe.surrogates.validation import get_model_params_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from sklearn.linear_model import ARDRegression
     from torch import Tensor
 
 
@@ -58,6 +58,8 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        from sklearn.linear_model import ARDRegression
+
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 

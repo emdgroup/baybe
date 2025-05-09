@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol
 
 import numpy as np
 from attrs import define, field
-from sklearn.ensemble import RandomForestRegressor
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
@@ -20,8 +19,8 @@ if TYPE_CHECKING:
     from botorch.models.ensemble import EnsemblePosterior
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
+    from sklearn.ensemble import RandomForestRegressor
     from torch import Tensor
-
 
 class _Predictor(Protocol):
     """A basic predictor."""
@@ -101,6 +100,8 @@ class RandomForestSurrogate(Surrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        from sklearn.ensemble import RandomForestRegressor
+
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
 
