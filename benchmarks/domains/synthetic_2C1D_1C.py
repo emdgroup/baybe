@@ -50,18 +50,28 @@ def lookup(df: pd.DataFrame, /) -> pd.DataFrame:
 
 
 def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
-    """Hybrid synthetic test function.
+    """Benchmark function with hybrid synthetic test function.
 
-    Inputs:
-        z   discrete   {1,2,3,4}
-        x   continuous [-2*pi, 2*pi]
-        y   continuous [-2*pi, 2*pi]
-    Output: continuous
-    Objective: Maximization
-    Optimal Inputs:
-        {x: 1.610, y: 1.571, z: 3}
-        {x: 1.610, y: -4.712, z: 3}
-    Optimal Output: 4.09685
+    Key characteristics:
+    • Parameters:
+      - z: Discrete {1,2,3,4}
+      - x: Continuous [-2π, 2π]
+      - y: Continuous [-2π, 2π]
+    • Output: Continuous
+    • Objective: Maximization
+    • Optimal inputs:
+      - {x: 1.610, y: 1.571, z: 3}
+      - {x: 1.610, y: -4.712, z: 3}
+    • Optimal output: 4.09685
+    • Tests multiple recommenders:
+      - Random Recommender
+      - Default Recommender
+
+    Args:
+        settings: Configuration settings for the convergence benchmark.
+
+    Returns:
+        DataFrame containing benchmark results.
     """
     parameters = [
         NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
@@ -97,8 +107,8 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=5,
-    n_doe_iterations=30,
-    n_mc_iterations=50,
+    n_doe_iterations=40,
+    n_mc_iterations=100,
 )
 
 synthetic_2C1D_1C_benchmark = ConvergenceBenchmark(
