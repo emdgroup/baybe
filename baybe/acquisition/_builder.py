@@ -13,6 +13,7 @@ from attrs import asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
+from botorch.acquisition.objective import PosteriorTransform as PTrans
 from botorch.models.model import Model
 from torch import Tensor
 
@@ -22,12 +23,15 @@ from baybe.acquisition.acqfs import (
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.exceptions import IncompleteMeasurementsError
+from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
+from baybe.targets.binary import BinaryTarget
+from baybe.targets.numerical import NumericalTarget
+from baybe.targets.transformation import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
@@ -51,6 +55,7 @@ class BotorchAcquisitionArgs:
     mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
     num_fantasies: int | None = field(default=None, validator=opt_v(int))
     objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
+    posterior_transform: PTrans | None = field(default=None, validator=opt_v(PTrans))
     prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
     ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
     X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
@@ -172,7 +177,37 @@ class BotorchAcquisitionFunctionBuilder:
             # In both cases, the setting is independent of the target mode.
             return
 
-        self._args.objective = self.objective.to_botorch()
+        if self.acqf.is_analytic:
+            if not isinstance(self.objective, SingleTargetObjective):
+                targets = self.objective.targets
+                raise IncompatibilityError(
+                    f"The selected analytic acquisition "
+                    f"'{self.acqf.__class__.__name__}' can handle one target only but "
+                    f"the specified objective comprises {len(targets)} targets: "
+                    f"{[t.name for t in targets]}"
+                )
+
+            match target := self.objective._target:
+                case NumericalTarget():
+                    pass
+                case BinaryTarget():
+                    return
+                case _:
+                    raise NotImplementedError("No transformation handling implemented.")
+
+            match t := target.total_transformation:
+                case AffineTransformation():
+                    self._args.posterior_transform = t.to_botorch_posterior_transform()
+                case IdentityTransformation():
+                    return
+                case _:
+                    raise NotImplementedError(
+                        f"The selected analytic acquisition "
+                        f"'{self.acqf.__class__.__name__}' supports only affine "
+                        f"target transformations. "
+                    )
+        else:
+            self._args.objective = self.objective.to_botorch()
 
     def _set_best_f(self) -> None:
         """Set BoTorch's ``best_f`` argument."""

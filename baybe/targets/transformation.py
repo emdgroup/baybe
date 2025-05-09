@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
+    from baybe.targets.botorch import AffinePosteriorTransform
+
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
 
@@ -51,15 +53,15 @@ class Transformation(ABC):
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
 
-    def to_botorch(self, *, keep_dimension: bool) -> MCAcquisitionObjective:
-        """Convert to BoTorch representation.
+    def to_botorch_objective(self, *, keep_dimension: bool) -> MCAcquisitionObjective:
+        """Convert to BoTorch objective.
 
         Args:
             keep_dimension: Boolean flag specifying whether to keep an explicit
                 dimension for the outputs of the objective.
 
         Returns:
-            The BoTorch objective.
+            The representation of the transform as BoTorch objective.
         """
         from botorch.acquisition.objective import GenericMCObjective
 
@@ -280,6 +282,20 @@ class AffineTransformation(Transformation):
     ) -> None:
         shift = shift * factor if shift_first else shift
         self.__attrs_init__(factor=factor, shift=shift)
+
+    def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
+        """Convert to BoTorch posterior transform.
+
+        Returns:
+            The representation of the transform as BoTorch posterior transform.
+        """
+        import torch
+
+        from baybe.targets.botorch import AffinePosteriorTransform
+
+        return AffinePosteriorTransform(
+            torch.tensor(self.factor), torch.tensor(self.shift)
+        )
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:

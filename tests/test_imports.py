@@ -61,6 +61,7 @@ WHITELISTS = {
         "baybe.acquisition.partial",
         "baybe.acquisition._builder",
         "baybe.surrogates._adapter",
+        "baybe.targets.botorch",
         "baybe.utils.torch",
     ],
 }

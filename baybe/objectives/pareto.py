@@ -61,7 +61,7 @@ class ParetoObjective(Objective):
         return GenericMCMultiOutputObjective(
             lambda samples, X: torch.stack(
                 [
-                    t.total_transformation.to_botorch(keep_dimension=True)(
+                    t.total_transformation.to_botorch_objective(keep_dimension=True)(
                         samples[..., i]
                     )
                     for i, t in enumerate(self.targets)
