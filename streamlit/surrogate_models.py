@@ -97,12 +97,7 @@ def main():
     st_function_name = st.sidebar.selectbox(
         "Test function", list(test_functions.keys())
     )
-    st_target_mode = st.sidebar.radio(
-        "Objective",
-        ["MAX", "MIN"],
-        format_func=lambda x: {"MAX": "Maximization", "MIN": "Minimization"}[x],
-        horizontal=True,
-    )
+    st_minimize = st.sidebar.checkbox("Minimize")
     st.sidebar.markdown("---")
     st.sidebar.markdown("# Model")
     st_surrogate_name = st.sidebar.selectbox(
@@ -168,11 +163,16 @@ def main():
         ),
     )
     searchspace = SearchSpace.from_product(parameters=[parameter])
-    objective = NumericalTarget(name="y", mode=st_target_mode).to_objective()
+    target_mode = "MIN" if st_minimize else "MAX"
+    objective = NumericalTarget(name="y", mode=target_mode).to_objective()
 
     # Create the surrogate model, acquisition function, and the recommender
     surrogate_model = surrogate_model_classes[st_surrogate_name]()
-    acqf = acquisition_function_classes[st_acqf_name]()
+    acqf_cls = acquisition_function_classes[st_acqf_name]
+    try:
+        acqf = acqf_cls(maximize=not st_minimize)
+    except TypeError:
+        acqf = acqf_cls()
     recommender = BotorchRecommender(
         surrogate_model=surrogate_model, acquisition_function=acqf
     )
