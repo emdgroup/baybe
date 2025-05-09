@@ -27,21 +27,21 @@ if TYPE_CHECKING:
 
 
 @overload
-def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
+def to_tensor(x: np.ndarray | pd.Series | pd.DataFrame, /) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
+def to_tensor(*x: np.ndarray | pd.Series | pd.DataFrame) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
-    """Convert numpy arrays and pandas dataframes to tensors.
+def to_tensor(*x: np.ndarray | pd.Series | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
+    """Convert numpy arrays and pandas series/dataframes to tensors.
 
     Args:
-        *x: The array(s)/dataframe(s) to be converted.
+        *x: The array(s)/series/dataframe(s) to be converted.
 
     Returns:
-        The provided array(s)/dataframe(s) represented as tensor(s).
+        The provided array(s)/series/dataframe(s) represented as tensor(s).
     """
     # FIXME This function seems to trigger a problem when some columns in either of
     #  the dfs have a dtype other than int or float (e.g. object, bool). This can
@@ -56,7 +56,9 @@ def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
 
     out = tuple(
         torch.from_numpy(
-            (xi.values if isinstance(xi, pd.DataFrame) else xi).astype(DTypeFloatNumpy)
+            (xi.values if isinstance(xi, (pd.Series, pd.DataFrame)) else xi).astype(
+                DTypeFloatNumpy
+            )
         ).to(DTypeFloatTorch)
         for xi in x
     )

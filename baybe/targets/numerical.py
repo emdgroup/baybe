@@ -371,10 +371,10 @@ class NumericalTarget(Target, SerialMixin):
 
         # When a transformation is specified, apply it
         if (self.transformation is not None) or self.minimize:
-            import torch
+            from baybe.utils.dataframe import to_tensor
 
             return pd.Series(
-                self.total_transformation(torch.from_numpy(series.to_numpy())),
+                self.total_transformation(to_tensor(series)),
                 index=series.index,
                 name=series.name,
             )
