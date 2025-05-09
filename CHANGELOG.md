@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
 
+### Fixed
+- Added missing garbage collection call to pareto.py, potentially solving serialization
+  issues in certain cases
+
 ## [0.13.0] - 2025-04-16
 ### Added
 - `extras` group for installing all dependencies required for optional features
