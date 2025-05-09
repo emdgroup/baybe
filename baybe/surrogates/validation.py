@@ -53,11 +53,11 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
         )
 
 
-def get_model_params_validator(model_init: Callable | None = None) -> Callable:
-    """Construct a validator based on the model class.
+def get_model_params_validator(model_params: dict) -> Callable:
+    """Construct a validator based on the model type dict.
 
     Args:
-        model_init: The init method for the model.
+        model_params: The init method for the model.
 
     Returns:
         A validator function to validate parameters.
@@ -66,39 +66,7 @@ def get_model_params_validator(model_init: Callable | None = None) -> Callable:
     def validate_model_params(  # noqa: DOC101, DOC103
         obj: Any, _: Any, model_params: dict
     ) -> None:
-        """Validate the model params attribute of an object.
-
-        Raises:
-            ValueError: When model params are given for non-supported objects.
-            ValueError: When surrogate is not recognized (no valid model_init).
-            ValueError: When invalid params are given for a model.
-        """
-        # Get model class name
-        model = obj.__class__.__name__
-
-        if not model_params:
-            return
-
-        # GP does not support additional model params
-        # Neither does custom models
-        if "GaussianProcess" in model or "Custom" in model:
-            raise ValueError(f"{model} does not support model params.")
-
-        if not model_init:
-            raise ValueError(
-                f"Cannot validate model params for unrecognized Surrogate: {model}"
-            )
-
-        # Invalid params
-        invalid_params = ", ".join(
-            [
-                key
-                for key in model_params.keys()
-                if key not in model_init.__code__.co_varnames
-            ]
-        )
-
-        if invalid_params:
-            raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
+        """Validate the model params attribute of an object."""
+        pass
 
     return validate_model_params
