@@ -58,10 +58,13 @@ class SingleTargetObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
-        assert isinstance(self._target, NumericalTarget)
-        return self._target.total_transformation.to_botorch_objective(
-            keep_dimension=False
-        )
+        if isinstance(self._target, NumericalTarget):
+            return self._target.total_transformation.to_botorch_objective(
+                keep_dimension=False
+            )
+        from botorch.acquisition.objective import IdentityMCObjective
+
+        return IdentityMCObjective()
 
     @override
     def transform(
