@@ -254,7 +254,6 @@ class GaussianProcessSurrogate(Surrogate):
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
-            mean_module=None,
             covar_module=base_covar_module,
             likelihood=likelihood,
             **model_kwargs,
