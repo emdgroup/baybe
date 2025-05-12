@@ -162,13 +162,6 @@ class GaussianProcessSurrogate(Surrogate):
 
         context = _ModelContext(self._searchspace)
 
-        numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
-
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
-        )
-
         if context.is_multitask and self._task_stratified_outtransform:
             # TODO See https://github.com/pytorch/botorch/issues/2739
             if train_y.shape[-1] != 1:
@@ -188,7 +181,7 @@ class GaussianProcessSurrogate(Surrogate):
                 stratification_idx=context.task_idx,
             )
         else:
-            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+            outcome_transform = None
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
@@ -253,7 +246,7 @@ class GaussianProcessSurrogate(Surrogate):
         self._model = model_cls(
             train_x,
             train_y,
-            input_transform=input_transform,
+            input_transform=None,
             outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=base_covar_module,
