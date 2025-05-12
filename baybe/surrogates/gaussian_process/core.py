@@ -249,7 +249,6 @@ class GaussianProcessSurrogate(Surrogate):
             outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=base_covar_module,
-            likelihood=None,
             **model_kwargs,
         )
 
