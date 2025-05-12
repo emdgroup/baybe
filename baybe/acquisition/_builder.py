@@ -6,7 +6,6 @@ from inspect import signature
 from types import MappingProxyType
 from typing import Any
 
-import botorch.acquisition as bo_acqf
 import pandas as pd
 import torch
 from attrs import asdict, define, field, fields
@@ -18,8 +17,10 @@ from botorch.models.model import Model
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
+    PosteriorStandardDeviation,
     _ExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
+    qPosteriorStandardDeviation,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
@@ -165,9 +166,9 @@ class BotorchAcquisitionFunctionBuilder:
         if issubclass(
             type(self.acqf),
             (
-                bo_acqf.qNegIntegratedPosteriorVariance,
-                bo_acqf.PosteriorStandardDeviation,
-                bo_acqf.qPosteriorStandardDeviation,
+                qNegIntegratedPosteriorVariance,
+                PosteriorStandardDeviation,
+                qPosteriorStandardDeviation,
             ),
         ):
             # No action needed for the active learning acquisition functions:

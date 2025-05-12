@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import warnings
 from typing import TYPE_CHECKING, ClassVar
 
@@ -113,3 +114,7 @@ class ParetoObjective(Objective):
         return transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for non-normalized targets in `DesirabilityObjective`
 - `Objective.to_botorch` method for converting objectives to BoTorch
 - Tests for migrating to new target API
+- `random_tie_break` flag to `farthest_point_sampling` to toggle between 
+  random or deterministic sampling for equidistant cases
+- `random_tie_break` and `initialization` attributes to `FPSRecommender` to
+  control sampling in `farthest_point_sampling`
 
 ### Changed
 - The target behavior is no longer defined via a `mode` (i.e. `MIN`, `MAX`, `MATCH` in
@@ -34,12 +38,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for each target instead of for the desirability value
 - Specifying bounds for `Interval` is now optional
 
+### Fixed
+- `simulate_scenarios` not making use of fully parallel computation
+- Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
+  minimization of the acquisition function
+- Added missing garbage collection call to pareto.py, potentially solving serialization
+  issues in certain cases
+
 ### Removed
 - Option to specify reference values for `add_fake_measurements`
 
 ### Deprecations
 - Creating targets using a `mode` argument
-
 
 ## [0.13.0] - 2025-04-16
 ### Added

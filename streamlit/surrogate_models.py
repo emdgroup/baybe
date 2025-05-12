@@ -167,7 +167,11 @@ def main():
 
     # Create the surrogate model, acquisition function, and the recommender
     surrogate_model = surrogate_model_classes[st_surrogate_name]()
-    acqf = acquisition_function_classes[st_acqf_name]()
+    acqf_cls = acquisition_function_classes[st_acqf_name]
+    try:
+        acqf = acqf_cls(maximize=not st_minimize)
+    except TypeError:
+        acqf = acqf_cls()
     recommender = BotorchRecommender(
         surrogate_model=surrogate_model, acquisition_function=acqf
     )
