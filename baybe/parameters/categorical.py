@@ -22,10 +22,11 @@ def _convert_values(value, self, field) -> tuple[str, ...]:
     return tuple(sorted(value, key=lambda x: (str(type(x)), x)))
 
 
-def _label_min_len(_, __, value):
+def _validate_label_min_len(self, attr, value) -> None:
+    """An attrs-compatible validator to ensure minimum label length."""  # noqa: D401
     if isinstance(value, str) and len(value) < 1:
         raise ValueError(
-            f"Strings used as 'values' for '{CategoricalParameter.__name__}' must "
+            f"Strings used as '{attr.alias}' for '{self.__class__.__name__}' must "
             f"have at least 1 character."
         )
 
@@ -41,7 +42,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
         validator=(  # type: ignore
             validate_unique_values,
             deep_iterable(
-                member_validator=(instance_of((str, bool)), _label_min_len),
+                member_validator=(instance_of((str, bool)), _validate_label_min_len),
                 iterable_validator=min_len(2),
             ),
         ),
