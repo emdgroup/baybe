@@ -18,8 +18,7 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
-from baybe.targets.base import Target
-from baybe.utils.basic import is_all_instance, to_tuple
+from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df, to_tensor, transform_target_columns
 from baybe.utils.validation import finite_float
@@ -68,11 +67,11 @@ class DesirabilityObjective(Objective):
     is_multi_output: ClassVar[bool] = False
     # See base class.
 
-    _targets: tuple[Target, ...] = field(
+    _targets: tuple[NumericalTarget, ...] = field(
         converter=to_tuple,
         validator=[
             min_len(2),
-            deep_iterable(member_validator=instance_of(Target)),
+            deep_iterable(member_validator=instance_of(NumericalTarget)),
             validate_target_names,
         ],
         alias="targets",
@@ -99,13 +98,6 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
-        # Validate target types
-        if not is_all_instance(targets, NumericalTarget):
-            raise TypeError(
-                f"'{self.__class__.__name__}' currently only supports targets "
-                f"of type '{NumericalTarget.__name__}'."
-            )
-
         # Validate non-negativity when using geometric mean
         if self.scalarizer is Scalarizer.GEOM_MEAN and (
             negative := {
@@ -145,7 +137,7 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:
+    def targets(self) -> tuple[NumericalTarget, ...]:
         return self._targets
 
     @override

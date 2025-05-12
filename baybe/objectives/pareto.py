@@ -13,9 +13,8 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.objectives.validation import validate_target_names
-from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance, to_tuple
+from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
 
 if TYPE_CHECKING:
@@ -29,11 +28,11 @@ class ParetoObjective(Objective):
     is_multi_output: ClassVar[bool] = True
     # See base class.
 
-    _targets: tuple[Target, ...] = field(
+    _targets: tuple[NumericalTarget, ...] = field(
         converter=to_tuple,
         validator=[
             min_len(2),
-            deep_iterable(member_validator=instance_of(Target)),
+            deep_iterable(member_validator=instance_of(NumericalTarget)),
             validate_target_names,
         ],
         alias="targets",
@@ -42,7 +41,7 @@ class ParetoObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:
+    def targets(self) -> tuple[NumericalTarget, ...]:
         return self._targets
 
     @override
@@ -52,8 +51,6 @@ class ParetoObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
-        assert is_all_instance(self.targets, NumericalTarget)
-
         import torch
         from botorch.acquisition.multi_objective.objective import (
             GenericMCMultiOutputObjective,
