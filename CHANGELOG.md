@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   random or deterministic sampling for equidistant cases
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
+
 ### Fixed
 - `simulate_scenarios` not making use of fully parallel computation
+- Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
+  minimization of the acquisition function
 
 ### Fixed
 - Added missing garbage collection call to pareto.py, potentially solving serialization
