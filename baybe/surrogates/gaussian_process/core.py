@@ -23,7 +23,6 @@ from baybe.surrogates.gaussian_process.presets import (
 )
 from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
-    _default_noise_factory,
 )
 from baybe.utils.conversion import to_string
 
@@ -208,13 +207,6 @@ class GaussianProcessSurrogate(Surrogate):
         # - multi-task MultiTaskGP: the model splits task and non-task features
         #   before passing them to the covariance kernel
 
-        # create GP likelihood
-        noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
-        likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
-        )
-        likelihood.noise = torch.tensor([noise_prior[1]])
-
         # Whether to use multi- or single-task model
         if not context.is_multitask:
             model_cls = botorch.models.SingleTaskGP
@@ -257,7 +249,7 @@ class GaussianProcessSurrogate(Surrogate):
             outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=base_covar_module,
-            likelihood=likelihood,
+            likelihood=None,
             **model_kwargs,
         )
 
