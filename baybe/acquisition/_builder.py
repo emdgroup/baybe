@@ -17,10 +17,8 @@ from botorch.models.model import Model
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
-    PosteriorStandardDeviation,
     _ExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
-    qPosteriorStandardDeviation,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
@@ -150,7 +148,7 @@ class BotorchAcquisitionFunctionBuilder:
         """Build the BoTorch acquisition function object."""
         # Set context-specific parameters
         self._set_best_f()
-        self._invert_optimization_direction()
+        self._set_target_transformation()
         self._set_X_baseline()
         self._set_X_pending()
         self._set_mc_points()
@@ -161,22 +159,13 @@ class BotorchAcquisitionFunctionBuilder:
 
         return botorch_acqf
 
-    def _invert_optimization_direction(self) -> None:
-        """Invert optimization direction for minimization targets."""
-        if issubclass(
-            type(self.acqf),
-            (
-                qNegIntegratedPosteriorVariance,
-                PosteriorStandardDeviation,
-                qPosteriorStandardDeviation,
-            ),
-        ):
-            # No action needed for the active learning acquisition functions:
-            # - PSTD: Minimization happens by setting `maximize=False`, which is
-            #   already take care of by auto-matching attributes
-            # - qPSTD and qNIPV do not support minimization yet
-            # In both cases, the setting is independent of the target mode.
-            return
+    def _set_target_transformation(self) -> None:
+        """Apply potential target transformations."""
+        # NOTE: BoTorch offers two distinct pathways for implementing target
+        #   transformations, with partly overlapping functionality: posterior transforms
+        #   and objectives (https://github.com/pytorch/botorch/discussions/2164).
+        #   We use the former for affine transformations and the latter to handle
+        #   all other cases.
 
         if self.acqf.is_analytic:
             if not isinstance(self.objective, SingleTargetObjective):
