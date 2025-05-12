@@ -22,7 +22,6 @@ from baybe.surrogates.gaussian_process.presets import (
     make_gp_from_preset,
 )
 from baybe.surrogates.gaussian_process.presets.default import (
-    DefaultKernelFactory,
     _default_noise_factory,
 )
 from baybe.utils.conversion import to_string
@@ -99,7 +98,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
-        factory=DefaultKernelFactory,
+        default=None,
         converter=to_kernel_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
@@ -193,16 +192,16 @@ class GaussianProcessSurrogate(Surrogate):
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
 
-        # create GP mean
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
-
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            batch_shape=batch_shape,
-        )
+        if self.kernel_factory is not None:
+            base_covar_module = self.kernel_factory(
+                context.searchspace, train_x, train_y
+            ).to_gpytorch(
+                ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+                batch_shape=batch_shape,
+            )
+        else:
+            base_covar_module = None
         # The active_dims parameter is omitted as it is not needed for both
         # - single-task SingleTaskGP: all features are used
         # - multi-task MultiTaskGP: the model splits task and non-task features
@@ -255,7 +254,7 @@ class GaussianProcessSurrogate(Surrogate):
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
-            mean_module=mean_module,
+            mean_module=None,
             covar_module=base_covar_module,
             likelihood=likelihood,
             **model_kwargs,

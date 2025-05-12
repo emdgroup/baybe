@@ -51,8 +51,11 @@ class PlainKernelFactory(KernelFactory, SerialMixin):
         return self.kernel
 
 
-def to_kernel_factory(x: Kernel | KernelFactory, /) -> KernelFactory:
-    """Wrap a kernel into a plain kernel factory (with factory passthrough)."""
+def to_kernel_factory(x: Kernel | KernelFactory | None, /) -> KernelFactory | None:
+    """Wrap a kernel into a plain kernel factory.
+
+    With factory or None passthrough.
+    """
     return x.to_factory() if isinstance(x, Kernel) else x
 
 
