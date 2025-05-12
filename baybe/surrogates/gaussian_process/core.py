@@ -242,12 +242,15 @@ class GaussianProcessSurrogate(Surrogate):
                 "all_tasks": task_param.comp_df[task_param.name].astype(int).to_list(),
             }
 
+        if outcome_transform is not None:
+            # The outcome_transform must be passed optionally rather than None
+            # if default should be used as None is interpreted as no transform
+            model_kwargs["outcome_transform"] = outcome_transform
+
         # construct and fit the Gaussian process
         self._model = model_cls(
             train_x,
             train_y,
-            input_transform=None,
-            outcome_transform=outcome_transform,
             mean_module=mean_module,
             covar_module=base_covar_module,
             likelihood=likelihood,
