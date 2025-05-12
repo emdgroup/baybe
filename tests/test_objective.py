@@ -38,7 +38,13 @@ class TestInvalidObjectiveCreation:
             SingleTargetObjective(target={"A": 1, "B": 2})
 
     def test_unnormalized_targets_for_desirability(self):
-        raise NotImplementedError()
+        """Unnormalized targets are not allowed unless explicitly declared."""
+        t1 = NumericalTarget("t1").clamp(min=1, max=2)
+        t2 = NumericalTarget("t2").clamp(min=0, max=3)
+        with pytest.raises(ValueError, match="are not normalized"):
+            DesirabilityObjective([t1, t2])
+        DesirabilityObjective([t1, t2], require_normalization=False)
+        DesirabilityObjective([t1.normalize(), t2.normalize()])
 
     def test_invalid_combination_function(self):
         with pytest.raises(ValueError):
