@@ -137,14 +137,16 @@ BAYBE_PARALLEL_SIMULATION_RUNS="False"  # Set this to disable parallel execution
 
 Alternatively, you can directly specify the `parallel_runs` parameter when calling the function:
 
-```python
+~~~python
+from baybe.simulation import simulate_scenarios
+
 results = simulate_scenarios(
     scenarios=scenarios,
     lookup=lookup,
     n_mc_iterations=10,
-    parallel_runs=False  # Disable parallel execution for this call
+    parallel_runs=False,  # Disable parallel execution for this call
 )
-```
+~~~
 
 The parameter takes precedence over the environment variable when both are specified.
 
