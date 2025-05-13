@@ -167,6 +167,12 @@ class BotorchAcquisitionFunctionBuilder:
         #   We use the former for affine transformations and the latter to handle
         #   all other cases.
 
+        match self.objective:
+            case SingleTargetObjective(
+                NumericalTarget(total_transformation=IdentityTransformation())
+            ):
+                return
+
         if self.acqf.is_analytic:
             if not isinstance(self.objective, SingleTargetObjective):
                 targets = self.objective.targets
@@ -188,8 +194,6 @@ class BotorchAcquisitionFunctionBuilder:
             match t := target.total_transformation:
                 case AffineTransformation():
                     self._args.posterior_transform = t.to_botorch_posterior_transform()
-                case IdentityTransformation():
-                    return
                 case _:
                     raise NotImplementedError(
                         f"The selected analytic acquisition "
