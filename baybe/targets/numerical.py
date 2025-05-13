@@ -48,7 +48,8 @@ class _LegacyAPI:
     bounds: Interval = field(default=None, converter=convert_bounds)
 
     transformation: TargetTransformation | None = field(
-        converter=lambda x: None if x is None else TargetTransformation(x)
+        alias="transformation",
+        converter=lambda x: None if x is None else TargetTransformation(x),
     )
 
     @transformation.default
@@ -71,7 +72,7 @@ def _translate_legacy_arguments(
             return (
                 NumericalTarget.ramp(
                     "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
-                ).transformation,
+                )._transformation,
                 False,
             )
     else:
@@ -84,7 +85,7 @@ def _translate_legacy_arguments(
             # Use transformation from what would have been the appropriate call
             modern_transformation = cast(
                 Transformation,
-                NumericalTarget.match_triangular("dummy", bounds).transformation,
+                NumericalTarget.match_triangular("dummy", bounds)._transformation,
             )
         return (modern_transformation, False)
 
@@ -93,8 +94,8 @@ def _translate_legacy_arguments(
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    transformation: Transformation | None = field(
-        default=None, converter=optional(convert_transformation)
+    _transformation: Transformation | None = field(
+        alias="transformation", default=None, converter=optional(convert_transformation)
     )
     """An optional target transformation."""
 
@@ -260,7 +261,7 @@ class NumericalTarget(Target, SerialMixin):
     @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
-        transformation = self.transformation or IdentityTransformation()
+        transformation = self._transformation or IdentityTransformation()
         return transformation.negate() if self.minimize else transformation
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -279,8 +280,8 @@ class NumericalTarget(Target, SerialMixin):
         return evolve(  # type: ignore[call-arg]
             self,
             transformation=transformation
-            if self.transformation is None
-            else ChainedTransformation([self.transformation, transformation]),
+            if self._transformation is None
+            else ChainedTransformation([self._transformation, transformation]),
         )
 
     def normalize(self) -> NumericalTarget:
@@ -367,7 +368,7 @@ class NumericalTarget(Target, SerialMixin):
         # <<<<<<<<<< Deprecation
 
         # When a transformation is specified, apply it
-        if (self.transformation is not None) or self.minimize:
+        if (self._transformation is not None) or self.minimize:
             from baybe.utils.dataframe import to_tensor
 
             return pd.Series(
