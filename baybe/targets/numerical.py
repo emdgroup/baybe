@@ -265,10 +265,7 @@ class NumericalTarget(Target, SerialMixin):
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
-        if self.transformation is None:
-            return Interval()
-
-        return self.transformation.get_image(interval)
+        return self.total_transformation.get_image(interval)
 
     def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
         """Append a new transformation.

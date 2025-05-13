@@ -101,11 +101,7 @@ class DesirabilityObjective(Objective):
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
         # Validate non-negativity when using geometric mean
         if self.scalarizer is Scalarizer.GEOM_MEAN and (
-            negative := {
-                t.name
-                for t in targets
-                if (tr := t.transformation) is None or tr.get_image().lower < 0
-            }
+            negative := {t.name for t in targets if t.get_image().lower < 0}
         ):
             raise ValueError(
                 f"Using '{Scalarizer.GEOM_MEAN}' for '{self.__class__.__name__}' "
