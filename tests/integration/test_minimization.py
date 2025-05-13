@@ -40,7 +40,7 @@ def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
         param(
             a,
             marks=(
-                [pytest.mark.xfail("not yet supported")]
+                [pytest.mark.xfail(reason="not yet supported")]
                 if issubclass(a, qNegIntegratedPosteriorVariance)
                 else []
             ),
