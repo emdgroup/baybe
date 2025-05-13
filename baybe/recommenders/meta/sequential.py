@@ -53,7 +53,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     )
     """The recommender used by the meta recommender after the switch."""
 
-    switch_after: int = field(default=1, validator=[instance_of(int), ge(1)])
+    switch_after: int = field(default=3, validator=[instance_of(int), ge(1)])
     """The number of experiments required for the recommender to switch."""
 
     remain_switched: bool = field(default=False, validator=instance_of(bool))
