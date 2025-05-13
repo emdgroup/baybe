@@ -42,7 +42,10 @@ def series() -> pd.Series:
 
 @pytest.mark.parametrize("mode", ["MAX", "MIN"])
 def test_constructor_equivalence_min_max(mode):
-    """Calling the new target class with legacy arguments yields the legacy object."""
+    """
+    Calling the new target class with legacy arguments yields an object equivalent
+    to the legacy object.
+    """  # noqa
     groups = [
         (
             # ------------
@@ -78,7 +81,10 @@ def test_constructor_equivalence_min_max(mode):
 
 @pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
 def test_constructor_equivalence_match(transformation):
-    """Calling the new target class with legacy arguments yields the legacy object."""
+    """
+    Calling the new target class with legacy arguments yields an object equivalent
+    to the legacy object.
+    """  # noqa
     # ------------
     # Legacy style
     targets = (
@@ -122,7 +128,7 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MAX", (0, 1), "LINEAR"),
             ModernTarget("t", "MAX", (0, 1), "LINEAR"),
-            ModernTarget("t", ClampingTransformation(min=0, max=1)),
+            ModernTarget("t").clamp(0, 1),
             linear_transform(sample_input(), 0, 1, descending=False),
             id="max_clamped",
         ),
