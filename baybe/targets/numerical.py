@@ -381,7 +381,12 @@ class NumericalTarget(Target, SerialMixin):
 
     @override
     def summary(self):
-        return {}
+        return dict(
+            Type=self.__class__.__name__,
+            Name=self.name,
+            Transformation=self._transformation,
+            Minimize=self.minimize,
+        )
 
 
 # >>> Deprecation >>> #
