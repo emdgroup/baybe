@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for reproducing the legacy `MATCH` modes
 - `ramp` convenience constructor to `NumericalTarget` for reproducing the legacy
   behavior when imposing bounds on `MIN`/`MAX` targets
-- Support for accessing posterior information of all target types (e.g. those consider
-  `MATCH` target in the legacy API) as well as targets used in `DesirabilityObjective`
+- Support for accessing posterior information of all target types (i.e. now including
+  those considered `MATCH` target in the legacy API) as well as targets used in
+  `DesirabilityObjective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
 - `normalize`, `clamp`, `log`, `exp` and `power` methods to `NumericalTarget` for
   easy creation of transformed targets from existing ones
