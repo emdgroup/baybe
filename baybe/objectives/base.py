@@ -17,6 +17,8 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import transform_target_columns
 
 if TYPE_CHECKING:
@@ -46,6 +48,11 @@ class Objective(ABC, SerialMixin):
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""
+        if not is_all_instance(self.targets, NumericalTarget):
+            raise NotImplementedError(
+                "Conversion to BoTorch is only supported for numerical targets."
+            )
+
         import torch
         from botorch.acquisition.multi_objective.objective import (
             GenericMCMultiOutputObjective,
