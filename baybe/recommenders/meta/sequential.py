@@ -15,6 +15,7 @@ from typing_extensions import override
 
 from baybe.exceptions import NoRecommendersLeftError
 from baybe.objectives.base import Objective
+from baybe.parameters import TaskParameter
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.base import MetaRecommender
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
@@ -83,7 +84,19 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> RecommenderProtocol:
-        n_data = len(measurements) if measurements is not None else 0
+        if measurements is None:
+            n_data = 0
+        elif searchspace.task_idx is not None:
+            # If using TaskParameter count only datapoints of the active task
+            task_param = [
+                p
+                for p in searchspace.parameters
+                # TODO Assumes there is a single task parameter
+                if isinstance(p, TaskParameter)
+            ][0]
+            n_data = measurements[task_param.name].isin(task_param.active_values).sum()
+        else:
+            n_data = len(measurements)
         if (n_data >= self.switch_after) or (
             self._has_switched and self.remain_switched
         ):
