@@ -201,6 +201,14 @@ class BotorchAcquisitionFunctionBuilder:
                         f"target transformations. "
                     )
         else:
+            # TODO: Enable once clarified:
+            # https://github.com/pytorch/botorch/discussions/2849
+            if isinstance(self.acqf, qNegIntegratedPosteriorVariance):
+                raise IncompatibilityError(
+                    f"'{qNegIntegratedPosteriorVariance.__name__}' currently supports "
+                    f"no target transformations."
+                )
+
             self._args.objective = self.objective.to_botorch()
 
     def _set_best_f(self) -> None:
