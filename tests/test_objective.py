@@ -11,6 +11,7 @@ from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.targets import NumericalTarget
+from baybe.targets.transformation import ClampingTransformation
 
 
 class TestInvalidObjectiveCreation:
@@ -36,6 +37,17 @@ class TestInvalidObjectiveCreation:
     def test_wrong_target_type(self):
         with pytest.raises(TypeError):
             SingleTargetObjective(target={"A": 1, "B": 2})
+
+    def test_negative_targets_for_desirability(self):
+        t1 = NumericalTarget("t1").clamp(0, 1)
+
+        # Is normalized but the minimize flag appends another transformation
+        t2 = NumericalTarget(
+            "t2", transformation=ClampingTransformation(0, 1), minimize=True
+        )
+
+        with pytest.raises(ValueError, match="transformed to a non-negative range"):
+            DesirabilityObjective([t1, t2])
 
     def test_unnormalized_targets_for_desirability(self):
         """Unnormalized targets are not allowed unless explicitly declared."""
