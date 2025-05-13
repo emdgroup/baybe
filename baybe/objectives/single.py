@@ -58,11 +58,12 @@ class SingleTargetObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
-        if isinstance(self._target, NumericalTarget):
-            return self._target.total_transformation.to_botorch_objective(
-                keep_dimension=False
-            )
         from botorch.acquisition.objective import IdentityMCObjective
+
+        from baybe.objectives.botorch import ChainedMCObjective
+
+        if isinstance(self._target, NumericalTarget):
+            return ChainedMCObjective(super().to_botorch(), IdentityMCObjective())
 
         return IdentityMCObjective()
 

@@ -17,6 +17,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
+from baybe.utils.dataframe import transform_target_columns
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
@@ -43,11 +44,23 @@ class Objective(ABC, SerialMixin):
     def n_outputs(self) -> int:
         """The number of outputs of the objective."""
 
-    @abstractmethod
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""
+        import torch
+        from botorch.acquisition.multi_objective.objective import (
+            GenericMCMultiOutputObjective,
+        )
 
-    @abstractmethod
+        return GenericMCMultiOutputObjective(
+            lambda samples, X: torch.stack(
+                [
+                    t.total_transformation.to_botorch_objective()(samples[..., i])
+                    for i, t in enumerate(self.targets)
+                ],
+                dim=-1,
+            )
+        )
+
     def transform(
         self,
         df: pd.DataFrame,
@@ -72,6 +85,9 @@ class Objective(ABC, SerialMixin):
         Returns:
             A corresponding dataframe with the targets in computational representation.
         """
+        return transform_target_columns(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        )
 
 
 def to_objective(x: Target | Objective, /) -> Objective:

@@ -53,22 +53,11 @@ class Transformation(ABC):
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
 
-    def to_botorch_objective(self, *, keep_dimension: bool) -> MCAcquisitionObjective:
-        """Convert to BoTorch objective.
-
-        Args:
-            keep_dimension: Boolean flag specifying whether to keep an explicit
-                dimension for the outputs of the objective.
-
-        Returns:
-            The representation of the transform as BoTorch objective.
-        """
+    def to_botorch_objective(self) -> MCAcquisitionObjective:
+        """Convert to BoTorch objective."""
         from botorch.acquisition.objective import GenericMCObjective
 
-        if keep_dimension:
-            return GenericMCObjective(lambda samples, X: self(samples))
-        else:
-            return GenericMCObjective(lambda samples, X: self(samples).squeeze(-1))
+        return GenericMCObjective(lambda samples, X: self(samples))
 
     def append(self, transformation: Transformation, /) -> Transformation:
         """Chain another transformation with the existing one."""

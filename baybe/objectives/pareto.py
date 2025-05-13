@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import warnings
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -16,9 +16,6 @@ from baybe.objectives.validation import validate_target_names
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.dataframe import transform_target_columns
-
-if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
 
 
 @define(frozen=True, slots=False)
@@ -48,25 +45,6 @@ class ParetoObjective(Objective):
     @property
     def n_outputs(self) -> int:
         return len(self._targets)
-
-    @override
-    def to_botorch(self) -> MCAcquisitionObjective:
-        import torch
-        from botorch.acquisition.multi_objective.objective import (
-            GenericMCMultiOutputObjective,
-        )
-
-        return GenericMCMultiOutputObjective(
-            lambda samples, X: torch.stack(
-                [
-                    t.total_transformation.to_botorch_objective(keep_dimension=True)(
-                        samples[..., i]
-                    )
-                    for i, t in enumerate(self.targets)
-                ],
-                dim=-1,
-            )
-        )
 
     @override
     def transform(

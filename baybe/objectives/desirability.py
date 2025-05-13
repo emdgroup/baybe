@@ -15,12 +15,13 @@ from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
+from baybe.objectives.botorch import ChainedMCObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import pretty_print_df, to_tensor, transform_target_columns
+from baybe.utils.dataframe import get_transform_objects, pretty_print_df, to_tensor
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -167,16 +168,13 @@ class DesirabilityObjective(Objective):
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
         import torch
+        from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
 
         if self.scalarizer is Scalarizer.MEAN:
-            from botorch.acquisition.objective import LinearMCObjective
-
-            return LinearMCObjective(torch.tensor(self._normalized_weights))
+            outer = LinearMCObjective(torch.tensor(self._normalized_weights))
 
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
-            from botorch.acquisition.objective import GenericMCObjective
-
-            return GenericMCObjective(
+            outer = GenericMCObjective(
                 lambda samples, X: _geometric_mean(
                     samples, torch.tensor(self._normalized_weights)
                 )
@@ -186,6 +184,9 @@ class DesirabilityObjective(Objective):
             raise NotImplementedError(
                 f"No scalarization mechanism defined for '{self.scalarizer.name}'."
             )
+
+        inner = super().to_botorch()
+        return ChainedMCObjective(inner, outer)
 
     @override
     def transform(
@@ -227,18 +228,18 @@ class DesirabilityObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
-        # Transform all targets individually
-        transformed = transform_target_columns(
+        targets = get_transform_objects(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
-        # Scalarize the transformed targets into desirability values
-        vals = self.to_botorch()(to_tensor(transformed.values))
+        import torch
 
-        # Store the total desirability in a dataframe column
-        transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
+        with torch.no_grad():
+            transformed = self.to_botorch()(to_tensor(df[[t.name for t in targets]]))
 
-        return transformed
+        return pd.DataFrame(
+            transformed.numpy(), columns=["Desirability"], index=df.index
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
