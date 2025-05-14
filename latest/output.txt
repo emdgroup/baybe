@@ -8,6 +8,6 @@ misc/contributing_link.md:136: [redirected with Found] https://hypothesis.readth
 misc/contributing_link.md:109: [redirected with Found] https://mypy.readthedocs.io/ to https://mypy.readthedocs.io/en/stable/
 misc/contributing_link.md:113: [redirected with Found] https://pytest-cov.readthedocs.io/ to https://pytest-cov.readthedocs.io/en/latest/
 index.md:310: [redirected with Found] https://shap.readthedocs.io/ to https://shap.readthedocs.io/en/latest/
-misc/contributing_link.md:114: [redirected with Found] https://www.sphinx-doc.org/ to https://www.sphinx-doc.org/en/master/
 misc/contributing_link.md:132: [redirected with Found] https://www.attrs.org/ to https://www.attrs.org/en/stable/
-misc/contributing_link.md:116: [redirected with Found] https://tox.wiki/ to https://tox.wiki/en/4.25.0/
+misc/contributing_link.md:114: [redirected with Found] https://www.sphinx-doc.org/ to https://www.sphinx-doc.org/en/master/
+misc/contributing_link.md:116: [redirected with Found] https://tox.wiki/ to https://tox.wiki/en/4.26.0/
