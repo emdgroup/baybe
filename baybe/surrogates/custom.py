@@ -32,7 +32,6 @@ from baybe.utils.conversion import to_string
 from baybe.utils.numerical import DTypeFloatONNX
 
 if TYPE_CHECKING:
-    import onnxruntime as ort
     from torch import Tensor
 
 
@@ -63,18 +62,8 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
 
     # TODO: type should be `onnxruntime.InferenceSession` but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
-    _model = field(init=False, eq=False)
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
-
-    @_model.default
-    def default_model(self) -> ort.InferenceSession:
-        """Instantiate the ONNX inference session."""
-        from baybe._optional.onnx import onnxruntime as ort
-
-        try:
-            return ort.InferenceSession(self.onnx_str)
-        except Exception as exc:
-            raise ValueError("Invalid ONNX string") from exc
 
     @override
     @batchify_mean_var_prediction
@@ -83,11 +72,14 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
     ) -> tuple[Tensor, Tensor]:
         import torch
 
+        from baybe._optional.onnx import onnxruntime as ort
         from baybe.utils.torch import DTypeFloatTorch
 
         model_inputs = {
             self.onnx_input_name: candidates_comp_scaled.numpy().astype(DTypeFloatONNX)
         }
+        if self._model is None:
+            self._model = ort.InferenceSession(self.onnx_str)
         results = self._model.run(None, model_inputs)
 
         # IMPROVE: At the moment, we assume that the second model output contains
