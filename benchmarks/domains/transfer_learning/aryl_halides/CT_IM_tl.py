@@ -1,4 +1,4 @@
-"""Aryl Halide benchmark for transfer learning.
+"""Aryl halide benchmark for transfer learning.
 
 Source task: 1-chloro-4-(trifluoromethyl)benzene
 Target task: 1-iodo-4-methoxybenzene
