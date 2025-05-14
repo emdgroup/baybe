@@ -68,7 +68,7 @@ surrogate_model = NGBoostSurrogate(model_params={"n_estimators": 50, "verbose": 
 
 try:
     invalid_surrogate_model = NGBoostSurrogate(model_params={"NOT_A_PARAM": None})
-except ValueError as e:
+except TypeError as e:
     print("The validator will give an error here:")
     print(e)
 
