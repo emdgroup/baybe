@@ -1,4 +1,4 @@
-"""Utils for reading data."""
+"""Utilities for data handling."""
 
 from pathlib import Path
 
