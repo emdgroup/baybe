@@ -62,7 +62,7 @@ def simulate_scenarios(
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
         parallel_runs: If set, then the value of this parameter is handed over to the
             ``parallel`` argument of the function ``run_combos`` of ``xyzpy``,
-            parallelizing all ``xyzpy`` crops.
+            enabling the use of parallel runners.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
