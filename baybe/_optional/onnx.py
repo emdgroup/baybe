@@ -17,7 +17,7 @@ try:
     # It is important to note that the main branch of "skl2onnx" already uses the new
     # function, so this issue will be resolved in the next release.
     onnx_version = onnx.__version__
-    if onnx_version >= Version("1.18.0"):
+    if Version(onnx_version) >= Version("1.18.0"):
         from onnx.helper import _split_complex_to_pairs
 
         onnx.helper.split_complex_to_pairs = _split_complex_to_pairs
