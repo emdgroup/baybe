@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Type, TypedDict
+from typing import Any
 
 import cattrs
 from cattrs import ClassValidationError
@@ -65,7 +65,7 @@ type_validation_converter = converter = cattrs.GenConverter(forbid_extra_keys=Tr
 configure_union_passthrough(int | float | str | None, type_validation_converter)
 
 
-def _strict_int_structure_hook(obj: Any, _: Type[int]) -> int:
+def _strict_int_structure_hook(obj: Any, _: type[int]) -> int:
     if isinstance(obj, int) and not isinstance(obj, bool):  # Exclude bools
         return obj
     raise ValueError(
@@ -74,7 +74,7 @@ def _strict_int_structure_hook(obj: Any, _: Type[int]) -> int:
     )
 
 
-def _strict_float_structure_hook(obj: Any, _: Type[float]) -> float:
+def _strict_float_structure_hook(obj: Any, _: type[float]) -> float:
     if isinstance(obj, float):
         return obj
     raise ValueError(
@@ -83,7 +83,7 @@ def _strict_float_structure_hook(obj: Any, _: Type[float]) -> float:
     )
 
 
-def _strict_bool_structure_hook(obj: Any, _: Type[bool]) -> bool:
+def _strict_bool_structure_hook(obj: Any, _: type[bool]) -> bool:
     if isinstance(obj, bool):
         return obj
     raise ValueError(
@@ -97,7 +97,7 @@ type_validation_converter.register_structure_hook(float, _strict_float_structure
 type_validation_converter.register_structure_hook(bool, _strict_bool_structure_hook)
 
 
-def get_dict_validator(specification: Type[TypedDict]) -> Callable:
+def get_dict_validator(specification: type) -> Callable:
     """Construct an attrs dictionary validator based on a ``TypedDict``.
 
     Args:
@@ -105,9 +105,6 @@ def get_dict_validator(specification: Type[TypedDict]) -> Callable:
 
     Returns:
         An attrs compatible validator.
-
-    Raises:
-        TypeError: If the dictionary does not match the specification.
     """
 
     def validate_model_params(_instance: Any, attr: Any, value: dict) -> None:
