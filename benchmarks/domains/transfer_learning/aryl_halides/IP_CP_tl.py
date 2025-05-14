@@ -54,7 +54,7 @@ def aryl_halide_IP_CP_tl(
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=25,
-    n_mc_iterations=50,
+    n_mc_iterations=60,
 )
 
 aryl_halide_IP_CP_tl_benchmark = ConvergenceBenchmark(
