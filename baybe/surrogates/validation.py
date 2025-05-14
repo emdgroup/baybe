@@ -62,7 +62,7 @@ type_validation_converter = converter = cattrs.GenConverter(forbid_extra_keys=Tr
 """Converter used for strict type validation."""
 
 
-configure_union_passthrough(bool | int | float | str | None, type_validation_converter)
+configure_union_passthrough(int | float | str | None, type_validation_converter)
 
 
 def _strict_int_structure_hook(obj: Any, _: Type[int]) -> int:
