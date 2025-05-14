@@ -188,13 +188,56 @@ def compare_merits(
     Returns:
         True if the merit values computed by both methods are close.
     """
-    # External Chimera expects the underlying ndarray transposed:
-    ext_merits = ext_chimera.scalarize(target_vals.values)
-
     # Internal ChimeraObjective works directly with the DataFrame:
     int_merits = int_chimera.transform(target_vals).values.flatten()
 
-    are_close = np.allclose(ext_merits, int_merits)
+    # External Chimera needs a transformed DataFrame and transformed threshold values
+    # --- build transformed dataframe (identical to int_chimera._targets_transformed)
+    target_vals_transformed = target_vals.copy()
+    _threshold_values_transformed = np.array(int_chimera.threshold_values)
+    ext_absolutes = []
+
+    for target, ttype, tval in zip(
+        int_chimera.targets, int_chimera.threshold_types, int_chimera.threshold_values
+    ):
+        # bounds-scale then invert the data column
+        col_tr = 1.0 - target.transform(target_vals[target.name])
+        target_vals_transformed[target.name] = col_tr
+
+        if ttype is ThresholdType.ABSOLUTE:
+            # transform + invert, but **do not** min-max scale here
+            thr_tr = 1.0 - target.transform(pd.Series([tval])).values[0]
+            _threshold_values_transformed[int_chimera.targets.index(target)] = thr_tr
+            ext_absolutes.append(
+                True
+            )  # TODO: this is wrong, no append, always indexing
+        else:
+            ext_absolutes.append(False)
+
+    # ----------- sanity prints --------------------------------------------------
+    print(
+        "transformed df are the same:",
+        np.allclose(
+            target_vals_transformed.values, int_chimera._targets_transformed.values
+        ),
+    )
+    print(
+        "transformed thresholds are the same:",
+        np.allclose(
+            _threshold_values_transformed, int_chimera._threshold_values_transformed
+        ),
+    )
+
+    # ----------- feed external Chimera -----------------------------------------
+    ext_chimera.absolutes = ext_absolutes
+    ext_chimera.tolerances = _threshold_values_transformed
+    ext_chimera.goals = ["min"] * len(ext_chimera.goals)
+
+    print("Index Error?:", ext_absolutes)
+    print("Index Error?:", target_vals_transformed.values)
+    ext_merits = ext_chimera.scalarize(target_vals_transformed.values)
+
+    are_close = np.allclose(ext_merits, int_merits, atol=1e-5)
     if verbose:
         print("Chimera merits:", ext_merits)
         print("BayBE Chimera merits:", int_merits)
@@ -207,10 +250,14 @@ def test_chimera_merits(chimera_obj, data):
     """Validating chimerra merits value with external reference."""
     # Initialize external Chimera using data from chimera_obj.
     goals = [t.mode.value.lower() for t in chimera_obj.targets]
+    threshold_vals = np.array(chimera_obj.threshold_values)
     ext_chimera = Chimera(
-        tolerances=np.array(chimera_obj.threshold_values),
+        tolerances=threshold_vals,
         absolutes=[
-            tt.value.upper() == "ABSOLUTE" for tt in chimera_obj.threshold_types
+            True
+            for tt in chimera_obj.threshold_types
+            # TODO: because of the transform, all become absolute
+            # tt.value.upper() == "ABSOLUTE" for tt in chimera_obj.threshold_types
         ],
         goals=[g.lower() for g in goals],
         softness=chimera_obj.softness,

@@ -172,6 +172,7 @@ class ChimeraObjective(Objective):
 
     def _shift(
         self,
+        targets: tuple[Target, ...],
         transformed: pd.DataFrame,
         transformed_threshold_values: list[float],
     ) -> tuple[np.ndarray, np.ndarray]:
@@ -184,7 +185,7 @@ class ChimeraObjective(Objective):
         domain = np.asarray(transformed.index)
 
         for idx, (target, threshold_value, threshold_type) in enumerate(
-            zip(self.targets, transformed_threshold_values, self.threshold_types)
+            zip(targets, transformed_threshold_values, self.threshold_types)
         ):
             if threshold_type is ThresholdType.FRACTION:
                 domain_max = transformed[target.name].loc[domain].max()
@@ -209,7 +210,7 @@ class ChimeraObjective(Objective):
                 domain = transformed[target.name].loc[domain][interest].index
 
             # Determine the next target
-            next_idx = (idx + 1) % len(self.targets)
+            next_idx = (idx + 1) % len(targets)
             # Restrict next objective values to the current domain.
             next_target_values = transformed.loc[domain, transformed.columns[next_idx]]
             # Compute new shift based on the restricted domain.
@@ -309,36 +310,35 @@ class ChimeraObjective(Objective):
         # <<<<<<<<<< Deprecation
 
         # Extract the relevant part of the dataframe
+        # targets = get_chimera_transform_objects(
+        #     df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        # )
         targets = get_transform_objects(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
         )
         transformed = df[[t.name for t in targets]].copy()
-
-        # Transform all target values to [0, 1] based on bounds defined
-        # TODO: Discuss this part in terms of necessity
-        for target in self.targets:
-            transformed[target.name] = target.transform(df[target.name])
-            # All transformed targets are set to be maximized
-
-        # Transform threshold values for each target
         _threshold_values_transformed = list(self.threshold_values)
-
         # Helper function to transform the target-specific threshold value
-        def transform_threshold_value(x: float, target: NumericalTarget) -> float:
-            """Transform the threshold value using the target's transform method."""
-            return target.transform(pd.Series([x])).values[0]
-
         for target, threshold_type, threshold_value in zip(
             targets, self.threshold_types, self.threshold_values
         ):
-            # Set targets to be minimized instead
-            transformed[target.name] = 1.0 - transformed[target.name]
-            _threshold_values_transformed[targets.index(target)] = threshold_value
-            # Invert the threshold value only if it is an absolute threshold
-            if threshold_type == ThresholdType.ABSOLUTE:
+            # 1. Transform target values to [0,1]
+            transformed[target.name] = target.transform(df[target.name])
+
+            # 2. Transform threshold value if it's absolute
+            if threshold_type is ThresholdType.ABSOLUTE:
+                threshold_transformed = target.transform(
+                    pd.Series([threshold_value])
+                ).values[0]
+                # Invert the absolute threshold value for minimization
                 _threshold_values_transformed[targets.index(target)] = (
-                    1.0 - transform_threshold_value(threshold_value, target)
+                    1.0 - threshold_transformed
                 )
+            else:
+                _threshold_values_transformed[targets.index(target)] = threshold_value
+
+            # 3. Invert target values for minimization
+            transformed[target.name] = 1.0 - transformed[target.name]
 
         object.__setattr__(self, "_targets_transformed", transformed.copy())
         object.__setattr__(
@@ -348,17 +348,18 @@ class ChimeraObjective(Objective):
         # Rescale the targets and threshold back to the min-max scale
         # This is how CHIMERA originally implmented the scalarization (without bounds)
 
-        # Final rescaling for each target column and corresponding threshold value
-        for target in self.targets:
+        # Final rescaling for each target column and corresponding threshold value.
+        for idx, target in enumerate(targets):
             min_val = transformed[target.name].min()
             max_val = transformed[target.name].max()
-            idx = targets.index(target)
             if max_val > min_val:
                 # Rescale the target column.
+                # TODO: Rescaling already done in get_chimera_transform_objects
                 transformed[target.name] = (transformed[target.name] - min_val) / (
                     max_val - min_val
                 )
                 # Rescale the threshold value only if it is absolute.
+                # TODO: For match mode, we need to use transform instead
                 if self.threshold_types[idx] is ThresholdType.ABSOLUTE:
                     _threshold_values_transformed[idx] = (
                         _threshold_values_transformed[idx] - min_val
@@ -375,7 +376,7 @@ class ChimeraObjective(Objective):
 
         # Shift target and threshold values to ensure a hierarchical order of the values
         shifted_values, shifted_thresholds = self._shift(
-            transformed, _threshold_values_transformed
+            targets, transformed, _threshold_values_transformed
         )
 
         object.__setattr__(self, "_targets_shifted", shifted_values.copy())
