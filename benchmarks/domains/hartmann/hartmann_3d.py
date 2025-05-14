@@ -124,12 +124,12 @@ if __name__ == "__main__":
         # Calculate function values
         import torch
 
-        values = (
-            hartmann_func(torch.tensor(points, dtype=torch.float64))
-            .detach()
-            .numpy()
-            .reshape(x1_mesh.shape)
-        )
+        with torch.no_grad():
+            values = (
+                hartmann_func(torch.tensor(points, dtype=torch.float64))
+                .numpy()
+                .reshape(x1_mesh.shape)
+            )
 
         # Plot the surface
         surf = ax.plot_surface(x1_mesh, x2_mesh, values, cmap="viridis")
