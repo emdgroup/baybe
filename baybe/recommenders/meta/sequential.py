@@ -89,11 +89,8 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         elif searchspace.task_idx is not None:
             # If using TaskParameter count only datapoints of the active task
             task_param = [
-                p
-                for p in searchspace.parameters
-                # TODO Assumes there is a single task parameter
-                if isinstance(p, TaskParameter)
-            ][0]
+                p for p in searchspace.parameters if isinstance(p, TaskParameter)
+            ][0]  # TODO Assumes there is a single task parameter
             n_data = measurements[task_param.name].isin(task_param.active_values).sum()
         else:
             n_data = len(measurements)
