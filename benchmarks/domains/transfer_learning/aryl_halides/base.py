@@ -58,9 +58,8 @@ def make_searchspace(
         )
         for substance in ["base", "ligand", "additive"]
     ]
-    use_task_parameter = target_tasks is not None and source_tasks is not None
-    if use_task_parameter:
-        assert target_tasks is not None and source_tasks is not None  # mypy
+    if target_tasks is not None and source_tasks is not None:
+        all_tasks = [*source_tasks, *target_tasks]
         all_tasks = [*source_tasks, *target_tasks]
         params.append(
             TaskParameter(
