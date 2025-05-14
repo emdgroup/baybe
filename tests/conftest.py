@@ -888,6 +888,10 @@ def fixture_default_simplex_config():
 @pytest.fixture(name="onnx_str")
 def fixture_default_onnx_str() -> bytes:
     """The default ONNX model string to be used if not specified differently."""
+    # Since the onnx import is done later in the tests bur this fixture uses
+    # the deprecated function, we need to do this manual import here.
+    import baybe._optional.onnx  # noqa: F401, I001
+
     from skl2onnx import convert_sklearn
     from skl2onnx.common.data_types import FloatTensorType
     from sklearn.linear_model import BayesianRidge
