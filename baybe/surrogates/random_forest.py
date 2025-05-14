@@ -8,13 +8,12 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypedDict
 import numpy as np
 import numpy.typing as npt
 from attrs import define, field
-from numpy.random import RandomState
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify_ensemble_predictor, catch_constant_targets
-from baybe.surrogates.validation import get_model_params_validator
+from baybe.surrogates.validation import get_dict_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -42,7 +41,7 @@ class _RandomForestRegressorParams(TypedDict, total=False):
     bootstrap: bool
     oob_score: bool  # Unlike sklearn, we do not allow callables
     n_jobs: int | None
-    random_state: int | RandomState | None
+    random_state: int | None  # Unlike sklearn, we do not allow ``RandomState``
     verbose: int
     warm_start: bool
     ccp_alpha: float
@@ -67,7 +66,7 @@ class RandomForestSurrogate(Surrogate):
     model_params: _RandomForestRegressorParams = field(
         factory=dict,
         converter=dict,
-        validator=get_model_params_validator(_RandomForestRegressorParams),
+        validator=get_dict_validator(_RandomForestRegressorParams),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
