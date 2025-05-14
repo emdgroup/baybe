@@ -11,7 +11,7 @@ from typing_extensions import override
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
-from baybe.surrogates.validation import get_model_params_validator
+from baybe.surrogates.validation import get_dict_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -53,7 +53,7 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     model_params: _NGBRegressorParams = field(
         factory=dict,
         converter=dict,
-        validator=get_model_params_validator(_NGBRegressorParams),
+        validator=get_dict_validator(_NGBRegressorParams),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
