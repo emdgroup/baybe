@@ -84,7 +84,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> RecommenderProtocol:
-        if measurements is None:
+        if measurements is None or measurements.shape[0] == 0:
             n_data = 0
         elif searchspace.task_idx is not None:
             # If using TaskParameter count only datapoints of the active task
