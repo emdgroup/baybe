@@ -888,8 +888,14 @@ def fixture_default_simplex_config():
 @pytest.fixture(name="onnx_str")
 def fixture_default_onnx_str() -> bytes:
     """The default ONNX model string to be used if not specified differently."""
-    # Since the onnx import is done later in the tests bur this fixture uses
-    # the deprecated function, we need to do this manual import here.
+    # NOTE: In version 1.18.0 of `onnx`, the function
+    # `onnx.helper.split_complex_to_pairs` was removed.
+    # This requires us to do some monkeypatching in the baybe._optional.onnx, and we
+    # refer to this place if you are interested in the details.
+    # Since using this fixture imports "skl2onnx", we need to ensure that this
+    # monkeypatching is done before this import, hence we do the additional import here.
+    # Note that this is only a temporary fix until all dependencies are updated to use
+    # the new function.
     import baybe._optional.onnx  # noqa: F401, I001
 
     from skl2onnx import convert_sklearn
