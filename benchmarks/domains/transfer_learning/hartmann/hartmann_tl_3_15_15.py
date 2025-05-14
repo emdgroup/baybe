@@ -135,7 +135,7 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=2,
     n_doe_iterations=25,
-    n_mc_iterations=70,
+    n_mc_iterations=75,
 )
 
 hartmann_tl_3_15_15_benchmark = ConvergenceBenchmark(
