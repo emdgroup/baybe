@@ -189,8 +189,6 @@ results = simulate_scenarios(
 
     
 
-    
-
 
 The following lines plot the results and save the plot in run_full_initial_data.png
 

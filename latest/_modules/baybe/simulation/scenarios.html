@@ -1044,6 +1044,7 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -1055,6 +1056,7 @@
 <span class="kn">from</span> <span class="nn">baybe.campaign</span> <span class="kn">import</span> <span class="n">Campaign</span>
 <span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">NothingToSimulateError</span><span class="p">,</span> <span class="n">UnusedObjectWarning</span>
 <span class="kn">from</span> <span class="nn">baybe.simulation.core</span> <span class="kn">import</span> <span class="n">simulate_experiment</span>
+<span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">strtobool</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">xarray</span> <span class="kn">import</span> <span class="n">DataArray</span>
@@ -1079,6 +1081,7 @@
         <span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="s2">&quot;worst&quot;</span><span class="p">,</span> <span class="s2">&quot;best&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;random&quot;</span><span class="p">,</span> <span class="s2">&quot;ignore&quot;</span>
     <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span><span class="p">,</span>
     <span class="n">noise_percent</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">parallel_runs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulate multiple Bayesian optimization scenarios.</span>
 
@@ -1101,12 +1104,15 @@
 <span class="sd">            the current random seed is used.</span>
 <span class="sd">        impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.</span>
 <span class="sd">        noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.</span>
+<span class="sd">        parallel_runs: If set, the value  is handed over to the ``parallel`` argument of</span>
+<span class="sd">            :func:`~xyzpy.combo_runner`, enabling the use of parallel runners. When</span>
+<span class="sd">            omitted, its value is determined by the ``BAYBE_PARALLEL_SIMULATION_RUNS``</span>
+<span class="sd">            environment variable, with fallback to ``True``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`</span>
 <span class="sd">        but with additional columns. See the ``Note`` for details.</span>
 
-<span class="sd">    Note:</span>
 <span class="sd">        The following additional columns are contained in the dataframe returned by this</span>
 <span class="sd">        function:</span>
 
@@ -1196,7 +1202,13 @@
             <span class="n">category</span><span class="o">=</span><span class="n">UnusedObjectWarning</span><span class="p">,</span>
             <span class="n">module</span><span class="o">=</span><span class="s2">&quot;baybe.recommenders.pure.nonpredictive.base&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">da_results</span> <span class="o">=</span> <span class="n">batch_simulator</span><span class="o">.</span><span class="n">run_combos</span><span class="p">(</span><span class="n">combos</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="n">result_variable</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">parallel_runs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parallel_runs</span> <span class="o">=</span> <span class="n">strtobool</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;BAYBE_PARALLEL_SIMULATION_RUNS&quot;</span><span class="p">,</span> <span class="s2">&quot;True&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">da_results</span> <span class="o">=</span> <span class="n">batch_simulator</span><span class="o">.</span><span class="n">run_combos</span><span class="p">(</span><span class="n">combos</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="n">parallel_runs</span><span class="p">)[</span>
+            <span class="n">result_variable</span>
+        <span class="p">]</span>
 
     <span class="n">df_results</span> <span class="o">=</span> <span class="n">unpack_simulation_results</span><span class="p">(</span><span class="n">da_results</span><span class="p">)</span>
 

@@ -1174,6 +1174,31 @@ Consequently, this feature is currently only available as an <em>experimental</e
 We are however actively working on fully enabling single precision.</p>
 </div>
 </section>
+<section id="parallel-runs-in-scenario-simulations">
+<h2>Parallel Runs in Scenario Simulations<a class="headerlink" href="#parallel-runs-in-scenario-simulations" title="Link to this heading">¶</a></h2>
+<p>By default, <a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.simulate_scenarios.html#baybe.simulation.scenarios.simulate_scenarios" title="baybe.simulation.scenarios.simulate_scenarios"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code></span></a>
+function is to run in parallel. This can be disabled by setting the environment variable <code class="docutils literal notranslate"><span class="pre">BAYBE_PARALLEL_SIMULATION_RUNS</span></code> to a <a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func">falsy value</span></a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BAYBE_PARALLEL_SIMULATION_RUNS</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="w">  </span><span class="c1"># Set this to disable parallel execution</span>
+</pre></div>
+</div>
+<p>Alternatively, you can directly specify the <code class="docutils literal notranslate"><span class="pre">parallel_runs</span></code> parameter when calling the function, which takes precedence over the environment variable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.simulation</span> <span class="kn">import</span> <span class="n">simulate_scenarios</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="n">simulate_scenarios</span><span class="p">(</span>
+    <span class="n">scenarios</span><span class="o">=</span><span class="n">scenarios</span><span class="p">,</span>
+    <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+    <span class="n">n_mc_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">parallel_runs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Disable parallel runners for this call</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="warning admonition">
+<p class="admonition-title">Experimental Feature –&gt;</p>
+<p>While parallel execution usually speeds up computation significantly, the performance
+impact can vary depending on the machine and simulation configuration. In some cases, it
+might even lead to longer run times due to overhead costs.</p>
+</div>
+</section>
 </section>
 
         </article>
@@ -1237,6 +1262,7 @@ We are however actively working on fully enabling single precision.</p>
 <li><a class="reference internal" href="#polars">Polars</a></li>
 <li><a class="reference internal" href="#disk-caching">Disk Caching</a></li>
 <li><a class="reference internal" href="#experimental-floating-point-precision">EXPERIMENTAL: Floating Point Precision</a></li>
+<li><a class="reference internal" href="#parallel-runs-in-scenario-simulations">Parallel Runs in Scenario Simulations</a></li>
 </ul>
 </li>
 </ul>

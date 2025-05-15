@@ -127,3 +127,31 @@ within `BoTorch` that transform single precision variables to double precision v
 Consequently, this feature is currently only available as an *experimental* feature.
 We are however actively working on fully enabling single precision.
 ```
+
+## Parallel Runs in Scenario Simulations
+By default, [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios)
+function is to run in parallel. This can be disabled by setting the environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` to a [falsy value](baybe.utils.boolean.strtobool):
+
+```bash
+BAYBE_PARALLEL_SIMULATION_RUNS="False"  # Set this to disable parallel execution
+```
+
+Alternatively, you can directly specify the `parallel_runs` parameter when calling the function, which takes precedence over the environment variable:
+
+~~~python
+from baybe.simulation import simulate_scenarios
+
+results = simulate_scenarios(
+    scenarios=scenarios,
+    lookup=lookup,
+    n_mc_iterations=10,
+    parallel_runs=False,  # Disable parallel runners for this call
+)
+~~~
+
+```{admonition} Experimental Feature -->
+:class: warning
+While parallel execution usually speeds up computation significantly, the performance
+impact can vary depending on the machine and simulation configuration. In some cases, it
+might even lead to longer run times due to overhead costs.
+```
