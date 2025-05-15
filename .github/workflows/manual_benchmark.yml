@@ -12,6 +12,7 @@ on:
           - "All"
           - "Transfer Learning"
           - "Synthetic"
+          - "Non Transfer Learning"
 
 env:
   TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous"]'
