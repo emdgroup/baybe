@@ -269,6 +269,7 @@ intersphinx_mapping = {
     "torch": ("https://pytorch.org/docs/main/", None),
     "rdkit": ("https://rdkit.org/docs/", None),
     "shap": ("https://shap.readthedocs.io/en/stable/", None),
+    "xyzpy": ("https://xyzpy.readthedocs.io/en/latest/", None),
 }
 
 # --- Options for autodoc typehints and autodoc -------------------------------

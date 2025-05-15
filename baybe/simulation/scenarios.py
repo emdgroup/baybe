@@ -60,18 +60,14 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        parallel_runs: If set, then the value of this parameter is handed over to the
-            ``parallel`` argument of the function ``run_combos`` of ``xyzpy``,
-            enabling the use of parallel runners.
+        parallel_runs: If set, the value  is handed over to the ``parallel`` argument of
+            :func:`~xyzpy.combo_runner`, enabling the use of parallel runners. When
+            omitted, its value is determined by the ``BAYBE_PARALLEL_SIMULATION_RUNS``
+            environment variable, with fallback to ``True``.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
         but with additional columns. See the ``Note`` for details.
-
-    Note:
-        If ``parallel_runs`` is not set, then the value ``True``is used by default. This
-        behavior can be changed by setting the environment variable
-        ``BAYBE_PARALLEL_SIMULATION_RUNS`` to ``False``.
 
         The following additional columns are contained in the dataframe returned by this
         function:
@@ -162,7 +158,6 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        # Use parameter if provided, otherwise use environment variable
         if parallel_runs is None:
             parallel_runs = strtobool(
                 os.environ.get("BAYBE_PARALLEL_SIMULATION_RUNS", "True")
