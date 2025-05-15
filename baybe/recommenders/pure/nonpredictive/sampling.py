@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from sklearn.preprocessing import StandardScaler
 from typing_extensions import override
 
+from baybe._optional import fpsample as optional_fpsample
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
@@ -99,12 +100,26 @@ class FPSRecommender(NonPredictiveRecommender):
         # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(
-            candidates_scaled,
-            batch_size,
-            initialization=self.initialization.value,
-            random_tie_break=self.random_tie_break,
-        )
+
+        # try fpsample first
+        try:
+            ilocs = optional_fpsample.fps_sampling(
+                candidates_scaled,
+                n_samples=batch_size,
+                start_idx=0,
+                # return distance not set -> default is false
+            )
+        except Exception:
+            # old method untouched to fall back to
+
+            print("fpsample failed, falling back to baybe's internal FPS")
+
+            ilocs = farthest_point_sampling(
+                candidates_scaled,
+                batch_size,
+                initialization=self.initialization.value,
+                random_tie_break=self.random_tie_break,
+            )
         return candidates_comp.index[ilocs]
 
     @override
