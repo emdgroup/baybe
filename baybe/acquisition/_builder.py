@@ -1,5 +1,6 @@
 """Functionality for building BoTorch acquisition functions."""
 
+import warnings
 from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
@@ -16,6 +17,7 @@ from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjectiv
 from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
 from botorch.acquisition.objective import LinearMCObjective
 from botorch.models.model import Model
+from gpytorch.utils.warnings import GPInputWarning
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
@@ -37,6 +39,11 @@ from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance, match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
+from baybe.utils.device_utils import (
+    device_context,
+    get_default_device,
+    to_device,
+)
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -85,6 +92,7 @@ class BotorchAcquisitionFunctionBuilder:
     objective: Objective = field()
     measurements: pd.DataFrame = field()
     pending_experiments: pd.DataFrame | None = field(default=None)
+    device: torch.device | None = field(default=None)
 
     # Context shared across building methods
     _args: BotorchAcquisitionArgs = field(init=False)
@@ -94,6 +102,12 @@ class BotorchAcquisitionFunctionBuilder:
 
     def __attrs_post_init__(self) -> None:
         """Initialize the building process."""
+        # Use provided device or get default
+        if self.device is None:
+            self.device = getattr(self.surrogate, "device", None)
+            if self.device is None and torch.cuda.is_available():
+                self.device = get_default_device()
+
         # Retrieve botorch acquisition function class and match attributes
         self._botorch_acqf_cls = _get_botorch_acqf_class(type(self.acqf))
         self._signature = signature(self._botorch_acqf_cls).parameters
@@ -103,13 +117,30 @@ class BotorchAcquisitionFunctionBuilder:
             ignore=self.acqf._non_botorch_attrs,
         )
 
-        # Pre-populate the acqf arguments with the content of the BayBE acqf
-        self._args = BotorchAcquisitionArgs(model=self.surrogate.to_botorch(), **args)
+        # Use device_mode to ensure consistent device usage during to_botorch
+        with (
+            warnings.catch_warnings(),
+            device_context(
+                self.device, enforce_single_device=True, manage_memory=False
+            ),
+        ):
+            warnings.filterwarnings("ignore", category=GPInputWarning)
+            bo_surrogate = self.surrogate.to_botorch()
+
+            # Move surrogate to device using to_device utility
+            bo_surrogate = to_device(bo_surrogate, self.device)
+
+        self._args = BotorchAcquisitionArgs(model=bo_surrogate, **args)
 
     @cached_property
     def _botorch_surrogate(self) -> Model:
         """The botorch surrogate object."""
-        return self.surrogate.to_botorch()
+        with device_context(
+            self.device, enforce_single_device=True, manage_memory=False
+        ):
+            model = self.surrogate.to_botorch()
+            model = to_device(model, self.device)
+            return model
 
     @property
     def _maximize_flags(self) -> list[bool]:
@@ -161,18 +192,30 @@ class BotorchAcquisitionFunctionBuilder:
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
-        # Set context-specific parameters
-        self._set_best_f()
-        self._invert_optimization_direction()
-        self._set_X_baseline()
-        self._set_X_pending()
-        self._set_mc_points()
-        self._set_ref_point()
+        # Replace device_mode with device_context
+        with device_context(
+            self.device, enforce_single_device=True, manage_memory=False
+        ):
+            # Set context-specific parameters
+            self._set_best_f()
+            self._invert_optimization_direction()
+            self._set_X_baseline()
+            self._set_X_pending()
+            self._set_mc_points()
+            self._set_ref_point()
 
-        botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
-        self.set_default_sample_shape(botorch_acqf)
+            botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
+            self.set_default_sample_shape(botorch_acqf)
 
-        return botorch_acqf
+            # Use to_device for moving to the right device
+            botorch_acqf = to_device(botorch_acqf, self.device)
+
+            # Move all tensor attributes to the correct device
+            for name, param in botorch_acqf.__dict__.items():
+                if isinstance(param, torch.Tensor):
+                    botorch_acqf.__dict__[name] = to_device(param, self.device)
+
+            return botorch_acqf
 
     def _invert_optimization_direction(self) -> None:
         """Invert optimization direction for minimization targets."""
@@ -217,13 +260,17 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.best_f.name not in self._signature:
             return
 
-        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
+        # Get tensor of train_x and move to device
+        train_x_tensor = to_tensor(self._train_x, device=self.device)
+        post_mean = self._botorch_surrogate.posterior(train_x_tensor).mean
 
         match self.objective:
             case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                self._args.best_f = post_mean.min().item()
+                # Move to CPU before converting to item for numerical stability
+                self._args.best_f = post_mean.cpu().min().item()
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = post_mean.max().item()
+                # Move to CPU before converting to item for numerical stability
+                self._args.best_f = post_mean.cpu().max().item()
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
@@ -239,8 +286,9 @@ class BotorchAcquisitionFunctionBuilder:
             return
 
         assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
+        # Get integration points and move to device
         self._args.mc_points = to_tensor(
-            self.acqf.get_integration_points(self.searchspace)
+            self.acqf.get_integration_points(self.searchspace), device=self.device
         )
 
     def _set_ref_point(self) -> None:
@@ -251,12 +299,16 @@ class BotorchAcquisitionFunctionBuilder:
         assert isinstance(self.acqf, _ExpectedHypervolumeImprovement)
 
         if isinstance(ref_point := self.acqf.reference_point, Iterable):
-            self._args.ref_point = torch.tensor(
+            tensor = torch.tensor(
                 [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
             )
+            # Move tensor to device if needed
+            if self.device is not None:
+                tensor = tensor.to(self.device)
+            self._args.ref_point = tensor
         else:
             kwargs = {} if ref_point is None else {"factor": ref_point}
-            self._args.ref_point = torch.tensor(
+            tensor = torch.tensor(
                 self.acqf.compute_ref_point(
                     self._target_configurations.to_numpy(),
                     self._maximize_flags,
@@ -264,13 +316,18 @@ class BotorchAcquisitionFunctionBuilder:
                 )
                 * self._multiplier
             )
+            # Move tensor to device if needed
+            if self.device is not None:
+                tensor = tensor.to(self.device)
+            self._args.ref_point = tensor
 
     def _set_X_baseline(self) -> None:
         """Set BoTorch's ``X_baseline`` argument."""
         if flds.X_baseline.name not in self._signature:
             return
 
-        self._args.X_baseline = to_tensor(self._train_x)
+        # Get tensor of train_x and move to device
+        self._args.X_baseline = to_tensor(self._train_x, device=self.device)
 
     def _set_X_pending(self) -> None:
         """Set BoTorch's ``X_pending`` argument."""
@@ -280,4 +337,5 @@ class BotorchAcquisitionFunctionBuilder:
         pending_x = self.searchspace.transform(
             self.pending_experiments, allow_extra=True
         )
-        self._args.X_pending = to_tensor(pending_x)
+        # Get tensor of pending_x and move to device
+        self._args.X_pending = to_tensor(pending_x, device=self.device)

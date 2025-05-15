@@ -138,6 +138,48 @@ class GaussianProcessSurrogate(Surrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
+        # Ensure input is on the right device - prioritize model's device
+        if (
+            self._model is not None
+            and hasattr(self._model, "train_inputs")
+            and self._model.train_inputs
+        ):
+            model_device = self._model.train_inputs[0].device
+            if candidates_comp_scaled.device != model_device:
+                candidates_comp_scaled = candidates_comp_scaled.to(model_device)
+
+        # Reset prediction strategy before making prediction to force rebuild
+        if (
+            hasattr(self._model, "prediction_strategy")
+            and self._model.prediction_strategy is not None
+        ):
+            # Get the current device of prediction strategy components
+            try:
+                # Access a tensor in the prediction strategy to determine its device
+                if hasattr(self._model.prediction_strategy, "mean_cache"):
+                    strat_device = self._model.prediction_strategy.mean_cache.device
+
+                    # If there's a device mismatch, reset the prediction strategy
+                    if candidates_comp_scaled.device != strat_device:
+                        self._model.prediction_strategy = None
+            except Exception:
+                # If any error occurs during this check, play it safe and reset
+                self._model.prediction_strategy = None
+
+        # If input transform has indices, ensure they're on the right device
+        if hasattr(self._model, "input_transform") and hasattr(
+            self._model.input_transform, "indices"
+        ):
+            if (
+                self._model.input_transform.indices.device
+                != candidates_comp_scaled.device
+            ):
+                self._model.input_transform.indices = (
+                    self._model.input_transform.indices.to(
+                        candidates_comp_scaled.device
+                    )
+                )
+
         return self._model.posterior(candidates_comp_scaled)
 
     @override
@@ -153,6 +195,7 @@ class GaussianProcessSurrogate(Surrogate):
         context = _ModelContext(self._searchspace)
 
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
+        numerical_idxs = torch.tensor(numerical_idxs, device=train_x.device)
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         input_transform = botorch.models.transforms.Normalize(

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
 import cattrs
 import pandas as pd
+import torch
 from attrs import define, field
 from cattrs.dispatch import (
     StructuredValue,
@@ -198,8 +199,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             mapping[idxs] = transformer
         scaler = ColumnTransformer(mapping)
 
-        # Fit the scaler to the parameter bounds
-        scaler.fit(to_tensor(searchspace.scaling_bounds))
+        # Fit the scaler to the parameter bounds, making sure to use the correct device.
+        scaler.fit(
+            to_tensor(searchspace.comp_rep_bounds, device=getattr(self, "device", None))
+        )
 
         return scaler
 
@@ -218,7 +221,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
-        scaler(to_tensor(objective.transform(measurements, allow_extra=True)))
+        scaler(
+            to_tensor(
+                objective.transform(measurements, allow_extra=True),
+                device=getattr(self, "device", None),
+            )
+        )
         scaler.eval()
 
         return scaler
@@ -249,7 +257,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 "The surrogate must be trained before a posterior can be computed."
             )
         return self._posterior_comp(
-            to_tensor(self._searchspace.transform(candidates, allow_extra=True))
+            to_tensor(
+                self._searchspace.transform(candidates, allow_extra=True),
+                device=getattr(self, "device", None),
+            )
         )
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
@@ -272,9 +283,65 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         #   checker that the attribute is available at the time of the function call
         assert self._input_scaler is not None
 
-        p = self._posterior(self._input_scaler.transform(candidates_comp))
+        transformed = self._input_scaler.transform(candidates_comp)
+        # Initialize prediction strategy if needed
+        if (
+            hasattr(self._model, "train_inputs")
+            and self._model.train_inputs
+            and (
+                self._model.prediction_strategy is None
+                or getattr(self._model.prediction_strategy, "_mean_cache", None) is None
+            )
+        ):
+            # Move training data to the same device as transformed inputs.
+            train_x = self._model.train_inputs[0].to(transformed.device)
+            train_y = self._model.train_targets.to(transformed.device)
+            # Use model.eval() to ensure prediction mode.
+            self._model.eval()
+            try:
+                with torch.no_grad():
+                    # Force a forward pass with training data
+                    output = self._model(train_x)
+                    # Initialize likelihood
+                    _ = self._model.likelihood(output)
+                    # Ensure prediction strategy is created
+                    if self._model.prediction_strategy is None:
+                        self._model.prediction_strategy = (
+                            self._model.exact_prediction_strategy(
+                                train_x, train_y, self._model.likelihood
+                            )
+                        )
+            except Exception as e:
+                # Log a warning if a dummy pass fails; the cache might have been
+                # already set.
+                print(
+                    "Warning: Dummy forward pass failed to initialize "
+                    "prediction strategy:",
+                    e,
+                )
+
+        p = self._posterior(transformed)
+
         if self._output_scaler is not _IDENTITY_TRANSFORM:
             p = self._output_scaler.untransform_posterior(p)
+
+        # If the posterior's tensors are on GPU, create a new posterior with CPU tensors
+        if hasattr(p, "mean") and isinstance(p.mean, torch.Tensor) and p.mean.is_cuda:
+            from botorch.posteriors import GPyTorchPosterior
+            from gpytorch.distributions import MultivariateNormal
+
+            # Create a new MultivariateNormal distribution with CPU tensors
+            # Ensure proper shape by squeezing extra dimensions
+            mvn = MultivariateNormal(
+                p.mean.cpu().detach().squeeze(-1),  # Remove last dimension
+                p.variance.cpu()
+                .detach()
+                .squeeze(-1)
+                .diag_embed(),  # Remove last dimension before creating diagonal matrix
+            )
+            # Create a new posterior with the CPU-based distribution
+            p = GPyTorchPosterior(mvn)
+
         return p
 
     @abstractmethod
@@ -461,6 +528,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         train_x_comp_rep, train_y_comp_rep = to_tensor(
             searchspace.transform(measurements, allow_extra=True),
             objective.transform(measurements, allow_extra=True),
+            device=getattr(self, "device", None),
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (

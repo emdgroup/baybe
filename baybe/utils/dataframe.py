@@ -9,12 +9,13 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
+import torch
 
 from baybe.exceptions import SearchSpaceMatchWarning
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.device_utils import to_device
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -27,42 +28,49 @@ if TYPE_CHECKING:
 
 
 @overload
-def to_tensor(x: np.ndarray | pd.DataFrame, /) -> Tensor: ...
+def to_tensor(
+    x: np.ndarray | pd.DataFrame, *, device: torch.device | None = None
+) -> Tensor: ...
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> tuple[Tensor, ...]: ...
+def to_tensor(
+    *x: np.ndarray | pd.DataFrame, device: torch.device | None = None
+) -> tuple[Tensor, ...]: ...
 
 
-def to_tensor(*x: np.ndarray | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
-    """Convert numpy arrays and pandas dataframes to tensors.
+def to_tensor(
+    *args: Any,
+    device: torch.device | str | None = None,
+) -> torch.Tensor | tuple[torch.Tensor, ...]:
+    """Convert one or multiple inputs to PyTorch tensors.
 
     Args:
-        *x: The array(s)/dataframe(s) to be converted.
+        *args: One or multiple inputs to convert to tensors.
+        device: The device to move the tensor(s) to.
 
     Returns:
         The provided array(s)/dataframe(s) represented as tensor(s).
     """
-    # FIXME This function seems to trigger a problem when some columns in either of
-    #  the dfs have a dtype other than int or float (e.g. object, bool). This can
-    #  weirdly happen, even if all values are numeric, e.g. when a target column is
-    #  looked up from a df in simulation, it can have dtype object even if it's all
-    #  floats. As a simple fix (this seems to be the most reasonable place to take
-    #  care of this) df.values has been changed to df.values.astype(float),
-    #  even though this seems like double casting here.
-    import torch
 
-    from baybe.utils.torch import DTypeFloatTorch
+    def _convert_single(data: Any) -> torch.Tensor:
+        if isinstance(data, torch.Tensor):
+            tensor = data
+        elif isinstance(data, pd.DataFrame):
+            # Convert DataFrame to numpy first
+            tensor = torch.tensor(data.values.astype(np.float64))
+        elif isinstance(data, np.ndarray):
+            tensor = torch.from_numpy(data.astype(np.float64))
+        else:
+            tensor = torch.tensor(data, dtype=torch.float64)
 
-    out = tuple(
-        torch.from_numpy(
-            (xi.values if isinstance(xi, pd.DataFrame) else xi).astype(DTypeFloatNumpy)
-        ).to(DTypeFloatTorch)
-        for xi in x
-    )
-    if len(x) == 1:
-        out = out[0]
-    return out
+        return to_device(tensor, device)
+
+    # Handle single or multiple inputs
+    if len(args) == 1:
+        return _convert_single(args[0])
+    else:
+        return tuple(_convert_single(arg) for arg in args)
 
 
 def add_fake_measurements(
@@ -757,6 +765,7 @@ def arrays_to_dataframes(
     input_labels: Sequence[str],
     output_labels: Sequence[str],
     /,
+    *,
     use_torch: bool = False,
 ) -> Callable[
     [Callable[[_ArrayLike], _ArrayLike]], Callable[[pd.DataFrame], pd.DataFrame]
@@ -769,6 +778,7 @@ def arrays_to_dataframes(
     accept and return two-dimensional arrays. When decorated, the callable accepts and
     returns dataframes whose columns are mapped to the corresponding arrays based on the
     specified label sequences.
+
 
     Args:
         input_labels: The sequence of labels for the input columns.
@@ -793,7 +803,11 @@ def arrays_to_dataframes(
                 import torch
 
                 with torch.no_grad():
-                    array_out = fn(torch.from_numpy(array_in)).numpy()
+                    result = fn(torch.from_numpy(array_in))
+                    # Move to CPU before converting to numpy
+                    if result.is_cuda:
+                        result = result.cpu()
+                    array_out = result.numpy()
             else:
                 array_out = fn(array_in)
             return pd.DataFrame(array_out, columns=list(output_labels), index=df.index)
