@@ -254,7 +254,7 @@ def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "objective",
-    [ParetoObjective([NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")])],
+    [ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2", minimize=True)])],
 )
 @pytest.mark.parametrize(
     "acqf",

@@ -68,9 +68,7 @@ config = {
         parameters=parameters,
         constraints=None,
     ),
-    "objective": Objective(
-        mode="SINGLE", targets=[NumericalTarget(name="Yield", mode="MAX")]
-    ),
+    "objective": Objective(mode="SINGLE", targets=[NumericalTarget(name="Yield")]),
     "recommender": TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
         initial_recommender=RandomRecommender(),

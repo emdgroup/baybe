@@ -102,7 +102,7 @@ constraint = DiscreteCustomConstraint(
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 
 ### Creating and printing the campaign
 

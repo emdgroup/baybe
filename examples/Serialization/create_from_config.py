@@ -64,7 +64,6 @@ CONFIG = str(
             {
                 "type": "NumericalTarget",
                 "name": "Yield",
-                "mode": "MAX"
             }
     },
     "recommender": {

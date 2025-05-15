@@ -31,8 +31,8 @@ from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.numerical import NumericalTarget
 
 
 def test_sequentialgreedyrecommender_class():
@@ -140,11 +140,11 @@ def test_constraint_config_deserialization(type_, op):
 
 def test_objective_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    single = SingleTargetObjective(NumericalTarget("A", "MAX"))
+    single = SingleTargetObjective(NumericalTarget("A"))
     desirability = DesirabilityObjective(
         [
-            NumericalTarget("A", "MAX", (0, 1)),
-            NumericalTarget("B", "MIN", (-1, 1)),
+            NumericalTarget.ramp("A", cutoffs=(0, 1)),
+            NumericalTarget.ramp("B", cutoffs=(-1, 1), descending=True),
         ]
     )
 
@@ -175,7 +175,7 @@ def test_deprecated_get_transform_parameters():
 
 def test_target_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    numerical = NumericalTarget("num", "MAX")
+    numerical = NumericalTarget("num")
     binary = BinaryTarget("bin")
 
     # Passing dataframe via `data`
@@ -249,3 +249,31 @@ def test_migrated_allow_flags(flag, recommender_cls):
 
     with pytest.raises(DeprecationError, match=f"The attribute '{flag}' is no longer"):
         getattr(recommender_cls(), flag)
+
+
+def test_legacy_target_construction():
+    """Constructing a target using legacy arguments raises a warning."""
+    with pytest.warns(
+        DeprecationWarning,
+        match="Creating numerical targets by specifying MAX/MIN/MATCH modes",
+    ):
+        NumericalTarget("t", "MAX")
+
+
+def test_target_deprecation_helpers():
+    """Calling the target deprecation helper constructors raises a warning."""
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_legacy_api'"
+    ):
+        NumericalTarget.from_legacy_api("t", "MIN")
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_modern_api'"
+    ):
+        NumericalTarget.from_modern_api("t", minimize=True)
+
+
+def test_target_legacy_deserialization():
+    """Deserialization also works from legacy arguments."""
+    actual = NumericalTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
+    expected = NumericalTarget("t", "MATCH", (1, 2))
+    assert actual == expected

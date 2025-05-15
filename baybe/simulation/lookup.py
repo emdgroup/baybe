@@ -57,7 +57,7 @@ def look_up_targets(
         >>> from baybe.targets.numerical import NumericalTarget
         >>> from baybe.simulation.lookup import look_up_targets
         >>>
-        >>> targets = [NumericalTarget("target", "MAX")]
+        >>> targets = [NumericalTarget("target")]
         >>> df = pd.DataFrame({"x": [1, 2, 3]})
         >>> lookup_df = pd.DataFrame({"x": [1, 2], "target": [10, 20]})
         >>> look_up_targets(df, targets, lookup_df, impute_mode="mean")
