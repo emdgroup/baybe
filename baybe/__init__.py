@@ -1,11 +1,28 @@
 """BayBE — A Bayesian Back End for Design of Experiments."""
 
+import sys
 import warnings
 
 from baybe.campaign import Campaign
 
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
+
+
+# >>>>> Temporary monkeypatch for onnx >>>>>
+# 1) Ensures that the patch is applied when baybe is imported first
+class CustomImporter:
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "skl2onnx":
+            from baybe._optional.onnx import patch_onnx  # noqa
+
+
+sys.meta_path.insert(0, CustomImporter())
+
+# 2) Ensures that the patch is applied when skl2onnx is imported first
+if "onnx" in sys.modules:
+    from baybe._optional.onnx import patch_onnx  # noqa
+# <<<<<<<<<<
 
 
 def infer_version() -> str:  # pragma: no cover
