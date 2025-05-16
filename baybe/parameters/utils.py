@@ -2,7 +2,7 @@
 
 from collections.abc import Callable, Collection
 from functools import partial
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -20,7 +20,7 @@ _TParameter = TypeVar("_TParameter", bound=Parameter)
 
 def get_parameters_from_dataframe(
     df: pd.DataFrame,
-    factory: Callable[[str, npt.NDArray], _TParameter],
+    factory: Callable[[str, Collection[Any]], _TParameter],
     parameters: Collection[_TParameter] | None = None,
 ) -> list[_TParameter]:
     """Create a list of parameters from a dataframe.

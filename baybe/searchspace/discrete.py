@@ -11,7 +11,6 @@ from math import prod
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 from attrs import define, field
 from cattrs import IterableValidationError
@@ -245,11 +244,11 @@ class SubspaceDiscrete(SerialMixin):
         """
 
         def discrete_parameter_factory(
-            name: str, values: npt.NDArray
+            name: str, values: Collection[Any]
         ) -> DiscreteParameter:
             """Try to create a numerical parameter or use a categorical fallback."""
             try:
-                if pd.api.types.is_bool_dtype(values):
+                if pd.api.types.is_bool_dtype(np.asarray(values)):
                     # Due to the difference between bool and np.bool and pandas'
                     # auto-casting into the latter, the usage of is_bool_dtype and map
                     # is required here.
