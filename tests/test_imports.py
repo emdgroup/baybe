@@ -63,6 +63,31 @@ WHITELISTS = {
         "baybe.surrogates._adapter",
         "baybe.utils.torch",
     ],
+    "scipy": [
+        "baybe._optional.chem",
+        "baybe._optional.insights",
+        "baybe._optional.ngboost",
+        "baybe.acquisition._builder",
+        "baybe.acquisition.partial",
+        "baybe.insights",
+        "baybe.insights.shap",
+        "baybe.surrogates._adapter",
+        "baybe.utils.chemistry",
+        "baybe.utils.clustering_algorithms",
+        "baybe.utils.clustering_algorithms.third_party",
+        "baybe.utils.clustering_algorithms.third_party.kmedoids",
+    ],
+    "sklearn": [
+        "baybe._optional.chem",
+        "baybe._optional.insights",
+        "baybe._optional.ngboost",
+        "baybe.insights",
+        "baybe.insights.shap",
+        "baybe.utils.chemistry",
+        "baybe.utils.clustering_algorithms",
+        "baybe.utils.clustering_algorithms.third_party",
+        "baybe.utils.clustering_algorithms.third_party.kmedoids",
+    ],
 }
 """Modules (dict values) for which certain imports (dict keys) are permitted."""
 
