@@ -143,3 +143,15 @@ insight.plot("bar")
 As expected, the result from [`LimeTabular`](shap.explainers.other.LimeTabular) are very
 similar to the results from the SHAP [`KernelExplainer`](shap.KernelExplainer) because
 both methods involve linear local approximations.
+
+### Multi-Output Surrogate Models
+In case you are using a surrogate model with multiple outputs, e.g. while using 
+a [`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate) 
+for a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), 
+there are multiple models to be analyzed.
+
+`SHAPInsight` calculates a separate explanation for each model. When requesting a plot, 
+you can select for which target the assessment should be displayed:
+~~~python
+insight.plot("bar", target_index=2)  # plots the bar plot for the third target
+~~~
