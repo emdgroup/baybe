@@ -21,6 +21,7 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import CompositeSurrogate
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
+from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import to_tensor
 
 _DEFAULT_EXPLAINER_CLS = "KernelExplainer"
@@ -165,11 +166,17 @@ class SHAPInsight:
         if isinstance(surrogate, Surrogate):
             single_output_surrogates = (surrogate,)
         elif isinstance(surrogate, CompositeSurrogate):
-            single_output_surrogates = surrogate._surrogates_flat
+            single_output_surrogates = surrogate._surrogates_flat  # type:ignore[assignment]
+            if not is_all_instance(single_output_surrogates, Surrogate):
+                raise TypeError(
+                    f"'{cls.__name__}.{cls.from_surrogate.__name__}' only supports "
+                    f"'{CompositeSurrogate.__name__}' if it is composed only of models "
+                    f"of type '{Surrogate.__name__}'."
+                )
         else:
             raise ValueError(
                 f"'{cls.__name__}.{cls.from_surrogate.__name__}' only accepts "
-                f"surrogate models of derived from '{Surrogate.__name__}' or "
+                f"surrogate models derived from '{Surrogate.__name__}' or "
                 f"{CompositeSurrogate.__name__}."
             )
 
