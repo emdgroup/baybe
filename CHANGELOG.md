@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional transfer learning and synthetic benchmarks
 - Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
   expected dtypes
+- `CompositeSurrogate` now has a `_posterior_comp` method similar to `Surrogate`
+- `SHAPInsight.explain_target` method for computing explanations for only a specific 
+  target
 
 ### Changed
 - `CategoricalParameter` and `TaskParameter` now also allow Boolean entries as 
@@ -24,14 +27,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `add_measurements`, `update_measurements`, `fuzzy_row_match` and some `.recommend` 
   calls now operate on dtype-normalized copies of the input if it contained unexpected
   dtypes for a parameter or target
-
-### Changed
 - `scikit-learn` and `scipy` are now lazy-loaded
 - Validity of optional `model_params` attribute of `RandomForestSurrogate`, 
   `NGBoostSurrogate` and `BayesianLinearSurrogate` is now checked via a hardcoded 
   `TypedDict` instead of dynamically retrieved specifications, required for 
   lazy-loading related packages
 - `CustomONNXSurrogate.onnx_str` is no longer validated before being used
+- `SHAPInsight.explain` now returns a tuple of explanations that contains one 
+  explanation for each surrogate model used by the (possibly multi-output) objective
+- `SHAPInsight.plot` now has the optional `target_index` argument, enabling users to 
+  select for which target they want to plot the shap assessment (default is the first 
+  target)
 
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
@@ -39,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added missing garbage collection call to `pareto.py`, potentially solving serialization
   issues in certain cases
 - `catch_constant_targets` decorator is now properly typed
+- Incorrect normalization of explanation shapes for `SHAPInsight`
+
+### Removed
+- `SHAPInsight.uses_shap_explainer`
 
 ## [0.13.0] - 2025-04-16
 ### Added
