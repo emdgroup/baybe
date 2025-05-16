@@ -10,7 +10,7 @@ from typing_extensions import override
 
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
-from baybe.surrogates.validation import get_dict_validator
+from baybe.surrogates.validation import make_dict_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     model_params: _ARDRegressionParams = field(
         factory=dict,
         converter=dict,
-        validator=get_dict_validator(_ARDRegressionParams),
+        validator=make_dict_validator(_ARDRegressionParams),
     )
     """Optional model parameter that will be passed to the surrogate constructor."""
 
