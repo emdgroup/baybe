@@ -165,6 +165,7 @@ jobs:
   fulltest:
     needs: [typecheck]
     strategy:
+      fail-fast: false  # Remove once we have solved the regular "LinAlgErrors"
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'}, {semantic: '3.13', tox: 'py313'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
