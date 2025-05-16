@@ -95,6 +95,12 @@ if strtobool(os.getenv("CI", "false")):
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
 
 
+_onnx_issue = (
+    "Breaking change in onnx 0.18.0, which causes skl2onnx to fail. "
+    "Fix is already on the way: https://github.com/onnx/sklearn-onnx/pull/1181"
+)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def disable_telemetry():
     """Disables telemetry during pytesting via fixture."""

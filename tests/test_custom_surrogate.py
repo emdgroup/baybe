@@ -9,7 +9,10 @@ from baybe._optional.info import ONNX_INSTALLED
 from baybe.surrogates import CustomONNXSurrogate
 from tests.conftest import run_iterations
 
+from .conftest import _onnx_issue
 
+
+@pytest.mark.xfail(reason=_onnx_issue, strict=True)
 @pytest.mark.skipif(
     not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )
@@ -37,6 +40,7 @@ def test_invalid_onnx_str():
         CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")
 
 
+@pytest.mark.xfail(reason=_onnx_issue, strict=True)
 @pytest.mark.skipif(
     not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
 )
