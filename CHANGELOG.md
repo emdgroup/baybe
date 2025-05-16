@@ -12,12 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
+- `CompositeSurrogate` now has a `_posterior_comp` method similar to `Surrogate`
+
+### Changed
+- `SHAPInsight.explain` now returns a tuple of explanations that contains one 
+  explanation for each surrogate model used by the (possibly multi-output) objective
+- `SHAPInsight.plot` now has the optional `target_index` argument, enabling users to 
+  select for which target they want to plot the shap assessment (default is the first 
+  target)
 
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
   minimization of the acquisition function
 - Added missing garbage collection call to `pareto.py`, potentially solving serialization
   issues in certain cases
+- Incorrect normalization of explanation shapes for `SHAPInsight`
 
 ## [0.13.0] - 2025-04-16
 ### Added
