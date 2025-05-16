@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
 from attrs import define, field
-from numpy.random import RandomState
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
@@ -34,7 +33,7 @@ class _NGBRegressorParams(TypedDict, total=False):
     verbose: bool
     verbose_eval: int
     tol: float
-    random_state: int | RandomState | None
+    random_state: int | None  # Unlike ngboost, we do not allow ``RandomState``
     validation_fraction: float
     early_stopping_rounds: int | None
 
