@@ -254,7 +254,7 @@ class SubspaceDiscrete(SerialMixin):
                     # is required here.
                     return CategoricalParameter(
                         name=name,
-                        values=tuple(map(bool, values)),
+                        values=map(bool, values),
                         encoding=CategoricalEncoding.INT,
                     )
                 return NumericalDiscreteParameter(name=name, values=values)
