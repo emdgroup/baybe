@@ -58,7 +58,7 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
 
 
 # Create a strict type validation converter
-type_validation_converter = converter = cattrs.GenConverter(forbid_extra_keys=True)
+type_validation_converter = cattrs.GenConverter(forbid_extra_keys=True)
 """Converter used for strict type validation."""
 
 
