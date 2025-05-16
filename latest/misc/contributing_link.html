@@ -1059,8 +1059,8 @@ we recommend the following workflow:</p>
 <ol class="arabic">
 <li><p>Clone a <a class="reference external" href="https://github.com/emdgroup/BayBE/fork">fork</a> of the repository to
 your local machine.</p></li>
-<li><p>Create and activate a virtual python environment using one of the supported
-python versions.</p></li>
+<li><p>Create and activate a virtual Python environment using one of the supported
+Python versions.</p></li>
 <li><p>Change into the root folder of the cloned repository and install an editable version
 including all development dependencies:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">pip install -e &#39;.[dev]&#39;</span>
@@ -1089,12 +1089,12 @@ including all development dependencies:</p>
 <a class="reference internal" href="#developer-tools">developer tool</a> in a certain Python version.
 You can retrieve all available environments via <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">list</span></code>.
 For more information, see our <a class="reference external" href="https://github.com/emdgroup/baybe/blob/main/tests/README.md">README about tests</a>.</p>
-<p>For instance, running all code tests in Python 3.12 can be achieved via:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tox -e fulltest-py312</span>
+<p>For instance, running all code tests in Python 3.13 can be achieved via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tox -e fulltest-py313</span>
 </pre></div>
 </div>
-<p>Other tox tests that are useful to verify your work locally are <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">lint-py312</span></code>,
-<code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">mypy-py312</span></code> and <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">coretest-py312</span></code>.</p>
+<p>Other tox tests that are useful to verify your work locally are <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">lint-py313</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">mypy-py313</span></code> and <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">coretest-py313</span></code>.</p>
 <p>If you want to challenge your machine, you can run all checks in all Python versions
 in parallel via:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">tox -p</span>
