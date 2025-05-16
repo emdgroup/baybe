@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 
+### Changed
+- `CategoricalParameter` and `TaskParameter` now also allow Boolean entries as 
+  `values` and `active_values`
+- `SubspaceDiscrete.from_dataframe` now handles purely Boolean columns differently, 
+  inferring a `CategoricalParameter` with `INT` encoding for them
+- `fuzzy_row_match` now casts numerical columns to float before distance calculation
+
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
   minimization of the acquisition function
