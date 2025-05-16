@@ -179,7 +179,6 @@ class SHAPInsight:
             )
             for s in single_output_surrogates
         )
-        print("BLA   ", explainers, len(explainers))
         return cls(explainers, data)
 
     @classmethod
@@ -337,12 +336,21 @@ class SHAPInsight:
             if len(explanation.shape) == 2:
                 explanations.append(explanation)
             elif len(explanation.shape) == 3:
-                explanations.append(explanation[:, :, 0])
+                if explanation.shape[2] == 1:
+                    # Some explainers have a third dimension corresponding to the
+                    # number of model outputs (in this implementation always 1).
+                    explanations.append(explanation[:, :, 0])
+                else:
+                    # Some explainers (like ``AdditiveExplainer``) have a third
+                    # dimension corresponding to feature interactions. The total shap
+                    # value is obtained by summing over them.
+                    explanations.append(explanation.sum(axis=2))
             else:
                 raise RuntimeError(
                     f"The explanation obtained for '{self.__class__.__name__}' has an "
                     f"unexpected dimensionality of {len(explanation.shape)}."
                 )
+
         return tuple(explanations)
 
     def plot(
