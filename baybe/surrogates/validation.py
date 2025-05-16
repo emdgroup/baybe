@@ -58,13 +58,13 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
 
 
 # Create a strict type validation converter
-type_validation_converter = cattrs.GenConverter(forbid_extra_keys=True)
+type_validation_converter = cattrs.Converter(forbid_extra_keys=True)
 """Converter used for strict type validation."""
-
 
 configure_union_passthrough(int | float | str | None, type_validation_converter)
 
 
+@type_validation_converter.register_structure_hook
 def _strict_int_structure_hook(obj: Any, _: type[int]) -> int:
     if isinstance(obj, int) and not isinstance(obj, bool):  # Exclude bools
         return obj
@@ -74,6 +74,7 @@ def _strict_int_structure_hook(obj: Any, _: type[int]) -> int:
     )
 
 
+@type_validation_converter.register_structure_hook
 def _strict_float_structure_hook(obj: Any, _: type[float]) -> float:
     if isinstance(obj, float):
         return obj
@@ -83,6 +84,7 @@ def _strict_float_structure_hook(obj: Any, _: type[float]) -> float:
     )
 
 
+@type_validation_converter.register_structure_hook
 def _strict_bool_structure_hook(obj: Any, _: type[bool]) -> bool:
     if isinstance(obj, bool):
         return obj
@@ -90,11 +92,6 @@ def _strict_bool_structure_hook(obj: Any, _: type[bool]) -> bool:
         f"Value '{obj}' (type: {type(obj).__name__}) is not a valid boolean. "
         "Only actual 'bool' instances (True, False) are accepted."
     )
-
-
-type_validation_converter.register_structure_hook(int, _strict_int_structure_hook)
-type_validation_converter.register_structure_hook(float, _strict_float_structure_hook)
-type_validation_converter.register_structure_hook(bool, _strict_bool_structure_hook)
 
 
 def make_dict_validator(specification: type) -> Callable:
