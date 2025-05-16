@@ -97,7 +97,7 @@ type_validation_converter.register_structure_hook(float, _strict_float_structure
 type_validation_converter.register_structure_hook(bool, _strict_bool_structure_hook)
 
 
-def get_dict_validator(specification: type) -> Callable:
+def make_dict_validator(specification: type) -> Callable:
     """Construct an attrs dictionary validator based on a ``TypedDict``.
 
     Args:
