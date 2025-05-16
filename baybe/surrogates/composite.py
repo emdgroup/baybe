@@ -23,6 +23,7 @@ from baybe.utils.dataframe import handle_missing_values
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
     from botorch.posteriors import PosteriorList
+    from torch import Tensor
 
 _T = TypeVar("_T")
 
@@ -129,8 +130,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         """
         if not all(hasattr(s, "posterior") for s in self._surrogates_flat):
             raise IncompatibleSurrogateError(
-                "A posterior can only be computed if all involved surrogates offer "
-                "posterior computation."
+                f"'{self.__class__.__name__}' can only compute a posterior in "
+                f"experimental representation if all involved surrogates offer "
+                f"posteriors in experimental representation."
             )
 
         from botorch.posteriors import PosteriorList
@@ -138,6 +140,27 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
         #   be handy here but unclear if this is doable with the current typing system
         posteriors = [s.posterior(candidates) for s in self._surrogates_flat]  # type: ignore[attr-defined]
+        return PosteriorList(*posteriors)
+
+    def _posterior_comp(self, candidates_comp: Tensor, /) -> PosteriorList:
+        """Compute the posterior for candidates in computational representation.
+
+        The (independent joint) posterior is represented as a collection of individual
+        posterior models computed per target of the involved objective.
+        For details, see :meth:`baybe.surrogates.base.Surrogate._posterior_comp`.
+        """
+        if not all(hasattr(s, "_posterior_comp") for s in self._surrogates_flat):
+            raise IncompatibleSurrogateError(
+                f"'{self.__class__.__name__}' can only compute a posterior in "
+                f"computational representation if all involved surrogates offer "
+                f"posteriors in computational representation."
+            )
+
+        from botorch.posteriors import PosteriorList
+
+        # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
+        #   be handy here but unclear if this is doable with the current typing system
+        posteriors = [s._posterior_comp(candidates_comp) for s in self._surrogates_flat]  # type: ignore[attr-defined]
         return PosteriorList(*posteriors)
 
     def posterior_stats(

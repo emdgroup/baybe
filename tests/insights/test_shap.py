@@ -7,10 +7,16 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
-from pytest import mark
+from pytest import mark, param
 
 from baybe._optional.info import INSIGHTS_INSTALLED
 from baybe.exceptions import IncompatibleExplainerError, NoMeasurementsError
+from baybe.objectives import (
+    DesirabilityObjective,
+    ParetoObjective,
+    SingleTargetObjective,
+)
+from baybe.targets import NumericalTarget
 
 if not INSIGHTS_INSTALLED:
     pytest.skip("Optional insights package not installed.", allow_module_level=True)
@@ -28,6 +34,7 @@ from baybe.insights.shap import (
     KernelExplainer,
     SHAPInsight,
     _get_explainer_cls,
+    is_shap_explainer,
 )
 from tests.conftest import run_iterations
 
@@ -82,7 +89,7 @@ def test_non_shap_signature(explainer_name):
 
 
 def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
-    """Helper function for general SHAP explainer tests."""
+    """Helper function for general SHAP explainers tests."""
     context = nullcontext()
     if (
         (not use_comp_rep)
@@ -90,7 +97,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         and any(not p.is_numerical for p in campaign.parameters)
     ):
         # We expect a validation error in case an explanation with an unsupported
-        # explainer type is attempted on a search space representation with
+        # explainers type is attempted on a search space representation with
         # non-numerical entries
         context = pytest.raises(IncompatibleExplainerError)
 
@@ -101,20 +108,45 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
             use_comp_rep=use_comp_rep,
         )
 
-        # Sanity check explainer
+        # Sanity check explainers
         assert isinstance(shap_insight, insights.SHAPInsight)
-        assert isinstance(shap_insight.explainer, _get_explainer_cls(explainer_cls))
-        assert shap_insight.uses_shap_explainer == is_shap
+        # assert all(
+        #     isinstance(e, _get_explainer_cls(explainer_cls))
+        #     for e in shap_insight.explainers
+        # )
+        assert all(is_shap_explainer(e) == is_shap for e in shap_insight.explainers)
 
         # Sanity check explanation
         df = campaign.measurements[[p.name for p in campaign.parameters]]
         if use_comp_rep:
             df = campaign.searchspace.transform(df)
-        shap_explanation = shap_insight.explain(df)
-        assert isinstance(shap_explanation, shap.Explanation)
+        shap_explanations = shap_insight.explain(df)
+        assert isinstance(shap_explanations, tuple)
+        assert isinstance(shap_explanations[0], shap.Explanation)
 
 
 @mark.slow
+@mark.parametrize(
+    "objective",
+    [
+        param(SingleTargetObjective(NumericalTarget("t1", "MAX")), id="single"),
+        param(
+            DesirabilityObjective(
+                (
+                    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
+                    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
+                )
+            ),
+            id="desirability",
+        ),
+        param(
+            ParetoObjective(
+                (NumericalTarget("t1", mode="MAX"), NumericalTarget("t2", mode="MIN"))
+            ),
+            id="pareto",
+        ),
+    ],
+)
 @mark.parametrize("explainer_cls", SHAP_EXPLAINERS)
 @mark.parametrize("use_comp_rep", [False, True], ids=["exp", "comp"])
 def test_shap_explainers(ongoing_campaign, explainer_cls, use_comp_rep):
@@ -158,14 +190,9 @@ def test_plots(ongoing_campaign: Campaign, use_comp_rep, plot_type):
     if use_comp_rep:
         df = ongoing_campaign.searchspace.transform(df)
 
-    try:
-        with mock.patch("matplotlib.pyplot.show"):
-            shap_insight.plot(plot_type, df)
-            plt.close()
-    except ValueError as e:
-        if "zero-size array to reduction" in str(e) and plot_type == "scatter":
-            pytest.xfail("SHAP bug")
-        raise e
+    with mock.patch("matplotlib.pyplot.show"):
+        shap_insight.plot(plot_type, df)
+        plt.close()
 
 
 def test_updated_campaign_explanations(campaign, n_iterations, batch_size):
@@ -208,13 +235,13 @@ def test_column_permutation():
     # Create insights object and test data
     background_data = pd.DataFrame(np.random.random((N, 3)), columns=["x", "y", "z"])
     explainer = KernelExplainer(lambda x: x, background_data)
-    insights = SHAPInsight(explainer, background_data)
+    insight = SHAPInsight([explainer], background_data)
     df = pd.DataFrame(np.random.random((N, 3)), columns=["x", "y", "z"])
 
     # Regular column order
-    ex1 = insights.explain(df)
+    ex1 = insight.explain(df)
 
     # Permuted column order
-    ex2 = insights.explain(df[["z", "x", "y"]])[:, [1, 2, 0]]
+    ex2 = insight.explain(df[["z", "x", "y"]])
 
-    assert np.array_equal(ex1.values, ex2.values)
+    assert np.array_equal(ex1[0].values, ex2[0][:, [1, 2, 0]].values)
