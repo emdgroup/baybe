@@ -8,6 +8,8 @@ import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, ONNX_INSTALLED
 
+from ..conftest import _onnx_issue
+
 # Run these tests in reduced settings
 _SMOKE_TEST_CACHE = os.environ.get("SMOKE_TEST", None)
 os.environ["SMOKE_TEST"] = "true"
@@ -20,7 +22,19 @@ paths = [str(x) for x in Path("examples/").rglob("*.py")]
 @pytest.mark.skipif(
     not (CHEM_INSTALLED and ONNX_INSTALLED), reason="skipped for core tests"
 )
-@pytest.mark.parametrize("example", paths, ids=paths)
+@pytest.mark.parametrize(
+    "example",
+    [
+        pytest.param(
+            p,
+            marks=[pytest.mark.xfail(reason=_onnx_issue, strict=True)]
+            if "custom_pretrained" in p
+            else [],
+        )
+        for p in paths
+    ],
+    ids=paths,
+)
 def test_example(example: str):
     """Test an individual example by running it.
 

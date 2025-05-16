@@ -1,9 +1,3 @@
-# NOTES:
-# - The map syntax used for matrix is flagged red but actually works
-# - This runs everything in Python 3.10, 3.11 and 3.12
-# - Environments are **not** cached in order to perform a full end-to-end test
-#   (and due to space limit)
-
 name: Regular Checks
 on:
   schedule:
@@ -53,7 +47,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Lint ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -74,7 +69,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Type Check ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -95,7 +91,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Audit ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -116,7 +113,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Core Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
@@ -137,7 +135,8 @@ jobs:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
-                      {semantic: '3.12', tox: 'py312'} ]
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:

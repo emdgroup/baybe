@@ -11,8 +11,21 @@ from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.utils.basic import get_subclasses
 
+from ..conftest import _onnx_issue
 
-@pytest.mark.parametrize("surrogate_cls", get_subclasses(Surrogate))
+
+@pytest.mark.parametrize(
+    "surrogate_cls",
+    [
+        pytest.param(
+            s,
+            marks=[pytest.mark.xfail(reason=_onnx_issue, strict=True)]
+            if issubclass(s, CustomONNXSurrogate)
+            else [],
+        )
+        for s in get_subclasses(Surrogate)
+    ],
+)
 def test_surrogate_serialization(request, surrogate_cls):
     """A serialization roundtrip yields an equivalent object."""
     if issubclass(surrogate_cls, CustomONNXSurrogate):
