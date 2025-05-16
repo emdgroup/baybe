@@ -1,21 +1,22 @@
 """Recommenders based on clustering."""
 
+from __future__ import annotations
+
 import gc
 from abc import ABC, abstractmethod
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from scipy.stats import multivariate_normal
-from sklearn.base import ClusterMixin
-from sklearn.metrics import pairwise_distances
-from sklearn.preprocessing import StandardScaler
 from typing_extensions import override
 
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
+
+if TYPE_CHECKING:
+    from sklearn.base import ClusterMixin
 
 
 @define
@@ -104,6 +105,8 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         batch_size: int,
     ) -> pd.Index:
         # Fit scaler on entire search space
+        from sklearn.preprocessing import StandardScaler
+
         # TODO [Scaling]: scaling should be handled by search space object
         scaler = StandardScaler()
         scaler.fit(subspace_discrete.comp_rep)
@@ -235,6 +238,8 @@ class KMeansClusteringRecommender(SKLearnClusteringRecommender):
         Returns:
             A list with positional indices of the selected candidates.
         """
+        from sklearn.metrics import pairwise_distances
+
         distances = pairwise_distances(candidates_scaled, model.cluster_centers_)
         # Set the distances of points that were not assigned by the model to that
         # cluster to infinity. This assures that one unique point per cluster is
@@ -280,6 +285,8 @@ class GaussianMixtureClusteringRecommender(SKLearnClusteringRecommender):
         Returns:
             A list with positional indices of the selected candidates.
         """
+        from scipy.stats import multivariate_normal
+
         predicted_clusters = model.predict(candidates_scaled)
         selection = []
         for k_cluster in range(model.n_components):

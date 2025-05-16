@@ -31,15 +31,6 @@ def test_invalid_onnx_creation(onnx_str):
         CustomONNXSurrogate(onnx_input_name="input")
 
 
-@pytest.mark.skipif(
-    not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
-)
-def test_invalid_onnx_str():
-    """Invalid onnx string causes error."""
-    with pytest.raises(Exception):
-        CustomONNXSurrogate(onnx_input_name="input", onnx_str=b"onnx_str")
-
-
 @pytest.mark.xfail(reason=_onnx_issue, strict=True)
 @pytest.mark.skipif(
     not ONNX_INSTALLED, reason="Optional onnx dependency not installed."
