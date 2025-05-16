@@ -361,6 +361,7 @@ class SHAPInsight:
         data: pd.DataFrame | None = None,
         /,
         *,
+        target_index: int = 0,
         show: bool = True,
         explanation_index: int | None = None,
         **kwargs: Any,
@@ -370,6 +371,8 @@ class SHAPInsight:
         Args:
             plot_type: The type of plot to be created.
             data: See :meth:`explain`.
+            target_index: The index of the target for which the plot is created. Only
+                relevant for multi-output objectives.
             show: Boolean flag determining if the plot is to be rendered.
             explanation_index: Positional index of the data point that should be
                 explained. Only relevant for plot types that can only handle a single
@@ -387,7 +390,7 @@ class SHAPInsight:
 
         # Use custom scatter plot function to ignore non-numeric features
         if plot_type == "scatter":
-            return self._plot_shap_scatter(data, show=show, **kwargs)
+            return self._plot_shap_scatter(data, target_index, show=show, **kwargs)
 
         if plot_type not in SHAP_PLOTS:
             raise ValueError(
@@ -405,18 +408,24 @@ class SHAPInsight:
                 )
                 explanation_index = 0
 
-            toplot = self.explain(data.iloc[[explanation_index]])
+            toplot = self.explain(data.iloc[[explanation_index]])[target_index]
             toplot = toplot[0]
 
             if plot_type == "force":
                 kwargs["matplotlib"] = True
         else:
-            toplot = self.explain(data)
+            toplot = self.explain(data)[target_index]
 
         return plot_func(toplot, show=show, **kwargs)
 
     def _plot_shap_scatter(
-        self, data: pd.DataFrame | None = None, /, *, show: bool = True, **kwargs: Any
+        self,
+        data: pd.DataFrame | None = None,
+        target_index: int = 0,
+        /,
+        *,
+        show: bool = True,
+        **kwargs: Any,
     ) -> plt.Axes:
         """Plot the Shapley values as scatter plot, ignoring non-numeric features.
 
@@ -439,5 +448,5 @@ class SHAPInsight:
                 UserWarning,
             )
         return shap.plots.scatter(
-            self.explain(data)[:, numeric_idx], show=show, **kwargs
+            self.explain(data)[target_index][:, numeric_idx], show=show, **kwargs
         )
