@@ -77,6 +77,10 @@ chem = [
     "scikit-fingerprints>=1.13.1",
 ]
 
+llm = [
+    "litellm>=1.70.0",
+]
+
 onnx = [
     "onnx>=1.16.0", # see AUDIT NOTE, required by skl2onnx
     "onnxruntime>=1.15.1",
