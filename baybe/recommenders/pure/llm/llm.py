@@ -1,8 +1,7 @@
 """LLM-based recommender for experimental design."""
 
-from enum import Enum
 import json
-from typing import ClassVar, List, Optional, Union
+from enum import Enum
 
 import pandas as pd
 from attrs import define, field
@@ -13,9 +12,8 @@ from typing_extensions import override
 from baybe.exceptions import LLMResponseError
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
-from baybe.searchspace import SearchSpace, SearchSpaceType
+from baybe.searchspace import SearchSpace
 from baybe.utils.conversion import to_string
-
 
 PROMPT = Template(
     """You are an expert experimental design assistant. Your task is to suggest new experimental conditions based on the following information:
@@ -76,7 +74,7 @@ Format your response as a JSON array of objects with the following structure (no
   ...
 ]
 {% endif %}
-""",
+""",  # noqa: E501, W293
     trim_blocks=True,
     lstrip_blocks=True,
 )
@@ -117,7 +115,7 @@ Please provide a corrected JSON response that follows the required format:
   },
   ...
 ]
-{% endif %}""",
+{% endif %}""",  # noqa: E501, W293
     trim_blocks=True,
     lstrip_blocks=True,
 )
@@ -152,23 +150,21 @@ class ParameterDescription:
     type: ParameterType = field()
     """Type of the parameter."""
 
-    bounds: Optional[Union[tuple[float, float], List[Union[float, str]]]] = field(
-        default=None
-    )
+    bounds: tuple[float, float] | list[float | str] | None = field(default=None)
     """Bounds or allowed values for the parameter.
-    
+
     For continuous parameters: tuple of (min, max)
     For discrete parameters: list of allowed values
     For binary parameters: None
     """
 
-    unit: Optional[str] = field(default=None)
+    unit: str | None = field(default=None)
     """Unit of measurement for the parameter (e.g., '°C', 'bar', 'mol/L')."""
 
-    default_value: Optional[Union[float, str, bool]] = field(default=None)
+    default_value: float | str | bool | None = field(default=None)
     """Default value for the parameter if known."""
 
-    constraints: Optional[str] = field(default=None)
+    constraints: str | None = field(default=None)
     """Additional constraints or considerations for this parameter."""
 
     def __str__(self) -> str:
@@ -211,26 +207,27 @@ class LLMRecommender(RecommenderProtocol):
     objective_description: str = field()
     """Textual description of the optimization objective."""
 
-    parameter_descriptions: List[ParameterDescription] = field(factory=list)
+    parameter_descriptions: list[ParameterDescription] = field(factory=list)
     """List of parameter descriptions."""
 
-    format_instructions: Optional[str] = field(default=None)
+    format_instructions: str | None = field(default=None)
     """Optional custom instructions for formatting the LLM's response."""
 
-    recovery_model: Optional[str] = field(default=None)
+    recovery_model: str | None = field(default=None)
     """Optional model to use for recovery attempts.
-    
+
     If None, uses the same model as the main recommendations.
     """
 
     litellm_args: dict = field(factory=dict)
     """Additional arguments to pass to LiteLLM."""
 
-    recovery_litellm_args: Optional[dict] = field(default=None)
+    recovery_litellm_args: dict | None = field(default=None)
     """Optional arguments to pass to LiteLLM during recovery attempts.
-    
+
     If None, uses the same arguments as the main recommendations.
-    If provided, these arguments will override the main litellm_args for recovery attempts.
+    If provided, these arguments will override the main litellm_args
+    for recovery attempts.
     """
 
     def _construct_prompt(
@@ -313,7 +310,8 @@ class LLMRecommender(RecommenderProtocol):
             A DataFrame containing the parsed recommendations.
 
         Raises:
-            LLMResponseError: If the response cannot be parsed or contains invalid values.
+            LLMResponseError: If the response cannot be parsed or
+                contains invalid values.
         """
         # Parse the JSON response
         suggestions = json.loads(response)
@@ -369,13 +367,15 @@ class LLMRecommender(RecommenderProtocol):
                     min_val, max_val = param.bounds
                     if not all(min_val <= v <= max_val for v in values):
                         raise LLMResponseError(
-                            f"Values for {param.name} outside bounds [{min_val}, {max_val}]"
+                            f"Values for {param.name} outside bounds "
+                            f"[{min_val}, {max_val}]"
                         )
 
             elif param.type == ParameterType.DISCRETE_NUMERIC:
                 if not all(isinstance(v, (int, float)) for v in values):
                     raise LLMResponseError(
-                        f"Non-numeric values for discrete numeric parameter: {param.name}"
+                        f"Non-numeric values for discrete numeric parameter:"
+                        f" {param.name}"
                     )
                 if param.bounds is not None:
                     if not all(v in param.bounds for v in values):
@@ -403,9 +403,9 @@ class LLMRecommender(RecommenderProtocol):
         self,
         batch_size: int,
         searchspace: SearchSpace,
-        objective: Optional[Objective] = None,
-        measurements: Optional[pd.DataFrame] = None,
-        pending_experiments: Optional[pd.DataFrame] = None,
+        objective: Objective | None = None,
+        measurements: pd.DataFrame | None = None,
+        pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """Generate recommendations using the language model.
 

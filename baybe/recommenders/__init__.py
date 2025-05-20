@@ -10,6 +10,7 @@ from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.recommenders.pure.bayesian.sequential_greedy import (
     SequentialGreedyRecommender,
 )
+from baybe.recommenders.pure.llm import LLMRecommender
 from baybe.recommenders.pure.nonpredictive.clustering import (
     GaussianMixtureClusteringRecommender,
     KMeansClusteringRecommender,
@@ -19,8 +20,6 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
     RandomRecommender,
 )
-
-from baybe.recommenders.pure.llm import LLMRecommender
 
 __all__ = [
     "BotorchRecommender",
