@@ -13,13 +13,13 @@ from benchmarks.domains.hartmann.hartmann_3d_discretized import (
 )
 from benchmarks.domains.hartmann.hartmann_6d import hartmann_6d_benchmark
 from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
-from benchmarks.domains.transfer_learning.aryl_halides.CT_I_BM_tl import (
+from benchmarks.domains.transfer_learning.aryl_halides.sou_CT_I_tar_BM import (
     aryl_halide_CT_I_BM_tl_benchmark,
 )
-from benchmarks.domains.transfer_learning.aryl_halides.CT_IM_tl import (
+from benchmarks.domains.transfer_learning.aryl_halides.sou_CT_tar_IM import (
     aryl_halide_CT_IM_tl_benchmark,
 )
-from benchmarks.domains.transfer_learning.aryl_halides.IP_CP_tl import (
+from benchmarks.domains.transfer_learning.aryl_halides.sout_IP_tar_CP import (
     aryl_halide_IP_CP_tl_benchmark,
 )
 from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import (
