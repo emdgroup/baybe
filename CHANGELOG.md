@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   minimization of the acquisition function
 - Added missing garbage collection call to `pareto.py`, potentially solving serialization
   issues in certain cases
+- `catch_constant_targets` decorator is now properly typed
 
 ## [0.13.0] - 2025-04-16
 ### Added

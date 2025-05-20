@@ -24,7 +24,9 @@ surrogate models that temporarily have a fallback attached because they were
 trained on constant training targets. Values are the corresponding fallback models."""
 
 
-def catch_constant_targets(cls: type[Surrogate], std_threshold: float = 1e-6):
+def catch_constant_targets(
+    cls: type[_TSurrogate], std_threshold: float = 1e-6
+) -> type[_TSurrogate]:
     """Make a ``Surrogate`` class robustly handle constant training targets.
 
     More specifically, "constant training targets" can mean either of:
