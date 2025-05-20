@@ -160,3 +160,7 @@ class InvalidSurrogateModelError(Exception):
 
 class InvalidTargetValueError(Exception):
     """A target value was entered that is not in the target space."""
+
+
+class LLMResponseError(Exception):
+    """Raised when there is an error processing the LLM response."""
