@@ -17,8 +17,8 @@ on:
 env:
   TRANSFER_LEARNING_BENCHMARKS: '["aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous"]'
   SYNTHETIC_BENCHMARKS: '["synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
-  ALL_BENCHMARKS: '["direct_arylation","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
-  NON_TL_BENCHMARKS: '["direct_arylation","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  ALL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","aryl_halide_CT_IM_tl","aryl_halide_IP_CP_tl","aryl_halide_CT_I_BM_tl","direct_arylation_tl_temperature","easom_tl_47_negate_noise5","hartmann_tl_3_15_15","michalewicz_tl_continuous","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
+  NON_TL_BENCHMARKS: '["direct_arylation_multi_batch","direct_arylation_single_batch","synthetic_2C1D_1C","hartmann_3d_discretized","hartmann_6d","hartmann_3d"]'
 
 permissions:
   contents: read

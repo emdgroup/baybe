@@ -7,6 +7,7 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
+    CategoricalParameter,
     NumericalDiscreteParameter,
     SubstanceParameter,
 )
@@ -21,7 +22,7 @@ from benchmarks.definition import (
 )
 
 
-def direct_arylation(
+def direct_arylation_single_batch(
     settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Benchmark function for direct arylation reaction."""
@@ -30,15 +31,7 @@ def direct_arylation(
         sep=",",
         index_col=0,
     )
-
-    parameters = [
-        SubstanceParameter(
-            name=substance,
-            data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
-            encoding="RDKIT2DDESCRIPTORS",
-        )
-        for substance in ["Solvent", "Base", "Ligand"]
-    ] + [
+    non_substance_paramters = [
         NumericalDiscreteParameter(
             name="Concentration",
             values=sorted(data["Concentration"].unique()),
@@ -48,19 +41,55 @@ def direct_arylation(
             values=sorted(data["Temp_C"].unique()),
         ),
     ]
+    catgorical_parameters = [
+        CategoricalParameter(name=substance, values=data[substance].unique())
+        for substance in ["Solvent", "Base", "Ligand"]
+    ]
+    rdkit_parameters = [
+        SubstanceParameter(
+            name=substance,
+            data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
+            encoding="RDKIT2DDESCRIPTORS",
+        )
+        for substance in ["Solvent", "Base", "Ligand"]
+    ]
+    rdkit_parameters = [
+        SubstanceParameter(
+            name=substance,
+            data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
+            encoding="MORDRED",
+        )
+        for substance in ["Solvent", "Base", "Ligand"]
+    ]
 
-    searchspace = SearchSpace.from_product(parameters=parameters)
+    categorical_searchspace = SearchSpace.from_product(
+        parameters=[*catgorical_parameters, *non_substance_paramters]
+    )
+    rdkit_searchspace = SearchSpace.from_product(
+        parameters=[*rdkit_parameters, *non_substance_paramters]
+    )
+    mordred_searchspace = SearchSpace.from_product(
+        parameters=[*rdkit_parameters, *non_substance_paramters]
+    )
     target = NumericalTarget(name="yield", mode="MAX")
     objective = SingleTargetObjective(target=target)
 
     scenarios: dict[str, Campaign] = {
-        "Random": Campaign(
-            searchspace=searchspace,
+        "Random Recommender": Campaign(
+            searchspace=categorical_searchspace,
             recommender=RandomRecommender(),
             objective=objective,
         ),
-        "Default": Campaign(
-            searchspace=searchspace,
+        "Categorical": Campaign(
+            searchspace=categorical_searchspace,
+            objective=objective,
+        ),
+        "RDKIT": Campaign(
+            searchspace=rdkit_searchspace,
+            objective=objective,
+        ),
+        "Mordred": Campaign(
+            searchspace=mordred_searchspace,
             objective=objective,
         ),
     }
@@ -77,13 +106,13 @@ def direct_arylation(
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=3,
+    batch_size=1,
     n_doe_iterations=30,
-    n_mc_iterations=50,
+    n_mc_iterations=100,
 )
 
-direct_arylation_benchmark = ConvergenceBenchmark(
-    function=direct_arylation,
+direct_arylation_single_batch_benchmark = ConvergenceBenchmark(
+    function=direct_arylation_single_batch,
     optimal_target_values={"yield": 100},
     settings=benchmark_config,
 )

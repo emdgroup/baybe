@@ -1,8 +1,11 @@
 """Benchmark domains."""
 
 from benchmarks.definition.base import Benchmark
-from benchmarks.domains.direct_arylation.direct_arylation import (
-    direct_arylation_benchmark,
+from benchmarks.domains.direct_arylation.direct_arylation_multi_batch import (
+    direct_arylation_multi_batch_benchmark,
+)
+from benchmarks.domains.direct_arylation.direct_arylation_single_batch import (
+    direct_arylation_single_batch_benchmark,
 )
 from benchmarks.domains.hartmann.hartmann_3d import hartmann_3d_benchmark
 from benchmarks.domains.hartmann.hartmann_3d_discretized import (
@@ -33,7 +36,8 @@ from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous 
 )
 
 BENCHMARKS: list[Benchmark] = [
-    direct_arylation_benchmark,
+    direct_arylation_multi_batch_benchmark,
+    direct_arylation_single_batch_benchmark,
     hartmann_3d_discretized_benchmark,
     synthetic_2C1D_1C_benchmark,
     hartmann_3d_benchmark,
