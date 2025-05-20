@@ -61,7 +61,7 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
         ),
     }
 
-    test_function = Hartmann(dim=3, negate=True)
+    test_function = Hartmann(dim=3)
 
     lookup_discretized = arrays_to_dataframes(
         [p.name for p in parameters], [target.name], use_torch=True
