@@ -28,8 +28,8 @@ from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import
 from benchmarks.domains.transfer_learning.easom.easom_tl_47_negate_noise5 import (
     easom_tl_47_negate_noise5_benchmark,
 )
-from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_15_15 import (
-    hartmann_tl_3_15_15_benchmark,
+from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_20_15 import (
+    hartmann_tl_3_20_15_benchmark,
 )
 from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous import (
     michalewicz_tl_continuous_benchmark,
@@ -47,7 +47,7 @@ BENCHMARKS: list[Benchmark] = [
     aryl_halide_CT_I_BM_tl_benchmark,
     direct_arylation_tl_temperature_benchmark,
     easom_tl_47_negate_noise5_benchmark,
-    hartmann_tl_3_15_15_benchmark,
+    hartmann_tl_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
 ]
 

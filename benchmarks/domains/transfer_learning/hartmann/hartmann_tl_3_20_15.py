@@ -21,14 +21,14 @@ from benchmarks.definition import (
 )
 
 
-def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     """Benchmark function for transfer learning with the Hartmann function in 3D.
 
     Key characteristics:
     • Compares two versions of Hartmann function:
       - Target: standard Hartmann
       - Source: Hartmann with added noise (noise_std=0.15)
-    • Uses 15 points per dimension
+    • Uses 20 points per dimension
     • Tests transfer learning with different source data percentages:
       - 1% of source data
       - 10% of source data
@@ -43,8 +43,8 @@ def hartmann_tl_3_15_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     target_function = Hartmann(dim=3)
     source_function = Hartmann(dim=3, noise_std=0.15)
 
-    points_per_dim = 15
-    percentages = [0.01, 0.1, 0.2]
+    points_per_dim = 20
+    percentages = [0.01, 0.05, 0.1]
 
     # Create grid locations for the parameters
     bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
@@ -138,8 +138,8 @@ benchmark_config = ConvergenceBenchmarkSettings(
     n_mc_iterations=75,
 )
 
-hartmann_tl_3_15_15_benchmark = ConvergenceBenchmark(
-    function=hartmann_tl_3_15_15,
+hartmann_tl_3_20_15_benchmark = ConvergenceBenchmark(
+    function=hartmann_tl_3_20_15,
     optimal_target_values={"Target": -3.851831124860353},
     settings=benchmark_config,
 )
