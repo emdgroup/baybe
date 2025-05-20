@@ -49,6 +49,7 @@ BATCH_SIZE = 1 if SMOKE_TEST else 2
 try:
     lookup = pd.read_csv("benchmarks/data/direct_arylation/data.csv")
 except FileNotFoundError as e:
+    lookup = pd.read_csv("../../../benchmarks/data/direct_arylation/data.csv")
     print(e)
 
 # As usual, we set up some experiment.
