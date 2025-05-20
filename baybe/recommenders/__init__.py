@@ -20,6 +20,8 @@ from baybe.recommenders.pure.nonpredictive.sampling import (
     RandomRecommender,
 )
 
+from baybe.recommenders.pure.llm import LLMRecommender
+
 __all__ = [
     "BotorchRecommender",
     "FPSRecommender",
@@ -32,4 +34,5 @@ __all__ = [
     "SequentialGreedyRecommender",
     "SequentialMetaRecommender",
     "StreamingSequentialMetaRecommender",
+    "LLMRecommender",
 ]
