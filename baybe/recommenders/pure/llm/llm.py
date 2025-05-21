@@ -2,6 +2,7 @@
 
 import json
 from enum import Enum
+from json import JSONDecodeError
 
 import pandas as pd
 from attrs import define, field
@@ -314,7 +315,10 @@ class LLMRecommender(RecommenderProtocol):
                 contains invalid values.
         """
         # Parse the JSON response
-        suggestions = json.loads(response)
+        try:
+            suggestions = json.loads(response)
+        except JSONDecodeError as e:
+            raise LLMResponseError(f"Error parsing JSON output: {e}")
         if not isinstance(suggestions, list):
             raise LLMResponseError("Response must be a JSON array")
 
