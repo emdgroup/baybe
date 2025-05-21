@@ -8,6 +8,21 @@
 
 ### Necessary imports
 
+from packaging.version import Version
+
+# NOTE: Due to some issues with depracated functions in onnx-related packages,
+# it is currently necessary to perform the following import.
+try:
+    import onnx
+
+    onnx_version = onnx.__version__
+    if Version(onnx_version) >= Version("1.18.0"):
+        from onnx.helper import _split_complex_to_pairs
+
+        onnx.helper.split_complex_to_pairs = _split_complex_to_pairs
+except ImportError as error:
+    raise error
+
 import numpy as np
 import torch
 from skl2onnx import convert_sklearn
