@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.surrogates.composite - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,41 +1042,41 @@
           <h1>Source code for baybe.surrogates.composite</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Composite surrogate models.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">IncompatibleSurrogateError</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace.core</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">converter</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization.mixin</span> <span class="kn">import</span> <span class="n">SerialMixin</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">PosteriorStatistic</span><span class="p">,</span> <span class="n">SurrogateProtocol</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.gaussian_process.core</span> <span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">is_all_instance</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">handle_missing_values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompatibleSurrogateError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">converter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorStatistic</span><span class="p">,</span> <span class="n">SurrogateProtocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_missing_values</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">botorch.models.model</span> <span class="kn">import</span> <span class="n">ModelList</span>
-    <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">PosteriorList</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorList</span>
 
 <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">_SurrogateGetter</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_SurrogateGetter</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A index-based mapping from strings to surrogates.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span> <span class="o">...</span>
 
 
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">_ReplicationMapping</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_T</span><span class="p">]):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ReplicationMapping</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_T</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper class providing copies of a given template object via indexing access.</span>
 
 <span class="sd">    Essentially a serializable version of ``defaultdict(lambda: deepcopy(template))``.</span>
@@ -1088,7 +1088,7 @@
     <span class="n">_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">_T</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An internal storage keeping track of already requested copies.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a new object copy upon first access.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="p">)</span>
@@ -1098,7 +1098,7 @@
 <div class="viewcode-block" id="CompositeSurrogate">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">CompositeSurrogate</span><span class="p">(</span><span class="n">SerialMixin</span><span class="p">,</span> <span class="n">SurrogateProtocol</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompositeSurrogate</span><span class="p">(</span><span class="n">SerialMixin</span><span class="p">,</span> <span class="n">SurrogateProtocol</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for composing multi-target surrogates from single-target surrogates.&quot;&quot;&quot;</span>
 
     <span class="c1"># IMPROVE: Currently, the class is implemented in the most vanilla way, using only</span>
@@ -1126,13 +1126,13 @@
 <div class="viewcode-block" id="CompositeSurrogate.from_replication">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.from_replication">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_replication</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompositeSurrogate</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_replication</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CompositeSurrogate</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Replicate a given single-target surrogate logic for multiple targets.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">CompositeSurrogate</span><span class="p">(</span><span class="n">_ReplicationMapping</span><span class="p">(</span><span class="n">surrogate</span><span class="p">))</span></div>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_surrogates_flat</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_surrogates_flat</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The surrogates ordered according to the targets of the modeled objective.&quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_names</span><span class="p">)</span>
@@ -1140,7 +1140,7 @@
 <div class="viewcode-block" id="CompositeSurrogate.fit">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.fit">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
@@ -1161,9 +1161,9 @@
 <div class="viewcode-block" id="CompositeSurrogate.to_botorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.to_botorch">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">botorch.models</span> <span class="kn">import</span> <span class="n">ModelList</span>
-        <span class="kn">from</span> <span class="nn">botorch.models.model_list_gp_regression</span> <span class="kn">import</span> <span class="n">ModelListGP</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelList</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model_list_gp_regression</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelListGP</span>
 
         <span class="bp">cls</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">ModelListGP</span>
@@ -1175,7 +1175,7 @@
 
 <div class="viewcode-block" id="CompositeSurrogate.posterior">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.posterior">[docs]</a>
-    <span class="k">def</span> <span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorList</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorList</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the posterior for candidates in experimental representation.</span>
 
 <span class="sd">        The (independent joint) posterior is represented as a collection of individual</span>
@@ -1188,7 +1188,7 @@
                 <span class="s2">&quot;posterior computation.&quot;</span>
             <span class="p">)</span>
 
-        <span class="kn">from</span> <span class="nn">botorch.posteriors</span> <span class="kn">import</span> <span class="n">PosteriorList</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorList</span>
 
         <span class="c1"># TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would</span>
         <span class="c1">#   be handy here but unclear if this is doable with the current typing system</span>
@@ -1198,7 +1198,7 @@
 
 <div class="viewcode-block" id="CompositeSurrogate.posterior_stats">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.posterior_stats">[docs]</a>
-    <span class="k">def</span> <span class="nf">posterior_stats</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior_stats</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">stats</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">PosteriorStatistic</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">),</span>
@@ -1216,7 +1216,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_structure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_SurrogateGetter</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_structure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_SurrogateGetter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve the object type.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">type_</span> <span class="o">:=</span> <span class="n">obj</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="n">_ReplicationMapping</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">_ReplicationMapping</span><span class="p">[</span><span class="n">SurrogateProtocol</span><span class="p">])</span>
@@ -1225,7 +1225,7 @@
     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No structure hook implemented for &#39;</span><span class="si">{</span><span class="n">type_</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_unstructure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">_SurrogateGetter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_unstructure_surrogate_getter</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">_SurrogateGetter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Add the object type information.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="o">**</span><span class="n">converter</span><span class="o">.</span><span class="n">unstructure</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span>
 

@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.exceptions - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1042,19 +1042,19 @@
           <h1>Source code for baybe.exceptions</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Custom exceptions and warnings.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">instance_of</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attr.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">instance_of</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="c1">##### Warnings #####</span>
 
 
 <div class="viewcode-block" id="UnusedObjectWarning">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.UnusedObjectWarning.html#baybe.exceptions.UnusedObjectWarning">[docs]</a>
-<span class="k">class</span> <span class="nc">UnusedObjectWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnusedObjectWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A method or function was called with undesired arguments which indicates an</span>
 <span class="sd">    unintended user fault.</span>
@@ -1065,7 +1065,7 @@
 <div class="viewcode-block" id="SearchSpaceMatchWarning">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.SearchSpaceMatchWarning.html#baybe.exceptions.SearchSpaceMatchWarning">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">SearchSpaceMatchWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchSpaceMatchWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    When trying to match data to entries in the search space, something unexpected</span>
 <span class="sd">    happened.</span>
@@ -1074,18 +1074,18 @@
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__attrs_pre_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">__attrs_pre_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span></div>
 
 
 
 <div class="viewcode-block" id="MinimumCardinalityViolatedWarning">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html#baybe.exceptions.MinimumCardinalityViolatedWarning">[docs]</a>
-<span class="k">class</span> <span class="nc">MinimumCardinalityViolatedWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MinimumCardinalityViolatedWarning</span><span class="p">(</span><span class="ne">UserWarning</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimum cardinality constraints are violated.&quot;&quot;&quot;</span></div>
 
 
@@ -1095,14 +1095,14 @@
 
 <div class="viewcode-block" id="IncompatibilityError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibilityError.html#baybe.exceptions.IncompatibilityError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibilityError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibilityError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Incompatible components are used together.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="IncompatibleSearchSpaceError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibleSearchSpaceError.html#baybe.exceptions.IncompatibleSearchSpaceError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibleSearchSpaceError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleSearchSpaceError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A recommender is used with a search space that contains incompatible parts,</span>
 <span class="sd">    e.g. a discrete recommender is used with a hybrid or continuous search space.</span>
@@ -1112,42 +1112,42 @@
 
 <div class="viewcode-block" id="IncompatibleSurrogateError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibleSurrogateError.html#baybe.exceptions.IncompatibleSurrogateError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibleSurrogateError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleSurrogateError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An incompatible surrogate was selected.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="IncompatibleAcquisitionFunctionError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibleAcquisitionFunctionError.html#baybe.exceptions.IncompatibleAcquisitionFunctionError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibleAcquisitionFunctionError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleAcquisitionFunctionError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An incompatible acquisition function was selected.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="IncompatibleExplainerError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibleExplainerError.html#baybe.exceptions.IncompatibleExplainerError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibleExplainerError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleExplainerError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An explainer is incompatible with the data it is presented.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="IncompatibleArgumentError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompatibleArgumentError.html#baybe.exceptions.IncompatibleArgumentError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompatibleArgumentError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleArgumentError</span><span class="p">(</span><span class="n">IncompatibilityError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An incompatible argument was passed to a callable.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="InfeasibilityError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html#baybe.exceptions.InfeasibilityError">[docs]</a>
-<span class="k">class</span> <span class="nc">InfeasibilityError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InfeasibilityError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An optimization problem has no feasible solution.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="NotEnoughPointsLeftError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html#baybe.exceptions.NotEnoughPointsLeftError">[docs]</a>
-<span class="k">class</span> <span class="nc">NotEnoughPointsLeftError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotEnoughPointsLeftError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    More recommendations are requested than there are viable parameter configurations</span>
 <span class="sd">    left in the search space.</span>
@@ -1157,7 +1157,7 @@
 
 <div class="viewcode-block" id="NoMCAcquisitionFunctionError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NoMCAcquisitionFunctionError.html#baybe.exceptions.NoMCAcquisitionFunctionError">[docs]</a>
-<span class="k">class</span> <span class="nc">NoMCAcquisitionFunctionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoMCAcquisitionFunctionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A Monte Carlo acquisition function is required but an analytical acquisition</span>
 <span class="sd">    function has been selected by the user.</span>
@@ -1167,35 +1167,35 @@
 
 <div class="viewcode-block" id="EmptySearchSpaceError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.EmptySearchSpaceError.html#baybe.exceptions.EmptySearchSpaceError">[docs]</a>
-<span class="k">class</span> <span class="nc">EmptySearchSpaceError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmptySearchSpaceError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The created search space contains no parameters.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="NoMeasurementsError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NoMeasurementsError.html#baybe.exceptions.NoMeasurementsError">[docs]</a>
-<span class="k">class</span> <span class="nc">NoMeasurementsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoMeasurementsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A context expected measurements but none were available.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="IncompleteMeasurementsError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html#baybe.exceptions.IncompleteMeasurementsError">[docs]</a>
-<span class="k">class</span> <span class="nc">IncompleteMeasurementsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompleteMeasurementsError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A context expected complete measurements but none were available.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="NothingToSimulateError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NothingToSimulateError.html#baybe.exceptions.NothingToSimulateError">[docs]</a>
-<span class="k">class</span> <span class="nc">NothingToSimulateError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NothingToSimulateError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;There is nothing to simulate because there are no testable configurations.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="NoRecommendersLeftError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NoRecommendersLeftError.html#baybe.exceptions.NoRecommendersLeftError">[docs]</a>
-<span class="k">class</span> <span class="nc">NoRecommendersLeftError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NoRecommendersLeftError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A recommender is requested by a meta recommender but there are no recommenders</span>
 <span class="sd">    left.</span>
 <span class="sd">    &quot;&quot;&quot;</span></div>
@@ -1204,19 +1204,19 @@
 
 <div class="viewcode-block" id="NumericalUnderflowError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.NumericalUnderflowError.html#baybe.exceptions.NumericalUnderflowError">[docs]</a>
-<span class="k">class</span> <span class="nc">NumericalUnderflowError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NumericalUnderflowError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A computation would lead to numerical underflow.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="OptionalImportError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError">[docs]</a>
-<span class="k">class</span> <span class="nc">OptionalImportError</span><span class="p">(</span><span class="ne">ImportError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptionalImportError</span><span class="p">(</span><span class="ne">ImportError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An attempt was made to import an optional but uninstalled dependency.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="OptionalImportError.__init__">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.OptionalImportError.html#baybe.exceptions.OptionalImportError.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1242,42 +1242,42 @@
 
 <div class="viewcode-block" id="DeprecationError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.DeprecationError.html#baybe.exceptions.DeprecationError">[docs]</a>
-<span class="k">class</span> <span class="nc">DeprecationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeprecationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Signals the use of a deprecated mechanism to the user, interrupting execution.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="UnidentifiedSubclassError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.UnidentifiedSubclassError.html#baybe.exceptions.UnidentifiedSubclassError">[docs]</a>
-<span class="k">class</span> <span class="nc">UnidentifiedSubclassError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnidentifiedSubclassError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A specified subclass cannot be found in the given class hierarchy.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="ModelNotTrainedError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError">[docs]</a>
-<span class="k">class</span> <span class="nc">ModelNotTrainedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelNotTrainedError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A prediction/transformation is attempted before the model has been trained.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="UnmatchedAttributeError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.UnmatchedAttributeError.html#baybe.exceptions.UnmatchedAttributeError">[docs]</a>
-<span class="k">class</span> <span class="nc">UnmatchedAttributeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UnmatchedAttributeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An attribute cannot be matched against a certain callable signature.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="InvalidSurrogateModelError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html#baybe.exceptions.InvalidSurrogateModelError">[docs]</a>
-<span class="k">class</span> <span class="nc">InvalidSurrogateModelError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvalidSurrogateModelError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An invalid surrogate model was chosen.&quot;&quot;&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="InvalidTargetValueError">
 <a class="viewcode-back" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html#baybe.exceptions.InvalidTargetValueError">[docs]</a>
-<span class="k">class</span> <span class="nc">InvalidTargetValueError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvalidTargetValueError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A target value was entered that is not in the target space.&quot;&quot;&quot;</span></div>
 
 </pre></div>

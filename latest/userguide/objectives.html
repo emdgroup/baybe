@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Objective - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
@@ -1059,8 +1059,8 @@ type of situation one can encounter in experimental design.
 In this scenario, the fact that only one target shall be considered in the design is
 communicated to BayBE by wrapping the target into a
 <a class="reference internal" href="../_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective" title="baybe.objectives.single.SingleTargetObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code></span></a>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 
 <span class="n">target</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Yield&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MAX&quot;</span><span class="p">)</span>
 <span class="n">objective</span> <span class="o">=</span> <span class="n">SingleTargetObjective</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
@@ -1135,8 +1135,8 @@ corresponding target weights:</p>
 <p>In the example below, we consider three different targets (all associated with a
 different goal) and give twice as much importance to the first target relative to each
 of the other two:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">DesirabilityObjective</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">DesirabilityObjective</span>
 
 <span class="n">target_1</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;t_1&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MIN&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
 <span class="n">target_2</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;t_2&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MIN&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
@@ -1176,8 +1176,8 @@ the flexibly to adjust their preferences post-hoc – knowing that each of the 
 points is optimal with respect to a particular preference model.</p>
 <p>To set up a <a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">ParetoObjective</span></code></span></a>, simply
 specify the corresponding target objects:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">ParetoObjective</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParetoObjective</span>
 
 <span class="n">target_1</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;t_1&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MIN&quot;</span><span class="p">)</span>
 <span class="n">target_2</span> <span class="o">=</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;t_2&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;MAX&quot;</span><span class="p">)</span>

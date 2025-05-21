@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.kernels.base - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,48 +1042,48 @@
           <h1>Source code for baybe.kernels.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base classes for all kernels.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">UnmatchedAttributeError</span>
-<span class="kn">from</span> <span class="nn">baybe.priors.base</span> <span class="kn">import</span> <span class="n">Prior</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization.core</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnmatchedAttributeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.priors.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">converter</span><span class="p">,</span>
     <span class="n">get_base_structure_hook</span><span class="p">,</span>
     <span class="n">unstructure_base</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization.mixin</span> <span class="kn">import</span> <span class="n">SerialMixin</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">get_baseclasses</span><span class="p">,</span> <span class="n">match_attributes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_baseclasses</span><span class="p">,</span> <span class="n">match_attributes</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-    <span class="kn">from</span> <span class="nn">baybe.surrogates.gaussian_process.kernel_factory</span> <span class="kn">import</span> <span class="n">PlainKernelFactory</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.kernel_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlainKernelFactory</span>
 
 
 <div class="viewcode-block" id="Kernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.Kernel.html#baybe.kernels.base.Kernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">Kernel</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Kernel</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all kernels.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="Kernel.to_factory">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.Kernel.html#baybe.kernels.base.Kernel.to_factory">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlainKernelFactory</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PlainKernelFactory</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap the kernel in a :class:`baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory`.&quot;&quot;&quot;</span>  <span class="c1"># noqa: E501</span>
-        <span class="kn">from</span> <span class="nn">baybe.surrogates.gaussian_process.kernel_factory</span> <span class="kn">import</span> <span class="n">PlainKernelFactory</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.kernel_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">PlainKernelFactory</span>
 
         <span class="k">return</span> <span class="n">PlainKernelFactory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Kernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.Kernel.html#baybe.kernels.base.Kernel.to_gpytorch">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gpytorch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ard_num_dims</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1091,7 +1091,7 @@
         <span class="n">active_dims</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the gpytorch representation of the kernel.&quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">gpytorch.kernels</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch.kernels</span>
 
         <span class="c1"># Extract keywords with non-default values. This is required since gpytorch</span>
         <span class="c1"># makes use of kwargs, i.e. differentiates if certain keywords are explicitly</span>
@@ -1147,9 +1147,9 @@
 
         <span class="c1"># If the kernel has a lengthscale, set its initial value</span>
         <span class="k">if</span> <span class="n">kernel_cls</span><span class="o">.</span><span class="n">has_lengthscale</span><span class="p">:</span>
-            <span class="kn">import</span> <span class="nn">torch</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-            <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
             <span class="c1"># We can ignore mypy here and simply assume that the corresponding BayBE</span>
             <span class="c1"># kernel class has the necessary lengthscale attribute defined. This is</span>
@@ -1169,7 +1169,7 @@
 <div class="viewcode-block" id="BasicKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.BasicKernel.html#baybe.kernels.base.BasicKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">BasicKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BasicKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all basic kernels.&quot;&quot;&quot;</span></div>
 
 
@@ -1177,7 +1177,7 @@
 <div class="viewcode-block" id="CompositeKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.base.CompositeKernel.html#baybe.kernels.base.CompositeKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">CompositeKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompositeKernel</span><span class="p">(</span><span class="n">Kernel</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all composite kernels.&quot;&quot;&quot;</span></div>
 
 

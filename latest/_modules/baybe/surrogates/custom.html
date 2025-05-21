@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.surrogates.custom - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1050,16 +1050,16 @@
 <span class="sd">It is planned to solve this issue in the future.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">NoReturn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">NoReturn</span>
 
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">validators</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">validators</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">DeprecationError</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeprecationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CategoricalEncoding</span><span class="p">,</span>
     <span class="n">CategoricalParameter</span><span class="p">,</span>
     <span class="n">CustomDiscreteParameter</span><span class="p">,</span>
@@ -1067,20 +1067,20 @@
     <span class="n">NumericalDiscreteParameter</span><span class="p">,</span>
     <span class="n">TaskParameter</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">IndependentGaussianSurrogate</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.utils</span> <span class="kn">import</span> <span class="n">batchify_mean_var_prediction</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.conversion</span> <span class="kn">import</span> <span class="n">to_string</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatONNX</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndependentGaussianSurrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">batchify_mean_var_prediction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatONNX</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">onnxruntime</span> <span class="k">as</span> <span class="nn">ort</span>
-    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">onnxruntime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ort</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="register_custom_architecture">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.custom.register_custom_architecture.html#baybe.surrogates.custom.register_custom_architecture">[docs]</a>
-<span class="k">def</span> <span class="nf">register_custom_architecture</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">register_custom_architecture</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NoReturn</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated! Raises an error when used.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
     <span class="k">raise</span> <span class="n">DeprecationError</span><span class="p">(</span>
         <span class="s2">&quot;The &#39;register_custom_architecture&#39; decorator is no longer available. &quot;</span>
@@ -1093,7 +1093,7 @@
 <div class="viewcode-block" id="CustomONNXSurrogate">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">CustomONNXSurrogate</span><span class="p">(</span><span class="n">IndependentGaussianSurrogate</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomONNXSurrogate</span><span class="p">(</span><span class="n">IndependentGaussianSurrogate</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A wrapper class for custom pretrained surrogate models.</span>
 
 <span class="sd">    Note that these surrogates cannot be retrained.</span>
@@ -1116,24 +1116,24 @@
 <div class="viewcode-block" id="CustomONNXSurrogate.default_model">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate.default_model">[docs]</a>
     <span class="nd">@_model</span><span class="o">.</span><span class="n">default</span>
-    <span class="k">def</span> <span class="nf">default_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">default_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate the ONNX inference session.&quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.onnx</span> <span class="kn">import</span> <span class="n">onnxruntime</span> <span class="k">as</span> <span class="n">ort</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.onnx</span><span class="w"> </span><span class="kn">import</span> <span class="n">onnxruntime</span> <span class="k">as</span> <span class="n">ort</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">onnx_str</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid ONNX string&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">exc</span></div>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid ONNX string&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span></div>
 
 
     <span class="nd">@override</span>
     <span class="nd">@batchify_mean_var_prediction</span>
-    <span class="k">def</span> <span class="nf">_estimate_moments</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_estimate_moments</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">candidates_comp_scaled</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="n">model_inputs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">onnx_input_name</span><span class="p">:</span> <span class="n">candidates_comp_scaled</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">DTypeFloatONNX</span><span class="p">)</span>
@@ -1150,7 +1150,7 @@
         <span class="p">)</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">train_y</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="c1"># TODO: This method actually needs to raise a NotImplementedError because</span>
         <span class="c1">#   ONNX surrogate models cannot be retrained. However, this would currently</span>
         <span class="c1">#   break the code since `BayesianRecommender` assumes that surrogates</span>
@@ -1162,7 +1162,7 @@
 <div class="viewcode-block" id="CustomONNXSurrogate.validate_compatibility">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_compatibility</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_compatibility</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if the class is compatible with a given search space.</span>
 
 <span class="sd">        Args:</span>
@@ -1197,7 +1197,7 @@
 
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;ONNX input name&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_input_name</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__str__</span><span class="p">(),</span> <span class="o">*</span><span class="n">fields</span><span class="p">)</span></div>
 

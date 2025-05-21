@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.utils.interval - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,19 +1042,19 @@
           <h1>Source code for baybe.utils.interval</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utilities for handling intervals.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">singledispatchmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">singledispatchmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="c1"># TODO[typing]: Add return type hints to classmethod constructors once ForwardRefs</span>
 <span class="c1">#   are supported: https://bugs.python.org/issue41987</span>
@@ -1062,7 +1062,7 @@
 
 <div class="viewcode-block" id="InfiniteIntervalError">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.InfiniteIntervalError.html#baybe.utils.interval.InfiniteIntervalError">[docs]</a>
-<span class="k">class</span> <span class="nc">InfiniteIntervalError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InfiniteIntervalError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An interval that should be finite is infinite.&quot;&quot;&quot;</span></div>
 
 
@@ -1070,7 +1070,7 @@
 <div class="viewcode-block" id="Interval">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">Interval</span><span class="p">(</span><span class="n">SerialMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Interval</span><span class="p">(</span><span class="n">SerialMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Intervals on the real number line.&quot;&quot;&quot;</span>
 
     <span class="n">lower</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">converter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
@@ -1080,7 +1080,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The upper end of the interval.&quot;&quot;&quot;</span>
 
     <span class="nd">@upper</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">upper</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the order of the interval bounds.</span>
 
 <span class="sd">        Raises:</span>
@@ -1093,37 +1093,37 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_degenerate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_degenerate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval is degenerate (i.e., contains only a single number).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval is bounded.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_left_bounded</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_right_bounded</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_left_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_left_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval is left-bounded.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_right_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_right_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval is right-bounded.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_half_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_half_bounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval is half-bounded.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_left_bounded</span> <span class="o">^</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_right_bounded</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_fully_unbounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_unbounded</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the interval represents the entire real number line.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_left_bounded</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_right_bounded</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The center of the interval, or ``None`` if the interval is unbounded.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_bounded</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
@@ -1133,51 +1133,51 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.create">[docs]</a>
     <span class="nd">@singledispatchmethod</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an interval from various input types.&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported argument type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
     <span class="nd">@create</span><span class="o">.</span><span class="n">register</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Overloaded implementation for creating an empty interval.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
     <span class="nd">@create</span><span class="o">.</span><span class="n">register</span>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Overloaded implementation for creating an interval of an iterable.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Interval.to_tuple">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.to_tuple">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the interval to a tuple.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper</span></div>
 
 
 <div class="viewcode-block" id="Interval.to_ndarray">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.to_ndarray">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_ndarray</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_ndarray</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the interval to a :class:`numpy.ndarray`.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatNumpy</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Interval.to_tensor">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.to_tensor">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Tensor&quot;</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Tensor&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform the interval to a :class:`torch.Tensor`.&quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">lower</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatTorch</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Interval.contains">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval.contains">[docs]</a>
-    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether the interval contains a given number.</span>
 
 <span class="sd">        Args:</span>
@@ -1193,7 +1193,7 @@
 
 <div class="viewcode-block" id="convert_bounds">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.convert_bounds.html#baybe.utils.interval.convert_bounds">[docs]</a>
-<span class="k">def</span> <span class="nf">convert_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Iterable</span> <span class="o">|</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Iterable</span> <span class="o">|</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert bounds given in another format to an interval.</span>
 
 <span class="sd">    Args:</span>
@@ -1210,7 +1210,7 @@
 
 <div class="viewcode-block" id="use_fallback_constructor_hook">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.interval.use_fallback_constructor_hook.html#baybe.utils.interval.use_fallback_constructor_hook">[docs]</a>
-<span class="k">def</span> <span class="nf">use_fallback_constructor_hook</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Interval</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">use_fallback_constructor_hook</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Interval</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Use the singledispatch mechanism as fallback to parse arbitrary input.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure_attrs_fromdict</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>

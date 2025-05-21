@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Example for using exclusion constraints incorporating sums and products - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1053,27 +1053,27 @@
 We thus refer to <a class="reference internal" href="../Basics/campaign.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">campaign</span></code></span></a> for a basic example.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
-<span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DiscreteProductConstraint</span><span class="p">,</span>
     <span class="n">DiscreteSumConstraint</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CategoricalParameter</span><span class="p">,</span>
     <span class="n">NumericalDiscreteParameter</span><span class="p">,</span>
     <span class="n">SubstanceParameter</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_measurements</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_fake_measurements</span>
 </pre></div>
 </div>
 </section>

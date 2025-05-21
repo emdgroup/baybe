@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Example for using synthetic test functions in hybrid spaces - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1057,17 +1057,17 @@ For details on using synthetic test functions, we refer to other examples in thi
 directory.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">botorch.test_functions</span> <span class="kn">import</span> <span class="n">Rastrigin</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.test_functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Rastrigin</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span><span class="p">,</span> <span class="n">NumericalDiscreteParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders</span> <span class="kn">import</span> <span class="n">NaiveHybridSpaceRecommender</span><span class="p">,</span> <span class="n">TwoPhaseMetaRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">arrays_to_dataframes</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span><span class="p">,</span> <span class="n">NumericalDiscreteParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders</span><span class="w"> </span><span class="kn">import</span> <span class="n">NaiveHybridSpaceRecommender</span><span class="p">,</span> <span class="n">TwoPhaseMetaRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">arrays_to_dataframes</span>
 </pre></div>
 </div>
 </section>
@@ -1207,9 +1207,9 @@ We use the default choices, which is the <code class="docutils literal notransla
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with measured values: 
      x_1   x_2   x_3       x_4       x_5       x_6      Target
-19  5.12 -5.12  0.00  0.107557 -2.038425  3.908532   81.387254
-26  5.12  5.12  5.12 -4.204893 -1.016088 -0.673645  127.811786
-21  5.12  0.00 -5.12  4.549095 -1.980139  2.498638  128.313221
+8  -5.12  5.12  5.12 -3.248748  2.510667  3.923820  150.051026
+18  5.12 -5.12 -5.12  0.628098  3.755861 -3.268265  149.665709
+13  0.00  0.00  0.00 -3.144550  4.009877  0.067764   30.732584
 </pre></div>
 </div>
 </section>

@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.serialization.mixin - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,17 +1042,17 @@
           <h1>Source code for baybe.serialization.mixin</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Serialization mixin class.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TypeVar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 
-<span class="kn">from</span> <span class="nn">baybe.serialization.core</span> <span class="kn">import</span> <span class="n">converter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">converter</span>
 
 <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SerialMixin">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin">[docs]</a>
-<span class="k">class</span> <span class="nc">SerialMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SerialMixin</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A mixin class providing serialization functionality.&quot;&quot;&quot;</span>
 
     <span class="c1"># Use slots so that derived classes also remain slotted</span>
@@ -1061,7 +1061,7 @@
 
 <div class="viewcode-block" id="SerialMixin.to_dict">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.to_dict">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object&#39;s dictionary representation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">unstructure</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
@@ -1069,7 +1069,7 @@
 <div class="viewcode-block" id="SerialMixin.from_dict">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.from_dict">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">dictionary</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">dictionary</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object from its dictionary representation.</span>
 
 <span class="sd">        Args:</span>
@@ -1083,7 +1083,7 @@
 
 <div class="viewcode-block" id="SerialMixin.to_json">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.to_json">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object&#39;s JSON representation.</span>
 
 <span class="sd">        Returns:</span>
@@ -1095,7 +1095,7 @@
 <div class="viewcode-block" id="SerialMixin.from_json">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.from_json">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object from its JSON representation.</span>
 
 <span class="sd">        Args:</span>

@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.utils.chemistry - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,28 +1042,28 @@
           <h1>Source code for baybe.utils.chemistry</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Chemistry tools.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">ssl</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">urllib.request</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ssl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Memory</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">joblib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Memory</span>
 
-<span class="kn">from</span> <span class="nn">baybe._optional.chem</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.chem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseFingerprintTransformer</span><span class="p">,</span>
     <span class="n">Chem</span><span class="p">,</span>
     <span class="n">ConformerGenerator</span><span class="p">,</span>
     <span class="n">MolFromSmilesTransformer</span><span class="p">,</span>
     <span class="n">fingerprints</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstanceEncoding</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
 
 <span class="c1"># Caching</span>
 <span class="n">_cachedir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
@@ -1071,7 +1071,7 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_dummy_wrapper</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_dummy_wrapper</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">func</span>
 
 
@@ -1082,7 +1082,7 @@
 
 <div class="viewcode-block" id="name_to_smiles">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.name_to_smiles.html#baybe.utils.chemistry.name_to_smiles">[docs]</a>
-<span class="k">def</span> <span class="nf">name_to_smiles</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">name_to_smiles</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert from chemical name to SMILES string using chemical identifier resolver.</span>
 
 <span class="sd">    This script is useful to combine with ``df.apply`` from pandas, hence it does not</span>
@@ -1119,7 +1119,7 @@
 
 <span class="nd">@lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="nd">@_disk_cache</span>
-<span class="k">def</span> <span class="nf">_molecule_to_fingerprint_features</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_molecule_to_fingerprint_features</span><span class="p">(</span>
     <span class="n">molecule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Chem</span><span class="o">.</span><span class="n">Mol</span><span class="p">,</span>
     <span class="n">encoder</span><span class="p">:</span> <span class="n">BaseFingerprintTransformer</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
@@ -1137,7 +1137,7 @@
 
 <div class="viewcode-block" id="smiles_to_fingerprint_features">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html#baybe.utils.chemistry.smiles_to_fingerprint_features">[docs]</a>
-<span class="k">def</span> <span class="nf">smiles_to_fingerprint_features</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">smiles_to_fingerprint_features</span><span class="p">(</span>
     <span class="n">smiles</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">encoding</span><span class="p">:</span> <span class="n">SubstanceEncoding</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1211,7 +1211,7 @@
 
 <div class="viewcode-block" id="get_fingerprint_class">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html#baybe.utils.chemistry.get_fingerprint_class">[docs]</a>
-<span class="k">def</span> <span class="nf">get_fingerprint_class</span><span class="p">(</span><span class="n">encoding</span><span class="p">:</span> <span class="n">SubstanceEncoding</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseFingerprintTransformer</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_fingerprint_class</span><span class="p">(</span><span class="n">encoding</span><span class="p">:</span> <span class="n">SubstanceEncoding</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseFingerprintTransformer</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve the fingerprint class corresponding to a given encoding.</span>
 
 <span class="sd">    Args:</span>
@@ -1236,14 +1236,14 @@
     <span class="k">except</span> <span class="ne">StopIteration</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;No fingerprint class exists for the specified encoding &#39;</span><span class="si">{</span><span class="n">encoding</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
-        <span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
     <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">fingerprints</span><span class="p">,</span> <span class="n">cls_name</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="get_canonical_smiles">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html#baybe.utils.chemistry.get_canonical_smiles">[docs]</a>
-<span class="k">def</span> <span class="nf">get_canonical_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_canonical_smiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the &quot;canonical&quot; representation of the given SMILES.&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Chem</span><span class="o">.</span><span class="n">MolToSmiles</span><span class="p">(</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">))</span>

@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.acquisition.utils - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,12 +1042,12 @@
           <h1>Source code for baybe.acquisition.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utilities for acquisition functions.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">baybe.acquisition.base</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
 
 
 <div class="viewcode-block" id="str_to_acqf">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.utils.str_to_acqf.html#baybe.acquisition.utils.str_to_acqf">[docs]</a>
-<span class="k">def</span> <span class="nf">str_to_acqf</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">str_to_acqf</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an ACQF object from a given ACQF name.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">AcquisitionFunction</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span></div>
 
@@ -1055,7 +1055,7 @@
 
 <div class="viewcode-block" id="convert_acqf">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.utils.convert_acqf.html#baybe.acquisition.utils.convert_acqf">[docs]</a>
-<span class="k">def</span> <span class="nf">convert_acqf</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_acqf</span><span class="p">(</span><span class="n">acqf</span><span class="p">:</span> <span class="n">AcquisitionFunction</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an ACQF name into an ACQF object (with ACQF object passthrough).&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">acqf</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">acqf</span><span class="p">,</span> <span class="n">AcquisitionFunction</span><span class="p">)</span> <span class="k">else</span> <span class="n">str_to_acqf</span><span class="p">(</span><span class="n">acqf</span><span class="p">)</span></div>
 

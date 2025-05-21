@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.kernels.basic - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,24 +1042,24 @@
           <h1>Source code for baybe.kernels.basic</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Collection of basic kernels.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">attrs.converters</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_v</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">ge</span><span class="p">,</span> <span class="n">gt</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_v</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.kernels.base</span> <span class="kn">import</span> <span class="n">BasicKernel</span>
-<span class="kn">from</span> <span class="nn">baybe.priors.base</span> <span class="kn">import</span> <span class="n">Prior</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.conversion</span> <span class="kn">import</span> <span class="n">fraction_to_float</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">finite_float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.kernels.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicKernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.priors.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Prior</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">fraction_to_float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">finite_float</span>
 
 
 <div class="viewcode-block" id="LinearKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.LinearKernel.html#baybe.kernels.basic.LinearKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">LinearKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinearKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A linear kernel.&quot;&quot;&quot;</span>
 
     <span class="n">variance_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1077,10 +1077,10 @@
 <div class="viewcode-block" id="LinearKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.LinearKernel.html#baybe.kernels.basic.LinearKernel.to_gpytorch">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="n">gpytorch_kernel</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">initial_value</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variance_initial_value</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1095,7 +1095,7 @@
 <div class="viewcode-block" id="MaternKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.MaternKernel.html#baybe.kernels.basic.MaternKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">MaternKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaternKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A Matern kernel using a smoothness parameter.&quot;&quot;&quot;</span>
 
     <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1123,7 +1123,7 @@
 <div class="viewcode-block" id="PeriodicKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">PeriodicKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PeriodicKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A periodic kernel.&quot;&quot;&quot;</span>
 
     <span class="n">lengthscale_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1153,10 +1153,10 @@
 <div class="viewcode-block" id="PeriodicKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.PeriodicKernel.html#baybe.kernels.basic.PeriodicKernel.to_gpytorch">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="n">gpytorch_kernel</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c1"># lengthscale is handled by the base class</span>
@@ -1173,7 +1173,7 @@
 <div class="viewcode-block" id="PiecewisePolynomialKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.PiecewisePolynomialKernel.html#baybe.kernels.basic.PiecewisePolynomialKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">PiecewisePolynomialKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PiecewisePolynomialKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A piecewise polynomial kernel.&quot;&quot;&quot;</span>
 
     <span class="n">q</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="n">in_</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -1196,7 +1196,7 @@
 <div class="viewcode-block" id="PolynomialKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.PolynomialKernel.html#baybe.kernels.basic.PolynomialKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">PolynomialKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PolynomialKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A polynomial kernel.&quot;&quot;&quot;</span>
 
     <span class="n">power</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="p">[</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">ge</span><span class="p">(</span><span class="mi">0</span><span class="p">)])</span>
@@ -1217,10 +1217,10 @@
 <div class="viewcode-block" id="PolynomialKernel.to_gpytorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.PolynomialKernel.html#baybe.kernels.basic.PolynomialKernel.to_gpytorch">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_gpytorch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="n">gpytorch_kernel</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_gpytorch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">initial_value</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_initial_value</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1233,7 +1233,7 @@
 <div class="viewcode-block" id="RBFKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.RBFKernel.html#baybe.kernels.basic.RBFKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">RBFKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RBFKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A radial basis function (RBF) kernel.&quot;&quot;&quot;</span>
 
     <span class="n">lengthscale_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1253,7 +1253,7 @@
 <div class="viewcode-block" id="RFFKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.RFFKernel.html#baybe.kernels.basic.RFFKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">RFFKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RFFKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A random Fourier features (RFF) kernel.&quot;&quot;&quot;</span>
 
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">validator</span><span class="o">=</span><span class="p">[</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">ge</span><span class="p">(</span><span class="mi">1</span><span class="p">)])</span>
@@ -1276,7 +1276,7 @@
 <div class="viewcode-block" id="RQKernel">
 <a class="viewcode-back" href="../../../_autosummary/baybe.kernels.basic.RQKernel.html#baybe.kernels.basic.RQKernel">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">RQKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RQKernel</span><span class="p">(</span><span class="n">BasicKernel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A rational quadratic (RQ) kernel.&quot;&quot;&quot;</span>
 
     <span class="n">lengthscale_prior</span><span class="p">:</span> <span class="n">Prior</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>

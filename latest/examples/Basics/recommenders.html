@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Example for using different strategies - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1064,20 +1064,20 @@ The different parameters the user can change are:</p>
 We refer to <a class="reference internal" href="campaign.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">campaign</span></code></span></a> for a more general and basic example.</p>
 <section id="necessary-imports-for-this-example">
 <h2>Necessary imports for this example<a class="headerlink" href="#necessary-imports-for-this-example" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BotorchRecommender</span><span class="p">,</span>
     <span class="n">RandomRecommender</span><span class="p">,</span>
     <span class="n">TwoPhaseMetaRecommender</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates</span> <span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="n">Surrogate</span>
-<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">get_subclasses</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">add_fake_measurements</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_subclasses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_fake_measurements</span>
 </pre></div>
 </div>
 </section>
@@ -1253,15 +1253,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-134  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-203  Butyornitrile  Potassium pivalate                     BrettPhos   
-213  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-
-     Temperature  Concentration  
-134        120.0          0.153  
-203        105.0          0.153  
-213        120.0          0.057  
+           Solvent             Base         Ligand  Temperature  Concentration
+144  Butyornitrile  Cesium pivalate      BrettPhos         90.0          0.057
+248           DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153
+251           DMAc  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.153
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1270,15 +1265,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-134  Butyornitrile      Cesium acetate  Di-tert-butylphenylphosphine   
-203  Butyornitrile  Potassium pivalate                     BrettPhos   
-213  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent             Base         Ligand  Temperature  \
+144  Butyornitrile  Cesium pivalate      BrettPhos         90.0   
+248           DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0   
+251           DMAc  Cesium pivalate  (t-Bu)PhCPhos        120.0   
 
-     Temperature  Concentration      yield  
-134        120.0          0.153  11.016360  
-203        105.0          0.153   8.163432  
-213        120.0          0.057   8.202717  
+     Concentration      yield  
+144          0.057   3.899794  
+248          0.153  23.823298  
+251          0.153  21.362457  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

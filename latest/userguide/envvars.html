@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Environment Variables - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
@@ -1066,7 +1066,7 @@ python<span class="w"> </span>do_baybe_work.py
 to the needed format. See for instance the <a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">strtobool</span></code></span></a>
 converter for values that can be set so BayBE can interpret them as Booleans.</p>
 <p>It is also possible to set environment variables in Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENVAR_NAME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;my_value&quot;</span>
 
@@ -1182,7 +1182,7 @@ function is to run in parallel. This can be disabled by setting the environment 
 </pre></div>
 </div>
 <p>Alternatively, you can directly specify the <code class="docutils literal notranslate"><span class="pre">parallel_runs</span></code> parameter when calling the function, which takes precedence over the environment variable:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.simulation</span> <span class="kn">import</span> <span class="n">simulate_scenarios</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.simulation</span><span class="w"> </span><span class="kn">import</span> <span class="n">simulate_scenarios</span>
 
 <span class="n">results</span> <span class="o">=</span> <span class="n">simulate_scenarios</span><span class="p">(</span>
     <span class="n">scenarios</span><span class="o">=</span><span class="n">scenarios</span><span class="p">,</span>

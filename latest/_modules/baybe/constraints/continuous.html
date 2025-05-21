@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.constraints.continuous - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,31 +1042,31 @@
           <h1>Source code for baybe.constraints.continuous</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Continuous constraints.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
-<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">comb</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">comb</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">attr.validators</span> <span class="kn">import</span> <span class="n">gt</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">lt</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attr.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">gt</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">lt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 
-<span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CardinalityConstraint</span><span class="p">,</span>
     <span class="n">ContinuousConstraint</span><span class="p">,</span>
     <span class="n">ContinuousNonlinearConstraint</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.interval</span> <span class="kn">import</span> <span class="n">Interval</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">finite_float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.interval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">finite_float</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="n">_valid_linear_constraint_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">]</span>
 
@@ -1074,7 +1074,7 @@
 <div class="viewcode-block" id="ContinuousLinearConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">ContinuousLinearConstraint</span><span class="p">(</span><span class="n">ContinuousConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContinuousLinearConstraint</span><span class="p">(</span><span class="n">ContinuousConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for continuous linear constraints.</span>
 
 <span class="sd">    Continuous linear constraints use parameter lists and coefficients to define</span>
@@ -1093,7 +1093,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Right-hand side value of the in-/equality.&quot;&quot;&quot;</span>
 
     <span class="nd">@coefficients</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_coefficients</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_coefficients</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the coefficients.</span>
@@ -1109,21 +1109,21 @@
             <span class="p">)</span>
 
     <span class="nd">@coefficients</span><span class="o">.</span><span class="n">default</span>
-    <span class="k">def</span> <span class="nf">_default_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_default_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return equal weight coefficients as default.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The internal multiplier for rhs and coefficients.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="o">-</span><span class="mf">1.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;&lt;=&quot;</span> <span class="k">else</span> <span class="mf">1.0</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_eq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_eq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether this constraint models an equality (assumed inequality otherwise).&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;=&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_drop_parameters</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_drop_parameters</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">parameter_names</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ContinuousLinearConstraint</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a copy of the constraint with certain parameters removed.</span>
@@ -1146,7 +1146,7 @@
 
 <div class="viewcode-block" id="ContinuousLinearConstraint.to_botorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousLinearConstraint.html#baybe.constraints.continuous.ContinuousLinearConstraint.to_botorch">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_botorch</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_botorch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">NumericalContinuousParameter</span><span class="p">],</span> <span class="n">idx_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Cast the constraint in a format required by botorch.</span>
@@ -1161,9 +1161,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The tuple required by botorch.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span> <span class="nn">torch</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-        <span class="kn">from</span> <span class="nn">baybe.utils.torch</span> <span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
 
         <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="p">]</span>
         <span class="n">param_indices</span> <span class="o">=</span> <span class="p">[</span>
@@ -1186,7 +1186,7 @@
 <div class="viewcode-block" id="ContinuousCardinalityConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">ContinuousCardinalityConstraint</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ContinuousCardinalityConstraint</span><span class="p">(</span>
     <span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">ContinuousNonlinearConstraint</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for continuous cardinality constraints.&quot;&quot;&quot;</span>
@@ -1206,14 +1206,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">n_inactive_parameter_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">n_inactive_parameter_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The number of possible inactive parameter combinations.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
             <span class="n">comb</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span> <span class="n">n_inactive_parameters</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">n_inactive_parameters</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactive_set_sizes</span><span class="p">()</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_inactive_set_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">range</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_inactive_set_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">range</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all possible sizes of inactive parameter sets.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">range</span><span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cardinality</span><span class="p">,</span>
@@ -1222,7 +1222,7 @@
 
 <div class="viewcode-block" id="ContinuousCardinalityConstraint.inactive_parameter_combinations">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint.inactive_parameter_combinations">[docs]</a>
-    <span class="k">def</span> <span class="nf">inactive_parameter_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inactive_parameter_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an iterator over all possible combinations of inactive parameters.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">n_inactive_parameters</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactive_set_sizes</span><span class="p">():</span>
             <span class="k">yield from</span> <span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">n_inactive_parameters</span><span class="p">)</span></div>
@@ -1230,7 +1230,7 @@
 
 <div class="viewcode-block" id="ContinuousCardinalityConstraint.sample_inactive_parameters">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint.sample_inactive_parameters">[docs]</a>
-    <span class="k">def</span> <span class="nf">sample_inactive_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_inactive_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample sets of inactive parameters according to the cardinality constraints.</span>
 
 <span class="sd">        Args:</span>
@@ -1271,7 +1271,7 @@
 
 <div class="viewcode-block" id="ContinuousCardinalityConstraint.get_absolute_thresholds">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.continuous.ContinuousCardinalityConstraint.html#baybe.constraints.continuous.ContinuousCardinalityConstraint.get_absolute_thresholds">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_absolute_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Interval</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_thresholds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Interval</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the absolute thresholds for a given interval.</span>
 
 <span class="sd">        Turns the relative threshold of the constraint into absolute thresholds</span>

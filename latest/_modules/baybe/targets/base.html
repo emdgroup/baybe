@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.targets.base - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,17 +1042,17 @@
           <h1>Source code for baybe.targets.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base functionality for all BayBE targets.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SerialMixin</span><span class="p">,</span>
     <span class="n">converter</span><span class="p">,</span>
     <span class="n">get_base_structure_hook</span><span class="p">,</span>
@@ -1060,13 +1060,13 @@
 <span class="p">)</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 
 
 <div class="viewcode-block" id="Target">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">Target</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Target</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all target variables.</span>
 
 <span class="sd">    Stores information about the range, transformations, etc.</span>
@@ -1077,9 +1077,9 @@
 
 <div class="viewcode-block" id="Target.to_objective">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target.to_objective">[docs]</a>
-    <span class="k">def</span> <span class="nf">to_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTargetObjective</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SingleTargetObjective</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a single-task objective from the target.&quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">baybe.objectives.single</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.single</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
 
         <span class="k">return</span> <span class="n">SingleTargetObjective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
@@ -1087,7 +1087,7 @@
 <div class="viewcode-block" id="Target.transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target.transform">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform target measurements to computational representation.</span>
 
 <span class="sd">        Args:</span>
@@ -1103,12 +1103,12 @@
 <div class="viewcode-block" id="Target.summary">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target.summary">[docs]</a>
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a custom summarization of the target.&quot;&quot;&quot;</span></div>
 
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span></div>
 
 

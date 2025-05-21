@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Modeling a Mixture in Traditional Representation - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1066,14 +1066,14 @@ subgroups: solvents, bases and phase agents.</p>
 </div>
 <section id="imports">
 <h2>Imports<a class="headerlink" href="#imports" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.constraints</span> <span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders</span> <span class="kn">import</span> <span class="n">RandomRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 </pre></div>
 </div>
 </section>
@@ -1152,16 +1152,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0   4.202089  11.182507     0.967736     3.312310  79.858980   0.476377
-1  14.188056  13.714413     0.640376     1.175556  52.232215  18.049382
-2  17.906061   4.065031     3.295910     1.187140  69.336603   4.209254
-3  13.382965  13.615393     0.143372     2.390191  61.776978   8.691102
-4  17.294981  12.814198     2.472829     1.329962  52.744072  13.343958
-5   6.406584  13.616842     3.950171     0.721599  62.584679  12.720125
-6   5.560291  11.742384     1.224065     0.353851  68.774595  12.344815
-7  12.495230  13.674545     3.163169     1.042696  68.012109   1.612252
-8   9.079691   1.346668     0.709306     0.339751  76.099200  12.425384
-9  19.117973  10.734585     0.558640     2.203631  13.302973  54.082198
+0   8.278366   2.893039     0.089029     1.022833  57.039116  30.677617
+1   7.242246  18.862957     0.177550     2.556689  17.979319  53.181239
+2  13.589933  19.604038     0.225518     0.128432  33.148629  33.303450
+3  11.413543  10.110209     1.613019     0.007632  75.567468   1.288129
+4   3.007753  19.927277     1.553341     1.960111  25.895345  47.656173
+5  10.108911   6.688694     0.026539     0.901631  73.847790   8.426435
+6  18.171471   1.925137     0.639881     1.317021  37.352954  40.593536
+7   9.811345   7.531714     0.265821     4.042464  14.420754  63.927902
+8  16.907215   8.475875     1.283213     2.257329  47.267335  23.809033
+9   5.346439  10.103587     0.516429     3.532343  12.341142  68.160059
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1176,16 +1176,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    15.384596            4.280046
-1  100.0    27.902470            1.815932
-2  100.0    21.971092            4.483051
-3  100.0    26.998357            2.533563
-4  100.0    30.109179            3.802791
-5  100.0    20.023426            4.671770
-6  100.0    17.302675            1.577915
-7  100.0    26.169775            4.205864
-8  100.0    10.426359            1.049057
-9  100.0    29.852558            2.762271
+0  100.0    11.171405            1.111861
+1  100.0    26.105203            2.734238
+2  100.0    33.193971            0.353950
+3  100.0    21.523752            1.620650
+4  100.0    22.935030            3.513452
+5  100.0    16.797605            0.928170
+6  100.0    20.096608            1.956902
+7  100.0    17.343059            4.308285
+8  100.0    25.383090            3.540543
+9  100.0    15.450026            4.048772
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.recommenders.pure.bayesian.base - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/sphinx_paramlinks.css" />
@@ -1042,42 +1042,42 @@
           <h1>Source code for baybe.recommenders.pure.bayesian.base</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Base class for all Bayesian recommenders.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
-<span class="kn">from</span> <span class="nn">attrs.converters</span> <span class="kn">import</span> <span class="n">optional</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.acquisition</span> <span class="kn">import</span> <span class="n">qLogEI</span><span class="p">,</span> <span class="n">qLogNEHVI</span>
-<span class="kn">from</span> <span class="nn">baybe.acquisition.base</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">baybe.acquisition.utils</span> <span class="kn">import</span> <span class="n">convert_acqf</span>
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">qLogEI</span><span class="p">,</span> <span class="n">qLogNEHVI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_acqf</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">,</span>
     <span class="n">InvalidSurrogateModelError</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders.pure.base</span> <span class="kn">import</span> <span class="n">PureRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates</span> <span class="kn">import</span> <span class="n">CustomONNXSurrogate</span><span class="p">,</span> <span class="n">GaussianProcessSurrogate</span>
-<span class="kn">from</span> <span class="nn">baybe.surrogates.base</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.pure.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PureRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomONNXSurrogate</span><span class="p">,</span> <span class="n">GaussianProcessSurrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IndependentGaussianSurrogate</span><span class="p">,</span>
     <span class="n">Surrogate</span><span class="p">,</span>
     <span class="n">SurrogateProtocol</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="n">_ValidatedDataFrame</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.validation</span> <span class="kn">import</span> <span class="n">validate_parameter_input</span><span class="p">,</span> <span class="n">validate_target_input</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">_ValidatedDataFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_parameter_input</span><span class="p">,</span> <span class="n">validate_target_input</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BoAcquisitionFunction</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BoAcquisitionFunction</span>
 
 
-<span class="k">def</span> <span class="nf">_autoreplicate</span><span class="p">(</span><span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_autoreplicate</span><span class="p">(</span><span class="n">surrogate</span><span class="p">:</span> <span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Replicates single-output surrogate models and passes through everything else.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">surrogate</span><span class="p">,</span> <span class="n">Surrogate</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">supports_multi_output</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">replicate</span><span class="p">()</span>
@@ -1087,7 +1087,7 @@
 <div class="viewcode-block" id="BayesianRecommender">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">BayesianRecommender</span><span class="p">(</span><span class="n">PureRecommender</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BayesianRecommender</span><span class="p">(</span><span class="n">PureRecommender</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An abstract class for Bayesian Recommenders.&quot;&quot;&quot;</span>
 
     <span class="n">_surrogate_model</span><span class="p">:</span> <span class="n">SurrogateProtocol</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
@@ -1113,7 +1113,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The induced BoTorch acquisition function.&quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">surrogate_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">surrogate_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deprecated!&quot;&quot;&quot;</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Accessing the surrogate model via &#39;surrogate_model&#39; has been &quot;</span>
@@ -1124,7 +1124,7 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span>
 
-    <span class="k">def</span> <span class="nf">_get_acquisition_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_acquisition_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionFunction</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Select the appropriate default acquisition function for the given context.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">acquisition_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">qLogNEHVI</span><span class="p">()</span> <span class="k">if</span> <span class="n">objective</span><span class="o">.</span><span class="n">is_multi_output</span> <span class="k">else</span> <span class="n">qLogEI</span><span class="p">()</span>
@@ -1132,7 +1132,7 @@
 
 <div class="viewcode-block" id="BayesianRecommender.get_surrogate">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.get_surrogate">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_surrogate</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_surrogate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
@@ -1150,7 +1150,7 @@
         <span class="k">return</span> <span class="n">surrogate</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_setup_botorch_acqf</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_setup_botorch_acqf</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
@@ -1178,7 +1178,7 @@
 
 <div class="viewcode-block" id="BayesianRecommender.get_acquisition_function">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.get_acquisition_function">[docs]</a>
-    <span class="k">def</span> <span class="nf">get_acquisition_function</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_acquisition_function</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
@@ -1198,7 +1198,7 @@
 <div class="viewcode-block" id="BayesianRecommender.recommend">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.recommend">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recommend</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
@@ -1256,7 +1256,7 @@
 
 <div class="viewcode-block" id="BayesianRecommender.acquisition_values">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.acquisition_values">[docs]</a>
-    <span class="k">def</span> <span class="nf">acquisition_values</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">acquisition_values</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
@@ -1299,7 +1299,7 @@
 
 <div class="viewcode-block" id="BayesianRecommender.joint_acquisition_value">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.recommenders.pure.bayesian.base.BayesianRecommender.html#baybe.recommenders.pure.bayesian.base.BayesianRecommender.joint_acquisition_value">[docs]</a>
-    <span class="k">def</span> <span class="nf">joint_acquisition_value</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">joint_acquisition_value</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>

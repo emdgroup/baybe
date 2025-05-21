@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.parameters.numerical - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,28 +1042,28 @@
           <h1>Source code for baybe.parameters.numerical</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Numerical parameters.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
 
-<span class="kn">import</span> <span class="nn">cattrs</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">min_len</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">cattrs</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">min_len</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">NumericalUnderflowError</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">ContinuousParameter</span><span class="p">,</span> <span class="n">DiscreteParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.validation</span> <span class="kn">import</span> <span class="n">validate_is_finite</span><span class="p">,</span> <span class="n">validate_unique_values</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.interval</span> <span class="kn">import</span> <span class="n">InfiniteIntervalError</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">convert_bounds</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalUnderflowError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousParameter</span><span class="p">,</span> <span class="n">DiscreteParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_is_finite</span><span class="p">,</span> <span class="n">validate_unique_values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.interval</span><span class="w"> </span><span class="kn">import</span> <span class="n">InfiniteIntervalError</span><span class="p">,</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">convert_bounds</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
 
 
 <div class="viewcode-block" id="NumericalDiscreteParameter">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.numerical.NumericalDiscreteParameter.html#baybe.parameters.numerical.NumericalDiscreteParameter">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">NumericalDiscreteParameter</span><span class="p">(</span><span class="n">DiscreteParameter</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NumericalDiscreteParameter</span><span class="p">(</span><span class="n">DiscreteParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for discrete numerical parameters (a.k.a. setpoints).&quot;&quot;&quot;</span>
 
     <span class="c1"># class variables</span>
@@ -1091,7 +1091,7 @@
 <span class="sd">        because that could cause ambiguity when inputting data points later.&quot;&quot;&quot;</span>
 
     <span class="nd">@tolerance</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_tolerance</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_tolerance</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the given tolerance is safe.</span>
@@ -1125,12 +1125,12 @@
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">DTypeFloatNumpy</span><span class="p">(</span><span class="n">itm</span><span class="p">)</span> <span class="k">for</span> <span class="n">itm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span>
 
     <span class="nd">@override</span>
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">comp_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comp_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="n">comp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatNumpy</span>
         <span class="p">)</span>
@@ -1139,7 +1139,7 @@
 <div class="viewcode-block" id="NumericalDiscreteParameter.is_in_range">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.numerical.NumericalDiscreteParameter.html#baybe.parameters.numerical.NumericalDiscreteParameter.is_in_range">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">differences_acceptable</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">val</span> <span class="o">-</span> <span class="n">item</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span>
         <span class="p">]</span>
@@ -1151,7 +1151,7 @@
 <div class="viewcode-block" id="NumericalContinuousParameter">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.numerical.NumericalContinuousParameter.html#baybe.parameters.numerical.NumericalContinuousParameter">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">NumericalContinuousParameter</span><span class="p">(</span><span class="n">ContinuousParameter</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NumericalContinuousParameter</span><span class="p">(</span><span class="n">ContinuousParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for continuous numerical parameters.&quot;&quot;&quot;</span>
 
     <span class="c1"># class variables</span>
@@ -1163,7 +1163,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The bounds of the parameter.&quot;&quot;&quot;</span>
 
     <span class="nd">@bounds</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate bounds.</span>
 
 <span class="sd">        Raises:</span>
@@ -1183,19 +1183,19 @@
 <div class="viewcode-block" id="NumericalContinuousParameter.is_in_range">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.numerical.NumericalContinuousParameter.html#baybe.parameters.numerical.NumericalContinuousParameter.is_in_range">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">comp_rep_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comp_rep_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
 
 <div class="viewcode-block" id="NumericalContinuousParameter.summary">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.numerical.NumericalContinuousParameter.html#baybe.parameters.numerical.NumericalContinuousParameter.summary">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">param_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">Name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">Type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
@@ -1208,7 +1208,7 @@
 
 
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">_FixedNumericalContinuousParameter</span><span class="p">(</span><span class="n">ContinuousParameter</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_FixedNumericalContinuousParameter</span><span class="p">(</span><span class="n">ContinuousParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameter class for fixed numerical parameters.&quot;&quot;&quot;</span>
 
     <span class="n">is_numeric</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -1218,21 +1218,21 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The fixed value of the parameter.&quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Interval</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The value of the parameter as a degenerate interval.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Interval</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_in_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">item</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">comp_rep_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comp_rep_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,)</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">Name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="n">Type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>

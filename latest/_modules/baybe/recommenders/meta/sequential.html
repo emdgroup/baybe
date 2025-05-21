@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.recommenders.meta.sequential - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx_paramlinks.css" />
@@ -1045,35 +1045,35 @@
 <span class="c1">#  this file will resolve type errors</span>
 <span class="c1"># mypy: disable-error-code=&quot;arg-type&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">Factory</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">deep_iterable</span><span class="p">,</span> <span class="n">ge</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">Factory</span><span class="p">,</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">deep_iterable</span><span class="p">,</span> <span class="n">ge</span><span class="p">,</span> <span class="n">in_</span><span class="p">,</span> <span class="n">instance_of</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">NoRecommendersLeftError</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders.base</span> <span class="kn">import</span> <span class="n">RecommenderProtocol</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders.meta.base</span> <span class="kn">import</span> <span class="n">MetaRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders.pure.bayesian.botorch</span> <span class="kn">import</span> <span class="n">BotorchRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders.pure.nonpredictive.sampling</span> <span class="kn">import</span> <span class="n">RandomRecommender</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoRecommendersLeftError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">RecommenderProtocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.meta.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetaRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.pure.bayesian.botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">BotorchRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.pure.nonpredictive.sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomRecommender</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">block_deserialization_hook</span><span class="p">,</span>
     <span class="n">block_serialization_hook</span><span class="p">,</span>
     <span class="n">converter</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.conversion</span> <span class="kn">import</span> <span class="n">to_string</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
 
 
 <div class="viewcode-block" id="TwoPhaseMetaRecommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.html#baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">TwoPhaseMetaRecommender</span><span class="p">(</span><span class="n">MetaRecommender</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TwoPhaseMetaRecommender</span><span class="p">(</span><span class="n">MetaRecommender</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A two-phased meta recommender that switches at a certain specified point.</span>
 
 <span class="sd">    The recommender is switched when a new (batch) recommendation is requested and</span>
@@ -1115,13 +1115,13 @@
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_stateful</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_stateful</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">remain_switched</span>
 
 <div class="viewcode-block" id="TwoPhaseMetaRecommender.select_recommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.html#baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.select_recommender">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_recommender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1140,7 +1140,7 @@
 
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Initial recommender&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_recommender</span><span class="p">),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Recommender&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommender</span><span class="p">),</span>
@@ -1155,7 +1155,7 @@
 <div class="viewcode-block" id="BaseSequentialMetaRecommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender.html#baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">BaseSequentialMetaRecommender</span><span class="p">(</span><span class="n">MetaRecommender</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseSequentialMetaRecommender</span><span class="p">(</span><span class="n">MetaRecommender</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for sequential meta recommenders.&quot;&quot;&quot;</span>
 
     <span class="c1"># TODO: These should **not** be exposed via the constructor but the workaround</span>
@@ -1177,17 +1177,17 @@
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">is_stateful</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_stateful</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">True</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the recommender at the current sequence position.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BaseSequentialMetaRecommender.select_recommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender.html#baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender.select_recommender">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">select_recommender</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">select_recommender</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1219,7 +1219,7 @@
 <div class="viewcode-block" id="BaseSequentialMetaRecommender.recommend">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender.html#baybe.recommenders.meta.sequential.BaseSequentialMetaRecommender.recommend">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">recommend</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
@@ -1243,7 +1243,7 @@
 <div class="viewcode-block" id="SequentialMetaRecommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.SequentialMetaRecommender.html#baybe.recommenders.meta.sequential.SequentialMetaRecommender">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">SequentialMetaRecommender</span><span class="p">(</span><span class="n">BaseSequentialMetaRecommender</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SequentialMetaRecommender</span><span class="p">(</span><span class="n">BaseSequentialMetaRecommender</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A meta recommender that uses a pre-defined sequence of recommenders.</span>
 
 <span class="sd">    A new recommender is taken from the sequence whenever at least one new measurement</span>
@@ -1284,7 +1284,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;reuse_last&quot;</span><span class="p">:</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recommenders</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
@@ -1298,10 +1298,10 @@
                 <span class="sa">f</span><span class="s2">&quot;the provided sequence contains only </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="si">}</span><span class="s2"> element(s). &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;Add more recommenders or adjust the &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">fields</span><span class="p">(</span><span class="n">SequentialMetaRecommender</span><span class="p">)</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; attribute.&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Recommenders&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommenders</span><span class="p">),</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Mode&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
@@ -1313,7 +1313,7 @@
 <div class="viewcode-block" id="StreamingSequentialMetaRecommender">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender.html#baybe.recommenders.meta.sequential.StreamingSequentialMetaRecommender">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">StreamingSequentialMetaRecommender</span><span class="p">(</span><span class="n">BaseSequentialMetaRecommender</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamingSequentialMetaRecommender</span><span class="p">(</span><span class="n">BaseSequentialMetaRecommender</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A meta recommender that switches between recommenders from an iterable.</span>
 
 <span class="sd">    Similar to :class:`baybe.recommenders.meta.sequential.SequentialMetaRecommender`</span>
@@ -1348,7 +1348,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The position of the latest recommender fetched from the iterable.&quot;&quot;&quot;</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_recommender_at_current_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RecommenderProtocol</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position_of_latest_recommender</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_last_recommender</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iterator</span><span class="p">)</span>
@@ -1356,7 +1356,7 @@
                 <span class="k">raise</span> <span class="n">NoRecommendersLeftError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;A total of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> recommender(s) was/were requested &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;but the provided iterator provided only </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="si">}</span><span class="s2"> element(s). &quot;</span>
-                <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_position_of_latest_recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span>
 
         <span class="c1"># By now, the first recommender has been fetched</span>
@@ -1365,7 +1365,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_recommender</span>
 
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;Recommenders&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">recommenders</span><span class="p">),</span>
         <span class="p">]</span>

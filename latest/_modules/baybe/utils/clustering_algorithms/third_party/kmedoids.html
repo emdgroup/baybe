@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.utils.clustering_algorithms.third_party.kmedoids - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../../../_static/sphinx_paramlinks.css" />
@@ -1078,23 +1078,23 @@
 
 <span class="c1"># flake8: noqa</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClusterMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span>
-<span class="kn">from</span> <span class="nn">sklearn.exceptions</span> <span class="kn">import</span> <span class="n">ConvergenceWarning</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClusterMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConvergenceWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics.pairwise</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">pairwise_distances</span><span class="p">,</span>
     <span class="n">pairwise_distances_argmin</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils</span> <span class="kn">import</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_random_state</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.extmath</span> <span class="kn">import</span> <span class="n">stable_cumsum</span>
-<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">check_is_fitted</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_array</span><span class="p">,</span> <span class="n">check_random_state</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.extmath</span><span class="w"> </span><span class="kn">import</span> <span class="n">stable_cumsum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_is_fitted</span>
 
-<span class="kn">from</span> <span class="nn">baybe.utils.numerical</span> <span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatNumpy</span>
 
 
-<span class="k">def</span> <span class="nf">_compute_inertia</span><span class="p">(</span><span class="n">distances</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_inertia</span><span class="p">(</span><span class="n">distances</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute inertia of new samples. Inertia is defined as the sum of the</span>
 <span class="sd">    sample distances to closest cluster centers.</span>
 
@@ -1118,7 +1118,7 @@
 
 <div class="viewcode-block" id="KMedoids">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids">[docs]</a>
-<span class="k">class</span> <span class="nc">KMedoids</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClusterMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KMedoids</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">ClusterMixin</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;k-medoids clustering.</span>
 
 <span class="sd">    Read more in the :ref:`User Guide &lt;k_medoids&gt;`.</span>
@@ -1221,7 +1221,7 @@
 
 <div class="viewcode-block" id="KMedoids.__init__">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.__init__">[docs]</a>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">n_clusters</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span>
@@ -1238,7 +1238,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_check_nonnegative_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_nonnegative_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates if value is a valid integer &gt; 0&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
             <span class="n">negative</span> <span class="o">=</span> <span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
@@ -1249,7 +1249,7 @@
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2"> should be a nonnegative integer. </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> was given&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_check_init_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_init_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates the input arguments.&quot;&quot;&quot;</span>
         <span class="c1"># Check n_clusters and max_iter</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_nonnegative_int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span><span class="p">,</span> <span class="s2">&quot;n_clusters&quot;</span><span class="p">)</span>
@@ -1277,7 +1277,7 @@
 
 <div class="viewcode-block" id="KMedoids.fit">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.fit">[docs]</a>
-    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit K-Medoids to the provided data.</span>
 
 <span class="sd">        Parameters</span>
@@ -1382,7 +1382,7 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_update_medoid_idxs_in_place</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_medoid_idxs_in_place</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;In-place update of the medoid indices&quot;&quot;&quot;</span>
         <span class="c1"># Update the medoids for each cluster</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span><span class="p">):</span>
@@ -1414,13 +1414,13 @@
             <span class="k">if</span> <span class="n">min_cost</span> <span class="o">&lt;</span> <span class="n">curr_cost</span><span class="p">:</span>
                 <span class="n">medoid_idxs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_k_idxs</span><span class="p">[</span><span class="n">min_cost_idx</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">_compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the cose for a given configuration of the medoids&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">_compute_inertia</span><span class="p">(</span><span class="n">D</span><span class="p">[:,</span> <span class="n">medoid_idxs</span><span class="p">])</span>
 
 <div class="viewcode-block" id="KMedoids.transform">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.transform">[docs]</a>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Transforms X to cluster-distance space.</span>
 
 <span class="sd">        Parameters</span>
@@ -1453,7 +1453,7 @@
 
 <div class="viewcode-block" id="KMedoids.predict">
 <a class="viewcode-back" href="../../../../../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html#baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.predict">[docs]</a>
-    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict the closest cluster for each sample in X.</span>
 
 <span class="sd">        Parameters</span>
@@ -1492,7 +1492,7 @@
             <span class="k">return</span> <span class="n">pd_argmin</span></div>
 
 
-    <span class="k">def</span> <span class="nf">_initialize_medoids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">random_state_</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_medoids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">random_state_</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Select initial mediods when beginning clustering.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="s2">&quot;__array__&quot;</span><span class="p">):</span>  <span class="c1"># Pre assign cluster</span>
             <span class="n">medoids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>
@@ -1515,7 +1515,7 @@
         <span class="k">return</span> <span class="n">medoids</span>
 
     <span class="c1"># Copied from sklearn.cluster.k_means_._k_init</span>
-    <span class="k">def</span> <span class="nf">_kpp_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">random_state_</span><span class="p">,</span> <span class="n">n_local_trials</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_kpp_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">random_state_</span><span class="p">,</span> <span class="n">n_local_trials</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Init n_clusters seeds with a method similar to k-means++</span>
 
 <span class="sd">        Parameters</span>
@@ -1594,7 +1594,7 @@
 
 
 
-<span class="k">def</span> <span class="nf">_compute_optimal_swap</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">,</span> <span class="n">not_medoid_idxs</span><span class="p">,</span> <span class="n">Djs</span><span class="p">,</span> <span class="n">Ejs</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_optimal_swap</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">medoid_idxs</span><span class="p">,</span> <span class="n">not_medoid_idxs</span><span class="p">,</span> <span class="n">Djs</span><span class="p">,</span> <span class="n">Ejs</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute best cost change for all the possible swaps.&quot;&quot;&quot;</span>
     <span class="c1"># Initialize best cost change and the associated swap couple.</span>
     <span class="n">best_cost_change</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
@@ -1641,7 +1641,7 @@
         <span class="k">return</span> <span class="kc">None</span>
 
 
-<span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute BUILD initialization, a greedy medoid initialization.&quot;&quot;&quot;</span>
     <span class="n">medoid_idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">D</span><span class="p">)</span>

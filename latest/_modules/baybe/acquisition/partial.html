@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.acquisition.partial - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,18 +1042,18 @@
           <h1>Source code for baybe.acquisition.partial</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Wrapper functionality for hybrid spaces.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 
-<span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span>
-<span class="kn">from</span> <span class="nn">botorch.acquisition</span> <span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BotorchAcquisitionFunction</span>
-<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">botorch.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">AcquisitionFunction</span> <span class="k">as</span> <span class="n">BotorchAcquisitionFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
 
 <div class="viewcode-block" id="PartialAcquisitionFunction">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">PartialAcquisitionFunction</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartialAcquisitionFunction</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Acquisition function for evaluating points in a hybrid search space.</span>
 
 <span class="sd">    It can either pin the discrete or the continuous part. The pinned part is assumed</span>
@@ -1072,7 +1072,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A flag for denoting whether ``pinned_part`` corresponds to the discrete</span>
 <span class="sd">    subspace.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_lift_partial_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partial_part</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lift_partial_part</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">partial_part</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Lift ``partial_part`` to the original hybrid space.</span>
 
 <span class="sd">        Depending on whether the discrete or the variable part of the search space is</span>
@@ -1104,7 +1104,7 @@
         <span class="n">full_point</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">disc_part</span><span class="p">,</span> <span class="n">cont_part</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">full_point</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_part</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable_part</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Lift the point to the hybrid space and evaluate the acquisition function.</span>
 
 <span class="sd">        Args:</span>
@@ -1116,12 +1116,12 @@
         <span class="n">full_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lift_partial_part</span><span class="p">(</span><span class="n">variable_part</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">botorch_acqf</span><span class="p">(</span><span class="n">full_point</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">botorch_acqf</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PartialAcquisitionFunction.set_X_pending">
 <a class="viewcode-back" href="../../../_autosummary/baybe.acquisition.partial.PartialAcquisitionFunction.html#baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending">[docs]</a>
-    <span class="k">def</span> <span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_X_pending</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_pending</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">|</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Inform the acquisition function about pending design points.</span>
 
 <span class="sd">        Enhances the original ``set_X_pending`` function from the full acquisition</span>

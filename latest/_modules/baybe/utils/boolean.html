@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.utils.boolean - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,11 +1042,11 @@
           <h1>Source code for baybe.utils.boolean</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Functions implementing Boolean checks.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">cmp_using</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">is_protocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">cmp_using</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_protocol</span>
 
 <span class="c1"># Used for comparing pandas dataframes in attrs classes</span>
 <span class="n">eq_dataframe</span> <span class="o">=</span> <span class="n">cmp_using</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
@@ -1054,7 +1054,7 @@
 
 <div class="viewcode-block" id="is_abstract">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.boolean.is_abstract.html#baybe.utils.boolean.is_abstract">[docs]</a>
-<span class="k">def</span> <span class="nf">is_abstract</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_abstract</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Determine if a given class is abstract.</span>
 
 <span class="sd">    This check is more general sense than ``inspect.abstract``, which only verifies</span>
@@ -1077,7 +1077,7 @@
 
 <div class="viewcode-block" id="strtobool">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool">[docs]</a>
-<span class="k">def</span> <span class="nf">strtobool</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">strtobool</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a string representation of truth to ``True`` or ``False``.</span>
 
 <span class="sd">    Adapted from distutils.</span>
@@ -1105,7 +1105,7 @@
 
 <div class="viewcode-block" id="check_if_in">
 <a class="viewcode-back" href="../../../_autosummary/baybe.utils.boolean.check_if_in.html#baybe.utils.boolean.check_if_in">[docs]</a>
-<span class="k">def</span> <span class="nf">check_if_in</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_if_in</span><span class="p">(</span><span class="n">element</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">allowed</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if an element is in a given list of elements.</span>
 
 <span class="sd">    Args:</span>

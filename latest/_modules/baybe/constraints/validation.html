@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.constraints.validation - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,26 +1042,26 @@
           <h1>Source code for baybe.constraints.validation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Validation functionality for constraints.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Collection</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Collection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
 
-<span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
-<span class="kn">from</span> <span class="nn">baybe.constraints.continuous</span> <span class="kn">import</span> <span class="n">ContinuousCardinalityConstraint</span>
-<span class="kn">from</span> <span class="nn">baybe.constraints.discrete</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.continuous</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousCardinalityConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.discrete</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DiscreteDependenciesConstraint</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalContinuousParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># For python &lt; 3.11, use the exceptiongroup backport</span>
     <span class="n">ExceptionGroup</span>
 <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">exceptiongroup</span> <span class="kn">import</span> <span class="n">ExceptionGroup</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
 
 
 <div class="viewcode-block" id="validate_constraints">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.validation.validate_constraints.html#baybe.constraints.validation.validate_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_constraints</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Constraint</span><span class="p">],</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assert that a given collection of constraints is valid.</span>
@@ -1142,7 +1142,7 @@
 
 <div class="viewcode-block" id="validate_cardinality_constraints_are_nonoverlapping">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.validation.validate_cardinality_constraints_are_nonoverlapping.html#baybe.constraints.validation.validate_cardinality_constraints_are_nonoverlapping">[docs]</a>
-<span class="k">def</span> <span class="nf">validate_cardinality_constraints_are_nonoverlapping</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_cardinality_constraints_are_nonoverlapping</span><span class="p">(</span>
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">ContinuousCardinalityConstraint</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that cardinality constraints are non-overlapping.</span>
@@ -1166,7 +1166,7 @@
 
 <div class="viewcode-block" id="validate_cardinality_constraint_parameter_bounds">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.validation.validate_cardinality_constraint_parameter_bounds.html#baybe.constraints.validation.validate_cardinality_constraint_parameter_bounds">[docs]</a>
-<span class="k">def</span> <span class="nf">validate_cardinality_constraint_parameter_bounds</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_cardinality_constraint_parameter_bounds</span><span class="p">(</span>
     <span class="n">constraint</span><span class="p">:</span> <span class="n">ContinuousCardinalityConstraint</span><span class="p">,</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="n">Collection</span><span class="p">[</span><span class="n">NumericalContinuousParameter</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1189,7 +1189,7 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The parameter &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; referenced by the constraint is not contained &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;in the given collection of parameters.&quot;</span>
-            <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">parameter</span><span class="o">.</span><span class="n">is_in_range</span><span class="p">(</span><span class="mf">0.0</span><span class="p">):</span>
             <span class="n">exceptions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>

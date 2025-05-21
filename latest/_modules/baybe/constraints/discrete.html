@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.constraints.discrete - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,40 +1042,40 @@
           <h1>Source code for baybe.constraints.discrete</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Discrete constraints.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">cast</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">in_</span><span class="p">,</span> <span class="n">min_len</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">in_</span><span class="p">,</span> <span class="n">min_len</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">DiscreteConstraint</span>
-<span class="kn">from</span> <span class="nn">baybe.constraints.conditions</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">DiscreteConstraint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.conditions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Condition</span><span class="p">,</span>
     <span class="n">ThresholdCondition</span><span class="p">,</span>
     <span class="n">_threshold_operators</span><span class="p">,</span>
     <span class="n">_valid_logic_combiners</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">block_deserialization_hook</span><span class="p">,</span>
     <span class="n">block_serialization_hook</span><span class="p">,</span>
     <span class="n">converter</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">Dummy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dummy</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">polars</span> <span class="k">as</span> <span class="nn">pl</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
 
 
 <div class="viewcode-block" id="DiscreteExcludeConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteExcludeConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteExcludeConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for modelling exclusion constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># object variables</span>
@@ -1088,7 +1088,7 @@
 <div class="viewcode-block" id="DiscreteExcludeConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">satisfied</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">cond</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="n">k</span><span class="p">]])</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">cond</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">)</span>
@@ -1100,8 +1100,8 @@
 <div class="viewcode-block" id="DiscreteExcludeConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteExcludeConstraint.html#baybe.constraints.discrete.DiscreteExcludeConstraint.get_invalid_polars">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.polars</span> <span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">satisfied</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">cond</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conditions</span><span class="p">):</span>
@@ -1117,7 +1117,7 @@
 <div class="viewcode-block" id="DiscreteSumConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteSumConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteSumConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for modelling sum constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying</span>
@@ -1133,7 +1133,7 @@
 <div class="viewcode-block" id="DiscreteSumConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">evaluate_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">evaluate_data</span><span class="p">)</span>
 
@@ -1143,8 +1143,8 @@
 <div class="viewcode-block" id="DiscreteSumConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteSumConstraint.html#baybe.constraints.discrete.DiscreteSumConstraint.get_invalid_polars">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.polars</span> <span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">to_polars</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">sum_horizontal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span><span class="o">.</span><span class="n">not_</span><span class="p">()</span></div>
 </div>
@@ -1154,7 +1154,7 @@
 <div class="viewcode-block" id="DiscreteProductConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteProductConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteProductConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for modelling product constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># IMPROVE: refactor `SumConstraint` and `ProdConstraint` to avoid code copying</span>
@@ -1170,7 +1170,7 @@
 <div class="viewcode-block" id="DiscreteProductConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">evaluate_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">evaluate_data</span><span class="p">)</span>
 
@@ -1180,8 +1180,8 @@
 <div class="viewcode-block" id="DiscreteProductConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteProductConstraint.html#baybe.constraints.discrete.DiscreteProductConstraint.get_invalid_polars">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.polars</span> <span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">op</span> <span class="o">=</span> <span class="n">_threshold_operators</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="o">.</span><span class="n">operator</span><span class="p">]</span>
 
@@ -1196,7 +1196,7 @@
 
 <div class="viewcode-block" id="DiscreteNoLabelDuplicatesConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint">[docs]</a>
-<span class="k">class</span> <span class="nc">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteNoLabelDuplicatesConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint class for excluding entries where occurring labels are not unique.</span>
 
 <span class="sd">    This can be useful to remove entries that arise from e.g. a permutation invariance</span>
@@ -1213,7 +1213,7 @@
 <div class="viewcode-block" id="DiscreteNoLabelDuplicatesConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_bad</span><span class="p">]</span></div>
@@ -1222,8 +1222,8 @@
 <div class="viewcode-block" id="DiscreteNoLabelDuplicatesConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.html#baybe.constraints.discrete.DiscreteNoLabelDuplicatesConstraint.get_invalid_polars">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.polars</span> <span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">expr</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
@@ -1238,7 +1238,7 @@
 
 <div class="viewcode-block" id="DiscreteLinkedParametersConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint">[docs]</a>
-<span class="k">class</span> <span class="nc">DiscreteLinkedParametersConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteLinkedParametersConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint class for linking the values of parameters.</span>
 
 <span class="sd">    This constraint type effectively allows generating parameter sets that relate to</span>
@@ -1250,7 +1250,7 @@
 <div class="viewcode-block" id="DiscreteLinkedParametersConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
 
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_bad</span><span class="p">]</span></div>
@@ -1259,8 +1259,8 @@
 <div class="viewcode-block" id="DiscreteLinkedParametersConstraint.get_invalid_polars">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteLinkedParametersConstraint.html#baybe.constraints.discrete.DiscreteLinkedParametersConstraint.get_invalid_polars">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe._optional.polars</span> <span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid_polars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">Expr</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe._optional.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">polars</span> <span class="k">as</span> <span class="n">pl</span>
 
         <span class="n">expr</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">pl</span><span class="o">.</span><span class="n">concat_list</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">))</span>
@@ -1276,7 +1276,7 @@
 <div class="viewcode-block" id="DiscreteDependenciesConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteDependenciesConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteDependenciesConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint that specifies dependencies between parameters.</span>
 
 <span class="sd">    For instance some parameters might only be relevant when another parameter has a</span>
@@ -1301,7 +1301,7 @@
 <span class="sd">    This should not be changed by the user but by other constraints using the class.&quot;&quot;&quot;</span>
 
     <span class="nd">@affected_parameters</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_affected_parameters</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_affected_parameters</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the affected parameters.</span>
@@ -1320,7 +1320,7 @@
 <div class="viewcode-block" id="DiscreteDependenciesConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteDependenciesConstraint.html#baybe.constraints.discrete.DiscreteDependenciesConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="c1"># Create data copy and mark entries where the dependency conditions are negative</span>
         <span class="c1"># with a dummy value to cause degeneracy.</span>
         <span class="n">censored_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -1369,7 +1369,7 @@
 <div class="viewcode-block" id="DiscretePermutationInvarianceConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscretePermutationInvarianceConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscretePermutationInvarianceConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraint class for declaring that a set of parameters is permutation invariant.</span>
 
 <span class="sd">    More precisely, this means that, ``(val_from_param1, val_from_param2)`` is</span>
@@ -1392,7 +1392,7 @@
 <div class="viewcode-block" id="DiscretePermutationInvarianceConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.html#baybe.constraints.discrete.DiscretePermutationInvarianceConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="c1"># Get indices of entries with duplicate label entries. These will also be</span>
         <span class="c1"># dropped by this constraint.</span>
         <span class="n">mask_duplicate_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
@@ -1441,7 +1441,7 @@
 <div class="viewcode-block" id="DiscreteCustomConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html#baybe.constraints.discrete.DiscreteCustomConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteCustomConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteCustomConstraint</span><span class="p">(</span><span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for user-defined custom constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># object variables</span>
@@ -1453,7 +1453,7 @@
 <div class="viewcode-block" id="DiscreteCustomConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCustomConstraint.html#baybe.constraints.discrete.DiscreteCustomConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">validator</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">mask_bad</span><span class="p">]</span></div>
@@ -1464,7 +1464,7 @@
 <div class="viewcode-block" id="DiscreteCardinalityConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint">[docs]</a>
 <span class="nd">@define</span>
-<span class="k">class</span> <span class="nc">DiscreteCardinalityConstraint</span><span class="p">(</span><span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">DiscreteConstraint</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiscreteCardinalityConstraint</span><span class="p">(</span><span class="n">CardinalityConstraint</span><span class="p">,</span> <span class="n">DiscreteConstraint</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for discrete cardinality constraints.&quot;&quot;&quot;</span>
 
     <span class="c1"># Class variables</span>
@@ -1474,7 +1474,7 @@
 <div class="viewcode-block" id="DiscreteCardinalityConstraint.get_invalid">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.discrete.DiscreteCardinalityConstraint.html#baybe.constraints.discrete.DiscreteCardinalityConstraint.get_invalid">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_invalid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">:</span>
         <span class="n">non_zeros</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">]</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">mask_bad</span> <span class="o">=</span> <span class="n">non_zeros</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_cardinality</span>
         <span class="n">mask_bad</span> <span class="o">|=</span> <span class="n">non_zeros</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_cardinality</span>

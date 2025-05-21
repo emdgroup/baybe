@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.targets.numerical - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,27 +1042,27 @@
           <h1>Source code for baybe.targets.numerical</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Numerical targets.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">ArrayLike</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">SerialMixin</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.base</span> <span class="kn">import</span> <span class="n">Target</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.enum</span> <span class="kn">import</span> <span class="n">TargetMode</span><span class="p">,</span> <span class="n">TargetTransformation</span>
-<span class="kn">from</span> <span class="nn">baybe.targets.transforms</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Target</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">TargetMode</span><span class="p">,</span> <span class="n">TargetTransformation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">bell_transform</span><span class="p">,</span>
     <span class="n">linear_transform</span><span class="p">,</span>
     <span class="n">triangular_transform</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.interval</span> <span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">convert_bounds</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.interval</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interval</span><span class="p">,</span> <span class="n">convert_bounds</span>
 
 <span class="n">_VALID_TRANSFORMATIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TargetMode</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TargetTransformation</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">TargetMode</span><span class="o">.</span><span class="n">MAX</span><span class="p">:</span> <span class="p">(</span><span class="n">TargetTransformation</span><span class="o">.</span><span class="n">LINEAR</span><span class="p">,),</span>
@@ -1073,7 +1073,7 @@
 <span class="sd">If multiple transformations are allowed, the first entry is used as default option.&quot;&quot;&quot;</span>
 
 
-<span class="k">def</span> <span class="nf">_get_target_transformation</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_target_transformation</span><span class="p">(</span>
     <span class="n">mode</span><span class="p">:</span> <span class="n">TargetMode</span><span class="p">,</span> <span class="n">transformation</span><span class="p">:</span> <span class="n">TargetTransformation</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Provide the transform callable for the given target mode and transform type.&quot;&quot;&quot;</span>
@@ -1093,7 +1093,7 @@
 <div class="viewcode-block" id="NumericalTarget">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.numerical.NumericalTarget.html#baybe.targets.numerical.NumericalTarget">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">NumericalTarget</span><span class="p">(</span><span class="n">Target</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NumericalTarget</span><span class="p">(</span><span class="n">Target</span><span class="p">,</span> <span class="n">SerialMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for numerical targets.&quot;&quot;&quot;</span>
 
     <span class="c1"># NOTE: The type annotations of `bounds` are correctly overridden by the attrs</span>
@@ -1117,7 +1117,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An optional target transformation.&quot;&quot;&quot;</span>
 
     <span class="nd">@transformation</span><span class="o">.</span><span class="n">default</span>
-    <span class="k">def</span> <span class="nf">_default_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TargetTransformation</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_default_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TargetTransformation</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Provide the default transformation for bounded targets.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">is_bounded</span><span class="p">:</span>
             <span class="n">fun</span> <span class="o">=</span> <span class="n">_VALID_TRANSFORMATIONS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
@@ -1131,7 +1131,7 @@
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="nd">@bounds</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="n">Interval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: DOC101, DOC103</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the bounds.</span>
 
 <span class="sd">        Raises:</span>
@@ -1154,7 +1154,7 @@
             <span class="p">)</span>
 
     <span class="nd">@transformation</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_transformation</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_transformation</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">TargetTransformation</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate compatability between transformation, bounds and the mode.</span>
@@ -1178,14 +1178,14 @@
             <span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">_is_transform_normalized</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_is_transform_normalized</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicate if the computational transformation maps to the unit interval.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">is_bounded</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transformation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NumericalTarget.transform">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.numerical.NumericalTarget.html#baybe.targets.numerical.NumericalTarget.transform">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">series</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="c1"># &gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; Deprecation</span>
@@ -1231,7 +1231,7 @@
 <div class="viewcode-block" id="NumericalTarget.summary">
 <a class="viewcode-back" href="../../../_autosummary/baybe.targets.numerical.NumericalTarget.html#baybe.targets.numerical.NumericalTarget.summary">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">target_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
             <span class="n">Type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
             <span class="n">Name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>

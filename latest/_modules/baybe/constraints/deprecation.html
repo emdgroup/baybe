@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.constraints.deprecation - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,25 +1042,25 @@
           <h1>Source code for baybe.constraints.deprecation</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Deprecation for constraints.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
-<span class="kn">from</span> <span class="nn">cattrs.gen</span> <span class="kn">import</span> <span class="n">make_dict_structure_fn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cattrs.gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_dict_structure_fn</span>
 
-<span class="kn">from</span> <span class="nn">baybe.serialization</span> <span class="kn">import</span> <span class="n">converter</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">find_subclass</span><span class="p">,</span> <span class="n">refers_to</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.boolean</span> <span class="kn">import</span> <span class="n">is_abstract</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">converter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_subclass</span><span class="p">,</span> <span class="n">refers_to</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.boolean</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_abstract</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
 
 
 <div class="viewcode-block" id="ContinuousLinearEqualityConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearEqualityConstraint.html#baybe.constraints.deprecation.ContinuousLinearEqualityConstraint">[docs]</a>
-<span class="k">def</span> <span class="nf">ContinuousLinearEqualityConstraint</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ContinuousLinearEqualityConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1073,7 +1073,7 @@
         <span class="ne">DeprecationWarning</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="kn">from</span> <span class="nn">baybe.constraints.continuous</span> <span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.continuous</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
 
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span> <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;=&quot;</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">coefficients</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1087,7 +1087,7 @@
 
 <div class="viewcode-block" id="ContinuousLinearInequalityConstraint">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearInequalityConstraint.html#baybe.constraints.deprecation.ContinuousLinearInequalityConstraint">[docs]</a>
-<span class="k">def</span> <span class="nf">ContinuousLinearInequalityConstraint</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ContinuousLinearInequalityConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">coefficients</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1100,7 +1100,7 @@
         <span class="ne">DeprecationWarning</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="kn">from</span> <span class="nn">baybe.constraints.continuous</span> <span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.continuous</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContinuousLinearConstraint</span>
 
     <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="n">parameters</span><span class="p">,</span> <span class="s2">&quot;operator&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">coefficients</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1114,9 +1114,9 @@
 
 <div class="viewcode-block" id="structure_constraints">
 <a class="viewcode-back" href="../../../_autosummary/baybe.constraints.deprecation.structure_constraints.html#baybe.constraints.deprecation.structure_constraints">[docs]</a>
-<span class="k">def</span> <span class="nf">structure_constraints</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Constraint</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">structure_constraints</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Constraint</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A structure hook taking care of deprecations.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401 (imperative mood)</span>
-    <span class="kn">from</span> <span class="nn">baybe.constraints.base</span> <span class="kn">import</span> <span class="n">Constraint</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.constraints.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Constraint</span>
 
     <span class="c1"># If the given class can be instantiated, only ensure there is no conflict with</span>
     <span class="c1"># a potentially specified type field</span>

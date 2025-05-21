@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Campaign Stopping - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/sphinx_paramlinks.css" />
@@ -1059,31 +1059,31 @@ optimization if the found results are sufficiently good.
 The underlying use case is taken from the example shown
 <a class="reference internal" href="../Backtesting/full_lookup.html"><span class="doc std std-doc">here</span></a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">### Imports</span>
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
-<span class="kn">from</span> <span class="nn">baybe.acquisition</span> <span class="kn">import</span> <span class="n">ProbabilityOfImprovement</span>
-<span class="kn">from</span> <span class="nn">baybe.exceptions</span> <span class="kn">import</span> <span class="n">UnusedObjectWarning</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives</span> <span class="kn">import</span> <span class="n">SingleTargetObjective</span>
-<span class="kn">from</span> <span class="nn">baybe.objectives.base</span> <span class="kn">import</span> <span class="n">Objective</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters</span> <span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.recommenders</span> <span class="kn">import</span> <span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProbabilityOfImprovement</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnusedObjectWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleTargetObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalDiscreteParameter</span><span class="p">,</span> <span class="n">SubstanceParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BotorchRecommender</span><span class="p">,</span>
     <span class="n">RandomRecommender</span><span class="p">,</span>
     <span class="n">TwoPhaseMetaRecommender</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">baybe.searchspace</span> <span class="kn">import</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">SearchSpaceType</span>
-<span class="kn">from</span> <span class="nn">baybe.simulation</span> <span class="kn">import</span> <span class="n">simulate_scenarios</span>
-<span class="kn">from</span> <span class="nn">baybe.targets</span> <span class="kn">import</span> <span class="n">NumericalTarget</span>
-<span class="kn">from</span> <span class="nn">baybe.utils</span> <span class="kn">import</span> <span class="n">register_hooks</span>
-<span class="kn">from</span> <span class="nn">examples.utils</span> <span class="kn">import</span> <span class="n">create_example_plots</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span><span class="p">,</span> <span class="n">SearchSpaceType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.simulation</span><span class="w"> </span><span class="kn">import</span> <span class="n">simulate_scenarios</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_hooks</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">examples.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_example_plots</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">### Temporary</span>
@@ -1109,9 +1109,13 @@ The underlying use case is taken from the example shown
 <h2>Problem Definition and Lookup Functionality<a class="headerlink" href="#problem-definition-and-lookup-functionality" title="Link to this heading">¶</a></h2>
 <p>We load the dataframe containing the lookup data for the closed-loop simulation:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">lookup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="s2">&quot;./../Backtesting/lookup.xlsx&quot;</span><span class="p">)</span>
-<span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
-    <span class="n">lookup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="s2">&quot;examples/Backtesting/lookup.xlsx&quot;</span><span class="p">)</span>
+    <span class="n">lookup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;benchmarks/data/direct_arylation/data.csv&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">FileNotFoundError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">lookup</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;../../../benchmarks/data/direct_arylation/data.csv&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[Errno 2] No such file or directory: &#39;benchmarks/data/direct_arylation/data.csv&#39;
 </pre></div>
 </div>
 <p>Following the setup described <a class="reference internal" href="../Backtesting/full_lookup.html"><span class="std std-doc">here</span></a>, we create the
@@ -1164,7 +1168,7 @@ feeling for the average trajectory. For reproducibility, we also fix the random 
 <h2>Defining the Campaign-Stopping Hook<a class="headerlink" href="#defining-the-campaign-stopping-hook" title="Link to this heading">¶</a></h2>
 <p>In order to interrupt a running campaign, we define a custom exception to identify our
 stopping event:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CampaignStoppedException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CampaignStoppedException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The campaign should be stopped.&quot;&quot;&quot;</span>
 </pre></div>
 </div>
@@ -1176,7 +1180,7 @@ threshold.</p>
 <span class="n">PI_REQUIRED_FRACTION</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c1"># 20% of candidates must be above the threshold</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">stop_on_PI</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">stop_on_PI</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">BotorchRecommender</span><span class="p">,</span>
     <span class="n">searchspace</span><span class="p">:</span> <span class="n">SearchSpace</span><span class="p">,</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>

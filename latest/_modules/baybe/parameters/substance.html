@@ -6,7 +6,7 @@
 
     <link rel="shortcut icon" href="../../../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.parameters.substance - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../../_static/sphinx_paramlinks.css" />
@@ -1042,20 +1042,20 @@
           <h1>Source code for baybe.parameters.substance</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Substance parameters.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">gc</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cached_property</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">attrs</span> <span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span> <span class="nn">attrs.validators</span> <span class="kn">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">deep_mapping</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
-<span class="kn">from</span> <span class="nn">typing_extensions</span> <span class="kn">import</span> <span class="n">override</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">deep_mapping</span><span class="p">,</span> <span class="n">instance_of</span><span class="p">,</span> <span class="n">min_len</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
-<span class="kn">from</span> <span class="nn">baybe.parameters.base</span> <span class="kn">import</span> <span class="n">_DiscreteLabelLikeParameter</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.enum</span> <span class="kn">import</span> <span class="n">SubstanceEncoding</span>
-<span class="kn">from</span> <span class="nn">baybe.parameters.validation</span> <span class="kn">import</span> <span class="n">validate_decorrelation</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.basic</span> <span class="kn">import</span> <span class="n">group_duplicate_values</span>
-<span class="kn">from</span> <span class="nn">baybe.utils.dataframe</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">_DiscreteLabelLikeParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubstanceEncoding</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_decorrelation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">group_duplicate_values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">add_noise_to_perturb_degenerate_rows</span><span class="p">,</span>
     <span class="n">df_drop_single_value_columns</span><span class="p">,</span>
     <span class="n">df_uncorrelated_features</span><span class="p">,</span>
@@ -1064,7 +1064,7 @@
 <span class="k">try</span><span class="p">:</span>  <span class="c1"># For python &lt; 3.11, use the exceptiongroup backport</span>
     <span class="n">ExceptionGroup</span>
 <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">exceptiongroup</span> <span class="kn">import</span> <span class="n">ExceptionGroup</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">exceptiongroup</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExceptionGroup</span>
 
 <span class="n">Smiles</span> <span class="o">=</span> <span class="nb">str</span>
 <span class="sd">&quot;&quot;&quot;Type alias for SMILES strings.&quot;&quot;&quot;</span>
@@ -1073,7 +1073,7 @@
 <div class="viewcode-block" id="SubstanceParameter">
 <a class="viewcode-back" href="../../../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter">[docs]</a>
 <span class="nd">@define</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">SubstanceParameter</span><span class="p">(</span><span class="n">_DiscreteLabelLikeParameter</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubstanceParameter</span><span class="p">(</span><span class="n">_DiscreteLabelLikeParameter</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic substances that are treated with cheminformatics descriptors.</span>
 
 <span class="sd">    Only a decorrelated subset of descriptors should be used as otherwise this can</span>
@@ -1117,7 +1117,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Keyword arguments passed to conformer generator.&quot;&quot;&quot;</span>
 
     <span class="nd">@data</span><span class="o">.</span><span class="n">validator</span>
-    <span class="k">def</span> <span class="nf">_validate_substance_data</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_substance_data</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Smiles</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the substance data, provided as SMILES, is valid.</span>
@@ -1126,7 +1126,7 @@
 <span class="sd">            ValueError: If one or more of the SMILES are invalid.</span>
 <span class="sd">            ValueError: If the several entries represent the same substance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">baybe.utils</span> <span class="kn">import</span> <span class="n">chemistry</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">chemistry</span>
 
         <span class="c1"># Check for invalid SMILES</span>
         <span class="n">canonical_smiles</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1159,14 +1159,14 @@
 
     <span class="nd">@override</span>
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the labels of the given set of molecules.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
     <span class="nd">@override</span>
     <span class="nd">@cached_property</span>
-    <span class="k">def</span> <span class="nf">comp_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="kn">from</span> <span class="nn">baybe.utils</span> <span class="kn">import</span> <span class="n">chemistry</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">comp_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">chemistry</span>
 
         <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
         <span class="n">pref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>

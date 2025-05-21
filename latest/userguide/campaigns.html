@@ -7,7 +7,7 @@
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>Campaigns - BayBE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx_paramlinks.css" />
@@ -1086,7 +1086,7 @@ describe the underlying optimization problem at hand:</p>
 optimization
 <code class="docutils literal notranslate"><span class="pre">Recommender</span></code> (<a class="reference internal" href="../_autosummary/baybe.recommenders.pure.base.PureRecommender.html#baybe.recommenders.pure.base.PureRecommender" title="baybe.recommenders.pure.base.PureRecommender"><span class="xref myst py py-class">class</span></a>
 / <a class="reference internal" href="recommenders.html"><span class="doc std std-doc">user guide</span></a>) to be used.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe</span> <span class="kn">import</span> <span class="n">Campaign</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Campaign</span>
 
 <span class="n">campaign</span> <span class="o">=</span> <span class="n">Campaign</span><span class="p">(</span>
     <span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span>  <span class="c1"># Required</span>
@@ -1381,7 +1381,7 @@ targets.</p>
 </pre></div>
 </div>
 <p>By default, both methods use the acquisition function of the underlying recommender. However, you can also specify a custom acquisition function if needed:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">baybe.acquisition</span> <span class="kn">import</span> <span class="n">UCB</span><span class="p">,</span> <span class="n">qPSTD</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition</span><span class="w"> </span><span class="kn">import</span> <span class="n">UCB</span><span class="p">,</span> <span class="n">qPSTD</span>
 
 <span class="n">acq_values</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">acquisition_values</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">UCB</span><span class="p">())</span>
 <span class="n">joint_acq_value</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">joint_acquisition_value</span><span class="p">(</span><span class="n">rec</span><span class="p">,</span> <span class="n">qPSTD</span><span class="p">())</span>
