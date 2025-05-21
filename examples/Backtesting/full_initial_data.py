@@ -40,12 +40,10 @@ BATCH_SIZE = 1 if SMOKE_TEST else 3
 # See [`full_lookup`](./full_lookup.md) for details.
 
 try:
-    lookup = pd.read_excel("./lookup.xlsx")
-except FileNotFoundError:
-    try:
-        lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
-    except FileNotFoundError as e:
-        print(e)
+    lookup = pd.read_csv("benchmarks/data/direct_arylation/data.csv")
+except FileNotFoundError as e:
+    lookup = pd.read_csv("../../../benchmarks/data/direct_arylation/data.csv")
+    print(e)
 
 ### Inclusion of initial data
 

@@ -47,12 +47,10 @@ BATCH_SIZE = 1 if SMOKE_TEST else 2
 # This code assumes that you call `python` either from the repository root folder or this folder.
 
 try:
-    lookup = pd.read_excel("./lookup.xlsx")
-except FileNotFoundError:
-    try:
-        lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
-    except FileNotFoundError as e:
-        print(e)
+    lookup = pd.read_csv("benchmarks/data/direct_arylation/data.csv")
+except FileNotFoundError as e:
+    lookup = pd.read_csv("../../../benchmarks/data/direct_arylation/data.csv")
+    print(e)
 
 # As usual, we set up some experiment.
 # Note that we now need to ensure that the names fit the names in the provided .xlsx file!

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
+- Additional transfer learning and synthetic benchmarks
 
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 

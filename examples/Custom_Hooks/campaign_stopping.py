@@ -60,9 +60,10 @@ RANDOM_SEED = 1337
 # We load the dataframe containing the lookup data for the closed-loop simulation:
 
 try:
-    lookup = pd.read_excel("./../Backtesting/lookup.xlsx")
-except FileNotFoundError:
-    lookup = pd.read_excel("examples/Backtesting/lookup.xlsx")
+    lookup = pd.read_csv("benchmarks/data/direct_arylation/data.csv")
+except FileNotFoundError as e:
+    lookup = pd.read_csv("../../../benchmarks/data/direct_arylation/data.csv")
+    print(e)
 
 # Following the setup described [here](../Backtesting/full_lookup.md), we create the
 # building blocks for the optimization problem:
