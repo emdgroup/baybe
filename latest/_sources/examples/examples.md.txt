@@ -11,8 +11,8 @@ Multi Target<Multi_Target/Multi_Target>
 Serialization<Serialization/Serialization>
 Custom Surrogates<Custom_Surrogates/Custom_Surrogates>
 Backtesting<Backtesting/Backtesting>
-Custom Hooks<Custom_Hooks/Custom_Hooks>
 Transfer Learning<Transfer_Learning/Transfer_Learning>
-Multi Armed Bandit<Multi_Armed_Bandit/Multi_Armed_Bandit>
 Mixtures<Mixtures/Mixtures>
+Multi Armed Bandit<Multi_Armed_Bandit/Multi_Armed_Bandit>
+Custom Hooks<Custom_Hooks/Custom_Hooks>
 ```
