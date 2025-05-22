@@ -1,6 +1,8 @@
 """Tests for sampling algorithm utilities."""
 
 import math
+import warnings
+from unittest.mock import patch
 
 import hypothesis.extra.numpy as hnp
 import hypothesis.strategies as st
@@ -10,6 +12,9 @@ import pytest
 from hypothesis import example, given
 from sklearn.metrics import pairwise_distances
 
+from baybe.exceptions import OptionalImportError
+from baybe.recommenders.pure.nonpredictive.sampling import FPSRecommender
+from baybe.searchspace import SubspaceDiscrete
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -110,3 +115,85 @@ def test_farthest_point_sampling_pathological_case():
     with pytest.warns(UserWarning, match="identical"):
         selection = farthest_point_sampling(points, 2)
     assert selection == [0, 1]
+
+
+class DummyParameter:
+    """Minimal mock parameter class to support SubspaceDiscrete construction.
+
+    Provides a basic `transform` method that converts input data to float format,
+    mimicking behavior expected from real parameter objects in tests.
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def transform(self, col):
+        return pd.DataFrame({self.name: col.astype(float)})
+
+
+def test_fps_recommender_calls_fpsample():
+    """Test that FPSRecommender uses `fpsample` when it is available."""
+    df = pd.DataFrame({"x": np.arange(10)})
+    param = DummyParameter("x")
+    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+
+    recommender = FPSRecommender()
+
+    with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
+        mock_fps.return_value = np.array([0, 1, 2])
+        result = recommender._recommend_discrete(
+            subspace_discrete=subspace,
+            candidates_exp=df,
+            batch_size=3,
+        )
+
+        mock_fps.assert_called_once()
+        assert result.tolist() == [0, 1, 2]
+
+
+def test_fps_recommender_warns_ignored_arguments():
+    """Test that FPSRecommender emits warnings for unsupported arguments."""
+    df = pd.DataFrame({"x": np.arange(10)})
+    param = DummyParameter("x")
+    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+
+    recommender = FPSRecommender(
+        initialization=FPSRecommender.__annotations__["initialization"]("random"),
+        random_tie_break=False,
+    )
+
+    with patch(
+        "baybe._optional.fpsample.fps_sampling", return_value=np.array([0, 1, 2])
+    ):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            recommender._recommend_discrete(
+                subspace_discrete=subspace, candidates_exp=df, batch_size=3
+            )
+        warning_msgs = [str(warning.message) for warning in w]
+        assert any("initialization=" in msg for msg in warning_msgs)
+        assert any("random tie-breaking" in msg for msg in warning_msgs)
+
+
+def test_fps_recommender_fallback_to_internal_fps():
+    """Test that FPSRecommender falls back to the custom FPS when unavailable."""
+    df = pd.DataFrame({"x": np.arange(10)})
+    param = DummyParameter("x")
+    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+    recommender = FPSRecommender()
+
+    with patch(
+        "baybe._optional.fpsample.fps_sampling",
+        side_effect=OptionalImportError("fpsample", "sampling"),
+    ):
+        with patch(
+            "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling"
+        ) as mock_internal:
+            mock_internal.return_value = [0, 1, 2]
+
+            result = recommender._recommend_discrete(
+                subspace_discrete=subspace, candidates_exp=df, batch_size=3
+            )
+
+            mock_internal.assert_called_once()
+            assert result.tolist() == [0, 1, 2]
