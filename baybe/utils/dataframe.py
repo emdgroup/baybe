@@ -527,15 +527,11 @@ def fuzzy_row_match(
 
     # Match numerical parameters
     for col in num_cols:
-        # Enforce float data type for entire column to make distance calculation safe.
-        if not pd.api.types.is_float_dtype(left_df[col]):
-            left_df[col] = left_df[col].astype(float, copy=False)
-        if not pd.api.types.is_float_dtype(right_df[col]):
-            right_df[col] = right_df[col].astype(float, copy=False)
+        left_col = left_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
+        right_col = right_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
 
-        # Per numerical parameter, this identifies the rows with the smallest absolute
-        # difference and records them in a matrix.
-        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        # Compute absolute differences and find the minimum difference
+        abs_diff = np.abs(right_col[:, None] - left_col[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 
