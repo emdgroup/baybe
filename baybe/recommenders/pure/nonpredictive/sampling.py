@@ -1,5 +1,6 @@
 """Recommenders based on sampling."""
 
+import warnings
 from enum import Enum
 from typing import ClassVar
 
@@ -9,6 +10,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.exceptions import OptionalImportError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
@@ -100,12 +102,34 @@ class FPSRecommender(NonPredictiveRecommender):
         # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(
-            candidates_scaled,
-            batch_size,
-            initialization=self.initialization.value,
-            random_tie_break=self.random_tie_break,
-        )
+
+        # Try fpsample first
+        try:
+            from baybe._optional import fpsample
+
+            if self.initialization != FPSInitialization.FARTHEST:
+                warnings.warn(
+                    f"fpsample does not support initialization="
+                    f"'{self.initialization.value}'; using default behavior."
+                )
+            if not self.random_tie_break:
+                warnings.warn(
+                    "fpsample does not support random tie-breaking; "
+                    "using deterministic behavior."
+                )
+            ilocs = fpsample.fps_sampling(
+                candidates_scaled,
+                n_samples=batch_size,
+                start_idx=0,
+            )
+        except OptionalImportError:
+            # Custom implementation as fallback
+            ilocs = farthest_point_sampling(
+                candidates_scaled,
+                batch_size,
+                initialization=self.initialization.value,
+                random_tie_break=self.random_tie_break,
+            )
         return candidates_comp.index[ilocs]
 
     @override
