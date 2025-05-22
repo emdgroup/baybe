@@ -527,9 +527,11 @@ def fuzzy_row_match(
 
     # Match numerical parameters
     for col in num_cols:
-        # Per numerical parameter, this identifies the rows with the smallest absolute
-        # difference and records them in a matrix.
-        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
+        left_col = left_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
+        right_col = right_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
+
+        # Compute absolute differences and find the minimum difference
+        abs_diff = np.abs(right_col[:, None] - left_col[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 

@@ -176,7 +176,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
     # See base class.
 
     # object variables
-    _active_values: tuple[str, ...] | None = field(
+    _active_values: tuple[str | bool, ...] | None = field(
         default=None,
         converter=optional_c(to_tuple),
         kw_only=True,
@@ -186,7 +186,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
 
     @override
     @property
-    def active_values(self) -> tuple[str, ...]:
+    def active_values(self) -> tuple[str | bool, ...]:
         if self._active_values is None:
             return self.values
 
@@ -194,7 +194,7 @@ class _DiscreteLabelLikeParameter(DiscreteParameter, ABC):
 
     @_active_values.validator
     def _validate_active_values(  # noqa: DOC101, DOC103
-        self, _: Any, content: tuple[str, ...]
+        self, _: Any, content: tuple[str | bool, ...]
     ) -> None:
         """Validate the active parameter values.
 
