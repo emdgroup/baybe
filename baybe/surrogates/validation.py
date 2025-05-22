@@ -5,6 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+import cattrs
+from cattrs import ClassValidationError
+from cattrs.strategies import configure_union_passthrough
+
 from baybe.surrogates.base import Surrogate
 
 
@@ -53,52 +57,60 @@ def validate_custom_architecture_cls(model_cls: type) -> None:
         )
 
 
-def get_model_params_validator(model_init: Callable | None = None) -> Callable:
-    """Construct a validator based on the model class.
+# Create a strict type validation converter
+type_validation_converter = cattrs.Converter(forbid_extra_keys=True)
+"""Converter used for strict type validation."""
+
+configure_union_passthrough(int | float | str | None, type_validation_converter)
+
+
+@type_validation_converter.register_structure_hook
+def _strict_int_structure_hook(obj: Any, _: type[int]) -> int:
+    if isinstance(obj, int) and not isinstance(obj, bool):  # Exclude bools
+        return obj
+    raise ValueError(
+        f"Value '{obj}' (type: {type(obj).__name__}) is not a valid integer. "
+        "Only actual 'int' instances are accepted."
+    )
+
+
+@type_validation_converter.register_structure_hook
+def _strict_float_structure_hook(obj: Any, _: type[float]) -> float:
+    if isinstance(obj, float):
+        return obj
+    raise ValueError(
+        f"Value '{obj}' (type: {type(obj).__name__}) is not a valid float. "
+        "Only actual 'float' instances are accepted."
+    )
+
+
+@type_validation_converter.register_structure_hook
+def _strict_bool_structure_hook(obj: Any, _: type[bool]) -> bool:
+    if isinstance(obj, bool):
+        return obj
+    raise ValueError(
+        f"Value '{obj}' (type: {type(obj).__name__}) is not a valid boolean. "
+        "Only actual 'bool' instances (True, False) are accepted."
+    )
+
+
+def make_dict_validator(specification: type) -> Callable:
+    """Construct an attrs dictionary validator based on a ``TypedDict``.
 
     Args:
-        model_init: The init method for the model.
+        specification: Describes allowed keys and corresponding value types.
 
     Returns:
-        A validator function to validate parameters.
+        An attrs compatible validator.
     """
 
-    def validate_model_params(  # noqa: DOC101, DOC103
-        obj: Any, _: Any, model_params: dict
-    ) -> None:
-        """Validate the model params attribute of an object.
-
-        Raises:
-            ValueError: When model params are given for non-supported objects.
-            ValueError: When surrogate is not recognized (no valid model_init).
-            ValueError: When invalid params are given for a model.
-        """
-        # Get model class name
-        model = obj.__class__.__name__
-
-        if not model_params:
-            return
-
-        # GP does not support additional model params
-        # Neither does custom models
-        if "GaussianProcess" in model or "Custom" in model:
-            raise ValueError(f"{model} does not support model params.")
-
-        if not model_init:
-            raise ValueError(
-                f"Cannot validate model params for unrecognized Surrogate: {model}"
-            )
-
-        # Invalid params
-        invalid_params = ", ".join(
-            [
-                key
-                for key in model_params.keys()
-                if key not in model_init.__code__.co_varnames
-            ]
-        )
-
-        if invalid_params:
-            raise ValueError(f"Invalid model params for {model}: {invalid_params}.")
+    def validate_model_params(_instance: Any, attr: Any, value: dict) -> None:
+        """Validate attrs attribute using cattrs with an extremely strict int hook."""
+        try:
+            type_validation_converter.structure(value, specification)
+        except ClassValidationError as ex:
+            raise TypeError(
+                f"The provided dictionary for '{attr.name}' is invalid."
+            ) from ex
 
     return validate_model_params
