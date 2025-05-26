@@ -273,6 +273,28 @@ def test_transformation_chaining(chained_first):
     assert actual == expected
 
 
+def test_unnesting_chained_transformations():
+    """Chaining chained transformations flattens them."""
+    t = PowerTransformation
+    c = ChainedTransformation(
+        [
+            ChainedTransformation(
+                [
+                    ChainedTransformation([t(1), t(2)]),
+                    ChainedTransformation([t(3), t(4)]),
+                ]
+            ),
+            ChainedTransformation(
+                [
+                    ChainedTransformation([t(5), t(6)]),
+                    ChainedTransformation([t(7), t(8)]),
+                ]
+            ),
+        ],
+    )
+    assert c == ChainedTransformation([t(1), t(2), t(3), t(4), t(5), t(6), t(7), t(8)])
+
+
 def test_affine_transformation_compression():
     """Compression of affine transformations works as expected."""
     t = IdentityTransformation()
