@@ -51,7 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Option to specify reference values for `add_fake_measurements`
 
 ### Deprecations
-- Creating targets using a `mode` argument
+- Creating `NumericalTarget`s using a `mode` argument
+- `TargetMode` and `TargetTransformation` enums
+- `linear_transform`, `triangular_transform` and `bell_transform` functions
 
 ## [0.13.0] - 2025-04-16
 ### Added
