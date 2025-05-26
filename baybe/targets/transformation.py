@@ -123,6 +123,17 @@ def combine_affine_transformations(
     )
 
 
+def _flatten_transformations(
+    transformations: Iterable[Transformation], /
+) -> Iterable[Transformation]:
+    """Recursively flatten nested chained transformations."""
+    for t in transformations:
+        if isinstance(t, ChainedTransformation):
+            yield from _flatten_transformations(t.transformations)
+        else:
+            yield t
+
+
 def compress_transformations(
     transformations: Iterable[Transformation], /
 ) -> tuple[Transformation, ...]:
@@ -139,7 +150,7 @@ def compress_transformations(
     aggregated: list[Transformation] = []
     last = None
 
-    for t in transformations:
+    for t in _flatten_transformations(transformations):
         # Drop identity transformations
         if isinstance(t, IdentityTransformation):
             continue
