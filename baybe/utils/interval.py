@@ -95,8 +95,9 @@ class Interval(SerialMixin):
     @classmethod
     def create(cls, value: Any) -> Interval:
         """Create an interval from various input types."""
-        # Singledispatch does not play well with forward references, hence
-        #   we use this workaround.
+        # Singledispatch does not play well with forward references, hence the
+        # workaround via `isinstance` in the fallback method.
+        # https://bugs.python.org/issue41987
         if isinstance(value, Interval):
             return deepcopy(value)
 
