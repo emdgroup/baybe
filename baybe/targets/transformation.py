@@ -179,7 +179,7 @@ class ChainedTransformation(Transformation):
     transformations: tuple[Transformation, ...] = field(
         converter=compress_transformations,
         validator=[
-            min_len(2),
+            min_len(1),
             deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )

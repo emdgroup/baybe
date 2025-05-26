@@ -306,20 +306,6 @@ def test_affine_transformation_compression():
     assert t2 == AffineTransformation(factor=2, shift=3, shift_first=True)
 
 
-@pytest.mark.parametrize(
-    "transformations",
-    [
-        (AbsoluteTransformation(),),
-        (AbsoluteTransformation(), IdentityTransformation()),
-    ],
-    ids=["single", "single_with_identity"],
-)
-def test_invalid_transformation_chaining(transformations):
-    """A chaining transformation requires at least two involved transformations."""
-    with pytest.raises(ValueError, match="must be >= 2: 1"):
-        ChainedTransformation(transformations)
-
-
 def test_identity_transformation_chaining():
     """Chaining an identity transformation has no effect."""
     t1 = IdentityTransformation()
