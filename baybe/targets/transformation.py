@@ -1,4 +1,4 @@
-"""Functions for bound transforms."""
+"""Target transformations."""
 
 from __future__ import annotations
 
