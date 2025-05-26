@@ -269,6 +269,17 @@ def test_transformation_chaining():
     assert t == ChainedTransformation([t1, t2, t3, t1, t2])
 
 
+def test_affine_transformation_compression():
+    """Compression of affine transformations works as expected."""
+    t = IdentityTransformation()
+
+    t1 = t * 2 + 3 + t
+    assert t1 == AffineTransformation(factor=2, shift=3)
+
+    t2 = (t + 3) * 2 + t
+    assert t2 == AffineTransformation(factor=2, shift=3, shift_first=True)
+
+
 @pytest.mark.parametrize(
     "transformations",
     [
