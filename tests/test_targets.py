@@ -257,16 +257,20 @@ def test_target_transformation(
     assert_series_equal(modern.transform(series), expected)
 
 
-def test_transformation_chaining():
+@pytest.mark.parametrize("chained_first", [True, False])
+def test_transformation_chaining(chained_first):
     """Transformation chaining and flattening works as expected."""
     t1 = AffineTransformation()
     t2 = ClampingTransformation()
     t3 = AbsoluteTransformation()
-
     c = ChainedTransformation([t1, t2])
-    t = c.append(t3).append(c)
 
-    assert t == ChainedTransformation([t1, t2, t3, t1, t2])
+    expected = ChainedTransformation([t1, t2, t3, t1, t2])
+    if chained_first:
+        actual = (c + t3) + c
+    else:
+        actual = c + (t3 + c)
+    assert actual == expected
 
 
 def test_affine_transformation_compression():
