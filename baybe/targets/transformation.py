@@ -8,7 +8,6 @@ from collections.abc import Callable, Iterable
 from functools import reduce
 from typing import TYPE_CHECKING
 
-import numpy as np
 from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
@@ -113,6 +112,24 @@ class Transformation(ABC):
         return args[0] + GenericTransformation(func)
 
 
+class MonotonicTransformation(Transformation):
+    """Class for monotonic transformations."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        import torch
+
+        interval = Interval.create(interval)
+        return Interval(
+            *sorted(
+                [
+                    float(self(torch.tensor(interval.lower))),
+                    float(self(torch.tensor(interval.upper))),
+                ]
+            )
+        )
+
+
 def combine_affine_transformations(
     t1: AffineTransformation, t2: AffineTransformation, /
 ) -> AffineTransformation:
@@ -214,12 +231,8 @@ class GenericTransformation(Transformation):
 
 
 @define
-class IdentityTransformation(Transformation):
+class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        return Interval.create(interval)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -233,7 +246,7 @@ class IdentityTransformation(Transformation):
 
 
 @define
-class ClampingTransformation(Transformation):
+class ClampingTransformation(MonotonicTransformation):
     """A transformation clamping values between specified cutoffs."""
 
     min: float = field(default=float("-inf"), converter=float)
@@ -243,20 +256,12 @@ class ClampingTransformation(Transformation):
     """The upper cutoff value."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return Interval(
-            max(min(interval.lower, self.max), self.min),
-            min(max(interval.upper, self.min), self.max),
-        )
-
-    @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.clamp(self.min, self.max)
 
 
 @define(slots=False, init=False)
-class AffineTransformation(Transformation):
+class AffineTransformation(MonotonicTransformation):
     """An affine transformation."""
 
     factor: float = field(default=1.0, converter=float)
@@ -283,21 +288,6 @@ class AffineTransformation(Transformation):
         from baybe.targets.botorch import AffinePosteriorTransform
 
         return AffinePosteriorTransform(self.factor, self.shift)
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-
-        import torch
-
-        return Interval(
-            *sorted(
-                [
-                    float(self(torch.tensor(interval.lower))),
-                    float(self(torch.tensor(interval.upper))),
-                ]
-            )
-        )
 
     @classmethod
     def from_unit_interval(
@@ -382,13 +372,8 @@ class AbsoluteTransformation(Transformation):
 
 
 @define(frozen=True)
-class LogarithmicTransformation(Transformation):
+class LogarithmicTransformation(MonotonicTransformation):
     """A logarithmic transformation."""
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return Interval(np.log(interval.lower), np.log(interval.upper))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -396,13 +381,8 @@ class LogarithmicTransformation(Transformation):
 
 
 @define(frozen=True)
-class ExponentialTransformation(Transformation):
+class ExponentialTransformation(MonotonicTransformation):
     """An exponential transformation."""
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return Interval(np.exp(interval.lower), np.exp(interval.upper))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
