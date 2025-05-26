@@ -6,15 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- New target API, including advanced machinery for defining and manipulating target
-  transformations based on the new `Transformation` class hierarchy
+- New `NumericalTarget` interface, including advanced machinery for defining and
+  manipulating target transformations based on the new `Transformation` class hierarchy
 - `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
   for reproducing the legacy `MATCH` modes
 - `ramp` convenience constructor to `NumericalTarget` for reproducing the legacy
   behavior when imposing bounds on `MIN`/`MAX` targets
-- Support for accessing posterior information of all target types (i.e. now including
-  those considered `MATCH` target in the legacy API) as well as targets used in
-  `DesirabilityObjective`
+- Full support for accessing posterior information of `NumericalTarget`, i.e. now
+  including settings considered `MATCH` mode in the legacy interface, as well as targets
+  used in `DesirabilityObjective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
 - `normalize`, `clamp`, `log`, `exp` and `power` methods to `NumericalTarget` for
   easy creation of transformed targets from existing ones
@@ -22,19 +22,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   target value ranges
 - Support for non-normalized targets in `DesirabilityObjective`
 - `Objective.to_botorch` method for converting objectives to BoTorch
-- Tests for migrating to new target API
+- Tests for migrating to new `NumericalTarget` interface
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
   random or deterministic sampling for equidistant cases
 - `random_tie_break` and `initialization` attributes to `FPSRecommender` to
   control sampling in `farthest_point_sampling`
 
 ### Changed
-- The target behavior is no longer defined via a `mode` (i.e. `MIN`, `MAX`, `MATCH` in
-  legacy API) but controlled using a minimization flag and corresponding target
-  transformations. This allows for more flexible target definitions, makes invalid
-  target configurations unrepresentable, and is in line with the definition of
-  mathematical optimization problems. Also, it avoids the need to explicitly specify an
-  irrelevant optimization direction in the context of active learning.
+- The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
+  `MAX`, `MATCH` in legacy interface) but controlled using a minimization flag and
+  corresponding target transformations. This allows for more flexible target
+  definitions, makes invalid target configurations unrepresentable, and is in line with
+  the definition of mathematical optimization problems. Also, it avoids the need to
+  explicitly specify an irrelevant optimization direction in the context of active
+  learning.
 - Evaluating posteriors using a `DesirabilityObjective` now returns information 
   for each target instead of for the desirability value
 - Specifying bounds for `Interval` is now optional

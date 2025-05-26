@@ -38,7 +38,7 @@ from baybe.utils.interval import Interval, convert_bounds
 
 
 @define
-class _LegacyAPI:
+class _LegacyInterface:
     """Class for parsing legacy targets arguments (for deprecation)."""
 
     name: str = field(validator=instance_of(str))
@@ -106,40 +106,40 @@ class NumericalTarget(Target, SerialMixin):
         self, name: str, *args, **kwargs
     ):
         """Translate legacy target specifications."""
-        # Check if legacy or modern API is used
+        # Check if legacy or modern interface is used
         try:
             self.__attrs_init__(name, *args, **kwargs)
             return
         except Exception:
             pass
 
-        # Now we know that the legacy API is used
-        legacy = _LegacyAPI(name, *args, **kwargs)
+        # Now we know that the legacy interface is used
+        legacy = _LegacyInterface(name, *args, **kwargs)
 
         warnings.warn(
             "Creating numerical targets by specifying MAX/MIN/MATCH modes has been "
             "deprecated. For now, you do not need to change your code as we "
             "automatically converted your target to the new format. "
             "However, this functionality will be removed in a future version, so "
-            "please familiarize yourself with the new API.",
+            "please familiarize yourself with the new interface.",
             DeprecationWarning,
         )
 
-        # Translate to modern API
+        # Translate to modern interface
         transformation, minimize = _translate_legacy_arguments(
             legacy.mode, legacy.bounds, legacy.transformation
         )
         self.__attrs_init__(legacy.name, transformation, minimize=minimize)
 
     @classmethod
-    def from_modern_api(
+    def from_modern_interface(
         cls,
         name: str,
         transformation: Transformation | None = None,
         *,
         minimize: bool = False,
     ) -> NumericalTarget:
-        """A deprecation helper for creating a target explicitly using the modern API.
+        """A deprecation helper for creating targets using the modern interface.
 
         Args:
             name: The name of the target.
@@ -150,9 +150,9 @@ class NumericalTarget(Target, SerialMixin):
             The created target object.
         """  # noqa: D401
         warnings.warn(
-            f"The helper constructor '{cls.from_modern_api.__name__}' is only "
-            f"available during the deprecation phase of the legacy target API and can "
-            f"to obtain type hints and for IDE autocompletion. Once the "
+            f"The helper constructor '{cls.from_modern_interface.__name__}' is only "
+            f"available during the deprecation phase of the legacy target interface "
+            f"to provide type hints and for IDE autocompletion. Once the "
             f"deprecation phase is over, the regular constructor will take over its "
             f"role with all typing features.",
             DeprecationWarning,
@@ -161,14 +161,14 @@ class NumericalTarget(Target, SerialMixin):
         return cls(name, transformation, minimize=minimize)
 
     @classmethod
-    def from_legacy_api(
+    def from_legacy_interface(
         cls,
         name: str,
         mode: TargetMode,
         bounds: None | Iterable | Interval = None,
         transformation: TargetTransformation | None = None,
     ) -> NumericalTarget:
-        """A deprecation helper for creating a target explicitly using the legacy API.
+        """A deprecation helper for creating targets using the legacy interface.
 
         Args:
             name: The name of the target.
@@ -180,11 +180,11 @@ class NumericalTarget(Target, SerialMixin):
             The created target object.
         """  # noqa: D401
         warnings.warn(
-            f"The helper constructor '{cls.from_legacy_api.__name__}' is only "
-            f"available during the deprecation phase of the legacy target API and can "
-            f"to obtain type hints and for IDE autocompletion. Once the "
-            f"deprecation phase is over, please switch to the modern API call using "
-            f"the regular constructor.",
+            f"The helper constructor '{cls.from_legacy_interface.__name__}' is only "
+            f"available during the deprecation phase of the legacy target interface "
+            f"to provide type hints and for IDE autocompletion. Once the "
+            f"deprecation phase is over, please switch to the modern interface "
+            f"using the regular constructor call.",
             DeprecationWarning,
         )
 

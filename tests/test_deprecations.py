@@ -263,13 +263,13 @@ def test_legacy_target_construction():
 def test_target_deprecation_helpers():
     """Calling the target deprecation helper constructors raises a warning."""
     with pytest.warns(
-        DeprecationWarning, match="The helper constructor 'from_legacy_api'"
+        DeprecationWarning, match="The helper constructor 'from_legacy_interface'"
     ):
-        NumericalTarget.from_legacy_api("t", "MIN")
+        NumericalTarget.from_legacy_interface("t", "MIN")
     with pytest.warns(
-        DeprecationWarning, match="The helper constructor 'from_modern_api'"
+        DeprecationWarning, match="The helper constructor 'from_modern_interface'"
     ):
-        NumericalTarget.from_modern_api("t", minimize=True)
+        NumericalTarget.from_modern_interface("t", minimize=True)
 
 
 def test_target_legacy_deserialization():
