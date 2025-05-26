@@ -48,7 +48,6 @@ class _LegacyInterface:
     bounds: Interval = field(default=None, converter=convert_bounds)
 
     transformation: TargetTransformation | None = field(
-        alias="transformation",
         converter=lambda x: None if x is None else TargetTransformation(x),
     )
 
