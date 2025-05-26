@@ -191,15 +191,6 @@ class ChainedTransformation(Transformation):
         return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
 
     @override
-    def append(self, transformation: Transformation, /) -> ChainedTransformation:
-        addendum = (
-            transformation.transformations
-            if isinstance(transformation, ChainedTransformation)
-            else [transformation]
-        )
-        return ChainedTransformation([*self.transformations, *addendum])
-
-    @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return compose(*(t.__call__ for t in self.transformations))(x)
 
