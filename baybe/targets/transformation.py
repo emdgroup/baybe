@@ -405,6 +405,71 @@ class AbsoluteTransformation(Transformation):
         return self._transformation(x)
 
 
+@define(slots=False)
+class TriangularTransformation(Transformation):
+    r"""A transformation with a triangular shape.
+
+    The transformation is defined by a peak location between two cutoff values. Outside
+    the region delimited by the cutoff values, the transformation is zero. Inside the
+    region, the transformed values increase linearly from both cutoffs to the peak,
+    where the highest value of 1 is reached:
+
+    .. math::
+        f(x) =
+        \begin{cases}
+            0 & \text{if } x < c_1 \\
+            \frac{x - c_1}{p - c_1} & \text{if } c_1 \leq x < p \\
+            \frac{c_2 - x}{c_2 - p} & \text{if } p \leq x < c_2 \\
+            0 & \text{if } c_2 \leq x
+        \end{cases}
+
+    where :math:`c_1` and :math:`c_2` are the left and right cutoffs, respectively, and
+    :math:`p` is the peak location, with :math:`c_1 < p < c_2`.
+    """
+
+    peak: float = field(converter=float)
+    """The location of the peak of the transformation."""
+
+    cutoffs: Interval = field(converter=Interval.create)
+    """The cutoff values where the transformation reaches zero."""
+
+    _transformation: Transformation = field(init=False, repr=False)
+    """Internal transformation object handling the operations."""
+
+    @_transformation.default
+    def _default_transformation(self) -> Transformation:
+        return (
+            TwoSidedLinearTransformation(
+                slope_left=1 / self.margins[0],
+                slope_right=-1 / self.margins[1],
+                center=self.peak,
+            )
+            + 1
+        ).clamp(min=0)
+
+    @cutoffs.validator
+    def _validate_cutoffs(self, _, cutoffs: Interval) -> None:
+        if not (cutoffs.lower < self.peak < cutoffs.upper):
+            raise ValueError(
+                f"The peak of the transformation must be located strictly between the "
+                f"specified cutoff values. Given peak location: {self.peak}. "
+                f"Given cutoffs: {cutoffs.to_tuple()}."
+            )
+
+    @property
+    def margins(self) -> tuple[float, float]:
+        """The left and right margin denoting the width of the triangle."""
+        return self.peak - self.cutoffs.lower, self.cutoffs.upper - self.peak
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        return self._transformation.get_image(interval)
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return self._transformation(x)
+
+
 @define(frozen=True)
 class LogarithmicTransformation(MonotonicTransformation):
     """A logarithmic transformation."""

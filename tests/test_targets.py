@@ -23,6 +23,7 @@ from baybe.targets.transformation import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    TriangularTransformation,
     TwoSidedLinearTransformation,
     bell_transform,
     linear_transform,
@@ -386,6 +387,7 @@ ts_l = TwoSidedLinearTransformation(slope_left=2, slope_right=5, center=2)
 ts_n = TwoSidedLinearTransformation(slope_left=4, slope_right=-5, center=2)
 bell = BellTransformation(center=c, width=2)
 abs = AbsoluteTransformation()
+tri = TriangularTransformation(peak=4, cutoffs=(2, 8))
 log = LogarithmicTransformation()
 exp = ExponentialTransformation()
 pow = PowerTransformation(0.5)
@@ -428,6 +430,12 @@ bell_off_01 = bell(to_tensor(bell.center + 0.1))
         param(abs, (0, 1), (0, 1), id="abs_0_1"),
         param(abs, (0.1, 1), (0.1, 1), id="abs_0.1_1"),
         param(abs, (-0.1, 1), (0, 1), id="abs_-0.1_1"),
+        param(tri, (None, None), (0, 1), id="tri_open"),
+        param(tri, (0, 1), (0, 0), id="tri_left_outside"),
+        param(tri, (0, 3), (0, 0.5), id="tri_left_overlapping"),
+        param(tri, (3, 4), (0.5, 1), id="tri_overlapping"),
+        param(tri, (5, 11), (0, 0.75), id="tri_right_overlapping"),
+        param(tri, (11, 12), (0, 0), id="tri_right_outside"),
         param(log, (0, None), (None, None), id="log_open"),
         param(log, (1, np.exp(1)), (0, 1), id="log_unit"),
         param(exp, (None, None), (0, None), id="exp_open"),
