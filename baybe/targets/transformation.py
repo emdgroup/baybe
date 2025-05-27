@@ -323,6 +323,42 @@ class AffineTransformation(MonotonicTransformation):
 
 
 @define(slots=False)
+class TwoSidedLinearTransformation(Transformation):
+    """A transformation with two linear segments on either side of a center point."""
+
+    slope_left: float = field(converter=float)
+    """The slope of the linear segment to the left of the center."""
+
+    slope_right: float = field(converter=float)
+    """The slope of the linear segment to the right of the center."""
+
+    center: float = field(default=0.0, converter=float)
+    """The center point of the transformation."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+
+        image_lower = self(to_tensor(interval.lower)).item()
+        image_upper = self(to_tensor(interval.upper)).item()
+        min_val, max_val = sorted([image_lower, image_upper])
+        if interval.contains(self.center):
+            return Interval(min(0, min_val), max(0, max_val))
+        else:
+            return Interval(min_val, max_val)
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        import torch
+
+        return torch.where(
+            x < self.center,
+            (x - self.center) * self.slope_left,
+            (x - self.center) * self.slope_right,
+        )
+
+
+@define(slots=False)
 class BellTransformation(Transformation):
     """A Gaussian bell curve transformation."""
 

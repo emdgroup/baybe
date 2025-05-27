@@ -23,6 +23,7 @@ from baybe.targets.transformation import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    TwoSidedLinearTransformation,
     bell_transform,
     linear_transform,
     triangular_transform,
@@ -380,6 +381,9 @@ c = 1
 id = IdentityTransformation()
 clamp = ClampingTransformation(min=2, max=5)
 aff = AffineTransformation(factor=2, shift=1)
+ts_v = TwoSidedLinearTransformation(slope_left=-4, slope_right=5, center=2)
+ts_l = TwoSidedLinearTransformation(slope_left=2, slope_right=5, center=2)
+ts_n = TwoSidedLinearTransformation(slope_left=4, slope_right=-5, center=2)
 bell = BellTransformation(center=c, width=2)
 abs = AbsoluteTransformation()
 log = LogarithmicTransformation()
@@ -408,6 +412,12 @@ bell_off_01 = bell(to_tensor(bell.center + 0.1))
         param(aff, (None, None), (None, None), id="affine_open"),
         param(aff, (0, None), (aff_0, None), id="affine_half_open"),
         param(aff, (0, 1), (aff_0, aff_1), id="affine_finite"),
+        param(ts_v, (1, 3), (0, 5), id="ts_v_with_center"),
+        param(ts_v, (3, 4), (5, 10), id="ts_v_no_center"),
+        param(ts_l, (1, 3), (-2, 5), id="ts_l_with_center"),
+        param(ts_l, (3, 4), (5, 10), id="ts_l_no_center"),
+        param(ts_n, (1, 3), (-5, 0), id="ts_n_with_center"),
+        param(ts_n, (3, 4), (-10, -5), id="ts_n_no_center"),
         param(bell, (None, None), (0, 1), id="bell_open"),
         param(bell, (c, None), (0, 1), id="bell_half_open"),
         param(bell, (c + 1, None), (0, bell_off_1), id="bell_half_open_reduced"),
