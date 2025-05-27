@@ -388,10 +388,10 @@ pow = PowerTransformation(0.5)
 chain = ChainedTransformation([abs, clamp, aff])
 
 # Transformed values
-aff_0 = aff(torch.tensor(0))
-aff_1 = aff(torch.tensor(1))
-bell_off_1 = bell(torch.tensor(bell.center + 1))
-bell_off_01 = bell(torch.tensor(bell.center + 0.1))
+aff_0 = aff(to_tensor(0))
+aff_1 = aff(to_tensor(1))
+bell_off_1 = bell(to_tensor(bell.center + 1))
+bell_off_01 = bell(to_tensor(bell.center + 0.1))
 
 
 @pytest.mark.parametrize(
@@ -438,8 +438,8 @@ def test_target_normalization():
     t = ModernTarget("t")
     with pytest.raises(IncompatibilityError, match="Only bounded targets"):
         t.normalize()
-    assert t.clamp(-5, 2).get_image() == Interval(-5, 2)
-    assert t.clamp(-5, 2).normalize().get_image() == Interval(0, 1)
+    assert t.clamp(-2, 4).get_image() == Interval(-2, 4)
+    assert t.clamp(-2, 4).normalize().get_image() == Interval(0, 1)
 
 
 def test_affine_transformation_operation_order(series):

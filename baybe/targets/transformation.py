@@ -23,6 +23,7 @@ from baybe.targets._deprecated import (  # noqa: F401
     triangular_transform,
 )
 from baybe.utils.basic import compose, is_all_instance
+from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
@@ -117,14 +118,12 @@ class MonotonicTransformation(Transformation):
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
-        import torch
-
         interval = Interval.create(interval)
         return Interval(
             *sorted(
                 [
-                    float(self(torch.tensor(interval.lower))),
-                    float(self(torch.tensor(interval.upper))),
+                    self(to_tensor(interval.lower)).item(),
+                    self(to_tensor(interval.upper)).item(),
                 ]
             )
         )
@@ -337,10 +336,8 @@ class BellTransformation(Transformation):
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
 
-        import torch
-
-        image_lower = float(self(torch.tensor(interval.lower)))
-        image_upper = float(self(torch.tensor(interval.upper)))
+        image_lower = self(to_tensor(interval.lower)).item()
+        image_upper = self(to_tensor(interval.upper)).item()
         if interval.contains(self.center):
             return Interval(min(image_lower, image_upper), 1)
         else:

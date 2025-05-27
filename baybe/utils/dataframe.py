@@ -11,9 +11,6 @@ import numpy as np
 import pandas as pd
 
 from baybe.exceptions import SearchSpaceMatchWarning
-from baybe.targets.base import Target
-from baybe.targets.binary import BinaryTarget
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
@@ -25,23 +22,25 @@ if TYPE_CHECKING:
     _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
 
-
-@overload
-def to_tensor(x: np.ndarray | pd.Series | pd.DataFrame, /) -> Tensor: ...
+_ConvertibleToTensor = int | float | np.ndarray | pd.Series | pd.DataFrame
 
 
 @overload
-def to_tensor(*x: np.ndarray | pd.Series | pd.DataFrame) -> tuple[Tensor, ...]: ...
+def to_tensor(x: _ConvertibleToTensor, /) -> Tensor: ...
 
 
-def to_tensor(*x: np.ndarray | pd.Series | pd.DataFrame) -> Tensor | tuple[Tensor, ...]:
-    """Convert numpy arrays and pandas series/dataframes to tensors.
+@overload
+def to_tensor(*x: _ConvertibleToTensor) -> tuple[Tensor, ...]: ...
+
+
+def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
+    """Convert ints, floats, numpy arrays and pandas series/dataframes to tensors.
 
     Args:
-        *x: The array(s)/series/dataframe(s) to be converted.
+        *x: The int(s)/float(s)/array(s)/series/dataframe(s) to be converted.
 
     Returns:
-        The provided array(s)/series/dataframe(s) represented as tensor(s).
+        The provided inputs represented as tensor(s).
     """
     # FIXME This function seems to trigger a problem when some columns in either of
     #  the dfs have a dtype other than int or float (e.g. object, bool). This can
@@ -55,7 +54,9 @@ def to_tensor(*x: np.ndarray | pd.Series | pd.DataFrame) -> Tensor | tuple[Tenso
     from baybe.utils.torch import DTypeFloatTorch
 
     out = tuple(
-        torch.from_numpy(
+        torch.tensor(xi, dtype=DTypeFloatTorch)
+        if isinstance(xi, (int, float))
+        else torch.from_numpy(
             (xi.values if isinstance(xi, (pd.Series, pd.DataFrame)) else xi).astype(
                 DTypeFloatNumpy
             )
@@ -79,6 +80,9 @@ def add_fake_measurements(
     Returns:
         The modified dataframe.
     """
+    from baybe.targets.binary import BinaryTarget
+    from baybe.targets.numerical import NumericalTarget
+
     for target in targets:
         if isinstance(target, BinaryTarget):
             data[target.name] = np.random.choice(
