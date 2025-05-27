@@ -17,6 +17,7 @@ from baybe.serialization.core import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.serialization.mixin import SerialMixin
 from baybe.targets._deprecated import (  # noqa: F401
     bell_transform,
     linear_transform,
@@ -42,7 +43,7 @@ def convert_transformation(x: Transformation | TensorCallable, /) -> Transformat
 
 
 @define
-class Transformation(ABC):
+class Transformation(SerialMixin, ABC):
     """Abstract base class for all transformations."""
 
     @abstractmethod
@@ -388,20 +389,20 @@ class BellTransformation(Transformation):
 class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
+    _transformation: Transformation = field(
+        factory=lambda: TwoSidedLinearTransformation(slope_left=-1, slope_right=1),
+        init=False,
+        repr=False,
+    )
+    """Internal transformation object handling the operations."""
+
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-
-        image_lower = abs(interval.lower)
-        image_upper = abs(interval.upper)
-        if interval.contains(0):
-            return Interval(0, max(image_lower, image_upper))
-        else:
-            return Interval(*sorted([image_lower, image_upper]))
+        return self._transformation.get_image(interval)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return x.abs()
+        return self._transformation(x)
 
 
 @define(frozen=True)
