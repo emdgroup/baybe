@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
+from numbers import Real
 from typing import TYPE_CHECKING
 
 from attrs import define, field
@@ -460,6 +461,24 @@ class TriangularTransformation(Transformation):
     def margins(self) -> tuple[float, float]:
         """The left and right margin denoting the width of the triangle."""
         return self.peak - self.cutoffs.lower, self.cutoffs.upper - self.peak
+
+    @classmethod
+    def from_margins(
+        cls, peak: float, margins: float | Sequence[float]
+    ) -> TriangularTransformation:
+        """Create a triangular transformation from a peak location and margins."""
+        match margins:
+            case Real():
+                margins = (margins, margins)
+            case (Real(), Real()):
+                pass
+            case _:
+                raise ValueError(
+                    "You must either provide a single numeric value as margin "
+                    "(for symmetric transformation around the peak) or a "
+                    "length-two sequence of numeric values (for asymmetric margins)."
+                )
+        return cls(peak=peak, cutoffs=Interval(peak - margins[0], peak + margins[1]))
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
