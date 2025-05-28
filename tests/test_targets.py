@@ -111,7 +111,7 @@ def test_constructor_equivalence_match(transformation):
     if transformation == "BELL":
         targets += (ModernTarget.match_bell("t", match_value=1.5, width=0.5),)
     else:
-        targets += (ModernTarget.match_triangular("t", (1, 2)),)
+        targets += (ModernTarget.match_triangular("t", cutoffs=(1, 2)),)
 
     for t1, t2 in pairwise(targets):
         assert t1 == t2
@@ -216,28 +216,28 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
-            ModernTarget.match_triangular("t", (-1, 1)),
+            ModernTarget.match_triangular("t", cutoffs=(-1, 1)),
             triangular_transform(sample_input(), -1, 1),
             id="match_triangular_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
-            ModernTarget.match_triangular("t", (1, 3)),
+            ModernTarget.match_triangular("t", cutoffs=(1, 3)),
             triangular_transform(sample_input(), 1, 3),
             id="match_triangular_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
-            ModernTarget.match_triangular("t", (-5, 5)),
+            ModernTarget.match_triangular("t", cutoffs=(-5, 5)),
             triangular_transform(sample_input(), -5, 5),
             id="match_triangular_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
             ModernTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
-            ModernTarget.match_triangular("t", (2, 6)),
+            ModernTarget.match_triangular("t", cutoffs=(2, 6)),
             triangular_transform(sample_input(), 2, 6),
             id="match_triangular_scaled_shifted",
         ),

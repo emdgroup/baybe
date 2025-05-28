@@ -77,14 +77,15 @@ def _translate_legacy_arguments(
     else:
         modern_transformation: Transformation
         if transformation is TargetTransformation.BELL:
-            center = (bounds.upper + bounds.lower) / 2
             width = (bounds.upper - bounds.lower) / 2
-            modern_transformation = BellTransformation(center, width)
+            modern_transformation = BellTransformation(bounds.center, width)
         else:
             # Use transformation from what would have been the appropriate call
             modern_transformation = cast(
                 Transformation,
-                NumericalTarget.match_triangular("dummy", bounds)._transformation,
+                NumericalTarget.match_triangular(
+                    "dummy", cutoffs=bounds
+                )._transformation,
             )
         return (modern_transformation, False)
 
