@@ -54,6 +54,14 @@ PREVIOUS MEASUREMENTS:
 {{ measurements.to_string() }}
 {% endif %}
 
+{% if related_data is not none and not related_data.empty %}
+RELATED DATA:
+Here is data from other optimization campaigns.
+It might be useful to learn from these experiments or not.
+Use it as you see fit.
+{{ related_data.to_string() }}
+{% endif %}
+
 Please suggest {{ batch_size }} new experimental conditions that are likely to improve the optimization objective.
 For each suggestion, provide:
 1. A brief explanation of why you chose these values
@@ -231,6 +239,14 @@ class LLMRecommender(RecommenderProtocol):
     for recovery attempts.
     """
 
+    related_data: pd.DataFrame | None = field(default=None)
+    """Optional DataFrame containing data from similar optimization campaigns.
+
+    This data can be used to inform the recommendations by learning from
+    similar experiments. The DataFrame should have the same parameter columns
+    as the current experiment.
+    """
+
     def _construct_prompt(
         self,
         searchspace: SearchSpace,
@@ -252,6 +268,7 @@ class LLMRecommender(RecommenderProtocol):
             objective_description=self.objective_description,
             parameter_descriptions=self.parameter_descriptions,
             measurements=measurements,
+            related_data=self.related_data,
             batch_size=batch_size,
             format_instructions=self.format_instructions,
         )
@@ -453,5 +470,6 @@ class LLMRecommender(RecommenderProtocol):
             to_string(
                 "Parameter Descriptions", self.parameter_descriptions, single_line=True
             ),
+            to_string("Related Data", self.related_data, single_line=True),
         ]
         return to_string(self.__class__.__name__, *fields)
