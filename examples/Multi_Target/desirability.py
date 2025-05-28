@@ -55,7 +55,7 @@ Target_2 = NumericalTarget.ramp("Target_2", cutoffs=(0, 100), descending=True)
 # In this example, define a third target working with the mode `MATCH`.
 # We furthermore use `target_transform="BELL"`.
 
-Target_3 = NumericalTarget.match_bell("Target_3", match_value=50, width=5)
+Target_3 = NumericalTarget.match_bell("Target_3", match_value=50, sigma=5)
 
 # Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
 # For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal value.

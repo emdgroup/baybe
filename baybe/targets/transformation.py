@@ -366,8 +366,13 @@ class BellTransformation(Transformation):
     center: float = field(default=0.0, converter=float)
     """The center point of the bell curve."""
 
-    width: float = field(default=1.0, converter=float)
-    """The width of the bell curve."""
+    sigma: float = field(default=1.0, converter=float)
+    """The scale parameter of the transformation.
+
+    Concerning the width of the bell curve, it has the same interpretation as the
+    standard deviation in a Gaussian distribution. (The magnitude of the curve is
+    not affected and always reaches a maximum value of 1 at the center.)
+    """
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -382,7 +387,7 @@ class BellTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return x.sub(self.center).pow(2.0).div(2.0 * self.width**2).neg().exp()
+        return x.sub(self.center).div(self.sigma).pow(2.0).div(2.0).neg().exp()
 
 
 @define(slots=False)

@@ -246,18 +246,19 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, transformation)
 
     @classmethod
-    def match_bell(cls, name: str, match_value: float, width: float) -> NumericalTarget:
+    def match_bell(cls, name: str, match_value: float, sigma: float) -> NumericalTarget:
         """Create a target to match a given value using a bell transformation.
 
         Args:
             name: The name of the target.
             match_value: The value to be matched.
-            width: The width of the bell curve.
+            sigma: The scale parameter controlling the width of the bell curve. For more
+                details, see :class:`baybe.targets.transformation.BellTransformation`.
 
         Returns:
             The target with applied bell matching transformation.
         """
-        return NumericalTarget(name, BellTransformation(match_value, width))
+        return NumericalTarget(name, BellTransformation(match_value, sigma))
 
     @classmethod
     def ramp(

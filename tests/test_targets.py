@@ -109,7 +109,7 @@ def test_constructor_equivalence_match(transformation):
     # ------------
     # Modern style
     if transformation == "BELL":
-        targets += (ModernTarget.match_bell("t", match_value=1.5, width=0.5),)
+        targets += (ModernTarget.match_bell("t", match_value=1.5, sigma=0.5),)
     else:
         targets += (
             ModernTarget.match_triangular("t", cutoffs=(1, 2)),
@@ -192,28 +192,28 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget("t", "MATCH", (-1, 1), "BELL"),
-            ModernTarget.match_bell("t", match_value=0, width=1),
+            ModernTarget.match_bell("t", match_value=0, sigma=1),
             bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget("t", "MATCH", (1, 3), "BELL"),
-            ModernTarget.match_bell("t", match_value=2, width=1),
+            ModernTarget.match_bell("t", match_value=2, sigma=1),
             bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget("t", "MATCH", (-5, 5), "BELL"),
-            ModernTarget.match_bell("t", match_value=0, width=5),
+            ModernTarget.match_bell("t", match_value=0, sigma=5),
             bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget("t", "MATCH", (2, 6), "BELL"),
-            ModernTarget.match_bell("t", match_value=4, width=2),
+            ModernTarget.match_bell("t", match_value=4, sigma=2),
             bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
@@ -389,7 +389,7 @@ aff = AffineTransformation(factor=2, shift=1)
 ts_v = TwoSidedLinearTransformation(slope_left=-4, slope_right=5, center=2)
 ts_l = TwoSidedLinearTransformation(slope_left=2, slope_right=5, center=2)
 ts_n = TwoSidedLinearTransformation(slope_left=4, slope_right=-5, center=2)
-bell = BellTransformation(center=c, width=2)
+bell = BellTransformation(center=c, sigma=2)
 abs = AbsoluteTransformation()
 tri = TriangularTransformation(cutoffs=(2, 8), peak=4)
 log = LogarithmicTransformation()
