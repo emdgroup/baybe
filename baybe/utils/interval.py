@@ -147,20 +147,6 @@ class Interval(SerialMixin):
         return self.lower <= number <= self.upper
 
 
-def convert_bounds(bounds: ConvertibleToInterval) -> Interval:
-    """Convert bounds given in another format to an interval.
-
-    Args:
-        bounds: The bounds that should be transformed to an interval.
-
-    Returns:
-        The interval.
-    """
-    if isinstance(bounds, Interval):
-        return bounds
-    return Interval.create(bounds)
-
-
 def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
     """Use the singledispatch mechanism as fallback to parse arbitrary input."""
     if isinstance(value, dict):

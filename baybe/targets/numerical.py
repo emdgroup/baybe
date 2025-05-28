@@ -33,7 +33,7 @@ from baybe.targets.transformation import (
     Transformation,
     convert_transformation,
 )
-from baybe.utils.interval import ConvertibleToInterval, Interval, convert_bounds
+from baybe.utils.interval import ConvertibleToInterval, Interval
 
 
 @define
@@ -44,7 +44,7 @@ class _LegacyInterface:
 
     mode: TargetMode = field(converter=TargetMode)
 
-    bounds: Interval = field(default=None, converter=convert_bounds)
+    bounds: Interval = field(default=None, converter=Interval.create)
 
     transformation: TargetTransformation | None = field(
         converter=lambda x: None if x is None else TargetTransformation(x),
@@ -186,7 +186,7 @@ class NumericalTarget(Target, SerialMixin):
             DeprecationWarning,
         )
 
-        bounds = convert_bounds(bounds)
+        bounds = Interval.create(bounds)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)

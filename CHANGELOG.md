@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Option to specify reference values for `add_fake_measurements`
+- `convert_bounds` utility (since now equivalent to `Interval.create`)
 
 ### Deprecations
 - Creating `NumericalTarget`s using a `mode` argument

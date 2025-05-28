@@ -14,7 +14,7 @@ from typing_extensions import override
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
-from baybe.utils.interval import InfiniteIntervalError, Interval, convert_bounds
+from baybe.utils.interval import InfiniteIntervalError, Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
@@ -109,7 +109,7 @@ class NumericalContinuousParameter(ContinuousParameter):
     # See base class.
 
     # object variables
-    bounds: Interval = field(default=None, converter=convert_bounds)
+    bounds: Interval = field(default=None, converter=Interval.create)
     """The bounds of the parameter."""
 
     @bounds.validator

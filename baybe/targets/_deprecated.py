@@ -15,7 +15,7 @@ from typing_extensions import override
 
 from baybe.serialization import SerialMixin
 from baybe.targets.base import Target
-from baybe.utils.interval import Interval, convert_bounds
+from baybe.utils.interval import Interval
 
 
 class TargetMode(Enum):
@@ -86,7 +86,7 @@ class LegacyTarget(Target, SerialMixin):
     mode: TargetMode = field(converter=TargetMode)
     """The target mode."""
 
-    bounds: Interval = field(default=None, converter=convert_bounds)
+    bounds: Interval = field(default=None, converter=Interval.create)
     """Optional target bounds."""
 
     transformation: TargetTransformation | None = field(
