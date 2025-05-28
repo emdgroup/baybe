@@ -111,7 +111,11 @@ def test_constructor_equivalence_match(transformation):
     if transformation == "BELL":
         targets += (ModernTarget.match_bell("t", match_value=1.5, width=0.5),)
     else:
-        targets += (ModernTarget.match_triangular("t", cutoffs=(1, 2)),)
+        targets += (
+            ModernTarget.match_triangular("t", cutoffs=(1, 2)),
+            ModernTarget.match_triangular("t", match_value=1.5, width=1),
+            ModernTarget.match_triangular("t", match_value=1.5, margins=(0.5, 0.5)),
+        )
 
     for t1, t2 in pairwise(targets):
         assert t1 == t2
