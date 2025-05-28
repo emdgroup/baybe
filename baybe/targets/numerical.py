@@ -197,7 +197,7 @@ class NumericalTarget(Target, SerialMixin):
     def match_triangular(
         cls,
         name: str,
-        match_value: float,
+        match_value: float | None = None,
         *,
         cutoffs: ConvertibleToInterval = None,
         width: float | None = None,
@@ -207,7 +207,8 @@ class NumericalTarget(Target, SerialMixin):
 
         Args:
             name: The name of the target.
-            match_value: The value to be matched.
+            match_value: The value to be matched. Can be omitted when ``cutoffs`` are
+                provided, in which case it defaults to the midpoint.
             cutoffs: The cutoff values where the output of the transformation
                 reaches zero.
             width: The width of the (symmetric) triangular transformation.
@@ -221,13 +222,21 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied triangular matching transformation.
         """
+        if match_value is None:
+            if cutoffs is None:
+                raise ValueError(
+                    "If no 'match_value' is provided, 'cutoffs' must be specified."
+                )
+            cutoffs = Interval.create(cutoffs)
+            match_value = cutoffs.center
+
         if sum(x is not None for x in (cutoffs, width, margins)) != 1:
             raise ValueError(
-                "Exactly one of `cutoffs`, `width`, or `margins` must be provided."
+                "Exactly one of 'cutoffs', 'width', or 'margins' must be provided."
             )
 
         if cutoffs is not None:
-            transformation = TriangularTransformation(match_value, cutoffs)
+            transformation = TriangularTransformation(cutoffs, match_value)
         elif width is not None:
             transformation = TriangularTransformation.from_width(match_value, width)
         elif margins is not None:

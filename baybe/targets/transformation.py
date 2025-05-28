@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING
 
-from attrs import define, field
+from attrs import Factory, define, field
 from attrs.validators import deep_iterable, instance_of, is_callable, min_len
 from typing_extensions import override
 
@@ -427,11 +427,14 @@ class TriangularTransformation(Transformation):
     :math:`p` is the peak location, with :math:`c_1 < p < c_2`.
     """
 
-    peak: float = field(converter=float)
-    """The location of the peak of the transformation."""
-
     cutoffs: Interval = field(converter=Interval.create)
     """The cutoff values where the transformation reaches zero."""
+
+    peak: float = field(
+        default=Factory(lambda self: self.cutoffs.center, takes_self=True),
+        converter=float,
+    )
+    """The peak location of the transformation. By default, centered between cutoffs."""
 
     _transformation: Transformation = field(init=False, repr=False)
     """Internal transformation object handling the operations."""
