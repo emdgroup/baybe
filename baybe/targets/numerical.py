@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import warnings
-from collections.abc import Iterable
 from typing import Any, cast
 
 import pandas as pd
@@ -34,7 +33,7 @@ from baybe.targets.transformation import (
     Transformation,
     convert_transformation,
 )
-from baybe.utils.interval import Interval, convert_bounds
+from baybe.utils.interval import ConvertibleToInterval, Interval, convert_bounds
 
 
 @define
@@ -164,7 +163,7 @@ class NumericalTarget(Target, SerialMixin):
         cls,
         name: str,
         mode: TargetMode,
-        bounds: None | Iterable | Interval = None,
+        bounds: ConvertibleToInterval = None,
         transformation: TargetTransformation | None = None,
     ) -> NumericalTarget:
         """A deprecation helper for creating targets using the legacy interface.
@@ -195,7 +194,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @classmethod
     def match_triangular(
-        cls, name: str, cutoffs: Interval | Iterable[float]
+        cls, name: str, cutoffs: ConvertibleToInterval
     ) -> NumericalTarget:
         """Create a target to match a given setpoint using a triangular transformation.
 
@@ -232,7 +231,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @classmethod
     def ramp(
-        cls, name: str, cutoffs: Interval | Iterable[float], *, descending: bool = False
+        cls, name: str, cutoffs: ConvertibleToInterval, *, descending: bool = False
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
 

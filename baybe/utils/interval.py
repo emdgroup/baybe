@@ -6,7 +6,7 @@ import gc
 from collections.abc import Iterable
 from copy import deepcopy
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 from attrs import define, field
@@ -23,6 +23,10 @@ if TYPE_CHECKING:
 
 class InfiniteIntervalError(Exception):
     """An interval that should be finite is infinite."""
+
+
+ConvertibleToInterval = Union["Interval", Iterable[float], None]
+"""Types that can be converted to an :class:`Interval`."""
 
 
 @define
@@ -93,7 +97,7 @@ class Interval(SerialMixin):
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value: Any) -> Interval:
+    def create(cls, value: ConvertibleToInterval) -> "Interval":
         """Create an interval from various input types."""
         # Singledispatch does not play well with forward references, hence the
         # workaround via `isinstance` in the fallback method.
@@ -143,7 +147,7 @@ class Interval(SerialMixin):
         return self.lower <= number <= self.upper
 
 
-def convert_bounds(bounds: None | Iterable | Interval) -> Interval:
+def convert_bounds(bounds: ConvertibleToInterval) -> Interval:
     """Convert bounds given in another format to an interval.
 
     Args:
