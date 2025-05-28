@@ -6,7 +6,6 @@ import gc
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
-from numbers import Real
 from typing import TYPE_CHECKING
 
 from attrs import define, field
@@ -464,21 +463,19 @@ class TriangularTransformation(Transformation):
 
     @classmethod
     def from_margins(
-        cls, peak: float, margins: float | Sequence[float]
+        cls, peak: float, margins: Sequence[float]
     ) -> TriangularTransformation:
         """Create a triangular transformation from a peak location and margins."""
-        match margins:
-            case Real():
-                margins = (margins, margins)
-            case (Real(), Real()):
-                pass
-            case _:
-                raise ValueError(
-                    "You must either provide a single numeric value as margin "
-                    "(for symmetric transformation around the peak) or a "
-                    "length-two sequence of numeric values (for asymmetric margins)."
-                )
+        if len(margins) != 2:
+            raise ValueError(
+                "The margins must be provided as a sequence of two values."
+            )
         return cls(peak=peak, cutoffs=Interval(peak - margins[0], peak + margins[1]))
+
+    @classmethod
+    def from_width(cls, peak: float, width: float) -> TriangularTransformation:
+        """Create a triangular transformation from a peak location and width."""
+        return cls.from_margins(peak, (width / 2, width / 2))
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
