@@ -439,7 +439,7 @@ def fixture_targets(target_names: list[str]):
         ),
         NumericalTarget.match_bell(
             name="Target_match_bell",
-            center=50,
+            match_value=50,
             width=50,
         ),
         NumericalTarget.match_triangular(

@@ -236,18 +236,18 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, transformation)
 
     @classmethod
-    def match_bell(cls, name: str, center: float, width: float) -> NumericalTarget:
-        """Create a target to match a given setpoint using a bell transformation.
+    def match_bell(cls, name: str, match_value: float, width: float) -> NumericalTarget:
+        """Create a target to match a given value using a bell transformation.
 
         Args:
             name: The name of the target.
-            center: The center point of the bell curve.
+            match_value: The value to be matched.
             width: The width of the bell curve.
 
         Returns:
             The target with applied bell matching transformation.
         """
-        return NumericalTarget(name, BellTransformation(center, width))
+        return NumericalTarget(name, BellTransformation(match_value, width))
 
     @classmethod
     def ramp(

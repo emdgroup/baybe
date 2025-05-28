@@ -109,7 +109,7 @@ def test_constructor_equivalence_match(transformation):
     # ------------
     # Modern style
     if transformation == "BELL":
-        targets += (ModernTarget.match_bell("t", center=1.5, width=0.5),)
+        targets += (ModernTarget.match_bell("t", match_value=1.5, width=0.5),)
     else:
         targets += (ModernTarget.match_triangular("t", (1, 2)),)
 
@@ -188,28 +188,28 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
             ModernTarget("t", "MATCH", (-1, 1), "BELL"),
-            ModernTarget.match_bell("t", center=0, width=1),
+            ModernTarget.match_bell("t", match_value=0, width=1),
             bell_transform(sample_input(), -1, 1),
             id="match_bell_unit_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (1, 3), "BELL"),
             ModernTarget("t", "MATCH", (1, 3), "BELL"),
-            ModernTarget.match_bell("t", center=2, width=1),
+            ModernTarget.match_bell("t", match_value=2, width=1),
             bell_transform(sample_input(), 1, 3),
             id="match_bell_unit_shifted",
         ),
         param(
             LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
             ModernTarget("t", "MATCH", (-5, 5), "BELL"),
-            ModernTarget.match_bell("t", center=0, width=5),
+            ModernTarget.match_bell("t", match_value=0, width=5),
             bell_transform(sample_input(), -5, 5),
             id="match_bell_scaled_centered",
         ),
         param(
             LegacyTarget("t", "MATCH", (2, 6), "BELL"),
             ModernTarget("t", "MATCH", (2, 6), "BELL"),
-            ModernTarget.match_bell("t", center=4, width=2),
+            ModernTarget.match_bell("t", match_value=4, width=2),
             bell_transform(sample_input(), 2, 6),
             id="match_bell_scaled_shifted",
         ),
