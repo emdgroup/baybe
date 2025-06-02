@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypedDict
 import numpy as np
 import numpy.typing as npt
 from attrs import define, field
+from numpy.random import RandomState
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
@@ -39,9 +40,9 @@ class _RandomForestRegressorParams(TypedDict, total=False):
     max_leaf_nodes: int | None
     min_impurity_decrease: float
     bootstrap: bool
-    oob_score: bool  # Unlike sklearn, we do not allow callables
+    oob_score: bool
     n_jobs: int | None
-    random_state: int | None  # Unlike sklearn, we do not allow ``RandomState``
+    random_state: int | RandomState | None
     verbose: int
     warm_start: bool
     ccp_alpha: float
