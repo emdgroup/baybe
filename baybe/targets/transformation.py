@@ -255,6 +255,14 @@ class ClampingTransformation(MonotonicTransformation):
     max: float = field(default=float("inf"), converter=float)
     """The upper cutoff value."""
 
+    @max.validator
+    def _validate_max(self, _, value: float) -> None:
+        if value <= self.min:
+            raise ValueError(
+                f"The upper cutoff must be greater than the lower cutoff. "
+                f"Given: min={self.min}, max={value}."
+            )
+
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.clamp(self.min, self.max)
