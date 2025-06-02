@@ -16,10 +16,15 @@ from baybe.surrogates.gaussian_process.kernel_factory import (
     KernelFactory,
     to_kernel_factory,
 )
+from baybe.surrogates.gaussian_process.model_factory import (
+    ModelFactory,
+    to_model_factory,
+)
 from baybe.surrogates.gaussian_process.presets import (
     GaussianProcessPreset,
     make_gp_from_preset,
 )
+from baybe.surrogates.gaussian_process.presets.botorch import BotorchModelFactory
 from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
@@ -96,9 +101,9 @@ class GaussianProcessSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
-    kernel_factory: KernelFactory = field(
+    kernel_factory: KernelFactory | None = field(
         alias="kernel_or_factory",
-        factory=DefaultKernelFactory,
+        default=None,
         converter=to_kernel_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
@@ -106,7 +111,21 @@ class GaussianProcessSurrogate(Surrogate):
     Accepts either a :class:`baybe.kernels.base.Kernel` or a
     :class:`.kernel_factory.KernelFactory`.
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
-    into a :class:`.kernel_factory.PlainKernelFactory`."""
+    into a :class:`.kernel_factory.PlainKernelFactory`.
+    If no kernel_factory and no model_factory are specified, the
+    `.surrogates.gaussian_process.presets.default.DefaultKernelFactory` will be used."""
+
+    model_factory: ModelFactory | None = field(
+        # TODO put this to default=None after benchmarks have finished
+        factory=BotorchModelFactory,
+        converter=to_model_factory,
+    )
+    """The factory used to create the model of the Gaussian process.
+
+    Accepts either a :class:`botorch.models.model.Model` or a
+    :class:`.model_factory.ModelFactory`.
+    When passing a :class:`botorch.models.model.Model`, it gets automatically wrapped
+    into a :class:`.model_factory.PlainModelFactory`."""
 
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
@@ -158,51 +177,69 @@ class GaussianProcessSurrogate(Surrogate):
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # extract the batch shape of the training data
-        batch_shape = train_x.shape[:-2]
-
-        # create GP mean
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
-
-        # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
-            batch_shape=batch_shape,
-        )
-
-        # create GP covariance
-        if not context.is_multitask:
-            covar_module = base_covar_module
-        else:
-            task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=context.n_tasks,
-                active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
+        if self.model_factory is not None:
+            self._model = self.model_factory(
+                searchspace=context.searchspace,
+                train_x=train_x,
+                train_y=train_y,
+                input_transform=input_transform,
+                outcome_transform=None,
+                kernel_factory=self.kernel_factory,
+                mean_module=None,
+                likelihood=None,
             )
-            covar_module = base_covar_module * task_covar_module
+        else:
+            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # create GP likelihood
-        noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
-        likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
-        )
-        likelihood.noise = torch.tensor([noise_prior[1]])
+            # extract the batch shape of the training data
+            batch_shape = train_x.shape[:-2]
 
-        # construct and fit the Gaussian process
-        self._model = botorch.models.SingleTaskGP(
-            train_x,
-            train_y,
-            input_transform=input_transform,
-            outcome_transform=outcome_transform,
-            mean_module=mean_module,
-            covar_module=covar_module,
-            likelihood=likelihood,
-        )
+            # create GP mean
+            mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
+
+            # define the covariance module for the numeric dimensions
+            kernel_factory = (
+                DefaultKernelFactory()
+                if self.kernel_factory is None
+                else self.kernel_factory
+            )
+            base_covar_module = kernel_factory(
+                context.searchspace, train_x, train_y
+            ).to_gpytorch(
+                ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+                active_dims=numerical_idxs,
+                batch_shape=batch_shape,
+            )
+
+            # create GP covariance
+            if not context.is_multitask:
+                covar_module = base_covar_module
+            else:
+                task_covar_module = gpytorch.kernels.IndexKernel(
+                    num_tasks=context.n_tasks,
+                    active_dims=context.task_idx,
+                    rank=context.n_tasks,  # TODO: make controllable
+                )
+                covar_module = base_covar_module * task_covar_module
+
+            # create GP likelihood
+            noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
+            likelihood = gpytorch.likelihoods.GaussianLikelihood(
+                noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
+            )
+            likelihood.noise = torch.tensor([noise_prior[1]])
+
+            # construct and fit the Gaussian process
+            self._model = botorch.models.SingleTaskGP(
+                train_x,
+                train_y,
+                input_transform=input_transform,
+                outcome_transform=outcome_transform,
+                mean_module=mean_module,
+                covar_module=covar_module,
+                likelihood=likelihood,
+            )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
         #  low-dimensional TL cases. More robust settings are being researched.

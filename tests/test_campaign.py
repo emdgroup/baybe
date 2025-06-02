@@ -1,6 +1,7 @@
 """Tests features of the Campaign object."""
 
 from contextlib import nullcontext
+from copy import deepcopy
 
 import pandas as pd
 import pytest
@@ -11,19 +12,31 @@ from baybe.acquisition import qLogEI, qLogNEHVI, qTS, qUCB
 from baybe.campaign import _EXCLUDED, Campaign
 from baybe.constraints.conditions import SubSelectionCondition
 from baybe.constraints.discrete import DiscreteExcludeConstraint
-from baybe.objectives import DesirabilityObjective, ParetoObjective
+from baybe.objectives import (
+    DesirabilityObjective,
+    ParetoObjective,
+    SingleTargetObjective,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.searchspace.core import SearchSpaceType
+from baybe.recommenders import (
+    BotorchRecommender,
+    RandomRecommender,
+    TwoPhaseMetaRecommender,
+)
+from baybe.searchspace.core import SearchSpace, SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates import (
     BetaBernoulliMultiArmedBanditSurrogate,
     GaussianProcessSurrogate,
 )
+from baybe.surrogates.gaussian_process.model_factory import ModelFactory
+from baybe.surrogates.gaussian_process.presets.botorch import BotorchModelFactory
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.basic import UNSPECIFIED
+from baybe.utils.interval import Interval
 
 from .conftest import run_iterations
 
@@ -287,3 +300,36 @@ def test_acquisition_value_computation(ongoing_campaign: Campaign):
     assert_index_equal(acqfs.index, df.index)
     joint_acqf = ongoing_campaign.joint_acquisition_value(df, qUCB())
     assert isinstance(joint_acqf, float)
+
+
+@pytest.mark.parametrize("model_factory", [None, BotorchModelFactory])
+def test_recommendation(model_factory: type[ModelFactory] | None):
+    """Test a BO iteration with different model parameters."""
+    objective = SingleTargetObjective(target=NumericalTarget(name="y", mode="MAX"))
+    parameters = [NumericalContinuousParameter(name="x", bounds=Interval(0, 10))]
+    searchspace = SearchSpace.from_product(parameters=parameters)
+    lookup = pd.DataFrame(
+        {
+            "x": [1.0, 2.0, 3.0, 4.0],
+            "y": [1.0, 2.0, 3.0, 4.0],
+        }
+    )
+
+    campaign = deepcopy(
+        Campaign(
+            searchspace=searchspace,
+            objective=objective,
+            recommender=TwoPhaseMetaRecommender(
+                recommender=BotorchRecommender(
+                    surrogate_model=GaussianProcessSurrogate(
+                        model_factory=model_factory()
+                        if model_factory is not None
+                        else model_factory,
+                    )
+                ),
+                initial_recommender=RandomRecommender(),
+            ),
+        )
+    )
+    campaign.add_measurements(lookup)
+    _ = campaign.recommend(batch_size=1)
