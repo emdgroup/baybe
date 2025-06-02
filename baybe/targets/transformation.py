@@ -95,7 +95,7 @@ class Transformation(SerialMixin, ABC):
             return self + AffineTransformation(shift=other)
         return NotImplemented
 
-    def __mul__(self, other: Transformation) -> ChainedTransformation:
+    def __mul__(self, other: int | float) -> Transformation:
         """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
             return self + AffineTransformation(factor=other)
