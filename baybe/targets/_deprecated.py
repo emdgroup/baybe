@@ -86,7 +86,8 @@ class LegacyTarget(Target, SerialMixin):
     mode: TargetMode = field(converter=TargetMode)
     """The target mode."""
 
-    bounds: Interval = field(default=None, converter=Interval.create)
+    # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
+    bounds: Interval = field(default=None, converter=Interval.create)  # type: ignore[misc]
     """Optional target bounds."""
 
     transformation: TargetTransformation | None = field(

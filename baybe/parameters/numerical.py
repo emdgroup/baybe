@@ -104,12 +104,11 @@ class NumericalDiscreteParameter(DiscreteParameter):
 class NumericalContinuousParameter(ContinuousParameter):
     """Class for continuous numerical parameters."""
 
-    # class variables
     is_numerical: ClassVar[bool] = True
     # See base class.
 
-    # object variables
-    bounds: Interval = field(default=None, converter=Interval.create)
+    # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
+    bounds: Interval = field(default=None, converter=Interval.create)  # type: ignore[misc]
     """The bounds of the parameter."""
 
     @bounds.validator

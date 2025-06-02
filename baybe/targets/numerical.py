@@ -45,7 +45,8 @@ class _LegacyInterface:
 
     mode: TargetMode = field(converter=TargetMode)
 
-    bounds: Interval = field(default=None, converter=Interval.create)
+    # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
+    bounds: Interval = field(default=None, converter=Interval.create)  # type: ignore[misc]
 
     transformation: TargetTransformation | None = field(
         converter=lambda x: None if x is None else TargetTransformation(x),

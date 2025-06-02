@@ -440,7 +440,8 @@ class TriangularTransformation(Transformation):
     :math:`p` is the peak location, with :math:`c_1 < p < c_2`.
     """
 
-    cutoffs: Interval = field(converter=Interval.create)
+    # TODO[typing]: https://github.com/python-attrs/attrs/issues/1435
+    cutoffs: Interval = field(converter=Interval.create)  # type: ignore[misc]
     """The cutoff values where the transformation reaches zero."""
 
     peak: float = field(
