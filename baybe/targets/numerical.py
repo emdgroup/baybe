@@ -22,6 +22,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.base import Target
 from baybe.transformations import (
+    AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
     ChainedTransformation,
@@ -196,6 +197,55 @@ class NumericalTarget(Target, SerialMixin):
             return cls(name, mode, bounds, transformation)
 
     @classmethod
+    def match_absolute(cls, name: str, match_value: float) -> NumericalTarget:
+        """Create a target to match a given value using an absolute transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+
+        Returns:
+            The target with applied absolute matching transformation.
+        """
+        return NumericalTarget(
+            name, AffineTransformation(shift=-match_value) + AbsoluteTransformation()
+        )
+
+    @classmethod
+    def match_quadratic(cls, name: str, match_value: float) -> NumericalTarget:
+        """Create a target to match a given value using a quadratic transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+
+        Returns:
+            The target with applied quadratic matching transformation.
+        """
+        return NumericalTarget.match_power_distance(name, match_value, exponent=2.0)
+
+    @classmethod
+    def match_power_distance(
+        cls, name: str, match_value: float, exponent: float
+    ) -> NumericalTarget:
+        """Create a target to match a given value using a power transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+            exponent: The exponent of applied the power transformation.
+
+        Returns:
+            The target with applied power matching transformation.
+        """
+        return NumericalTarget(
+            name,
+            AffineTransformation(shift=-match_value)
+            + AbsoluteTransformation()
+            + PowerTransformation(exponent),
+        )
+
+    @classmethod
     def match_triangular(
         cls,
         name: str,
@@ -334,6 +384,14 @@ class NumericalTarget(Target, SerialMixin):
                 *self.get_image().to_tuple()
             )
         )
+
+    def abs(self) -> NumericalTarget:
+        """Apply an absolute transformation to the target.
+
+        Returns:
+            The target with applied absolute transformation.
+        """
+        return self._append_transformation(AbsoluteTransformation())
 
     def clamp(
         self, min: float | None = None, max: float | None = None
