@@ -1,9 +1,10 @@
 """Hypothesis strategies for targets."""
 
 import hypothesis.strategies as st
+from hypothesis import assume
 
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.enum import TargetMode
+from baybe.targets.enum import TargetMode, TargetTransformation
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.utils.interval import Interval
 
@@ -37,6 +38,72 @@ def numerical_targets(
 
     return NumericalTarget(
         name=name, mode=mode, bounds=bounds, transformation=transformation
+    )
+
+
+@st.composite
+def linear_numerical_targets(
+    draw: st.DrawFn, bounds_strategy: st.SearchStrategy[Interval] | None = None
+):
+    """Generate :class:`baybe.targets.numerical.NumericalTarget` with: #TODO: rewrite.
+
+    - mode ∈ {MIN, MAX}
+    - transformation always “LINEAR”
+    """
+    name = draw(target_name)
+    mode = draw(st.sampled_from([TargetMode.MIN, TargetMode.MAX]))
+
+    if bounds_strategy is None:
+        bounds_strategy = st_intervals(
+            exclude_half_bounded=True, exclude_fully_unbounded=True
+        )
+    # keep drawing until we get an interval with width ≥ 1e-6
+    while True:
+        interval = draw(bounds_strategy)
+        lo, hi = interval.lower, interval.upper
+        if (hi - lo) >= 1e-6:
+            break
+
+    transformation = "LINEAR"
+    return NumericalTarget(
+        name=name, mode=mode, bounds=interval, transformation=transformation
+    )
+
+
+@st.composite
+def nonlinear_numerical_targets(
+    draw: st.DrawFn, bounds_strategy: st.SearchStrategy[Interval] | None = None
+):
+    """Generate a NumericalTarget with: #TODO: rewrite.
+
+    - mode == TargetMode.MATCH
+    - transformation ∈ {"TRIANGULAR", "BELL"}
+    - strictly bounded interval of width ≥ 1e-6
+    """
+    name = draw(target_name)
+    mode = TargetMode.MATCH
+
+    if bounds_strategy is None:
+        bounds_strategy = st_intervals(
+            exclude_bounded=False,
+            exclude_half_bounded=True,
+            exclude_fully_unbounded=True,
+        )
+    interval_obj = draw(bounds_strategy)
+    lo = interval_obj.lower
+    hi = interval_obj.upper
+
+    assume((hi - lo) >= 1e-6)  # enforce nonzero width
+
+    transformation = draw(
+        st.sampled_from([TargetTransformation.TRIANGULAR, TargetTransformation.BELL])
+    )
+
+    return NumericalTarget(
+        name=name,
+        mode=mode,
+        bounds=interval_obj,
+        transformation=transformation,
     )
 
 

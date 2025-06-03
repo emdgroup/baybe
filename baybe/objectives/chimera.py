@@ -34,8 +34,8 @@ class ThresholdType(Enum):
     ABSOLUTE = "ABSOLUTE"
     """The target threshold is an absolute value."""
 
-    PERCENTILE = "PERCENTILE"
-    """The target threshold is a percentile value."""
+    # PERCENTILE = "PERCENTILE"
+    # """The target threshold is a percentile value."""
 
     FRACTION = "FRACTION"
     """The target threshold is a fraction value."""
@@ -148,7 +148,7 @@ class ChimeraObjective(Objective):
         return np.exp(-np.logaddexp(0, arg))
 
     def _hard_heaviside(self, value: float) -> float:
-        return (value >= 0.0).astype(
+        return (value > 0.0).astype(
             float
         )  # Pandas handles booleans as floats automatically
 
@@ -191,10 +191,10 @@ class ChimeraObjective(Objective):
                 domain_max = transformed[target.name].loc[domain].max()
                 domain_min = transformed[target.name].loc[domain].min()
                 _threshold = domain_min + threshold_value * (domain_max - domain_min)
-            elif threshold_type is ThresholdType.PERCENTILE:
-                _threshold = transformed[target.name].quantile(
-                    threshold_value, interpolation="linear"
-                )
+            # elif threshold_type is ThresholdType.PERCENTILE:
+            #     _threshold = transformed[target.name].quantile(
+            #         threshold_value, interpolation="linear"
+            #     )
             elif threshold_type is ThresholdType.ABSOLUTE:
                 _threshold = threshold_value
             else:
@@ -234,8 +234,8 @@ class ChimeraObjective(Objective):
             current_tol = shifted_thresholds[idx]
 
             # Compute step functions / positive and negative masks
-            pos_mask = self.step(current_obj - current_tol)
-            neg_mask = 1 - pos_mask
+            pos_mask = self.step(current_obj - current_tol, self.softness)
+            neg_mask = self.step(current_tol - current_obj, self.softness)
 
             # Scalarize through inversely updating merits:
             # (kept if within threshold, else replaced by higher-level)

@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 from chimera import Chimera
-from hypothesis import assume, given, settings
+from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.pandas import column, data_frames
 
 from baybe.objectives.chimera import ChimeraObjective, ThresholdType
@@ -233,8 +233,8 @@ def compare_merits(
     ext_chimera.tolerances = _threshold_values_transformed
     ext_chimera.goals = ["min"] * len(ext_chimera.goals)
 
-    print("Index Error?:", ext_absolutes)
-    print("Index Error?:", target_vals_transformed.values)
+    # print("Index Error?:", ext_absolutes)
+    # print("Index Error?:", target_vals_transformed.values)
     ext_merits = ext_chimera.scalarize(target_vals_transformed.values)
 
     are_close = np.allclose(ext_merits, int_merits, atol=1e-5)
@@ -244,7 +244,9 @@ def compare_merits(
     return are_close
 
 
-@settings(max_examples=2)
+@settings(
+    max_examples=100, suppress_health_check=[HealthCheck.too_slow]
+)  # TODO: try to rewrite to run all?
 @given(chimera_obj=chimera_objectives(), data=st.data())
 def test_chimera_merits(chimera_obj, data):
     """Validating chimerra merits value with external reference."""
