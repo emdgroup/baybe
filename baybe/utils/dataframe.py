@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import numpy as np
 import pandas as pd
 
-from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
@@ -513,6 +514,10 @@ def fuzzy_row_match(
         f"{provided_cols.difference(allowed_cols)}"
     )
 
+    # Ensure the dtype consistency in the dataframes
+    left_df = normalize_input_dtypes(left_df, parameters)
+    right_df = normalize_input_dtypes(right_df, parameters)
+
     # Initialize the match matrix. We will later filter it down using other
     # matrices (representing the matches for individual parameters) via logical 'and'.
     match_matrix = pd.DataFrame(
@@ -527,11 +532,8 @@ def fuzzy_row_match(
 
     # Match numerical parameters
     for col in num_cols:
-        left_col = left_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
-        right_col = right_df[col].to_numpy(dtype=DTypeFloatNumpy, copy=False)
-
         # Compute absolute differences and find the minimum difference
-        abs_diff = np.abs(right_col[:, None] - left_col[None, :])
+        abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
 
@@ -836,3 +838,58 @@ def handle_missing_values(
         )
 
     return data.loc[~mask]
+
+
+def normalize_input_dtypes(
+    data: pd.DataFrame,
+    parameters: Iterable[Parameter] | None = None,
+    targets: Iterable[Target] | None = None,
+) -> pd.DataFrame:
+    """Ensure that the input dataframe has the expected datatypes for all columns.
+
+    Args:
+        data: The input dataframe to be checked.
+        parameters: The parameters for which corresponding columns ill be checked.
+        targets: The targets for which corresponding columns will be checked.
+
+    Returns:
+        The original dataframe if there are no dtype issues. Otherwise, a copy with
+        columns converted to expected dtypes.
+    """
+    parameters = parameters or []
+    targets = targets or []
+    parameters_num = [
+        p for p in parameters if (p.is_numerical and p.name in data.columns)
+    ]
+    targets_num = [
+        t
+        for t in targets
+        if (isinstance(t, NumericalTarget) and t.name in data.columns)
+    ]
+
+    # Collect columns corresponding to numerical parameters that don't have float dtype
+    wrong_p_cols = []
+    for p in parameters_num:
+        if not pd.api.types.is_float_dtype(data[p.name]):
+            wrong_p_cols.append(p.name)
+
+    # Collect columns corresponding to numerical targets that don't have float dtype
+    wrong_t_cols = []
+    for t in targets_num:
+        if not pd.api.types.is_float_dtype(data[t.name]):
+            wrong_t_cols.append(t.name)
+
+    # If there are no issues, return the original
+    if not (wrong_cols := wrong_p_cols + wrong_t_cols):
+        return data
+
+    # Make a copy of the dataframe and convert problematic column data types
+    warnings.warn(
+        f"One of the following columns has an unexpected data type: {wrong_cols}. "
+        f"Converting to float internally.",
+        InputDataTypeWarning,
+    )
+    data = data.copy()
+    for col in wrong_cols:
+        data[col] = data[col].astype(DTypeFloatNumpy)
+    return data

@@ -31,7 +31,11 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.dataframe import (
+    get_transform_objects,
+    normalize_input_dtypes,
+    pretty_print_df,
+)
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -269,6 +273,9 @@ class SubspaceDiscrete(SerialMixin):
         parameters = get_parameters_from_dataframe(
             df, discrete_parameter_factory, parameters
         )
+
+        # Ensure dtype consistency
+        df = normalize_input_dtypes(df, parameters)
 
         return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
 
