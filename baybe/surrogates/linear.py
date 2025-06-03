@@ -49,7 +49,10 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
         converter=dict,
         validator=make_dict_validator(_ARDRegressionParams),
     )
-    """Optional model parameter that will be passed to the surrogate constructor."""
+    """Optional model parameter that will be passed to the surrogate constructor.
+
+    For allowed keys and values, see :class:`~sklearn.linear_model.ARDRegression`.
+    """
 
     # TODO: type should be `ARDRegression | None` but is currently omitted due to:
     #  https://github.com/python-attrs/cattrs/issues/531

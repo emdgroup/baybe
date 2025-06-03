@@ -68,7 +68,10 @@ class RandomForestSurrogate(Surrogate):
         converter=dict,
         validator=make_dict_validator(_RandomForestRegressorParams),
     )
-    """Optional model parameter that will be passed to the surrogate constructor."""
+    """Optional model parameter that will be passed to the surrogate constructor.
+
+    For allowed keys and values, see :class:`~sklearn.ensemble.RandomForestRegressor`.
+    """
 
     # TODO: type should be `RandomForestRegressor | None` but is currently omitted due
     #  to: https://github.com/python-attrs/cattrs/issues/531
