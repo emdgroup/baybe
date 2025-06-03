@@ -48,8 +48,8 @@ def chimera_objectives(draw: st.DrawFn):
     targets = draw(
         st.lists(
             linear_numerical_targets(bounded_intervals),
-            min_size=3,
-            max_size=4,  # TODO: remove max_size constraint later
+            min_size=2,
+            max_size=100,
             unique_by=lambda t: t.name,
         )
     )
