@@ -762,7 +762,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
         parameters = converter.structure(specs["parameters"], list[DiscreteParameter])
         validate_parameters(parameters)
 
-        constraints = specs.get("constraints", None)
+        constraints = specs.get("constraints", [])
         if constraints:
             constraints = converter.structure(
                 specs["constraints"], list[DiscreteConstraint]
@@ -782,7 +782,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
                 f"values only."
             )
 
-        product_parameters = specs.get("product_parameters", None)
+        product_parameters = specs.get("product_parameters", [])
         if product_parameters:
             product_parameters = converter.structure(
                 specs["product_parameters"], list[DiscreteParameter]
@@ -790,7 +790,7 @@ def validate_simplex_subspace_from_config(specs: dict, _) -> None:
 
         validate_parameters(simplex_parameters + product_parameters)
 
-        constraints = specs.get("constraints", None)
+        constraints = specs.get("constraints", [])
         if constraints:
             constraints = converter.structure(
                 specs["constraints"], list[DiscreteConstraint]
