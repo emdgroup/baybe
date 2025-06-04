@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
 
+### Changed
+- `scikit-learn` and `scipy` are now lazy-loaded
+- Validity of optional `model_params` attribute of `RandomForestSurrogate`, 
+  `NGBoostSurrogate` and `BayesianLinearSurrogate` is now checked via a hardcoded 
+  `TypedDict` instead of dynamically retrieved specifications, required for 
+  lazy-loading related packages
+- `CustomONNXSurrogate.onnx_str` is no longer validated before being used
+
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
   minimization of the acquisition function

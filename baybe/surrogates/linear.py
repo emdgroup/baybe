@@ -3,19 +3,37 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
 from attrs import define, field
-from sklearn.linear_model import ARDRegression
 from typing_extensions import override
 
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
-from baybe.surrogates.validation import get_model_params_validator
+from baybe.surrogates.validation import make_dict_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
     from torch import Tensor
+
+
+class _ARDRegressionParams(TypedDict, total=False):
+    """Optional ARDRegression parameters.
+
+    See :class:`~sklearn.linear_model.ARDRegression`.
+    """
+
+    max_iter: int
+    tol: float
+    alpha_1: float
+    alpha_2: float
+    lambda_1: float
+    lambda_2: float
+    compute_score: bool
+    threshold_lambda: float
+    fit_intercept: bool
+    copy_X: bool
+    verbose: bool
 
 
 @catch_constant_targets
@@ -26,14 +44,19 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    model_params: dict[str, Any] = field(
+    model_params: _ARDRegressionParams = field(
         factory=dict,
         converter=dict,
-        validator=get_model_params_validator(ARDRegression.__init__),
+        validator=make_dict_validator(_ARDRegressionParams),
     )
-    """Optional model parameter that will be passed to the surrogate constructor."""
+    """Optional model parameter that will be passed to the surrogate constructor.
 
-    _model: ARDRegression | None = field(init=False, default=None, eq=False)
+    For allowed keys and values, see :class:`~sklearn.linear_model.ARDRegression`.
+    """
+
+    # TODO: type should be `ARDRegression | None` but is currently omitted due to:
+    #  https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @override
@@ -58,6 +81,8 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        from sklearn.linear_model import ARDRegression
+
         self._model = ARDRegression(**(self.model_params))
         self._model.fit(train_x, train_y.ravel())
 
