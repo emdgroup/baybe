@@ -54,7 +54,7 @@ try:
     from opentelemetry.metrics import Histogram, get_meter, set_meter_provider
     from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.resources import Resource  # type: ignore[attr-defined]
 except ImportError:
     # Failed telemetry install/import should not fail baybe, so telemetry is being
     # disabled in that case

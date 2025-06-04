@@ -9,6 +9,7 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSearchSpaceError, ModelNotTrainedError
+from baybe.parameters.base import Parameter
 from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.priors import BetaPrior
@@ -110,7 +111,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_input_scaler_factory():
+    def _make_parameter_scaler_factory(_: Parameter):
         # Due to enforced one-hot encoding, no input scaling is needed.
         return None
 
