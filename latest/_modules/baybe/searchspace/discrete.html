@@ -1848,7 +1848,7 @@
         <span class="n">parameters</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiscreteParameter</span><span class="p">])</span>
         <span class="n">validate_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span>
 
-        <span class="n">constraints</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">constraints</span><span class="p">:</span>
             <span class="n">constraints</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span>
                 <span class="n">specs</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiscreteConstraint</span><span class="p">]</span>
@@ -1868,7 +1868,7 @@
                 <span class="sa">f</span><span class="s2">&quot;values only.&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">product_parameters</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;product_parameters&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">product_parameters</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;product_parameters&quot;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">product_parameters</span><span class="p">:</span>
             <span class="n">product_parameters</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span>
                 <span class="n">specs</span><span class="p">[</span><span class="s2">&quot;product_parameters&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiscreteParameter</span><span class="p">]</span>
@@ -1876,7 +1876,7 @@
 
         <span class="n">validate_parameters</span><span class="p">(</span><span class="n">simplex_parameters</span> <span class="o">+</span> <span class="n">product_parameters</span><span class="p">)</span>
 
-        <span class="n">constraints</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="p">[])</span>
         <span class="k">if</span> <span class="n">constraints</span><span class="p">:</span>
             <span class="n">constraints</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span>
                 <span class="n">specs</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">DiscreteConstraint</span><span class="p">]</span>

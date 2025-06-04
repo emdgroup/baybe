@@ -1051,6 +1051,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompatibleSearchSpaceError</span><span class="p">,</span> <span class="n">ModelNotTrainedError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.categorical</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalParameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">CategoricalEncoding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.priors</span><span class="w"> </span><span class="kn">import</span> <span class="n">BetaPrior</span>
@@ -1163,7 +1164,7 @@
 
     <span class="nd">@override</span>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_make_input_scaler_factory</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_parameter_scaler_factory</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">Parameter</span><span class="p">):</span>
         <span class="c1"># Due to enforced one-hot encoding, no input scaling is needed.</span>
         <span class="k">return</span> <span class="kc">None</span>
 

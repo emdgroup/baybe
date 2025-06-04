@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    119  Butyornitrile      Cesium acetate                     BrettPhos   
-    372       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+          Solvent                Base                        Ligand  Temperature  \
+    318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+    382  p-Xylene   Potassium acetate                 (t-Bu)PhCPhos        105.0   
+    309      DMAc  Potassium pivalate                     BrettPhos        105.0   
     
-         Temperature  Concentration  
-    119         90.0          0.153  
-    372        105.0          0.057  
-    212        105.0          0.153  
+         Concentration  
+    318          0.057  
+    382          0.100  
+    309          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    119  Butyornitrile      Cesium acetate                     BrettPhos   
-    372       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+          Solvent                Base                        Ligand  Temperature  \
+    318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+    382  p-Xylene   Potassium acetate                 (t-Bu)PhCPhos        105.0   
+    309      DMAc  Potassium pivalate                     BrettPhos        105.0   
     
-         Temperature  Concentration      yield  
-    119         90.0          0.153   8.169183  
-    372        105.0          0.057  22.844380  
-    212        105.0          0.153   9.600154  
+         Concentration      yield  
+    318          0.057   7.339808  
+    382          0.100  12.744035  
+    309          0.057  17.983820  
 
 
 
