@@ -829,7 +829,8 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.validation.html">baybe.surrogates.validation</a><input class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><div class="visually-hidden">Toggle navigation of baybe.surrogates.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.validation.get_model_params_validator.html">baybe.surrogates.validation.get_model_params_validator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.validation.type_validation_converter.html">baybe.surrogates.validation.type_validation_converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.validation.make_dict_validator.html">baybe.surrogates.validation.make_dict_validator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.surrogates.validation.validate_custom_architecture_cls.html">baybe.surrogates.validation.validate_custom_architecture_cls</a></li>
 </ul>
 </li>
@@ -1047,6 +1048,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">cattrs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cattrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cattrs.strategies</span><span class="w"> </span><span class="kn">import</span> <span class="n">configure_union_passthrough</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Surrogate</span>
 
 
@@ -1098,55 +1103,63 @@
 
 
 
-<div class="viewcode-block" id="get_model_params_validator">
-<a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.validation.get_model_params_validator.html#baybe.surrogates.validation.get_model_params_validator">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_model_params_validator</span><span class="p">(</span><span class="n">model_init</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct a validator based on the model class.</span>
+<span class="c1"># Create a strict type validation converter</span>
+<span class="n">type_validation_converter</span> <span class="o">=</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">Converter</span><span class="p">(</span><span class="n">forbid_extra_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Converter used for strict type validation.&quot;&quot;&quot;</span>
+
+<span class="n">configure_union_passthrough</span><span class="p">(</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">type_validation_converter</span><span class="p">)</span>
+
+
+<span class="nd">@type_validation_converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_strict_int_structure_hook</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>  <span class="c1"># Exclude bools</span>
+        <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Value &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39; (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) is not a valid integer. &quot;</span>
+        <span class="s2">&quot;Only actual &#39;int&#39; instances are accepted.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@type_validation_converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_strict_float_structure_hook</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Value &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39; (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) is not a valid float. &quot;</span>
+        <span class="s2">&quot;Only actual &#39;float&#39; instances are accepted.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@type_validation_converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_strict_bool_structure_hook</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Value &#39;</span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&#39; (type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">) is not a valid boolean. &quot;</span>
+        <span class="s2">&quot;Only actual &#39;bool&#39; instances (True, False) are accepted.&quot;</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="make_dict_validator">
+<a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.validation.make_dict_validator.html#baybe.surrogates.validation.make_dict_validator">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_dict_validator</span><span class="p">(</span><span class="n">specification</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Construct an attrs dictionary validator based on a ``TypedDict``.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model_init: The init method for the model.</span>
+<span class="sd">        specification: Describes allowed keys and corresponding value types.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        A validator function to validate parameters.</span>
+<span class="sd">        An attrs compatible validator.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_model_params</span><span class="p">(</span>  <span class="c1"># noqa: DOC101, DOC103</span>
-        <span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">model_params</span><span class="p">:</span> <span class="nb">dict</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the model params attribute of an object.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: When model params are given for non-supported objects.</span>
-<span class="sd">            ValueError: When surrogate is not recognized (no valid model_init).</span>
-<span class="sd">            ValueError: When invalid params are given for a model.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get model class name</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_params</span><span class="p">:</span>
-            <span class="k">return</span>
-
-        <span class="c1"># GP does not support additional model params</span>
-        <span class="c1"># Neither does custom models</span>
-        <span class="k">if</span> <span class="s2">&quot;GaussianProcess&quot;</span> <span class="ow">in</span> <span class="n">model</span> <span class="ow">or</span> <span class="s2">&quot;Custom&quot;</span> <span class="ow">in</span> <span class="n">model</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2"> does not support model params.&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">model_init</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Cannot validate model params for unrecognized Surrogate: </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-
-        <span class="c1"># Invalid params</span>
-        <span class="n">invalid_params</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">key</span>
-                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">model_params</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_init</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span>
-            <span class="p">]</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">invalid_params</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid model params for </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">invalid_params</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_model_params</span><span class="p">(</span><span class="n">_instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate attrs attribute using cattrs with an extremely strict int hook.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">type_validation_converter</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">specification</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ClassValidationError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The provided dictionary for &#39;</span><span class="si">{</span><span class="n">attr</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is invalid.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
 
     <span class="k">return</span> <span class="n">validate_model_params</span></div>
 

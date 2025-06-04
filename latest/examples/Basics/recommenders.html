@@ -830,7 +830,8 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.surrogates.validation.html">baybe.surrogates.validation</a><input class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><div class="visually-hidden">Toggle navigation of baybe.surrogates.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.validation.get_model_params_validator.html">baybe.surrogates.validation.get_model_params_validator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.validation.type_validation_converter.html">baybe.surrogates.validation.type_validation_converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.validation.make_dict_validator.html">baybe.surrogates.validation.make_dict_validator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.surrogates.validation.validate_custom_architecture_cls.html">baybe.surrogates.validation.validate_custom_architecture_cls</a></li>
 </ul>
 </li>
@@ -1254,14 +1255,14 @@ as follows.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
            Solvent               Base                        Ligand  \
-131  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
-271           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-247           DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
+183  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+295           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
+270           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration  
-131        105.0          0.153  
-271         90.0          0.100  
-247        105.0          0.100  
+183        105.0          0.057  
+295        120.0          0.100  
+270         90.0          0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1271,14 +1272,14 @@ as follows.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
            Solvent               Base                        Ligand  \
-131  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
-271           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
-247           DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
+183  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+295           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
+270           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
 
      Temperature  Concentration      yield  
-131        105.0          0.153  31.488590  
-271         90.0          0.100   5.005084  
-247        105.0          0.100  26.434195  
+183        105.0          0.057  22.437430  
+295        120.0          0.100  23.208696  
+270         90.0          0.057  31.036310  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

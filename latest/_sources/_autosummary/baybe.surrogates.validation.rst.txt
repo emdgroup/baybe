@@ -5,6 +5,14 @@ baybe.surrogates.validation
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      type_validation_converter
+   
    
 
    
@@ -14,7 +22,7 @@ baybe.surrogates.validation
    .. autosummary::
       :toctree:                                       
    
-      get_model_params_validator
+      make_dict_validator
       validate_custom_architecture_cls
    
    

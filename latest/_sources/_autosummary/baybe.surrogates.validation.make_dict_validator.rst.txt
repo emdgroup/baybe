@@ -1,0 +1,6 @@
+baybe.surrogates.validation.make\_dict\_validator
+=================================================
+
+.. currentmodule:: baybe.surrogates.validation
+
+.. autofunction:: make_dict_validator

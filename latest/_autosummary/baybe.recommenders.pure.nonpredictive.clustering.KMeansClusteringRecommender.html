@@ -830,7 +830,8 @@
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.surrogates.validation.html">baybe.surrogates.validation</a><input class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><div class="visually-hidden">Toggle navigation of baybe.surrogates.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.get_model_params_validator.html">baybe.surrogates.validation.get_model_params_validator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.type_validation_converter.html">baybe.surrogates.validation.type_validation_converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.make_dict_validator.html">baybe.surrogates.validation.make_dict_validator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.validate_custom_architecture_cls.html">baybe.surrogates.validation.validate_custom_architecture_cls</a></li>
 </ul>
 </li>
@@ -1158,13 +1159,13 @@ as individual rows.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name">
-<span class="sig-name descname"><span class="pre">model_cluster_num_parameter_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.13)"><code class="xref py py-data docutils literal notranslate"><span class="pre">ClassVar</span></code></a><span class="pre">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a><span class="pre">]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'n_clusters'</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_cluster_num_parameter_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar[str]</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'n_clusters'</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_cluster_num_parameter_name" title="Link to this definition">¶</a></dt>
 <dd><p>Class variable describing the name of the clustering parameter.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params">
-<span class="sig-name descname"><span class="pre">model_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">model_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></em><a class="headerlink" href="#baybe.recommenders.pure.nonpredictive.clustering.KMeansClusteringRecommender.model_params" title="Link to this definition">¶</a></dt>
 <dd><p>Optional model parameter that will be passed to the surrogate constructor.
 This is initialized with reasonable default values for the derived child classes.</p>
 </dd></dl>

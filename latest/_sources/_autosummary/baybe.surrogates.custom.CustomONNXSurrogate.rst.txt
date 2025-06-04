@@ -15,7 +15,6 @@ CustomONNXSurrogate
    .. autosummary::
    
       ~CustomONNXSurrogate.__init__
-      ~CustomONNXSurrogate.default_model
       ~CustomONNXSurrogate.fit
       ~CustomONNXSurrogate.from_dict
       ~CustomONNXSurrogate.from_json

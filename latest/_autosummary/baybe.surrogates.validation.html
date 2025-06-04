@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.surrogates.validation.get_model_params_validator" href="baybe.surrogates.validation.get_model_params_validator.html" /><link rel="prev" title="baybe.surrogates.utils.catch_constant_targets" href="baybe.surrogates.utils.catch_constant_targets.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="baybe.surrogates.validation.type_validation_converter" href="baybe.surrogates.validation.type_validation_converter.html" /><link rel="prev" title="baybe.surrogates.utils.catch_constant_targets" href="baybe.surrogates.utils.catch_constant_targets.html" />
 
     <link rel="shortcut icon" href="../_static/favicon.ico"/><!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>baybe.surrogates.validation - BayBE documentation</title>
@@ -830,7 +830,8 @@
 </ul>
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">baybe.surrogates.validation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><div class="visually-hidden">Toggle navigation of baybe.surrogates.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.get_model_params_validator.html">baybe.surrogates.validation.get_model_params_validator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.type_validation_converter.html">baybe.surrogates.validation.type_validation_converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.make_dict_validator.html">baybe.surrogates.validation.make_dict_validator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.surrogates.validation.validate_custom_architecture_cls.html">baybe.surrogates.validation.validate_custom_architecture_cls</a></li>
 </ul>
 </li>
@@ -1049,12 +1050,22 @@
           <section id="module-baybe.surrogates.validation">
 <span id="baybe-surrogates-validation"></span><h1>baybe.surrogates.validation<a class="headerlink" href="#module-baybe.surrogates.validation" title="Link to this heading">¶</a></h1>
 <p>Validation functionality for surrogates.</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.validation.type_validation_converter.html#baybe.surrogates.validation.type_validation_converter" title="baybe.surrogates.validation.type_validation_converter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">type_validation_converter</span></code></a></p></td>
+<td><p>Converter used for strict type validation.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p class="rubric">Functions</p>
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.validation.get_model_params_validator.html#baybe.surrogates.validation.get_model_params_validator" title="baybe.surrogates.validation.get_model_params_validator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_params_validator</span></code></a>([model_init])</p></td>
-<td><p>Construct a validator based on the model class.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="baybe.surrogates.validation.make_dict_validator.html#baybe.surrogates.validation.make_dict_validator" title="baybe.surrogates.validation.make_dict_validator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_dict_validator</span></code></a>(specification)</p></td>
+<td><p>Construct an attrs dictionary validator based on a <code class="docutils literal notranslate"><span class="pre">TypedDict</span></code>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="baybe.surrogates.validation.validate_custom_architecture_cls.html#baybe.surrogates.validation.validate_custom_architecture_cls" title="baybe.surrogates.validation.validate_custom_architecture_cls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_custom_architecture_cls</span></code></a>(model_cls)</p></td>
 <td><p>Validate a custom architecture to have the correct attributes.</p></td>
@@ -1069,12 +1080,12 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="baybe.surrogates.validation.get_model_params_validator.html">
+          <a class="next-page" href="baybe.surrogates.validation.type_validation_converter.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">baybe.surrogates.validation.get_model_params_validator</div>
+                <div class="title">baybe.surrogates.validation.type_validation_converter</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
