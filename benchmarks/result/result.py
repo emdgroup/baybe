@@ -41,7 +41,7 @@ class Result(BenchmarkSerialization):
     @python_env.default
     def _default_python_env(self) -> dict[str, str]:
         installed_packages = importlib_metadata.distributions()
-        return {dist.metadata["Name"]: dist.version for dist in installed_packages}
+        return {dist.name: dist.version for dist in installed_packages}
 
 
 converter.register_unstructure_hook(
