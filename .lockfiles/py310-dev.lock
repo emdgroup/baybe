@@ -465,7 +465,6 @@ numpy==2.2.6
     #   ngboost
     #   numba
     #   onnx
-    #   onnxconverter-common
     #   onnxruntime
     #   pandas
     #   pandas-stubs
@@ -523,10 +522,7 @@ nvidia-nvtx-cu12==12.6.77 ; platform_machine == 'x86_64' and sys_platform == 'li
 onnx==1.18.0
     # via
     #   baybe (pyproject.toml)
-    #   onnxconverter-common
     #   skl2onnx
-onnxconverter-common==1.13.0
-    # via skl2onnx
 onnxruntime==1.22.0
     # via baybe (pyproject.toml)
 openpyxl==3.1.5
@@ -587,7 +583,6 @@ packaging==24.2
     #   matplotlib
     #   mordredcommunity
     #   nbconvert
-    #   onnxconverter-common
     #   onnxruntime
     #   pip-audit
     #   pip-requirements-parser
@@ -671,7 +666,6 @@ protobuf==5.29.4
     # via
     #   googleapis-common-protos
     #   onnx
-    #   onnxconverter-common
     #   onnxruntime
     #   opentelemetry-proto
     #   streamlit
@@ -862,7 +856,7 @@ six==1.17.0
     #   pybtex
     #   python-dateutil
     #   rfc3339-validator
-skl2onnx==1.18.0
+skl2onnx==1.19.1
     # via baybe (pyproject.toml)
 slicer==0.0.8
     # via shap
