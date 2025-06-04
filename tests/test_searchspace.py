@@ -103,7 +103,8 @@ def test_discrete_from_dataframe_dtype_consistency():
     subspace = SubspaceDiscrete.from_dataframe(df)
 
     assert isinstance(
-        [p for p in subspace.parameters if p.name == "C"][0], NumericalDiscreteParameter
+        next(p for p in subspace.parameters if p.name == "C"),
+        NumericalDiscreteParameter,
     )
     assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
 

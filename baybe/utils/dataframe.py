@@ -849,7 +849,7 @@ def normalize_input_dtypes(
 
     Args:
         data: The input dataframe to be checked.
-        parameters: The parameters for which corresponding columns ill be checked.
+        parameters: The parameters for which corresponding columns will be checked.
         targets: The targets for which corresponding columns will be checked.
 
     Returns:
