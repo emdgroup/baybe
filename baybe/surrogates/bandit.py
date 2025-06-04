@@ -110,7 +110,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
 
     @override
     @staticmethod
-    def _make_input_scaler_factory():
+    def _make_parameter_scaler_factory():
         # Due to enforced one-hot encoding, no input scaling is needed.
         return None
 
