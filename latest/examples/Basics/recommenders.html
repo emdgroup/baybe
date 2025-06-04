@@ -1253,10 +1253,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent             Base         Ligand  Temperature  Concentration
-144  Butyornitrile  Cesium pivalate      BrettPhos         90.0          0.057
-248           DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.153
-251           DMAc  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.153
+           Solvent                Base                        Ligand  \
+119  Butyornitrile      Cesium acetate                     BrettPhos   
+372       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+
+     Temperature  Concentration  
+119         90.0          0.153  
+372        105.0          0.057  
+212        105.0          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1265,15 +1270,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent             Base         Ligand  Temperature  \
-144  Butyornitrile  Cesium pivalate      BrettPhos         90.0   
-248           DMAc  Cesium pivalate  (t-Bu)PhCPhos        105.0   
-251           DMAc  Cesium pivalate  (t-Bu)PhCPhos        120.0   
+           Solvent                Base                        Ligand  \
+119  Butyornitrile      Cesium acetate                     BrettPhos   
+372       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration      yield  
-144          0.057   3.899794  
-248          0.153  23.823298  
-251          0.153  21.362457  
+     Temperature  Concentration      yield  
+119         90.0          0.153   8.169183  
+372        105.0          0.057  22.844380  
+212        105.0          0.153   9.600154  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
