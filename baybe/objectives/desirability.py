@@ -57,7 +57,7 @@ def scalarize(
             f"No scalarization mechanism defined for '{scalarizer.name}'."
         )
 
-    return func(values, weights=weights)
+    return func(values, weights=weights)  # type: ignore[return-value]
 
 
 @define(frozen=True, slots=False)
