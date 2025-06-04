@@ -1253,15 +1253,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-      Solvent                Base                        Ligand  Temperature  \
-318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-382  p-Xylene   Potassium acetate                 (t-Bu)PhCPhos        105.0   
-309      DMAc  Potassium pivalate                     BrettPhos        105.0   
+           Solvent               Base                        Ligand  \
+131  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
+271           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
+247           DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
 
-     Concentration  
-318          0.057  
-382          0.100  
-309          0.057  
+     Temperature  Concentration  
+131        105.0          0.153  
+271         90.0          0.100  
+247        105.0          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1270,15 +1270,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-      Solvent                Base                        Ligand  Temperature  \
-318      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
-382  p-Xylene   Potassium acetate                 (t-Bu)PhCPhos        105.0   
-309      DMAc  Potassium pivalate                     BrettPhos        105.0   
+           Solvent               Base                        Ligand  \
+131  Butyornitrile     Cesium acetate  Di-tert-butylphenylphosphine   
+271           DMAc  Potassium acetate                 (t-Bu)PhCPhos   
+247           DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
 
-     Concentration      yield  
-318          0.057   7.339808  
-382          0.100  12.744035  
-309          0.057  17.983820  
+     Temperature  Concentration      yield  
+131        105.0          0.153  31.488590  
+271         90.0          0.100   5.005084  
+247        105.0          0.100  26.434195  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

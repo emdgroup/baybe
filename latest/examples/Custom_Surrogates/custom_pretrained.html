@@ -1054,23 +1054,6 @@ Please note that the model is not designed to be useful but to demonstrate the w
 We thus refer to <a class="reference internal" href="../Basics/campaign.html"><span class="std std-doc"><code class="docutils literal notranslate"><span class="pre">campaign</span></code></span></a> for a basic example.</p>
 <section id="necessary-imports">
 <h2>Necessary imports<a class="headerlink" href="#necessary-imports" title="Link to this heading">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># NOTE: Due to some issues with depracated functions in onnx-related packages,</span>
-<span class="c1"># it is currently necessary to perform the following import.</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span><span class="w"> </span><span class="nn">onnx</span>
-
-    <span class="n">onnx_version</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">__version__</span>
-    <span class="k">if</span> <span class="n">Version</span><span class="p">(</span><span class="n">onnx_version</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s2">&quot;1.18.0&quot;</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">onnx.helper</span><span class="w"> </span><span class="kn">import</span> <span class="n">_split_complex_to_pairs</span>
-
-        <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">split_complex_to_pairs</span> <span class="o">=</span> <span class="n">_split_complex_to_pairs</span>
-<span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="n">error</span>
-</pre></div>
-</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">skl2onnx</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_sklearn</span>
@@ -1654,7 +1637,7 @@ fitted"><pre>BayesianRidge()</pre></div> </div></div></div></div></p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from campaign:
        Pressure[bar]  Temperature[degree_C]
 index                                      
-10               5.0                  100.0
+9                1.0                  200.0
 </pre></div>
 </div>
 </section>

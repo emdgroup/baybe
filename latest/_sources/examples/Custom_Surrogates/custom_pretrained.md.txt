@@ -10,27 +10,6 @@ We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
 
 ```python
-from packaging.version import Version
-```
-
-
-```python
-# NOTE: Due to some issues with depracated functions in onnx-related packages,
-# it is currently necessary to perform the following import.
-try:
-    import onnx
-
-    onnx_version = onnx.__version__
-    if Version(onnx_version) >= Version("1.18.0"):
-        from onnx.helper import _split_complex_to_pairs
-
-        onnx.helper.split_complex_to_pairs = _split_complex_to_pairs
-except ImportError as error:
-    raise error
-```
-
-
-```python
 import numpy as np
 import torch
 from skl2onnx import convert_sklearn
@@ -651,7 +630,7 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    10               5.0                  100.0
+    9                1.0                  200.0
 
 
 ## Using configuration instead
