@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
+- New recommender based on large language models: `LLMRecommender`
 
 ### Changed
 - `scikit-learn` and `scipy` are now lazy-loaded
