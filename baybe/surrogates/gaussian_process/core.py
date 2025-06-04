@@ -159,7 +159,6 @@ class GaussianProcessSurrogate(Surrogate):
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
@@ -186,6 +185,9 @@ class GaussianProcessSurrogate(Surrogate):
         if not context.is_multitask:
             model_cls = botorch.models.SingleTaskGP
             model_kwargs = {}
+
+            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+
         else:
             model_cls = botorch.models.MultiTaskGP
             # TODO - is te below ok?
@@ -220,6 +222,23 @@ class GaussianProcessSurrogate(Surrogate):
                 "rank": context.n_tasks,
                 "all_tasks": task_param.comp_df.squeeze(axis=1).to_list(),
             }
+
+            if train_y.shape[-1] != 1:
+                raise NotImplementedError(
+                    "Task-stratified output transform currently does not support"
+                    + "multiple outputs."  # TODO add fallback to non-stratified
+                )
+            outcome_transform = botorch.models.transforms.outcome.StratifiedStandardize(
+                task_values=torch.tensor(
+                    [
+                        p
+                        for p in context.searchspace.parameters
+                        if isinstance(p, TaskParameter)
+                    ][0].comp_df.values.ravel(),
+                    dtype=torch.long,
+                ),
+                stratification_idx=context.task_idx,
+            )
 
         # construct and fit the Gaussian process
         self._model = model_cls(
