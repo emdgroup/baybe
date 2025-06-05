@@ -248,7 +248,5 @@ def test_input_dtype(data, warning, match, parameters, targets):
         print(converted)
 
     # Asserts converted columns have expected dtypes
-    if not pd.api.types.is_float_dtype(data["Num_disc_1"]):
-        assert pd.api.types.is_float_dtype(converted["Num_disc_1"]), (data, converted)
-    if not pd.api.types.is_float_dtype(data["Target_max"]):
-        assert pd.api.types.is_float_dtype(converted["Target_max"]), (data, converted)
+    assert pd.api.types.is_float_dtype(converted["Num_disc_1"]), (data, converted)
+    assert pd.api.types.is_float_dtype(converted["Target_max"]), (data, converted)
