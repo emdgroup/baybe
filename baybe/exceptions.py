@@ -10,6 +10,10 @@ from typing_extensions import override
 ##### Warnings #####
 
 
+class InputDataTypeWarning(UserWarning):
+    """An input has unexpected data type."""
+
+
 class UnusedObjectWarning(UserWarning):
     """
     A method or function was called with undesired arguments which indicates an

@@ -19,7 +19,16 @@ from baybe.utils.numerical import DTypeFloatNumpy
 def _convert_values(value, self, field) -> tuple[str, ...]:
     """Sort and convert values for categorical parameters."""
     value = nonstring_to_tuple(value, self, field)
-    return tuple(sorted(value))
+    return tuple(sorted(value, key=lambda x: (str(type(x)), x)))
+
+
+def _validate_label_min_len(self, attr, value) -> None:
+    """An attrs-compatible validator to ensure minimum label length."""  # noqa: D401
+    if isinstance(value, str) and len(value) < 1:
+        raise ValueError(
+            f"Strings used as '{attr.alias}' for '{self.__class__.__name__}' must "
+            f"have at least 1 character."
+        )
 
 
 @define(frozen=True, slots=False)
@@ -27,13 +36,15 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     """Parameter class for categorical parameters."""
 
     # object variables
-    _values: tuple[str, ...] = field(
+    _values: tuple[str | bool, ...] = field(
         alias="values",
         converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
-            min_len(2),
             validate_unique_values,
-            deep_iterable(member_validator=(instance_of(str), min_len(1))),
+            deep_iterable(
+                member_validator=(instance_of((str, bool)), _validate_label_min_len),
+                iterable_validator=min_len(2),
+            ),
         ),
     )
     # See base class.
@@ -53,7 +64,10 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         if self.encoding is CategoricalEncoding.OHE:
-            cols = [f"{self.name}_{val}" for val in self.values]
+            cols = [
+                f"{self.name}_{'b' if isinstance(val, bool) else ''}{val}"
+                for val in self.values
+            ]
             comp_df = pd.DataFrame(
                 np.eye(len(self.values), dtype=DTypeFloatNumpy), columns=cols
             )

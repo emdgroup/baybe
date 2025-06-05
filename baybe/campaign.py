@@ -47,7 +47,12 @@ from baybe.telemetry import (
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import _ValidatedDataFrame, filter_df, fuzzy_row_match
+from baybe.utils.dataframe import (
+    _ValidatedDataFrame,
+    filter_df,
+    fuzzy_row_match,
+    normalize_input_dtypes,
+)
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
@@ -288,6 +293,7 @@ class Campaign(SerialMixin):
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
+        data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
 
         # Read in measurements and add them to the database
@@ -339,6 +345,7 @@ class Campaign(SerialMixin):
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
+        data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
 
         # Block duplicate input indices
@@ -455,6 +462,9 @@ class Campaign(SerialMixin):
         if (pending_experiments is not None) and not pending_experiments.empty:
             self._cached_recommendation = pd.DataFrame()
             validate_parameter_input(pending_experiments, self.parameters)
+            pending_experiments = normalize_input_dtypes(
+                pending_experiments, self.parameters
+            )
             pending_experiments.__class__ = _ValidatedDataFrame
 
         # If there are cached recommendations and the batch size of those is equal to

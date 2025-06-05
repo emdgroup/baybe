@@ -19,7 +19,11 @@ from typing_extensions import override
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
 from baybe.exceptions import DeprecationError, OptionalImportError
-from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
+from baybe.parameters import (
+    CategoricalEncoding,
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
@@ -27,7 +31,11 @@ from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.basic import to_tuple
 from baybe.utils.boolean import eq_dataframe, strtobool
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df
+from baybe.utils.dataframe import (
+    get_transform_objects,
+    normalize_input_dtypes,
+    pretty_print_df,
+)
 from baybe.utils.memory import bytes_to_human_readable
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -244,6 +252,15 @@ class SubspaceDiscrete(SerialMixin):
         ) -> DiscreteParameter:
             """Try to create a numerical parameter or use a categorical fallback."""
             try:
+                if pd.api.types.is_bool_dtype(np.asarray(values)):
+                    # Due to the difference between bool and np.bool and pandas'
+                    # auto-casting into the latter, the usage of is_bool_dtype and map
+                    # is required here.
+                    return CategoricalParameter(
+                        name=name,
+                        values=map(bool, values),
+                        encoding=CategoricalEncoding.INT,
+                    )
                 return NumericalDiscreteParameter(name=name, values=values)
             except IterableValidationError:
                 return CategoricalParameter(name=name, values=values)
@@ -256,6 +273,9 @@ class SubspaceDiscrete(SerialMixin):
         parameters = get_parameters_from_dataframe(
             df, discrete_parameter_factory, parameters
         )
+
+        # Ensure dtype consistency
+        df = normalize_input_dtypes(df, parameters)
 
         return cls(parameters=parameters, exp_rep=df, empty_encoding=empty_encoding)
 

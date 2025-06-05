@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import numpy as np
 import pandas as pd
 
-from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
+from baybe.parameters.base import Parameter
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
@@ -19,7 +21,6 @@ from baybe.utils.numerical import DTypeFloatNumpy
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
     _T = TypeVar("_T", bound=Parameter | Target)
@@ -513,6 +514,10 @@ def fuzzy_row_match(
         f"{provided_cols.difference(allowed_cols)}"
     )
 
+    # Ensure the dtype consistency in the dataframes
+    left_df = normalize_input_dtypes(left_df, parameters)
+    right_df = normalize_input_dtypes(right_df, parameters)
+
     # Initialize the match matrix. We will later filter it down using other
     # matrices (representing the matches for individual parameters) via logical 'and'.
     match_matrix = pd.DataFrame(
@@ -527,8 +532,7 @@ def fuzzy_row_match(
 
     # Match numerical parameters
     for col in num_cols:
-        # Per numerical parameter, this identifies the rows with the smallest absolute
-        # difference and records them in a matrix.
+        # Compute absolute differences and find the minimum difference
         abs_diff = np.abs(right_df[col].values[:, None] - left_df[col].values[None, :])
         min_diff = abs_diff.min(axis=1, keepdims=True)
         match_matrix &= abs_diff == min_diff
@@ -834,3 +838,46 @@ def handle_missing_values(
         )
 
     return data.loc[~mask]
+
+
+def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.DataFrame:
+    """Ensure that the input dataframe has the expected dtypes for all columns.
+
+    Args:
+        df: The input dataframe to be checked.
+        objects: The objects for which to check the corresponding column dtypes.
+
+    Returns:
+        The original dataframe if there are no dtype issues. Otherwise, a copy with
+        columns converted to expected dtypes.
+    """
+
+    def needs_float_dtype(obj) -> bool:
+        """Check if the object requires float dtype column representation."""
+        return (isinstance(obj, Parameter) and obj.is_numerical) or isinstance(
+            obj, NumericalTarget
+        )
+
+    # Find columns that are not of float dtype but should be
+    wrong_cols = [
+        o.name
+        for o in objects
+        if needs_float_dtype(o)
+        and o.name in df.columns
+        and not pd.api.types.is_float_dtype(df[o.name])
+    ]
+
+    # If there are no issues, return the original
+    if not wrong_cols:
+        return df
+
+    # Make a copy of the dataframe and convert problematic column data types
+    warnings.warn(
+        f"The following columns have unexpected data types: {wrong_cols}. "
+        f"Converting to float internally.",
+        InputDataTypeWarning,
+    )
+    df = df.copy()
+    for col in wrong_cols:
+        df[col] = df[col].astype(DTypeFloatNumpy)
+    return df
