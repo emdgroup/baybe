@@ -132,7 +132,7 @@ class DummyParameter:
 
 
 def test_fps_recommender_calls_fpsample():
-    """Test that FPSRecommender uses `fpsample` when it is available."""
+    """Test that FPSRecommender uses `fpsample` and return results."""
     df = pd.DataFrame({"x": np.arange(10)})
     param = DummyParameter("x")
     subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
@@ -197,3 +197,22 @@ def test_fps_recommender_fallback_to_internal_fps():
 
             mock_internal.assert_called_once()
             assert result.tolist() == [0, 1, 2]
+
+
+def test_fps_recommender_with_known_points():
+    """Test FPSRecommender returns expected indices for a fixed dataset."""
+    df = pd.DataFrame({"x": [0.0, 10.0, 20.0, 30.0, 40.0]})
+    param = DummyParameter("x")
+    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+    recommender = FPSRecommender()
+
+    with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
+        # Simulate fpsample selecting indices [0, 4, 2]
+        mock_fps.return_value = np.array([0, 4, 2])
+        result = recommender._recommend_discrete(
+            subspace_discrete=subspace,
+            candidates_exp=df,
+            batch_size=3,
+        )
+
+        assert result.tolist() == [0, 4, 2]
