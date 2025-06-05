@@ -192,13 +192,12 @@ class GaussianProcessSurrogate(Surrogate):
             model_kwargs = {}
         else:
             model_cls = botorch.models.MultiTaskGP
-            # TODO
-            #  It is assumed that there is only one task parameter with only
+            # TODO - is te below ok?
+            #  It is required that there is only one task parameter with only
             #  one active value.
             #  One active task value is required for MultiTaskGP as else
             #  one posterior per task would be returned:
             #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
-            # TODO
             #  The below code implicitly assumes there is single task parameter,
             #  which is already checked in the SearchSpace.
             task_param = [
