@@ -367,9 +367,9 @@ class SHAPInsight:
         data: pd.DataFrame | None = None,
         /,
         *,
-        target_index: int = 0,
         show: bool = True,
         explanation_index: int | None = None,
+        target_index: int | None = None,
         **kwargs: Any,
     ) -> plt.Axes:
         """Plot the Shapley values using the provided plot type.
@@ -377,12 +377,12 @@ class SHAPInsight:
         Args:
             plot_type: The type of plot to be created.
             data: See :meth:`explain`.
-            target_index: The index of the target for which the plot is created. Only
-                relevant for multi-output objectives.
             show: Boolean flag determining if the plot is to be rendered.
             explanation_index: Positional index of the data point that should be
                 explained. Only relevant for plot types that can only handle a single
                 data point.
+            target_index: The index of the target for which the plot is created. Only
+                required for multi-output objectives.
             **kwargs: Additional keyword arguments passed to the plot function.
 
         Returns:
@@ -390,9 +390,17 @@ class SHAPInsight:
 
         Raises:
             ValueError: If the provided plot type is not supported.
+            ValueError: If the target index is not specified for multi-output
+                situations.
         """
         if data is None:
             data = self.background_data
+        if target_index is None:
+            if len(self.explainers) > 1:
+                raise ValueError(
+                    "The 'target_index' must be specified for multi-output scenarios."
+                )
+            target_index = 0
 
         # Use custom scatter plot function to ignore non-numeric features
         if plot_type == "scatter":

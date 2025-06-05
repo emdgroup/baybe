@@ -151,7 +151,7 @@ for a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective),
 there are multiple models to be analyzed.
 
 [`SHAPInsight`](baybe.insights.shap.SHAPInsight) calculates a separate explanation for
-each model. When requesting a plot, you can select for which target the assessment
+each model. When requesting a plot, you must select for which target the assessment
 should be displayed:
 ~~~python
 insight.plot("bar", target_index=2)  # plots the bar plot for the third target
