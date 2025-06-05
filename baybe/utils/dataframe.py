@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
+from baybe.parameters.base import Parameter
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
@@ -20,10 +21,10 @@ from baybe.utils.numerical import DTypeFloatNumpy
 if TYPE_CHECKING:
     from torch import Tensor
 
-    from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
-    _T = TypeVar("_T", bound=Parameter | Target)
+    _Component = Parameter | Target
+    _T = TypeVar("_T", bound=_Component)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
 
 
@@ -841,55 +842,45 @@ def handle_missing_values(
 
 
 def normalize_input_dtypes(
-    data: pd.DataFrame,
-    parameters: Iterable[Parameter] | None = None,
-    targets: Iterable[Target] | None = None,
+    df: pd.DataFrame, objects: Iterable[_Component], /
 ) -> pd.DataFrame:
-    """Ensure that the input dataframe has the expected datatypes for all columns.
+    """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:
-        data: The input dataframe to be checked.
-        parameters: The parameters for which corresponding columns will be checked.
-        targets: The targets for which corresponding columns will be checked.
+        df: The input dataframe to be checked.
+        objects: The objects for which to check the corresponding column dtypes.
 
     Returns:
         The original dataframe if there are no dtype issues. Otherwise, a copy with
         columns converted to expected dtypes.
     """
-    parameters = parameters or []
-    targets = targets or []
-    parameters_num = [
-        p for p in parameters if (p.is_numerical and p.name in data.columns)
-    ]
-    targets_num = [
-        t
-        for t in targets
-        if (isinstance(t, NumericalTarget) and t.name in data.columns)
-    ]
 
-    # Collect columns corresponding to numerical parameters that don't have float dtype
-    wrong_p_cols = []
-    for p in parameters_num:
-        if not pd.api.types.is_float_dtype(data[p.name]):
-            wrong_p_cols.append(p.name)
+    def needs_float_dtype(obj) -> bool:
+        """Check if the object requires float dtype column representation."""
+        return (isinstance(obj, Parameter) and obj.is_numerical) or isinstance(
+            obj, NumericalTarget
+        )
 
-    # Collect columns corresponding to numerical targets that don't have float dtype
-    wrong_t_cols = []
-    for t in targets_num:
-        if not pd.api.types.is_float_dtype(data[t.name]):
-            wrong_t_cols.append(t.name)
+    # Find columns that are not of float dtype but should be
+    wrong_cols = [
+        o.name
+        for o in objects
+        if needs_float_dtype(o)
+        and o.name in df.columns
+        and not pd.api.types.is_float_dtype(df[o.name])
+    ]
 
     # If there are no issues, return the original
-    if not (wrong_cols := wrong_p_cols + wrong_t_cols):
-        return data
+    if not wrong_cols:
+        return df
 
     # Make a copy of the dataframe and convert problematic column data types
     warnings.warn(
-        f"One of the following columns has an unexpected data type: {wrong_cols}. "
+        f"The following columns have unexpected data types: {wrong_cols}. "
         f"Converting to float internally.",
         InputDataTypeWarning,
     )
-    data = data.copy()
+    df = df.copy()
     for col in wrong_cols:
-        data[col] = data[col].astype(DTypeFloatNumpy)
-    return data
+        df[col] = df[col].astype(DTypeFloatNumpy)
+    return df

@@ -109,7 +109,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             validate_target_input(measurements, objective.targets)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
-                measurements, searchspace.parameters, objective.targets
+                measurements, searchspace.parameters + objective.targets
             )
             measurements.__class__ = _ValidatedDataFrame
         if (

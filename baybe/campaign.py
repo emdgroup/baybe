@@ -293,7 +293,7 @@ class Campaign(SerialMixin):
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
-        data = normalize_input_dtypes(data, self.parameters, self.targets)
+        data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
 
         # Read in measurements and add them to the database
@@ -345,7 +345,7 @@ class Campaign(SerialMixin):
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
-        data = normalize_input_dtypes(data, self.parameters, self.targets)
+        data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
 
         # Block duplicate input indices

@@ -170,7 +170,7 @@ class BayesianRecommender(PureRecommender, ABC):
             validate_target_input(measurements, objective.targets)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
-                measurements, searchspace.parameters, objective.targets
+                measurements, searchspace.parameters + objective.targets
             )
             measurements.__class__ = _ValidatedDataFrame
         if pending_experiments is not None and not isinstance(

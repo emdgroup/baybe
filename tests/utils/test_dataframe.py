@@ -242,8 +242,8 @@ def test_measurement_singletons():
 def test_input_dtype(data, warning, match, parameters, targets):
     """If necessary, utility converts input dtype and raises warning."""
     with nullcontext() if warning is None else pytest.warns(warning, match=match):
-        converted = normalize_input_dtypes(data, parameters, targets)
-        converted = normalize_input_dtypes(data, parameters, targets)
+        converted = normalize_input_dtypes(data, parameters + targets)
+        converted = normalize_input_dtypes(data, parameters + targets)
         print(data)
         print(converted)
 
