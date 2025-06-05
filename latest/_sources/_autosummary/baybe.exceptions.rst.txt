@@ -32,6 +32,7 @@ baybe.exceptions
       IncompatibleSurrogateError
       IncompleteMeasurementsError
       InfeasibilityError
+      InputDataTypeWarning
       InvalidSurrogateModelError
       InvalidTargetValueError
       MinimumCardinalityViolatedWarning

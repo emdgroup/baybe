@@ -26,6 +26,7 @@ baybe.utils.dataframe
       fuzzy_row_match
       get_transform_objects
       handle_missing_values
+      normalize_input_dtypes
       pretty_print_df
       to_tensor
       transform_target_columns

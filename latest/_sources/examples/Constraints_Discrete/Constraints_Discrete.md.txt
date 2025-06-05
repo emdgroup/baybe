@@ -7,7 +7,7 @@ can be applied to discrete search spaces.
 :maxdepth: 1
 
 Custom <custom_constraints>
-Dependency <dependency_constraints>
 Product/Sum <prodsum_constraints>
+Dependency <dependency_constraints>
 Exclusion <exclusion_constraints>
 ```
