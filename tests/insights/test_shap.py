@@ -17,6 +17,7 @@ from baybe.objectives import (
     SingleTargetObjective,
 )
 from baybe.targets import NumericalTarget
+from baybe.utils.basic import is_all_instance
 
 if not INSIGHTS_INSTALLED:
     pytest.skip("Optional insights package not installed.", allow_module_level=True)
@@ -89,7 +90,7 @@ def test_non_shap_signature(explainer_name):
 
 
 def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
-    """Helper function for general SHAP explainers tests."""
+    """Helper function for general SHAP explainer tests."""
     context = nullcontext()
     if (
         (not use_comp_rep)
@@ -97,7 +98,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         and any(not p.is_numerical for p in campaign.parameters)
     ):
         # We expect a validation error in case an explanation with an unsupported
-        # explainers type is attempted on a search space representation with
+        # explainer type is attempted on a search space representation with
         # non-numerical entries
         context = pytest.raises(IncompatibleExplainerError)
 
@@ -110,10 +111,6 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
 
         # Sanity check explainers
         assert isinstance(shap_insight, insights.SHAPInsight)
-        # assert all(
-        #     isinstance(e, _get_explainer_cls(explainer_cls))
-        #     for e in shap_insight.explainers
-        # )
         assert all(is_shap_explainer(e) == is_shap for e in shap_insight.explainers)
 
         # Sanity check explanation
@@ -122,7 +119,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
             df = campaign.searchspace.transform(df)
         shap_explanations = shap_insight.explain(df)
         assert isinstance(shap_explanations, tuple)
-        assert isinstance(shap_explanations[0], shap.Explanation)
+        assert is_all_instance(shap_explanations, shap.Explanation)
 
 
 @mark.slow

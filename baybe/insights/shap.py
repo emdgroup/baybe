@@ -131,7 +131,6 @@ class SHAPInsight:
     explainers: tuple[shap.Explainer, ...] = field(
         converter=tuple,
         validator=deep_iterable(
-            iterable_validator=instance_of(tuple),
             member_validator=instance_of(shap.Explainer),
         ),
     )
