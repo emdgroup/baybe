@@ -272,17 +272,18 @@ class SHAPInsight:
             use_comp_rep=use_comp_rep,
         )
 
-    def explain(
-        self, data: pd.DataFrame | None = None, /
-    ) -> tuple[shap.Explanation, ...]:
-        """Compute Shapley explanations for a given data set.
+    def explain_target(
+        self, target_index: int, data: pd.DataFrame | None = None, /
+    ) -> shap.Explanation:
+        """Compute Shapley explanations for a given data set for a single-target.
 
         Args:
+            target_index: The index of the target for which the explanation is created.
             data: The dataframe for which the Shapley values are to be computed.
                 By default, the background data set of the explainer is used.
 
         Returns:
-            The computed Shapley explanations.
+            The computed Shapley explanation.
 
         Raises:
             ValueError: If not all the columns of the explainer background dataframe
@@ -299,65 +300,76 @@ class SHAPInsight:
         # Align columns with background data
         df_aligned = data[self.background_data.columns]
 
-        explanations = []
-        for explainer in self.explainers:
-            if not is_shap_explainer(explainer):
-                # Return attributions for non-SHAP explainers
-                if explainer.__module__.endswith("maple"):
-                    # Additional argument for maple to increase comparability to SHAP
-                    attributions = explainer.attributions(
-                        df_aligned, multiply_by_input=True
-                    )[0]
-                else:
-                    attributions = explainer.attributions(df_aligned)[0]
-
-                explanation = shap.Explanation(
-                    values=attributions,
-                    base_values=explainer.model(self.background_data).mean(),
-                    data=df_aligned.values,
-                    feature_names=df_aligned.columns.values,
-                )
+        explainer = self.explainers[target_index]
+        if not is_shap_explainer(explainer):
+            # Return attributions for non-SHAP explainers
+            if explainer.__module__.endswith("maple"):
+                # Additional argument for maple to increase comparability to SHAP
+                attributions = explainer.attributions(
+                    df_aligned, multiply_by_input=True
+                )[0]
             else:
-                explanation = explainer(df_aligned)
+                attributions = explainer.attributions(df_aligned)[0]
 
-            # Permute explanation object data according to input column order
-            # (`base_values` can be a scalar or vector)
-            # TODO: https://github.com/shap/shap/issues/3958
-            idx = self.background_data.columns.get_indexer(data.columns)
-            idx = idx[idx != -1]  # Additional columns in data are ignored.
-            for attr in ["values", "data", "base_values"]:
-                try:
-                    setattr(explanation, attr, getattr(explanation, attr)[:, idx])
-                except IndexError as ex:
-                    if not (
-                        isinstance(explanation.base_values, float)
-                        or explanation.base_values.shape[1] == 1
-                    ):
-                        raise TypeError("Unexpected explanation format.") from ex
-            explanation.feature_names = [explanation.feature_names[i] for i in idx]
+            explanation = shap.Explanation(
+                values=attributions,
+                base_values=explainer.model(self.background_data).mean(),
+                data=df_aligned.values,
+                feature_names=df_aligned.columns.values,
+            )
+        else:
+            explanation = explainer(df_aligned)
 
-            # Reduce dimensionality of explanations to 2D in case
-            # a 3D explanation is returned. This is the case for
-            # some explainers even if only one output is present.
-            if len(explanation.shape) == 2:
-                explanations.append(explanation)
-            elif len(explanation.shape) == 3:
-                if explanation.shape[2] == 1:
-                    # Some explainers have a third dimension corresponding to the
-                    # number of model outputs (in this implementation always 1).
-                    explanations.append(explanation[:, :, 0])
-                else:
-                    # Some explainers (like ``AdditiveExplainer``) have a third
-                    # dimension corresponding to feature interactions. The total shap
-                    # value is obtained by summing over them.
-                    explanations.append(explanation.sum(axis=2))
+        # Permute explanation object data according to input column order
+        # (`base_values` can be a scalar or vector)
+        # TODO: https://github.com/shap/shap/issues/3958
+        idx = self.background_data.columns.get_indexer(data.columns)
+        idx = idx[idx != -1]  # Additional columns in data are ignored.
+        for attr in ["values", "data", "base_values"]:
+            try:
+                setattr(explanation, attr, getattr(explanation, attr)[:, idx])
+            except IndexError as ex:
+                if not (
+                    isinstance(explanation.base_values, float)
+                    or explanation.base_values.shape[1] == 1
+                ):
+                    raise TypeError("Unexpected explanation format.") from ex
+        explanation.feature_names = [explanation.feature_names[i] for i in idx]
+
+        # Reduce dimensionality of explanations to 2D in case
+        # a 3D explanation is returned. This is the case for
+        # some explainers even if only one output is present.
+        if len(explanation.shape) == 3:
+            if explanation.shape[2] == 1:
+                # Some explainers have a third dimension corresponding to the
+                # number of model outputs (in this implementation always 1).
+                explanation = explanation[:, :, 0]
             else:
-                raise RuntimeError(
-                    f"The explanation obtained for '{self.__class__.__name__}' has an "
-                    f"unexpected dimensionality of {len(explanation.shape)}."
-                )
+                # Some explainers (like ``AdditiveExplainer``) have a third
+                # dimension corresponding to feature interactions. The total shap
+                # value is obtained by summing over them.
+                explanation = explanation.sum(axis=2)
+        elif len(explanation.shape) != 2:
+            raise RuntimeError(
+                f"The explanation obtained for '{self.__class__.__name__}' has an "
+                f"unexpected dimensionality of {len(explanation.shape)}."
+            )
 
-        return tuple(explanations)
+        return explanation
+
+    def explain(
+        self, data: pd.DataFrame | None = None, /
+    ) -> tuple[shap.Explanation, ...]:
+        """Compute Shapley explanations for a given data set for all targets.
+
+        Args:
+            data: The dataframe for which the Shapley values are to be computed.
+                By default, the background data set of the explainer is used.
+
+        Returns:
+            The computed Shapley explanations.
+        """
+        return tuple(self.explain_target(k, data) for k in range(len(self.explainers)))
 
     def plot(
         self,
@@ -422,13 +434,13 @@ class SHAPInsight:
                 )
                 explanation_index = 0
 
-            toplot = self.explain(data.iloc[[explanation_index]])[target_index]
+            toplot = self.explain_target(target_index, data.iloc[[explanation_index]])
             toplot = toplot[0]
 
             if plot_type == "force":
                 kwargs["matplotlib"] = True
         else:
-            toplot = self.explain(data)[target_index]
+            toplot = self.explain_target(target_index, data)
 
         return plot_func(toplot, show=show, **kwargs)
 
@@ -462,5 +474,5 @@ class SHAPInsight:
                 UserWarning,
             )
         return shap.plots.scatter(
-            self.explain(data)[target_index][:, numeric_idx], show=show, **kwargs
+            self.explain_target(target_index, data)[:, numeric_idx], show=show, **kwargs
         )
