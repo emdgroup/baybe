@@ -23,8 +23,7 @@ if TYPE_CHECKING:
 
     from baybe.targets.base import Target
 
-    _Component = Parameter | Target
-    _T = TypeVar("_T", bound=_Component)
+    _T = TypeVar("_T", bound=Parameter | Target)
     _ArrayLike = TypeVar("_ArrayLike", np.ndarray, Tensor)
 
 
@@ -841,9 +840,7 @@ def handle_missing_values(
     return data.loc[~mask]
 
 
-def normalize_input_dtypes(
-    df: pd.DataFrame, objects: Iterable[_Component], /
-) -> pd.DataFrame:
+def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.DataFrame:
     """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:
