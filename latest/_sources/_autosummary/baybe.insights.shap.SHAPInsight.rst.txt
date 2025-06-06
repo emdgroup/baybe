@@ -16,6 +16,7 @@ SHAPInsight
    
       ~SHAPInsight.__init__
       ~SHAPInsight.explain
+      ~SHAPInsight.explain_target
       ~SHAPInsight.from_campaign
       ~SHAPInsight.from_recommender
       ~SHAPInsight.from_surrogate
@@ -29,8 +30,7 @@ SHAPInsight
 
    .. autosummary::
    
-      ~SHAPInsight.explainer
+      ~SHAPInsight.explainers
       ~SHAPInsight.background_data
-      ~SHAPInsight.uses_shap_explainer
    
    
