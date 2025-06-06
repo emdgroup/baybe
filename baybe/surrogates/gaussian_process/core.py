@@ -170,15 +170,11 @@ class GaussianProcessSurrogate(Surrogate):
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
+        covar_module = self.kernel_factory(
             context.searchspace, train_x, train_y
         ).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
             batch_shape=batch_shape,
-            # The active_dims parameter is omitted as it is not needed for both
-            # - single-task SingleTaskGP: all features are used
-            # - multi-task MultiTaskGP: the model splits task and non-task features
-            #   before passing them to the covariance kernel
         )
 
         # create GP likelihood
@@ -207,7 +203,6 @@ class GaussianProcessSurrogate(Surrogate):
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
             )
-            ][0]
             if len(task_param.active_values) > 1:
                 raise NotImplementedError(
                     "Does not support multiple active task values."
@@ -215,11 +210,12 @@ class GaussianProcessSurrogate(Surrogate):
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": [
-                    task_param.comp_df.at[task_param.active_values[0], task_param.name]
+                    # Assumption (as implemented in TaskParameter class):
+                    # comp_df is always 1-dimensional (DF with single numerical column)
+                    task_param.comp_df.squeeze(axis=1).at[task_param.active_values[0]]
                 ],
                 "rank": context.n_tasks,
-                "task_covar_prior": None,
-                "all_tasks": task_param.comp_df[task_param.name].astype(int).to_list(),
+                "all_tasks": task_param.comp_df.squeeze(axis=1).astype(int).to_list(),
             }
 
         # construct and fit the Gaussian process
@@ -229,7 +225,7 @@ class GaussianProcessSurrogate(Surrogate):
             input_transform=input_transform,
             outcome_transform=outcome_transform,
             mean_module=mean_module,
-            covar_module=base_covar_module,
+            covar_module=covar_module,
             likelihood=likelihood,
             **model_kwargs,
         )
