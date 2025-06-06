@@ -202,10 +202,11 @@ class GaussianProcessSurrogate(Surrogate):
             #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
             #  The below code implicitly assumes there is single task parameter,
             #  which is already checked in the SearchSpace.
-            task_param = [
+            task_param = next(
                 p
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
+            )
             ][0]
             if len(task_param.active_values) > 1:
                 raise NotImplementedError(
