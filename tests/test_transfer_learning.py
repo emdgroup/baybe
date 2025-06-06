@@ -48,4 +48,4 @@ def test_recommendation(
     if lookup.shape[0] > 0:
         campaign.add_measurements(lookup)
 
-    _ = campaign.recommend(batch_size=1)
+    campaign.recommend(batch_size=1)
