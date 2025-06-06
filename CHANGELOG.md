@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.13.1] - 2025-06-06
 ### Added
 - Support for Python 3.13
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `values` and `active_values`
 - `SubspaceDiscrete.from_dataframe` now handles purely Boolean columns differently, 
   inferring a `CategoricalParameter` with `INT` encoding for them
+- `SHAPInsight.explain` now returns a tuple of explanations that contains one 
+  explanation for each surrogate model used by the (possibly multi-output) objective
+- `SHAPInsight.plot` now has the optional `target_index` argument, enabling users to 
+  select for which target they want to plot the shap assessment (default is the first 
+  target)
 - `add_measurements`, `update_measurements`, `fuzzy_row_match` and some `.recommend` 
   calls now operate on dtype-normalized copies of the input if it contained unexpected
   dtypes for a parameter or target
@@ -33,17 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TypedDict` instead of dynamically retrieved specifications, required for 
   lazy-loading related packages
 - `CustomONNXSurrogate.onnx_str` is no longer validated before being used
-- `SHAPInsight.explain` now returns a tuple of explanations that contains one 
-  explanation for each surrogate model used by the (possibly multi-output) objective
-- `SHAPInsight.plot` now has the optional `target_index` argument, enabling users to 
-  select for which target they want to plot the shap assessment (default is the first 
-  target)
 
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
   minimization of the acquisition function
-- Added missing garbage collection call to `pareto.py`, potentially solving serialization
-  issues in certain cases
+- Added missing garbage collection call to `pareto.py`, potentially solving 
+  serialization issues in certain cases
 - `catch_constant_targets` decorator is now properly typed
 - Incorrect normalization of explanation shapes for `SHAPInsight`
 
