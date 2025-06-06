@@ -36,6 +36,7 @@ with exclude_sys_path(os.getcwd()):
     SKFP_INSTALLED = find_spec("skfp") is not None  # scikit-fingerprints
     STREAMLIT_INSTALLED = find_spec("streamlit") is not None
     XYZPY_INSTALLED = find_spec("xyzpy") is not None
+    FPSAMPLE_INSTALLED = find_spec("fpsample") is not None
 
 # TODO: `find_spec` does not work for `typos` (probably because it's a rust package),
 #   neither seem any versions of `pip show typos` / `pip freeze | grep typos` /
