@@ -17,7 +17,7 @@ def test_recommendation(
     observed_target_data: bool,
     observed_source_data: bool,
 ):
-    """Test a BO iteration with TL model in different data settings."""
+    """First BO recommendation in TL setting runs through."""
     # Setup test data
     source = "B"
     target = "A"
