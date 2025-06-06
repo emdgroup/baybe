@@ -13,11 +13,7 @@ from ..hypothesis_strategies.basic import finite_floats
 from ..hypothesis_strategies.targets import numerical_targets
 from ..hypothesis_strategies.utils import intervals as st_intervals
 
-_intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
-
-_target_lists = st.lists(
-    numerical_targets(_intervals), min_size=2, unique_by=lambda t: t.name
-)
+_target_lists = st.lists(numerical_targets(), min_size=2, unique_by=lambda t: t.name)
 
 
 def single_target_objectives():
