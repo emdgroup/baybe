@@ -1,7 +1,6 @@
 """Tests for sampling algorithm utilities."""
 
 import math
-import warnings
 from unittest.mock import patch
 
 import hypothesis.extra.numpy as hnp
@@ -12,9 +11,14 @@ import pytest
 from hypothesis import example, given
 from sklearn.metrics import pairwise_distances
 
+from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.exceptions import OptionalImportError
-from baybe.recommenders.pure.nonpredictive.sampling import FPSRecommender
-from baybe.searchspace import SubspaceDiscrete
+from baybe.parameters import CategoricalParameter
+from baybe.recommenders.pure.nonpredictive.sampling import (
+    FPSInitialization,
+    FPSRecommender,
+)
+from baybe.searchspace import SearchSpace
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -117,69 +121,50 @@ def test_farthest_point_sampling_pathological_case():
     assert selection == [0, 1]
 
 
-class DummyParameter:
-    """Minimal mock parameter class to support SubspaceDiscrete construction.
-
-    Provides a basic `transform` method that converts input data to float format,
-    mimicking behavior expected from real parameter objects in tests.
-    """
-
-    def __init__(self, name):
-        self.name = name
-
-    def transform(self, col):
-        return pd.DataFrame({self.name: col.astype(float)})
-
-
+@pytest.mark.skipif(not FPSAMPLE_INSTALLED, reason="fpsample is not installed.")
 def test_fps_recommender_calls_fpsample():
-    """Test that FPSRecommender uses `fpsample` and return results."""
-    df = pd.DataFrame({"x": np.arange(10)})
-    param = DummyParameter("x")
-    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
-
-    recommender = FPSRecommender()
+    """Test that FPSRecommender uses `fpsample` when it is available."""
+    parameters = [
+        CategoricalParameter("x", values=[str(i) for i in range(10)]),
+    ]
+    searchspace = SearchSpace.from_product(parameters)
 
     with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
         mock_fps.return_value = np.array([0, 1, 2])
-        result = recommender._recommend_discrete(
-            subspace_discrete=subspace,
-            candidates_exp=df,
-            batch_size=3,
-        )
+
+        recommender = FPSRecommender()
+        result = recommender.recommend(3, searchspace)
 
         mock_fps.assert_called_once()
-        assert result.tolist() == [0, 1, 2]
+        assert result.index.tolist() == [0, 1, 2]
 
 
+@pytest.mark.skipif(not FPSAMPLE_INSTALLED, reason="fpsample is not installed.")
 def test_fps_recommender_warns_ignored_arguments():
     """Test that FPSRecommender emits warnings for unsupported arguments."""
-    df = pd.DataFrame({"x": np.arange(10)})
-    param = DummyParameter("x")
-    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+    parameters = [
+        CategoricalParameter("x", values=[str(i) for i in range(10)]),
+    ]
+    searchspace = SearchSpace.from_product(parameters)
 
     recommender = FPSRecommender(
-        initialization=FPSRecommender.__annotations__["initialization"]("random"),
+        initialization=FPSInitialization.RANDOM,
         random_tie_break=False,
     )
 
-    with patch(
-        "baybe._optional.fpsample.fps_sampling", return_value=np.array([0, 1, 2])
-    ):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            recommender._recommend_discrete(
-                subspace_discrete=subspace, candidates_exp=df, batch_size=3
-            )
-        warning_msgs = [str(warning.message) for warning in w]
-        assert any("initialization=" in msg for msg in warning_msgs)
-        assert any("random tie-breaking" in msg for msg in warning_msgs)
+    with pytest.warns(UserWarning, match=r"initialization=|random tie-breaking"):
+        recommender.recommend(
+            batch_size=3,
+            searchspace=searchspace,
+        )
 
 
 def test_fps_recommender_fallback_to_internal_fps():
-    """Test that FPSRecommender falls back to the custom FPS when unavailable."""
-    df = pd.DataFrame({"x": np.arange(10)})
-    param = DummyParameter("x")
-    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+    """Test that FPS falls back to the custom FPS when `fpsample` is unavailable."""
+    parameters = [
+        CategoricalParameter("x", values=[str(i) for i in range(10)]),
+    ]
+    searchspace = SearchSpace.from_product(parameters)
     recommender = FPSRecommender()
 
     with patch(
@@ -191,28 +176,26 @@ def test_fps_recommender_fallback_to_internal_fps():
         ) as mock_internal:
             mock_internal.return_value = [0, 1, 2]
 
-            result = recommender._recommend_discrete(
-                subspace_discrete=subspace, candidates_exp=df, batch_size=3
+            result = recommender.recommend(
+                batch_size=3,
+                searchspace=searchspace,
             )
 
             mock_internal.assert_called_once()
-            assert result.tolist() == [0, 1, 2]
+            assert result.index.tolist() == [0, 1, 2]
 
 
+@pytest.mark.skipif(not FPSAMPLE_INSTALLED, reason="fpsample is not installed.")
 def test_fps_recommender_with_known_points():
-    """Test FPSRecommender returns expected indices for a fixed dataset."""
-    df = pd.DataFrame({"x": [0.0, 10.0, 20.0, 30.0, 40.0]})
-    param = DummyParameter("x")
-    subspace = SubspaceDiscrete(parameters=(param,), comp_rep=df, exp_rep=df)
+    """Test that `fpsample` returns correct farthest points on known data."""
+    string_values = [str(x) for x in [0.0, 10.0, 20.0, 30.0, 40.0]]
+    param = CategoricalParameter(name="x", values=string_values)
+    searchspace = SearchSpace.from_product(parameters=[param])
+
     recommender = FPSRecommender()
+    result = recommender.recommend(
+        batch_size=3,
+        searchspace=searchspace,
+    )
 
-    with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
-        # Simulate fpsample selecting indices [0, 4, 2]
-        mock_fps.return_value = np.array([0, 4, 2])
-        result = recommender._recommend_discrete(
-            subspace_discrete=subspace,
-            candidates_exp=df,
-            batch_size=3,
-        )
-
-        assert result.tolist() == [0, 4, 2]
+    assert result.index.tolist() == [0, 4, 3]
