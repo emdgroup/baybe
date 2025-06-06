@@ -1,0 +1,33 @@
+baybe.parameters.utils
+======================
+
+.. automodule:: baybe.parameters.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      activate_parameter
+      get_parameters_from_dataframe
+      is_inactive
+      sort_parameters
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,6 @@
+baybe.utils.dataframe.normalize\_input\_dtypes
+==============================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: normalize_input_dtypes

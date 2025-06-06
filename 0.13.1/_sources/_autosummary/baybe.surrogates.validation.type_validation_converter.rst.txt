@@ -1,0 +1,7 @@
+baybe.surrogates.validation.type\_validation\_converter
+=======================================================
+
+.. currentmodule:: baybe.surrogates.validation
+
+
+.. autodata:: type_validation_converter

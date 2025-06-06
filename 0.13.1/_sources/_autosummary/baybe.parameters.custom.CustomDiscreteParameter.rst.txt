@@ -1,0 +1,48 @@
+CustomDiscreteParameter
+=======================
+
+.. currentmodule:: baybe.parameters.custom
+
+.. autoclass:: CustomDiscreteParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CustomDiscreteParameter.__init__
+      ~CustomDiscreteParameter.from_dict
+      ~CustomDiscreteParameter.from_json
+      ~CustomDiscreteParameter.is_in_range
+      ~CustomDiscreteParameter.summary
+      ~CustomDiscreteParameter.to_dict
+      ~CustomDiscreteParameter.to_json
+      ~CustomDiscreteParameter.to_searchspace
+      ~CustomDiscreteParameter.to_subspace
+      ~CustomDiscreteParameter.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CustomDiscreteParameter.active_values
+      ~CustomDiscreteParameter.comp_df
+      ~CustomDiscreteParameter.comp_rep_columns
+      ~CustomDiscreteParameter.is_continuous
+      ~CustomDiscreteParameter.is_discrete
+      ~CustomDiscreteParameter.is_numerical
+      ~CustomDiscreteParameter.values
+      ~CustomDiscreteParameter.data
+      ~CustomDiscreteParameter.decorrelate
+      ~CustomDiscreteParameter.encoding
+      ~CustomDiscreteParameter.name
+   
+   

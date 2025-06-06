@@ -1,6 +1,0 @@
-baybe.surrogates.validation.get\_model\_params\_validator
-=========================================================
-
-.. currentmodule:: baybe.surrogates.validation
-
-.. autofunction:: get_model_params_validator

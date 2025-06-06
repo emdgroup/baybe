@@ -1,0 +1,38 @@
+baybe.surrogates.custom
+=======================
+
+.. automodule:: baybe.surrogates.custom
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      register_custom_architecture
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      CustomONNXSurrogate
+   
+   
+
+   
+   
+   
+
+
+

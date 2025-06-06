@@ -1,0 +1,38 @@
+CompositeSurrogate
+==================
+
+.. currentmodule:: baybe.surrogates.composite
+
+.. autoclass:: CompositeSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CompositeSurrogate.__init__
+      ~CompositeSurrogate.fit
+      ~CompositeSurrogate.from_dict
+      ~CompositeSurrogate.from_json
+      ~CompositeSurrogate.from_replication
+      ~CompositeSurrogate.posterior
+      ~CompositeSurrogate.posterior_stats
+      ~CompositeSurrogate.to_botorch
+      ~CompositeSurrogate.to_dict
+      ~CompositeSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CompositeSurrogate.surrogates
+   
+   

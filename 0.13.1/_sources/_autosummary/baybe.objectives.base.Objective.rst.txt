@@ -1,0 +1,36 @@
+Objective
+=========
+
+.. currentmodule:: baybe.objectives.base
+
+.. autoclass:: Objective
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Objective.__init__
+      ~Objective.from_dict
+      ~Objective.from_json
+      ~Objective.to_dict
+      ~Objective.to_json
+      ~Objective.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Objective.n_outputs
+      ~Objective.targets
+      ~Objective.is_multi_output
+   
+   

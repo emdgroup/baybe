@@ -1,0 +1,51 @@
+SearchSpace
+===========
+
+.. currentmodule:: baybe.searchspace.core
+
+.. autoclass:: SearchSpace
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SearchSpace.__init__
+      ~SearchSpace.estimate_product_space_size
+      ~SearchSpace.from_dataframe
+      ~SearchSpace.from_dict
+      ~SearchSpace.from_json
+      ~SearchSpace.from_parameter
+      ~SearchSpace.from_product
+      ~SearchSpace.get_comp_rep_parameter_indices
+      ~SearchSpace.get_parameters_by_name
+      ~SearchSpace.to_dict
+      ~SearchSpace.to_json
+      ~SearchSpace.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SearchSpace.discrete
+      ~SearchSpace.continuous
+      ~SearchSpace.comp_rep_bounds
+      ~SearchSpace.comp_rep_columns
+      ~SearchSpace.constraints
+      ~SearchSpace.constraints_augmentable
+      ~SearchSpace.n_tasks
+      ~SearchSpace.parameter_names
+      ~SearchSpace.parameters
+      ~SearchSpace.scaling_bounds
+      ~SearchSpace.task_idx
+      ~SearchSpace.type
+   
+   

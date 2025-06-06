@@ -1,0 +1,39 @@
+IndependentGaussianSurrogate
+============================
+
+.. currentmodule:: baybe.surrogates.base
+
+.. autoclass:: IndependentGaussianSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~IndependentGaussianSurrogate.__init__
+      ~IndependentGaussianSurrogate.fit
+      ~IndependentGaussianSurrogate.from_dict
+      ~IndependentGaussianSurrogate.from_json
+      ~IndependentGaussianSurrogate.posterior
+      ~IndependentGaussianSurrogate.posterior_stats
+      ~IndependentGaussianSurrogate.replicate
+      ~IndependentGaussianSurrogate.to_botorch
+      ~IndependentGaussianSurrogate.to_dict
+      ~IndependentGaussianSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~IndependentGaussianSurrogate.supports_multi_output
+      ~IndependentGaussianSurrogate.supports_transfer_learning
+   
+   

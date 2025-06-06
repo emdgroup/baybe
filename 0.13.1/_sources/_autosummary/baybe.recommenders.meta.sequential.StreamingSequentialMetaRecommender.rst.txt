@@ -1,0 +1,39 @@
+StreamingSequentialMetaRecommender
+==================================
+
+.. currentmodule:: baybe.recommenders.meta.sequential
+
+.. autoclass:: StreamingSequentialMetaRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~StreamingSequentialMetaRecommender.__init__
+      ~StreamingSequentialMetaRecommender.from_dict
+      ~StreamingSequentialMetaRecommender.from_json
+      ~StreamingSequentialMetaRecommender.get_current_recommender
+      ~StreamingSequentialMetaRecommender.get_next_recommender
+      ~StreamingSequentialMetaRecommender.get_non_meta_recommender
+      ~StreamingSequentialMetaRecommender.recommend
+      ~StreamingSequentialMetaRecommender.select_recommender
+      ~StreamingSequentialMetaRecommender.to_dict
+      ~StreamingSequentialMetaRecommender.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~StreamingSequentialMetaRecommender.recommenders
+      ~StreamingSequentialMetaRecommender.is_stateful
+   
+   

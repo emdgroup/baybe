@@ -1,0 +1,46 @@
+baybe.utils.interval
+====================
+
+.. automodule:: baybe.utils.interval
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      convert_bounds
+      use_fallback_constructor_hook
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      Interval
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+      :toctree:
+   
+      InfiniteIntervalError
+   
+   
+
+
+

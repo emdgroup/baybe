@@ -1,0 +1,6 @@
+baybe.exceptions.MinimumCardinalityViolatedWarning
+==================================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: MinimumCardinalityViolatedWarning

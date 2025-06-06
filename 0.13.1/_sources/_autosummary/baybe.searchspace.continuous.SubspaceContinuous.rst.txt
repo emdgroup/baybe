@@ -1,0 +1,58 @@
+SubspaceContinuous
+==================
+
+.. currentmodule:: baybe.searchspace.continuous
+
+.. autoclass:: SubspaceContinuous
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SubspaceContinuous.__init__
+      ~SubspaceContinuous.empty
+      ~SubspaceContinuous.from_bounds
+      ~SubspaceContinuous.from_dataframe
+      ~SubspaceContinuous.from_dict
+      ~SubspaceContinuous.from_json
+      ~SubspaceContinuous.from_parameter
+      ~SubspaceContinuous.from_product
+      ~SubspaceContinuous.get_parameters_by_name
+      ~SubspaceContinuous.inactive_parameter_combinations
+      ~SubspaceContinuous.sample_from_full_factorial
+      ~SubspaceContinuous.sample_uniform
+      ~SubspaceContinuous.samples_full_factorial
+      ~SubspaceContinuous.samples_random
+      ~SubspaceContinuous.to_dict
+      ~SubspaceContinuous.to_json
+      ~SubspaceContinuous.to_searchspace
+      ~SubspaceContinuous.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubspaceContinuous.parameters
+      ~SubspaceContinuous.constraints_lin_eq
+      ~SubspaceContinuous.constraints_lin_ineq
+      ~SubspaceContinuous.constraints_nonlin
+      ~SubspaceContinuous.comp_rep_bounds
+      ~SubspaceContinuous.comp_rep_columns
+      ~SubspaceContinuous.constraints_cardinality
+      ~SubspaceContinuous.full_factorial
+      ~SubspaceContinuous.is_empty
+      ~SubspaceContinuous.n_inactive_parameter_combinations
+      ~SubspaceContinuous.parameter_names
+      ~SubspaceContinuous.parameter_names_in_cardinality_constraints
+      ~SubspaceContinuous.scaling_bounds
+   
+   

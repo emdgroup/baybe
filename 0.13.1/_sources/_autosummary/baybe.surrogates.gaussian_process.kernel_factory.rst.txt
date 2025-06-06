@@ -1,0 +1,39 @@
+baybe.surrogates.gaussian\_process.kernel\_factory
+==================================================
+
+.. automodule:: baybe.surrogates.gaussian_process.kernel_factory
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      to_kernel_factory
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      KernelFactory
+      PlainKernelFactory
+   
+   
+
+   
+   
+   
+
+
+

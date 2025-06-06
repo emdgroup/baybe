@@ -1,0 +1,40 @@
+Parameter
+=========
+
+.. currentmodule:: baybe.parameters.base
+
+.. autoclass:: Parameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Parameter.__init__
+      ~Parameter.from_dict
+      ~Parameter.from_json
+      ~Parameter.is_in_range
+      ~Parameter.summary
+      ~Parameter.to_dict
+      ~Parameter.to_json
+      ~Parameter.to_searchspace
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Parameter.comp_rep_columns
+      ~Parameter.is_continuous
+      ~Parameter.is_discrete
+      ~Parameter.is_numerical
+      ~Parameter.name
+   
+   
