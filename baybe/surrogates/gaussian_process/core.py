@@ -191,16 +191,20 @@ class GaussianProcessSurrogate(Surrogate):
             # TODO - is te below ok?
             #  It is required that there is only one task parameter with only
             #  one active value.
+            #  ...
             #  One active task value is required for MultiTaskGP as else
             #  one posterior per task would be returned:
             #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
-            #  The below code implicitly assumes there is single task parameter,
+            #  This would cause issues with current acquisition function implementation.
+            #  ...
+            #  The below code implicitly assumes there is a single task parameter,
             #  which is already checked in the SearchSpace.
             task_param = next(
                 p
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
             )
+            # The below code assumes there is a single active value
             if len(task_param.active_values) > 1:
                 raise NotImplementedError(
                     "Does not support multiple active task values."
@@ -208,6 +212,7 @@ class GaussianProcessSurrogate(Surrogate):
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": [
+                    # Assumption (checked above): single active value
                     # Assumption (as implemented in TaskParameter class):
                     # comp_df is always 1-dimensional (DF with single numerical column)
                     task_param.comp_df.squeeze(axis=1).at[task_param.active_values[0]]
