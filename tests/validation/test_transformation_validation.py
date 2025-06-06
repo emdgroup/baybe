@@ -7,6 +7,7 @@ from pytest import param
 from baybe.transformations import (
     AffineTransformation,
     BellTransformation,
+    ChainedTransformation,
     ClampingTransformation,
     PowerTransformation,
     TriangularTransformation,
@@ -113,3 +114,16 @@ def test_invalid_power_transformation(exponent):
     """Providing invalid arguments raises an exception."""
     with pytest.raises(ValueError):
         PowerTransformation(exponent)
+
+
+@pytest.mark.parametrize(
+    ("transformations", "error"),
+    [
+        param([], ValueError, id="empty"),
+        param([None], TypeError, id="type"),
+    ],
+)
+def test_invalid_chained_transformation(transformations, error):
+    """Providing invalid arguments raises an exception."""
+    with pytest.raises(error):
+        ChainedTransformation(transformations)

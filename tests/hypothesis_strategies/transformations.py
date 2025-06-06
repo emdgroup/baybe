@@ -8,6 +8,7 @@ from baybe.transformations import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
+    ChainedTransformation,
     ClampingTransformation,
     ExponentialTransformation,
     IdentityTransformation,
@@ -94,6 +95,17 @@ def power_transformations(draw: st.DrawFn) -> PowerTransformation:
     """Generate :class:`baybe.transformations.core.PowerTransformation`."""
     exponent = draw(st.integers(min_value=2))
     return PowerTransformation(exponent=exponent)
+
+
+@st.composite
+def chained_transformations(
+    draw: st.DrawFn, min_size: int = 2, max_size: int = 3
+) -> ChainedTransformation:
+    """Generate :class:`baybe.transformations.core.ChainedTransformation`."""
+    transformations = draw(
+        st.lists(single_transformations, min_size=min_size, max_size=max_size)
+    )
+    return ChainedTransformation(transformations)
 
 
 single_transformations = st.one_of(

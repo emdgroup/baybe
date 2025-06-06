@@ -11,6 +11,7 @@ from ..hypothesis_strategies.transformations import (
     absolute_transformations,
     affine_transformations,
     bell_transformations,
+    chained_transformations,
     clamping_transformations,
     exponential_transformations,
     identity_transformations,
@@ -37,6 +38,7 @@ from ..hypothesis_strategies.transformations import (
         param(bell_transformations(), id="BellTransformation"),
         param(triangular_transformations(), id="TriangularTransformation"),
         param(power_transformations(), id="PowerTransformation"),
+        param(chained_transformations(), id="ChainedTransformation"),
     ],
 )
 @given(data=st.data())
