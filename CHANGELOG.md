@@ -61,7 +61,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
-- Use BoTorch's `MultiTaskGP` for transfer learning instead of custom `IndexKernel` in
+
+### Changed
+- Use BoTorch's `MultiTaskGP` for transfer learning instead of custom `IndexKernel` with
   `SingleTaskGP`
 - Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
   expected dtypes
