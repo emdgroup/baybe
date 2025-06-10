@@ -105,7 +105,11 @@ def chained_transformations(
     transformations = draw(
         st.lists(single_transformations, min_size=min_size, max_size=max_size)
     )
-    return ChainedTransformation(transformations)
+    try:
+        return ChainedTransformation(transformations)
+    except OverflowError:
+        # Combining affine transformations while chaining can lead to overflow
+        assume(False)
 
 
 single_transformations = st.one_of(
