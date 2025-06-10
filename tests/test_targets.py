@@ -286,19 +286,19 @@ def test_unnesting_chained_transformations():
         [
             ChainedTransformation(
                 [
-                    ChainedTransformation([t(1), t(2)]),
-                    ChainedTransformation([t(3), t(4)]),
+                    ChainedTransformation([t(2), t(3)]),
+                    ChainedTransformation([t(4), t(5)]),
                 ]
             ),
             ChainedTransformation(
                 [
-                    ChainedTransformation([t(5), t(6)]),
-                    ChainedTransformation([t(7), t(8)]),
+                    ChainedTransformation([t(6), t(7)]),
+                    ChainedTransformation([t(8), t(9)]),
                 ]
             ),
         ],
     )
-    assert c == ChainedTransformation([t(1), t(2), t(3), t(4), t(5), t(6), t(7), t(8)])
+    assert c == ChainedTransformation([t(2), t(3), t(4), t(5), t(6), t(7), t(8), t(9)])
 
 
 def test_affine_transformation_compression():
@@ -398,7 +398,8 @@ abs = AbsoluteTransformation()
 tri = TriangularTransformation(cutoffs=(2, 8), peak=4)
 log = LogarithmicTransformation()
 exp = ExponentialTransformation()
-pow = PowerTransformation(0.5)
+pow_even = PowerTransformation(exponent=2)
+pow_odd = PowerTransformation(exponent=3)
 chain = ChainedTransformation([abs, clamp, aff])
 
 # Transformed values
@@ -448,8 +449,14 @@ bell_off_01 = bell(to_tensor(bell.center + 0.1))
         param(log, (1, np.exp(1)), (0, 1), id="log_unit"),
         param(exp, (None, None), (0, None), id="exp_open"),
         param(exp, (0, 1), (1, np.exp(1)), id="exp_unit"),
-        param(pow, (0, None), (0, None), id="pow_open"),
-        param(pow, (1, 4), (1, 2), id="pow_finite"),
+        param(pow_even, (1, None), (1, None), id="pow_even_open_right"),
+        param(pow_even, (None, -1), (1, None), id="pow_even_open_left"),
+        param(pow_even, (-2, 3), (0, 9), id="pow_even_with_center"),
+        param(pow_even, (1, 3), (1, 9), id="pow_even_without_center"),
+        param(pow_odd, (1, None), (1, None), id="pow_odd_open_right"),
+        param(pow_odd, (None, -1), (None, -1), id="pow_odd_open_left"),
+        param(pow_odd, (-2, 3), (-8, 27), id="pow_odd_with_center"),
+        param(pow_odd, (1, 3), (1, 27), id="pow_odd_without_center"),
         param(chain, (-0.1, 3), (5, 7), id="chain"),
     ],
 )

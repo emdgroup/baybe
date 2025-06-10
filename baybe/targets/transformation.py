@@ -9,7 +9,7 @@ from functools import reduce
 from typing import TYPE_CHECKING
 
 from attrs import Factory, define, field
-from attrs.validators import deep_iterable, instance_of, is_callable, min_len
+from attrs.validators import deep_iterable, ge, instance_of, is_callable, min_len
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -525,13 +525,21 @@ class ExponentialTransformation(MonotonicTransformation):
 class PowerTransformation(Transformation):
     """A transformation computing the power."""
 
-    exponent: float = field(converter=float)
+    # TODO: Could be generalized to floats but then requires runtime checks on the input
+    #   tensor exponents to avoid producing complex numbers and adjusting the image
+    #   computation logic
+    exponent: int = field(validator=[instance_of(int), ge(2)])
     """The exponent of the power transformation."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
-        return Interval(interval.lower**self.exponent, interval.upper**self.exponent)
+        image_lower = self(to_tensor(interval.lower)).item()
+        image_upper = self(to_tensor(interval.upper)).item()
+        if self.exponent % 2 == 0 and interval.contains(0.0):
+            return Interval(0, max(image_lower, image_upper))
+        else:
+            return Interval(*sorted([image_lower, image_upper]))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
