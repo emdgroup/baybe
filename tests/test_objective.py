@@ -11,7 +11,7 @@ from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.targets import NumericalTarget
-from baybe.targets.transformation import ClampingTransformation
+from baybe.transformations import ClampingTransformation
 
 
 class TestInvalidObjectiveCreation:

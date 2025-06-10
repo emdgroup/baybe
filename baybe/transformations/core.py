@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import gc
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING
 
@@ -17,176 +16,19 @@ from baybe.serialization.core import (
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.serialization.mixin import SerialMixin
-from baybe.targets._deprecated import (  # noqa: F401
-    bell_transform,
-    linear_transform,
-    triangular_transform,
-)
-from baybe.utils.basic import compose, is_all_instance
+from baybe.transformations.base import MonotonicTransformation, Transformation
+from baybe.transformations.utils import compress_transformations
+from baybe.utils.basic import compose
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
     from baybe.targets.botorch import AffinePosteriorTransform
 
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
-
-
-def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
-    """Autowrap a torch callable as transformation (with transformation passthrough)."""
-    return x if isinstance(x, Transformation) else GenericTransformation(x)
-
-
-@define
-class Transformation(SerialMixin, ABC):
-    """Abstract base class for all transformations."""
-
-    @abstractmethod
-    def __call__(self, x: Tensor, /) -> Tensor:
-        """Transform a given input tensor."""
-
-    @abstractmethod
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        """Get the image of a certain interval (assuming transformation continuity)."""
-
-    def to_botorch_objective(self) -> MCAcquisitionObjective:
-        """Convert to BoTorch objective."""
-        from botorch.acquisition.objective import GenericMCObjective
-
-        return GenericMCObjective(lambda samples, X: self(samples))
-
-    def append(self, transformation: Transformation, /) -> Transformation:
-        """Chain another transformation with the existing one."""
-        return self + transformation
-
-    def negate(self) -> Transformation:
-        """Negate the output of the transformation."""
-        return self + AffineTransformation(factor=-1)
-
-    def clamp(
-        self, min: float = float("-inf"), max: float = float("inf")
-    ) -> Transformation:
-        """Clamp the output of the transformation."""
-        if min == float("-inf") and max == float("inf"):
-            raise ValueError(
-                "A clamping transformation requires at least one finite boundary value."
-            )
-
-        return self + ClampingTransformation(min, max)
-
-    def abs(self) -> Transformation:
-        """Take the absolute value of the output of the transformation."""
-        return self + AbsoluteTransformation()
-
-    def __add__(self, other: Transformation | int | float) -> Transformation:
-        """Chain another transformation or shift the output of the current one."""
-        if isinstance(other, IdentityTransformation):
-            return self
-        if is_all_instance(t := [self, other], AffineTransformation):
-            return combine_affine_transformations(*t)
-        if isinstance(other, Transformation):
-            return ChainedTransformation([self, other])
-        if isinstance(other, (int, float)):
-            return self + AffineTransformation(shift=other)
-        return NotImplemented
-
-    def __mul__(self, other: int | float) -> Transformation:
-        """Scale the output of the transformation."""
-        if isinstance(other, (int, float)):
-            return self + AffineTransformation(factor=other)
-        return NotImplemented
-
-    @classmethod
-    def __torch_function__(cls, func, types, args=(), kwargs=None):
-        """Chain the transformation with a given torch callable."""
-        if not (
-            len(args) == 1 and isinstance(args[0], Transformation) and kwargs is None
-        ):
-            raise ValueError(
-                "Composing transformations with torch operations is only supported "
-                "if the transformation enters as the only (positional) argument."
-            )
-        return args[0] + GenericTransformation(func)
-
-
-class MonotonicTransformation(Transformation):
-    """Class for monotonic transformations."""
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return Interval(
-            *sorted(
-                [
-                    self(to_tensor(interval.lower)).item(),
-                    self(to_tensor(interval.upper)).item(),
-                ]
-            )
-        )
-
-
-def combine_affine_transformations(
-    t1: AffineTransformation, t2: AffineTransformation, /
-) -> AffineTransformation:
-    """Combine two affine transformations into one."""
-    return AffineTransformation(
-        factor=t2.factor * t1.factor,
-        shift=t2.factor * t1.shift + t2.shift,
-    )
-
-
-def _flatten_transformations(
-    transformations: Iterable[Transformation], /
-) -> Iterable[Transformation]:
-    """Recursively flatten nested chained transformations."""
-    for t in transformations:
-        if isinstance(t, ChainedTransformation):
-            yield from _flatten_transformations(t.transformations)
-        else:
-            yield t
-
-
-def compress_transformations(
-    transformations: Iterable[Transformation], /
-) -> tuple[Transformation, ...]:
-    """Compress any iterable of transformations by removing redundancies.
-
-    Drops identity transformations and combines subsequent affine transformations.
-
-    Args:
-        transformations: An iterable of transformations.
-
-    Returns:
-        The minimum sequence of transformations that is equivalent to the input.
-    """
-    aggregated: list[Transformation] = []
-    last = None
-
-    for t in _flatten_transformations(transformations):
-        # Drop identity transformations
-        if isinstance(t, IdentityTransformation):
-            continue
-
-        # Combine subsequent affine transformations
-        if (
-            aggregated
-            and isinstance(last := aggregated.pop(), AffineTransformation)
-            and isinstance(t, AffineTransformation)
-        ):
-            aggregated.append(combine_affine_transformations(last, t))
-
-        # Keep other transformations
-        else:
-            if last is not None:
-                aggregated.append(last)
-            aggregated.append(t)
-
-    return tuple(aggregated)
 
 
 @define
@@ -313,7 +155,7 @@ class AffineTransformation(MonotonicTransformation):
 
         Example:
             >>> import torch
-            >>> from baybe.targets.transformation import AffineTransformation
+            >>> from baybe.transformations import AffineTransformation
             >>> transform = AffineTransformation.from_unit_interval(3, 7)
             >>> transform(torch.tensor([3, 7]))
             tensor([0., 1.])

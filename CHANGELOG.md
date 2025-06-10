@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - New `NumericalTarget` interface, including advanced machinery for defining and
-  manipulating target transformations based on the new `Transformation` class hierarchy
+  manipulating target transformations based on the new `transformations` subpackage
 - `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
   for reproducing the legacy `MATCH` modes
 - `ramp` convenience constructor to `NumericalTarget` for reproducing the legacy

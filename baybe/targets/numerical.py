@@ -21,7 +21,7 @@ from baybe.targets._deprecated import (
     TargetTransformation,
 )
 from baybe.targets.base import Target
-from baybe.targets.transformation import (
+from baybe.transformations import (
     AffineTransformation,
     BellTransformation,
     ChainedTransformation,
@@ -254,7 +254,7 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
-                details, see :class:`baybe.targets.transformation.BellTransformation`.
+                details, see :class:`baybe.transformations.core.BellTransformation`.
 
         Returns:
             The target with applied bell matching transformation.

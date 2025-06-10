@@ -10,9 +10,14 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe.exceptions import IncompatibilityError
-from baybe.targets._deprecated import LegacyTarget
+from baybe.targets._deprecated import (
+    LegacyTarget,
+    bell_transform,
+    linear_transform,
+    triangular_transform,
+)
 from baybe.targets.numerical import NumericalTarget as ModernTarget
-from baybe.targets.transformation import (
+from baybe.transformations import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
@@ -25,9 +30,6 @@ from baybe.targets.transformation import (
     PowerTransformation,
     TriangularTransformation,
     TwoSidedLinearTransformation,
-    bell_transform,
-    linear_transform,
-    triangular_transform,
 )
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
