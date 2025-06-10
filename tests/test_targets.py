@@ -326,10 +326,14 @@ def test_generic_transformation(series):
     t1 = ModernTarget("t", AbsoluteTransformation())
     t2 = ModernTarget("t", GenericTransformation(torch.abs))
     t3 = ModernTarget("t", torch.abs)
+    t4 = ModernTarget(
+        "t", torch.abs(IdentityTransformation())
+    )  # explicitly trigger __torch_function__
 
     transformed = t1.transform(series)
     assert_series_equal(transformed, t2.transform(series))
     assert_series_equal(transformed, t3.transform(series))
+    assert_series_equal(transformed, t4.transform(series))
 
 
 def test_transformation_addition(series):
