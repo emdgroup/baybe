@@ -87,27 +87,21 @@ class IdentityTransformation(MonotonicTransformation):
         return other
 
 
-@define
+@define(init=False)
 class ClampingTransformation(MonotonicTransformation):
-    """A transformation clamping values between specified cutoffs."""
+    """A transformation clamping values between specified bounds."""
 
-    min: float = field(default=float("-inf"), converter=float)
-    """The lower cutoff value."""
+    bounds: Interval = field(converter=Interval.create)
+    """The range to which input values are clamped."""
 
-    max: float = field(default=float("inf"), converter=float)
-    """The upper cutoff value."""
-
-    @max.validator
-    def _validate_max(self, _, value: float) -> None:
-        if value <= self.min:
-            raise ValueError(
-                f"The upper cutoff must be greater than the lower cutoff. "
-                f"Given: min={self.min}, max={value}."
-            )
+    def __init__(self, min: float | None = None, max: float | None = None) -> None:
+        if min is None and max is None:
+            raise ValueError("At least one bound must be specified.")
+        self.__attrs_init__(bounds=Interval(min, max))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return x.clamp(self.min, self.max)
+        return x.clamp(*self.bounds.to_tuple())
 
 
 @define(slots=False, init=False)
