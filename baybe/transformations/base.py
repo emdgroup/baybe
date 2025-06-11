@@ -28,7 +28,16 @@ class Transformation(SerialMixin, ABC):
 
     @abstractmethod
     def get_image(self, interval: Interval | None = None, /) -> Interval:
-        """Get the image of a certain interval (assuming transformation continuity)."""
+        """Get the image of a certain interval (assuming transformation continuity).
+
+        In accordance with the mathematical definition of a function's `image
+        <https://en.wikipedia.org/wiki/Image_(mathematics)>`_, we define the image of a
+        given :class:`~baybe.utils.interval.Interval` under a certain (assumed
+        continuous) :class:`~Transformation` to be the smallest
+        :class:`~baybe.utils.interval.Interval` containing all possible outcomes when
+        the :class:`~Transformation` is applied to all points in the input
+        :class:`~baybe.utils.interval.Interval`.
+        """
 
     def to_botorch_objective(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""
