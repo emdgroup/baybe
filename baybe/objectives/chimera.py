@@ -9,7 +9,7 @@ import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import deep_iterable, ge, instance_of, min_len
+from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
@@ -58,7 +58,7 @@ class ChimeraObjective(Objective):
 
     threshold_values: tuple[float, ...] = field(
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
-        validator=deep_iterable(member_validator=[finite_float, ge(0.0)]),
+        validator=deep_iterable(member_validator=[finite_float]),
     )
     """The target degradation thresholds for each target from its optimum."""
 
@@ -91,15 +91,15 @@ class ChimeraObjective(Objective):
         init=False, default=None
     )
 
-    @threshold_values.default
-    def _default_threshold_values(self) -> tuple[float, ...]:
-        default_values = (0.0,) * len(self._targets)
-        warnings.warn(
-            f"The values for targets thresholds have not been specified. "
-            f"Setting the target threshold values to {default_values}.",
-            UserWarning,
-        )
-        return default_values
+    # @threshold_values.default
+    # def _default_threshold_values(self) -> tuple[float, ...]:
+    #     default_values = (0.0,) * len(self._targets)
+    #     warnings.warn(
+    #         f"The values for targets thresholds have not been specified. "
+    #         f"Setting the target threshold values to {default_values}.",
+    #         UserWarning,
+    #     )
+    #     return default_values
 
     @threshold_types.default
     def _default_threshold_types(self) -> tuple[ThresholdType, ...]:
