@@ -109,18 +109,21 @@ class FPSRecommender(NonPredictiveRecommender):
 
             if self.initialization != FPSInitialization.FARTHEST:
                 warnings.warn(
-                    f"fpsample does not support initialization="
-                    f"'{self.initialization.value}'; using default behavior."
+                    f"{self.__class__.__name__} is using the optional 'fpsample', "
+                    f"which does not support '{self.initialization.value}'. "
+                    f"Please uninstall 'fpsample' or choose a supported initialization."
                 )
-            if not self.random_tie_break:
+
+            if self.random_tie_break:
                 warnings.warn(
-                    "fpsample does not support random tie-breaking; "
-                    "using deterministic behavior."
+                    f"{self.__class__.__name__} is using the optional 'fpsample' , "
+                    f"which does not support random tie-breaking. "
+                    f"Selection will follow a deterministic order. "
                 )
+
             ilocs = fpsample.fps_sampling(
                 candidates_scaled,
                 n_samples=batch_size,
-                start_idx=0,
             )
         except OptionalImportError:
             # Custom implementation as fallback
