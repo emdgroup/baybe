@@ -116,8 +116,8 @@ class Transformation(SerialMixin, ABC):
         return args[0] + CustomTransformation(func)
 
 
-class MonotonicTransformation(Transformation):
-    """Class for monotonic transformations."""
+class MonotonicTransformation(Transformation, ABC):
+    """Abstract base class for monotonic transformations."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
