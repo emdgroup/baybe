@@ -58,8 +58,8 @@ class ChainedTransformation(Transformation):
 class CustomTransformation(Transformation):
     """A custom transformation applying an arbitrary torch callable."""
 
-    transformation: TensorCallable = field(validator=is_callable())
-    """The torch callable to be applied."""
+    function: TensorCallable = field(validator=is_callable())
+    """The torch callable representing the transformation."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -69,7 +69,7 @@ class CustomTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return self.transformation(x)
+        return self.function(x)
 
 
 @define
