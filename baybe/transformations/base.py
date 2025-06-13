@@ -45,7 +45,7 @@ class Transformation(SerialMixin, ABC):
 
         return GenericMCObjective(lambda samples, X: self(samples))
 
-    def append(self, transformation: Transformation, /) -> Transformation:
+    def chain(self, transformation: Transformation, /) -> Transformation:
         """Chain another transformation with the existing one."""
         return self + transformation
 

@@ -321,8 +321,8 @@ def test_identity_transformation_chaining():
     t1 = IdentityTransformation()
     t2 = ClampingTransformation()
 
-    assert t1.append(t2) == t2
-    assert t2.append(t1) == t2
+    assert t1.chain(t2) == t2
+    assert t2.chain(t1) == t2
 
 
 def test_generic_transformation(series):
