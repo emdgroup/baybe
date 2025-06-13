@@ -218,7 +218,7 @@ class GaussianProcessSurrogate(Surrogate):
                     task_param.comp_df.squeeze(axis=1).at[task_param.active_values[0]]
                 ],
                 "rank": context.n_tasks,
-                "all_tasks": task_param.comp_df.squeeze(axis=1).astype(int).to_list(),
+                "all_tasks": task_param.comp_df.squeeze(axis=1).to_list(),
             }
 
         # construct and fit the Gaussian process
