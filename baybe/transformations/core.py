@@ -169,16 +169,16 @@ class AffineTransformation(MonotonicTransformation):
 
 @define(slots=False)
 class TwoSidedLinearTransformation(Transformation):
-    """A transformation with two linear segments on either side of a center point."""
+    """A transformation with two linear segments on either side of a midpoint."""
 
     slope_left: float = field(converter=float)
-    """The slope of the linear segment to the left of the center."""
+    """The slope of the linear segment to the left of the midpoint."""
 
     slope_right: float = field(converter=float)
-    """The slope of the linear segment to the right of the center."""
+    """The slope of the linear segment to the right of the midpoint."""
 
-    center: float = field(default=0.0, converter=float)
-    """The center point of the transformation."""
+    midpoint: float = field(default=0.0, converter=float)
+    """The midpoint where the two linear segments meet."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -187,7 +187,7 @@ class TwoSidedLinearTransformation(Transformation):
         image_lower = self(to_tensor(interval.lower)).item()
         image_upper = self(to_tensor(interval.upper)).item()
         min_val, max_val = sorted([image_lower, image_upper])
-        if interval.contains(self.center):
+        if interval.contains(self.midpoint):
             return Interval(min(0, min_val), max(0, max_val))
         else:
             return Interval(min_val, max_val)
@@ -197,9 +197,9 @@ class TwoSidedLinearTransformation(Transformation):
         import torch
 
         return torch.where(
-            x < self.center,
-            (x - self.center) * self.slope_left,
-            (x - self.center) * self.slope_right,
+            x < self.midpoint,
+            (x - self.midpoint) * self.slope_left,
+            (x - self.midpoint) * self.slope_right,
         )
 
 
@@ -295,7 +295,7 @@ class TriangularTransformation(Transformation):
             TwoSidedLinearTransformation(
                 slope_left=1 / self.margins[0],
                 slope_right=-1 / self.margins[1],
-                center=self.peak,
+                midpoint=self.peak,
             )
             + 1
         ).clamp(min=0)
