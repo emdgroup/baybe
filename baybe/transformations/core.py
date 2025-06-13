@@ -134,7 +134,7 @@ class AffineTransformation(MonotonicTransformation):
         return AffinePosteriorTransform(self.factor, self.shift)
 
     @classmethod
-    def from_unit_interval(
+    def from_points_mapped_to_unit_interval_bounds(
         cls, mapped_to_zero: float, mapped_to_one: float
     ) -> AffineTransformation:
         """Create an affine transform by specifying reference points mapped to 0/1.
