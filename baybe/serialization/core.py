@@ -19,8 +19,6 @@ _T = TypeVar("_T")
 
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
-# Using GenConverter for built-in overrides for sets, see
-# https://catt.rs/en/latest/indepth.html#customizing-collection-unstructuring
 converter = cattrs.Converter(unstruct_collection_overrides={set: list})
 """The default converter for (de-)serializing BayBE-related objects."""
 
