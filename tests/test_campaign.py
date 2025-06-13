@@ -162,8 +162,10 @@ def test_update_measurements(ongoing_campaign):
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             DesirabilityObjective(
                 (
-                    NumericalTarget.ramp("t1", cutoffs=(0, 1)),
-                    NumericalTarget.ramp("t2", cutoffs=(0, 1), descending=True),
+                    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1)),
+                    NumericalTarget.normalize_ramp(
+                        "t2", cutoffs=(0, 1), descending=True
+                    ),
                 )
             ),
             GaussianProcessSurrogate(),

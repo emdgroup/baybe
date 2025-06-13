@@ -20,8 +20,10 @@ from baybe.utils.dataframe import create_fake_input
         param(
             DesirabilityObjective(
                 [
-                    NumericalTarget.ramp("t1", cutoffs=(0, 1)),
-                    NumericalTarget.ramp("t2", cutoffs=(0, 1), descending=True),
+                    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1)),
+                    NumericalTarget.normalize_ramp(
+                        "t2", cutoffs=(0, 1), descending=True
+                    ),
                 ]
             ),
             id="desirability",

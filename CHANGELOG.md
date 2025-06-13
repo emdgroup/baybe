@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   manipulating target transformations based on the new `transformations` subpackage
 - `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
   for reproducing the legacy `MATCH` modes
-- `ramp` convenience constructor to `NumericalTarget` for reproducing the legacy
-  behavior when imposing bounds on `MIN`/`MAX` targets
+- `normalize_ramp` convenience constructor to `NumericalTarget` for reproducing the
+  legacy behavior when imposing bounds on `MIN`/`MAX` targets
 - Full support for accessing posterior information of `NumericalTarget`, i.e. now
   including settings considered `MATCH` mode in the legacy interface, as well as targets
   used in `DesirabilityObjective`

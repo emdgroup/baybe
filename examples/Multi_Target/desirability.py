@@ -35,15 +35,17 @@ searchspace = NumericalContinuousParameter("parameter", (0, 1)).to_searchspace()
 
 # For our example, we consider three simple targets reflecting different optimization
 # goals. The first target takes values in the interval [0, 100] and is to be maximized.
-# The {meth}`~baybe.targets.numerical.NumericalTarget.ramp` constructor helps us achieve
-# this by applying an affine transformation whose output is clamped to the unit
-# interval:
+# The {meth}`~baybe.targets.numerical.NumericalTarget.normalize_ramp` constructor helps
+# us achieve this by applying an affine transformation whose output is clamped to the
+# unit interval:
 
-target_max = NumericalTarget.ramp("target_max", cutoffs=(0, 100))
+target_max = NumericalTarget.normalize_ramp("target_max", cutoffs=(0, 100))
 
 # The second target takes values in the interval [-10, 0] and is to be minimized:
 
-target_min = NumericalTarget.ramp("target_min", cutoffs=(-10, 0), descending=True)
+target_min = NumericalTarget.normalize_ramp(
+    "target_min", cutoffs=(-10, 0), descending=True
+)
 
 # For the third target, we like to match a certain value. To do so, we apply a target
 # transformation that penalizes the distance to this value using a

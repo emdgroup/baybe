@@ -75,7 +75,9 @@ def test_constructor_equivalence_min_max(mode):
             ModernTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
             # ------------
             # Modern style
-            ModernTarget.ramp(name="t", cutoffs=(1, 2), descending=mode == "MIN"),
+            ModernTarget.normalize_ramp(
+                name="t", cutoffs=(1, 2), descending=mode == "MIN"
+            ),
         ),
     ]
     for targets in groups:
@@ -143,7 +145,7 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
             ModernTarget("t", "MAX", (2, 5), "LINEAR"),
-            ModernTarget.ramp("t", (2, 5)),
+            ModernTarget.normalize_ramp("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
         ),
@@ -180,14 +182,14 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
             ModernTarget("t", "MIN", (0, 1), "LINEAR"),
-            ModernTarget.ramp("t", (0, 1), descending=True),
+            ModernTarget.normalize_ramp("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
             LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
             ModernTarget("t", "MIN", (2, 5), "LINEAR"),
-            ModernTarget.ramp("t", (2, 5), descending=True),
+            ModernTarget.normalize_ramp("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),
