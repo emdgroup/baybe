@@ -17,7 +17,10 @@ def test_recommendation(
     observed_target_data: bool,
     observed_source_data: bool,
 ):
-    """First BO recommendation in TL setting runs through."""
+    """Transfer learning recommendation works in different training data settings.
+
+    Regardless of whether source/target tasks are missing/present in the training data.
+    """
     # Setup test data
     source = "B"
     target = "A"
