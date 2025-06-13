@@ -23,8 +23,8 @@ from baybe.transformations import (
     BellTransformation,
     ChainedTransformation,
     ClampingTransformation,
+    CustomTransformation,
     ExponentialTransformation,
-    GenericTransformation,
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
@@ -326,7 +326,7 @@ def test_identity_transformation_chaining():
 def test_generic_transformation(series):
     """Torch callables can be used to specify generic transformations."""
     t1 = ModernTarget("t", AbsoluteTransformation())
-    t2 = ModernTarget("t", GenericTransformation(torch.abs))
+    t2 = ModernTarget("t", CustomTransformation(torch.abs))
     t3 = ModernTarget("t", torch.abs)
     t4 = ModernTarget(
         "t", torch.abs(IdentityTransformation())
@@ -373,7 +373,7 @@ def test_transformation_multiplication(series):
 def test_torch_overloading(series):
     """Transformations can be passed to torch callables for chaining."""
     t1 = ModernTarget(
-        "t", AffineTransformation(factor=2) + GenericTransformation(torch.abs)
+        "t", AffineTransformation(factor=2) + CustomTransformation(torch.abs)
     )
     t2 = ModernTarget("t", torch.abs(AffineTransformation(factor=2)))
     assert_series_equal(t1.transform(series), t2.transform(series))

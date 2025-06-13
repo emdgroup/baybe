@@ -16,9 +16,9 @@ if TYPE_CHECKING:
 
 def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
     """Autowrap a torch callable as transformation (with transformation passthrough)."""
-    from baybe.transformations.core import GenericTransformation
+    from baybe.transformations.core import CustomTransformation
 
-    return x if isinstance(x, Transformation) else GenericTransformation(x)
+    return x if isinstance(x, Transformation) else CustomTransformation(x)
 
 
 def combine_affine_transformations(t1, t2, /):

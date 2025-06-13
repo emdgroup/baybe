@@ -55,8 +55,8 @@ class ChainedTransformation(Transformation):
 
 
 @define
-class GenericTransformation(Transformation):
-    """A generic transformation applying an arbitrary torch callable."""
+class CustomTransformation(Transformation):
+    """A custom transformation applying an arbitrary torch callable."""
 
     transformation: TensorCallable = field(validator=is_callable())
     """The torch callable to be applied."""
@@ -64,7 +64,7 @@ class GenericTransformation(Transformation):
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         raise NotImplementedError(
-            "Generic transformations do not provide details about their image."
+            "Custom transformations do not provide details about their image."
         )
 
     @override

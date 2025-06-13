@@ -111,9 +111,9 @@ class Transformation(SerialMixin, ABC):
                 "if the transformation enters as the only (positional) argument."
             )
 
-        from baybe.transformations.core import GenericTransformation
+        from baybe.transformations.core import CustomTransformation
 
-        return args[0] + GenericTransformation(func)
+        return args[0] + CustomTransformation(func)
 
 
 class MonotonicTransformation(Transformation):
