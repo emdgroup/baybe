@@ -91,7 +91,7 @@ class IdentityTransformation(MonotonicTransformation):
 class ClampingTransformation(MonotonicTransformation):
     """A transformation clamping values between specified bounds."""
 
-    bounds: Interval = field(converter=Interval.create)
+    bounds: Interval = field(converter=Interval.create)  # type: ignore[misc]
     """The range to which input values are clamped."""
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
