@@ -97,7 +97,7 @@ class Interval(SerialMixin):
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value: ConvertibleToInterval) -> "Interval":
+    def create(cls, value: ConvertibleToInterval) -> Interval:
         """Create an interval from various input types."""
         # Singledispatch does not play well with forward references, hence the
         # workaround via `isinstance` in the fallback method.
