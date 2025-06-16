@@ -34,8 +34,8 @@ class ThresholdType(Enum):
     ABSOLUTE = "ABSOLUTE"
     """The target threshold is an absolute value."""
 
-    # PERCENTILE = "PERCENTILE"
-    # """The target threshold is a percentile value."""
+    PERCENTILE = "PERCENTILE"
+    """The target threshold is a percentile value."""
 
     FRACTION = "FRACTION"
     """The target threshold is a fraction value."""
@@ -239,13 +239,13 @@ class ChimeraObjective(Objective):
             merits = merits * neg_mask + pos_mask * current_obj
 
         # Normalize CHIMERA merits
-        # merits_range = merits.max() - merits.min()
-        # if merits_range > 0:
-        #     merits = (merits - merits.min()) / (merits.max() - merits.min())
-        # else:
-        #     merits = np.zeros_like(merits)  # Handle uniform values
-        if np.amax(merits) > 0.0:
-            merits = (merits - np.amin(merits)) / (np.amax(merits) - np.amin(merits))
+        merits_range = merits.max() - merits.min()
+        if merits_range > 0:
+            merits = (merits - merits.min()) / (merits.max() - merits.min())
+        else:
+            merits = np.zeros_like(merits)  # Handle uniform values
+        # if np.amax(merits) > 0.0:
+        #     merits = (merits - np.amin(merits)) / (np.amax(merits) - np.amin(merits))
         return merits
 
     @override

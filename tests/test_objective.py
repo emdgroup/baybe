@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 from chimera import Chimera
-from hypothesis import given
+from hypothesis import HealthCheck, given, settings
 from hypothesis.extra.pandas import column, data_frames, range_indexes
 
 from baybe.objectives.chimera import ChimeraObjective, ThresholdType
@@ -235,6 +235,8 @@ def compare_merits(
             if not ok:
                 print("  BayBE:", a_buf)
                 print("  ext  :", b_buf)
+            print("  BayBE:", a_buf)
+            print("  ext  :", b_buf)
 
         print("\n=== PER-STAGE THRESHOLD COMPARISON ===")
         for name, a_thr, b_thr in thr_stages:
@@ -243,26 +245,27 @@ def compare_merits(
             if not ok:
                 print("  BayBE:", a_thr)
                 print("  ext  :", b_thr)
+            print("  BayBE:", a_thr)
+            print("  ext  :", b_thr)
 
         print("\nfinal merits:")
         print("  BayBE:", int_merits)
         print("  ext  :", ext_merits)
 
-    # Edge case to exclude
-    int_const = (np.nanmax(int_merits) - np.nanmin(int_merits)) == 0.0
-    ext_all_nan = np.isnan(ext_merits).all()
-    ext_const = (np.nanmax(ext_merits) - np.nanmin(ext_merits)) == 0.0
-    ext_degenerate = ext_all_nan or ext_const
-
-    if int_const or ext_degenerate:
-        return True
-
+    # Normalize external merits to match internal implementation
+    ext_range = np.amax(ext_merits) - np.amin(ext_merits)
+    if ext_range > 0:
+        ext_merits = (ext_merits - np.amin(ext_merits)) / ext_range
+    else:
+        ext_merits = np.zeros_like(ext_merits)  # Handle uniform values
     return np.allclose(ext_merits, int_merits, atol=1e-6)
 
 
-# @settings(
-#     max_examples=100, suppress_health_check=[HealthCheck.too_slow]
-# )  # TODO: try to rewrite to run all? / Remove max_examples?
+@settings(
+    max_examples=1000,
+    suppress_health_check=[HealthCheck.too_slow],
+    deadline=None,  # Remove time limits for complex cases
+)
 @given(chimera_obj=chimera_objectives(), data=st.data())
 def test_chimera_merits(chimera_obj, data):
     """Validating chimerra merits value with external reference."""
