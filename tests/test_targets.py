@@ -271,7 +271,7 @@ def test_target_transformation(
 def test_transformation_chaining(chained_first):
     """Transformation chaining and flattening works as expected."""
     t1 = AffineTransformation()
-    t2 = ClampingTransformation()
+    t2 = ClampingTransformation(0, 1)
     t3 = AbsoluteTransformation()
     c = ChainedTransformation([t1, t2])
 
@@ -319,7 +319,7 @@ def test_affine_transformation_compression():
 def test_identity_transformation_chaining():
     """Chaining an identity transformation has no effect."""
     t1 = IdentityTransformation()
-    t2 = ClampingTransformation()
+    t2 = ClampingTransformation(0, 1)
 
     assert t1.chain(t2) == t2
     assert t2.chain(t1) == t2
