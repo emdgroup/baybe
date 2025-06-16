@@ -188,10 +188,12 @@ class ChimeraObjective(Objective):
                 domain_max = transformed[target.name].loc[domain].max()
                 domain_min = transformed[target.name].loc[domain].min()
                 _threshold = domain_min + threshold_value * (domain_max - domain_min)
-            # elif threshold_type is ThresholdType.PERCENTILE:
-            #     _threshold = transformed[target.name].quantile(
-            #         threshold_value, interpolation="linear"
-            #     )
+            elif threshold_type is ThresholdType.PERCENTILE:
+                _threshold = (
+                    transformed[target.name]
+                    .loc[domain]
+                    .quantile(threshold_value, interpolation="linear")
+                )
             elif threshold_type is ThresholdType.ABSOLUTE:
                 _threshold = threshold_value
             else:

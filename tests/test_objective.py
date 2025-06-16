@@ -301,7 +301,9 @@ def test_chimera_merits(chimera_obj, data):
         absolutes=[
             tt.value.upper() == "ABSOLUTE" for tt in chimera_obj.threshold_types
         ],
-        # TODO: PERCENTIL MISSING
+        percentiles=[
+            tt.value.upper() == "PERCENTILE" for tt in chimera_obj.threshold_types
+        ],
         goals=["max"] * len(chimera_obj.targets),
         softness=chimera_obj.softness,
     )

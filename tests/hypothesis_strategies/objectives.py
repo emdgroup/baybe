@@ -59,7 +59,13 @@ def chimera_objectives(draw: st.DrawFn):
     # 3) Draw threshold_types (only FRACTION or ABSOLUTE for now)
     threshold_types = draw(
         st.lists(
-            st.sampled_from([ThresholdType.FRACTION, ThresholdType.ABSOLUTE]),
+            st.sampled_from(
+                [
+                    ThresholdType.FRACTION,
+                    ThresholdType.ABSOLUTE,
+                    ThresholdType.PERCENTILE,
+                ]
+            ),
             min_size=n_targets,
             max_size=n_targets,
         )
