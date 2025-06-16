@@ -11,7 +11,7 @@ from attrs import define
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
-    unstructure_base,
+    register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
@@ -80,15 +80,7 @@ converter.register_structure_hook(
         ),
     ),
 )
-converter.register_unstructure_hook(
-    Objective,
-    lambda x: unstructure_base(
-        x,
-        overrides=dict(
-            _target=cattrs.override(rename="target"),
-            _targets=cattrs.override(rename="targets"),
-        ),
-    ),
-)
+register_base_unstructuring(Objective)
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

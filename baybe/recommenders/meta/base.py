@@ -14,8 +14,11 @@ from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
-from baybe.serialization import SerialMixin, converter, unstructure_base
-from baybe.serialization.core import get_base_structure_hook
+from baybe.serialization import SerialMixin, converter
+from baybe.serialization.core import (
+    get_base_structure_hook,
+    register_base_unstructuring,
+)
 
 
 @define
@@ -128,7 +131,7 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(MetaRecommender, unstructure_base)
+register_base_unstructuring(MetaRecommender)
 converter.register_structure_hook(
     MetaRecommender, get_base_structure_hook(MetaRecommender)
 )

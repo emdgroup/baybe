@@ -14,8 +14,8 @@ from baybe.constraints.deprecation import structure_constraints
 from baybe.serialization import (
     SerialMixin,
     converter,
-    unstructure_base,
 )
+from baybe.serialization.core import register_base_unstructuring
 
 if TYPE_CHECKING:
     import polars as pl
@@ -212,7 +212,7 @@ class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_unstructure_hook(Constraint, unstructure_base)
+register_base_unstructuring(Constraint)
 
 # Currently affected by a deprecation
 # converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))

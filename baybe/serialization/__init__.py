@@ -5,8 +5,8 @@ from baybe.serialization.core import (
     block_serialization_hook,
     converter,
     get_base_structure_hook,
+    register_base_unstructuring,
     select_constructor_hook,
-    unstructure_base,
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.serialization.utils import deserialize_dataframe, serialize_dataframe
@@ -17,8 +17,8 @@ __all__ = [
     "converter",
     "deserialize_dataframe",
     "get_base_structure_hook",
+    "register_base_unstructuring",
     "select_constructor_hook",
     "serialize_dataframe",
-    "unstructure_base",
     "SerialMixin",
 ]

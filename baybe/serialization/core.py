@@ -9,7 +9,8 @@ from typing import Any, TypeVar, get_type_hints
 import attrs
 import cattrs
 import pandas as pd
-from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
+from cattrs.dispatch import UnstructureHook
+from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
@@ -27,25 +28,40 @@ converter = cattrs.Converter(unstruct_collection_overrides={set: list})
 
 configure_union_passthrough(bool | int | float | str, converter)
 
+converter.register_structure_hook_factory(
+    attrs.has,
+    lambda cl: cattrs.gen.make_dict_structure_fn(cl, converter, _cattrs_use_alias=True),
+)
 
-def unstructure_base(base: Any, overrides: dict | None = None) -> dict:
-    """Unstructure an object into a dictionary and adds an entry for the class name.
+converter.register_unstructure_hook_factory(
+    attrs.has,
+    lambda cl: cattrs.gen.make_dict_unstructure_fn(
+        cl, converter, _cattrs_use_alias=True
+    ),
+)
 
-    Args:
-        base: The object that should be unstructured.
-        overrides: An optional dictionary of cattrs-overrides for certain attributes.
 
-    Returns:
-        The unstructured dict with the additional entry.
+def register_base_unstructuring(base: Any, /) -> None:
+    """Register a hook for unstructuring subclasses of the given base class.
+
+    Calls the existing unstructure hook of the subclass but adds a ``type`` field
+    containing the class name, to enable deserialization of the object into the correct
+    type later on.
     """
-    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
-    fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
-    attrs_dict = fun(base)
-    return {
-        "type": base.__class__.__name__,
-        **attrs_dict,
-    }
+    def factory(_: Any, /) -> UnstructureHook:
+        """Create a hook adding a ``type`` field to the unstructured output."""
+
+        def hook(x: Any, /) -> dict[str, Any]:
+            fn = converter.get_unstructure_hook(x.__class__)
+            return {
+                _TYPE_FIELD: x.__class__.__name__,
+                **fn(x),
+            }
+
+        return hook
+
+    converter.register_unstructure_hook_factory(lambda cls: cls is base, factory)
 
 
 def get_base_structure_hook(
