@@ -367,7 +367,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(ExponentialTransformation())
 
-    def power(self, exponent: float) -> NumericalTarget:
+    def power(self, exponent: int) -> NumericalTarget:
         """Apply a power transformation to the target.
 
         Args:
