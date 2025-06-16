@@ -111,7 +111,7 @@ class NumericalTarget(Target, SerialMixin):
         try:
             self.__attrs_init__(name, *args, **kwargs)
             return
-        except Exception:
+        except TypeError:
             pass
 
         # Now we know that the legacy interface is used
