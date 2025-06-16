@@ -326,7 +326,7 @@ def test_identity_transformation_chaining():
 
 
 def test_generic_transformation(series):
-    """Torch callables can be used to specify generic transformations."""
+    """Torch callables can be used to specify custom transformations."""
     t1 = ModernTarget("t", AbsoluteTransformation())
     t2 = ModernTarget("t", CustomTransformation(torch.abs))
     t3 = ModernTarget("t", torch.abs)
