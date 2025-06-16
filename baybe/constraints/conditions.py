@@ -22,8 +22,8 @@ from baybe.serialization import (
     SerialMixin,
     converter,
     get_base_structure_hook,
-    unstructure_base,
 )
+from baybe.serialization.core import register_base_unstructuring
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -234,9 +234,7 @@ converter.register_structure_hook(
     Condition,
     get_base_structure_hook(Condition, overrides=_overrides),  # type: ignore
 )
-converter.register_unstructure_hook(
-    Condition, partial(unstructure_base, overrides=_overrides)
-)
+register_base_unstructuring(Condition)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

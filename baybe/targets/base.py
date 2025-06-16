@@ -14,8 +14,8 @@ from baybe.serialization import (
     SerialMixin,
     converter,
     get_base_structure_hook,
-    unstructure_base,
 )
+from baybe.serialization.core import register_base_unstructuring
 
 if TYPE_CHECKING:
     from baybe.objectives import SingleTargetObjective
@@ -61,7 +61,7 @@ class Target(ABC, SerialMixin):
 
 # Register (un-)structure hooks
 converter.register_structure_hook(Target, get_base_structure_hook(Target))
-converter.register_unstructure_hook(Target, unstructure_base)
+register_base_unstructuring(Target)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

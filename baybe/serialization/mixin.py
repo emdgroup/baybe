@@ -3,7 +3,7 @@
 import json
 from typing import TypeVar
 
-from baybe.serialization.core import converter
+from baybe.serialization.core import _TYPE_FIELD, converter
 
 _T = TypeVar("_T")
 
@@ -15,9 +15,19 @@ class SerialMixin:
     # See also: https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
     __slots__ = ()
 
-    def to_dict(self) -> dict:
-        """Create an object's dictionary representation."""
-        return converter.unstructure(self)
+    def to_dict(self, *, add_type: bool = False) -> dict:
+        """Create an object's dictionary representation.
+
+        Args:
+            add_type: Boolean flag allowing to include the object's type.
+
+        Returns:
+            The dictionary representation of the object.
+        """
+        dct = converter.unstructure(self)
+        if add_type:
+            dct[_TYPE_FIELD] = self.__class__.__name__
+        return dct
 
     @classmethod
     def from_dict(cls: type[_T], dictionary: dict) -> _T:
@@ -31,13 +41,16 @@ class SerialMixin:
         """
         return converter.structure(dictionary, cls)
 
-    def to_json(self) -> str:
+    def to_json(self, *, add_type: bool = False) -> str:
         """Create an object's JSON representation.
+
+        Args:
+            add_type: Boolean flag allowing to include the object's type.
 
         Returns:
             The JSON representation as a string.
         """
-        return json.dumps(self.to_dict())
+        return json.dumps(self.to_dict(add_type=add_type))
 
     @classmethod
     def from_json(cls: type[_T], string: str) -> _T:

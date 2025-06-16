@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from functools import cached_property, partial
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import cattrs
@@ -19,8 +19,8 @@ from baybe.serialization import (
     SerialMixin,
     converter,
     get_base_structure_hook,
-    unstructure_base,
 )
+from baybe.serialization.core import register_base_unstructuring
 from baybe.utils.basic import to_tuple
 
 if TYPE_CHECKING:
@@ -247,9 +247,8 @@ converter.register_structure_hook(
     Parameter,
     get_base_structure_hook(Parameter, overrides=_overrides),  # type: ignore
 )
-converter.register_unstructure_hook(
-    Parameter, partial(unstructure_base, overrides=_overrides)
-)
+register_base_unstructuring(Parameter)
+register_base_unstructuring(DiscreteParameter)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

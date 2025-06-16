@@ -6,6 +6,7 @@ from typing import TypeVar
 from typing_extensions import is_protocol
 
 from baybe.serialization.mixin import SerialMixin
+from baybe.utils.boolean import is_abstract
 
 Serializable = TypeVar("Serializable", bound=SerialMixin)
 
@@ -23,8 +24,9 @@ def _get_highest_baseclass(cls: type[SerialMixin]) -> type[SerialMixin]:
 
 def roundtrip(obj: Serializable) -> Serializable:
     """Perform a roundtrip serialization of the given object."""
-    string = obj.to_json()
-    return _get_highest_baseclass(type(obj)).from_json(string)
+    cls = _get_highest_baseclass(type(obj))
+    string = obj.to_json(add_type=is_abstract(cls))
+    return cls.from_json(string)
 
 
 def assert_roundtrip_consistency(obj: SerialMixin) -> None:

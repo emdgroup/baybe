@@ -14,7 +14,7 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
-    unstructure_base,
+    register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
 
@@ -34,7 +34,7 @@ class KernelFactory(Protocol):
 
 # Register (un-)structure hooks
 converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
-converter.register_unstructure_hook(KernelFactory, unstructure_base)
+register_base_unstructuring(KernelFactory)
 
 
 @define(frozen=True)

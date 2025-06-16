@@ -13,7 +13,7 @@ from baybe.priors.base import Prior
 from baybe.serialization.core import (
     converter,
     get_base_structure_hook,
-    unstructure_base,
+    register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import get_baseclasses, match_attributes
@@ -127,7 +127,7 @@ class CompositeKernel(Kernel, ABC):
 
 # Register (un-)structure hooks
 converter.register_structure_hook(Kernel, get_base_structure_hook(Kernel))
-converter.register_unstructure_hook(Kernel, unstructure_base)
+register_base_unstructuring(Kernel)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
