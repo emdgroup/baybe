@@ -15,7 +15,6 @@ from baybe import Campaign
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_measurements
 
 ### Defining the Search Space
 
@@ -87,10 +86,14 @@ print(recommendations)
 
 ### Accessing Desirability Values
 
-# Once the target measurements are available, we can access the corresponding
-# desirability values via the objective:
+# Once the target measurements are available, ...
 
-add_fake_measurements(recommendations, campaign.targets)
+recommendations[target_max.name] = [65, 35, 87]
+recommendations[target_min.name] = [-8, -3, -5]
+recommendations[target_match.name] = [55, 25, 48]
+
+# ... we can access the corresponding desirability values via the objective:
+
 campaign.add_measurements(recommendations)
 desirability = objective.transform(recommendations, allow_extra=True)
 print(pd.concat([recommendations, desirability], axis=1))
