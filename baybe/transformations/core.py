@@ -149,8 +149,8 @@ class AffineTransformation(MonotonicTransformation):
 
         Example:
             >>> import torch
-            >>> from baybe.transformations import AffineTransformation
-            >>> transform = AffineTransformation.from_unit_interval(3, 7)
+            >>> from baybe.transformations import AffineTransformation as AffineT
+            >>> transform = AffineT.from_points_mapped_to_unit_interval_bounds(3, 7)
             >>> transform(torch.tensor([3, 7]))
             tensor([0., 1.])
             >>> transform(torch.tensor([7, 3]))
