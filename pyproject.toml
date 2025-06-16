@@ -6,7 +6,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python =">=3.10,<3.13"
+requires-python =">=3.10,<=3.13"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
@@ -79,7 +80,7 @@ chem = [
 onnx = [
     "onnx>=1.16.0", # see AUDIT NOTE, required by skl2onnx
     "onnxruntime>=1.15.1",
-    "skl2onnx>=1.15.0",
+    "skl2onnx>=1.19.1",
 ]
 
 dev = [
@@ -150,6 +151,7 @@ benchmarking = [
     "baybe[chem]",
     "baybe[onnx]",
     "baybe[simulation]",
+    "baybe[examples]", # Due to matplotlib
     "boto3>=1.0.0,<2",
     "GitPython>=3.0.6,<4", # GitPython<3.0.6 is necessary since older versions rely on a specific version of GitDB: https://github.com/gitpython-developers/GitPython/issues/983
 ]

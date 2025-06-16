@@ -91,6 +91,24 @@ def test_discrete_searchspace_creation_from_dataframe():
     assert df.equals(searchspace.discrete.exp_rep)
 
 
+def test_discrete_from_dataframe_dtype_consistency():
+    """Inconsistent but valid dtypes are correctly converted."""
+    df = pd.DataFrame(
+        {
+            "A": [1, 2, 3],
+            "B": ["x", "y", "z"],
+            "C": [int(1), 2.2, True],  # Valid but inconsistent dtypes
+        }
+    )
+    subspace = SubspaceDiscrete.from_dataframe(df)
+
+    assert isinstance(
+        next(p for p in subspace.parameters if p.name == "C"),
+        NumericalDiscreteParameter,
+    )
+    assert pd.api.types.is_float_dtype(subspace.exp_rep["C"])
+
+
 def test_invalid_simplex_creating_with_overlapping_parameters():
     """Creating a simplex searchspace with overlapping simplex and product parameters
     raises an error."""  # noqa

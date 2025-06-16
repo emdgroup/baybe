@@ -28,7 +28,7 @@ from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.dataframe import _ValidatedDataFrame
+from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
 if TYPE_CHECKING:
@@ -169,11 +169,17 @@ class BayesianRecommender(PureRecommender, ABC):
         if not isinstance(measurements, _ValidatedDataFrame):
             validate_target_input(measurements, objective.targets)
             validate_parameter_input(measurements, searchspace.parameters)
+            measurements = normalize_input_dtypes(
+                measurements, searchspace.parameters + objective.targets
+            )
             measurements.__class__ = _ValidatedDataFrame
         if pending_experiments is not None and not isinstance(
             pending_experiments, _ValidatedDataFrame
         ):
             validate_parameter_input(pending_experiments, searchspace.parameters)
+            pending_experiments = normalize_input_dtypes(
+                pending_experiments, searchspace.parameters
+            )
             pending_experiments.__class__ = _ValidatedDataFrame
 
         if (

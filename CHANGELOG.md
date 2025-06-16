@@ -23,10 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for non-normalized targets in `DesirabilityObjective`
 - `Objective.to_botorch` method for converting objectives to BoTorch
 - Tests for migrating to new `NumericalTarget` interface
-- `random_tie_break` flag to `farthest_point_sampling` to toggle between 
-  random or deterministic sampling for equidistant cases
-- `random_tie_break` and `initialization` attributes to `FPSRecommender` to
-  control sampling in `farthest_point_sampling`
 
 ### Changed
 - The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
@@ -40,13 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for each target instead of for the desirability value
 - Specifying bounds for `Interval` is now optional
 
-### Fixed
-- `simulate_scenarios` not making use of fully parallel computation
-- Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
-  minimization of the acquisition function
-- Added missing garbage collection call to pareto.py, potentially solving serialization
-  issues in certain cases
-
 ### Removed
 - Option to specify reference values for `add_fake_measurements`
 - `convert_bounds` utility (since now equivalent to `Interval.create`)
@@ -55,6 +44,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Creating `NumericalTarget`s using a `mode` argument
 - `TargetMode` and `TargetTransformation` enums
 - `linear_transform`, `triangular_transform` and `bell_transform` functions
+
+## [0.13.1] - 2025-06-06
+- Support for Python 3.13
+- `random_tie_break` flag to `farthest_point_sampling` to toggle between 
+  random or deterministic sampling for equidistant cases
+- `random_tie_break` and `initialization` attributes to `FPSRecommender` to
+  control sampling in `farthest_point_sampling`
+- Flag for toggling parallel computation in `simulate_scenarios`
+- Additional transfer learning and synthetic benchmarks
+- Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
+  expected dtypes
+- `CompositeSurrogate` now has a `_posterior_comp` method similar to `Surrogate`
+- `SHAPInsight.explain_target` method for computing explanations for only a specific 
+  target
+
+### Changed
+- `CategoricalParameter` and `TaskParameter` now also allow Boolean entries as 
+  `values` and `active_values`
+- `SubspaceDiscrete.from_dataframe` now handles purely Boolean columns differently, 
+  inferring a `CategoricalParameter` with `INT` encoding for them
+- `SHAPInsight.explain` now returns a tuple of explanations that contains one 
+  explanation for each surrogate model used by the (possibly multi-output) objective
+- `SHAPInsight.plot` now has the optional `target_index` argument, enabling users to 
+  select for which target they want to plot the shap assessment (default is the first 
+  target)
+- `add_measurements`, `update_measurements`, `fuzzy_row_match` and some `.recommend` 
+  calls now operate on dtype-normalized copies of the input if it contained unexpected
+  dtypes for a parameter or target
+- `scikit-learn` and `scipy` are now lazy-loaded
+- Validity of optional `model_params` attribute of `RandomForestSurrogate`, 
+  `NGBoostSurrogate` and `BayesianLinearSurrogate` is now checked via a hardcoded 
+  `TypedDict` instead of dynamically retrieved specifications, required for 
+  lazy-loading related packages
+- `CustomONNXSurrogate.onnx_str` is no longer validated before being used
+
+### Fixed
+- Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
+  minimization of the acquisition function
+- Added missing garbage collection call to `pareto.py`, potentially solving 
+  serialization issues in certain cases
+- `catch_constant_targets` decorator is now properly typed
+- Incorrect normalization of explanation shapes for `SHAPInsight`
+
+### Removed
+- `SHAPInsight.uses_shap_explainer`
 
 ## [0.13.0] - 2025-04-16
 ### Added

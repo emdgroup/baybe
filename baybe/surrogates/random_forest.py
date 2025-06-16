@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Collection
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypedDict
 
 import numpy as np
+import numpy.typing as npt
 from attrs import define, field
-from sklearn.ensemble import RandomForestRegressor
+from numpy.random import RandomState
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.utils import batchify_ensemble_predictor, catch_constant_targets
-from baybe.surrogates.validation import get_model_params_validator
+from baybe.surrogates.validation import make_dict_validator
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -21,6 +22,32 @@ if TYPE_CHECKING:
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from torch import Tensor
+
+
+class _RandomForestRegressorParams(TypedDict, total=False):
+    """Optional RandomForestRegressor parameters.
+
+    See :class:`~sklearn.ensemble.RandomForestRegressor`.
+    """
+
+    n_estimators: int
+    criterion: Literal["squared_error", "absolute_error", "friedman_mse", "poisson"]
+    max_depth: int
+    min_samples_split: int | float
+    min_samples_leaf: int | float
+    min_weight_fraction_leaf: float
+    max_features: Literal["sqrt", "log2"] | int | float | None
+    max_leaf_nodes: int | None
+    min_impurity_decrease: float
+    bootstrap: bool
+    oob_score: bool
+    n_jobs: int | None
+    random_state: int | RandomState | None
+    verbose: int
+    warm_start: bool
+    ccp_alpha: float
+    max_samples: int | float | None
+    monotonic_cst: npt.ArrayLike | int | None
 
 
 class _Predictor(Protocol):
@@ -37,14 +64,19 @@ class RandomForestSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
-    model_params: dict[str, Any] = field(
+    model_params: _RandomForestRegressorParams = field(
         factory=dict,
         converter=dict,
-        validator=get_model_params_validator(RandomForestRegressor.__init__),
+        validator=make_dict_validator(_RandomForestRegressorParams),
     )
-    """Optional model parameter that will be passed to the surrogate constructor."""
+    """Optional model parameter that will be passed to the surrogate constructor.
 
-    _model: RandomForestRegressor | None = field(init=False, default=None, eq=False)
+    For allowed keys and values, see :class:`~sklearn.ensemble.RandomForestRegressor`.
+    """
+
+    # TODO: type should be `RandomForestRegressor | None` but is currently omitted due
+    #  to: https://github.com/python-attrs/cattrs/issues/531
+    _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
     @override
@@ -101,6 +133,8 @@ class RandomForestSurrogate(Surrogate):
 
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        from sklearn.ensemble import RandomForestRegressor
+
         self._model = RandomForestRegressor(**(self.model_params))
         self._model.fit(train_x.numpy(), train_y.numpy().ravel())
 

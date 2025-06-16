@@ -6,7 +6,6 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import pairwise_distances
 
 
 def farthest_point_sampling(
@@ -71,6 +70,8 @@ def farthest_point_sampling(
     points = points[sort_idx]
 
     # Pre-compute the pairwise distances between all points
+    from sklearn.metrics import pairwise_distances
+
     dist_matrix = pairwise_distances(points)
 
     # Avoid wrong behavior situations where all (remaining) points are duplicates

@@ -37,8 +37,8 @@ def get_parameters_from_dataframe(
 
     Args:
         df: The dataframe from which to create the parameters.
-        factory: A parameter factor, creating parameter objects for the columns
-            from the column name and the unique column values.
+        factory: A callable creating parameter objects for the columns from the column
+            name and the unique column values.
         parameters: An optional list of parameter objects to bypass the factory
             creation for columns whose names match with the parameter names.
 

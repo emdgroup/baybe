@@ -8,13 +8,14 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pytest import param
 
-from baybe.exceptions import SearchSpaceMatchWarning
+from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.dataframe import (
     add_noise_to_perturb_degenerate_rows,
     add_parameter_noise,
     fuzzy_row_match,
     handle_missing_values,
+    normalize_input_dtypes,
 )
 
 
@@ -198,3 +199,54 @@ def test_measurement_singletons():
     # Test NaN removal
     df_new = handle_missing_values(df, [t.name for t in targets], drop=True)
     assert_frame_equal(df.iloc[1:-1, :], df_new)
+
+
+@pytest.mark.parametrize(
+    "data, warning, match",
+    [
+        param(
+            pd.DataFrame(
+                {
+                    "Num_disc_1": [1.1, 2.2],
+                    "Target_max": [3.3, 4.4],
+                }
+            ),
+            None,
+            "",
+            id="valid",
+        ),
+        param(
+            pd.DataFrame(
+                {
+                    "Num_disc_1": [1.1, True],
+                    "Target_max": [3.3, 4.4],
+                }
+            ),
+            InputDataTypeWarning,
+            "Num_disc_1",
+            id="bool_in_num_parameter",
+        ),
+        param(
+            pd.DataFrame(
+                {
+                    "Num_disc_1": [1.1, 2.2],
+                    "Target_max": [3.3, False],
+                }
+            ),
+            InputDataTypeWarning,
+            "Target_max",
+            id="bool_in_num_target",
+        ),
+    ],
+)
+def test_input_dtype(data, warning, match, parameters, targets):
+    """If necessary, utility converts input dtype and raises warning."""
+    with nullcontext() if warning is None else pytest.warns(warning, match=match):
+        converted = normalize_input_dtypes(data, parameters + targets)
+        converted = normalize_input_dtypes(data, parameters + targets)
+        print(data)
+        print(converted)
+
+    # Asserts converted columns have expected dtypes
+    assert pd.api.types.is_float_dtype(converted["Num_disc_1"]), (data, converted)
+    assert pd.api.types.is_float_dtype(converted["Target_max"]), (data, converted)
