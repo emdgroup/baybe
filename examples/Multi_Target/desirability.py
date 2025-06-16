@@ -18,7 +18,7 @@ from baybe.targets import NumericalTarget
 
 ### Defining the Search Space
 
-# Because the search space is secondary importance in this example, we keep it simple
+# Because the search space is of secondary importance in this example, we keep it simple
 # and consider only a single parameter, without loss of generality:
 
 searchspace = NumericalContinuousParameter("parameter", (0, 1)).to_searchspace()
@@ -26,11 +26,20 @@ searchspace = NumericalContinuousParameter("parameter", (0, 1)).to_searchspace()
 
 ### Defining the Targets
 
-# Next, we define our optimization targets. Because desirability computation is based on
+# Next, we define our optimization targets. Because desirability computation relies on
 # averaging target values, it is required that all targets are properly normalized.
 # This can be achieved by applying appropriate target transformations, for which
 # BayBE offers several built-in choices and also offers full customization for
 # advanced use cases.
+
+# ```{admonition} Target Normalization
+# :class: note
+# If you know what you are doing, you can also disable the normalization check
+# via the
+# {paramref}`~baybe.objectives.desirability.DesirabilityObjective.require_normalization`
+# flag, with the consequence that the selected averaging method is executed on the
+# target values no matter if they are normalized or not.
+# ```
 
 # For our example, we consider three simple targets reflecting different optimization
 # goals. The first target takes values in the interval [0, 100] and is to be maximized.
