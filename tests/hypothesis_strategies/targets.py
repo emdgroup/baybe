@@ -1,6 +1,7 @@
 """Hypothesis strategies for targets."""
 
 import hypothesis.strategies as st
+import numpy as np
 from hypothesis import assume
 
 from baybe.targets.binary import BinaryTarget
@@ -57,16 +58,18 @@ def linear_numerical_targets(
         bounds_strategy = st_intervals(
             exclude_half_bounded=True, exclude_fully_unbounded=True
         )
-    # keep drawing until we get an interval with width ≥ 1e-6
-    while True:
-        interval = draw(bounds_strategy)
-        lo, hi = interval.lower, interval.upper
-        if (hi - lo) >= 1e-6:
-            break
 
-    transformation = "LINEAR"
+    bounds_strategy = bounds_strategy.filter(
+        lambda iv: (iv.upper - iv.lower) >= 0.0
+        and np.nextafter(iv.lower, iv.upper) < iv.upper
+    )
+
+    interval = draw(bounds_strategy)
+
+    name = draw(target_name)
+    mode = draw(st.sampled_from([TargetMode.MIN, TargetMode.MAX]))
     return NumericalTarget(
-        name=name, mode=mode, bounds=interval, transformation=transformation
+        name=name, mode=mode, bounds=interval, transformation="LINEAR"
     )
 
 

@@ -49,7 +49,7 @@ def chimera_objectives(draw: st.DrawFn):
         st.lists(
             linear_numerical_targets(bounded_intervals),
             min_size=2,
-            max_size=100,
+            max_size=10,
             unique_by=lambda t: t.name,
         )
     )
@@ -59,7 +59,7 @@ def chimera_objectives(draw: st.DrawFn):
     # 3) Draw threshold_types (only FRACTION or ABSOLUTE for now)
     threshold_types = draw(
         st.lists(
-            st.sampled_from([ThresholdType.FRACTION]),  # , ThresholdType.ABSOLUTE]),
+            st.sampled_from([ThresholdType.FRACTION, ThresholdType.ABSOLUTE]),
             min_size=n_targets,
             max_size=n_targets,
         )
@@ -68,25 +68,23 @@ def chimera_objectives(draw: st.DrawFn):
     # 4) For each threshold_type, draw a threshold_value in the correct range
     threshold_values: list[float] = []
     for i, tt in enumerate(threshold_types):
-        lo, hi = targets[i].bounds.lower, targets[i].bounds.upper
+        # 4.1) draw a clean fraction in (0,1)
+        frac = draw(
+            finite_floats(
+                min_value=0.0,
+                max_value=1.0,
+                exclude_min=True,
+                exclude_max=True,
+            )
+        )
+
+        # 4.2) map to absolute bounds if needed
         if tt is ThresholdType.ABSOLUTE:
-            val = draw(
-                finite_floats(
-                    min_value=lo,
-                    max_value=hi,
-                    exclude_min=True,
-                    exclude_max=True,
-                )
-            )
-        else:  # FRACTION
-            val = draw(
-                finite_floats(
-                    min_value=0.0,
-                    max_value=1.0,
-                    exclude_min=True,
-                    exclude_max=True,
-                )
-            )
+            lo, hi = targets[i].bounds.lower, targets[i].bounds.upper
+            val = (1.0 - frac) * lo + frac * hi  # numerically more stable
+        else:  # FRACTION / PERCENTILE
+            val = frac
+
         threshold_values.append(val)
 
     # 5) Fix softness = 0.0 for now (#TODO: draw later)

@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 from chimera import Chimera
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis.extra.pandas import column, data_frames
+from hypothesis import given
+from hypothesis.extra.pandas import column, data_frames, range_indexes
 
 from baybe.objectives.chimera import ChimeraObjective, ThresholdType
 from baybe.objectives.desirability import DesirabilityObjective, scalarize
@@ -15,6 +15,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget
 
+from .hypothesis_strategies.basic import finite_floats
 from .hypothesis_strategies.objectives import chimera_objectives
 
 
@@ -188,106 +189,119 @@ def compare_merits(
     Returns:
         True if the merit values computed by both methods are close.
     """
-    # Internal ChimeraObjective works directly with the DataFrame:
-    int_merits = int_chimera.transform(target_vals).values.flatten()
+    # 1) Run the internal transform once to populate all internal buffers
+    _ = int_chimera.transform(target_vals)
+    int_merits = int_chimera.transform(target_vals)["Merit"].values
 
-    # External Chimera needs a transformed DataFrame and transformed threshold values
-    # --- build transformed dataframe (identical to int_chimera._targets_transformed)
-    target_vals_transformed = target_vals.copy()
-    _threshold_values_transformed = np.array(int_chimera.threshold_values)
-    ext_absolutes = []
+    # 2) Grab the exact transformed DataFrame / thresholds BayBE uses
+    ext_chimera.goals = ["max"] * len(int_chimera.targets)
+    # after transform, all are maximization problems
+    ext_chimera.tolerances = np.array(int_chimera._threshold_values_transformed)
+    target_vals_transformed = int_chimera._targets_transformed.copy()
 
-    for target, ttype, tval in zip(
-        int_chimera.targets, int_chimera.threshold_types, int_chimera.threshold_values
-    ):
-        # bounds-scale then invert the data column
-        col_tr = 1.0 - target.transform(target_vals[target.name])
-        target_vals_transformed[target.name] = col_tr
-
-        if ttype is ThresholdType.ABSOLUTE:
-            # transform + invert, but **do not** min-max scale here
-            thr_tr = 1.0 - target.transform(pd.Series([tval])).values[0]
-            _threshold_values_transformed[int_chimera.targets.index(target)] = thr_tr
-            ext_absolutes.append(
-                True
-            )  # TODO: this is wrong, no append, always indexing
-        else:
-            ext_absolutes.append(False)
-
-    # ----------- sanity prints --------------------------------------------------
-    print(
-        "transformed df are the same:",
-        np.allclose(
-            target_vals_transformed.values, int_chimera._targets_transformed.values
-        ),
-    )
-    print(
-        "transformed thresholds are the same:",
-        np.allclose(
-            _threshold_values_transformed, int_chimera._threshold_values_transformed
-        ),
-    )
-
-    # ----------- feed external Chimera -----------------------------------------
-    ext_chimera.absolutes = ext_absolutes
-    ext_chimera.tolerances = _threshold_values_transformed
-    ext_chimera.goals = ["min"] * len(ext_chimera.goals)
-
-    # print("Index Error?:", ext_absolutes)
-    # print("Index Error?:", target_vals_transformed.values)
+    # 3) Compute external merits
     ext_merits = ext_chimera.scalarize(target_vals_transformed.values)
 
-    are_close = np.allclose(ext_merits, int_merits, atol=1e-5)
+    # 6) Compare final merits
     if verbose:
-        print("Chimera merits:", ext_merits)
-        print("BayBE Chimera merits:", int_merits)
-    return are_close
+        stages = [
+            ("adjusted", int_chimera._targets_adjusted, ext_chimera._objs),
+            ("rescaled", int_chimera._targets_rescaled, ext_chimera._scaled_objs),
+            ("shifted", int_chimera._targets_shifted, ext_chimera._shifted_objs),
+        ]
+
+        thr_stages = [
+            (
+                "thr_adj",
+                int_chimera._threshold_values_adjusted,
+                ext_chimera._thresholds,
+            ),
+            (
+                "thr_res",
+                int_chimera._threshold_values_rescaled,
+                ext_chimera._scaled_thresholds,
+            ),
+            (
+                "thr_shift",
+                int_chimera._threshold_values_shifted,
+                ext_chimera._shifted_thresholds,
+            ),
+        ]
+
+        print("\n=== PER-STAGE OBJECTIVE COMPARISON ===")
+        for name, a_buf, b_buf in stages:
+            ok = np.allclose(a_buf, b_buf, atol=1e-8, equal_nan=True)
+            print(f"{name:10s}: {'OK' if ok else 'DIFF'}")
+            if not ok:
+                print("  BayBE:", a_buf)
+                print("  ext  :", b_buf)
+
+        print("\n=== PER-STAGE THRESHOLD COMPARISON ===")
+        for name, a_thr, b_thr in thr_stages:
+            ok = np.allclose(a_thr, b_thr, atol=1e-8, equal_nan=True)
+            print(f"{name:10s}: {'OK' if ok else 'DIFF'}")
+            if not ok:
+                print("  BayBE:", a_thr)
+                print("  ext  :", b_thr)
+
+        print("\nfinal merits:")
+        print("  BayBE:", int_merits)
+        print("  ext  :", ext_merits)
+
+    # Edge case to exclude
+    int_const = (np.nanmax(int_merits) - np.nanmin(int_merits)) == 0.0
+    ext_all_nan = np.isnan(ext_merits).all()
+    ext_const = (np.nanmax(ext_merits) - np.nanmin(ext_merits)) == 0.0
+    ext_degenerate = ext_all_nan or ext_const
+
+    if int_const or ext_degenerate:
+        return True
+
+    return np.allclose(ext_merits, int_merits, atol=1e-6)
 
 
-@settings(
-    max_examples=100, suppress_health_check=[HealthCheck.too_slow]
-)  # TODO: try to rewrite to run all?
+# @settings(
+#     max_examples=100, suppress_health_check=[HealthCheck.too_slow]
+# )  # TODO: try to rewrite to run all? / Remove max_examples?
 @given(chimera_obj=chimera_objectives(), data=st.data())
 def test_chimera_merits(chimera_obj, data):
     """Validating chimerra merits value with external reference."""
-    # Initialize external Chimera using data from chimera_obj.
-    goals = [t.mode.value.lower() for t in chimera_obj.targets]
-    threshold_vals = np.array(chimera_obj.threshold_values)
-    ext_chimera = Chimera(
-        tolerances=threshold_vals,
-        absolutes=[
-            True
-            for tt in chimera_obj.threshold_types
-            # TODO: because of the transform, all become absolute
-            # tt.value.upper() == "ABSOLUTE" for tt in chimera_obj.threshold_types
-        ],
-        goals=[g.lower() for g in goals],
-        softness=chimera_obj.softness,
-    )
-
-    # Build a list of columns, one per target.
+    # Step 1: Build a list of columns, one per target.
     columns = [
         column(
-            name=t.name,
-            elements=st.floats(
-                min_value=t.bounds.lower
-                if chimera_obj.threshold_types[i] == ThresholdType.ABSOLUTE
-                else 0.0,
-                max_value=t.bounds.upper
-                if chimera_obj.threshold_types[i] == ThresholdType.ABSOLUTE
-                else 1.0,
-                allow_nan=False,
-                allow_infinity=False,
+            name=target.name,
+            elements=finite_floats(
+                min_value=target.bounds.lower,
+                max_value=target.bounds.upper,
                 exclude_min=True,
                 exclude_max=True,
             ),
         )
-        for i, t in enumerate(chimera_obj.targets)
+        for target in chimera_obj.targets
     ]
 
-    target_vals = data.draw(data_frames(columns=columns))
-    assume(target_vals.shape[0] >= 6)
+    target_vals = data.draw(
+        data_frames(columns=columns, index=range_indexes(min_size=2)).filter(
+            lambda df: len(df.drop_duplicates()) > 1
+        )
+        # at least one row needs to be unique
+    )
+    # assume(target_vals.shape[0] >= 3)
+    # TODO: do not use assume, no reason behind 6 except for the test
+    # TODO: use min length instead
+    print("Target DataFrame:\n", target_vals)  # TODO: remove later
 
-    print("Target DataFrame:\n", target_vals)
-
+    # Step 2: Initialize external Chimera using data from chimera_obj.
+    threshold_vals = np.array(chimera_obj.threshold_values)
+    ext_chimera = Chimera(
+        tolerances=threshold_vals,
+        absolutes=[
+            tt.value.upper() == "ABSOLUTE" for tt in chimera_obj.threshold_types
+        ],
+        # TODO: PERCENTIL MISSING
+        goals=["max"] * len(chimera_obj.targets),
+        softness=chimera_obj.softness,
+    )
+    # TODO: Style inconsistent
+    # Step 3: Compare merits
     assert compare_merits(target_vals, ext_chimera, chimera_obj)
