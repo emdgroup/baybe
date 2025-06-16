@@ -152,7 +152,7 @@ def test_update_measurements(ongoing_campaign):
     [
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
-            NumericalTarget("t1", "MAX").to_objective(),
+            NumericalTarget("t1").to_objective(),
             GaussianProcessSurrogate(),
             qLogEI(),
             3,
@@ -162,8 +162,10 @@ def test_update_measurements(ongoing_campaign):
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             DesirabilityObjective(
                 (
-                    NumericalTarget("t1", "MAX", bounds=(0, 1)),
-                    NumericalTarget("t2", "MIN", bounds=(0, 1)),
+                    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1)),
+                    NumericalTarget.normalize_ramp(
+                        "t2", cutoffs=(0, 1), descending=True
+                    ),
                 )
             ),
             GaussianProcessSurrogate(),
@@ -174,7 +176,7 @@ def test_update_measurements(ongoing_campaign):
         param(
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             ParetoObjective(
-                (NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN"))
+                (NumericalTarget("t1"), NumericalTarget("t2", minimize=True))
             ),
             GaussianProcessSurrogate(),
             qLogNEHVI(),
@@ -212,12 +214,7 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     )
 
     # Assert expected columns are present.
-    match objective:
-        case DesirabilityObjective():
-            targets = ["Desirability"]
-        case _:
-            targets = [t.name for t in objective.targets]
-
+    targets = [t.name for t in objective.targets]
     for t in targets:
         for stat in tested_stats:
             stat_name = f"Q_{stat}" if isinstance(stat, float) else stat

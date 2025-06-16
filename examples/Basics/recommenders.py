@@ -144,7 +144,7 @@ parameters = [solvent, base, ligand, temperature, concentration]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
 
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 
 ### Creating the campaign
 

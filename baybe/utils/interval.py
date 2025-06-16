@@ -1,9 +1,12 @@
 """Utilities for handling intervals."""
 
+from __future__ import annotations
+
 import gc
 from collections.abc import Iterable
+from copy import deepcopy
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
 import numpy as np
 from attrs import define, field
@@ -22,14 +25,24 @@ class InfiniteIntervalError(Exception):
     """An interval that should be finite is infinite."""
 
 
+ConvertibleToInterval = Union["Interval", Iterable[float], None]
+"""Types that can be converted to an :class:`Interval`."""
+
+
 @define
 class Interval(SerialMixin):
     """Intervals on the real number line."""
 
-    lower: float = field(converter=lambda x: float(x) if x is not None else -np.inf)
+    lower: float = field(
+        default=float("-inf"),
+        converter=lambda x: float("-inf") if x is None else float(x),
+    )
     """The lower end of the interval."""
 
-    upper: float = field(converter=lambda x: float(x) if x is not None else np.inf)
+    upper: float = field(
+        default=float("inf"),
+        converter=lambda x: float("inf") if x is None else float(x),
+    )
     """The upper end of the interval."""
 
     @upper.validator
@@ -76,28 +89,34 @@ class Interval(SerialMixin):
         return not (self.is_left_bounded or self.is_right_bounded)
 
     @property
-    def center(self) -> float | None:
-        """The center of the interval, or ``None`` if the interval is unbounded."""
+    def center(self) -> float:
+        """The center of the interval, or ``nan`` if the interval is unbounded."""
         if not self.is_bounded:
-            return None
+            return float("nan")
         return (self.lower + self.upper) / 2
 
     @singledispatchmethod
     @classmethod
-    def create(cls, value: Any):
+    def create(cls, value: ConvertibleToInterval) -> Interval:
         """Create an interval from various input types."""
+        # Singledispatch does not play well with forward references, hence the
+        # workaround via `isinstance` in the fallback method.
+        # https://bugs.python.org/issue41987
+        if isinstance(value, Interval):
+            return deepcopy(value)
+
         raise NotImplementedError(f"Unsupported argument type: {type(value)}")
 
     @create.register
     @classmethod
     def _(cls, _: None):
-        """Overloaded implementation for creating an empty interval."""
-        return Interval(-np.inf, np.inf)
+        """Overloaded implementation for creating an unbounded interval."""
+        return Interval()
 
     @create.register
     @classmethod
     def _(cls, bounds: Iterable):
-        """Overloaded implementation for creating an interval of an iterable."""
+        """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
 
     def to_tuple(self) -> tuple[float, float]:
@@ -108,7 +127,7 @@ class Interval(SerialMixin):
         """Transform the interval to a :class:`numpy.ndarray`."""
         return np.array([self.lower, self.upper], dtype=DTypeFloatNumpy)
 
-    def to_tensor(self) -> "Tensor":
+    def to_tensor(self) -> Tensor:
         """Transform the interval to a :class:`torch.Tensor`."""
         import torch
 
@@ -126,20 +145,6 @@ class Interval(SerialMixin):
             Whether or not the interval contains the number.
         """
         return self.lower <= number <= self.upper
-
-
-def convert_bounds(bounds: None | Iterable | Interval) -> Interval:
-    """Convert bounds given in another format to an interval.
-
-    Args:
-        bounds: The bounds that should be transformed to an interval.
-
-    Returns:
-        The interval.
-    """
-    if isinstance(bounds, Interval):
-        return bounds
-    return Interval.create(bounds)
 
 
 def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:

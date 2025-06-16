@@ -41,7 +41,7 @@ BOUNDS = (-1, 1)
 parameters = [
     NumericalContinuousParameter(name=f"x_{k}", bounds=BOUNDS) for k in range(DIMENSION)
 ]
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 
 
 # Based on the above, we construct the black-box callable to be optimized, which

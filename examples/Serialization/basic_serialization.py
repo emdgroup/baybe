@@ -47,7 +47,7 @@ parameters = [
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
         initial_recommender=FPSRecommender(),

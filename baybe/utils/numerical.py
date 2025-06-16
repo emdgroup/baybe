@@ -28,21 +28,6 @@ There is no clear documentation but some references can be found here (version 1
 """  # noqa: E501
 
 
-def geom_mean(arr: npt.ArrayLike, weights: npt.ArrayLike) -> np.ndarray:
-    """Calculate the (weighted) geometric mean along the second axis of a 2-D array.
-
-    Alternative to ``gmean`` from scipy that avoids logarithms and division errors.
-
-    Args:
-        arr: The array containing the values for the mean computation.
-        weights: Weights for the mean computation.
-
-    Returns:
-        A 1-D array containing the row-wise geometric means of the given array.
-    """
-    return np.prod(np.power(arr, np.atleast_2d(weights) / np.sum(weights)), axis=1)
-
-
 def closest_element(array: npt.ArrayLike, target: float) -> float:
     """Find the element of an array that is closest to a target value.
 

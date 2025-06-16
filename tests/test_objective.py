@@ -5,12 +5,13 @@ import pandas as pd
 import pytest
 from cattrs import IterableValidationError
 
-from baybe.objectives.desirability import DesirabilityObjective, scalarize
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.targets import NumericalTarget
+from baybe.transformations import ClampingTransformation
 
 
 class TestInvalidObjectiveCreation:
@@ -18,15 +19,14 @@ class TestInvalidObjectiveCreation:
 
     # Two example targets used in the tests
     two_targets = [
-        NumericalTarget(
+        NumericalTarget.normalize_ramp(
             name="Target_1",
-            mode="MAX",
-            bounds=(0, 100),
+            cutoffs=(0, 100),
         ),
-        NumericalTarget(
+        NumericalTarget.normalize_ramp(
             name="Target_2",
-            mode="MIN",
-            bounds=(0, 100),
+            cutoffs=(0, 100),
+            descending=True,
         ),
     ]
 
@@ -38,21 +38,25 @@ class TestInvalidObjectiveCreation:
         with pytest.raises(TypeError):
             SingleTargetObjective(target={"A": 1, "B": 2})
 
-    def test_missing_bounds_for_desirability(self):
-        with pytest.raises(ValueError):
-            DesirabilityObjective(
-                targets=[
-                    NumericalTarget(
-                        name="Target_1",
-                        mode="MAX",
-                        bounds=(0, 100),
-                    ),
-                    NumericalTarget(
-                        name="Target_2",
-                        mode="MIN",
-                    ),
-                ],
-            )
+    def test_negative_targets_for_desirability(self):
+        t1 = NumericalTarget("t1").clamp(0, 1)
+
+        # Is normalized but the minimize flag appends another transformation
+        t2 = NumericalTarget(
+            "t2", transformation=ClampingTransformation(0, 1), minimize=True
+        )
+
+        with pytest.raises(ValueError, match="transformed to a non-negative range"):
+            DesirabilityObjective([t1, t2])
+
+    def test_unnormalized_targets_for_desirability(self):
+        """Unnormalized targets are not allowed unless explicitly declared."""
+        t1 = NumericalTarget("t1").clamp(min=1, max=2)
+        t2 = NumericalTarget("t2").clamp(min=0, max=3)
+        with pytest.raises(ValueError, match="are not normalized"):
+            DesirabilityObjective([t1, t2])
+        DesirabilityObjective([t1, t2], require_normalization=False)
+        DesirabilityObjective([t1.normalize(), t2.normalize()])
 
     def test_invalid_combination_function(self):
         with pytest.raises(ValueError):
@@ -86,26 +90,41 @@ class TestInvalidObjectiveCreation:
 @pytest.mark.parametrize(
     ("values", "scalarizer", "weights", "expected"),
     [
-        ([[1, 2]], Scalarizer.MEAN, [1, 1], [1.5]),
-        ([[1, 2]], Scalarizer.MEAN, [1, 2], [5 / 3]),
-        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 1], [np.sqrt(2)]),
-        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 2], [np.power(4, 1 / 3)]),
+        ([[1, 2]], Scalarizer.MEAN, [1, 1], 1.5),
+        ([[1, 2]], Scalarizer.MEAN, [1, 2], 5 / 3),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 1], np.sqrt(2)),
+        ([[1, 2]], Scalarizer.GEOM_MEAN, [1, 2], np.power(4, 1 / 3)),
     ],
+    ids=["mean1", "mean2", "geom1", "geom2"],
 )
 def test_desirability_scalarization(values, scalarizer, weights, expected):
     """The desirability scalarization yields the expected result."""
-    actual = scalarize(values, scalarizer, weights)
-    assert np.array_equal(actual, expected), (expected, actual)
+    obj = DesirabilityObjective(
+        [
+            NumericalTarget("t1").clamp(min=0),
+            NumericalTarget("t2").clamp(min=0),
+        ],
+        weights,
+        scalarizer,
+        require_normalization=False,
+    )
+    actual = obj.transform(pd.DataFrame(values, columns=["t1", "t2"])).values.item()
+    assert np.isclose(actual, expected), (expected, actual)
 
 
 @pytest.mark.parametrize(
-    ("mode", "bounds", "opt"),
-    [("MIN", None, 0), ("MAX", None, 1), ("MIN", (0, 1), 0), ("MAX", (0, 1), 1)],
+    ("target", "opt"),
+    [
+        (NumericalTarget("t", minimize=True), 0),
+        (NumericalTarget("t"), 1),
+        (NumericalTarget.normalize_ramp("t", cutoffs=(0, 1), descending=True), 0),
+        (NumericalTarget.normalize_ramp("t", cutoffs=(0, 1)), 1),
+    ],
 )
-def test_single_objective(mode, bounds, opt):
+def test_single_objective(target, opt):
     """Recommendations yield expected results with and without bounded objective."""
     searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
-    objective = NumericalTarget("t", mode=mode, bounds=bounds).to_objective()
+    objective = target.to_objective()
     recommender = BotorchRecommender()
     measurements = pd.DataFrame(
         {"p": np.linspace(0, 1, 100), "t": np.linspace(0, 1, 100)}

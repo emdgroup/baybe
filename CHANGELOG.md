@@ -4,8 +4,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.13.1] - 2025-06-06
+## [Unreleased]
 ### Added
+- New `NumericalTarget` interface, including advanced machinery for defining and
+  manipulating target transformations based on the new `transformations` subpackage
+- `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
+  for reproducing the legacy `MATCH` modes
+- `normalize_ramp` convenience constructor to `NumericalTarget` for reproducing the
+  legacy behavior when imposing bounds on `MIN`/`MAX` targets
+- Full support for accessing posterior information of `NumericalTarget`, i.e. now
+  including settings considered `MATCH` mode in the legacy interface, as well as targets
+  used in `DesirabilityObjective`
+- `total_transformation` and `is_normalized` properties to `NumericalTarget`
+- `normalize`, `clamp`, `log`, `exp` and `power` methods to `NumericalTarget` for
+  easy creation of transformed targets from existing ones
+- `get_image` method to `NumericalTarget` for computing the images of transformed
+  target value ranges
+- Support for non-normalized targets in `DesirabilityObjective`
+- `Objective.to_botorch` method for converting objectives to BoTorch
+- Tests for migrating to new `NumericalTarget` interface
+
+### Changed
+- The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
+  `MAX`, `MATCH` in legacy interface) but controlled using a minimization flag and
+  corresponding target transformations. This allows for more flexible target
+  definitions, makes invalid target configurations unrepresentable, and is in line with
+  the definition of mathematical optimization problems. Also, it avoids the need to
+  explicitly specify an irrelevant optimization direction in the context of active
+  learning.
+- Evaluating posteriors using a `DesirabilityObjective` now returns information 
+  for each target instead of for the desirability value
+- Specifying bounds for `Interval` is now optional
+
+### Removed
+- Option to specify reference values for `add_fake_measurements`
+- `convert_bounds` utility (since now equivalent to `Interval.create`)
+- `geom_mean` utility 
+
+### Deprecations
+- Creating `NumericalTarget`s using a `mode` argument
+- `TargetMode` and `TargetTransformation` enums
+- `linear_transform`, `triangular_transform` and `bell_transform` functions
+
+## [0.13.1] - 2025-06-06
 - Support for Python 3.13
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
   random or deterministic sampling for equidistant cases

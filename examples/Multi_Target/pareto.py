@@ -49,8 +49,8 @@ set_random_seed(42)
 
 x0 = NumericalContinuousParameter("x0", (-1, 1))
 x1 = NumericalContinuousParameter("x1", (-1, 1))
-y0 = NumericalTarget("y0", "MAX")
-y1 = NumericalTarget("y1", "MIN")
+y0 = NumericalTarget("y0")
+y1 = NumericalTarget("y1", minimize=True)
 searchspace = SearchSpace.from_product([x0, x1])
 
 # With these definitions at hand, we can construct a multi-variate callable representing

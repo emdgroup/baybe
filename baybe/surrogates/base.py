@@ -22,7 +22,6 @@ from joblib.hashing import hash
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
-from baybe.objectives import DesirabilityObjective
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
@@ -348,17 +347,9 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 )
         posterior = self.posterior(candidates)
 
-        match self._objective:
-            case DesirabilityObjective():
-                # TODO: Once desirability also supports posterior transforms this check
-                #  here will have to depend on the configuration of the objective and
-                #  whether it uses the transforms or not.
-                targets = ["Desirability"]
-            case _:
-                targets = [t.name for t in self._objective.targets]
-
         import torch
 
+        targets = [t.name for t in self._objective.targets]
         result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
             for k, target_name in enumerate(targets):
@@ -458,16 +449,22 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._output_scaler = self._make_output_scaler(objective, measurements)
 
         # Transform and fit
-        train_x_comp_rep, train_y_comp_rep = to_tensor(
+        # Note: The targets are not transformed here because their transformations
+        #  are applied in form of BoTorch objectives. This has the consequence that:
+        #  * the trained surrogate model can be called with untransformed target values,
+        #    enabling predictions with input from the original target domain
+        #  * the transformation is part of the computational backpropagation graph
+        train_x_comp_rep, train_y_tensor = to_tensor(
             searchspace.transform(measurements, allow_extra=True),
-            objective.transform(measurements, allow_extra=True),
+            measurements[[t.name for t in objective.targets]],
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
-            train_y_comp_rep
+            train_y_tensor
             if self._output_scaler is _IDENTITY_TRANSFORM
-            else self._output_scaler(train_y_comp_rep)[0]
+            else self._output_scaler(train_y_tensor)[0]
         )
+
         self._fit(train_x, train_y)
 
     @abstractmethod
