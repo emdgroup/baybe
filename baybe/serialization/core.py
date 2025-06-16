@@ -17,6 +17,9 @@ from baybe.utils.boolean import is_abstract
 
 _T = TypeVar("_T")
 
+_TYPE_FIELD = "type"
+"""The name of the field used to store the type information in serialized objects."""
+
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
 converter = cattrs.Converter(unstruct_collection_overrides={set: list})
@@ -66,7 +69,7 @@ def get_base_structure_hook(
         # If the given class can be instantiated, only ensure there is no conflict with
         # a potentially specified type field
         if not is_abstract(cls):
-            if (type_ := val.pop("type", None)) and not refers_to(cls, type_):
+            if (type_ := val.pop(_TYPE_FIELD, None)) and not refers_to(cls, type_):
                 raise ValueError(
                     f"The class '{cls.__name__}' specified for deserialization "
                     f"does not match with the given type information '{type_}'."
@@ -76,7 +79,7 @@ def get_base_structure_hook(
         # Otherwise, extract the type information from the given input and find
         # the corresponding class in the hierarchy
         else:
-            type_ = val if isinstance(val, str) else val.pop("type")
+            type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
             concrete_cls = find_subclass(base, type_)
 
         # Create the structuring function for the class and call it
