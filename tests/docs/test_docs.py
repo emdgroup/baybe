@@ -7,8 +7,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from baybe._optional.info import CHEM_INSTALLED, LINT_INSTALLED
-
-from .utils import extract_code_blocks
+from tests.docs.utils import extract_code_blocks
 
 doc_files = list(map(str, [Path("README.md"), *Path("docs/userguide/").rglob("*.md")]))
 """Files whose code blocks are to be checked."""

@@ -25,8 +25,7 @@ from baybe.constraints.discrete import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
-
-from ..hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats
 
 
 def sub_selection_conditions(superset: list[Any] | None = None):

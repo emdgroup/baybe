@@ -3,8 +3,7 @@
 from hypothesis import given
 
 from baybe.recommenders import BotorchRecommender
-
-from .hypothesis_strategies.acquisition import acquisition_functions
+from tests.hypothesis_strategies.acquisition import acquisition_functions
 
 
 @given(acquisition_functions)

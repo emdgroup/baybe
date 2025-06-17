@@ -9,8 +9,7 @@ from attrs import asdict, has
 from hypothesis import given
 
 from baybe.kernels.base import BasicKernel, Kernel
-
-from .hypothesis_strategies.kernels import kernels
+from tests.hypothesis_strategies.kernels import kernels
 
 # TODO: Consider deprecating these attribute names to avoid inconsistencies
 _RENAME_DICT: dict[str, str] = {

@@ -11,9 +11,8 @@ from baybe.priors import (
     NormalPrior,
     SmoothedBoxPrior,
 )
-
-from .basic import finite_floats
-from .utils import intervals
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.utils import intervals
 
 gamma_priors = st.builds(
     GammaPrior,
