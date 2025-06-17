@@ -18,9 +18,8 @@ from baybe.parameters.numerical import (
 )
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
 from baybe.utils.numerical import DTypeFloatNumpy
-
-from ..hypothesis_strategies.basic import finite_floats
-from .utils import intervals
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.utils import intervals
 
 decorrelations = st.one_of(
     st.booleans(),
