@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -43,12 +44,13 @@ def aryl_halide_CT_IM_tl(
     Returns:
         DataFrame containing benchmark results
     """
-    return aryl_halide_tl_substance_benchmark(
-        settings=settings,
-        source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
-        target_tasks=["1-iodo-4-methoxybenzene"],
-        percentages=[0.01, 0.05, 0.1, 0.2],
-    )
+    with temporary_seed(settings.random_seed):
+        return aryl_halide_tl_substance_benchmark(
+            settings=settings,
+            source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
+            target_tasks=["1-iodo-4-methoxybenzene"],
+            percentages=[0.01, 0.05, 0.1, 0.2],
+        )
 
 
 benchmark_config = ConvergenceBenchmarkSettings(

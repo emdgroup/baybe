@@ -135,6 +135,7 @@ def aryl_halide_tl_substance_benchmark(
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -145,6 +146,7 @@ def aryl_halide_tl_substance_benchmark(
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)
