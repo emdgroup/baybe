@@ -60,8 +60,10 @@ def linear_numerical_targets(
         )
 
     bounds_strategy = bounds_strategy.filter(
-        lambda iv: (iv.upper - iv.lower) >= 0.0
+        lambda iv: (iv.upper - iv.lower) > 1e-4  # a reasonable MIN_WIDTH
         and np.nextafter(iv.lower, iv.upper) < iv.upper
+        and np.isfinite(iv.lower)
+        and np.isfinite(iv.upper)
     )
 
     interval = draw(bounds_strategy)
