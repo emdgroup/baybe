@@ -21,6 +21,7 @@ from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 
 
@@ -121,54 +122,59 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     Returns:
         DataFrame containing benchmark results for all test cases
     """
-    functions = {
-        "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
-        "Target_Function": Michalewicz(dim=5, negate=True),
-    }
-    searchspace_nontl = make_searchspace(use_task_parameter=False)
-    searchspace_tl = make_searchspace(use_task_parameter=True)
+    with temporary_seed(settings.random_seed):
+        functions = {
+            "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
+            "Target_Function": Michalewicz(dim=5, negate=True),
+        }
+        searchspace_nontl = make_searchspace(use_task_parameter=False)
+        searchspace_tl = make_searchspace(use_task_parameter=True)
 
-    objective = make_objective()
-    campaign_tl = Campaign(
-        searchspace=searchspace_tl,
-        objective=objective,
-    )
-    campaign_nontl = Campaign(
-        searchspace=searchspace_nontl,
-        objective=objective,
-    )
+        objective = make_objective()
+        campaign_tl = Campaign(
+            searchspace=searchspace_tl,
+            objective=objective,
+        )
+        campaign_nontl = Campaign(
+            searchspace=searchspace_nontl,
+            objective=objective,
+        )
 
-    results = []
+        results = []
 
-    for p in [1, 10, 50, 100]:
+        for p in [1, 10, 50, 100]:
+            results.append(
+                simulate_scenarios(
+                    {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                    lambda x: wrap_function(
+                        functions["Target_Function"], "Target_Function", x
+                    ),
+                    initial_data=[
+                        make_initial_data(
+                            functions["Source_Function"], "Source_Function", p
+                        )
+                        for _ in range(settings.n_mc_iterations)
+                    ],
+                    batch_size=settings.batch_size,
+                    n_doe_iterations=settings.n_doe_iterations,
+                    impute_mode="error",
+                    random_seed=settings.random_seed,
+                )
+            )
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                {"0": campaign_tl, "0_naive": campaign_nontl},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
-                initial_data=[
-                    make_initial_data(
-                        functions["Source_Function"], "Source_Function", p
-                    )
-                    for _ in range(settings.n_mc_iterations)
-                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
+                n_mc_iterations=settings.n_mc_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
-    results.append(
-        simulate_scenarios(
-            {"0": campaign_tl, "0_naive": campaign_nontl},
-            lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-        )
-    )
-    return pd.concat(results)
+        return pd.concat(results)
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
