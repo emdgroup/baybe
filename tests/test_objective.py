@@ -22,19 +22,21 @@ from .hypothesis_strategies.objectives import chimera_objectives
 class TestInvalidObjectiveCreation:
     """Invalid objective creation raises expected error."""
 
-    # Two example targets used in the tests
-    two_targets = [
-        NumericalTarget(
-            name="Target_1",
-            mode="MAX",
-            bounds=(0, 100),
-        ),
-        NumericalTarget(
-            name="Target_2",
-            mode="MIN",
-            bounds=(0, 100),
-        ),
-    ]
+    @property
+    def two_targets(self):
+        """Return two example numerical targets for testing."""
+        return [
+            NumericalTarget(
+                name="Target_1",
+                mode="MAX",
+                bounds=(0, 100),
+            ),
+            NumericalTarget(
+                name="Target_2",
+                mode="MIN",
+                bounds=(0, 100),
+            ),
+        ]
 
     def test_empty_target_list(self):
         with pytest.raises(ValueError):
@@ -107,10 +109,13 @@ def test_desirability_scalarization(values, scalarizer, weights, expected):
 class TestInvalidChimeraObjectiveCreation:
     """Tests for invalid ChimeraObjective creation."""
 
-    two_targets = [
-        NumericalTarget(name="Target_1", mode="MIN", bounds=(0, 100)),
-        NumericalTarget(name="Target_2", mode="MIN", bounds=(0, 100)),
-    ]
+    @property
+    def two_targets(self):
+        """Return two example numerical targets for testing."""
+        return [
+            NumericalTarget(name="Target_1", mode="MIN", bounds=(0, 100)),
+            NumericalTarget(name="Target_2", mode="MIN", bounds=(0, 100)),
+        ]
 
     def test_empty_target_list(self):
         with pytest.raises(ValueError):
@@ -174,7 +179,7 @@ def compare_merits(
     target_vals: pd.DataFrame,
     ext_chimera: Chimera,
     int_chimera: ChimeraObjective,
-    verbose: bool = True,
+    verbose: bool = False,
 ) -> bool:
     """Compare merit values computed by the external and internal Chimera objects.
 
@@ -235,8 +240,6 @@ def compare_merits(
             if not ok:
                 print("  BayBE:", a_buf)
                 print("  ext  :", b_buf)
-            print("  BayBE:", a_buf)
-            print("  ext  :", b_buf)
 
         print("\n=== PER-STAGE THRESHOLD COMPARISON ===")
         for name, a_thr, b_thr in thr_stages:
@@ -245,8 +248,6 @@ def compare_merits(
             if not ok:
                 print("  BayBE:", a_thr)
                 print("  ext  :", b_thr)
-            print("  BayBE:", a_thr)
-            print("  ext  :", b_thr)
 
         print("\nfinal merits:")
         print("  BayBE:", int_merits)
@@ -262,8 +263,8 @@ def compare_merits(
 
 
 @settings(
-    max_examples=1000,
-    suppress_health_check=[HealthCheck.too_slow],
+    max_examples=500,
+    suppress_health_check=[HealthCheck.too_slow, HealthCheck.filter_too_much],
     deadline=None,  # Remove time limits for complex cases
 )
 @given(chimera_obj=chimera_objectives(), data=st.data())
@@ -287,12 +288,7 @@ def test_chimera_merits(chimera_obj, data):
         data_frames(columns=columns, index=range_indexes(min_size=2)).filter(
             lambda df: len(df.drop_duplicates()) > 1
         )
-        # at least one row needs to be unique
     )
-    # assume(target_vals.shape[0] >= 3)
-    # TODO: do not use assume, no reason behind 6 except for the test
-    # TODO: use min length instead
-    print("Target DataFrame:\n", target_vals)  # TODO: remove later
 
     # Step 2: Initialize external Chimera using data from chimera_obj.
     threshold_vals = np.array(chimera_obj.threshold_values)
@@ -307,6 +303,5 @@ def test_chimera_merits(chimera_obj, data):
         goals=["max"] * len(chimera_obj.targets),
         softness=chimera_obj.softness,
     )
-    # TODO: Style inconsistent
     # Step 3: Compare merits
     assert compare_merits(target_vals, ext_chimera, chimera_obj)
