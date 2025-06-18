@@ -17,10 +17,11 @@ from typing_extensions import override
 from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
     SerialMixin,
-    converter,
-    get_base_structure_hook,
 )
-from baybe.serialization.core import register_base_unstructuring
+from baybe.serialization.core import (
+    register_base_structuring,
+    register_base_unstructuring,
+)
 from baybe.utils.basic import to_tuple
 
 if TYPE_CHECKING:
@@ -243,12 +244,10 @@ _overrides = {
     "_active_values": cattrs.override(rename="active_values"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
-converter.register_structure_hook(
-    Parameter,
-    get_base_structure_hook(Parameter, overrides=_overrides),  # type: ignore
-)
 register_base_unstructuring(Parameter)
 register_base_unstructuring(DiscreteParameter)
+register_base_structuring(Parameter)
+register_base_structuring(DiscreteParameter)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

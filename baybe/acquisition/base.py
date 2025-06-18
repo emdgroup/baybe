@@ -16,8 +16,7 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -182,10 +181,8 @@ def _get_botorch_acqf_class(
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(
-    AcquisitionFunction, get_base_structure_hook(AcquisitionFunction)
-)
 register_base_unstructuring(AcquisitionFunction)
+register_base_structuring(AcquisitionFunction)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

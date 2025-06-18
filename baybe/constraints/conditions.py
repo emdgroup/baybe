@@ -20,10 +20,11 @@ from typing_extensions import override
 from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
-    converter,
-    get_base_structure_hook,
 )
-from baybe.serialization.core import register_base_unstructuring
+from baybe.serialization.core import (
+    register_base_structuring,
+    register_base_unstructuring,
+)
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -230,11 +231,8 @@ _overrides = {
     "_selection": cattrs.override(rename="selection"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
-converter.register_structure_hook(
-    Condition,
-    get_base_structure_hook(Condition, overrides=_overrides),  # type: ignore
-)
 register_base_unstructuring(Condition)
+register_base_structuring(Condition)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

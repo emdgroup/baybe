@@ -2,7 +2,6 @@
 
 import base64
 import pickle
-from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any, TypeVar, get_type_hints
 
@@ -10,7 +9,6 @@ import attrs
 import cattrs
 import pandas as pd
 from cattrs.dispatch import UnstructureHook
-from cattrs.gen import make_dict_structure_fn
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
@@ -64,22 +62,12 @@ def register_base_unstructuring(base: Any, /) -> None:
     converter.register_unstructure_hook_factory(lambda cls: cls is base, factory)
 
 
-def get_base_structure_hook(
-    base: type[_T],
-    overrides: dict | None = None,
-) -> Callable[[dict | str, type[_T]], _T]:
-    """Return a hook for structuring a specified subclass.
+def register_base_structuring(base: type[_T]):
+    """Register a hook for structuring subclasses of the given base class.
 
-    Provides the inverse operation to ``unstructure_base``.
-
-    Args:
-        base: The corresponding class.
-        overrides: An optional dictionary of cattrs-overrides for certain attributes.
-
-    Returns:
-        The hook.
+    Reads the ``type`` information from the given input to retrieve the correct
+    subclass and then calls the existing structure hook of the that class.
     """
-    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
 
     def structure_base(val: dict | str, cls: type[_T]) -> _T:
         # If the given class can be instantiated, only ensure there is no conflict with
@@ -98,13 +86,10 @@ def get_base_structure_hook(
             type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
             concrete_cls = find_subclass(base, type_)
 
-        # Create the structuring function for the class and call it
-        fn = make_dict_structure_fn(
-            concrete_cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
-        )
+        fn = converter.get_structure_hook(concrete_cls)
         return fn({} if isinstance(val, str) else val, concrete_cls)
 
-    return structure_base
+    converter.register_structure_hook_func(lambda cls: cls is base, structure_base)
 
 
 def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:

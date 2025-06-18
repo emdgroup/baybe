@@ -12,8 +12,7 @@ from typing_extensions import override
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -33,8 +32,8 @@ class KernelFactory(Protocol):
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
 register_base_unstructuring(KernelFactory)
+register_base_structuring(KernelFactory)
 
 
 @define(frozen=True)

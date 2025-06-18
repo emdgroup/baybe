@@ -25,8 +25,7 @@ from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -510,14 +509,9 @@ def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHo
 
 # Register (un-)structure hooks
 register_base_unstructuring(Surrogate)
-converter.register_structure_hook(
-    Surrogate, _make_hook_encode_onnx_str(get_base_structure_hook(Surrogate))
-)
 register_base_unstructuring(SurrogateProtocol)
-converter.register_structure_hook(
-    SurrogateProtocol,
-    _make_hook_encode_onnx_str(get_base_structure_hook(SurrogateProtocol)),
-)
+register_base_structuring(Surrogate)
+register_base_structuring(SurrogateProtocol)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
