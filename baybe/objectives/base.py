@@ -7,10 +7,6 @@ from typing import ClassVar
 import pandas as pd
 from attrs import define
 
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 
@@ -66,10 +62,6 @@ def to_objective(x: Target | Objective, /) -> Objective:
     """Convert a target into an objective (with objective passthrough)."""
     return x if isinstance(x, Objective) else x.to_objective()
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Objective)
-register_base_structuring(Objective)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

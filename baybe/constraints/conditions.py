@@ -20,10 +20,6 @@ from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
@@ -224,10 +220,6 @@ class SubSelectionCondition(Condition):
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         return expr.is_in(self.selection)
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Condition)
-register_base_structuring(Condition)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

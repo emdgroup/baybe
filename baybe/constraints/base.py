@@ -19,8 +19,6 @@ from baybe.serialization import (
 )
 from baybe.serialization.core import (
     converter,
-    register_base_structuring,
-    register_base_unstructuring,
 )
 
 if TYPE_CHECKING:
@@ -215,11 +213,6 @@ class CardinalityConstraint(Constraint, ABC):
 
 class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
-
-
-# Register (un-)structure hooks
-register_base_unstructuring(Constraint)
-register_base_structuring(Constraint)
 
 
 # >>>>> Deprecation handling

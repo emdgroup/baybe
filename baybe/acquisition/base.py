@@ -15,10 +15,6 @@ from baybe.exceptions import (
 )
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.utils.basic import classproperty
@@ -179,10 +175,6 @@ def _get_botorch_acqf_class(
         f"'{baybe_acqf_cls.__name__}'."
     )
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(AcquisitionFunction)
-register_base_structuring(AcquisitionFunction)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

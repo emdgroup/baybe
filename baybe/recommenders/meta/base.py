@@ -15,10 +15,6 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 
 
 @define
@@ -129,10 +125,6 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
             **optional_args,
         )
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(MetaRecommender)
-register_base_structuring(MetaRecommender)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

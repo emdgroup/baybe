@@ -10,10 +10,6 @@ from attrs import define
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import get_baseclasses, match_attributes
 
@@ -123,10 +119,6 @@ class BasicKernel(Kernel, ABC):
 class CompositeKernel(Kernel, ABC):
     """Abstract base class for all composite kernels."""
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Kernel)
-register_base_structuring(Kernel)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
