@@ -2,14 +2,12 @@
 
 from typing import Protocol, runtime_checkable
 
-import cattrs
 import pandas as pd
 
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
-from baybe.serialization import converter
 from baybe.serialization.core import (
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 
@@ -61,15 +59,16 @@ class RecommenderProtocol(Protocol):
 
 # Register (un-)structure hooks
 register_base_unstructuring(RecommenderProtocol)
-converter.register_structure_hook(
-    RecommenderProtocol,
-    get_base_structure_hook(
-        RecommenderProtocol,
-        # Temporary workaround (see TODO note above)
-        overrides=dict(
-            _surrogate_model=cattrs.override(rename="surrogate_model"),
-            _current_recommender=cattrs.override(omit=False),
-            _used_recommender_ids=cattrs.override(omit=False),
-        ),
-    ),
-)
+register_base_structuring(RecommenderProtocol)
+# converter.register_structure_hook(
+#     RecommenderProtocol,
+#     get_base_structure_hook(
+#         RecommenderProtocol,
+#         # Temporary workaround (see TODO note above)
+#         overrides=dict(
+#             _surrogate_model=cattrs.override(rename="surrogate_model"),
+#             _current_recommender=cattrs.override(omit=False),
+#             _used_recommender_ids=cattrs.override(omit=False),
+#         ),
+#     ),
+# )

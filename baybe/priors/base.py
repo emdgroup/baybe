@@ -6,8 +6,7 @@ from abc import ABC
 from attrs import define
 
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -40,8 +39,8 @@ class Prior(ABC, SerialMixin):
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(Prior, get_base_structure_hook(Prior))
 register_base_unstructuring(Prior)
+register_base_structuring(Prior)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

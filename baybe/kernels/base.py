@@ -11,8 +11,7 @@ from attrs import define
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -126,8 +125,8 @@ class CompositeKernel(Kernel, ABC):
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(Kernel, get_base_structure_hook(Kernel))
 register_base_unstructuring(Kernel)
+register_base_structuring(Kernel)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

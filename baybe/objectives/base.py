@@ -4,13 +4,11 @@ import gc
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
-import cattrs
 import pandas as pd
 from attrs import define
 
 from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
+    register_base_structuring,
     register_base_unstructuring,
 )
 from baybe.serialization.mixin import SerialMixin
@@ -70,17 +68,8 @@ def to_objective(x: Target | Objective, /) -> Objective:
 
 
 # Register (un-)structure hooks
-converter.register_structure_hook(
-    Objective,
-    get_base_structure_hook(
-        Objective,
-        overrides=dict(
-            _target=cattrs.override(rename="target"),
-            _targets=cattrs.override(rename="targets"),
-        ),
-    ),
-)
 register_base_unstructuring(Objective)
+register_base_structuring(Objective)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
