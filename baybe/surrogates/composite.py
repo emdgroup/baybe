@@ -15,7 +15,7 @@ from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, Surrogate, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import handle_missing_values
@@ -190,7 +190,18 @@ def _structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
 
 def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Add the object type information."""
-    return {"type": type(obj).__name__, **converter.unstructure(obj)}
+    type_ = type(obj).__name__
+    if isinstance(obj, dict):
+        return {
+            "type": type_,
+            **{k: v.to_dict(add_type=True) for k, v in obj.items()},
+        }
+    elif isinstance(obj, _ReplicationMapping):
+        return {
+            "type": type_,
+            **converter.unstructure(obj, unstructure_as=_ReplicationMapping[Surrogate]),
+        }
+    raise NotImplementedError(f"No unstructure hook implemented for '{type_}'.")
 
 
 converter.register_structure_hook_func(
