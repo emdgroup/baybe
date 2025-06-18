@@ -141,8 +141,18 @@ def test_fps_recommender_calls_fpsample(searchspace):
 @pytest.mark.parametrize(
     ("init", "tie_break", "match"),
     [
-        param(FPSInitialization.RANDOM, True, "initialization=", id="warn_initial"),
-        param(FPSInitialization.FARTHEST, True, "random tie-breaking", id="tiebreak"),
+        param(
+            FPSInitialization.RANDOM,
+            True,
+            "does not support 'random'",
+            id="warn_initial",
+        ),
+        param(
+            FPSInitialization.FARTHEST,
+            True,
+            "does not support random tie-breaking",
+            id="tiebreak",
+        ),
     ],
 )
 def test_fps_recommender_warns_ignored_arguments(searchspace, init, tie_break, match):
@@ -178,8 +188,8 @@ def test_fps_recommender_fallback_to_internal_fps(searchspace):
 @pytest.mark.skipif(
     not FPSAMPLE_INSTALLED, reason="Optional fpsample dependency not installed."
 )
-def test_fps_recommender_known_grid_indices(searchspace):
-    """Test FPSRecommender with fpsample using fixed start index for determinism."""
+def test_fps_recommender_with_known_indices(searchspace):
+    """Test FPSRecommender with fpsample using expected output."""
     # Hardcoded known output
     expected_indices = [0, 26, 15]
 
@@ -192,5 +202,19 @@ def test_fps_recommender_known_grid_indices(searchspace):
     ):
         recommender = FPSRecommender()
         result = recommender.recommend(batch_size=3, searchspace=searchspace)
+
+    assert result.index.tolist() == expected_indices
+
+
+def test_fps_recommender_with_known_indices_fallback(searchspace):
+    """Test FPSRecommender fallback returns expected indices."""
+    np.random.seed(42)
+    expected_indices = [0, 17, 24]  # Based on internal FPS logic and input order
+
+    with patch(
+        "baybe._optional.fpsample.fps_sampling",
+        side_effect=OptionalImportError("fpsample", "sampling"),
+    ):
+        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
 
     assert result.index.tolist() == expected_indices
