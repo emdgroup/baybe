@@ -8,11 +8,12 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
+from sklearn.preprocessing import StandardScaler
 from typing_extensions import override
 
 from baybe.exceptions import OptionalImportError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
-from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
+from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
@@ -71,7 +72,7 @@ class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling."""
 
     # Class variables
-    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
+    compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.HYBRID
     # See base class.
 
     initialization: FPSInitialization = field(
@@ -85,23 +86,58 @@ class FPSRecommender(NonPredictiveRecommender):
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
+    grid_density: int = field(default=10, kw_only=True)
+    """Number of points to sample per dimension for continuous subspaces."""
+
     @override
-    def _recommend_discrete(
+    def _recommend_hybrid(
         self,
-        subspace_discrete: SubspaceDiscrete,
+        searchspace: SearchSpace,
         candidates_exp: pd.DataFrame,
         batch_size: int,
-    ) -> pd.Index:
-        # Fit scaler on entire search space
-        from sklearn.preprocessing import StandardScaler
+    ) -> pd.DataFrame:
+        # If space is purely discrete, reuse _recommend_discrete logic
+        if searchspace.type == SearchSpaceType.DISCRETE:
+            return candidates_exp.sample(
+                n=batch_size,
+                replace=len(candidates_exp) < batch_size,
+            )
 
-        # TODO [Scaling]: scaling should be handled by search space object
+        # Sample a grid from continuous subspace
+        grid_density = self.grid_density
+
+        cont_bounds = searchspace.continuous.comp_rep_bounds
+        param_names = searchspace.continuous.parameter_names
+
+        grid_axes = [
+            np.linspace(start, stop, num=grid_density)
+            for start, stop in zip(cont_bounds.iloc[0], cont_bounds.iloc[1])
+        ]
+
+        grid = np.meshgrid(*grid_axes, indexing="ij")
+        grid_points = np.stack([g.ravel() for g in grid], axis=-1)
+        cont_grid_df = pd.DataFrame(grid_points, columns=param_names)
+
+        # For hybrid, combine discrete and continuous points
+        if searchspace.type == SearchSpaceType.HYBRID:
+            disc_candidates, _ = searchspace.discrete.get_candidates()
+
+            total_grid = pd.concat(
+                [
+                    disc_candidates.loc[
+                        disc_candidates.index.repeat(len(cont_grid_df))
+                    ].reset_index(drop=True),
+                    pd.concat([cont_grid_df] * len(disc_candidates), ignore_index=True),
+                ],
+                axis=1,
+            )
+        else:
+            total_grid = cont_grid_df
+
+        # Transform, scale and then sample
         scaler = StandardScaler()
-        scaler.fit(subspace_discrete.comp_rep)
-
-        # Scale and sample
-        candidates_comp = subspace_discrete.transform(candidates_exp)
-        candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
+        candidates_comp = searchspace.transform(total_grid)
+        candidates_scaled = scaler.fit_transform(candidates_comp)
 
         # Try fpsample first
         try:
@@ -113,14 +149,12 @@ class FPSRecommender(NonPredictiveRecommender):
                     f"which does not support '{self.initialization.value}'. "
                     f"Please uninstall 'fpsample' or choose a supported initialization."
                 )
-
             if self.random_tie_break:
                 warnings.warn(
-                    f"{self.__class__.__name__} is using the optional 'fpsample' , "
+                    f"{self.__class__.__name__} is using the optional 'fpsample', "
                     f"which does not support random tie-breaking. "
                     f"Selection will follow a deterministic order. "
                 )
-
             ilocs = fpsample.fps_sampling(
                 candidates_scaled,
                 n_samples=batch_size,
@@ -133,7 +167,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 initialization=self.initialization.value,
                 random_tie_break=self.random_tie_break,
             )
-        return candidates_comp.index[ilocs]
+        return total_grid.iloc[ilocs]
 
     @override
     def __str__(self) -> str:
