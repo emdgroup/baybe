@@ -2,6 +2,7 @@
 
 import gc
 from abc import ABC
+from collections.abc import Callable
 from typing import ClassVar, NoReturn
 
 import cattrs
@@ -292,16 +293,17 @@ class PureRecommender(ABC, RecommenderProtocol):
 
 
 # Register (un-)structure hooks
-converter = converter.register_unstructure_hook(
-    PureRecommender,
-    make_dict_unstructure_fn(
-        PureRecommender,
+@converter.register_unstructure_hook_factory(lambda c: issubclass(c, PureRecommender))
+def _drop_deprecated_arguments(cls: type) -> Callable:
+    """Create a hook to drop deprecated arguments from the unstructured dictionary."""
+    return make_dict_unstructure_fn(
+        cls,
         converter,
         _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
         _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
         _deprecated_allow_recommending_pending_experiments=cattrs.override(omit=True),
-    ),
-)
+    )
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
