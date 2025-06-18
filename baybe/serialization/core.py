@@ -8,7 +8,6 @@ from typing import Any, TypeVar, get_type_hints
 import attrs
 import cattrs
 import pandas as pd
-from cattrs.dispatch import UnstructureHook
 from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
@@ -39,6 +38,15 @@ converter.register_unstructure_hook_factory(
 )
 
 
+def unstructure_with_type(x: Any, /) -> dict[str, Any]:
+    """Unstructure an object and add its type information."""
+    fn = converter.get_unstructure_hook(x.__class__)
+    return {
+        _TYPE_FIELD: x.__class__.__name__,
+        **fn(x),
+    }
+
+
 def register_base_unstructuring(base: Any, /) -> None:
     """Register a hook for unstructuring subclasses of the given base class.
 
@@ -46,20 +54,9 @@ def register_base_unstructuring(base: Any, /) -> None:
     containing the class name, to enable deserialization of the object into the correct
     type later on.
     """
-
-    def factory(_: Any, /) -> UnstructureHook:
-        """Create a hook adding a ``type`` field to the unstructured output."""
-
-        def hook(x: Any, /) -> dict[str, Any]:
-            fn = converter.get_unstructure_hook(x.__class__)
-            return {
-                _TYPE_FIELD: x.__class__.__name__,
-                **fn(x),
-            }
-
-        return hook
-
-    converter.register_unstructure_hook_factory(lambda cls: cls is base, factory)
+    converter.register_unstructure_hook_func(
+        lambda cls: cls is base, unstructure_with_type
+    )
 
 
 def register_base_structuring(base: type[_T]):
