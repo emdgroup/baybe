@@ -10,12 +10,6 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
 import pandas as pd
 from attrs import define, field
-from cattrs.dispatch import (
-    StructuredValue,
-    StructureHook,
-    TargetType,
-    UnstructuredValue,
-)
 from joblib.hashing import hash
 from typing_extensions import override
 
@@ -491,20 +485,6 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
         self, candidates_comp_scaled: Tensor, /
     ) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior."""
-
-
-def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHook:
-    """Wrap a structuring hook to let it also encode the contained ONNX string."""
-    from baybe.surrogates.custom import _ONNX_ENCODING
-
-    def wrapper(dct: UnstructuredValue, _: TargetType) -> StructuredValue:
-        if (onnx_str := dct.get("onnx_str")) and isinstance(onnx_str, str):
-            dct["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
-        obj = raw_structure_hook(dct, _)
-
-        return obj
-
-    return wrapper
 
 
 # Register (un-)structure hooks

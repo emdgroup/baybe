@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import cattrs
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -239,11 +238,6 @@ class ContinuousParameter(Parameter):
 
 
 # Register (un-)structure hooks
-_overrides = {
-    "_values": cattrs.override(rename="values"),
-    "_active_values": cattrs.override(rename="active_values"),
-}
-# FIXME[typing]: https://github.com/python/mypy/issues/4717
 register_base_unstructuring(Parameter)
 register_base_unstructuring(DiscreteParameter)
 register_base_structuring(Parameter)

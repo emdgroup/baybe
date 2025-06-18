@@ -9,7 +9,6 @@ from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
-import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -227,10 +226,6 @@ class SubSelectionCondition(Condition):
 
 
 # Register (un-)structure hooks
-_overrides = {
-    "_selection": cattrs.override(rename="selection"),
-}
-# FIXME[typing]: https://github.com/python/mypy/issues/4717
 register_base_unstructuring(Condition)
 register_base_structuring(Condition)
 

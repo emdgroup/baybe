@@ -52,23 +52,6 @@ class RecommenderProtocol(Protocol):
         ...
 
 
-# TODO: The workarounds below are currently required since the hooks created through
-#   `unstructure_base` and `get_base_structure_hook` do not reuse the hooks of the
-#   actual class, hence we cannot control things there. Fix is already planned and also
-#   needed for other reasons.
-
 # Register (un-)structure hooks
 register_base_unstructuring(RecommenderProtocol)
 register_base_structuring(RecommenderProtocol)
-# converter.register_structure_hook(
-#     RecommenderProtocol,
-#     get_base_structure_hook(
-#         RecommenderProtocol,
-#         # Temporary workaround (see TODO note above)
-#         overrides=dict(
-#             _surrogate_model=cattrs.override(rename="surrogate_model"),
-#             _current_recommender=cattrs.override(omit=False),
-#             _used_recommender_ids=cattrs.override(omit=False),
-#         ),
-#     ),
-# )

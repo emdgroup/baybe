@@ -156,6 +156,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
         return to_string(super().__str__(), *fields)
 
 
+# Register (un-)structure hooks
 @converter.register_unstructure_hook
 def _decode_onnx_string(obj: CustomONNXSurrogate) -> dict[str, Any]:
     """Unstructure ONNX surrogates by decoding the ONNX byte string."""
@@ -165,6 +166,17 @@ def _decode_onnx_string(obj: CustomONNXSurrogate) -> dict[str, Any]:
         onnx_str=cattrs.override(unstruct_hook=lambda x: x.decode(_ONNX_ENCODING)),
     )
     return fn(obj)
+
+
+@converter.register_structure_hook
+def _encode_onnx_string(dct: dict[str, Any], _) -> CustomONNXSurrogate:
+    """Structure ONNX surrogates by encoding the ONNX byte string."""
+    fn = cattrs.gen.make_dict_structure_fn(
+        CustomONNXSurrogate,
+        converter,
+        onnx_str=cattrs.override(struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)),
+    )
+    return fn(dct)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
