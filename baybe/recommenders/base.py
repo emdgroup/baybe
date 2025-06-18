@@ -6,10 +6,6 @@ import pandas as pd
 
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 
 
 @runtime_checkable
@@ -50,8 +46,3 @@ class RecommenderProtocol(Protocol):
             as individual rows.
         """
         ...
-
-
-# Register (un-)structure hooks
-register_base_unstructuring(RecommenderProtocol)
-register_base_structuring(RecommenderProtocol)

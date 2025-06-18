@@ -5,10 +5,6 @@ from abc import ABC
 
 from attrs import define
 
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import match_attributes
 
@@ -36,11 +32,6 @@ class Prior(ABC, SerialMixin):
         kwargs.update(fields_dict)
 
         return prior_cls(*args, **kwargs)
-
-
-# Register (un-)structure hooks
-register_base_unstructuring(Prior)
-register_base_structuring(Prior)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

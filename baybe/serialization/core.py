@@ -47,20 +47,8 @@ def unstructure_with_type(x: Any, /) -> dict[str, Any]:
     }
 
 
-def register_base_unstructuring(base: Any, /) -> None:
-    """Register a hook for unstructuring subclasses of the given base class.
-
-    Calls the existing unstructure hook of the subclass but adds a ``type`` field
-    containing the class name, to enable deserialization of the object into the correct
-    type later on.
-    """
-    converter.register_unstructure_hook_func(
-        lambda cls: cls is base, unstructure_with_type
-    )
-
-
-def register_base_structuring(base: type[_T]):
-    """Register a hook for structuring subclasses of the given base class.
+def make_base_structure_hook(base: type[_T]):
+    """Create a hook for structuring subclasses using annotations of their base class.
 
     Reads the ``type`` information from the given input to retrieve the correct
     subclass and then calls the existing structure hook of the that class.
@@ -86,7 +74,18 @@ def register_base_structuring(base: type[_T]):
         fn = converter.get_structure_hook(concrete_cls)
         return fn({} if isinstance(val, str) else val, concrete_cls)
 
-    converter.register_structure_hook_func(lambda cls: cls is base, structure_base)
+    return structure_base
+
+
+converter.register_unstructure_hook_func(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    unstructure_with_type,
+)
+
+converter.register_structure_hook_factory(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    make_base_structure_hook,
+)
 
 
 def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:

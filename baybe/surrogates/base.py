@@ -18,10 +18,6 @@ from baybe.objectives import DesirabilityObjective
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
@@ -486,12 +482,6 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
     ) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior."""
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Surrogate)
-register_base_unstructuring(SurrogateProtocol)
-register_base_structuring(Surrogate)
-register_base_structuring(SurrogateProtocol)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

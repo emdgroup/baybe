@@ -17,10 +17,6 @@ from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 from baybe.utils.basic import to_tuple
 
 if TYPE_CHECKING:
@@ -236,12 +232,6 @@ class ContinuousParameter(Parameter):
 
         return SubspaceContinuous.from_parameter(self)
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Parameter)
-register_base_unstructuring(DiscreteParameter)
-register_base_structuring(Parameter)
-register_base_structuring(DiscreteParameter)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

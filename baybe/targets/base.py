@@ -13,10 +13,6 @@ from typing_extensions import override
 from baybe.serialization import (
     SerialMixin,
 )
-from baybe.serialization.core import (
-    register_base_structuring,
-    register_base_unstructuring,
-)
 
 if TYPE_CHECKING:
     from baybe.objectives import SingleTargetObjective
@@ -59,10 +55,6 @@ class Target(ABC, SerialMixin):
     def __str__(self) -> str:
         return str(self.summary())
 
-
-# Register (un-)structure hooks
-register_base_unstructuring(Target)
-register_base_structuring(Target)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
