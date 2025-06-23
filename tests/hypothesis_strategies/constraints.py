@@ -252,3 +252,18 @@ continuous_linear_inequality_constraints = partial(
     continuous_linear_constraints, operators=[">=", "<="]
 )
 """Generate linear inequality constraints."""
+
+constraints = st.one_of(
+    [
+        discrete_excludes_constraints(),
+        discrete_dependencies_constraints(),
+        discrete_permutation_invariance_constraints(),
+        discrete_sum_constraints(),
+        discrete_product_constraints(),
+        discrete_no_label_duplicates_constraints(),
+        discrete_linked_parameters_constraints(),
+        continuous_linear_equality_constraints(),
+        continuous_linear_inequality_constraints(),
+    ]
+)
+"""A strategy that generates constraints."""
