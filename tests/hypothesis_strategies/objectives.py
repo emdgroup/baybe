@@ -68,3 +68,11 @@ _pareto_target_lists = st.lists(
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
     return ParetoObjective(draw(_pareto_target_lists))
+
+
+objectives = st.one_of(
+    single_target_objectives(),
+    desirability_objectives(),
+    pareto_objectives(),
+)
+"""A strategy that generates objectives."""
