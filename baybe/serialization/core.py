@@ -25,22 +25,12 @@ _TYPE_FIELD = "type"
 
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
-converter = cattrs.Converter(unstruct_collection_overrides={set: list})
+converter = cattrs.Converter(
+    unstruct_collection_overrides={set: list}, forbid_extra_keys=True
+)
 """The default converter for (de-)serializing BayBE-related objects."""
 
 configure_union_passthrough(bool | int | float | str, converter)
-
-converter.register_structure_hook_factory(
-    attrs.has,
-    lambda cl: cattrs.gen.make_dict_structure_fn(cl, converter, _cattrs_use_alias=True),
-)
-
-converter.register_unstructure_hook_factory(
-    attrs.has,
-    lambda cl: cattrs.gen.make_dict_unstructure_fn(
-        cl, converter, _cattrs_use_alias=True
-    ),
-)
 
 
 def add_type(hook: UnstructureHook) -> UnstructureHook:
