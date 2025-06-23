@@ -1,9 +1,11 @@
 """Converter and hooks."""
 
+from __future__ import annotations
+
 import base64
 import pickle
 from datetime import datetime, timedelta
-from typing import Any, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, TypeVar, get_type_hints
 
 import attrs
 import cattrs
@@ -12,6 +14,9 @@ from cattrs.strategies import configure_union_passthrough
 
 from baybe.utils.basic import find_subclass, refers_to
 from baybe.utils.boolean import is_abstract
+
+if TYPE_CHECKING:
+    from cattrs.dispatch import UnstructureHook
 
 _T = TypeVar("_T")
 
@@ -38,13 +43,21 @@ converter.register_unstructure_hook_factory(
 )
 
 
+def add_type(hook: UnstructureHook) -> UnstructureHook:
+    """Wrap a given hook to add type information to the unstructured object."""
+
+    def wrapper(obj: Any, /) -> dict[str, Any]:
+        """Unstructure an object and add its type information."""
+        result = hook(obj)
+        result[_TYPE_FIELD] = obj.__class__.__name__
+        return result
+
+    return wrapper
+
+
 def unstructure_with_type(x: Any, /) -> dict[str, Any]:
     """Unstructure an object and add its type information."""
-    fn = converter.get_unstructure_hook(x.__class__)
-    return {
-        _TYPE_FIELD: x.__class__.__name__,
-        **fn(x),
-    }
+    return add_type(converter.get_unstructure_hook(x.__class__))(x)
 
 
 def make_base_structure_hook(base: type[_T]):
