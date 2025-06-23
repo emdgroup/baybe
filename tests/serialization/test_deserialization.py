@@ -8,6 +8,7 @@ NOTE: The tests are based on `AcquisitionFunction` simply because the class prov
 """
 
 import pytest
+from cattrs.errors import ClassValidationError
 from pytest import param
 
 from baybe.acquisition.acqfs import UpperConfidenceBound
@@ -29,18 +30,8 @@ from baybe.acquisition.base import AcquisitionFunction
         ),
         param(
             UpperConfidenceBound,
-            {"type": "UpperConfidenceBound", "beta": 1337},
-            id="subclass-full",
-        ),
-        param(
-            UpperConfidenceBound,
-            {"type": "UCB", "beta": 1337},
-            id="subclass-abbreviation",
-        ),
-        param(
-            UpperConfidenceBound,
             {"beta": 1337},
-            id="subclass-without",
+            id="subclass",
         ),
     ],
 )
@@ -53,26 +44,20 @@ def test_valid_deserialization(cls, dct):
     UpperConfidenceBound(beta=1337) == cls.from_dict(dct)
 
 
-@pytest.mark.parametrize(
-    ("cls", "dct", "err", "msg"),
-    [
-        param(
-            AcquisitionFunction,
-            {"beta": 1337},
-            KeyError,
-            "type",
-            id="missing-type",
-        ),
-        param(
-            UpperConfidenceBound,
-            {"type": "wrong", "beta": 1337},
-            ValueError,
-            "'UpperConfidenceBound' .* does not match .* 'wrong'",
-            id="inconsistent-type",
-        ),
-    ],
-)
-def test_invalid_deserialization(cls, dct, err, msg):
-    """Incorrect type information throws the correct error."""
-    with pytest.raises(err, match=msg):
-        cls.from_dict(dct)
+def test_invalid_deserialization_missing_type():
+    """Omitting necessary type information throws the correct error."""
+    dct = {"beta": 1337}
+    with pytest.raises(KeyError, match="type"):
+        AcquisitionFunction.from_dict(dct)
+
+
+def test_invalid_deserialization_unneeded_type():
+    """Providing unneeded type information throws the correct error."""
+    dct = {"type": "UCB", "beta": 1337}
+    with pytest.raises(ClassValidationError) as ex:
+        UpperConfidenceBound.from_dict(dct)
+    assert len(ex.value.exceptions) == 1
+    assert (
+        str(ex.value.exceptions[0])
+        == "Extra fields in constructor for UpperConfidenceBound: type"
+    )
