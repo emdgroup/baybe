@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Providing an explicit `type` field in serialization strings where the concrete
+  type is already dictated by the context (e.g. `simplex_parameters` argument of 
+  `SubspaceDiscrete.from_simplex`) is no longer supported.
+
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
 
