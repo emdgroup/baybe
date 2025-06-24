@@ -61,6 +61,7 @@ def test_meta_recommender_state_serialization(recommender):
     assert rec is RECOMMENDERS[1]
 
     # After serialization, identity no longer holds but equality does
-    recommender = roundtrip(recommender)
-    rec = select_recommender(recommender, 1)
+    recommender2 = roundtrip(recommender)
+    assert recommender2 == recommender
+    rec = select_recommender(recommender2, 1)
     assert rec == RECOMMENDERS[1]
