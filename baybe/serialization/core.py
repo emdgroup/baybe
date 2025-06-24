@@ -12,7 +12,7 @@ import cattrs
 import pandas as pd
 from cattrs.strategies import configure_union_passthrough
 
-from baybe.utils.basic import find_subclass, refers_to
+from baybe.utils.basic import find_subclass
 from baybe.utils.boolean import is_abstract
 
 if TYPE_CHECKING:
@@ -55,23 +55,13 @@ def make_base_structure_hook(base: type[_T]):
     subclass and then calls the existing structure hook of the that class.
     """
 
-    def structure_base(val: dict | str, cls: type[_T]) -> _T:
-        # If the given class can be instantiated, only ensure there is no conflict with
-        # a potentially specified type field
-        if not is_abstract(cls):
-            if (type_ := val.pop(_TYPE_FIELD, None)) and not refers_to(cls, type_):
-                raise ValueError(
-                    f"The class '{cls.__name__}' specified for deserialization "
-                    f"does not match with the given type information '{type_}'."
-                )
-            concrete_cls = cls
-
-        # Otherwise, extract the type information from the given input and find
+    def structure_base(val: dict[str, Any] | str, cls: type[_T]) -> _T:
+        # Extract the type information from the given input and find
         # the corresponding class in the hierarchy
-        else:
-            type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
-            concrete_cls = find_subclass(base, type_)
+        type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
+        concrete_cls = find_subclass(base, type_)
 
+        # Call the structure hook of the concrete class
         fn = converter.get_structure_hook(concrete_cls)
         return fn({} if isinstance(val, str) else val, concrete_cls)
 
