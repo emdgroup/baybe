@@ -5,7 +5,7 @@ from __future__ import annotations
 import base64
 import pickle
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
 
 import attrs
 import cattrs
@@ -23,8 +23,6 @@ _T = TypeVar("_T")
 _TYPE_FIELD = "type"
 """The name of the field used to store the type information in serialized objects."""
 
-# TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
-#   switch to the cattrs built-in subclass recommender.
 converter = cattrs.Converter(
     unstruct_collection_overrides={set: list}, forbid_extra_keys=True, use_alias=True
 )
@@ -93,7 +91,7 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(pickled_df).decode("utf-8")
 
 
-def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
+def block_serialization_hook(obj: Any) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
     Raises:
@@ -104,7 +102,7 @@ def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
     )
 
 
-def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC103
+def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent deserialization into a specific type.
 
     Raises:
