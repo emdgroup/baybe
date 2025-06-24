@@ -26,7 +26,7 @@ _TYPE_FIELD = "type"
 # TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
 #   switch to the cattrs built-in subclass recommender.
 converter = cattrs.Converter(
-    unstruct_collection_overrides={set: list}, forbid_extra_keys=True
+    unstruct_collection_overrides={set: list}, forbid_extra_keys=True, use_alias=True
 )
 """The default converter for (de-)serializing BayBE-related objects."""
 
