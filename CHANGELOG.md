@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API diagram in user guide
 
+### Changed
+- Providing an explicit `type` field in serialization strings where the concrete
+  type is already dictated by the context (e.g. `simplex_parameters` argument of 
+  `SubspaceDiscrete.from_simplex`) is no longer supported.
+
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
 
