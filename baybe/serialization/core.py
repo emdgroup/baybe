@@ -30,8 +30,6 @@ converter = cattrs.Converter(
 )
 """The default converter for (de-)serializing BayBE-related objects."""
 
-configure_union_passthrough(bool | int | float | str, converter)
-
 
 def add_type(hook: UnstructureHook) -> UnstructureHook:
     """Wrap a given hook to add type information to the unstructured object."""
@@ -78,17 +76,6 @@ def make_base_structure_hook(base: type[_T]):
         return fn({} if isinstance(val, str) else val, concrete_cls)
 
     return structure_base
-
-
-converter.register_unstructure_hook_func(
-    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
-    unstructure_with_type,
-)
-
-converter.register_structure_hook_factory(
-    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
-    make_base_structure_hook,
-)
 
 
 def _structure_dataframe_hook(obj: str | dict, _) -> pd.DataFrame:
@@ -163,6 +150,16 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 
 
 # Register custom (un-)structure hooks
+configure_union_passthrough(bool | int | float | str, converter)
+converter.register_unstructure_hook_func(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    unstructure_with_type,
+)
+
+converter.register_structure_hook_factory(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    make_base_structure_hook,
+)
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
