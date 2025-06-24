@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
 
+import attrs
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
@@ -210,3 +211,6 @@ converter.register_structure_hook_func(
 converter.register_unstructure_hook_func(
     lambda t: t is _SurrogateGetter, _unstructure_surrogate_getter
 )
+
+# TODO: https://github.com/python-attrs/cattrs/issues/661
+attrs.resolve_types(_ReplicationMapping)
