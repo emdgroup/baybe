@@ -92,8 +92,15 @@ class DesirabilityObjective(Objective):
     scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
-    require_normalization: bool = field(default=True, validator=instance_of(bool))
-    """Boolean flag controlling whether the targets must be normalized."""
+    require_normalization: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the targets must be normalized."""
+
+    as_pre_transformation: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the desirability transform is applied as a pre-transformation."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
