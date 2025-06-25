@@ -53,8 +53,8 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def outputs(self) -> tuple[str, ...]:
+        return (self._target.name,)
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
