@@ -5,7 +5,7 @@ from typing import TypeVar
 
 from baybe.serialization.core import _TYPE_FIELD, converter
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound="SerialMixin")
 
 
 class SerialMixin:
