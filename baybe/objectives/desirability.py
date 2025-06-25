@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
+_OUTPUT_NAME = "Desirability"
+"""The name of output column produced by the desirability transform."""
+
 
 def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
     """Calculate the geometric mean of an array along a given dimension.
@@ -144,8 +147,8 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def outputs(self) -> tuple[str, ...]:
+        return (_OUTPUT_NAME,)
 
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
@@ -240,9 +243,7 @@ class DesirabilityObjective(Objective):
         with torch.no_grad():
             transformed = self.to_botorch()(to_tensor(df[[t.name for t in targets]]))
 
-        return pd.DataFrame(
-            transformed.numpy(), columns=["Desirability"], index=df.index
-        )
+        return pd.DataFrame(transformed.numpy(), columns=self.outputs, index=df.index)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
