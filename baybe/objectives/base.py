@@ -19,7 +19,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import transform_target_columns
+from baybe.utils.dataframe import get_transform_objects, transform_target_columns
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
@@ -40,6 +40,24 @@ class Objective(ABC, SerialMixin):
     @abstractmethod
     def targets(self) -> tuple[Target, ...]:
         """The targets included in the objective."""
+
+    @property
+    def _modeled_quantity_names(self) -> tuple[str, ...]:
+        """The names of the quantities returned by the pre-transformation."""
+        return tuple(t.name for t in self.targets)
+
+    @property
+    def _n_models(self) -> int:
+        """The number of models used in the objective.
+
+        Corresponds to the number of dimensions after the pre-transformation.
+        """
+        return len(self._modeled_quantity_names)
+
+    @property
+    def _is_multi_model(self) -> bool:
+        """Check if the objective relies on multiple surrogate models."""
+        return self._n_models > 1
 
     @property
     @abstractmethod
@@ -72,6 +90,24 @@ class Objective(ABC, SerialMixin):
                 dim=-1,
             )
         )
+
+    def _pre_transform(
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
+        """Pre-transform the target values prior to predictive modeling.
+
+        For details on the method arguments, see :meth:`transform`.
+        """
+        # By default, we just pipe through the unmodified target values
+        targets = get_transform_objects(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        return df[[t.name for t in targets]]
 
     def transform(
         self,
