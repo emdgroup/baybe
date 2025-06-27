@@ -1,6 +1,7 @@
 """LLM-based recommender for experimental design."""
 
 import json
+from collections.abc import Callable
 from enum import Enum
 from json import JSONDecodeError
 
@@ -51,7 +52,7 @@ Constraints: {{ param.constraints }}
 
 {% if measurements is not none and not measurements.empty %}
 PREVIOUS MEASUREMENTS:
-{{ measurements.to_string() }}
+{{ measurements.to_string(index=False) }}
 {% endif %}
 
 {% if related_data is not none and not related_data.empty %}
@@ -59,7 +60,7 @@ RELATED DATA:
 Here is data from other optimization campaigns.
 It might be useful to learn from these experiments or not.
 Use it as you see fit.
-{{ related_data.to_string() }}
+{{ related_data.to_string(index=False) }}
 {% endif %}
 
 Please suggest {{ batch_size }} new experimental conditions that are likely to improve the optimization objective.
@@ -247,6 +248,22 @@ class LLMRecommender(RecommenderProtocol):
     as the current experiment.
     """
 
+    is_feasible_experiment: Callable[[pd.Series], bool] | None = field(default=None)
+    """Optional function to check if an experiment is feasible.
+
+    If provided, this function will be used to filter out infeasible experiments.
+    The function should take a pandas Series (representing a single experiment)
+    and return a boolean indicating whether the experiment is feasible.
+    """
+
+    overflow_experiments: int = field(default=0)
+    """Number of additional experiments to request from the LLM.
+
+    The LLM will be asked to generate batch_size + overflow_experiments
+    experiments. After filtering for feasibility, the first batch_size
+    feasible experiments will be returned.
+    """
+
     def _construct_prompt(
         self,
         searchspace: SearchSpace,
@@ -263,13 +280,14 @@ class LLMRecommender(RecommenderProtocol):
         Returns:
             The constructed prompt.
         """
+        total_experiments = batch_size + self.overflow_experiments
         return PROMPT.render(
             experiment_description=self.experiment_description,
             objective_description=self.objective_description,
             parameter_descriptions=self.parameter_descriptions,
             measurements=measurements,
             related_data=self.related_data,
-            batch_size=batch_size,
+            batch_size=total_experiments,
             format_instructions=self.format_instructions,
         )
 
@@ -455,6 +473,20 @@ class LLMRecommender(RecommenderProtocol):
             output = self._attempt_recovery(
                 e, response.choices[0].message.content, searchspace
             )
+
+        # Filter for feasibility if the function is provided
+        if self.is_feasible_experiment is not None:
+            # Apply feasibility check to each row
+            feasible_mask = output.apply(self.is_feasible_experiment, axis=1)
+            feasible_experiments = output[feasible_mask]
+
+            # Take only the first batch_size feasible experiments
+            if len(feasible_experiments) >= batch_size:
+                return feasible_experiments.head(batch_size)
+            else:
+                # If we don't have enough feasible experiments, return what we have
+                return feasible_experiments
+
         return output
 
     def __str__(self) -> str:
@@ -471,5 +503,13 @@ class LLMRecommender(RecommenderProtocol):
                 "Parameter Descriptions", self.parameter_descriptions, single_line=True
             ),
             to_string("Related Data", self.related_data, single_line=True),
+            to_string(
+                "Overflow Experiments", self.overflow_experiments, single_line=True
+            ),
+            to_string(
+                "Feasibility Check",
+                "Enabled" if self.is_feasible_experiment is not None else "Disabled",
+                single_line=True,
+            ),
         ]
         return to_string(self.__class__.__name__, *fields)
