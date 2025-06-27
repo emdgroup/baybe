@@ -23,6 +23,52 @@ from baybe.serialization import (
 )
 from baybe.utils.basic import to_tuple
 
+
+@define(frozen=True, slots=False)
+class Metadata:
+    """Metadata for parameters containing description, unit, and additional info."""
+
+    description: str | None = field(default=None)
+    """A description of the parameter."""
+
+    unit: str | None = field(default=None)
+    """The unit of measurement for the parameter."""
+
+    misc: dict[str, Any] = field(factory=dict)
+    """Additional user-defined metadata."""
+
+
+def _convert_metadata(value: dict[str, Any] | Metadata | None) -> Metadata | None:
+    """Convert metadata input to Metadata dataclass.
+
+    Args:
+        value: The metadata input - can be dict, Metadata instance, or None.
+
+    Returns:
+        Metadata instance or None.
+
+    Raises:
+        TypeError: If value is not dict, Metadata, or None.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, Metadata):
+        return value
+
+    if not isinstance(value, dict):
+        raise TypeError(
+            f"Metadata must be dict, Metadata instance, or None, got {type(value)}"
+        )
+
+    # Separate known fields from unknown ones
+    known_fields = {"description", "unit"}
+    known_values = {k: v for k, v in value.items() if k in known_fields}
+    misc_values = {k: v for k, v in value.items() if k not in known_fields}
+
+    return Metadata(**known_values, misc=misc_values)
+
+
 if TYPE_CHECKING:
     from baybe.searchspace.continuous import SubspaceContinuous
     from baybe.searchspace.core import SearchSpace
@@ -47,6 +93,11 @@ class Parameter(ABC, SerialMixin):
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
+
+    metadata: Metadata | None = field(
+        default=None, converter=_convert_metadata, kw_only=True
+    )
+    """Optional metadata containing description, unit, and other information."""
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -87,6 +138,16 @@ class Parameter(ABC, SerialMixin):
     @abstractmethod
     def summary(self) -> dict:
         """Return a custom summarization of the parameter."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the parameter."""
+        return self.metadata.description if self.metadata else None
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of measurement for the parameter."""
+        return self.metadata.unit if self.metadata else None
 
 
 @define(frozen=True, slots=False)
@@ -241,6 +302,7 @@ class ContinuousParameter(Parameter):
 _overrides = {
     "_values": cattrs.override(rename="values"),
     "_active_values": cattrs.override(rename="active_values"),
+    "metadata": cattrs.override(rename="metadata"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
