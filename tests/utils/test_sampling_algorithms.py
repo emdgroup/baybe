@@ -208,13 +208,19 @@ def test_fps_recommender_with_known_indices(searchspace):
 
 def test_fps_recommender_with_known_indices_fallback(searchspace):
     """Test FPSRecommender fallback returns expected indices."""
-    np.random.seed(42)
-    expected_indices = [0, 17, 24]  # Based on internal FPS logic and input order
+    np.random.seed(1)
+    expected_indices = [0, 26, 15]  # Based on internal FPS logic and input order
 
     with patch(
         "baybe._optional.fpsample.fps_sampling",
         side_effect=OptionalImportError("fpsample", "sampling"),
     ):
-        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+        with patch(
+            "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
+            wraps=lambda X, n_samples, **kwargs: farthest_point_sampling(
+                X, n_samples=n_samples, start_idx=0, **kwargs
+            ),
+        ):
+            result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
 
     assert result.index.tolist() == expected_indices
