@@ -57,7 +57,7 @@ class Metadata:
     """Additional user-defined metadata."""
 
 
-def _convert_metadata(value: dict[str, Any] | Metadata) -> Metadata:
+def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
     """Convert metadata input to Metadata dataclass.
 
     Args:
@@ -103,7 +103,7 @@ class Parameter(ABC, SerialMixin):
     """The name of the parameter"""
 
     metadata: Metadata | None = field(
-        default=None, converter=optional_c(_convert_metadata), kw_only=True
+        default=None, converter=optional_c(to_metadata), kw_only=True
     )
     """Optional metadata containing description, unit, and other information."""
 
