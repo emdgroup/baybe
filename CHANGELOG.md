@@ -7,10 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
-- `Metadata` dataclass for flexible parameter metadata with `description`, `unit`, and `misc` fields
-- `_convert_metadata` function to handle dict/class/None input for parameter metadata
-- `description` and `unit` convenience properties on `Parameter` class
-- `Metadata` class exposed in `baybe.parameters` public API for easy user access
+- `Metadata` dataclass for `Parameter` metadata.
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
