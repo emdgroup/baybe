@@ -71,7 +71,7 @@ extras = [
     "baybe[polars]",
     "baybe[simulation]",
     "ngboost>=0.3.12,<1",
-    "fpsample>=0.3.3",
+    "fpsample>=0.3.3; python_version < '3.13'",
 ]
 
 chem = [
