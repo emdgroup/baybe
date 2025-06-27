@@ -111,7 +111,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 warnings.warn(
                     f"{self.__class__.__name__} is using the optional 'fpsample', "
                     f"which does not support '{self.initialization.value}'. "
-                    f"Please uninstall 'fpsample' or choose a supported initialization."
+                    f"Please choose a supported initialization."
                 )
 
             if self.random_tie_break:
