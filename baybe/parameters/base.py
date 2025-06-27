@@ -49,27 +49,24 @@ class Metadata:
     """Additional user-defined metadata."""
 
 
-def _convert_metadata(value: dict[str, Any] | Metadata | None) -> Metadata | None:
+def _convert_metadata(value: dict[str, Any] | Metadata) -> Metadata:
     """Convert metadata input to Metadata dataclass.
 
     Args:
-        value: The metadata input - can be dict, Metadata instance, or None.
+        value: The metadata input.
 
     Returns:
-        Metadata instance or None.
+        Metadata instance.
 
     Raises:
-        TypeError: If value is not dict, Metadata, or None.
+        TypeError: If value is not dict or Metadata.
     """
-    if value is None:
-        return None
-
     if isinstance(value, Metadata):
         return value
 
     if not isinstance(value, dict):
         raise TypeError(
-            f"Metadata must be dict, Metadata instance, or None, got {type(value)}"
+            f"Metadata must be dict or Metadata instance. Got: {type(value)}"
         )
 
     # Separate known fields from unknown ones
@@ -106,7 +103,7 @@ class Parameter(ABC, SerialMixin):
     """The name of the parameter"""
 
     metadata: Metadata | None = field(
-        default=None, converter=_convert_metadata, kw_only=True
+        default=None, converter=optional_c(_convert_metadata), kw_only=True
     )
     """Optional metadata containing description, unit, and other information."""
 

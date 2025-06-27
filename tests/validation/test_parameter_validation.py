@@ -248,7 +248,7 @@ def test_invalid_data_custom_parameter(data, active_values):
 def test_invalid_metadata_input(metadata_input, expected_error):
     """Providing invalid metadata input raises TypeError."""
     with pytest.raises(
-        expected_error, match="Metadata must be dict, Metadata instance, or None"
+        expected_error, match="Metadata must be dict or Metadata instance."
     ):
         _convert_metadata(metadata_input)
 

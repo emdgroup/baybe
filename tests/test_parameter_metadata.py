@@ -35,11 +35,6 @@ class TestMetadata:
 class TestMetadataConverter:
     """Tests for _convert_metadata function."""
 
-    def test_convert_none(self):
-        """Test converting None returns None."""
-        result = _convert_metadata(None)
-        assert result is None
-
     def test_convert_metadata_instance(self):
         """Test converting Metadata instance returns same instance."""
         meta = Metadata(description="test")
@@ -97,7 +92,7 @@ class TestMetadataConverter:
     def test_convert_invalid_input(self, invalid_input, expected_error):
         """Test converting invalid inputs raises TypeError."""
         with pytest.raises(
-            expected_error, match="Metadata must be dict, Metadata instance, or None"
+            expected_error, match="Metadata must be dict or Metadata instance."
         ):
             _convert_metadata(invalid_input)
 
