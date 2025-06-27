@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective` now has a `metadata` attribute as well as a `description` property
 - `Target` and `Parameter` now have a `metadata` attribute as well as `description` and
   `unit` properties
+- `FPSRecommender` now optionally uses the fpsample library with fall back
+  to internal implementation
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
@@ -32,8 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
-- `FPSRecommender` now optionally uses the fpsample library with fall back
-  to internal implementation 
 - Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
   expected dtypes
 - `CompositeSurrogate` now has a `_posterior_comp` method similar to `Surrogate`
