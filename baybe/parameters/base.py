@@ -24,6 +24,14 @@ from baybe.serialization import (
 )
 from baybe.utils.basic import to_tuple
 
+if TYPE_CHECKING:
+    from baybe.searchspace.continuous import SubspaceContinuous
+    from baybe.searchspace.core import SearchSpace
+    from baybe.searchspace.discrete import SubspaceDiscrete
+
+# TODO: Reactive slots in all classes once cached_property is supported:
+#   https://github.com/python-attrs/attrs/issues/164
+
 
 @define(frozen=True, slots=False)
 class Metadata:
@@ -76,15 +84,6 @@ def _convert_metadata(value: dict[str, Any] | Metadata) -> Metadata:
     }
 
     return Metadata(**known_fields, misc=value)
-
-
-if TYPE_CHECKING:
-    from baybe.searchspace.continuous import SubspaceContinuous
-    from baybe.searchspace.core import SearchSpace
-    from baybe.searchspace.discrete import SubspaceDiscrete
-
-# TODO: Reactive slots in all classes once cached_property is supported:
-#   https://github.com/python-attrs/attrs/issues/164
 
 
 @define(frozen=True, slots=False)
