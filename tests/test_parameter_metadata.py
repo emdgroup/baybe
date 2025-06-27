@@ -3,7 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.parameters.base import Metadata, _convert_metadata
+from baybe.parameters.base import Metadata, to_metadata
 from baybe.parameters.numerical import NumericalDiscreteParameter
 
 
@@ -38,7 +38,7 @@ class TestMetadataConverter:
     def test_convert_metadata_instance(self):
         """Test converting Metadata instance returns same instance."""
         meta = Metadata(description="test")
-        result = _convert_metadata(meta)
+        result = to_metadata(meta)
         assert result is meta
 
     @pytest.mark.parametrize(
@@ -75,7 +75,7 @@ class TestMetadataConverter:
         self, input_dict, expected_desc, expected_unit, expected_misc
     ):
         """Test converting valid dict inputs."""
-        result = _convert_metadata(input_dict)
+        result = to_metadata(input_dict)
         assert isinstance(result, Metadata)
         assert result.description == expected_desc
         assert result.unit == expected_unit
@@ -94,7 +94,7 @@ class TestMetadataConverter:
         with pytest.raises(
             expected_error, match="Metadata must be dict or Metadata instance."
         ):
-            _convert_metadata(invalid_input)
+            to_metadata(invalid_input)
 
 
 class TestParameterMetadataIntegration:

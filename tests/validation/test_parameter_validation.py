@@ -9,7 +9,7 @@ from cattrs.errors import IterableValidationError
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.parameters.base import _convert_metadata
+from baybe.parameters.base import to_metadata
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
@@ -250,7 +250,7 @@ def test_invalid_metadata_input(metadata_input, expected_error):
     with pytest.raises(
         expected_error, match="Metadata must be dict or Metadata instance."
     ):
-        _convert_metadata(metadata_input)
+        to_metadata(metadata_input)
 
 
 def test_metadata_parameter_integration():
