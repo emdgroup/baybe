@@ -310,7 +310,6 @@ class ContinuousParameter(Parameter):
 _overrides = {
     "_values": cattrs.override(rename="values"),
     "_active_values": cattrs.override(rename="active_values"),
-    "metadata": cattrs.override(rename="metadata"),
 }
 # FIXME[typing]: https://github.com/python/mypy/issues/4717
 converter.register_structure_hook(
