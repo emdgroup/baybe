@@ -58,16 +58,16 @@ class Metadata:
 
 
 def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
-    """Convert metadata input to Metadata dataclass.
+    """Convert a dictionary to {class}`Metadata` (with {class}`Metadata` passthrough).
 
     Args:
         value: The metadata input.
 
     Returns:
-        Metadata instance.
+        The {class}`Metadata` instance.
 
     Raises:
-        TypeError: If value is not dict or Metadata.
+        TypeError: If the input is not a dictionary or {class}`Metadata`.
     """
     if isinstance(value, Metadata):
         return value
