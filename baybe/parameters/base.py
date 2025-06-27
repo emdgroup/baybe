@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_mapping, instance_of, min_len
 from attrs.validators import optional as optional_v
@@ -70,11 +70,12 @@ def _convert_metadata(value: dict[str, Any] | Metadata) -> Metadata:
         )
 
     # Separate known fields from unknown ones
-    known_fields = {"description", "unit"}
-    known_values = {k: v for k, v in value.items() if k in known_fields}
-    misc_values = {k: v for k, v in value.items() if k not in known_fields}
+    flds = fields(Metadata)
+    known_fields = {
+        fld: value.pop(fld, None) for fld in (flds.description.name, flds.unit.name)
+    }
 
-    return Metadata(**known_values, misc=misc_values)
+    return Metadata(**known_fields, misc=value)
 
 
 if TYPE_CHECKING:
