@@ -349,7 +349,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         import torch
 
-        targets = [t.name for t in self._objective.targets]
         result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
             for stat in stats:
@@ -376,8 +375,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 if stat == "std":
                     vals = torch.sqrt(vals)
 
-                numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                result[[f"{name}_{stat_name}" for name in targets]] = numpyvals
+                numpyvals = (
+                    vals.cpu().numpy().reshape((len(result), self._objective._n_models))
+                )
+                result[
+                    [
+                        f"{name}_{stat_name}"
+                        for name in self._objective._modeled_quantity_names
+                    ]
+                ] = numpyvals
 
         return result
 
@@ -448,14 +454,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._output_scaler = self._make_output_scaler(objective, measurements)
 
         # Transform and fit
-        # Note: The targets are not transformed here because their transformations
+        # Note: The targets are only pre-transformed here. The remaining transformations
         #  are applied in form of BoTorch objectives. This has the consequence that:
-        #  * the trained surrogate model can be called with untransformed target values,
-        #    enabling predictions with input from the original target domain
-        #  * the transformation is part of the computational backpropagation graph
+        #  * The trained surrogate model can be called with pre-transformed target
+        #    values, enabling predictions with input from the pre-transformed domain
+        #   (this allows us to control precisely on which level the model is placed)
+        #  * The main transformation is part of the computational backpropagation graph
+        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
         train_x_comp_rep, train_y_tensor = to_tensor(
-            searchspace.transform(measurements, allow_extra=True),
-            measurements[[t.name for t in objective.targets]],
+            searchspace.transform(measurements, allow_extra=True), pre_transformed
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
