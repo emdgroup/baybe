@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 #   https://github.com/python-attrs/attrs/issues/164
 
 
-@define(frozen=True, slots=False)
+@define(frozen=True)
 class Metadata:
     """Metadata for parameters containing description, unit, and additional info."""
 
