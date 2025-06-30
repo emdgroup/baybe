@@ -93,7 +93,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
+    "uv>=0.7.0",
 ]
 
 insights = [
