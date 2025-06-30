@@ -52,23 +52,13 @@ jobs:
   lockfiles:
     runs-on: ubuntu-latest
     name: "Lockfiles"
-    env: 
-      TARGET_DOCS_LOCKFILE_PATH: .lockfiles/py310-dev.lock
-      DOCS_LOCKFILE_PATH: /tmp/lockfile
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        id: setup-python
-        with:
-          python-version: '3.10'
-      - name:  Verify lockfile integrity 
+      - name: Verify lockfile integrity
         run: |
-          git fetch origin main:main
-          if git diff --name-only origin/main -- pyproject.toml | grep -q pyproject.toml; then
-            echo "pyproject.toml has been modified compared to the main branch."
-            echo "Lockfile might need to be updated."
-            exit 1
-          fi
+          pip install uv
+          uv lock --check
 
   lint:
     strategy:
