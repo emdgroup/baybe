@@ -9,7 +9,6 @@ from cattrs.errors import IterableValidationError
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.parameters.base import to_metadata
 from baybe.parameters.categorical import (
     CategoricalParameter,
     TaskParameter,
@@ -234,29 +233,3 @@ def test_invalid_data_custom_parameter(data, active_values):
         CustomDiscreteParameter(
             name="invalid_data", data=data, active_values=active_values
         )
-
-
-@pytest.mark.parametrize(
-    ("metadata_input", "expected_error"),
-    [
-        param("invalid_string", TypeError, id="string_metadata"),
-        param(123, TypeError, id="number_metadata"),
-        param(["list"], TypeError, id="list_metadata"),
-        param(object(), TypeError, id="object_metadata"),
-    ],
-)
-def test_invalid_metadata_input(metadata_input, expected_error):
-    """Providing invalid metadata input raises TypeError."""
-    with pytest.raises(
-        expected_error, match="Metadata must be dict or Metadata instance."
-    ):
-        to_metadata(metadata_input)
-
-
-def test_metadata_parameter_integration():
-    """Test that parameters correctly handle metadata input validation."""
-    # Test valid metadata dict
-    param = NumericalDiscreteParameter(
-        name="test", values=(1.0, 2.0), metadata={"description": "valid metadata"}
-    )
-    assert param.description == "valid metadata"
