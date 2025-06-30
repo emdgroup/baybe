@@ -87,6 +87,7 @@ class TestMetadataConverter:
             param("string", TypeError, id="string_input"),
             param(123, TypeError, id="number_input"),
             param(["list"], TypeError, id="list_input"),
+            param(object(), TypeError, id="object_input"),
         ],
     )
     def test_convert_invalid_input(self, invalid_input, expected_error):
