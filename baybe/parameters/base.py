@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import define, field, fields
+from attrs import define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_mapping, instance_of, min_len
-from attrs.validators import optional as optional_v
+from attrs.validators import instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.enum import ParameterEncoding
@@ -23,6 +22,7 @@ from baybe.serialization import (
     unstructure_base,
 )
 from baybe.utils.basic import to_tuple
+from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
     from baybe.searchspace.continuous import SubspaceContinuous
@@ -31,59 +31,6 @@ if TYPE_CHECKING:
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
-
-
-@define(frozen=True)
-class Metadata:
-    """Metadata for parameters containing description, unit, and additional info."""
-
-    description: str | None = field(
-        default=None, validator=optional_v(instance_of(str))
-    )
-    """A description of the parameter."""
-
-    unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
-    """The unit of measurement for the parameter."""
-
-    misc: dict[str, Any] = field(
-        factory=dict,
-        validator=deep_mapping(
-            mapping_validator=instance_of(dict),
-            key_validator=instance_of(str),
-            # FIXME: https://github.com/python-attrs/attrs/issues/1246
-            value_validator=lambda *x: None,
-        ),
-    )
-    """Additional user-defined metadata."""
-
-
-def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
-    """Convert a dictionary to {class}`Metadata` (with {class}`Metadata` passthrough).
-
-    Args:
-        value: The metadata input.
-
-    Returns:
-        The {class}`Metadata` instance.
-
-    Raises:
-        TypeError: If the input is not a dictionary or {class}`Metadata`.
-    """
-    if isinstance(value, Metadata):
-        return value
-
-    if not isinstance(value, dict):
-        raise TypeError(
-            f"Metadata must be dict or Metadata instance. Got: {type(value)}"
-        )
-
-    # Separate known fields from unknown ones
-    flds = fields(Metadata)
-    known_fields = {
-        fld: value.pop(fld, None) for fld in (flds.description.name, flds.unit.name)
-    }
-
-    return Metadata(**known_fields, misc=value)
 
 
 @define(frozen=True, slots=False)

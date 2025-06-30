@@ -3,8 +3,8 @@
 import pytest
 from pytest import param
 
-from baybe.parameters.base import Metadata, to_metadata
 from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.utils.metadata import Metadata, to_metadata
 
 
 class TestMetadata:
@@ -33,7 +33,7 @@ class TestMetadata:
 
 
 class TestMetadataConverter:
-    """Tests for _convert_metadata function."""
+    """Tests for to_metadata function."""
 
     def test_convert_metadata_instance(self):
         """Test converting Metadata instance returns same instance."""
