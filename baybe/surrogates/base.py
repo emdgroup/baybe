@@ -210,7 +210,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return _IDENTITY_TRANSFORM
 
         if objective.n_outputs != 1:
-            # There is execution path yet that could lead to this situation
+            # There is no execution path yet that could lead to this situation
             raise NotImplementedError(
                 "Output scalers for multi-output models are not available."
             )
