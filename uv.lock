@@ -254,6 +254,7 @@ dev = [
     { name = "tenacity" },
     { name = "tornado" },
     { name = "tox-uv" },
+    { name = "tqdm" },
     { name = "types-seaborn" },
     { name = "uv" },
     { name = "xyzpy" },
@@ -285,6 +286,7 @@ docs = [
     { name = "sphinxcontrib-bibtex" },
     { name = "streamlit" },
     { name = "tornado" },
+    { name = "tqdm" },
     { name = "xyzpy" },
 ]
 examples = [
@@ -421,6 +423,7 @@ requires-dist = [
     { name = "torch", specifier = ">=1.13.1,<3" },
     { name = "tornado", marker = "extra == 'examples'", specifier = ">=6.3.3" },
     { name = "tox-uv", marker = "extra == 'dev'", specifier = ">=1.7.0" },
+    { name = "tqdm", marker = "extra == 'docs'" },
     { name = "types-seaborn", marker = "extra == 'mypy'", specifier = ">=0.13.2.20240618" },
     { name = "typing-extensions", specifier = ">=4.7.0" },
     { name = "uv", marker = "extra == 'dev'", specifier = ">=0.7.0" },
