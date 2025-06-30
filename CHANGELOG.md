@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
-- `Metadata` dataclass for `Parameter` metadata.
+- Generic `Metadata` system for BayBE objects containing description, unit, and additional information.
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
