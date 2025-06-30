@@ -375,15 +375,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 if stat == "std":
                     vals = torch.sqrt(vals)
 
-                numpyvals = (
-                    vals.cpu().numpy().reshape((len(result), self._objective._n_models))
-                )
                 result[
                     [
                         f"{name}_{stat_name}"
                         for name in self._objective._modeled_quantity_names
                     ]
-                ] = numpyvals
+                ] = vals.cpu().numpy()
 
         return result
 
