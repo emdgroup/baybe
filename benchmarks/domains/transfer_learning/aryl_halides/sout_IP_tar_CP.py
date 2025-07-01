@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-from baybe.utils.random import temporary_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -44,13 +43,12 @@ def aryl_halide_IP_CP_tl(
     Returns:
         DataFrame containing benchmark results
     """
-    with temporary_seed(settings.random_seed):
-        return aryl_halide_tl_substance_benchmark(
-            settings=settings,
-            source_tasks=["2-iodopyridine"],
-            target_tasks=["3-chloropyridine"],
-            percentages=[0.01, 0.05, 0.1, 0.2],
-        )
+    return aryl_halide_tl_substance_benchmark(
+        settings=settings,
+        source_tasks=["2-iodopyridine"],
+        target_tasks=["3-chloropyridine"],
+        percentages=[0.01, 0.05, 0.1, 0.2],
+    )
 
 
 benchmark_config = ConvergenceBenchmarkSettings(

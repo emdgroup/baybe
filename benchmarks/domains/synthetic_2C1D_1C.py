@@ -15,7 +15,6 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.random import temporary_seed
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -74,38 +73,37 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
     Returns:
         DataFrame containing benchmark results.
     """
-    with temporary_seed(settings.random_seed):
-        parameters = [
-            NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
-            NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
-            NumericalDiscreteParameter("z", (1, 2, 3, 4)),
-        ]
+    parameters = [
+        NumericalContinuousParameter("x", (-2 * pi, 2 * pi)),
+        NumericalContinuousParameter("y", (-2 * pi, 2 * pi)),
+        NumericalDiscreteParameter("z", (1, 2, 3, 4)),
+    ]
 
-        target = NumericalTarget(name="target", mode="MAX")
-        searchspace = SearchSpace.from_product(parameters=parameters)
-        objective = target.to_objective()
+    target = NumericalTarget(name="target", mode="MAX")
+    searchspace = SearchSpace.from_product(parameters=parameters)
+    objective = target.to_objective()
 
-        scenarios: dict[str, Campaign] = {
-            "Random Recommender": Campaign(
-                searchspace=searchspace,
-                recommender=RandomRecommender(),
-                objective=objective,
-            ),
-            "Default Recommender": Campaign(
-                searchspace=searchspace,
-                objective=objective,
-            ),
-        }
+    scenarios: dict[str, Campaign] = {
+        "Random Recommender": Campaign(
+            searchspace=searchspace,
+            recommender=RandomRecommender(),
+            objective=objective,
+        ),
+        "Default Recommender": Campaign(
+            searchspace=searchspace,
+            objective=objective,
+        ),
+    }
 
-        return simulate_scenarios(
-            scenarios,
-            lookup,
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-            random_seed=settings.random_seed,
-        )
+    return simulate_scenarios(
+        scenarios,
+        lookup,
+        batch_size=settings.batch_size,
+        n_doe_iterations=settings.n_doe_iterations,
+        n_mc_iterations=settings.n_mc_iterations,
+        impute_mode="error",
+        random_seed=settings.random_seed,
+    )
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
