@@ -34,16 +34,16 @@ class Metadata:
 
 
 def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
-    """Convert a dictionary to {class}`Metadata` (with {class}`Metadata` passthrough).
+    """Convert a dictionary to :class:`Metadata` (with :class:`Metadata` passthrough).
 
     Args:
         value: The metadata input.
 
     Returns:
-        The {class}`Metadata` instance.
+        The :class:`Metadata` instance.
 
     Raises:
-        TypeError: If the input is not a dictionary or {class}`Metadata`.
+        TypeError: If the input is not a dictionary or :class:`Metadata`.
     """
     if isinstance(value, Metadata):
         return value
