@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Generic `Metadata` system for BayBE objects containing description, unit, and additional information.
+- Generic `Metadata` system for BayBE objects containing description, unit, and
+  additional information
 
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
