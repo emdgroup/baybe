@@ -86,18 +86,22 @@ def wrap_function(
 
 
 def make_initial_data(
-    function: Callable, function_name: str, num_of_points: int
+    function: Callable,
+    function_name: str,
+    num_of_points: int,
+    settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
-    # Create random samples in [0, pi]^dim
-    samples = np.random.uniform(low=0, high=math.pi, size=(num_of_points, 5))
+    with temporary_seed(settings.random_seed):
+        # Create random samples in [0, pi]^dim
+        samples = np.random.uniform(low=0, high=math.pi, size=(num_of_points, 5))
 
-    # Convert to DataFrame
-    column_names = [f"x{i}" for i in range(5)]
-    df = pd.DataFrame(samples, columns=column_names)
+        # Convert to DataFrame
+        column_names = [f"x{i}" for i in range(5)]
+        df = pd.DataFrame(samples, columns=column_names)
 
-    # Apply the function to get target values
-    df = wrap_function(function, function_name, df)
+        # Apply the function to get target values
+        df = wrap_function(function, function_name, df)
 
     return df
 
@@ -122,59 +126,56 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     Returns:
         DataFrame containing benchmark results for all test cases
     """
-    with temporary_seed(settings.random_seed):
-        functions = {
-            "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
-            "Target_Function": Michalewicz(dim=5, negate=True),
-        }
-        searchspace_nontl = make_searchspace(use_task_parameter=False)
-        searchspace_tl = make_searchspace(use_task_parameter=True)
+    functions = {
+        "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
+        "Target_Function": Michalewicz(dim=5, negate=True),
+    }
+    searchspace_nontl = make_searchspace(use_task_parameter=False)
+    searchspace_tl = make_searchspace(use_task_parameter=True)
 
-        objective = make_objective()
-        campaign_tl = Campaign(
-            searchspace=searchspace_tl,
-            objective=objective,
-        )
-        campaign_nontl = Campaign(
-            searchspace=searchspace_nontl,
-            objective=objective,
-        )
+    objective = make_objective()
+    campaign_tl = Campaign(
+        searchspace=searchspace_tl,
+        objective=objective,
+    )
+    campaign_nontl = Campaign(
+        searchspace=searchspace_nontl,
+        objective=objective,
+    )
 
-        results = []
+    results = []
 
-        for p in [1, 10, 50, 100]:
-            results.append(
-                simulate_scenarios(
-                    {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
-                    lambda x: wrap_function(
-                        functions["Target_Function"], "Target_Function", x
-                    ),
-                    initial_data=[
-                        make_initial_data(
-                            functions["Source_Function"], "Source_Function", p
-                        )
-                        for _ in range(settings.n_mc_iterations)
-                    ],
-                    batch_size=settings.batch_size,
-                    n_doe_iterations=settings.n_doe_iterations,
-                    impute_mode="error",
-                    random_seed=settings.random_seed,
-                )
-            )
+    for p in [1, 10, 50, 100]:
         results.append(
             simulate_scenarios(
-                {"0": campaign_tl, "0_naive": campaign_nontl},
+                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
+                initial_data=[
+                    make_initial_data(
+                        functions["Source_Function"], "Source_Function", p, settings
+                    )
+                    for _ in range(settings.n_mc_iterations)
+                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations,
                 impute_mode="error",
                 random_seed=settings.random_seed,
             )
         )
-        return pd.concat(results)
+    results.append(
+        simulate_scenarios(
+            {"0": campaign_tl, "0_naive": campaign_nontl},
+            lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+            random_seed=settings.random_seed,
+        )
+    )
+    return pd.concat(results)
 
 
 benchmark_config = ConvergenceBenchmarkSettings(

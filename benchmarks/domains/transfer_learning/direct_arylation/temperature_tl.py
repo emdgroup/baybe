@@ -18,7 +18,6 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.random import temporary_seed
 from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
@@ -115,56 +114,54 @@ def direct_arylation_tl_temperature(
     Returns:
         DataFrame containing benchmark results for all test cases
     """
-    with temporary_seed(settings.random_seed):
-        data = load_data()
+    data = load_data()
 
-        searchspace = make_searchspace(
-            data=data,
-            use_task_parameter=True,
-        )
-        searchspace_nontl = make_searchspace(
-            data=data,
-            use_task_parameter=False,
-        )
+    searchspace = make_searchspace(
+        data=data,
+        use_task_parameter=True,
+    )
+    searchspace_nontl = make_searchspace(
+        data=data,
+        use_task_parameter=False,
+    )
 
-        lookup = make_lookup(data)
-        initial_data = make_initial_data(data)
-        objective = make_objective()
+    lookup = make_lookup(data)
+    initial_data = make_initial_data(data)
+    objective = make_objective()
 
-        tl_campaign = Campaign(searchspace=searchspace, objective=objective)
-        non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
+    tl_campaign = Campaign(searchspace=searchspace, objective=objective)
+    non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
-        results = []
-        for p in [0.01, 0.1, 0.2]:
-            results.append(
-                simulate_scenarios(
-                    {
-                        f"{int(100 * p)}": tl_campaign,
-                        f"{int(100 * p)}_naive": non_tl_campaign,
-                    },
-                    lookup,
-                    initial_data=[
-                        initial_data.sample(frac=p)
-                        for _ in range(settings.n_mc_iterations)
-                    ],
-                    batch_size=settings.batch_size,
-                    n_doe_iterations=settings.n_doe_iterations,
-                    impute_mode="error",
-                    random_seed=settings.random_seed,
-                )
-            )
+    results = []
+    for p in [0.01, 0.1, 0.2]:
         results.append(
             simulate_scenarios(
-                {"0": tl_campaign, "0_naive": non_tl_campaign},
+                {
+                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_naive": non_tl_campaign,
+                },
                 lookup,
+                initial_data=[
+                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+                ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
-                n_mc_iterations=settings.n_mc_iterations,
                 impute_mode="error",
                 random_seed=settings.random_seed,
             )
         )
-        return pd.concat(results)
+    results.append(
+        simulate_scenarios(
+            {"0": tl_campaign, "0_naive": non_tl_campaign},
+            lookup,
+            batch_size=settings.batch_size,
+            n_doe_iterations=settings.n_doe_iterations,
+            n_mc_iterations=settings.n_mc_iterations,
+            impute_mode="error",
+            random_seed=settings.random_seed,
+        )
+    )
+    return pd.concat(results)
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
