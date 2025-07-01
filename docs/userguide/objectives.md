@@ -15,7 +15,7 @@ communicated to BayBE by wrapping the target into a
 from baybe.targets import NumericalTarget
 from baybe.objectives import SingleTargetObjective
 
-target = NumericalTarget(name="Yield", mode="MAX")
+target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target)
 ```
 In fact, the role of the
@@ -89,9 +89,9 @@ of the other two:
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-target_1 = NumericalTarget(name="t_1", mode="MIN", bounds=(0, 100))
-target_2 = NumericalTarget(name="t_2", mode="MIN", bounds=(0, 100))
-target_3 = NumericalTarget(name="t_3", mode="MATCH", bounds=(40, 60))
+target_1 = NumericalTarget.normalize_ramp(name="t_1", bounds=(0, 100))
+target_2 = NumericalTarget.normalize_ramp(name="t_2", bounds=(0, 100), descending=True)
+target_3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
 objective = DesirabilityObjective(
     targets=[target_1, target_2, target_3],
     weights=[2.0, 1.0, 1.0],  # optional (by default, all weights are equal)
@@ -133,8 +133,9 @@ specify the corresponding target objects:
 from baybe.targets import NumericalTarget
 from baybe.objectives import ParetoObjective
 
-target_1 = NumericalTarget(name="t_1", mode="MIN")
-target_2 = NumericalTarget(name="t_2", mode="MAX")
+target_1 = NumericalTarget(name="t_1")
+target_2 = NumericalTarget(name="t_2", minimize=True)
+target_3 = NumericalTarget.match_absolute(name="t_3", match_value=0)
 objective = ParetoObjective(targets=[target_1, target_2])
 ```
 
