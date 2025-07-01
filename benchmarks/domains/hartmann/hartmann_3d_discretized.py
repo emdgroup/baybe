@@ -13,7 +13,6 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
-from baybe.utils.random import temporary_seed
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -40,44 +39,43 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
     Returns:
         DataFrame containing benchmark results.
     """
-    with temporary_seed(settings.random_seed):
-        parameters = [
-            NumericalDiscreteParameter("x1", np.linspace(0, 1, 25)),
-            NumericalDiscreteParameter("x2", np.linspace(0, 1, 25)),
-            NumericalDiscreteParameter("x3", np.linspace(0, 1, 25)),
-        ]
+    parameters = [
+        NumericalDiscreteParameter("x1", np.linspace(0, 1, 25)),
+        NumericalDiscreteParameter("x2", np.linspace(0, 1, 25)),
+        NumericalDiscreteParameter("x3", np.linspace(0, 1, 25)),
+    ]
 
-        target = NumericalTarget(name="target", mode="MIN")
-        searchspace = SearchSpace.from_product(parameters=parameters)
-        objective = target.to_objective()
+    target = NumericalTarget(name="target", mode="MIN")
+    searchspace = SearchSpace.from_product(parameters=parameters)
+    objective = target.to_objective()
 
-        scenarios: dict[str, Campaign] = {
-            "Random Recommender": Campaign(
-                searchspace=searchspace,
-                recommender=RandomRecommender(),
-                objective=objective,
-            ),
-            "Default Recommender": Campaign(
-                searchspace=searchspace,
-                objective=objective,
-            ),
-        }
+    scenarios: dict[str, Campaign] = {
+        "Random Recommender": Campaign(
+            searchspace=searchspace,
+            recommender=RandomRecommender(),
+            objective=objective,
+        ),
+        "Default Recommender": Campaign(
+            searchspace=searchspace,
+            objective=objective,
+        ),
+    }
 
-        test_function = Hartmann(dim=3)
+    test_function = Hartmann(dim=3)
 
-        lookup_discretized = arrays_to_dataframes(
-            [p.name for p in parameters], [target.name], use_torch=True
-        )(test_function)
+    lookup_discretized = arrays_to_dataframes(
+        [p.name for p in parameters], [target.name], use_torch=True
+    )(test_function)
 
-        return simulate_scenarios(
-            scenarios,
-            lookup_discretized,
-            batch_size=settings.batch_size,
-            n_doe_iterations=settings.n_doe_iterations,
-            n_mc_iterations=settings.n_mc_iterations,
-            impute_mode="error",
-            random_seed=settings.random_seed,
-        )
+    return simulate_scenarios(
+        scenarios,
+        lookup_discretized,
+        batch_size=settings.batch_size,
+        n_doe_iterations=settings.n_doe_iterations,
+        n_mc_iterations=settings.n_mc_iterations,
+        impute_mode="error",
+        random_seed=settings.random_seed,
+    )
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
