@@ -50,7 +50,8 @@ def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
 
     if not isinstance(value, dict):
         raise TypeError(
-            f"Metadata must be dict or Metadata instance. Got: {type(value)}"
+            f"The input must be dictionary or '{Metadata.__name__}' instance. "
+            f"Got: {type(value)}"
         )
 
     # Separate known fields from unknown ones
