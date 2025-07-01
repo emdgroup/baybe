@@ -8,79 +8,154 @@ The way BayBE treats multiple targets is then controlled via the
 [`Objective`](../../userguide/objectives).
 
 ## NumericalTarget
-Besides the `name`, a [`NumericalTarget`](baybe.targets.numerical.NumericalTarget)
-has the following attributes:
-* **The optimization** `mode`: Specifies whether we want to minimize/maximize
-  the target or whether we want to match a specific value.
-* **Bounds**: Defines `bounds` that constrain the range of target values.
-* **A** `transformation` **function**: When bounds are provided, this is
-  used to map target values into the [0, 1] interval.
+```{admonition} Important
+:class: important
 
-Below is a visualization of possible choices for `transformation`, where `lower` and
-`upper` are the entries provided via `bounds`:
-![Transforms](../_static/target_transforms.svg)
+The {class}`~baybe.targets.numerical.NumericalTarget` class has been redesigned from the
+ground up in version [0.14.0](https://github.com/emdgroup/baybe/releases/tag/0.13.1),
+providing a more concise and significantly **more expressive interface.**
 
-### MIN and MAX mode
-Here are two examples for simple maximization and minimization targets:
+For a temporary transition period, the class constructor offers full backward
+compatibility with the previous interface, meaning that it can be called with either the
+new or the legacy arguments. However, this comes at the cost of **reduced typing
+support**, meaning that you won't get type hints (e.g. for autocompletion or static type
+checks) for either of the two types of calls. 
+
+For this reason, we offer two additional constructors available for the duration of the
+transition period that offer full typing support, which are useful for code development:
+{meth}`~baybe.targets.numerical.NumericalTarget.from_legacy_interface` and
+{meth}`~baybe.targets.numerical.NumericalTarget.from_modern_interface`.
+```
+
+Whenever you want to optimize a real-valued quantity, the 
+{class}`~baybe.targets.numerical.NumericalTarget` class is the right choice.
+Optimization with targets of this type follows two basic rules:
+1. Targets are transformed as specified by their
+   {class}`~baybe.transformations.base.Transformation` (with no transformation
+   defined being equivalent to the identity transformation).
+2. Whenever an optimization direction is required (i.e., when the context is *not*
+   active learning), the transformed targets are assumed to be **maximized**.
+
+This results in a simple yet flexible interface:
 ```python
-from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
+from baybe.targets import NumericalTarget
+from baybe.transformations import LogarithmicTransformation
 
-max_target = NumericalTarget(
-    name="Target_1",
-    mode=TargetMode.MAX,  # can also be provided as string "MAX"
-)
-
-min_target = NumericalTarget(
-    name="Target_2",
-    mode="MIN",  # can also be provided as TargetMode.MIN
-    bounds=(0, 100),  # optional
-    transformation=TargetTransformation.LINEAR,  # optional, will be applied if bounds are not None
+target = NumericalTarget(
+    name="Yield",
+    transformation=LogarithmicTransformation(),  # optional transformation object
 )
 ```
 
-### MATCH mode
-If you want to match a desired value, the `TargetMode.MATCH` mode is the right choice.
-In this mode, `bounds` are required and different transformations compared to `MIN`
-and `MAX` modes are allowed.
+While the second rule may seem restrictive at first, it does not limit the
+expressiveness of the resulting models, thanks to the transformation step applied.
+In fact, other types of optimization problems (e.g., minimization, matching a
+specific set point value, or pursuing any other custom objective) are just maximization
+problems in disguise, hidden behind an appropriate target transformation.
 
-Assume we want to instruct BayBE to match a value of 50 in a target.
-We simply need to choose the bounds so that the midpoint is the desired value.
-The spread of the bounds interval defines how fast the acceptability of a measurement
-falls off away from the match value, also depending on the choice of `transformation`.
+For example:
+* **Minimization** can be achieved by negating the targets before maximizing the
+  resulting numerical values.
+* **Matching** a set point value can be implemented by applying a transformation that
+  computes the "proximity" to the set point in some way (e.g. in terms of the
+  negative absolute difference to it).
+* In general, any (potentially nonlinear) **custom objective** can be expressed using a
+  transformation that assigns higher values to more desirable outcomes and lower values
+  to less desirable outcomes.
 
-In the example below, `match_targetA` will treat all values < 45 and > 55 as
-equally bad, while `match_targetB` is more forgiving in that it chooses a bell curve
-transformation instead of a triangular one, and also uses a wider interval of bounds.
-Both targets are configured such that the midpoint of `bounds` (in this case 50) 
-becomes the optimal value:
+Especially the first two cases are so common that we provide convenient ways to create
+the corresponding target objects:
 
-```python
-from baybe.targets import NumericalTarget, TargetMode, TargetTransformation
+### Convenience Construction
+Instead of manually providing the necessary transformation object, BayBE offers several
+convenience approaches to construct targets for many common use cases.
+The following is a non-comprehensive overview – for a complete list, please refer to the
+[`NumericalTarget` documentation](baybe.targets.numerical.NumericalTarget).
+* **Minimization**: Minimization of a target can be achieved by simply passing the
+  `minimize=True` argument to the constructor:
+  ```python
+  target = NumericalTarget(
+      name="Yield",
+      transformation=LogarithmicTransformation(),  # optional transformation object
+      minimize=True,  # this time, the yield is to be minimized
+  )
+  ```
 
-match_targetA = NumericalTarget(
-    name="Target_3A",
-    mode=TargetMode.MATCH,
-    bounds=(45, 55),  # mandatory in MATCH mode
-    transformation=TargetTransformation.TRIANGULAR,  # optional, applied if bounds are not None
-)
-match_targetB = NumericalTarget(
-    name="Target_3B",
-    mode="MATCH",
-    bounds=(0, 100),  # mandatory in MATCH mode
-    transformation="BELL",  # can also be provided as TargetTransformation.BELL
-)
-```
+  ````{admonition} Manual Inversion
+  :class: note
+  Note that the above is virtually the same as chaining the existing transformation with
+  an inversion transformation:
+  ```python
+  from baybe.transformations import AffineTransformation
+  target = NumericalTarget(
+      name="Yield",
+      transformation=LogarithmicTransformation() + AffineTransformation(factor=-1)
+  )
+  ```
 
-Targets are used in nearly all [examples](../../examples/examples).
+  Implementation-wise, however, the two approaches differ in that the inversion is
+  dynamically added before passing the target to the optimization algorithm in the
+  former case, while it becomes an integral part of the target transformation attribute
+  in the latter.
+  ````
+
+* **Matching a set point**: For common matching transformations, we provide
+  convenience constructors with the `match_` prefix (see
+  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+  
+  For example:
+  ```python
+  # Absolute transformation
+  t_abs = NumericalTarget.match_absolute(name="Yield", match_value=42)  
+
+  # Bell-shaped transformation
+  t_bell = NumericalTarget.match_bell(name="Yield", match_value=42, sigma=5)
+
+  # Triangular transformation
+  t_tr1 = NumericalTarget.match_triangle(name="Yield", match_value=42, width=10)
+  t_tr2 = NumericalTarget.match_triangle(name="Yield", match_value=42, cutoffs=(37, 47))
+  t_tr3 = NumericalTarget.match_triangle(name="Yield", match_value=42, margins=(5, 5))
+  assert t_tr1 == t_tr2 == t_tr3
+  ```
+
+* **Normalizing targets**: Sometimes, it is necessary to normalize the targets to a
+  certain range, e.g. to ensure that values are always in the interval [0, 1]. 
+  One situation where this can be required is when combining the targets using a
+  {class}`baybe.objective.desirability.DesirabilityObjective`.
+  For this purpose, we provide convenience constructors with the `normalize_` prefix
+  (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+  
+  For example:
+  ```python
+  target = NumericalTarget.normalize_ramp(name="Yield", bounds=(0, 1), descending=True)
+  ```
+
+* **Creation from existing targets**: Targets can also be quickly created from existing
+  ones by calling certain transformation methods on them (see
+  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+  
+  For example:
+  ```python
+  t1 = NumericalTarget("Yield")
+  t2 = t1 - 10
+  t3 = t2 * 5
+  t4 = t3.abs()
+  t5 = t4.power(2)
+  t6 = t5.clamp(max=100)
+  ```
 
 ## Limitations
 ```{important}
-`NumericalTarget` enables many use cases due to the real-valued nature of most 
-measurements. But it can also be used to model categorical targets if they are ordinal.
-For example: If your experimental outcome is a categorical ranking into "bad",
-"mediocre" and "good", you could use a `NumericalTarget` with bounds (1, 3), where the
-categories correspond to values 1, 2 and 3 respectively.
+{class}`~baybe.targets.numerical.NumericalTarget` enables many use cases due to the
+real-valued nature of most measurements. However, it can also be used to model
+categorical targets if they are ordinal.
+
+**For example:**
+If your experimental outcome is a categorical ranking into "bad", "mediocre" and "good",
+you could use a {class}`~baybe.targets.numerical.NumericalTarget` with bounds (1, 3)
+and pre-map the categories to the values 1, 2 and 3, respectively.
+
 If your target category is not ordinal, the transformation into a numerical target is
-not straightforward, which is a current limitation of BayBE.
-We are looking into adding more target options in the future.
+not straightforward, which is a current limitation of BayBE. We are looking into adding
+more target options in the future.
 ```
