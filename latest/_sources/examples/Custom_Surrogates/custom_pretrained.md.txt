@@ -630,7 +630,7 @@ print(recommendation)
     Recommendation from campaign:
            Pressure[bar]  Temperature[degree_C]
     index                                      
-    1                1.0             111.111111
+    10               5.0                  100.0
 
 
 ## Using configuration instead

@@ -5,6 +5,6 @@ These examples demonstrate BayBE's (de-)serialization capabilities.
 :maxdepth: 1
 
 Basic Serialization<basic_serialization>
-Validate Config<validate_config>
 Create From Config<create_from_config>
+Validate Config<validate_config>
 ```
