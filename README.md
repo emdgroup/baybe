@@ -1,9 +1,9 @@
 <div align="center">
   <br/>
 
-[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/ci.yml?style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/ci.yml)
-[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/regular.yml)
-[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/docs.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/ci.yml?branch=main&style=flat-square&label=CI&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/ci.yml?query=branch%3Amain)
+[![Regular](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/regular.yml?branch=main&style=flat-square&label=Regular%20Check&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/regular.yml?query=branch%3Amain)
+[![Docs](https://img.shields.io/github/actions/workflow/status/emdgroup/baybe/docs.yml?branch=main&style=flat-square&label=Docs&labelColor=0f69af&color=ffdcb9)](https://github.com/emdgroup/baybe/actions/workflows/docs.yml?query=branch%3Amain)
 
 [![Supports Python](https://img.shields.io/pypi/pyversions/baybe?style=flat-square&label=Supports%20Python&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
 [![PyPI version](https://img.shields.io/pypi/v/baybe.svg?style=flat-square&label=PyPI%20Version&labelColor=96d7d2&color=ffdcb9)](https://pypi.org/project/baybe/)
