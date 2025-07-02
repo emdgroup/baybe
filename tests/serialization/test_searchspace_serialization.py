@@ -1,13 +1,16 @@
-"""Test serialization of searchspaces."""
+"""Search space serialization tests."""
 
 import json
+from collections.abc import Sequence
 
 import pytest
 
+from baybe.parameters.base import Parameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import converter
+from tests.serialization.utils import assert_roundtrip_consistency
 
 
 @pytest.mark.parametrize(
@@ -20,11 +23,10 @@ from baybe.serialization.core import converter
         ["Solvent_1"],
     ],
 )
-def test_searchspace_serialization(parameters):
+def test_roundtrip(parameters: Sequence[Parameter]) -> None:
+    """A serialization roundtrip yields an equivalent object."""
     searchspace = SearchSpace.from_product(parameters)
-    string = searchspace.to_json()
-    searchspace2 = SearchSpace.from_json(string)
-    assert searchspace == searchspace2
+    assert_roundtrip_consistency(searchspace)
 
 
 def test_from_dataframe_deserialization(searchspace):

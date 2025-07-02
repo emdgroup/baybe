@@ -1,4 +1,4 @@
-"""Test serialization of meta recommenders."""
+"""Meta recommender serialization tests."""
 
 import pytest
 
@@ -11,16 +11,11 @@ from baybe.recommenders import (
 )
 from baybe.recommenders.meta.base import MetaRecommender
 from tests.conftest import select_recommender
+from tests.serialization.utils import assert_roundtrip_consistency, roundtrip
 
 # Create some recommenders of different class for better differentiation after roundtrip
 RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
 assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS})
-
-
-def roundtrip(recommender: MetaRecommender) -> MetaRecommender:
-    """Roundtrip serialization."""
-    string = recommender.to_json()
-    return MetaRecommender.from_json(string)
 
 
 @pytest.mark.parametrize(
@@ -30,9 +25,9 @@ def roundtrip(recommender: MetaRecommender) -> MetaRecommender:
         SequentialMetaRecommender(recommenders=[RandomRecommender()]),
     ],
 )
-def test_meta_recommender_serialization(recommender):
-    """Roundtrip serialization of meta recommenders."""
-    assert recommender == roundtrip(recommender)
+def test_roundtrip(recommender: MetaRecommender):
+    """A serialization roundtrip yields an equivalent object."""
+    assert_roundtrip_consistency(recommender)
 
 
 def test_unsupported_serialization():
@@ -66,6 +61,7 @@ def test_meta_recommender_state_serialization(recommender):
     assert rec is RECOMMENDERS[1]
 
     # After serialization, identity no longer holds but equality does
-    recommender = roundtrip(recommender)
-    rec = select_recommender(recommender, 1)
+    recommender2 = roundtrip(recommender)
+    assert recommender2 == recommender
+    rec = select_recommender(recommender2, 1)
     assert rec == RECOMMENDERS[1]

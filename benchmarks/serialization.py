@@ -12,7 +12,7 @@ from baybe.serialization.core import (
     _unstructure_dataframe_hook,
 )
 
-converter = cattrs.GenConverter(unstruct_collection_overrides={set: list})
+converter = cattrs.Converter(unstruct_collection_overrides={set: list})
 """The converter for benchmarking objects."""
 
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)

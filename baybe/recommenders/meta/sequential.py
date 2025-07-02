@@ -6,8 +6,9 @@
 import gc
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import Literal
+from typing import Any, Literal, TypeVar
 
+import cattrs
 import pandas as pd
 from attrs import Factory, define, field, fields
 from attrs.validators import deep_iterable, ge, in_, instance_of
@@ -26,6 +27,8 @@ from baybe.serialization import (
     converter,
 )
 from baybe.utils.conversion import to_string
+
+_T = TypeVar("_T")
 
 
 @define
@@ -60,13 +63,7 @@ class TwoPhaseMetaRecommender(MetaRecommender):
     """Determines if the recommender should remain switched even if the number of
     experiments falls below the threshold value in subsequent calls."""
 
-    # TODO: These should **not** be exposed via the constructor but the workaround
-    #   is currently needed for correct (de-)serialization. A proper approach would be
-    #   to not set them via the constructor but through a custom hook in combination
-    #   with `_cattrs_include_init_false=True`. However, the way
-    #   `get_base_structure_hook` is currently designed prevents such a hook from
-    #   taking action.
-    _has_switched: bool = field(default=False, alias="_has_switched")
+    _has_switched: bool = field(init=False, default=False, alias="_has_switched")
     """Indicates if the switch has already occurred."""
 
     @override
@@ -108,16 +105,10 @@ class TwoPhaseMetaRecommender(MetaRecommender):
 class BaseSequentialMetaRecommender(MetaRecommender):
     """Base class for sequential meta recommenders."""
 
-    # TODO: These should **not** be exposed via the constructor but the workaround
-    #   is currently needed for correct (de-)serialization. A proper approach would be
-    #   to not set them via the constructor but through a custom hook in combination
-    #   with `_cattrs_include_init_false=True`. However, the way
-    #   `get_base_structure_hook` is currently designed prevents such a hook from
-    #   taking action.
-    _step: int = field(default=0, alias="_step", kw_only=True)
+    _step: int = field(init=False, default=0, alias="_step", kw_only=True)
     """An index pointing to the current position in the recommender sequence."""
 
-    _was_used: bool = field(default=False, alias="_was_used", kw_only=True)
+    _was_used: bool = field(init=False, default=False, alias="_was_used", kw_only=True)
     """Boolean flag indicating if the current recommender has been used."""
 
     _n_last_measurements: int = field(
@@ -309,6 +300,30 @@ class StreamingSequentialMetaRecommender(BaseSequentialMetaRecommender):
         ]
         return to_string(self.__class__.__name__, *fields)
 
+
+def _unstructure_privates(x: Any) -> dict[str, Any]:
+    """Unstructure an object with its private attributes."""
+    fn = cattrs.gen.make_dict_unstructure_fn(
+        type(x), converter, _cattrs_include_init_false=True
+    )
+    return fn(x)
+
+
+def _structure_privates(x: dict[str, Any], cls: type[_T]) -> _T:
+    """Structure an object with its private attributes."""
+    fn = cattrs.gen.make_dict_structure_fn(
+        cls, converter, _cattrs_include_init_false=True
+    )
+    return fn(x)
+
+
+# Register (un-)structure hooks
+converter.register_unstructure_hook(TwoPhaseMetaRecommender, _unstructure_privates)
+converter.register_structure_hook(TwoPhaseMetaRecommender, _structure_privates)
+converter.register_unstructure_hook(
+    BaseSequentialMetaRecommender, _unstructure_privates
+)
+converter.register_structure_hook(BaseSequentialMetaRecommender, _structure_privates)
 
 # The recommender iterable cannot be serialized
 converter.register_unstructure_hook(
