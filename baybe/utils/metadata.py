@@ -8,9 +8,11 @@ from attrs import define, field, fields
 from attrs.validators import deep_mapping, instance_of
 from attrs.validators import optional as optional_v
 
+from baybe.serialization.mixin import SerialMixin
+
 
 @define(frozen=True)
-class Metadata:
+class Metadata(SerialMixin):
     """Generic metadata containing description, unit, and additional information."""
 
     description: str | None = field(

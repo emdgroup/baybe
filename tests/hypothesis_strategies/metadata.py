@@ -1,0 +1,28 @@
+"""Hypothesis strategies for metadata."""
+
+import hypothesis.strategies as st
+
+from baybe.utils.metadata import Metadata
+
+
+@st.composite
+def metadata(draw: st.DrawFn):
+    """Generate :class:`baybe.utils.metadata.Metadata`.
+
+    Args:
+        draw: Hypothesis draw object.
+
+    Returns:
+        A :class:`baybe.utils.metadata.Metadata` instance.
+    """
+    description = draw(st.one_of(st.none(), st.text(min_size=1)))
+    unit = draw(st.one_of(st.none(), st.text(min_size=1)))
+    misc = draw(
+        st.dictionaries(
+            st.text(min_size=1),
+            st.one_of(st.text(), st.integers(), st.floats(allow_nan=False)),
+            max_size=5,
+        )
+    )
+
+    return Metadata(description=description, unit=unit, misc=misc)
