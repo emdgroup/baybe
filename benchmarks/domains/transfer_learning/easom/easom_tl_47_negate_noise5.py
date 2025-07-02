@@ -122,6 +122,13 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
     lookup = concat_lookups[concat_lookups["Function"] == "Target_Function"]
     initial_data = concat_lookups[concat_lookups["Function"] == "Source_Function"]
 
+    initial_data_samples = {}
+    for p in percentages:
+        with temporary_seed(settings.random_seed):
+            initial_data_samples[p] = [
+                initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+            ]
+
     results = []
     for p in percentages:
         results.append(
@@ -131,9 +138,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
-                initial_data=[
-                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
