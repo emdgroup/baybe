@@ -96,7 +96,7 @@ class BayesianRecommender(PureRecommender, ABC):
         # This fit applies internal caching and does not necessarily involve computation
         surrogate = (
             _autoreplicate(self._surrogate_model)
-            if objective.is_multi_output
+            if objective._is_multi_model
             else self._surrogate_model
         )
         surrogate.fit(searchspace, objective, measurements)
