@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for each target instead of for the desirability value
 - Specifying bounds for `Interval` is now optional
 
+### Fixed
+- The Python version specifier now also allows patch versions of Python 3.13
+
+
 ### Removed
 - Option to specify reference values for `add_fake_measurements`
 - `convert_bounds` utility (since now equivalent to `Interval.create`)
