@@ -258,3 +258,11 @@ def test_affine_transformation_chaining(series):
     tensor = to_tensor(series.values)
     assert chained == expected
     assert chained(tensor).equal(expected(tensor))
+
+
+def test_chained_transformation_equality():
+    """Length-one chained transformations are equivalent to their wrapped element."""
+    t1 = ExponentialTransformation()
+    t2 = ChainedTransformation([t1])
+    assert t1 == t2
+    assert t2 == t1

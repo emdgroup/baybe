@@ -53,6 +53,13 @@ class ChainedTransformation(Transformation):
     def __call__(self, x: Tensor, /) -> Tensor:
         return compose(*(t.__call__ for t in self.transformations))(x)
 
+    def __eq__(self, other: Transformation):
+        # Length-one chained transformations are considered equivalent to the
+        # the corresponding single transformation
+        if len(self.transformations) == 1:
+            return self.transformations[0] == other
+        return super().__eq__(other)
+
 
 @define
 class CustomTransformation(Transformation):
