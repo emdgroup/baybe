@@ -35,6 +35,11 @@ def series() -> pd.Series:
     return sample_input()
 
 
+@pytest.fixture
+def tensor() -> torch.Tensor:
+    return to_tensor(sample_input())
+
+
 @pytest.mark.parametrize("chained_first", [True, False])
 def test_transformation_chaining(chained_first):
     """Transformation chaining and flattening works as expected."""
@@ -98,9 +103,9 @@ def test_generic_transformation(series):
     t1 = NumericalTarget("t", AbsoluteTransformation())
     t2 = NumericalTarget("t", CustomTransformation(torch.abs))
     t3 = NumericalTarget("t", torch.abs)
-    t4 = NumericalTarget(
-        "t", torch.abs(IdentityTransformation())
-    )  # explicitly trigger __torch_function__
+
+    # explicitly trigger __torch_function__
+    t4 = NumericalTarget("t", torch.abs(IdentityTransformation()))
 
     transformed = t1.transform(series)
     assert_series_equal(transformed, t2.transform(series))
@@ -108,45 +113,37 @@ def test_generic_transformation(series):
     assert_series_equal(transformed, t4.transform(series))
 
 
-def test_transformation_addition(series):
+def test_transformation_addition(tensor):
     """Adding transformations results in chaining/shifting."""
-    t1 = NumericalTarget(
-        "t",
-        ChainedTransformation(
-            [AbsoluteTransformation(), AffineTransformation(shift=1)]
-        ),
+    t1 = ChainedTransformation(
+        [AbsoluteTransformation(), AffineTransformation(shift=1)]
     )
-    t2 = NumericalTarget("t", AbsoluteTransformation() + 1)
-    t3 = NumericalTarget("t", AbsoluteTransformation() + AffineTransformation(shift=1))
+    t2 = AbsoluteTransformation() + 1
+    t3 = AbsoluteTransformation() + AffineTransformation(shift=1)
 
-    transformed = t1.transform(series)
-    assert_series_equal(transformed, t2.transform(series))
-    assert_series_equal(transformed, t3.transform(series))
+    transformed = t1(tensor)
+    assert torch.equal(transformed, t2(tensor))
+    assert torch.equal(transformed, t3(tensor))
 
 
-def test_transformation_multiplication(series):
+def test_transformation_multiplication(tensor):
     """Multiplying transformations results in scaling."""
-    t1 = NumericalTarget(
-        "t",
-        ChainedTransformation(
-            [AbsoluteTransformation(), AffineTransformation(factor=2)]
-        ),
+    t1 = ChainedTransformation(
+        [AbsoluteTransformation(), AffineTransformation(factor=2)]
     )
-    t2 = NumericalTarget("t", AbsoluteTransformation() * 2)
-    t3 = NumericalTarget("t", AbsoluteTransformation() + AffineTransformation(factor=2))
+    t2 = AbsoluteTransformation() * 2
+    t3 = AbsoluteTransformation() + AffineTransformation(factor=2)
 
-    transformed = t1.transform(series)
-    assert_series_equal(transformed, t2.transform(series))
-    assert_series_equal(transformed, t3.transform(series))
+    transformed = t1(tensor)
+    assert torch.equal(transformed, t2(tensor))
+    assert torch.equal(transformed, t3(tensor))
 
 
-def test_torch_overloading(series):
+def test_torch_overloading(tensor):
     """Transformations can be passed to torch callables for chaining."""
-    t1 = NumericalTarget(
-        "t", AffineTransformation(factor=2) + CustomTransformation(torch.abs)
-    )
-    t2 = NumericalTarget("t", torch.abs(AffineTransformation(factor=2)))
-    assert_series_equal(t1.transform(series), t2.transform(series))
+    t1 = AffineTransformation(factor=2) + CustomTransformation(torch.abs)
+    t2 = torch.abs(AffineTransformation(factor=2))
+    torch.equal(t1(tensor), t2(tensor))
 
 
 def test_invalid_torch_overloading():
