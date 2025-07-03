@@ -136,6 +136,12 @@ class NumericalTarget(Target, SerialMixin):
         )
         self.__attrs_init__(legacy.name, transformation, minimize=minimize)
 
+    def __add__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(shift=other))
+
+    def __mul__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(factor=other))
+
     @classmethod
     def from_modern_interface(
         cls,
