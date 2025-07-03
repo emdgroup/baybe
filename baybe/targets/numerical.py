@@ -7,6 +7,7 @@ import warnings
 from collections.abc import Sequence
 from typing import Any, cast
 
+import numpy as np
 import pandas as pd
 from attrs import define, evolve, field
 from attrs.converters import optional
@@ -35,6 +36,7 @@ from baybe.transformations import (
     TriangularTransformation,
     convert_transformation,
 )
+from baybe.transformations.core import SigmoidTransformation
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 
@@ -343,6 +345,62 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation.from_points_mapped_to_unit_interval_bounds(
                 *bounds
             ).clamp(0, 1),
+        )
+
+    @classmethod
+    def normalize_sigmoid(
+        cls, name: str, anchors: Sequence[Sequence[float]]
+    ) -> NumericalTarget:
+        """Create a sigmoid target.
+
+        Args:
+            name: The name of the target.
+            anchors: The anchor points defining the sigmoid transformation.
+                Must be convertible to two pairs of floats, where each pair represents
+                an anchor point through which the sigmoid curve passes.
+
+        Returns:
+            The target with applied sigmoid transformation.
+
+        Raises:
+            ValueError: If the input given as anchors does not represent two points.
+            ValueError: If the ordinates of the anchors are not in the unit interval.
+
+        Example:
+            >>> from baybe.targets import NumericalTarget
+            >>> from pandas.testing import assert_series_equal
+            >>> p1 = (-2, 0.1)
+            >>> p2 = (5, 0.6)
+            >>> t = NumericalTarget.normalize_sigmoid("t", [p1, p2])
+            >>> out = t.transform(pd.Series([p1[0], p2[0]]))
+            >>> assert_series_equal(out, pd.Series([p1[1], p2[1]]))
+        """
+        import cattrs
+
+        # Extract point coordinates from the input
+        try:
+            anchors = cattrs.structure(
+                anchors, tuple[tuple[float, float], tuple[float, float]]
+            )  # type: ignore[call-arg]
+        except cattrs.IterableValidationError as ex:
+            raise ValueError(
+                f"The specified anchor point argument must be convertible to two "
+                f"pairs of floats. Given: {anchors}"
+            ) from ex
+        (x1, y1), (x2, y2) = anchors
+
+        if not ((0.0 < y1 < 1.0) and (0.0 < y2 < 1.0)):
+            raise ValueError(
+                f"The ordinates of the anchor points must be in the open "
+                f"interval (0, 1). Given: {y1=} and {y2=}."
+            )
+
+        k1 = np.log(1 / y1 - 1)
+        k2 = np.log(1 / y2 - 1)
+        shift = -(k2 * x1 - k1 * x2) / (k2 - k1)
+        steepness = (k2 - k1) / (x2 - x1)
+        return NumericalTarget(
+            name, AffineTransformation(shift=shift) + SigmoidTransformation(steepness)
         )
 
     @property

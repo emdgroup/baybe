@@ -398,6 +398,20 @@ class PowerTransformation(Transformation):
         return x.pow(self.exponent)
 
 
+@define(slots=False)
+class SigmoidTransformation(MonotonicTransformation):
+    """A sigmoid transformation."""
+
+    steepness: float = field(default=1.0, converter=float)
+    """The steepness of the sigmoid function."""
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        import torch
+
+        return 1 / (1 + torch.exp(self.steepness * x))
+
+
 # Register (un-)structure hooks
 converter.register_structure_hook(
     Transformation, get_base_structure_hook(Transformation)

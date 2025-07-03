@@ -12,6 +12,7 @@ from baybe.transformations.core import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     TriangularTransformation,
     TwoSidedLinearTransformation,
 )
@@ -38,6 +39,7 @@ __all__ = [
     "IdentityTransformation",
     "LogarithmicTransformation",
     "PowerTransformation",
+    "SigmoidTransformation",
     "TriangularTransformation",
     "TwoSidedLinearTransformation",
     # Utilities
