@@ -53,7 +53,9 @@ class Dummy:
         return "<dummy>"
 
 
-def is_all_instance(x: Collection[Any], t: type[_T], /) -> TypeGuard[Collection[_T]]:
+def is_all_instance(
+    x: Collection[Any], t: type[_T] | tuple[type[_T], ...], /
+) -> TypeGuard[Collection[_T]]:
     """Typeguard to check if all elements in a collection are of a certain type."""
     # IMPROVE: Ideally, the collection type should itself be abstracted away using a
     #   generic container type, but unclear how to achieve this with the typing system.
@@ -144,8 +146,8 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
     return {k: v for k, v in group.items() if len(v) > 1}
 
 
-def to_tuple(x: Sequence) -> tuple:
-    """Convert any sequence into a tuple.
+def to_tuple(x: Iterable) -> tuple:
+    """Convert any (finite-length) iterable into a tuple.
 
     This wrapper is only used to avoid mypy warnings for attrs converters:
     * https://github.com/python/mypy/issues/8417
@@ -353,3 +355,13 @@ def convert_to_float(
     if isinstance(x, Iterable):
         return cattrs.structure(x, tuple[float, ...])
     return float(x)
+
+
+def compose_two(f: Callable, g: Callable, /) -> Callable:
+    """Compose two given functions (first function is applied first)."""
+    return lambda *a, **kw: g(f(*a, **kw))
+
+
+def compose(*fs: Callable) -> Callable:
+    """Compose an arbitrary number of functions (first function is applied first)."""
+    return functools.reduce(compose_two, fs)

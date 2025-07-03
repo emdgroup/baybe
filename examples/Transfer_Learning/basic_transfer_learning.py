@@ -42,7 +42,7 @@ POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimen
 # The corresponding [Objective](baybe.objectives.base.Objective)
 # is created as follows:
 
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 
 ### Creating the Searchspace

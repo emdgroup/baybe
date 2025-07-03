@@ -7,7 +7,7 @@ from baybe.objectives.enum import Scalarizer
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget, TargetMode
-from baybe.targets.numerical import _VALID_TRANSFORMATIONS
+from baybe.targets._deprecated import _VALID_TRANSFORMATIONS
 
 from ..hypothesis_strategies.basic import finite_floats
 from ..hypothesis_strategies.targets import numerical_targets

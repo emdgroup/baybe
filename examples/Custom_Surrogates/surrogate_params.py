@@ -82,7 +82,7 @@ except TypeError as e:
 
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),

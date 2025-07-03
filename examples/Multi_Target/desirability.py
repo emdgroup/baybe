@@ -1,132 +1,108 @@
-## Example for using the multi target mode for the objective
+## Desirability Optimization
 
-# Example for using the multi target mode for the objective.
-# It uses a desirability value to handle several targets.
+# This example demonstrates how to set up a multi-target optimization problem using the
+# {class}`desirability approach <baybe.objectives.desirability.DesirabilityObjective>`.
+# The focus lies on defining the target objects with the necessary transformations
+# enabling the desirability computation, and the creation of the corresponding
+# optimization objective.
 
-# This example assumes some basic familiarity with using BayBE.
-# We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
 
-### Necessary imports for this example
+### Imports
 
 import pandas as pd
 
 from baybe import Campaign
 from baybe.objectives import DesirabilityObjective
-from baybe.parameters import CategoricalParameter, NumericalDiscreteParameter
-from baybe.searchspace import SearchSpace
+from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import add_fake_measurements
 
-### Experiment setup and creating the searchspace
+### Defining the Search Space
 
-Categorical_1 = CategoricalParameter("Cat_1", values=["22", "33"], encoding="OHE")
-Categorical_2 = CategoricalParameter(
-    "Cat_2",
-    values=["very bad", "bad", "OK", "good", "very good"],
-    encoding="INT",
-)
-Num_disc_1 = NumericalDiscreteParameter(
-    "Num_disc_1", values=[1, 2, 3, 4, 6, 8, 10], tolerance=0.3
-)
-Num_disc_2 = NumericalDiscreteParameter(
-    "Num_disc_2", values=[-1, -3, -6, -9], tolerance=0.3
-)
+# Because the search space is of secondary importance in this example, we keep it simple
+# and consider only a single parameter, without loss of generality:
 
-parameters = [Categorical_1, Categorical_2, Num_disc_1, Num_disc_2]
-
-searchspace = SearchSpace.from_product(parameters=parameters)
+searchspace = NumericalContinuousParameter("parameter", (0, 1)).to_searchspace()
 
 
-### Defining the targets
+### Defining the Targets
 
-# The multi target mode is handled when creating the objective object.
-# Thus we first need to define the different targets.
+# Next, we define our optimization targets. Because desirability computation relies on
+# averaging target values, it is required that all targets are properly normalized.
+# This can be achieved by applying appropriate target transformations, for which
+# BayBE offers several built-in choices and also offers full customization for
+# advanced use cases.
 
-# This examples has different targets with different modes.
-# The first target is maximized and while the second one is minimized.
-# Note that in this multi target mode, the user must specify bounds for each target.
+# ```{admonition} Target Normalization
+# :class: note
+# If you know what you are doing, you can also disable the normalization check
+# via the
+# {paramref}`~baybe.objectives.desirability.DesirabilityObjective.require_normalization`
+# flag, with the consequence that the selected averaging method is executed on the
+# target values no matter if they are normalized or not.
+# ```
 
-Target_1 = NumericalTarget(
-    name="Target_1", mode="MAX", bounds=(0, 100), transformation="LINEAR"
-)
-Target_2 = NumericalTarget(
-    name="Target_2", mode="MIN", bounds=(0, 100), transformation="LINEAR"
-)
+# For our example, we consider three simple targets reflecting different optimization
+# goals. The first target takes values in the interval [0, 100] and is to be maximized.
+# The {meth}`~baybe.targets.numerical.NumericalTarget.normalize_ramp` constructor helps
+# us achieve this by applying an affine transformation whose output is clamped to the
+# unit interval:
 
-# For each target it is also possible to specify a `target_transform` function.
-# A detailed discussion of this functionality can be found at the end of this example.
+target_max = NumericalTarget.normalize_ramp("target_max", cutoffs=(0, 100))
 
-# In this example, define a third target working with the mode `MATCH`.
-# We furthermore use `target_transform="BELL"`.
+# The second target takes values in the interval [-10, 0] and is to be minimized:
 
-Target_3 = NumericalTarget(
-    name="Target_3", mode="MATCH", bounds=(45, 55), transformation="BELL"
+target_min = NumericalTarget.normalize_ramp(
+    "target_min", cutoffs=(-10, 0), descending=True
 )
 
-# Note that the `MATCH` mode seeks to have the target at the mean between the two bounds.
-# For example, choosing 95 and 105 will lead the algorithm seeking 100 as the optimal value.
-# Thus, using the bounds, it is possible to control both the match target and
-# the range around this target that is considered viable.
+# For the third target, we like to match a certain value. To do so, we apply a target
+# transformation that penalizes the distance to this value using a
+# {meth}`bell-shaped curve <baybe.targets.numerical.NumericalTarget.match_bell>`
+# centered around it:
+
+target_match = NumericalTarget.match_bell("target_match", match_value=50, sigma=5)
+
+# ```{admonition} Customization
+# :class: note
+# Note that you can easily change the specifics of the applied transformations by
+# resorting to other target constructors or specifying custom transformation
+# logic. For more details, see our
+# {ref}`target userguide <userguide/targets:NumericalTarget>`.
+# ```
 
 
-### Creating the objective
+### Creating the Objective
 
-# Now to work with these three targets the objective object must be properly created.
-# The mode is set to `DESIRABILITY` and the targets are described in a list.
+# The targets are collected in a
+# {class}`~baybe.objectives.desirability.DesirabilityObjective`, which takes care of the
+# averaging process. The specifics of the averaging can be configured by specifying
+# optional weights for the targets and the type of averaging to be used:
 
-targets = [Target_1, Target_2, Target_3]
-
-# As the recommender requires a single function, the different targets need to be combined.
-# Thus, a `scalarizer` is used to create a single target out of the several targets given.
-# The combine function can either be the mean `MEAN` or the geometric mean `GEOM_MEAN`.
-# Per default, `GEOM_MEAN` is used.
-# Weights for each target can also be specified as a list of floats in the arguments
-# Per default, weights are equally distributed between all targets and are normalized internally.
-# It is thus not necessary to handle normalization or scaling.
+targets = [target_max, target_min, target_match]
+objective = DesirabilityObjective(targets, weights=[20, 20, 60], scalarizer="MEAN")
 
 
-objective = DesirabilityObjective(
-    targets=targets,
-    weights=[20, 20, 60],
-    scalarizer="MEAN",
-)
+### Getting Recommendations
 
-print(objective)
+# We can now use the objective, like any other, to
+# {doc}`query recommendations </userguide/getting_recommendations>`, e.g. by setting
+# up a {class}`~baybe.campaign.Campaign`:
 
-### Creating and printing the campaign
+campaign = Campaign(searchspace, objective)
+recommendations = campaign.recommend(batch_size=3)
+print(recommendations)
 
-campaign = Campaign(searchspace=searchspace, objective=objective)
-print(campaign)
 
-### Performing some iterations
+### Accessing Desirability Values
 
-# The following loop performs some recommendations and adds fake results.
-# It also prints what happens to internal data.
+# Once the target measurements are available, ...
 
-N_ITERATIONS = 3
+recommendations[target_max.name] = [65, 35, 87]
+recommendations[target_min.name] = [-8, -3, -5]
+recommendations[target_match.name] = [55, 25, 48]
 
-for kIter in range(N_ITERATIONS):
-    rec = campaign.recommend(batch_size=3)
-    add_fake_measurements(rec, campaign.targets)
-    campaign.add_measurements(rec)
-    desirability = campaign.objective.transform(campaign.measurements, allow_extra=True)
+# ... we can access the corresponding desirability values via the objective:
 
-    print(f"\n\n#### ITERATION {kIter + 1} ####")
-    print("\nRecommended measurements with fake measured results:\n")
-    print(rec)
-    print("\nInternal measurement database with desirability values:\n")
-    print(pd.concat([campaign.measurements, desirability], axis=1))
-
-### Addendum: Description of `transformation` functions
-
-# This function is used to transform target values to the interval `[0,1]` for `MAX`/`MIN` mode.
-# An ascending or decreasing `LINEAR` function is used per default.
-# This function maps input values in a specified interval [lower, upper] to the interval `[0,1]`.
-# Outside the specified interval, the function remains constant, that is, 0 or 1.
-
-# For the match mode, two functions are available `TRIANGULAR` and `BELL`.
-# The `TRIANGULAR` function is 0 outside a specified interval and linearly increases to 1 from both
-# interval ends, reaching the value 1 at the center of the interval.
-# This function is used per default for MATCH mode.
-# The `BELL` function is a Gaussian bell curve, specified through the boundary values of the sigma
-# interval, reaching the maximum value of 1 at the interval center.
+campaign.add_measurements(recommendations)
+desirability = objective.transform(recommendations, allow_extra=True)
+print(pd.concat([recommendations, desirability], axis=1))

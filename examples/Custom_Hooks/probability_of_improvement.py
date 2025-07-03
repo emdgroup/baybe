@@ -127,7 +127,7 @@ discrete_params = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=discrete_params)
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 campaign = Campaign(
     searchspace=searchspace,

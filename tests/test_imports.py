@@ -61,6 +61,8 @@ WHITELISTS = {
         "baybe.acquisition.partial",
         "baybe.acquisition._builder",
         "baybe.surrogates._adapter",
+        "baybe.targets.botorch",
+        "baybe.objectives.botorch",
         "baybe.utils.torch",
     ],
     "scipy": [
