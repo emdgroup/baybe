@@ -64,8 +64,9 @@ def compress_transformations(
 
     for t in _flatten_transformations(transformations):
         # Drop identity transformations
-        if isinstance(t, IdentityTransformation):
-            continue
+        match t:
+            case IdentityTransformation() | AffineTransformation(factor=1, shift=0):
+                continue
 
         # Combine subsequent affine transformations
         if (

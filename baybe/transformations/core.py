@@ -45,13 +45,17 @@ class ChainedTransformation(Transformation):
     """The transformations to be composed."""
 
     @override
-    def __new__(cls, transformations: Iterable[Transformation], /) -> Transformation:
+    def __new__(
+        cls, transformations: Iterable[Transformation], /
+    ) -> Transformation | None:
         # If only one transformation is provided, we return it directly instead of
         # wrapping it. This has the advantages of:
         # * Avoiding unnecessary wrappers
         # * Simplifying comparisons in such cases
         # * Not requiring us to allow length-one chained transformations
         compressed = compress_transformations(transformations)
+        if len(compressed) == 0:
+            return None
         if len(compressed) == 1:
             return compressed[0]
         return super().__new__(cls)

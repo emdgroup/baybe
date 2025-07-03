@@ -18,8 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including settings considered `MATCH` mode in the legacy interface, as well as targets
   used in `DesirabilityObjective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
-- `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to `NumericalTarget` for
-  easy creation of transformed targets from existing ones
+- `invert`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
+  `NumericalTarget` for easy creation of transformed targets from existing ones
 - `get_image` method to `NumericalTarget` for computing the images of transformed
   target value ranges
 - Support for non-normalized targets in `DesirabilityObjective`

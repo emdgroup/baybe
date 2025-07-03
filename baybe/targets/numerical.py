@@ -97,7 +97,10 @@ class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
     _transformation: Transformation | None = field(
-        alias="transformation", default=None, converter=optional(convert_transformation)
+        alias="transformation",
+        default=None,
+        converter=optional(convert_transformation),
+        eq=lambda x: x or IdentityTransformation(),
     )
     """An optional target transformation."""
 
@@ -366,6 +369,14 @@ class NumericalTarget(Target, SerialMixin):
             if self._transformation is None
             else ChainedTransformation([self._transformation, transformation]),
         )
+
+    def invert(self) -> NumericalTarget:
+        """Apply an inversion transformation to the target.
+
+        Returns:
+            The target with applied inversion transformation.
+        """
+        return self._append_transformation(AffineTransformation(factor=1))
 
     def normalize(self) -> NumericalTarget:
         """Normalize the target to the unit interval using an affine transformation.
