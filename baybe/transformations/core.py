@@ -7,6 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING
 
+import numpy as np
 from attrs import Factory, define, field
 from attrs.validators import deep_iterable, ge, instance_of, is_callable, min_len
 from typing_extensions import override
@@ -402,14 +403,68 @@ class PowerTransformation(Transformation):
 class SigmoidTransformation(MonotonicTransformation):
     """A sigmoid transformation."""
 
+    center: float = field(default=0.0, converter=float)
+    """The center of the sigmoid function, where it crosses 0.5."""
+
     steepness: float = field(default=1.0, converter=float)
     """The steepness of the sigmoid function."""
+
+    @classmethod
+    def from_anchors(cls, anchors: Sequence[Sequence[float]]) -> SigmoidTransformation:
+        """Create a sigmoid transformation from two anchor points.
+
+        Args:
+            anchors: The anchor points defining the sigmoid transformation.
+                Must be convertible to two pairs of floats, where each pair represents
+                an anchor point through which the sigmoid curve passes.
+
+        Raises:
+            ValueError: If the input given as anchors does not represent two points.
+            ValueError: If the ordinates of the anchors are not in the unit interval.
+
+        Returns:
+            A sigmoid transformation passing through the specified anchor points.
+
+        Example:
+            >>> import torch
+            >>> from pandas.testing import assert_series_equal
+            >>> p1 = (-2, 0.1)
+            >>> p2 = (5, 0.6)
+            >>> t = SigmoidTransformation.from_anchors([p1, p2])
+            >>> out = t(torch.tensor([p1[0], p2[0]]))
+            >>> assert torch.equal(out, torch.tensor([p1[1], p2[1]]))
+        """
+        import cattrs
+
+        # Extract point coordinates from the input
+        try:
+            anchors = cattrs.structure(
+                anchors, tuple[tuple[float, float], tuple[float, float]]
+            )  # type: ignore[call-arg]
+        except cattrs.IterableValidationError as ex:
+            raise ValueError(
+                f"The specified anchor point argument must be convertible to two "
+                f"pairs of floats. Given: {anchors}"
+            ) from ex
+        (x1, y1), (x2, y2) = anchors
+
+        if not ((0.0 < y1 < 1.0) and (0.0 < y2 < 1.0)):
+            raise ValueError(
+                f"The ordinates of the anchor points must be in the open "
+                f"interval (0, 1). Given: {y1=} and {y2=}."
+            )
+
+        k1 = np.log(1 / y1 - 1)
+        k2 = np.log(1 / y2 - 1)
+        shift = (k2 * x1 - k1 * x2) / (k2 - k1)
+        steepness = (k2 - k1) / (x2 - x1)
+        return SigmoidTransformation(shift, steepness)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         import torch
 
-        return 1 / (1 + torch.exp(self.steepness * x))
+        return 1 / (1 + torch.exp(self.steepness * (x - self.center)))
 
 
 # Register (un-)structure hooks
