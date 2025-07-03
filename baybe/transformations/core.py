@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING
 
@@ -36,13 +36,25 @@ class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
     transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
+        converter=tuple,
         validator=[
-            min_len(1),
+            min_len(2),
             deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )
     """The transformations to be composed."""
+
+    @override
+    def __new__(cls, transformations: Iterable[Transformation], /) -> Transformation:
+        # If only one transformation is provided, we return it directly instead of
+        # wrapping it. This has the advantages of:
+        # * Avoiding unnecessary wrappers
+        # * Simplifying comparisons in such cases
+        # * Not requiring us to allow length-one chained transformations
+        compressed = compress_transformations(transformations)
+        if len(compressed) == 1:
+            return compressed[0]
+        return super().__new__(cls)
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -52,13 +64,6 @@ class ChainedTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return compose(*(t.__call__ for t in self.transformations))(x)
-
-    def __eq__(self, other: Transformation):
-        # Length-one chained transformations are considered equivalent to the
-        # the corresponding single transformation
-        if len(self.transformations) == 1:
-            return self.transformations[0] == other
-        return super().__eq__(other)
 
 
 @define
