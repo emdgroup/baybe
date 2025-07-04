@@ -13,7 +13,7 @@ from baybe.serialization.mixin import SerialMixin
 
 @define(frozen=True)
 class Metadata(SerialMixin):
-    """Generic metadata containing description, unit, and additional information."""
+    """Metadata providing description, unit, and other information for BayBE objects."""
 
     description: str | None = field(
         default=None, validator=optional_v(instance_of(str))
@@ -52,7 +52,7 @@ def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
 
     if not isinstance(value, dict):
         raise TypeError(
-            f"The input must be dictionary or '{Metadata.__name__}' instance. "
+            f"The input must be a dictionary or a '{Metadata.__name__}' instance. "
             f"Got: {type(value)}"
         )
 

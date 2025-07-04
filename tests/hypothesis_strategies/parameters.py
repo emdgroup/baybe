@@ -115,7 +115,6 @@ def numerical_discrete_parameters(
                 exclude_max=True,
             )
         )
-    # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
     return NumericalDiscreteParameter(
         name=name, values=values, tolerance=tolerance, metadata=param_metadata
@@ -127,7 +126,6 @@ def numerical_continuous_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.numerical.NumericalContinuousParameter`."""
     name = draw(parameter_names)
     bounds = draw(intervals(exclude_half_bounded=True, exclude_fully_unbounded=True))
-    # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
     return NumericalContinuousParameter(
         name=name, bounds=bounds, metadata=param_metadata
@@ -141,9 +139,7 @@ def categorical_parameters(draw: st.DrawFn):
     values = draw(categories)
     encoding = draw(st.sampled_from(CategoricalEncoding))
     active_values = draw(_active_values(values))
-    # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
-
     return CategoricalParameter(
         name=name,
         values=values,
@@ -159,7 +155,6 @@ def task_parameters(draw: st.DrawFn):
     name = draw(parameter_names)
     values = draw(categories)
     active_values = draw(_active_values(values))
-    # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
     return TaskParameter(
         name=name, values=values, active_values=active_values, metadata=param_metadata
@@ -179,6 +174,7 @@ def substance_parameters(draw: st.DrawFn):
     encodings.remove(SubstanceEncoding.MORGAN_FP)
     encodings.remove(SubstanceEncoding.RDKIT)
     encoding = draw(st.sampled_from(encodings))
+
     # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
 
@@ -199,9 +195,7 @@ def custom_parameters(draw: st.DrawFn):
     data = draw(custom_descriptors())
     decorrelate = draw(decorrelations)
     active_values = draw(_active_values(data.index.values))
-    # Optionally generate metadata
     param_metadata = draw(st.one_of(st.none(), metadata()))
-
     return CustomDiscreteParameter(
         name=name,
         data=data,
