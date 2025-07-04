@@ -3,7 +3,22 @@
 import pytest
 from pytest import param
 
-from baybe.utils.metadata import to_metadata
+from baybe.utils.metadata import Metadata, to_metadata
+
+
+@pytest.mark.parametrize(
+    ("description", "unit", "misc", "match"),
+    [
+        param(0, None, None, "must be <class 'str'>", id="desc-non-str"),
+        param(None, 0, None, "must be <class 'str'>", id="unit-non-str"),
+        param(None, None, 0, "must be <class 'dict'>", id="misc-non-dict"),
+        param(None, None, {0: 0}, "must be <class 'str'>", id="misc-non-str-keys"),
+    ],
+)
+def test_invalid_arguments(description, unit, misc, match):
+    """Providing invalid arguments raises an error."""
+    with pytest.raises(TypeError, match=match):
+        Metadata(description, unit, misc)
 
 
 @pytest.mark.parametrize(
