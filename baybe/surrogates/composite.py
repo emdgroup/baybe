@@ -15,7 +15,7 @@ from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.mixin import SerialMixin
-from baybe.surrogates.base import PosteriorStatistic, Surrogate, SurrogateProtocol
+from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import handle_missing_values
@@ -179,24 +179,28 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         return pd.concat(dfs, axis=1)
 
 
+def _get_surrogate_getter_type(type: str) -> type[_SurrogateGetter]:
+    """Retrieve the concrete {class}`SurrogateGetter` type from its serialized name."""
+    if type == _ReplicationMapping.__name__:
+        return _ReplicationMapping[SurrogateProtocol]
+    elif type == "dict":
+        return dict[str, SurrogateProtocol]
+    else:
+        raise NotImplementedError(
+            f"No implementation of '{_SurrogateGetter.__name__}' found for '{type}'."
+        )
+
+
 def _structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
-    """Resolve the object type."""
-    if (type_ := obj.pop("type")) == _ReplicationMapping.__name__:
-        return converter.structure(obj, _ReplicationMapping[SurrogateProtocol])
-    elif type_ == "dict":
-        return converter.structure(obj, dict[str, SurrogateProtocol])
-    raise NotImplementedError(f"No structure hook implemented for '{type_}'.")
+    """Structure into the specified type."""
+    container_type = _get_surrogate_getter_type(obj.pop("type"))
+    return converter.structure(obj, container_type)
 
 
 def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Add the object type information."""
     type_ = type(obj).__name__
-    if isinstance(obj, dict):
-        container_type = dict[str, SurrogateProtocol]
-    elif isinstance(obj, _ReplicationMapping):
-        container_type = _ReplicationMapping[Surrogate]
-    else:
-        raise NotImplementedError(f"No unstructure hook implemented for '{type_}'.")
+    container_type = _get_surrogate_getter_type(type_)
     return {
         "type": type_,
         **converter.unstructure(obj, unstructure_as=container_type),
