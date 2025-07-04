@@ -2,6 +2,7 @@
 
 import pytest
 from pandas.testing import assert_frame_equal
+from pytest import param
 
 from baybe._optional.info import POLARS_INSTALLED
 from baybe.searchspace.discrete import (
@@ -122,6 +123,10 @@ def test_polars_exclusion(mock_substances, parameters, constraints):
 
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_7"]])
+@pytest.mark.xfail(
+    strict=True,
+    reason="https://github.com/pola-rs/polars/issues/23187#issuecomment-2983037337",
+)
 def test_polars_label_duplicates(parameters, constraints):
     """Tests Polars implementation of no-label duplicates constraint."""
     ldf = _lazyframe_from_product(parameters)
@@ -141,6 +146,10 @@ def test_polars_label_duplicates(parameters, constraints):
 
 @pytest.mark.parametrize("parameter_names", [["Solvent_1", "Solvent_2", "Solvent_3"]])
 @pytest.mark.parametrize("constraint_names", [["Constraint_15"]])
+@pytest.mark.xfail(
+    strict=True,
+    reason="https://github.com/pola-rs/polars/issues/23187#issuecomment-2983037337",
+)
 def test_polars_linked_parameters(parameters, constraints):
     """Tests Polars implementation of linked parameters constraint."""
     ldf = _lazyframe_from_product(parameters)
@@ -177,7 +186,13 @@ def test_polars_linked_parameters(parameters, constraints):
     [
         ["Constraint_4"],
         ["Constraint_12"],
-        ["Constraint_15", "Constraint_8", "Constraint_9"],
+        param(
+            ["Constraint_15", "Constraint_8", "Constraint_9"],
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason="https://github.com/pola-rs/polars/issues/23187#issuecomment-2983037337",
+            ),
+        ),
     ],
 )
 def test_polars_product(constraints, parameters):
