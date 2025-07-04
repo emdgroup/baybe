@@ -29,7 +29,7 @@ _T = TypeVar("_T")
 
 
 class _SurrogateGetter(Protocol):
-    """A index-based mapping from strings to surrogates."""
+    """An index-based mapping from strings to surrogates."""
 
     def __getitem__(self, key: str) -> SurrogateProtocol: ...
 
@@ -193,8 +193,8 @@ def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     type_ = type(obj).__name__
     if isinstance(obj, dict):
         return {
-            "type": type_,
-            **{k: v.to_dict(add_type=True) for k, v in obj.items()},
+            "type": type(obj).__name__,
+            **converter.unstructure(obj, unstructure_as=dict[str, SurrogateProtocol]),
         }
     elif isinstance(obj, _ReplicationMapping):
         return {
