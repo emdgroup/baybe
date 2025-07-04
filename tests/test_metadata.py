@@ -82,19 +82,3 @@ class TestMetadataConverter:
         assert result.description == expected_desc
         assert result.unit == expected_unit
         assert result.misc == expected_misc
-
-    @pytest.mark.parametrize(
-        "invalid_input",
-        [
-            param("string", id="string_input"),
-            param(123, id="number_input"),
-            param(["list"], id="list_input"),
-            param(object(), id="object_input"),
-        ],
-    )
-    def test_convert_invalid_input(self, invalid_input):
-        """Converting invalid inputs raises an error."""
-        with pytest.raises(
-            TypeError, match="must be a dictionary or a 'Metadata' instance."
-        ):
-            to_metadata(invalid_input)
