@@ -14,6 +14,7 @@ from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
+from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
@@ -193,18 +194,15 @@ def _get_surrogate_getter_type(type: str) -> type[_SurrogateGetter]:
 
 def _structure_surrogate_getter(obj: dict, _) -> _SurrogateGetter:
     """Structure into the specified type."""
-    container_type = _get_surrogate_getter_type(obj.pop("type"))
+    container_type = _get_surrogate_getter_type(obj.pop(_TYPE_FIELD))
     return converter.structure(obj, container_type)
 
 
+@add_type
 def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
-    """Add the object type information."""
-    type_ = type(obj).__name__
-    container_type = _get_surrogate_getter_type(type_)
-    return {
-        "type": type_,
-        **converter.unstructure(obj, unstructure_as=container_type),
-    }
+    """Unstructure as the concrete type."""
+    container_type = _get_surrogate_getter_type(type(obj).__name__)
+    return converter.unstructure(obj, unstructure_as=container_type)
 
 
 converter.register_structure_hook_func(
