@@ -1256,15 +1256,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-317           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-116  Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
-233           DMAc      Cesium acetate                     BrettPhos   
+    Solvent               Base                        Ligand  Temperature  \
+247    DMAc    Cesium pivalate                 (t-Bu)PhCPhos        105.0   
+280    DMAc  Potassium acetate                     BrettPhos         90.0   
+268    DMAc    Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
 
-     Temperature  Concentration  
-317         90.0          0.153  
-116        120.0          0.153  
-233        120.0          0.153  
+     Concentration  
+247            0.1  
+280            0.1  
+268            0.1  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1273,15 +1273,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-317           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-116  Butyornitrile      Cesium acetate                 (t-Bu)PhCPhos   
-233           DMAc      Cesium acetate                     BrettPhos   
+    Solvent               Base                        Ligand  Temperature  \
+247    DMAc    Cesium pivalate                 (t-Bu)PhCPhos        105.0   
+280    DMAc  Potassium acetate                     BrettPhos         90.0   
+268    DMAc    Cesium pivalate  Di-tert-butylphenylphosphine        120.0   
 
-     Temperature  Concentration      yield  
-317         90.0          0.153  17.872469  
-116        120.0          0.153  31.548860  
-233        120.0          0.153  10.513448  
+     Concentration      yield  
+247            0.1  28.778994  
+280            0.1   3.606713  
+268            0.1  27.386741  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
