@@ -192,16 +192,15 @@ def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Add the object type information."""
     type_ = type(obj).__name__
     if isinstance(obj, dict):
-        return {
-            "type": type(obj).__name__,
-            **converter.unstructure(obj, unstructure_as=dict[str, SurrogateProtocol]),
-        }
+        container_type = dict[str, SurrogateProtocol]
     elif isinstance(obj, _ReplicationMapping):
-        return {
-            "type": type_,
-            **converter.unstructure(obj, unstructure_as=_ReplicationMapping[Surrogate]),
-        }
-    raise NotImplementedError(f"No unstructure hook implemented for '{type_}'.")
+        container_type = _ReplicationMapping[Surrogate]
+    else:
+        raise NotImplementedError(f"No unstructure hook implemented for '{type_}'.")
+    return {
+        "type": type_,
+        **converter.unstructure(obj, unstructure_as=container_type),
+    }
 
 
 converter.register_structure_hook_func(
