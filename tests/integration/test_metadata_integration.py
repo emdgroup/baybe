@@ -1,5 +1,7 @@
 """Integration tests for metadata with BayBE components."""
 
+import pytest
+
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.utils.metadata import Metadata
 
@@ -7,46 +9,22 @@ from baybe.utils.metadata import Metadata
 class TestParameterMetadataIntegration:
     """Tests for metadata integration with Parameter class."""
 
-    def test_parameter_with_metadata_dict(self):
-        """Test parameter accepts metadata as dict."""
+    @pytest.mark.parametrize("as_dict", [True, False])
+    def test_parameter_with_metadata(self, as_dict: bool):
+        """Parameters accept, ingest, and surface metadata."""
+        meta = Metadata(description="test", unit="m", misc={"key": "value"})
         param = NumericalDiscreteParameter(
-            name="test_param",
-            values=(1.0, 2.0, 3.0),
-            metadata={"description": "test parameter", "unit": "kg"},
+            name="p",
+            values=(1, 2),
+            metadata=meta.to_dict() if as_dict else meta,
         )
-        assert param.description == "test parameter"
-        assert param.unit == "kg"
-        assert param.metadata.misc == {}
-
-    def test_parameter_with_metadata_instance(self):
-        """Test parameter accepts Metadata instance."""
-        meta = Metadata(description="direct metadata", unit="m")
-        param = NumericalDiscreteParameter(
-            name="test_param", values=(1.0, 2.0, 3.0), metadata=meta
-        )
-        assert param.description == "direct metadata"
+        assert param.description == "test"
         assert param.unit == "m"
-        assert param.metadata is meta
+        assert param.metadata.misc == {"key": "value"}
 
     def test_parameter_without_metadata(self):
-        """Test parameter without metadata has None properties."""
-        param = NumericalDiscreteParameter(name="test_param", values=(1.0, 2.0, 3.0))
+        """Parameters without metadata have ``None`` properties."""
+        param = NumericalDiscreteParameter(name="p", values=(1, 2))
         assert param.metadata is None
         assert param.description is None
         assert param.unit is None
-
-    def test_parameter_metadata_with_misc(self):
-        """Test parameter metadata preserves misc fields."""
-        param = NumericalDiscreteParameter(
-            name="test_param",
-            values=(1.0, 2.0, 3.0),
-            metadata={
-                "description": "test",
-                "unit": "kg",
-                "custom_field": "custom_value",
-                "priority": 1,
-            },
-        )
-        assert param.description == "test"
-        assert param.unit == "kg"
-        assert param.metadata.misc == {"custom_field": "custom_value", "priority": 1}
