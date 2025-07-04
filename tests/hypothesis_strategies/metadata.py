@@ -1,6 +1,7 @@
 """Hypothesis strategies for metadata."""
 
 import hypothesis.strategies as st
+from hypothesis import assume
 
 from baybe.utils.metadata import Metadata
 
@@ -17,4 +18,5 @@ def metadata(draw: st.DrawFn):
             max_size=5,
         )
     )
+    assume(not Metadata._explicit_fields.intersection(misc))
     return Metadata(description=description, unit=unit, misc=misc)
