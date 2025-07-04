@@ -58,6 +58,7 @@ def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
 
     # Separate known fields from unknown ones
     flds = fields(Metadata)
+    value = value.copy()
     known_fields = {
         fld: value.pop(fld, None) for fld in (flds.description.name, flds.unit.name)
     }
