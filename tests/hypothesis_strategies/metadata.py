@@ -7,14 +7,7 @@ from baybe.utils.metadata import Metadata
 
 @st.composite
 def metadata(draw: st.DrawFn):
-    """Generate :class:`baybe.utils.metadata.Metadata`.
-
-    Args:
-        draw: Hypothesis draw object.
-
-    Returns:
-        A :class:`baybe.utils.metadata.Metadata` instance.
-    """
+    """Generate :class:`baybe.utils.metadata.Metadata`."""
     description = draw(st.one_of(st.none(), st.text(min_size=1)))
     unit = draw(st.one_of(st.none(), st.text(min_size=1)))
     misc = draw(
@@ -24,5 +17,4 @@ def metadata(draw: st.DrawFn):
             max_size=5,
         )
     )
-
     return Metadata(description=description, unit=unit, misc=misc)
