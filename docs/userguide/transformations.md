@@ -434,3 +434,51 @@ t3 = t2.clamp(min=-1)
 t4 = t3 + 5
 t5 = t4 * 10
 ```
+
+## Custom Transformations
+
+If none of the [pre-defined transformations](#pre-defined-transformations) fit your
+needs and [chaining them](#chaining-transformations) does also not bring you to the
+desired result, you can easily define your custom logic using the
+{class}`~baybe.transformations.core.CustomTransformation` class, which accepts any
+one-argument `torch` callable as transformation function:
+
+```python
+import torch
+from baybe.transformations import CustomTransformation
+
+t = CustomTransformation(torch.sin)
+```
+
+When embedding such transformations into another certain context, the wrapping happens
+automatically, so you can use them just like any other built-in transformation:
+
+```python
+import torch
+from baybe.targets import NumericalTarget
+from baybe.transformations import CustomTransformation
+
+t = NumericalTarget(name="Sinusoid Target", transformation=torch.sin)
+```
+
+A convenient feature is that you can chain custom transformations with built-in ones
+directly, without needing to explicitly wrap them. Here is an example, demonstrating the
+same chaining operation from the most concise to the most explicit construction:
+
+```python
+import torch
+from baybe.transformations import (
+    AbsoluteTransformation,
+    ChainedTransformation,
+    CustomTransformation,
+)
+
+t1 = torch.sin(AbsoluteTransformation()) 
+t2 = AbsoluteTransformation() + torch.sin
+t3 = AbsoluteTransformation() + CustomTransformation(torch.sin)
+t4 = AbsoluteTransformation().chain(CustomTransformation(torch.sin))
+t5 = ChainedTransformation([AbsoluteTransformation(), CustomTransformation(torch.sin)])
+assert t1 == t2 == t3 == t4 == t5
+```
+
+
