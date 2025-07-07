@@ -3,7 +3,7 @@
 import json
 from typing import TypeVar
 
-from baybe.serialization.core import _TYPE_FIELD, converter
+from baybe.serialization.core import _add_type_to_dict, converter
 
 _T = TypeVar("_T", bound="SerialMixin")
 
@@ -26,7 +26,7 @@ class SerialMixin:
         """
         dct = converter.unstructure(self)
         if add_type:
-            dct[_TYPE_FIELD] = self.__class__.__name__
+            dct = _add_type_to_dict(dct, self.__class__.__name__)
         return dct
 
     @classmethod
