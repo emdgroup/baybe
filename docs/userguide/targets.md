@@ -130,6 +130,16 @@ The following is a non-comprehensive overview – for a complete list, please r
   target = NumericalTarget.normalize_ramp(name="Yield", bounds=(0, 1), descending=True)
   ```
 
+  You can also create a normalized version of an existing target by calling its
+  {meth}`~baybe.targets.numerical.NumericalTarget.normalize` method, provided the latter
+  already maps to a bounded domain. For brevity and demonstration purposes, we show an
+  example using [method chaining](method-chaining): 
+
+  ```python
+  target = NumericalTarget(name="Yield").power(2).clamp(1).normalize()
+  ```
+
+(method-chaining)=
 * **Creation from existing targets**: Targets can also be quickly created from existing
   ones by calling certain transformation methods on them (see
   {class}`~baybe.targets.numerical.NumericalTarget` for all options).
@@ -142,6 +152,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   t4 = t3.abs()
   t5 = t4.power(2)
   t6 = t5.clamp(max=100)
+  t7 = t6.normalize()
   ```
 
 ## Limitations
