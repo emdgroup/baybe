@@ -80,8 +80,8 @@ def triangular_transformations(draw: st.DrawFn) -> TriangularTransformation:  # 
         )
     # Unclear how to avoid these situations upfront, so dropping sample if they occur
     except hypothesis.errors.InvalidArgument:
-        # The cutoffs must be chosen such that there always exists at least one
-        # additional floating point number between them for the peak
+        # This situation happens when the cutoffs are extreme so that there exists no
+        # floating point number between them for the peak
         assume(False)
 
     try:
