@@ -419,3 +419,18 @@ compresses the resulting chain to remove redundancies, by
 * combining successive affine transformations,
 * and removing the chaining wrapper if not needed. 
 ```
+
+## Creation from Existing Transformations
+
+For common chaining operation, BayBE provides a set convenience methods that
+allow you to quickly create new transformations from existing ones
+(see {class}`~baybe.transformations.base.Transformation` for all options):
+
+```python
+t = IdentityTransformation()  # start with **any** existing transformation
+t1 = t.abs() 
+t2 = t.negate()  
+t3 = t2.clamp(min=-1)
+t4 = t3 + 5
+t5 = t4 * 10
+```
