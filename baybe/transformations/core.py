@@ -307,7 +307,8 @@ class TriangularTransformation(Transformation):
         if np.isinf([slope_left, slope_right]).any():
             raise OverflowError(
                 "The triangular transformation could not be initialized because "
-                "of numerical problems representing the slopes."
+                "the cutoffs are too close to the peak, leading to numerical overflow "
+                "when computing the slopes."
             )
         self._transformation = (
             TwoSidedLinearTransformation(
