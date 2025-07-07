@@ -83,6 +83,7 @@ def triangular_transformations(draw: st.DrawFn) -> TriangularTransformation:  # 
         # The cutoffs must be chosen such that there always exists at least one
         # additional floating point number between them for the peak
         assume(False)
+
     try:
         return TriangularTransformation(cutoffs, peak)
     except OverflowError:
