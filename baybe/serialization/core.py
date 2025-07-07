@@ -29,14 +29,24 @@ converter = cattrs.Converter(
 """The default converter for (de-)serializing BayBE-related objects."""
 
 
+def _add_type_to_dict(dct: dict[str, Any], type: str, /) -> dict[str, Any]:
+    """Safely add type information to an existing dictionary."""
+    if _TYPE_FIELD in dct:
+        raise ValueError(
+            f"Cannot add type information to the dictionary since it already contains "
+            f"a '{_TYPE_FIELD}' field."
+        )
+    dct[_TYPE_FIELD] = type
+    return dct
+
+
 def add_type(hook: UnstructureHook) -> UnstructureHook:
     """Wrap a given hook to add type information to the unstructured object."""
 
     def wrapper(obj: Any, /) -> dict[str, Any]:
         """Unstructure an object and add its type information."""
-        result = hook(obj)
-        result[_TYPE_FIELD] = obj.__class__.__name__
-        return result
+        dct = hook(obj)
+        return _add_type_to_dict(dct, obj.__class__.__name__)
 
     return wrapper
 
