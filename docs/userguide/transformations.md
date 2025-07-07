@@ -387,3 +387,35 @@ t_skew1 = TriangularTransformation(cutoffs=(1, 3), peak=2)
 t_skew2 = TriangularTransformation.from_margins(peak=2, margins=(1, 3))
 assert t_skew1 == t_skew2
 ```
+
+## Chaining Transformations
+
+Instead of applying [individual transformations](#pre-defined-transformations) directly,
+you can also use them as building blocks to enable more complex types of operations.
+This is enabled through the {class}`~baybe.transformations.core.ChainedTransformation`
+class, which allows you to combine multiple transformations into a single one. The
+transformations are applied in sequence, with the output of one transformation serving
+as the input to the next.
+
+```python
+from baybe.transformations import ChainTransformation
+
+twosided = TwoSidedLinearTransformation(left_slope=0, right_slope=1)
+power = PowerTransformation(power=2)
+
+# Create a transformation representing a one-sided square function
+t1 = ChainTransformation([twosided, power])  # explicit construction
+t2 = twosided + power  # using transformation arithmetic
+t3 = twosided.chain(power)  # via method chaining
+assert t1 == t2 == t3
+```
+
+```{admonition} Compression
+:class: note
+
+BayBE is smart when it comes to chaining transformations in that it automatically
+compresses the resulting chain to remove redundancies, by
+* dropping unnecessary identity transformations,
+* combining successive affine transformations,
+* and removing the chaining wrapper if not needed. 
+```
