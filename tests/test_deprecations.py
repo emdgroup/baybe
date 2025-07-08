@@ -19,7 +19,6 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
-    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
@@ -27,18 +26,10 @@ from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-
-
-def test_samples_full_factorial():
-    """Using the deprecated `samples_full_factorial` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
 
 
 def test_subspace_transform_interface(searchspace):

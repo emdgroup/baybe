@@ -591,16 +591,6 @@ class SubspaceContinuous(SerialMixin):
         ]
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
 
-    def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
-        """Deprecated!"""  # noqa: D401
-        warnings.warn(
-            f"The method '{SubspaceContinuous.samples_full_factorial.__name__}' "
-            f"has been deprecated and will be removed in a future version. "
-            f"Use '{SubspaceContinuous.sample_from_full_factorial.__name__}' instead.",
-            DeprecationWarning,
-        )
-        return self.sample_from_full_factorial(n_points)
-
     def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw parameter configurations from the full factorial of the space.
 
