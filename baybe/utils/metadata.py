@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar
 
 import cattrs
 from attrs import define, field, fields
@@ -11,6 +11,8 @@ from attrs.validators import optional as optional_v
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.basic import classproperty
+
+TMetaData = TypeVar("TMetaData", bound="Metadata")
 
 
 @define(frozen=True)
@@ -49,44 +51,48 @@ class Metadata(SerialMixin):
         return {fld.name for fld in flds if fld.name != flds.misc.name}
 
 
-def to_metadata(value: dict[str, Any] | Metadata, /) -> Metadata:
+def to_metadata(
+    value: dict[str, Any] | TMetaData, cls: type[TMetaData], /
+) -> TMetaData:
     """Convert a dictionary to :class:`Metadata` (with :class:`Metadata` passthrough).
 
     Args:
         value: The metadata input.
+        cls: The specific :class:`Metadata` subclass to convert to.
 
     Returns:
-        The :class:`Metadata` instance.
+        The created metadata instance of the requested :class:`Metadata` subclass.
 
     Raises:
-        TypeError: If the input is not a dictionary or :class:`Metadata`.
+        TypeError: If the input is not a dictionary or of the specified
+            :class:`Metadata` type.
     """
-    if isinstance(value, Metadata):
+    if isinstance(value, cls):
         return value
 
     if not isinstance(value, dict):
         raise TypeError(
-            f"The input must be a dictionary or a '{Metadata.__name__}' instance. "
+            f"The input must be a dictionary or a '{cls.__name__}' instance. "
             f"Got: {type(value)}"
         )
 
     # Separate known fields from unknown ones
-    return converter.structure(value, Metadata)
+    return converter.structure(value, cls)
 
 
 @converter.register_structure_hook
-def _separate_metadata_fields(dct: dict[str, Any], _: type[Metadata]) -> Metadata:
+def _separate_metadata_fields(dct: dict[str, Any], cls: type[Metadata]) -> Metadata:
     """Separate known fields from miscellaneous metadata."""
     dct = dct.copy()
-    explicit = {fld: dct.pop(fld, None) for fld in Metadata._explicit_fields}
-    return Metadata(**explicit, misc=dct)
+    explicit = {fld: dct.pop(fld, None) for fld in cls._explicit_fields}
+    return cls(**explicit, misc=dct)
 
 
 @converter.register_unstructure_hook
 def _flatten_misc_metadata(metadata: Metadata) -> dict[str, Any]:
     """Flatten the metadata for serialization."""
-    fn = cattrs.gen.make_dict_unstructure_fn(Metadata, converter)
+    cls = type(metadata)
+    fn = cattrs.gen.make_dict_unstructure_fn(cls, converter)
     dct = fn(metadata)
-    fld = fields(Metadata).misc.name
-    dct = dct | dct.pop(fld)
+    dct = dct | dct.pop(fields(Metadata).misc.name)
     return dct
