@@ -3,7 +3,8 @@
 import pytest
 from pytest import param
 
-from baybe.utils.metadata import Metadata, to_metadata
+from baybe.parameters.base import ParameterMetadata
+from baybe.utils.metadata import to_metadata
 
 
 class TestMetadata:
@@ -11,14 +12,16 @@ class TestMetadata:
 
     def test_metadata_creation_basic(self):
         """All metadata attributes are properly populated."""
-        meta = Metadata(description="test", unit="kg", misc={"custom_field": "value"})
+        meta = ParameterMetadata(
+            description="test", unit="kg", misc={"custom_field": "value"}
+        )
         assert meta.description == "test"
         assert meta.unit == "kg"
         assert meta.misc == {"custom_field": "value"}
 
     def test_metadata_creation_defaults(self):
         """Metadata can be created with no content."""
-        meta = Metadata()
+        meta = ParameterMetadata()
         assert meta.description is None
         assert meta.unit is None
         assert meta.misc == {}
@@ -29,8 +32,8 @@ class TestMetadataConverter:
 
     def test_convert_metadata_instance(self):
         """The converter passes through Metadata instances unchanged."""
-        meta = Metadata(description="test")
-        result = to_metadata(meta)
+        meta = ParameterMetadata(description="test")
+        result = to_metadata(meta, ParameterMetadata)
         assert result is meta
 
     @pytest.mark.parametrize(
@@ -77,8 +80,8 @@ class TestMetadataConverter:
         self, input_dict, expected_desc, expected_unit, expected_misc
     ):
         """Conversion from dict properly separates known and unknown attributes."""
-        result = to_metadata(input_dict)
-        assert isinstance(result, Metadata)
+        result = to_metadata(input_dict, ParameterMetadata)
+        assert isinstance(result, ParameterMetadata)
         assert result.description == expected_desc
         assert result.unit == expected_unit
         assert result.misc == expected_misc
