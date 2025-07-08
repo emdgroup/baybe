@@ -1,17 +1,28 @@
 """Test serialization of metadata."""
 
+import hypothesis.strategies as st
+import pytest
 from hypothesis import given
+from pytest import param
 
 from baybe.utils.metadata import Metadata, to_metadata
+from tests.hypothesis_strategies.metadata import metadata, parameter_metadata
 
-from ..hypothesis_strategies.metadata import metadata
 
-
-@given(metadata())
-def test_metadata_roundtrip(meta: Metadata):
+@pytest.mark.parametrize(
+    "metadata_strategy",
+    [
+        param(metadata(), id="Metadata"),
+        param(parameter_metadata(), id="ParameterMetadata"),
+    ],
+)
+@given(data=st.data())
+def test_metadata_roundtrip(data, metadata_strategy):
     """A serialization roundtrip yields an equivalent object."""
+    meta = data.draw(metadata_strategy)
+    cls = type(meta)
     string = meta.to_json()
-    meta2 = Metadata.from_json(string)
+    meta2 = cls.from_json(string)
     assert meta == meta2, (meta, meta2)
 
 
