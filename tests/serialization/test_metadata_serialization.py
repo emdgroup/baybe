@@ -5,6 +5,7 @@ import pytest
 from hypothesis import given
 from pytest import param
 
+from baybe.parameters.base import ParameterMetadata
 from baybe.utils.metadata import Metadata, to_metadata
 from tests.hypothesis_strategies.metadata import metadata, parameter_metadata
 
@@ -26,10 +27,18 @@ def test_metadata_roundtrip(data, metadata_strategy):
     assert meta == meta2, (meta, meta2)
 
 
-def test_field_separation():
-    """Field separation works regardless of the conversion route."""
+@pytest.mark.parametrize("cls", [Metadata, ParameterMetadata])
+def test_field_separation(cls: type[Metadata]):
+    """Field separation adapts to the specific ``Metadata`` subclass and works
+    regardless of the conversion route.
+    """  # noqa: D205
     dct = {"description": "test", "unit": "m", "key": "value"}
-    metadata = Metadata("test", "m", {"key": "value"})
-    via_converter = to_metadata(dct)
-    via_from_dict = Metadata.from_dict(dct)
+    if cls is Metadata:
+        metadata = cls(description="test", misc={"unit": "m", "key": "value"})
+    elif issubclass(cls, ParameterMetadata):
+        metadata = cls(description="test", unit="m", misc={"key": "value"})
+    else:
+        raise ValueError(f"Unsupported class: {cls}")
+    via_converter = to_metadata(dct, cls)
+    via_from_dict = cls.from_dict(dct)
     assert metadata == via_converter == via_from_dict
