@@ -185,17 +185,17 @@ class AffineTransformation(MonotonicTransformation):
 
 
 @define(slots=False)
-class TwoSidedLinearTransformation(Transformation):
-    """A transformation with two linear segments on either side of a midpoint."""
+class TwoSidedAffineTransformation(Transformation):
+    """A transformation with two affine segments on either side of a midpoint."""
 
     slope_left: float = field(converter=float)
-    """The slope of the linear segment to the left of the midpoint."""
+    """The slope of the affine segment to the left of the midpoint."""
 
     slope_right: float = field(converter=float)
-    """The slope of the linear segment to the right of the midpoint."""
+    """The slope of the affine segment to the right of the midpoint."""
 
     midpoint: float = field(default=0.0, converter=float)
-    """The midpoint where the two linear segments meet."""
+    """The midpoint where the two affine segments meet."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -256,7 +256,7 @@ class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
     _transformation: Transformation = field(
-        factory=lambda: TwoSidedLinearTransformation(slope_left=-1, slope_right=1),
+        factory=lambda: TwoSidedAffineTransformation(slope_left=-1, slope_right=1),
         init=False,
         repr=False,
     )
@@ -309,7 +309,7 @@ class TriangularTransformation(Transformation):
     @_transformation.default
     def _default_transformation(self) -> Transformation:
         return (
-            TwoSidedLinearTransformation(
+            TwoSidedAffineTransformation(
                 slope_left=1 / self.margins[0],
                 slope_right=-1 / self.margins[1],
                 midpoint=self.peak,

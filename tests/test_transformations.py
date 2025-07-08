@@ -20,7 +20,7 @@ from baybe.transformations import (
     LogarithmicTransformation,
     PowerTransformation,
     TriangularTransformation,
-    TwoSidedLinearTransformation,
+    TwoSidedAffineTransformation,
 )
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
@@ -159,9 +159,9 @@ c = 1
 id = IdentityTransformation()
 clamp = ClampingTransformation(min=2, max=5)
 aff = AffineTransformation(factor=2, shift=1)
-ts_v = TwoSidedLinearTransformation(slope_left=-4, slope_right=5, midpoint=2)
-ts_l = TwoSidedLinearTransformation(slope_left=2, slope_right=5, midpoint=2)
-ts_n = TwoSidedLinearTransformation(slope_left=4, slope_right=-5, midpoint=2)
+ts_v = TwoSidedAffineTransformation(slope_left=-4, slope_right=5, midpoint=2)
+ts_l = TwoSidedAffineTransformation(slope_left=2, slope_right=5, midpoint=2)
+ts_n = TwoSidedAffineTransformation(slope_left=4, slope_right=-5, midpoint=2)
 bell = BellTransformation(center=c, sigma=2)
 abs = AbsoluteTransformation()
 tri = TriangularTransformation(cutoffs=(2, 8), peak=4)
