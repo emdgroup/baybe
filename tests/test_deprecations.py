@@ -25,7 +25,6 @@ from baybe.parameters.numerical import (
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
-    SequentialGreedyRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -33,12 +32,6 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-
-
-def test_sequentialgreedyrecommender_class():
-    """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        SequentialGreedyRecommender()
 
 
 def test_samples_random():

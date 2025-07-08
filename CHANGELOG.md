@@ -34,6 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
 
+### Expired Deprecations (from 0.10.*)
+- `SequentialGreedyRecommender` class
+
+
 ## [0.13.1] - 2025-06-06
 ### Added
 - Support for Python 3.13
