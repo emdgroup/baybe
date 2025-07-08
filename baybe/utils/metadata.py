@@ -45,9 +45,9 @@ class Metadata(SerialMixin):
             )
 
     @classproperty
-    def _explicit_fields(self) -> set[str]:
+    def _explicit_fields(cls) -> set[str]:
         """The explicit metadata fields."""  # noqa: D401
-        flds = fields(Metadata)
+        flds = fields(cls)
         return {fld.name for fld in flds if fld.name != flds.misc.name}
 
 
