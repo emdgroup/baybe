@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   target value ranges
 - Support for non-normalized targets in `DesirabilityObjective`
 - `Objective.to_botorch` method for converting objectives to BoTorch
+- `qEHVI` and `qLogEHVI` acquisition functions (in addition to their noisy variants)
 - Tests for migrating to new `NumericalTarget` interface
 
 ### Changed

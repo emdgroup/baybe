@@ -1,5 +1,7 @@
 """Available acquisition functions."""
 
+from __future__ import annotations
+
 import gc
 import math
 from abc import ABC
@@ -355,9 +357,6 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
       the coordinates of the reference point.
     """
 
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
-
     @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
@@ -428,10 +427,45 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
 
 @define(frozen=True)
+class qExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Monte Carlo based expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qEHVI"
+
+    alpha: float | None = field(default=None, converter=optional_c(float))
+    """An optional threshold parameter controlling the shape of the partitioning."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qExpectedHypervolumeImprovement)
+        return (flds.alpha.name, flds.reference_point.name)
+
+
+@define(frozen=True)
+class qLogExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Logarithmic Monte Carlo based expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogEHVI"
+
+    alpha: float | None = field(default=None, converter=optional_c(float))
+    """An optional threshold parameter controlling the shape of the partitioning."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        flds = fields(qLogExpectedHypervolumeImprovement)
+        return (flds.alpha.name, flds.reference_point.name)
+
+
+@define(frozen=True)
 class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 @define(frozen=True)
@@ -439,6 +473,9 @@ class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
