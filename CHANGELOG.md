@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `Metadata` class providing description, unit, and other information for BayBE objects
+- `Metadata` class providing class providing basic information for BayBE objects
+- `ParameterMetadata` class providing metadata for `Parameter` objects
 
 ## [0.13.2] - 2025-07-09
 ### Changed

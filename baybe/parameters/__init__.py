@@ -1,5 +1,6 @@
 """BayBE parameters."""
 
+from baybe.parameters.base import ParameterMetadata
 from baybe.parameters.categorical import CategoricalParameter, TaskParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import (
@@ -12,14 +13,13 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceParameter
-from baybe.utils.metadata import Metadata
 
 __all__ = [
     "CategoricalEncoding",
     "CategoricalParameter",
     "CustomDiscreteParameter",
     "CustomEncoding",
-    "Metadata",
+    "ParameterMetadata",
     "NumericalContinuousParameter",
     "NumericalDiscreteParameter",
     "SubstanceEncoding",

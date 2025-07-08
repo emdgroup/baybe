@@ -12,6 +12,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.parameters.enum import ParameterEncoding
@@ -33,6 +34,14 @@ if TYPE_CHECKING:
 #   https://github.com/python-attrs/attrs/issues/164
 
 
+@define(frozen=True)
+class ParameterMetadata(Metadata):
+    """Class providing metadata for BayBE :class:`Parameter` objects."""
+
+    unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
+    """The unit of measurement for the parameter."""
+
+
 @define(frozen=True, slots=False)
 class Parameter(ABC, SerialMixin):
     """Abstract base class for all parameters.
@@ -49,8 +58,10 @@ class Parameter(ABC, SerialMixin):
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
-    metadata: Metadata | None = field(
-        default=None, converter=optional_c(to_metadata), kw_only=True
+    metadata: ParameterMetadata | None = field(
+        default=None,
+        converter=optional_c(lambda x: to_metadata(x, ParameterMetadata)),
+        kw_only=True,
     )
     """Optional metadata containing description, unit, and other information."""
 
