@@ -32,29 +32,6 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
 
-def test_subspace_transform_interface(searchspace):
-    """Using the deprecated transform interface raises a warning."""
-    # Not providing `allow_extra` when there are additional columns
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-
-    # Passing dataframe via `data`
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
-
-
 def test_surrogate_registration():
     """Using the deprecated registration mechanism raises a warning."""
     from baybe.surrogates import register_custom_architecture

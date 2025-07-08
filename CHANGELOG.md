@@ -38,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SequentialGreedyRecommender` class
 - `SubspaceContinuous.samples_random` method
 - `SubspaceContinuous.samples_full_factorial` method
+- `data` argument to `transform` method of search space classes
+- Automatically setting `allow_extra=True` in `transform` methods of search space
+  classes when left unspecified
 
 ## [0.13.1] - 2025-06-06
 ### Added
