@@ -15,15 +15,12 @@ from baybe.utils.basic import classproperty
 
 @define(frozen=True)
 class Metadata(SerialMixin):
-    """Metadata providing description, unit, and other information for BayBE objects."""
+    """Metadata class providing basic information for BayBE objects."""
 
     description: str | None = field(
         default=None, validator=optional_v(instance_of(str))
     )
     """A description of the object."""
-
-    unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
-    """The unit of measurement for the object."""
 
     misc: dict[str, Any] = field(
         factory=dict,
@@ -33,6 +30,7 @@ class Metadata(SerialMixin):
             # FIXME: https://github.com/python-attrs/attrs/issues/1246
             value_validator=lambda *x: None,
         ),
+        kw_only=True,
     )
     """Additional user-defined metadata."""
 
