@@ -34,13 +34,6 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
 
-def test_samples_random():
-    """Using the deprecated `samples_random` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_random(n_points=1)
-
-
 def test_samples_full_factorial():
     """Using the deprecated `samples_full_factorial` method raises a warning."""
     with pytest.warns(DeprecationWarning):

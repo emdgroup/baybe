@@ -460,16 +460,6 @@ class SubspaceContinuous(SerialMixin):
         # Transform the parameters
         return df[[p.name for p in parameters]]
 
-    def samples_random(self, n_points: int = 1) -> pd.DataFrame:
-        """Deprecated!"""  # noqa: D401
-        warnings.warn(
-            f"The method '{SubspaceContinuous.samples_random.__name__}' "
-            f"has been deprecated and will be removed in a future version. "
-            f"Use '{SubspaceContinuous.sample_uniform.__name__}' instead.",
-            DeprecationWarning,
-        )
-        return self.sample_uniform(n_points)
-
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
 

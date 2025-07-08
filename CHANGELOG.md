@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Expired Deprecations (from 0.10.*)
 - `SequentialGreedyRecommender` class
+- `SubspaceContinuous.samples_random` method
 
 
 ## [0.13.1] - 2025-06-06
