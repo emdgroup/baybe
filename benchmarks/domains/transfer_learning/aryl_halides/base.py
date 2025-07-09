@@ -112,7 +112,7 @@ def aryl_halide_tl_substance_benchmark(
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
-    objective = SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
+    objective = SingleTargetObjective(NumericalTarget(name="yield"))
 
     tl_campaign = Campaign(
         searchspace=searchspace,
