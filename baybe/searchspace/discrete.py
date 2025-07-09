@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import os
-import warnings
 from collections.abc import Collection, Sequence
 from itertools import compress
 from math import prod
@@ -592,44 +591,13 @@ class SubspaceDiscrete(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame | None = None,
+        df: pd.DataFrame,
         /,
         *,
         allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
+        allow_extra: bool = False,
     ) -> pd.DataFrame:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the data to be transformed as first positional argument."
-            )
-
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
-
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df.columns) - {p.name for p in self.parameters}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
-
         # Extract the parameters to be transformed
         parameters = get_transform_objects(
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
