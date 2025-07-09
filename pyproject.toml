@@ -127,11 +127,11 @@ examples = [
 ]
 
 lint = [
-    "flake8==7.2.0", # see DEV TOOLS NOTE
-    "pre-commit==3.7.1", # see DEV TOOLS NOTE
+    "flake8==7.3.0", # see DEV TOOLS NOTE
+    "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
-    "pyupgrade==3.19.1", # see DEV TOOLS NOTE
-    "ruff==0.11.5", # see DEV TOOLS NOTE
+    "pyupgrade==3.20.0", # see DEV TOOLS NOTE
+    "ruff==0.12.2", # see DEV TOOLS NOTE
 ]
 
 mypy = [
