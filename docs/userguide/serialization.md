@@ -228,11 +228,25 @@ task_parameter_reconstructed = Parameter.from_json(task_parameter_json)
 assert task_parameter == task_parameter_reconstructed
 ```
 
-```{note} 
-When serializing an object that belongs to a class hierarchy, BayBE automatically
-injects the `type` field into the serialization string to enable frictionless deserialization
-at a later stage.
+````{note} 
+When serializing objects that appear in contexts where the concrete type information
+would be lost during serialization (e.g. an object that populates an abstractly
+annotated attribute of a second object, such as a
+{class}`~baybe.parameters.categorical.CategoricalParameter` assigned to a
+{class}`~baybe.parameters.base.Parameter` attribute), BayBE automatically injects the
+`type` field into the hierarchical serialization string to enable frictionless
+deserialization at a later stage.
+
+At the root level of the hierarchy, you can manually decide whether to include the
+`type` field or not, by passing the `add_type` argument to the corresponding
+serialization method:
+```python
+from baybe.parameters import CategoricalParameter
+
+p = CategoricalParameter(name="Setting", values=["low", "high"])
+p_json = p.to_json(add_type=True)  # includes the "type" field
 ```
+````
 
 ### Using abbreviations
 Classes that have an `abbreviation` class variable defined can be conveniently
