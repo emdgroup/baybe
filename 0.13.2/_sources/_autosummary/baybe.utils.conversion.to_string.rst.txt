@@ -1,0 +1,6 @@
+baybe.utils.conversion.to\_string
+=================================
+
+.. currentmodule:: baybe.utils.conversion
+
+.. autofunction:: to_string

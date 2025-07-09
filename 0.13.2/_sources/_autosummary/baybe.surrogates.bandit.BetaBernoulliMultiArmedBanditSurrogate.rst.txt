@@ -1,0 +1,42 @@
+BetaBernoulliMultiArmedBanditSurrogate
+======================================
+
+.. currentmodule:: baybe.surrogates.bandit
+
+.. autoclass:: BetaBernoulliMultiArmedBanditSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BetaBernoulliMultiArmedBanditSurrogate.__init__
+      ~BetaBernoulliMultiArmedBanditSurrogate.fit
+      ~BetaBernoulliMultiArmedBanditSurrogate.from_dict
+      ~BetaBernoulliMultiArmedBanditSurrogate.from_json
+      ~BetaBernoulliMultiArmedBanditSurrogate.posterior
+      ~BetaBernoulliMultiArmedBanditSurrogate.posterior_means
+      ~BetaBernoulliMultiArmedBanditSurrogate.posterior_modes
+      ~BetaBernoulliMultiArmedBanditSurrogate.posterior_stats
+      ~BetaBernoulliMultiArmedBanditSurrogate.replicate
+      ~BetaBernoulliMultiArmedBanditSurrogate.to_botorch
+      ~BetaBernoulliMultiArmedBanditSurrogate.to_dict
+      ~BetaBernoulliMultiArmedBanditSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BetaBernoulliMultiArmedBanditSurrogate.prior
+      ~BetaBernoulliMultiArmedBanditSurrogate.supports_multi_output
+      ~BetaBernoulliMultiArmedBanditSurrogate.supports_transfer_learning
+   
+   

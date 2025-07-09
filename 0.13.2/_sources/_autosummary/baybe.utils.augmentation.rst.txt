@@ -1,0 +1,31 @@
+baybe.utils.augmentation
+========================
+
+.. automodule:: baybe.utils.augmentation
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      df_apply_dependency_augmentation
+      df_apply_permutation_augmentation
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

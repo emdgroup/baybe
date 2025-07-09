@@ -1,0 +1,36 @@
+ParetoObjective
+===============
+
+.. currentmodule:: baybe.objectives.pareto
+
+.. autoclass:: ParetoObjective
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ParetoObjective.__init__
+      ~ParetoObjective.from_dict
+      ~ParetoObjective.from_json
+      ~ParetoObjective.to_dict
+      ~ParetoObjective.to_json
+      ~ParetoObjective.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ParetoObjective.is_multi_output
+      ~ParetoObjective.n_outputs
+      ~ParetoObjective.targets
+   
+   

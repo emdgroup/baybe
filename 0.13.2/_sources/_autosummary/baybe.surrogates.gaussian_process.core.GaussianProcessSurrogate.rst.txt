@@ -1,0 +1,41 @@
+GaussianProcessSurrogate
+========================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.core
+
+.. autoclass:: GaussianProcessSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~GaussianProcessSurrogate.__init__
+      ~GaussianProcessSurrogate.fit
+      ~GaussianProcessSurrogate.from_dict
+      ~GaussianProcessSurrogate.from_json
+      ~GaussianProcessSurrogate.from_preset
+      ~GaussianProcessSurrogate.posterior
+      ~GaussianProcessSurrogate.posterior_stats
+      ~GaussianProcessSurrogate.replicate
+      ~GaussianProcessSurrogate.to_botorch
+      ~GaussianProcessSurrogate.to_dict
+      ~GaussianProcessSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~GaussianProcessSurrogate.kernel_factory
+      ~GaussianProcessSurrogate.supports_multi_output
+      ~GaussianProcessSurrogate.supports_transfer_learning
+   
+   

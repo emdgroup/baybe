@@ -1,0 +1,37 @@
+baybe.recommenders.pure.bayesian
+================================
+
+.. automodule:: baybe.recommenders.pure.bayesian
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   base
+
+   botorch
+
+   sequential_greedy
+

@@ -1,0 +1,6 @@
+baybe.exceptions.UnusedObjectWarning
+====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: UnusedObjectWarning

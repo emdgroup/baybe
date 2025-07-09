@@ -1,0 +1,36 @@
+LogExpectedImprovement
+======================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: LogExpectedImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LogExpectedImprovement.__init__
+      ~LogExpectedImprovement.evaluate
+      ~LogExpectedImprovement.from_dict
+      ~LogExpectedImprovement.from_json
+      ~LogExpectedImprovement.to_botorch
+      ~LogExpectedImprovement.to_dict
+      ~LogExpectedImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~LogExpectedImprovement.abbreviation
+      ~LogExpectedImprovement.supports_multi_output
+   
+   

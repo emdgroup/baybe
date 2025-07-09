@@ -1,0 +1,42 @@
+CustomONNXSurrogate
+===================
+
+.. currentmodule:: baybe.surrogates.custom
+
+.. autoclass:: CustomONNXSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CustomONNXSurrogate.__init__
+      ~CustomONNXSurrogate.fit
+      ~CustomONNXSurrogate.from_dict
+      ~CustomONNXSurrogate.from_json
+      ~CustomONNXSurrogate.posterior
+      ~CustomONNXSurrogate.posterior_stats
+      ~CustomONNXSurrogate.replicate
+      ~CustomONNXSurrogate.to_botorch
+      ~CustomONNXSurrogate.to_dict
+      ~CustomONNXSurrogate.to_json
+      ~CustomONNXSurrogate.validate_compatibility
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CustomONNXSurrogate.onnx_input_name
+      ~CustomONNXSurrogate.onnx_str
+      ~CustomONNXSurrogate.supports_multi_output
+      ~CustomONNXSurrogate.supports_transfer_learning
+   
+   

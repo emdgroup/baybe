@@ -1,0 +1,38 @@
+PeriodicKernel
+==============
+
+.. currentmodule:: baybe.kernels.basic
+
+.. autoclass:: PeriodicKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PeriodicKernel.__init__
+      ~PeriodicKernel.from_dict
+      ~PeriodicKernel.from_json
+      ~PeriodicKernel.to_dict
+      ~PeriodicKernel.to_factory
+      ~PeriodicKernel.to_gpytorch
+      ~PeriodicKernel.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PeriodicKernel.lengthscale_prior
+      ~PeriodicKernel.lengthscale_initial_value
+      ~PeriodicKernel.period_length_prior
+      ~PeriodicKernel.period_length_initial_value
+   
+   

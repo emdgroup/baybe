@@ -1,0 +1,314 @@
+# Example for the serialization of a campaign
+
+This example shows how to serialize and also de-serialize a campaign.
+It demonstrates and shows that the "original" and "new" objects behave the same.
+
+This example assumes some basic familiarity with using BayBE.
+We thus refer to [`campaign`](./../Basics/campaign.md) for a basic example.
+
+## Necessary imports
+
+
+```python
+import numpy as np
+```
+
+
+```python
+from baybe import Campaign
+from baybe.objectives import SingleTargetObjective
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalDiscreteParameter,
+)
+from baybe.recommenders import (
+    BotorchRecommender,
+    FPSRecommender,
+    TwoPhaseMetaRecommender,
+)
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+```
+
+## Experiment setup
+
+
+```python
+parameters = [
+    CategoricalParameter(
+        name="Granularity",
+        values=["coarse", "medium", "fine"],
+        encoding="OHE",
+    ),
+    NumericalDiscreteParameter(
+        name="Pressure[bar]",
+        values=[1, 5, 10],
+        tolerance=0.2,
+    ),
+    NumericalDiscreteParameter(
+        name="Temperature[degree_C]",
+        values=np.linspace(100, 200, 10),
+    ),
+]
+```
+
+## Creating the campaign
+
+
+```python
+campaign = Campaign(
+    searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    recommender=TwoPhaseMetaRecommender(
+        recommender=BotorchRecommender(),
+        initial_recommender=FPSRecommender(),
+    ),
+)
+```
+
+## Serialization and de-serialization
+
+We begin by printing the original campaign
+
+
+```python
+print("Original object")
+print(campaign, end="\n" * 3)
+```
+
+    Original object
+    Campaign
+       Meta Data
+          Batches done: 0
+          Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/90
+             Measured: 0/90
+             Excluded: 0/90
+       SearchSpace
+          Search Space Type: DISCRETE
+          SubspaceDiscrete
+             Discrete Parameters
+                                    Name                        Type  ...
+Encoding nActiveValues
+                0            Granularity        CategoricalParameter  ...
+CategoricalEncoding.OHE           3.0
+                1          Pressure[bar]  NumericalDiscreteParameter  ...
+None           NaN
+                2  Temperature[degree_C]  NumericalDiscreteParameter  ...
+None           NaN
+                
+                [3 rows x 5 columns]
+             Experimental Representation
+                   Granularity  Pressure[bar]  Temperature[degr
+                0       coarse            1.0          100.000 
+                1       coarse            1.0          111.111 
+                2       coarse            1.0          122.222 
+                ..         ...            ...              ... 
+                87      medium           10.0          177.778 
+                88      medium           10.0          188.889 
+                89      medium           10.0          200.000 
+                
+                [90 rows x 3 columns]
+             Constraints
+                Empty DataFrame
+                Columns: []
+                Index: []
+             Computational Representation
+                    Granularity_coar  Granularity_fine  ...  Pressure[bar]
+Temperature[degr
+                0               1.0               0.0   ...            1.0
+100.000
+                1               1.0               0.0   ...            1.0
+111.111
+                2               1.0               0.0   ...            1.0
+122.222
+                ..              ...               ...   ...            ...
+...
+                87              0.0               0.0   ...           10.0
+177.778
+                88              0.0               0.0   ...           10.0
+188.889
+                89              0.0               0.0   ...           10.0
+200.000
+                
+                [90 rows x 5 columns]
+       Objective
+          Type: SingleTargetObjective
+          Targets
+                           Type   Name  ... Upper_Bound  Transformation
+             0  NumericalTarget  Yield  ...         inf            None
+             
+             [1 rows x 6 columns]
+       TwoPhaseMetaRecommender
+          Initial recommender
+             FPSRecommender
+                Compatibility: SearchSpaceType.DISCRETE
+          Recommender
+             BotorchRecommender
+                Surrogate
+                   GaussianProcessSurrogate
+                      Supports Transfer Learning: True
+                      Kernel factory: DefaultKernelFactory()
+                Acquisition function: None
+                Compatibility: SearchSpaceType.HYBRID
+                Sequential continuous: True
+                Hybrid sampler: None
+                Sampling percentage: 1.0
+          Switch after: 1
+          Remain switched: False
+          Has switched: False
+    
+    
+
+
+We next serialize the campaign to JSON.
+This yields a JSON representation in string format.
+Since it is rather complex, we do not print this string here.
+Note: Dataframes are binary-encoded and are hence not human-readable.
+
+
+```python
+string = campaign.to_json()
+```
+
+Deserialize the JSON string back to an object.
+
+
+```python
+print("Deserialized object")
+campaign_recreate = Campaign.from_json(string)
+print(campaign_recreate, end="\n" * 3)
+```
+
+    Deserialized object
+    Campaign
+       Meta Data
+          Batches done: 0
+          Fits done: 0
+          Discrete Subspace Meta Data
+             Recommended: 0/90
+             Measured: 0/90
+             Excluded: 0/90
+       SearchSpace
+          Search Space Type: DISCRETE
+          SubspaceDiscrete
+             Discrete Parameters
+                                    Name                        Type  ...
+Encoding nActiveValues
+                0            Granularity        CategoricalParameter  ...
+CategoricalEncoding.OHE           3.0
+                1          Pressure[bar]  NumericalDiscreteParameter  ...
+None           NaN
+                2  Temperature[degree_C]  NumericalDiscreteParameter  ...
+None           NaN
+                
+                [3 rows x 5 columns]
+             Experimental Representation
+                   Granularity  Pressure[bar]  Temperature[degr
+                0       coarse            1.0          100.000 
+                1       coarse            1.0          111.111 
+                2       coarse            1.0          122.222 
+                ..         ...            ...              ... 
+                87      medium           10.0          177.778 
+                88      medium           10.0          188.889 
+                89      medium           10.0          200.000 
+                
+                [90 rows x 3 columns]
+             Constraints
+                Empty DataFrame
+                Columns: []
+                Index: []
+             Computational Representation
+                    Granularity_coar  Granularity_fine  ...  Pressure[bar]
+Temperature[degr
+                0               1.0               0.0   ...            1.0
+100.000
+                1               1.0               0.0   ...            1.0
+111.111
+                2               1.0               0.0   ...            1.0
+122.222
+                ..              ...               ...   ...            ...
+...
+                87              0.0               0.0   ...           10.0
+177.778
+                88              0.0               0.0   ...           10.0
+188.889
+                89              0.0               0.0   ...           10.0
+200.000
+                
+                [90 rows x 5 columns]
+       Objective
+          Type: SingleTargetObjective
+          Targets
+                           Type   Name  ... Upper_Bound  Transformation
+             0  NumericalTarget  Yield  ...         inf            None
+             
+             [1 rows x 6 columns]
+       TwoPhaseMetaRecommender
+          Initial recommender
+             FPSRecommender
+                Compatibility: SearchSpaceType.DISCRETE
+          Recommender
+             BotorchRecommender
+                Surrogate
+                   GaussianProcessSurrogate
+                      Supports Transfer Learning: True
+                      Kernel factory: DefaultKernelFactory()
+                Acquisition function: None
+                Compatibility: SearchSpaceType.HYBRID
+                Sequential continuous: True
+                Hybrid sampler: None
+                Sampling percentage: 1.0
+          Switch after: 1
+          Remain switched: False
+          Has switched: False
+    
+    
+
+
+Verify that both objects are equal.
+
+
+```python
+assert campaign == campaign_recreate
+print("Passed basic assertion check!")
+```
+
+    Passed basic assertion check!
+
+
+## Comparing recommendations in both objects
+
+To further show how serialization affects working with campaigns, we will now
+create and compare some recommendations in both campaigns.
+
+
+```python
+recommendation_orig = campaign.recommend(batch_size=2)
+recommendation_recreate = campaign_recreate.recommend(batch_size=2)
+```
+
+
+```python
+print("Recommendation from original object:")
+print(recommendation_orig)
+```
+
+    Recommendation from original object:
+       Granularity  Pressure[bar]  Temperature[degree_C]
+    0       coarse            1.0                  100.0
+    59        fine           10.0                  200.0
+
+
+
+```python
+print("Recommendation from recreated object:")
+print(recommendation_recreate)
+```
+
+    Recommendation from recreated object:
+       Granularity  Pressure[bar]  Temperature[degree_C]
+    0       coarse            1.0                  100.0
+    59        fine           10.0                  200.0
+

@@ -1,0 +1,6 @@
+baybe.utils.basic.hilberts\_factory
+===================================
+
+.. currentmodule:: baybe.utils.basic
+
+.. autofunction:: hilberts_factory

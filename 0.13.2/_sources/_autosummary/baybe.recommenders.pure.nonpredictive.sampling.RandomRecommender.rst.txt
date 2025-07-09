@@ -1,0 +1,33 @@
+RandomRecommender
+=================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.sampling
+
+.. autoclass:: RandomRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~RandomRecommender.__init__
+      ~RandomRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~RandomRecommender.allow_recommending_already_measured
+      ~RandomRecommender.allow_recommending_pending_experiments
+      ~RandomRecommender.allow_repeated_recommendations
+      ~RandomRecommender.compatibility
+   
+   
