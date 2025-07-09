@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent               Base                        Ligand  \
-    296           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    375       p-Xylene    Cesium pivalate  Di-tert-butylphenylphosphine   
-    147  Butyornitrile    Cesium pivalate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    161  Butyornitrile     Cesium pivalate  Di-tert-butylphenylphosphine   
+    416       p-Xylene  Potassium pivalate                     BrettPhos   
+    15     Butyl Ester      Cesium acetate                     BrettPhos   
     
          Temperature  Concentration  
-    296        120.0          0.153  
-    375        120.0          0.057  
-    147        105.0          0.057  
+    161        120.0          0.153  
+    416         90.0          0.153  
+    15         120.0          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent               Base                        Ligand  \
-    296           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    375       p-Xylene    Cesium pivalate  Di-tert-butylphenylphosphine   
-    147  Butyornitrile    Cesium pivalate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    161  Butyornitrile     Cesium pivalate  Di-tert-butylphenylphosphine   
+    416       p-Xylene  Potassium pivalate                     BrettPhos   
+    15     Butyl Ester      Cesium acetate                     BrettPhos   
     
          Temperature  Concentration      yield  
-    296        120.0          0.153  26.872987  
-    375        120.0          0.057   9.935290  
-    147        105.0          0.057   3.532469  
+    161        120.0          0.153  30.452062  
+    416         90.0          0.153  12.610554  
+    15         120.0          0.057  18.895820  
 
 
 

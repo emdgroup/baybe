@@ -1395,7 +1395,7 @@ object creation step:</p>
 </section>
 <section id="dataframe-deserialization">
 <h3>Dataframe deserialization<a class="headerlink" href="#dataframe-deserialization" title="Link to this heading">¶</a></h3>
-<p>When serializing BayBE objects, contained <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="pandas 2.3.0"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">DataFrames</span></code></span></a> are
+<p>When serializing BayBE objects, contained <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="pandas 2.3.1"><span class="xref myst"><code class="docutils literal notranslate"><span class="pre">DataFrames</span></code></span></a> are
 automatically converted to a binary format in order to</p>
 <ol class="arabic simple">
 <li><p>ensure that the involved data types are exactly restored after completing the roundtrip and</p></li>
@@ -1410,7 +1410,7 @@ with configuration strings.</p>
 a more elegant solution becomes apparent when noticing that <a class="reference internal" href="#alternative-constructors"><span class="std std-ref">invoking alternative
 constructors</span></a> also works for non-BayBE objects.
 In particular, this means you can resort to any dataframe constructor of your choice
-(such as <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.from_records.html#pandas.DataFrame.from_records" title="(in pandas v2.3.0)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DataFrame.from_records</span></code></a>)
+(such as <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.from_records.html#pandas.DataFrame.from_records" title="(in pandas v2.3.1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">DataFrame.from_records</span></code></a>)
 when defining your configuration, instead of having to work with compressed formats:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace.discrete</span><span class="w"> </span><span class="kn">import</span> <span class="n">SubspaceDiscrete</span>
