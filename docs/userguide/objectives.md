@@ -47,59 +47,76 @@ enables the combination of multiple targets via scalarization into a single nume
 value (commonly referred to as the *overall desirability*), a method also utilized in
 classical DOE.
 
-```{admonition} Mandatory Target Bounds
-:class: attention
-Since measurements of different targets can vary arbitrarily in scale, all targets
-passed to a
-[`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective) must be
-normalizable to enable meaningful combination into desirability values. This requires
-that all provided targets must have `bounds` specified (see [target user
-guide](/userguide/targets.md)).
-If provided, the necessary normalization is taken care of automatically. 
-Otherwise, an error will be thrown.
+```{admonition} Target Normalization
+:class: important
+Since desirability computation relies on scalarization, and because targets can vary
+arbitrarily in scale, it is (by default) required that all targets are properly
+normalized before entering the computation to enable meaningful combination into
+desirability values. This can be achieved by applying appropriate normalizing target
+[transformations](/userguide/transformations).
+
+Alternatively, if you know what you are doing, you can also disable this requirement
+via the [`require_normalization`](#require-normalization) flag. 
 ```
 
-Besides the list of [`Targets`](baybe.targets.base.Target)
-to be scalarized, this objective type takes two
-additional optional parameters that let us control its behavior:
-* `weights`: Specifies the relative importance of the targets in the form of a
-  sequence of positive numbers, one for each target considered.  
-  **Note:** 
-  BayBE automatically normalizes the weights, so only their relative
-  scales matter.
+Besides the list of [`Target`](baybe.targets.base.Target)s to be scalarized, this
+objective type takes additional optional parameters that let us control its behavior:
+* `weights`: Specifies the relative importance of the targets in the form of a sequence
+  of positive numbers, one for each target considered.  
+  Note that BayBE automatically normalizes the weights, so only their relative scales
+  matter.
 * `scalarizer`: Specifies the [scalarization function](baybe.objectives.enum.Scalarizer)
-  to be used for combining the normalized target values. 
-  The choices are `MEAN` and `GEOM_MEAN`, referring to the arithmetic and 
-  geometric mean, respectively.
+  to be used for combining the normalized target values.
+(require-normalization)=
+* `require_normalization`: A Boolean flag controlling the target normalization
+  requirement. 
 
-The definitions of the `scalarizer`s are as follows, where $\{t_i\}$ enumerate the
-**normalized** target measurements of single experiment and $\{w_i\}$ are the
+The definitions of the `scalarizer`s are as follows, where $\{t_i\}$ refer the
+**transformed** target measurements of a single experiment and $\{w_i\}$ are the
 corresponding target weights:
 
-$$
-\text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
-\text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
-$$
+```{math}
+\begin{align*}
+  \text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
+  \text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
+\end{align*}
+```
 
-
-In the example below, we consider three different targets (all associated with a
-different goal) and give twice as much importance to the first target relative to each 
-of the other two:
+### Example 1 – Normalized Targets
+Here, we consider four different targets, each with a distinct optimization goal. The
+first target is given twice as much importance as each of the other three by assigning
+it a higher weight:
 ```python
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-target_1 = NumericalTarget.normalize_ramp(name="t_1", bounds=(0, 100))
-target_2 = NumericalTarget.normalize_ramp(name="t_2", bounds=(0, 100), descending=True)
+target_1 = NumericalTarget.normalize_ramp(name="t_1", bounds=(0, 100), descending=True)
+target_2 = NumericalTarget.normalize_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
 target_3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
+target_4 = NumericalTarget(name="t4").exp().clamp(10).normalize()
 objective = DesirabilityObjective(
-    targets=[target_1, target_2, target_3],
-    weights=[2.0, 1.0, 1.0],  # optional (by default, all weights are equal)
+    targets=[target_1, target_2, target_3, target_4],
+    weights=[2.0, 1.0, 1.0, 1.0],  # optional (by default, all weights are equal)
     scalarizer="GEOM_MEAN",  # optional
 )
 ```
 
-For a complete example demonstrating desirability mode, see [here](./../../examples/Multi_Target/desirability).
+### Example 2 – Non-Normalized Targets
+Sometimes, we explicitly want to bypass the normalization requirement, for example,
+when the target ranges are unknown. In this case, using the unweighted arithmetic mean
+is a reasonable choice:
+```python
+from baybe.targets import NumericalTarget
+from baybe.objectives import DesirabilityObjective  
+
+t1 = NumericalTarget(name="t_max")
+t2 = NumericalTarget.match_absolute(name="t_match", match_value=0)
+objective = DesirabilityObjective(
+    targets=[t1, t2],
+    scalarizer="MEAN",
+    require_normalization=False,  # disable normalization requirement
+)
+```
 
 ## ParetoObjective
 The [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective) can be used when the
