@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, TypeVar
 
 import cattrs
-from attrs import define, field, fields
+from attrs import AttrsInstance, define, field, fields
 from attrs.validators import deep_mapping, instance_of
 from attrs.validators import optional as optional_v
 
@@ -45,7 +45,7 @@ class Metadata(SerialMixin):
             )
 
     @classproperty
-    def _explicit_fields(cls) -> set[str]:
+    def _explicit_fields(cls: type[AttrsInstance]) -> set[str]:
         """The explicit metadata fields."""  # noqa: D401
         flds = fields(cls)
         return {fld.name for fld in flds if fld.name != flds.misc.name}
