@@ -14,14 +14,20 @@ from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
 from botorch.acquisition.objective import PosteriorTransform as PTrans
 from botorch.models.model import Model
+from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+    BoxDecomposition as BoPart,
+)
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
+    qExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
+from baybe.acquisition.utils import get_partitioning
 from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -54,6 +60,7 @@ class BotorchAcquisitionArgs:
     mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
     num_fantasies: int | None = field(default=None, validator=opt_v(int))
     objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
+    partitioning: BoPart | None = field(default=None, validator=opt_v(BoPart))
     posterior_transform: PTrans | None = field(default=None, validator=opt_v(PTrans))
     prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
     ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
@@ -113,6 +120,14 @@ class BotorchAcquisitionFunctionBuilder:
         return self.searchspace.transform(self.measurements, allow_extra=True)
 
     @cached_property
+    def _posterior_mean_comp(self) -> Tensor:
+        """The posterior mean of the (transformed) targets of the training data."""
+        # TODO: Currently, this is the "transformed posterior mean of the targets"
+        #   rather than the "posterior mean of the transformed targets".
+        posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
+        return self.objective.to_botorch()(posterior.mean)
+
+    @cached_property
     def _target_configurations(self) -> pd.DataFrame:
         """The target configurations used for reference point calculation.
 
@@ -153,6 +168,7 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_X_pending()
         self._set_mc_points()
         self._set_ref_point()
+        self._set_partitioning()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
@@ -216,11 +232,9 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.best_f.name not in self._signature:
             return
 
-        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
-
         match self.objective:
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = self.objective.to_botorch()(post_mean).max().item()
+                self._args.best_f = self._posterior_mean_comp.max().item()
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")
 
@@ -240,6 +254,20 @@ class BotorchAcquisitionFunctionBuilder:
         assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
         self._args.mc_points = to_tensor(
             self.acqf.get_integration_points(self.searchspace)
+        )
+
+    def _set_partitioning(self) -> None:
+        """Set BoTorch's ``partitioning`` argument."""
+        if flds.partitioning.name not in self._signature:
+            return
+
+        assert isinstance(
+            self.acqf,
+            (qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement),
+        )
+
+        self._args.partitioning = get_partitioning(
+            self._posterior_mean_comp, self._args.ref_point, self.acqf.alpha
         )
 
     def _set_ref_point(self) -> None:

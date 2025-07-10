@@ -71,7 +71,7 @@ def direct_arylation_multi_batch(
     mordred_searchspace = SearchSpace.from_product(
         parameters=[*rdkit_parameters, *non_substance_paramters]
     )
-    target = NumericalTarget(name="yield", mode="MAX")
+    target = NumericalTarget(name="yield")
     objective = SingleTargetObjective(target=target)
 
     scenarios: dict[str, Campaign] = {
