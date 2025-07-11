@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
-- `Metadata` class providing class providing basic information for BayBE objects
+- `Metadata` class providing basic information for BayBE objects
 - `ParameterMetadata` class providing metadata for `Parameter` objects
 
 ### Fixed

@@ -3,14 +3,42 @@
 import pytest
 from pytest import param
 
+from baybe.parameters.base import ParameterMetadata
 from baybe.utils.metadata import Metadata, to_metadata
+
+
+@pytest.mark.parametrize(
+    ("description", "misc", "error", "match"),
+    [
+        param(0, {}, TypeError, "must be <class 'str'>", id="desc-non-str"),
+        param(None, 0, TypeError, "must be <class 'dict'>", id="misc-non-dict"),
+        param(
+            None,
+            {0: 0},
+            TypeError,
+            "must be <class 'str'>",
+            id="misc-non-str-keys",
+        ),
+        param(
+            None,
+            {"description": 0},
+            ValueError,
+            "fields: {'description'}",
+            id="desc_in_misc",
+        ),
+    ],
+)
+def test_invalid_arguments_for_metadata(description, misc, error, match):
+    """Providing invalid arguments to base Metadata class raises an error."""
+    with pytest.raises(error, match=match):
+        Metadata(description, misc=misc)
 
 
 @pytest.mark.parametrize(
     ("description", "unit", "misc", "error", "match"),
     [
-        param(0, None, None, TypeError, "must be <class 'str'>", id="desc-non-str"),
-        param(None, 0, None, TypeError, "must be <class 'str'>", id="unit-non-str"),
+        param(0, None, {}, TypeError, "must be <class 'str'>", id="desc-non-str"),
+        param(None, 0, {}, TypeError, "must be <class 'str'>", id="unit-non-str"),
         param(None, None, 0, TypeError, "must be <class 'dict'>", id="misc-non-dict"),
         param(
             None,
@@ -26,15 +54,19 @@ from baybe.utils.metadata import Metadata, to_metadata
             {"description": 0},
             ValueError,
             "fields: {'description'}",
-            id="desc",
+            id="desc_in_misc",
         ),
-        param(None, None, {"unit": 0}, ValueError, "fields: {'unit'}", id="unit"),
+        param(
+            None, None, {"unit": 0}, ValueError, "fields: {'unit'}", id="unit_in_misc"
+        ),
     ],
 )
-def test_invalid_arguments(description, unit, misc, error, match):
+def test_invalid_arguments_for_parameter_metadata(
+    description, unit, misc, error, match
+):
     """Providing invalid arguments raises an error."""
     with pytest.raises(error, match=match):
-        Metadata(description, unit, misc)
+        ParameterMetadata(description, unit, misc=misc)
 
 
 @pytest.mark.parametrize(
@@ -51,4 +83,4 @@ def test_invalid_input_conversion(invalid_input):
     with pytest.raises(
         TypeError, match="must be a dictionary or a 'Metadata' instance."
     ):
-        to_metadata(invalid_input)
+        to_metadata(invalid_input, Metadata)
