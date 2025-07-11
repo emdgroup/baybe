@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `FPSRecommender` now optionally uses the fpsample library with fall back
+  to internal implementation
+
 ## [0.13.2] - 2025-07-09
 ### Changed
 - Lockfiles are now generated using `uv lock` and consumed using `uv sync`
@@ -20,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   control sampling in `farthest_point_sampling`
 - Flag for toggling parallel computation in `simulate_scenarios`
 - Additional transfer learning and synthetic benchmarks
+- `FPSRecommender` now optionally uses the fpsample library with fall back
+  to internal implementation 
 - Utility `normalize_input_dtypes` for ensuring all input dataframe columns have the
   expected dtypes
 - `CompositeSurrogate` now has a `_posterior_comp` method similar to `Surrogate`

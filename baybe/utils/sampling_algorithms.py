@@ -13,6 +13,7 @@ def farthest_point_sampling(
     n_samples: int = 1,
     initialization: Literal["farthest", "random"] = "farthest",
     random_tie_break: bool = True,
+    start_idx: int | None = None,
 ) -> list[int]:
     """Select a subset of points using farthest point sampling.
 
@@ -35,6 +36,7 @@ def farthest_point_sampling(
             in equidistant situations. If ``True``, a random point is selected from the
             candidates, otherwise the first point is selected. For non-equidistant
             points, the point with the largest minimum distance is always selected.
+        start_idx: Optional index to specify the first point in the selection.
 
     Returns:
         A list containing the positional indices of the selected points.
@@ -59,6 +61,11 @@ def farthest_point_sampling(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
             f"total number of points provided ({n_points})."
         )
+    if initialization == "random" and start_idx is not None:
+        raise ValueError(
+            "Cannot specify `start_idx` when using initialization='random'. "
+            "Either remove `start_idx` or choose initialization='farthest'."
+        )
 
     # Catch the pathological case upfront
     if len(np.unique(points, axis=0)) == 1:
@@ -78,7 +85,9 @@ def farthest_point_sampling(
     np.fill_diagonal(dist_matrix, -np.inf)
 
     # Initialize the point selection
-    if initialization == "random":
+    if start_idx is not None:
+        selected_point_indices = [start_idx]
+    elif initialization == "random":
         selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
