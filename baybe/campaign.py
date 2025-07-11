@@ -872,6 +872,74 @@ class Campaign(SerialMixin):
             acquisition_function,
         )
 
+    def is_non_dominated(
+        self,
+        measurements: pd.DataFrame | None = None,
+        consider_campaign_measurements: bool = True,
+    ) -> pd.Series:
+        """Determine for each point if it is non-dominated across all measurements.
+
+        Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input`.
+
+        Args:
+            measurements: The measurements with filled target columns.
+                If not provided, the non-dominated points will be determined for the
+                existing campaign measurements.
+            consider_campaign_measurements: Allows for consideration of the existing
+                campaign measurements when calculating if the input measurements are
+                non-dominated.
+
+        Raises:
+            IncompatibilityError: If objective is None
+            IncompatibilityError: If objective does not support multi output
+
+        Returns:
+            A series of boolean values indicating whether the corresponding measurement
+            is non-dominated.
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                f"Cannot get the non dominated points since no '{Objective.__name__}' "
+                "is defined."
+            )
+        if not self.objective.is_multi_output:
+            raise IncompatibilityError(
+                f"{self.objective.is_non_dominated.__name__} is only available for "
+                f"Objectives with {self.objective.is_multi_output.__name__} set to "
+                "True."
+            )
+
+        validate_target_input(measurements, self.objective.targets)
+
+        campaign_measurement_added_at = None
+        if measurements is None:
+            if self.measurements.empty:
+                raise NoMeasurementsError(
+                    "No measurements were provided and the campaign has no "
+                    f"measurements yet. '{self.is_non_dominated.__name__}' has no "
+                    "measurements to compute the non dominated points for in this "
+                    "case."
+                )
+            measurements = self.measurements
+        elif consider_campaign_measurements:
+            if self.measurements.empty:
+                raise Warning(
+                    "No measurements are provided to the campaign yet. Therefore the "
+                    "non-dominated points will be determined without considering the "
+                    "campaign measurements, although the flag "
+                    f"{consider_campaign_measurements.__name__} is set to "
+                    f"{consider_campaign_measurements}"
+                )
+            else:
+                campaign_measurement_added_at = len(measurements)
+                measurements = pd.concat([measurements, self.measurements])
+
+        non_dominated = self.objective.is_non_dominated(measurements=measurements)
+        if campaign_measurement_added_at is not None:
+            non_dominated = non_dominated[:campaign_measurement_added_at]
+        return non_dominated
+
 
 def _add_version(dict_: dict) -> dict:
     """Add the package version to the given dictionary."""
