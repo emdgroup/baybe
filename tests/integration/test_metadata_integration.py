@@ -2,8 +2,8 @@
 
 import pytest
 
+from baybe.parameters.base import ParameterMetadata
 from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.utils.metadata import Metadata
 
 
 class TestParameterMetadataIntegration:
@@ -12,7 +12,7 @@ class TestParameterMetadataIntegration:
     @pytest.mark.parametrize("as_dict", [True, False])
     def test_parameter_with_metadata(self, as_dict: bool):
         """Parameters accept, ingest, and surface metadata."""
-        meta = Metadata(description="test", unit="m", misc={"key": "value"})
+        meta = ParameterMetadata(description="test", unit="m", misc={"key": "value"})
         param = NumericalDiscreteParameter(
             name="p",
             values=(1, 2),
