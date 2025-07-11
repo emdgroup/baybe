@@ -8,7 +8,7 @@ from baybe.utils.metadata import to_metadata
 
 
 class TestMetadata:
-    """Tests for Metadata class."""
+    """Tests for `Metadata` class."""
 
     def test_metadata_creation_basic(self):
         """All metadata attributes are properly populated."""
@@ -28,7 +28,7 @@ class TestMetadata:
 
 
 class TestMetadataConverter:
-    """Tests for to_metadata function."""
+    """Tests for `to_metadata` function."""
 
     def test_convert_metadata_instance(self):
         """The converter passes through Metadata instances unchanged."""
