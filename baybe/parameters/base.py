@@ -12,6 +12,7 @@ import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import instance_of, min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.parameters.enum import ParameterEncoding
@@ -22,6 +23,7 @@ from baybe.serialization import (
     unstructure_base,
 )
 from baybe.utils.basic import to_tuple
+from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
     from baybe.searchspace.continuous import SubspaceContinuous
@@ -30,6 +32,14 @@ if TYPE_CHECKING:
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
+
+
+@define(frozen=True)
+class ParameterMetadata(Metadata):
+    """Class providing metadata for BayBE :class:`Parameter` objects."""
+
+    unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
+    """The unit of measurement for the parameter."""
 
 
 @define(frozen=True, slots=False)
@@ -47,6 +57,13 @@ class Parameter(ABC, SerialMixin):
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
+
+    metadata: ParameterMetadata | None = field(
+        default=None,
+        converter=optional_c(lambda x: to_metadata(x, ParameterMetadata)),
+        kw_only=True,
+    )
+    """Optional metadata containing description, unit, and other information."""
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -87,6 +104,16 @@ class Parameter(ABC, SerialMixin):
     @abstractmethod
     def summary(self) -> dict:
         """Return a custom summarization of the parameter."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the parameter."""
+        return self.metadata.description if self.metadata else None
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of measurement for the parameter."""
+        return self.metadata.unit if self.metadata else None
 
 
 @define(frozen=True, slots=False)
