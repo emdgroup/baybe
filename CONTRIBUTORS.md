@@ -35,4 +35,4 @@
 - Tobias Plötz (Merck KGaA, Darmstadt, Germany):\
   Metadata system
 - Chung Hsuan (Jonathan) Shan (External Contractor at Merck KGaA, Darmstadt, Germany):\
-  `fpsample` implementation for FPSRecommender 
+  `fpsample` implementation for `FPSRecommender` 
