@@ -33,4 +33,4 @@
 - Alexander Wieczorek (Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland):\
   SHAP explainers for insights
 - Chung Hsuan (Jonathan) Shan (External Contractor at Merck KGaA, Darmstadt, Germany):\
-  `fpsample` implementation for FPSRecommender 
+  `fpsample` implementation for `FPSRecommender` 
