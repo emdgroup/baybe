@@ -1,6 +1,5 @@
 """Recommenders based on sampling."""
 
-import warnings
 from enum import Enum
 from typing import ClassVar
 
@@ -108,14 +107,14 @@ class FPSRecommender(NonPredictiveRecommender):
             from baybe._optional import fpsample
 
             if self.initialization != FPSInitialization.FARTHEST:
-                warnings.warn(
+                raise ValueError(
                     f"{self.__class__.__name__} is using the optional 'fpsample', "
                     f"which does not support '{self.initialization.value}'. "
                     f"Please choose a supported initialization."
                 )
 
             if self.random_tie_break:
-                warnings.warn(
+                raise ValueError(
                     f"{self.__class__.__name__} is using the optional 'fpsample' , "
                     f"which does not support random tie-breaking. "
                     f"Selection will follow a deterministic order. "
