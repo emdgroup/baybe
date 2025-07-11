@@ -10,15 +10,21 @@ from typing import TYPE_CHECKING, ClassVar
 import pandas as pd
 from attrs import define, field
 
+from baybe.exceptions import IncompatibilityError
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import get_transform_objects, to_tensor
+from baybe.utils.dataframe import (
+    get_transform_objects,
+    to_tensor,
+    transform_target_columns,
+)
 from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
 from baybe.utils.metadata import Metadata, to_metadata
+from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
@@ -252,6 +258,36 @@ class Objective(ABC, SerialMixin):
         return pd.DataFrame(
             transformed.numpy(), columns=self.output_names, index=df.index
         )
+
+    def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
+        """Determine for each point if it is non-dominated across all measurements.
+
+        Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input`.
+
+        Args:
+            measurements: The measurements used to identify the non-dominated points.
+
+        Raises:
+            IncompatibilityError: If the objective does not support multi output
+
+        Returns:
+            A series of boolean values indicating whether the corresponding measurement
+            is non-dominated.
+        """
+        from botorch.utils.multi_objective.pareto import is_non_dominated
+
+        if not self.is_multi_output:
+            raise IncompatibilityError(
+                f"{self.is_non_dominated.__name__} is only available for Objectives "
+                f"with {self.is_multi_output.__name__} set to True."
+            )
+        validate_target_input(measurements, self.targets)
+
+        y_comp = self.transform(measurements, allow_extra=True)
+        y_is_non_dominated = is_non_dominated(Y=to_tensor(y_comp))
+
+        return pd.Series(y_is_non_dominated.numpy(), name="is_non_dominated")
 
 
 def to_objective(x: Target | Objective, /) -> Objective:
