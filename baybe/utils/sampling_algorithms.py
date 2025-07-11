@@ -61,6 +61,11 @@ def farthest_point_sampling(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
             f"total number of points provided ({n_points})."
         )
+    if initialization == "random" and start_idx is not None:
+        raise ValueError(
+            "Cannot specify `start_idx` when using initialization='random'. "
+            "Either remove `start_idx` or choose initialization='farthest'."
+        )
 
     # Catch the pathological case upfront
     if len(np.unique(points, axis=0)) == 1:
