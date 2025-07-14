@@ -119,7 +119,9 @@ def farthest_point_sampling(
             choice = np.random.choice(max_indices)
         else:
             # Choose the first point with the "largest smallest distance"
-            choice = np.argmax(min_dists)
+            max_val = np.max(min_dists)
+            max_indices = np.where(min_dists == max_val)[0]
+            choice = max_indices.max()
         selected_point_index = remaining_point_indices[choice]
 
         # Add the chosen point to the selection
