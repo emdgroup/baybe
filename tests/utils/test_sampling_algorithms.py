@@ -13,10 +13,13 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSInitialization,
     FPSRecommender,
 )
+from baybe.searchspace import SearchSpace
+from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -177,13 +180,22 @@ def test_fps_recommender_fallback_to_internal_fps(searchspace):
     assert result.index.tolist() == [0, 1, 2]
 
 
+@pytest.fixture
+def simple_searchspace():
+    param = NumericalDiscreteParameter(
+        name="x", values=list(range(30))
+    )  # encoding defaults OK
+    subspace = SubspaceDiscrete.from_parameter(param)
+    return SearchSpace(discrete=subspace)
+
+
 @pytest.mark.skipif(
     not FPSAMPLE_INSTALLED, reason="Optional fpsample dependency not installed."
 )
-def test_fps_recommender_with_known_indices(searchspace):
+def test_fps_recommender_with_known_indices(simple_searchspace):
     """Test FPSRecommender with fpsample using expected output."""
     # Hardcoded known output
-    expected_indices = [0, 26, 15]
+    expected_indices = [0, 29, 15]
 
     with patch(
         "baybe._optional.fpsample.fps_sampling",
@@ -192,23 +204,27 @@ def test_fps_recommender_with_known_indices(searchspace):
         ),
     ):
         recommender = FPSRecommender(random_tie_break=False)
-        result = recommender.recommend(batch_size=3, searchspace=searchspace)
+        result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
 
     assert result.index.tolist() == expected_indices
 
 
 @pytest.mark.skipif(FPSAMPLE_INSTALLED, reason="fpsample is installed")
-def test_fps_recommender_with_known_indices_fallback(searchspace):
+def test_fps_recommender_with_known_indices_fallback(simple_searchspace):
     """Test FPSRecommender fallback returns expected indices with start_idx=0."""
-    np.random.seed(1)
-    expected_indices = [0, 26, 15]
+    expected_indices = [0, 29, 15]
 
     with patch(
         "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
         wraps=lambda X, n_samples, **kwargs: farthest_point_sampling(
-            X, n_samples=n_samples, start_idx=0, **kwargs
+            X,
+            n_samples=n_samples,
+            start_idx=0,
+            random_tie_break=kwargs.pop("random_tie_break", False),
+            **kwargs,
         ),
     ):
-        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+        recommender = FPSRecommender(random_tie_break=False)
+        result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
 
     assert result.index.tolist() == expected_indices
