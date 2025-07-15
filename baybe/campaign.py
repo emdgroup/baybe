@@ -130,7 +130,7 @@ class Campaign(SerialMixin):
     def _validate_objective(  # noqa: DOC101, DOC103
         self, _: Any, value: Objective | None
     ) -> None:
-        """Validate no overlapping names between target and parameter names."""
+        """Validate no overlapping names between targets and parameters."""
         if value is None:
             return
 
