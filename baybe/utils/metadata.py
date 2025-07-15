@@ -12,7 +12,7 @@ from attrs.validators import optional as optional_v
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.basic import classproperty
 
-TMetaData = TypeVar("TMetaData", bound="Metadata")
+_TMetaData = TypeVar("_TMetaData", bound="Metadata")
 
 
 @define(frozen=True)
@@ -52,8 +52,8 @@ class Metadata(SerialMixin):
 
 
 def to_metadata(
-    value: dict[str, Any] | TMetaData, cls: type[TMetaData], /
-) -> TMetaData:
+    value: dict[str, Any] | _TMetaData, cls: type[_TMetaData], /
+) -> _TMetaData:
     """Convert a dictionary to :class:`Metadata` (with :class:`Metadata` passthrough).
 
     Args:
