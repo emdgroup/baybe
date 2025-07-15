@@ -39,7 +39,7 @@ from baybe.utils.dataframe import add_fake_measurements
 
 initial_recommenders = [
     "Random",  #: RandomRecommender(),
-    "Farthest Point Sampling",  # FPSRecommender(),
+    "Farthest Point Sampling",  # FPSRecommender(random_tie_break=False),
     "KMEANS Clustering",  # KMeansClusteringRecommender(),
 ]
 
