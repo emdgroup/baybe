@@ -103,7 +103,7 @@ campaign = Campaign(
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(surrogate_model=surrogate_model),
-        initial_recommender=FPSRecommender(),
+        initial_recommender=FPSRecommender(random_tie_break=False),
     ),
 )
 
