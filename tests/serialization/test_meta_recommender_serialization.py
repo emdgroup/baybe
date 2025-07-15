@@ -13,7 +13,7 @@ from baybe.recommenders.meta.base import MetaRecommender
 from tests.conftest import select_recommender
 
 # Create some recommenders of different class for better differentiation after roundtrip
-RECOMMENDERS = [RandomRecommender(), FPSRecommender()]
+RECOMMENDERS = [RandomRecommender(), FPSRecommender(random_tie_break=False)]
 assert len(RECOMMENDERS) == len({rec.__class__.__name__ for rec in RECOMMENDERS})
 
 
