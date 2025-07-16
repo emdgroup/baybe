@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lazy-loading related packages
 - `CustomONNXSurrogate.onnx_str` is no longer validated before being used
 
+### Changed
+- Use BoTorch's `MultiTaskGP` for transfer learning instead of custom `IndexKernel` with
+  `SingleTaskGP`
+
 ### Fixed
 - Using `PosteriorStandardDeviation` with `MIN` targets no longer results in 
   minimization of the acquisition function
