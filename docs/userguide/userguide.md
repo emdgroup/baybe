@@ -1,5 +1,16 @@
 # User Guide
 
+BayBE is organized around a central [`Campaign`](baybe.campaign.Campaign) object,
+which suggests new measurements according to the bayesian optimization
+procedure. The below diagram explains how the [`Campaign`](baybe.campaign.Campaign)
+can be used to perform the **Bayesian Optimization Loop**, 
+how the [`Campaign`](baybe.campaign.Campaign) can be **Configured** and 
+how the results can be **Post-Analysed**.
+
+![Transforms](../_static/api_overview.svg){: width="850" alt="Overview of BayBE API for bayesian optimization." style="border-radius: 7px;"}
+
+Detailed examples of how to use individual API components can be found bellow:
+
 ```{toctree}
 Getting Recommendations <getting_recommendations>
 Campaigns <campaigns>
