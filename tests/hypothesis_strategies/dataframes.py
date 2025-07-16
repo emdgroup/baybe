@@ -3,7 +3,7 @@
 from hypothesis import strategies as st
 from hypothesis.extra.pandas import column, data_frames, indexes
 
-from ..hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats
 
 
 @st.composite
