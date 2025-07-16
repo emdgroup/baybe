@@ -3,7 +3,7 @@
 import hypothesis.strategies as st
 from hypothesis import assume
 
-from baybe.parameters.base import ParameterMetadata
+from baybe.parameters.base import MeasurableMetadata
 from baybe.utils.metadata import Metadata
 
 _descriptions = st.one_of(st.none(), st.text(min_size=0))
@@ -33,9 +33,9 @@ def metadata(draw: st.DrawFn):
 
 
 @st.composite
-def parameter_metadata(draw: st.DrawFn):
-    """Generate :class:`baybe.parameters.base.ParameterMetadata`."""
+def measurable_metadata(draw: st.DrawFn):
+    """Generate :class:`baybe.parameters.base.MeasurableMetadata`."""
     description = draw(_descriptions)
     unit = draw(st.one_of(st.none(), st.text(min_size=1)))
-    misc = draw(_miscs(ParameterMetadata))
-    return ParameterMetadata(description=description, unit=unit, misc=misc)
+    misc = draw(_miscs(MeasurableMetadata))
+    return MeasurableMetadata(description=description, unit=unit, misc=misc)

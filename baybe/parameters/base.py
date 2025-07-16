@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 
 @define(frozen=True)
-class ParameterMetadata(Metadata):
+class MeasurableMetadata(Metadata):
     """Class providing metadata for BayBE :class:`Parameter` objects."""
 
     unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
@@ -58,9 +58,9 @@ class Parameter(ABC, SerialMixin):
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
-    metadata: ParameterMetadata | None = field(
+    metadata: MeasurableMetadata | None = field(
         default=None,
-        converter=optional_c(lambda x: to_metadata(x, ParameterMetadata)),
+        converter=optional_c(lambda x: to_metadata(x, MeasurableMetadata)),
         kw_only=True,
     )
     """Optional metadata containing description, unit, and other information."""
