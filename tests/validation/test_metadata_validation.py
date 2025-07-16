@@ -3,7 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.parameters.base import ParameterMetadata
+from baybe.parameters.base import MeasurableMetadata
 from baybe.utils.metadata import Metadata, to_metadata
 
 
@@ -61,12 +61,12 @@ def test_invalid_arguments_for_metadata(description, misc, error, match):
         ),
     ],
 )
-def test_invalid_arguments_for_parameter_metadata(
+def test_invalid_arguments_for_measurable_metadata(
     description, unit, misc, error, match
 ):
     """Providing invalid arguments raises an error."""
     with pytest.raises(error, match=match):
-        ParameterMetadata(description, unit, misc=misc)
+        MeasurableMetadata(description, unit, misc=misc)
 
 
 @pytest.mark.parametrize(
