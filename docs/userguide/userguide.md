@@ -7,7 +7,15 @@ can be used to perform the **Bayesian Optimization Loop**,
 how the [`Campaign`](baybe.campaign.Campaign) can be **Configured** and 
 how the results can be **Post-Analysed**.
 
-![Transforms](../_static/api_overview_light.svg)
+```{image} ../_static/api_overview_dark.svg
+:align: center
+:class: only-dark
+```
+
+```{image} ../_static/api_overview_light.svg
+:align: center
+:class: only-light
+```
 
 Detailed examples of how to use individual API components can be found bellow:
 
