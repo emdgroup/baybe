@@ -37,6 +37,7 @@ def farthest_point_sampling(
             candidates, otherwise the first point is selected. For non-equidistant
             points, the point with the largest minimum distance is always selected.
         start_idx: Optional index to specify the first point in the selection.
+            Only compatible with ``initialization="random"``.
 
     Returns:
         A list containing the positional indices of the selected points.
