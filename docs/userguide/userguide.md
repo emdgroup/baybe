@@ -6,7 +6,7 @@ which suggests new measurements and administers the current state of
 your experimental operation. The diagram below explains how the 
 [`Campaign`](baybe.campaign.Campaign) can be used to perform 
 the bayesian optimization loop, how it can be configured and 
-how the results can be post-Analysed.
+how the results can be post-analysed.
 
 ```{image} ../_static/api_overview_dark.svg
 :align: center
