@@ -81,6 +81,7 @@ def hartmann_3d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
         n_doe_iterations=settings.n_doe_iterations,
         n_mc_iterations=settings.n_mc_iterations,
         impute_mode="error",
+        random_seed=settings.random_seed,
     )
 
 

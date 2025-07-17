@@ -21,6 +21,7 @@ from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 
 
@@ -85,18 +86,22 @@ def wrap_function(
 
 
 def make_initial_data(
-    function: Callable, function_name: str, num_of_points: int
+    function: Callable,
+    function_name: str,
+    num_of_points: int,
+    settings: ConvergenceBenchmarkSettings,
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
-    # Create random samples in [0, pi]^dim
-    samples = np.random.uniform(low=0, high=math.pi, size=(num_of_points, 5))
+    with temporary_seed(settings.random_seed):
+        # Create random samples in [0, pi]^dim
+        samples = np.random.uniform(low=0, high=math.pi, size=(num_of_points, 5))
 
-    # Convert to DataFrame
-    column_names = [f"x{i}" for i in range(5)]
-    df = pd.DataFrame(samples, columns=column_names)
+        # Convert to DataFrame
+        column_names = [f"x{i}" for i in range(5)]
+        df = pd.DataFrame(samples, columns=column_names)
 
-    # Apply the function to get target values
-    df = wrap_function(function, function_name, df)
+        # Apply the function to get target values
+        df = wrap_function(function, function_name, df)
 
     return df
 
@@ -149,13 +154,14 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 ),
                 initial_data=[
                     make_initial_data(
-                        functions["Source_Function"], "Source_Function", p
+                        functions["Source_Function"], "Source_Function", p, settings
                     )
                     for _ in range(settings.n_mc_iterations)
                 ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -166,6 +172,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)
