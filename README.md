@@ -173,7 +173,7 @@ from baybe.recommenders import (
 )
 
 recommender = TwoPhaseMetaRecommender(
-    initial_recommender=FPSRecommender(random_tie_break=False),  # farthest point sampling
+    initial_recommender=FPSRecommender(),  # farthest point sampling
     recommender=BotorchRecommender(),  # Bayesian model-based optimization
 )
 ```

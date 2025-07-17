@@ -130,7 +130,7 @@ def test_fps_recommender_calls_fpsample(searchspace):
     with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
         mock_fps.return_value = np.array([0, 1, 2])
 
-        recommender = FPSRecommender(random_tie_break=False)
+        recommender = FPSRecommender()
         result = recommender.recommend(3, searchspace)
 
         mock_fps.assert_called_once()
@@ -182,9 +182,7 @@ def test_fps_recommender_fallback_to_internal_fps(searchspace):
 
 @pytest.fixture
 def simple_searchspace():
-    param = NumericalDiscreteParameter(
-        name="x", values=list(range(30))
-    )  # encoding defaults OK
+    param = NumericalDiscreteParameter(name="x", values=list(range(30)))
     subspace = SubspaceDiscrete.from_parameter(param)
     return SearchSpace(discrete=subspace)
 
@@ -203,7 +201,7 @@ def test_fps_recommender_with_known_indices(simple_searchspace):
             X, n_samples=n_samples, start_idx=0, **kwargs
         ),
     ):
-        recommender = FPSRecommender(random_tie_break=False)
+        recommender = FPSRecommender()
         result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
 
     assert result.index.tolist() == expected_indices
@@ -224,7 +222,7 @@ def test_fps_recommender_with_known_indices_fallback(simple_searchspace):
             **kwargs,
         ),
     ):
-        recommender = FPSRecommender(random_tie_break=False)
+        recommender = FPSRecommender()
         result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
 
     assert result.index.tolist() == expected_indices

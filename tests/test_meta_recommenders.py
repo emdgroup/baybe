@@ -15,7 +15,7 @@ from tests.conftest import select_recommender
 
 RECOMMENDERS = [
     RandomRecommender(),
-    FPSRecommender(random_tie_break=False),
+    FPSRecommender(),
     BotorchRecommender(),
 ]
 
