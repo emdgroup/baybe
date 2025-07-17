@@ -79,10 +79,14 @@ class FPSRecommender(NonPredictiveRecommender):
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
-    random_tie_break: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
+    random_tie_break: bool = field(validator=instance_of(bool), kw_only=True)
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+
+    @random_tie_break.default
+    def _default_random_tie_break(self) -> bool:
+        if self.initialization == FPSInitialization.FARTHEST:
+            return False
+        return True
 
     @override
     def _recommend_discrete(

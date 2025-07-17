@@ -50,7 +50,7 @@ campaign = Campaign(
     objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
-        initial_recommender=FPSRecommender(random_tie_break=False),
+        initial_recommender=FPSRecommender(),
     ),
 )
 
