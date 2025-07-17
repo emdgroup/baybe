@@ -33,7 +33,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
     [
         param(
             _discrete_params,
-            FPSRecommender(random_tie_break=False),
+            FPSRecommender(),
             id="fps_discrete",
         ),
         param(
@@ -84,7 +84,7 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
         param(
             _discrete_params,
             NaiveHybridSpaceRecommender(
-                disc_recommender=FPSRecommender(random_tie_break=False),
+                disc_recommender=FPSRecommender(),
             ),
             id="naive1_discrete",
         ),
