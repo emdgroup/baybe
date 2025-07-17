@@ -5,13 +5,8 @@ The most commonly used interface BayBE provides is the central
 which suggests new measurements and administers the current state of 
 your experimental operation. The diagram below explains how the 
 [`Campaign`](baybe.campaign.Campaign) can be used to perform 
-the **Bayesian Optimization Loop**, how it can be **Configured** and 
-how the results can be **Post-Analysed**.
-which suggests new measurements according to the bayesian optimization
-procedure. The below diagram explains how the [`Campaign`](baybe.campaign.Campaign)
-can be used to perform the **Bayesian Optimization Loop**, 
-how the [`Campaign`](baybe.campaign.Campaign) can be **Configured** and 
-how the results can be **Post-Analysed**.
+the bayesian optimization loop, how it can be configured and 
+how the results can be post-Analysed.
 
 ```{image} ../_static/api_overview_dark.svg
 :align: center
