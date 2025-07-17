@@ -1,6 +1,12 @@
 # User Guide
 
-BayBE is organized around a central [`Campaign`](baybe.campaign.Campaign) object,
+The most commonly used interface BayBE provides is the central 
+[`Campaign`](baybe.campaign.Campaign) object,
+which suggests new measurements and administers the current state of 
+your experimental operation. The diagram below explains how the 
+[`Campaign`](baybe.campaign.Campaign) can be used to perform 
+the **Bayesian Optimization Loop**, how it can be **Configured** and 
+how the results can be **Post-Analysed**.
 which suggests new measurements according to the bayesian optimization
 procedure. The below diagram explains how the [`Campaign`](baybe.campaign.Campaign)
 can be used to perform the **Bayesian Optimization Loop**, 
