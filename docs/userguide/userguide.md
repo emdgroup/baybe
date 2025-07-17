@@ -17,7 +17,7 @@ how the results can be **Post-Analysed**.
 :class: only-light
 ```
 
-Detailed examples of how to use individual API components can be found bellow:
+Detailed examples of how to use individual API components can be found below:
 
 ```{toctree}
 Getting Recommendations <getting_recommendations>
