@@ -3,8 +3,10 @@
 import pytest
 from pytest import param
 
-from baybe.parameters.base import MeasurableMetadata
-from baybe.utils.metadata import Metadata, to_metadata
+from baybe.objectives.single import SingleTargetObjective
+from baybe.targets.enum import TargetMode, TargetTransformation
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
 
 
 @pytest.mark.parametrize(
@@ -84,3 +86,99 @@ def test_invalid_input_conversion(invalid_input):
         TypeError, match="must be a dictionary or a 'Metadata' instance."
     ):
         to_metadata(invalid_input, Metadata)
+
+
+class TestTargetMetadataValidation:
+    """Validation tests for target metadata."""
+
+    def test_target_invalid_metadata_type(self):
+        """Creating target with invalid metadata type raises error."""
+        with pytest.raises(
+            TypeError, match="must be a dictionary or a 'MeasurableMetadata' instance"
+        ):
+            NumericalTarget(
+                name="test",
+                bounds=(0, 1),
+                mode=TargetMode.MAX,
+                transformation=TargetTransformation.LINEAR,
+                metadata="invalid_string",
+            )
+
+    def test_target_metadata_with_invalid_unit(self):
+        """Target metadata with invalid unit type raises error."""
+        with pytest.raises(TypeError, match="must be <class 'str'>"):
+            NumericalTarget(
+                name="test",
+                bounds=(0, 1),
+                mode=TargetMode.MAX,
+                transformation=TargetTransformation.LINEAR,
+                metadata={"unit": 123},  # Invalid unit type
+            )
+
+    def test_target_metadata_with_unit_field_separation(self):
+        """Target metadata should automatically separate unit from misc."""
+        # This test shows that unit is automatically separated from misc
+        target = NumericalTarget(
+            name="test",
+            bounds=(0, 1),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata={"description": "test", "unit": "kg", "extra": "value"},
+        )
+        # The unit should be extracted to the unit field
+        assert target.unit == "kg"
+        assert target.description == "test"
+        # Only extra should remain in misc
+        assert target.metadata is not None
+        assert target.metadata.misc == {"extra": "value"}
+
+    def test_target_direct_metadata_with_unit_in_misc(self):
+        """Direct metadata creation with unit in misc should raise error."""
+        with pytest.raises(ValueError, match="fields: {'unit'}"):
+            MeasurableMetadata(description="test", misc={"unit": "kg"})
+
+
+class TestObjectiveMetadataValidation:
+    """Validation tests for objective metadata."""
+
+    def test_objective_invalid_metadata_type(self):
+        """Creating objective with invalid metadata type raises error."""
+        target = NumericalTarget(
+            name="test",
+            bounds=(0, 1),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        with pytest.raises(
+            TypeError, match="must be a dictionary or a 'Metadata' instance"
+        ):
+            SingleTargetObjective(target=target, metadata=["invalid_list"])
+
+    def test_objective_metadata_field_separation(self):
+        """Objective metadata should automatically separate description from misc."""
+        target = NumericalTarget(
+            name="test",
+            bounds=(0, 1),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        # Test that description is automatically separated from other fields
+        objective = SingleTargetObjective(
+            target=target,
+            metadata={
+                "description": "test objective",
+                "priority": "high",
+                "algorithm": "GP",
+            },
+        )
+
+        assert objective.description == "test objective"
+        assert objective.metadata is not None
+        assert objective.metadata.misc == {"priority": "high", "algorithm": "GP"}
+
+    def test_objective_direct_metadata_with_description_in_misc(self):
+        """Direct metadata creation with description in misc should raise error."""
+        with pytest.raises(ValueError, match="fields: {'description'}"):
+            Metadata(misc={"description": "should not be here"})

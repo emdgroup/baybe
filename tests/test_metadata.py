@@ -3,8 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.parameters.base import MeasurableMetadata
-from baybe.utils.metadata import to_metadata
+from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 
 class TestMetadata:

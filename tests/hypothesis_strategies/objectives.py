@@ -10,6 +10,7 @@ from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS
 
 from ..hypothesis_strategies.basic import finite_floats
+from ..hypothesis_strategies.metadata import measurable_metadata, metadata
 from ..hypothesis_strategies.targets import numerical_targets
 from ..hypothesis_strategies.utils import intervals as st_intervals
 
@@ -20,9 +21,12 @@ _target_lists = st.lists(
 )
 
 
-def single_target_objectives():
+@st.composite
+def single_target_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.single.SingleTargetObjective`."""
-    return st.builds(SingleTargetObjective, target=numerical_targets())
+    target = draw(numerical_targets())
+    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    return SingleTargetObjective(target=target, metadata=objective_metadata)
 
 
 @st.composite
@@ -37,7 +41,10 @@ def desirability_objectives(draw: st.DrawFn):
         )
     )
     scalarizer = draw(st.sampled_from(Scalarizer))
-    return DesirabilityObjective(targets, weights, scalarizer)
+    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    return DesirabilityObjective(
+        targets, weights, scalarizer, metadata=objective_metadata
+    )
 
 
 @st.composite
@@ -55,8 +62,15 @@ def _pareto_targets(draw: st.DrawFn):
         transformation = None
         bounds = None
 
+    # Optionally generate metadata for Pareto targets
+    target_metadata = draw(st.one_of(st.none(), measurable_metadata()))
+
     return NumericalTarget(
-        name=name, mode=mode, bounds=bounds, transformation=transformation
+        name=name,
+        mode=mode,
+        bounds=bounds,
+        transformation=transformation,
+        metadata=target_metadata,
     )
 
 
@@ -68,4 +82,6 @@ _pareto_target_lists = st.lists(
 @st.composite
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
-    return ParetoObjective(draw(_pareto_target_lists))
+    targets = draw(_pareto_target_lists)
+    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    return ParetoObjective(targets, metadata=objective_metadata)

@@ -2,8 +2,11 @@
 
 import pytest
 
-from baybe.parameters.base import MeasurableMetadata
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
+from baybe.targets.enum import TargetMode, TargetTransformation
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.metadata import MeasurableMetadata, Metadata
 
 
 class TestMeasurableMetadataIntegration:
@@ -20,6 +23,7 @@ class TestMeasurableMetadataIntegration:
         )
         assert param.description == "test"
         assert param.unit == "m"
+        assert param.metadata is not None
         assert param.metadata.misc == {"key": "value"}
 
     def test_parameter_without_metadata(self):
@@ -28,3 +32,148 @@ class TestMeasurableMetadataIntegration:
         assert param.metadata is None
         assert param.description is None
         assert param.unit is None
+
+
+class TestTargetMetadataIntegration:
+    """Tests for metadata integration with Target class."""
+
+    @pytest.mark.parametrize("as_dict", [True, False])
+    def test_target_with_metadata(self, as_dict: bool):
+        """Targets accept, ingest, and surface metadata."""
+        meta = MeasurableMetadata(
+            description="test target", unit="kg", misc={"priority": "high"}
+        )
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata=meta.to_dict() if as_dict else meta,
+        )
+        assert target.description == "test target"
+        assert target.unit == "kg"
+        assert target.metadata is not None
+        assert target.metadata.misc == {"priority": "high"}
+
+    def test_target_without_metadata(self):
+        """Targets without metadata have ``None`` properties."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+        assert target.metadata is None
+        assert target.description is None
+        assert target.unit is None
+
+    def test_target_metadata_serialization(self):
+        """Target metadata survives serialization roundtrip."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata={"description": "Chemical yield", "unit": "%", "method": "HPLC"},
+        )
+
+        # Serialize and deserialize
+        json_str = target.to_json()
+        target_restored = NumericalTarget.from_json(json_str)
+
+        # Check metadata is preserved
+        assert target_restored.description == "Chemical yield"
+        assert target_restored.unit == "%"
+        assert target_restored.metadata is not None
+        assert target_restored.metadata.misc == {"method": "HPLC"}
+
+
+class TestObjectiveMetadataIntegration:
+    """Tests for metadata integration with Objective class."""
+
+    @pytest.mark.parametrize("as_dict", [True, False])
+    def test_objective_with_metadata(self, as_dict: bool):
+        """Objectives accept, ingest, and surface metadata."""
+        meta = Metadata(
+            description="test objective", misc={"algorithm": "GP", "priority": "high"}
+        )
+
+        # Create a target first
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        objective = SingleTargetObjective(
+            target=target,
+            metadata=meta.to_dict() if as_dict else meta,
+        )
+        assert objective.description == "test objective"
+        assert objective.metadata is not None
+        assert objective.metadata.misc == {"algorithm": "GP", "priority": "high"}
+
+    def test_objective_without_metadata(self):
+        """Objectives without metadata have ``None`` properties."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        objective = SingleTargetObjective(target=target)
+        assert objective.metadata is None
+        assert objective.description is None
+
+    def test_objective_metadata_serialization(self):
+        """Objective metadata survives serialization roundtrip."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        objective = SingleTargetObjective(
+            target=target,
+            metadata={"description": "Maximize yield", "priority": "critical"},
+        )
+
+        # Serialize and deserialize
+        json_str = objective.to_json()
+        objective_restored = SingleTargetObjective.from_json(json_str)
+
+        # Check metadata is preserved
+        assert objective_restored.description == "Maximize yield"
+        assert objective_restored.metadata is not None
+        assert objective_restored.metadata.misc == {"priority": "critical"}
+
+    def test_combined_target_objective_metadata(self):
+        """Both target and objective can have independent metadata."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata={"description": "Chemical yield", "unit": "%"},
+        )
+
+        objective = SingleTargetObjective(
+            target=target,
+            metadata={"description": "Maximize yield objective"},
+        )
+
+        # Both should have their own metadata
+        assert target.description == "Chemical yield"
+        assert target.unit == "%"
+        assert objective.description == "Maximize yield objective"
+
+        # Serialize and verify both metadata survive
+        json_str = objective.to_json()
+        objective_restored = SingleTargetObjective.from_json(json_str)
+
+        assert objective_restored.targets[0].description == "Chemical yield"
+        assert objective_restored.targets[0].unit == "%"
+        assert objective_restored.description == "Maximize yield objective"

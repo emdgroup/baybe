@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from attrs import define, field
+from attrs.converters import optional as optional_c
 from typing_extensions import override
 
 from baybe.serialization import (
@@ -16,6 +17,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
     from baybe.objectives import SingleTargetObjective
@@ -30,6 +32,23 @@ class Target(ABC, SerialMixin):
 
     name: str = field()
     """The name of the target."""
+
+    metadata: MeasurableMetadata | None = field(
+        default=None,
+        converter=optional_c(lambda x: to_metadata(x, MeasurableMetadata)),
+        kw_only=True,
+    )
+    """Optional metadata containing description, unit, and other information."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the target."""
+        return self.metadata.description if self.metadata else None
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of measurement for the target."""
+        return self.metadata.unit if self.metadata else None
 
     def to_objective(self) -> SingleTargetObjective:
         """Create a single-task objective from the target."""

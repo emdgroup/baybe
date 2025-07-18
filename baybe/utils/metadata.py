@@ -51,6 +51,14 @@ class Metadata(SerialMixin):
         return {fld.name for fld in flds if fld.name != flds.misc.name}
 
 
+@define(frozen=True)
+class MeasurableMetadata(Metadata):
+    """Class providing metadata for BayBE :class:`Parameter` objects."""
+
+    unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
+    """The unit of measurement for the parameter."""
+
+
 def to_metadata(
     value: dict[str, Any] | _TMetaData, cls: type[_TMetaData], /
 ) -> _TMetaData:
