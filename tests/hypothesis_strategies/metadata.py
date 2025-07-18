@@ -3,8 +3,7 @@
 import hypothesis.strategies as st
 from hypothesis import assume
 
-from baybe.parameters.base import MeasurableMetadata
-from baybe.utils.metadata import Metadata
+from baybe.utils.metadata import MeasurableMetadata, Metadata
 
 _descriptions = st.one_of(st.none(), st.text(min_size=0))
 """A strategy generating metadata descriptions."""

@@ -6,7 +6,8 @@ from typing import ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import define
+from attrs import define, field
+from attrs.converters import optional as optional_c
 
 from baybe.serialization.core import (
     converter,
@@ -15,6 +16,7 @@ from baybe.serialization.core import (
 )
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
+from baybe.utils.metadata import Metadata, to_metadata
 
 # TODO: Reactive slots in all classes once cached_property is supported:
 #   https://github.com/python-attrs/attrs/issues/164
@@ -26,6 +28,18 @@ class Objective(ABC, SerialMixin):
 
     is_multi_output: ClassVar[bool]
     """Class variable indicating if the objective produces multiple outputs."""
+
+    metadata: Metadata | None = field(
+        default=None,
+        converter=optional_c(lambda x: to_metadata(x, Metadata)),
+        kw_only=True,
+    )
+    """Optional metadata containing description and other information."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the objective."""
+        return self.metadata.description if self.metadata else None
 
     @property
     @abstractmethod

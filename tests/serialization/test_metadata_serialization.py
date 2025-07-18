@@ -5,8 +5,7 @@ import pytest
 from hypothesis import given
 from pytest import param
 
-from baybe.parameters.base import MeasurableMetadata
-from baybe.utils.metadata import Metadata, to_metadata
+from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
 from tests.hypothesis_strategies.metadata import measurable_metadata, metadata
 
 
