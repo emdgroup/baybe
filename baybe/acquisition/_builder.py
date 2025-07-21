@@ -27,7 +27,7 @@ from baybe.acquisition.acqfs import (
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.acquisition.utils import get_partitioning
+from baybe.acquisition.utils import make_partitioning
 from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -281,7 +281,7 @@ class BotorchAcquisitionFunctionBuilder:
             (qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement),
         )
 
-        self._args.partitioning = get_partitioning(
+        self._args.partitioning = make_partitioning(
             self._posterior_mean_comp, self._args.ref_point, self.acqf.alpha
         )
 

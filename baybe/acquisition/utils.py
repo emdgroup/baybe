@@ -23,10 +23,10 @@ def convert_acqf(acqf: AcquisitionFunction | str, /) -> AcquisitionFunction:
     return acqf if isinstance(acqf, AcquisitionFunction) else str_to_acqf(acqf)
 
 
-def get_partitioning(
+def make_partitioning(
     predictions: Tensor, ref_point: Tensor, alpha: float | None
 ) -> BoxDecomposition:
-    """Get a :class:`~botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition` object for the given predictions and reference point.
+    """Create a :class:`~botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition` object for the given predictions and reference point.
 
     For details on the arguments, see
     :class:`~botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning`.
