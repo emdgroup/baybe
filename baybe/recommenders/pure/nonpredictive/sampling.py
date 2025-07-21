@@ -9,6 +9,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.exceptions import OptionalImportError
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
@@ -78,10 +79,14 @@ class FPSRecommender(NonPredictiveRecommender):
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
-    random_tie_break: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
+    random_tie_break: bool = field(validator=instance_of(bool), kw_only=True)
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+
+    @random_tie_break.default
+    def _default_random_tie_break(self) -> bool:
+        if self.initialization is FPSInitialization.FARTHEST:
+            return False
+        return True
 
     @override
     def _recommend_discrete(
@@ -100,12 +105,37 @@ class FPSRecommender(NonPredictiveRecommender):
         # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(
-            candidates_scaled,
-            batch_size,
-            initialization=self.initialization.value,
-            random_tie_break=self.random_tie_break,
-        )
+
+        # Try fpsample first
+        try:
+            from baybe._optional import fpsample
+
+            if self.initialization != FPSInitialization.FARTHEST:
+                raise ValueError(
+                    f"{self.__class__.__name__} is using the optional 'fpsample', "
+                    f"which does not support '{self.initialization.value}'. "
+                    f"Please choose a supported initialization."
+                )
+
+            if self.random_tie_break:
+                raise ValueError(
+                    f"{self.__class__.__name__} is using the optional 'fpsample' , "
+                    f"which does not support random tie-breaking. "
+                    f"Selection will follow a deterministic order. "
+                )
+
+            ilocs = fpsample.fps_sampling(
+                candidates_scaled,
+                n_samples=batch_size,
+            )
+        except OptionalImportError:
+            # Custom implementation as fallback
+            ilocs = farthest_point_sampling(
+                candidates_scaled,
+                batch_size,
+                initialization=self.initialization.value,
+                random_tie_break=self.random_tie_break,
+            )
         return candidates_comp.index[ilocs]
 
     @override

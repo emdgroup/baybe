@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
+- `FPSRecommender` now optionally uses the fpsample library with fall back
+  to internal implementation
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
