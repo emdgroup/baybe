@@ -26,9 +26,10 @@ def convert_acqf(acqf: AcquisitionFunction | str, /) -> AcquisitionFunction:
 def get_partitioning(
     predictions: Tensor, ref_point: Tensor, alpha: float | None
 ) -> BoxDecomposition:
-    """Get a partitioning object for the given predictions and reference point.
+    """Get a :class:`~botorch.utils.multi_objective.box_decompositions.box_decomposition.BoxDecomposition` object for the given predictions and reference point.
 
-    For details on the arguments, see the corresponding BoTorch functions.
+    For details on the arguments, see
+    :class:`~botorch.utils.multi_objective.box_decompositions.non_dominated.NondominatedPartitioning`.
 
     Args:
         predictions: The predictions tensor of shape (n_samples, n_outputs).
@@ -41,7 +42,7 @@ def get_partitioning(
 
     Returns:
         A partitioning object for hypervolume acquisition functions.
-    """
+    """  # noqa: E501
     from botorch.acquisition.input_constructors import (
         get_default_partitioning_alpha,
     )
