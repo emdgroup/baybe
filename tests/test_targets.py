@@ -1,6 +1,8 @@
 """Target tests."""
 
+import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget
@@ -22,8 +24,15 @@ def test_target_multiplication():
 
 def test_target_inversion():
     """Double inversion cancels out."""
+    series = pd.Series([-2, 0, 3], dtype=float)
     t = NumericalTarget("t")
-    assert t.invert().invert() == t
+    ti = t.invert()
+    tii = ti.invert()
+
+    transformed = t.transform(series)
+    assert tii == t
+    assert_series_equal(transformed, -ti.transform(series))
+    assert_series_equal(transformed, tii.transform(series))
 
 
 def test_target_normalization():
