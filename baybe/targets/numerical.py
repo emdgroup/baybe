@@ -350,7 +350,7 @@ class NumericalTarget(Target, SerialMixin):
     def normalize_sigmoid(
         cls, name: str, anchors: Sequence[Sequence[float]]
     ) -> NumericalTarget:
-        """Create a sigmoid target.
+        """Create a sigmoid-transformed target.
 
         Args:
             name: The name of the target.
