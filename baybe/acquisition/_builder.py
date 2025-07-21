@@ -14,7 +14,7 @@ from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
-from botorch.utils.multi_objective.box_decompositions.non_dominated import (
+from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
 )
 from torch import Tensor
