@@ -2,7 +2,8 @@
 
 import gc
 from abc import ABC
-from typing import ClassVar, NoReturn
+from collections.abc import Callable
+from typing import Any, ClassVar, NoReturn
 
 import cattrs
 import pandas as pd
@@ -18,6 +19,7 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
+from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import validate_parameter_input, validate_target_input
 
@@ -291,16 +293,25 @@ class PureRecommender(ABC, RecommenderProtocol):
         return rec
 
 
-@converter.register_unstructure_hook
-def _drop_deprecated_flags(obj: PureRecommender, /) -> dict[str, object]:
-    fn = make_dict_unstructure_fn(
-        obj.__class__,
-        converter,
-        _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
-        _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
-        _deprecated_allow_recommending_pending_experiments=cattrs.override(omit=True),
-    )
-    return add_type(fn)(obj)
+@converter.register_unstructure_hook_factory(lambda x: issubclass(x, PureRecommender))
+def _(cls: type[PureRecommender]) -> Callable[[PureRecommender], dict[str, Any]]:
+    """Deprecation mechanism for allow_* flags."""  # noqa: D401
+
+    def drop_deprecated_flags(obj: PureRecommender, /) -> dict[str, Any]:
+        fn = make_dict_unstructure_fn(
+            cls,
+            converter,
+            _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
+            _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
+            _deprecated_allow_recommending_pending_experiments=cattrs.override(
+                omit=True
+            ),
+        )
+        if is_abstract(cls):
+            fn = add_type(fn)
+        return fn(obj)
+
+    return drop_deprecated_flags
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
