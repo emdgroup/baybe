@@ -25,7 +25,7 @@ _target_lists = st.lists(
 def single_target_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.single.SingleTargetObjective`."""
     target = draw(numerical_targets())
-    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    objective_metadata = draw(metadata())
     return SingleTargetObjective(target=target, metadata=objective_metadata)
 
 
@@ -41,7 +41,7 @@ def desirability_objectives(draw: st.DrawFn):
         )
     )
     scalarizer = draw(st.sampled_from(Scalarizer))
-    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    objective_metadata = draw(metadata())
     return DesirabilityObjective(
         targets, weights, scalarizer, metadata=objective_metadata
     )
@@ -63,7 +63,7 @@ def _pareto_targets(draw: st.DrawFn):
         bounds = None
 
     # Optionally generate metadata for Pareto targets
-    target_metadata = draw(st.one_of(st.none(), measurable_metadata()))
+    target_metadata = draw(measurable_metadata())
 
     return NumericalTarget(
         name=name,
@@ -83,5 +83,5 @@ _pareto_target_lists = st.lists(
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
     targets = draw(_pareto_target_lists)
-    objective_metadata = draw(st.one_of(st.none(), metadata()))
+    objective_metadata = draw(metadata())
     return ParetoObjective(targets, metadata=objective_metadata)

@@ -49,9 +49,9 @@ class Parameter(ABC, SerialMixin):
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
 
-    metadata: MeasurableMetadata | None = field(
-        default=None,
-        converter=optional_c(lambda x: to_metadata(x, MeasurableMetadata)),
+    metadata: MeasurableMetadata = field(
+        factory=MeasurableMetadata,
+        converter=lambda x: to_metadata(x, MeasurableMetadata),
         kw_only=True,
     )
     """Optional metadata containing description, unit, and other information."""
@@ -99,12 +99,12 @@ class Parameter(ABC, SerialMixin):
     @property
     def description(self) -> str | None:
         """The description of the parameter."""
-        return self.metadata.description if self.metadata else None
+        return self.metadata.description
 
     @property
     def unit(self) -> str | None:
         """The unit of measurement for the parameter."""
-        return self.metadata.unit if self.metadata else None
+        return self.metadata.unit
 
 
 @define(frozen=True, slots=False)

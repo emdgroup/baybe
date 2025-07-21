@@ -182,3 +182,12 @@ class TestObjectiveMetadataValidation:
         """Direct metadata creation with description in misc should raise error."""
         with pytest.raises(ValueError, match="fields: {'description'}"):
             Metadata(misc={"description": "should not be here"})
+
+    def test_none_metadata_raises_error(self):
+        """Test that passing None for metadata raises TypeError."""
+        from baybe.parameters.numerical import NumericalDiscreteParameter
+
+        with pytest.raises(
+            TypeError, match="must be a dictionary or a 'MeasurableMetadata' instance"
+        ):
+            NumericalDiscreteParameter(name="test", values=(1, 2, 3), metadata=None)

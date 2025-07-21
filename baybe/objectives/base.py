@@ -7,7 +7,6 @@ from typing import ClassVar
 import cattrs
 import pandas as pd
 from attrs import define, field
-from attrs.converters import optional as optional_c
 
 from baybe.serialization.core import (
     converter,
@@ -29,9 +28,9 @@ class Objective(ABC, SerialMixin):
     is_multi_output: ClassVar[bool]
     """Class variable indicating if the objective produces multiple outputs."""
 
-    metadata: Metadata | None = field(
-        default=None,
-        converter=optional_c(lambda x: to_metadata(x, Metadata)),
+    metadata: Metadata = field(
+        factory=Metadata,
+        converter=lambda x: to_metadata(x, Metadata),
         kw_only=True,
     )
     """Optional metadata containing description and other information."""
@@ -39,7 +38,7 @@ class Objective(ABC, SerialMixin):
     @property
     def description(self) -> str | None:
         """The description of the objective."""
-        return self.metadata.description if self.metadata else None
+        return self.metadata.description
 
     @property
     @abstractmethod

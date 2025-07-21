@@ -3,7 +3,7 @@
 import pytest
 from pytest import param
 
-from baybe.utils.metadata import MeasurableMetadata, to_metadata
+from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
 
 
 class TestMetadata:
@@ -24,6 +24,36 @@ class TestMetadata:
         assert meta.description is None
         assert meta.unit is None
         assert meta.misc == {}
+
+    def test_metadata_is_empty_detection(self):
+        """The is_empty property correctly identifies empty metadata."""
+        # Test empty MeasurableMetadata
+        meta1 = MeasurableMetadata()
+        assert meta1.is_empty
+
+        # Test MeasurableMetadata with description only
+        meta2 = MeasurableMetadata(description="test")
+        assert not meta2.is_empty
+
+        # Test MeasurableMetadata with unit only
+        meta3 = MeasurableMetadata(unit="kg")
+        assert not meta3.is_empty
+
+        # Test MeasurableMetadata with misc only
+        meta4 = MeasurableMetadata(misc={"key": "value"})
+        assert not meta4.is_empty
+
+        # Test empty base Metadata
+        meta5 = Metadata()
+        assert meta5.is_empty
+
+        # Test Metadata with description
+        meta6 = Metadata(description="test")
+        assert not meta6.is_empty
+
+        # Test Metadata with misc
+        meta7 = Metadata(misc={"key": "value"})
+        assert not meta7.is_empty
 
 
 class TestMetadataConverter:

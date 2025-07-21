@@ -27,11 +27,39 @@ class TestMeasurableMetadataIntegration:
         assert param.metadata.misc == {"key": "value"}
 
     def test_parameter_without_metadata(self):
-        """Parameters without metadata have ``None`` properties."""
+        """Parameters without metadata have empty metadata and ``None`` properties."""
         param = NumericalDiscreteParameter(name="p", values=(1, 2))
-        assert param.metadata is None
+        assert param.metadata is not None
+        assert param.metadata.is_empty
         assert param.description is None
         assert param.unit is None
+
+    def test_parameter_metadata_always_non_none(self):
+        """Test that parameter metadata is always non-None."""
+        # Test parameter without explicit metadata
+        param1 = NumericalDiscreteParameter(name="test1", values=(1, 2, 3))
+        assert param1.metadata is not None
+        assert param1.metadata.is_empty
+        assert param1.description is None
+        assert param1.unit is None
+
+        # Test parameter with empty dict metadata
+        param2 = NumericalDiscreteParameter(name="test2", values=(1, 2, 3), metadata={})
+        assert param2.metadata is not None
+        assert param2.metadata.is_empty
+        assert param2.description is None
+        assert param2.unit is None
+
+        # Test parameter with actual metadata
+        param3 = NumericalDiscreteParameter(
+            name="test3",
+            values=(1, 2, 3),
+            metadata={"description": "Test param", "unit": "kg"},
+        )
+        assert param3.metadata is not None
+        assert not param3.metadata.is_empty
+        assert param3.description == "Test param"
+        assert param3.unit == "kg"
 
 
 class TestTargetMetadataIntegration:
@@ -63,9 +91,50 @@ class TestTargetMetadataIntegration:
             mode=TargetMode.MAX,
             transformation=TargetTransformation.LINEAR,
         )
-        assert target.metadata is None
+        assert target.metadata is not None
+        assert target.metadata.is_empty
         assert target.description is None
         assert target.unit is None
+
+    def test_target_metadata_always_non_none(self):
+        """Test that target metadata is always non-None."""
+        # Test target without explicit metadata
+        target1 = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+        assert target1.metadata is not None
+        assert target1.metadata.is_empty
+        assert target1.description is None
+        assert target1.unit is None
+
+        # Test target with empty dict metadata
+        target2 = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata={},
+        )
+        assert target2.metadata is not None
+        assert target2.metadata.is_empty
+        assert target2.description is None
+        assert target2.unit is None
+
+        # Test target with actual metadata
+        target3 = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+            metadata={"description": "Chemical yield", "unit": "%"},
+        )
+        assert target3.metadata is not None
+        assert not target3.metadata.is_empty
+        assert target3.description == "Chemical yield"
+        assert target3.unit == "%"
 
     def test_target_metadata_serialization(self):
         """Target metadata survives serialization roundtrip."""
@@ -124,7 +193,8 @@ class TestObjectiveMetadataIntegration:
         )
 
         objective = SingleTargetObjective(target=target)
-        assert objective.metadata is None
+        assert objective.metadata is not None
+        assert objective.metadata.is_empty
         assert objective.description is None
 
     def test_objective_metadata_serialization(self):
@@ -177,3 +247,33 @@ class TestObjectiveMetadataIntegration:
         assert objective_restored.targets[0].description == "Chemical yield"
         assert objective_restored.targets[0].unit == "%"
         assert objective_restored.description == "Maximize yield objective"
+
+    def test_objective_metadata_always_non_none(self):
+        """Test that objective metadata is always non-None."""
+        target = NumericalTarget(
+            name="yield",
+            bounds=(0, 100),
+            mode=TargetMode.MAX,
+            transformation=TargetTransformation.LINEAR,
+        )
+
+        # Test objective without explicit metadata
+        objective1 = SingleTargetObjective(target=target)
+        assert objective1.metadata is not None
+        assert objective1.metadata.is_empty
+        assert objective1.description is None
+
+        # Test objective with empty dict metadata
+        objective2 = SingleTargetObjective(target=target, metadata={})
+        assert objective2.metadata is not None
+        assert objective2.metadata.is_empty
+        assert objective2.description is None
+
+        # Test objective with actual metadata
+        objective3 = SingleTargetObjective(
+            target=target,
+            metadata={"description": "Maximize yield", "priority": "critical"},
+        )
+        assert objective3.metadata is not None
+        assert not objective3.metadata.is_empty
+        assert objective3.description == "Maximize yield"

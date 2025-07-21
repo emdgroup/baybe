@@ -50,6 +50,11 @@ class Metadata(SerialMixin):
         flds = fields(cls)
         return {fld.name for fld in flds if fld.name != flds.misc.name}
 
+    @property
+    def is_empty(self) -> bool:
+        """Check if metadata contains any meaningful information."""
+        return self.description is None and not self.misc
+
 
 @define(frozen=True)
 class MeasurableMetadata(Metadata):
@@ -57,6 +62,11 @@ class MeasurableMetadata(Metadata):
 
     unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
     """The unit of measurement for the parameter."""
+
+    @property
+    def is_empty(self) -> bool:
+        """Check if metadata contains any meaningful information."""
+        return self.description is None and self.unit is None and not self.misc
 
 
 def to_metadata(
