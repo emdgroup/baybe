@@ -84,7 +84,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.default
     def _default_random_tie_break(self) -> bool:
-        if self.initialization == FPSInitialization.FARTHEST:
+        if self.initialization is FPSInitialization.FARTHEST:
             return False
         return True
 

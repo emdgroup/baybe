@@ -12,13 +12,9 @@ from baybe.searchspace.core import SearchSpace
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
-nonpredictive_recommenders = []
-for cls in get_subclasses(NonPredictiveRecommender):
-    if cls.__name__ == "FPSRecommender":
-        recommender = cls(random_tie_break=False)
-    else:
-        recommender = cls()
-    nonpredictive_recommenders.append(param(recommender, id=cls.__name__))
+nonpredictive_recommenders = [
+    param(cls(), id=cls.__name__) for cls in get_subclasses(NonPredictiveRecommender)
+]
 
 p1 = NumericalDiscreteParameter("p1", [1, 2])
 t1 = NumericalTarget("t1", "MAX")
