@@ -438,8 +438,11 @@ class qExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
-        flds = fields(qExpectedHypervolumeImprovement)
-        return (flds.alpha.name, flds.reference_point.name)
+        # BoTorch's acquisition functions do not directly expect an `alpha` argument
+        # but a partitioning object derived from it, which we create on the fly.
+        # Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(qLogExpectedHypervolumeImprovement)
+        return super()._non_botorch_attrs + (flds.alpha.name,)
 
 
 @define(frozen=True)
@@ -454,8 +457,11 @@ class qLogExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     @override
     @classproperty
     def _non_botorch_attrs(cls) -> tuple[str, ...]:
+        # BoTorch's acquisition functions do not directly expect an `alpha` argument
+        # but a partitioning object derived from it, which we create on the fly.
+        # Thus, we bypass the auto-matching mechanism and handle it manually.
         flds = fields(qLogExpectedHypervolumeImprovement)
-        return (flds.alpha.name, flds.reference_point.name)
+        return super()._non_botorch_attrs + (flds.alpha.name,)
 
 
 @define(frozen=True)
