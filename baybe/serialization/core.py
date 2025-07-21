@@ -23,9 +23,7 @@ _T = TypeVar("_T")
 _TYPE_FIELD = "type"
 """The name of the field used to store the type information in serialized objects."""
 
-converter = cattrs.Converter(
-    unstruct_collection_overrides={set: list}, forbid_extra_keys=True, use_alias=True
-)
+converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alias=True)
 """The default converter for (de-)serializing BayBE-related objects."""
 
 
@@ -62,6 +60,11 @@ def make_base_structure_hook(base: type[_T]):
     Reads the ``type`` information from the given input to retrieve the correct
     subclass and then calls the existing structure hook of the that class.
     """
+    if not is_abstract(base):
+        raise ValueError(
+            f"Registering base class structuring is intended for abstract classes "
+            f"only. Given: '{base.__name__}' (which is not abstract).",
+        )
 
     def structure_base(val: dict[str, Any] | str, cls: type[_T]) -> _T:
         # Extract the type information from the given input and find

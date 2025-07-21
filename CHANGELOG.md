@@ -9,9 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API diagram in user guide
 
 ### Changed
-- Providing an explicit `type` field in serialization strings where the concrete
-  type is already dictated by the context (e.g. `simplex_parameters` argument of 
-  `SubspaceDiscrete.from_simplex`) is no longer supported.
 - `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
   have been replaced with `unstructure_with_type` and `make_base_structure_hook`
 - `to_dict` and `to_json` now accept an optional Boolean `add_type` argument
