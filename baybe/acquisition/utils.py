@@ -50,17 +50,17 @@ def get_partitioning(
         NondominatedPartitioning,
     )
 
-    if not predictions.ndim == 2:
+    if predictions.ndim != 2:
         raise ValueError(
             f"Predictions must be a 2-D tensor, got shape {predictions.shape}."
         )
 
-    if not ref_point.ndim == 1:
+    if ref_point.ndim != 1:
         raise ValueError(
             f"Reference point must be a 1-D tensor, got shape {ref_point.shape}."
         )
 
-    if not (n_p := predictions.shape[1]) == (n_r := len(ref_point)):
+    if (n_p := predictions.shape[1]) != (n_r := len(ref_point)):
         raise ValueError(
             f"Predictions dimensionality {n_p} does not match reference point "
             f"dimensionality {n_r}."
