@@ -70,7 +70,9 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     searchspace_nontl = SearchSpace.from_product(parameters=params)
     searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
-    objective = SingleTargetObjective(target=NumericalTarget(name="Target", mode="MIN"))
+    objective = SingleTargetObjective(
+        target=NumericalTarget(name="Target", minimize=True)
+    )
     tl_campaign = Campaign(
         searchspace=searchspace_tl,
         objective=objective,

@@ -44,7 +44,7 @@ searchspace = SearchSpace.from_product(
         NumericalContinuousParameter("p2", [-1, 1]),
     ]
 )
-objective = NumericalTarget("t1", "MAX").to_objective()
+objective = NumericalTarget("t1").to_objective()
 
 
 def lookup(df: pd.DataFrame) -> pd.DataFrame:
@@ -98,7 +98,7 @@ searchspace = SearchSpace.from_product(
         NumericalDiscreteParameter("p2", [1, 10, 100, 1000]),
     ]
 )
-objective = NumericalTarget("t", "MAX").to_objective()
+objective = NumericalTarget("t").to_objective()
 
 lookup = pd.DataFrame.from_records(
     [

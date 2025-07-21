@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="169.9mm" height="84.885mm" version="1.1" viewBox="0 0 84.949 42.442" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <marker id="marker50" overflow="visible" markerHeight="1" markerWidth="1" orient="auto" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path d="m0 4v-8" fill="none" stroke="context-stroke"/>
+  </marker>
+  <marker id="Stop" overflow="visible" markerHeight="1" markerWidth="1" orient="auto" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path d="m0 4v-8" fill="none" stroke="context-stroke"/>
+  </marker>
+  <marker id="ArrowWide" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="rotate(180 .125 0)" d="m3-3-3 3 3 3" fill="none" stroke="context-stroke"/>
+  </marker>
+ </defs>
+ <g transform="translate(-115.57 -127.35)">
+  <path d="m115.57 127.35h42.474v42.442h-42.474z" fill="#0f69af"/>
+  <g fill="none">
+   <path d="m124.38 167.38v-36.952" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <path d="m117.35 160.25h37.425" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <text x="154.01079" y="164.31525" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="154.01079" y="164.31525" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">in</tspan></text>
+   <path d="m117.52 160.25h8.3503l16.934-22.84 6.5107 22.84h4.3548" stroke="#ffdcb9" stroke-width=".37042"/>
+  </g>
+  <path d="m158.04 127.35h42.474v42.442h-42.474z" fill="#0f69af"/>
+  <g>
+   <text x="117.89469" y="132.16644" fill="none" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="117.89469" y="132.16644" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">out</tspan></text>
+   <text x="125.78802" y="163.76926" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="125.78802" y="163.76926" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" font-size="1.8053px" stroke-width=".06628">min</tspan></tspan></text>
+   <path d="m125.94 159.47v1.5561" fill="none" stroke="#abdfdb" stroke-width=".37042"/>
+   <text x="139.23357" y="163.76926" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="139.23357" y="163.76926" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" font-size="1.8053px" stroke-width=".06628">peak</tspan></tspan></text>
+   <path d="m142.79 159.47v1.5561" fill="none" stroke="#abdfdb" stroke-width=".37042"/>
+   <text x="146.55708" y="163.76926" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="146.55708" y="163.76926" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" font-size="1.8053px" stroke-width=".06628">max</tspan></tspan></text>
+  </g>
+  <g fill="none" stroke="#abdfdb">
+   <path d="m149.31 159.47v1.5561" stroke-width=".37042"/>
+   <path d="m142.78 137.85v22.412" stroke-dasharray="0.211666, 0.423332" stroke-width=".21167"/>
+   <path d="m142.89 137.51h-18.43" stroke-dasharray="0.211666, 0.423332" stroke-width=".21167"/>
+  </g>
+  <text x="117.84587" y="138.48732" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="117.84587" y="138.48732" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">1.0</tspan></text>
+  <g fill="none">
+   <path d="m125.16 137.51h-1.5561" stroke="#abdfdb" stroke-width=".37042"/>
+   <path d="m166.9 167.38v-36.952" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <path d="m159.86 155.18h37.425" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <text x="196.52895" y="159.24722" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="196.52895" y="159.24722" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">in</tspan></text>
+   <path d="m160.04 155.18h8.3503l11.723-22.84 11.723 22.84h4.3548" stroke="#ffdcb9" stroke-width=".37042"/>
+  </g>
+  <text x="181.33301" y="153.42523" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="181.33301" y="153.42523" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" font-size="1.8053px" stroke-width=".06628">peak</tspan></tspan></text>
+  <g fill="none" stroke="#abdfdb">
+   <path d="m180.11 154.4v1.5561" stroke-width=".37042"/>
+   <path d="m180.07 132.78v31.904" stroke-dasharray="0.211666, 0.423332" stroke-width=".21167"/>
+   <path d="m180.09 132.44h-13.112" stroke-dasharray="0.211666, 0.423332" stroke-width=".21167"/>
+  </g>
+  <text x="160.36403" y="133.41928" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="160.36403" y="133.41928" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">1.0</tspan></text>
+  <g fill="none" stroke="#abdfdb">
+   <path d="m167.68 132.44h-1.5561" stroke-width=".37042"/>
+   <g stroke-dasharray="0.635, 0.635" stroke-width=".21167">
+    <path d="m191.69 164.55h-23.376" marker-end="url(#marker50)" marker-start="url(#Stop)"/>
+    <path d="m180.07 160.33h-11.708" marker-end="url(#marker50)" marker-start="url(#Stop)" stroke-dashoffset=".71966"/>
+    <path d="m191.69 160.33h-11.625" marker-end="url(#marker50)" marker-start="url(#Stop)" stroke-dashoffset=".84666"/>
+   </g>
+  </g>
+  <g fill="#abdfdb" font-size="2.1167px" stroke="#ffffff" stroke-width=".06628">
+   <text x="177.66582" y="167.01556" xml:space="preserve"><tspan x="177.66582" y="167.01556" fill="#abdfdb" font-family="Arial" font-size="2.1167px" stroke="none" stroke-width=".06628">width</tspan></text>
+   <text x="169.29305" y="158.64761" xml:space="preserve"><tspan x="169.29305" y="158.64761" fill="#abdfdb" font-family="Arial" font-size="2.1167px" stroke="none" stroke-width=".06628">margins[0]</tspan></text>
+   <text x="180.96111" y="158.64761" xml:space="preserve"><tspan x="180.96111" y="158.64761" fill="#abdfdb" font-family="Arial" font-size="2.1167px" stroke="none" stroke-width=".06628">margins[1]</tspan></text>
+  </g>
+ </g>
+</svg>

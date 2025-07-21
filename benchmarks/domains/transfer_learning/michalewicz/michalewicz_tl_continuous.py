@@ -47,7 +47,7 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
 
 def make_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
-    return SingleTargetObjective(target=NumericalTarget(name="Target", mode="MAX"))
+    return SingleTargetObjective(target=NumericalTarget(name="Target"))
 
 
 def wrap_function(

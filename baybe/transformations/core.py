@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import gc
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING
 
+import numpy as np
 from attrs import Factory, define, field
 from attrs.validators import deep_iterable, ge, instance_of, is_callable, min_len
 from typing_extensions import override
@@ -36,13 +37,29 @@ class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
     transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
+        converter=tuple,
         validator=[
-            min_len(1),
+            min_len(2),
             deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )
     """The transformations to be composed."""
+
+    @override
+    def __new__(
+        cls, transformations: Iterable[Transformation], /
+    ) -> Transformation | None:
+        # If only one transformation is provided, we return it directly instead of
+        # wrapping it. This has the advantages of:
+        # * Avoiding unnecessary wrappers
+        # * Simplifying comparisons in such cases
+        # * Not requiring us to allow length-one chained transformations
+        compressed = compress_transformations(transformations)
+        if len(compressed) == 0:
+            return None
+        if len(compressed) == 1:
+            return compressed[0]
+        return super().__new__(cls)
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -168,17 +185,17 @@ class AffineTransformation(MonotonicTransformation):
 
 
 @define(slots=False)
-class TwoSidedLinearTransformation(Transformation):
-    """A transformation with two linear segments on either side of a midpoint."""
+class TwoSidedAffineTransformation(Transformation):
+    """A transformation with two affine segments on either side of a midpoint."""
 
     slope_left: float = field(converter=float)
-    """The slope of the linear segment to the left of the midpoint."""
+    """The slope of the affine segment to the left of the midpoint."""
 
     slope_right: float = field(converter=float)
-    """The slope of the linear segment to the right of the midpoint."""
+    """The slope of the affine segment to the right of the midpoint."""
 
     midpoint: float = field(default=0.0, converter=float)
-    """The midpoint where the two linear segments meet."""
+    """The midpoint where the two affine segments meet."""
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
@@ -239,7 +256,7 @@ class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
     _transformation: Transformation = field(
-        factory=lambda: TwoSidedLinearTransformation(slope_left=-1, slope_right=1),
+        factory=lambda: TwoSidedAffineTransformation(slope_left=-1, slope_right=1),
         init=False,
         repr=False,
     )
@@ -292,7 +309,7 @@ class TriangularTransformation(Transformation):
     @_transformation.default
     def _default_transformation(self) -> Transformation:
         return (
-            TwoSidedLinearTransformation(
+            TwoSidedAffineTransformation(
                 slope_left=1 / self.margins[0],
                 slope_right=-1 / self.margins[1],
                 midpoint=self.peak,
@@ -380,6 +397,74 @@ class PowerTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.pow(self.exponent)
+
+
+@define(slots=False)
+class SigmoidTransformation(MonotonicTransformation):
+    """A sigmoid transformation."""
+
+    center: float = field(default=0.0, converter=float)
+    """The center of the sigmoid function, where it crosses 0.5."""
+
+    steepness: float = field(default=1.0, converter=float)
+    """The steepness of the sigmoid function."""
+
+    @classmethod
+    def from_anchors(cls, anchors: Sequence[Sequence[float]]) -> SigmoidTransformation:
+        """Create a sigmoid transformation from two anchor points.
+
+        Args:
+            anchors: The anchor points defining the sigmoid transformation.
+                Must be convertible to two pairs of floats, where each pair represents
+                an anchor point through which the sigmoid curve passes.
+
+        Raises:
+            ValueError: If the input given as anchors does not represent two points.
+            ValueError: If the ordinates of the anchors are not in the unit interval.
+
+        Returns:
+            A sigmoid transformation passing through the specified anchor points.
+
+        Example:
+            >>> import torch
+            >>> from pandas.testing import assert_series_equal
+            >>> p1 = (-2, 0.1)
+            >>> p2 = (5, 0.6)
+            >>> t = SigmoidTransformation.from_anchors([p1, p2])
+            >>> out = t(torch.tensor([p1[0], p2[0]]))
+            >>> assert torch.equal(out, torch.tensor([p1[1], p2[1]]))
+        """
+        import cattrs
+
+        # Extract point coordinates from the input
+        try:
+            anchors = cattrs.structure(
+                anchors, tuple[tuple[float, float], tuple[float, float]]
+            )  # type: ignore[call-arg]
+        except cattrs.IterableValidationError as ex:
+            raise ValueError(
+                f"The specified anchor point argument must be convertible to two "
+                f"pairs of floats. Given: {anchors}"
+            ) from ex
+        (x1, y1), (x2, y2) = anchors
+
+        if not ((0.0 < y1 < 1.0) and (0.0 < y2 < 1.0)):
+            raise ValueError(
+                f"The ordinates of the anchor points must be in the open "
+                f"interval (0, 1). Given: {y1=} and {y2=}."
+            )
+
+        k1 = np.log(1 / y1 - 1)
+        k2 = np.log(1 / y2 - 1)
+        shift = (k2 * x1 - k1 * x2) / (k2 - k1)
+        steepness = (k2 - k1) / (x2 - x1)
+        return SigmoidTransformation(shift, steepness)
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        import torch
+
+        return 1 / (1 + torch.exp(self.steepness * (x - self.center)))
 
 
 # Register (un-)structure hooks

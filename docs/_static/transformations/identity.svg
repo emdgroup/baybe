@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="84.949mm" height="84.885mm" version="1.1" viewBox="0 0 42.474 42.442" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <marker id="ArrowWide" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="rotate(180 .125 0)" d="m3-3-3 3 3 3" fill="none" stroke="context-stroke"/>
+  </marker>
+ </defs>
+ <g transform="translate(-83.714 -127.35)">
+  <path d="m83.714 127.35h42.474v42.442h-42.474z" fill="#0f69af"/>
+  <g fill="none">
+   <path d="m96.031 167.38v-36.952" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <path d="m85.491 156.9h37.425" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <text x="117.16714" y="160.80472" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="117.16714" y="160.80472" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">input</tspan></text>
+   <text transform="rotate(-90)" x="-137.87392" y="93.138031" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="-137.87392" y="93.138031" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">output</tspan></text>
+   <path d="m87.695 165.37 32.406-32.998" stroke="#ffdcb9" stroke-width=".37042"/>
+  </g>
+ </g>
+</svg>

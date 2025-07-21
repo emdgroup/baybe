@@ -94,7 +94,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
     searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
     objective = SingleTargetObjective(
-        target=NumericalTarget(name="Target", mode="MAX" if negate else "MIN")
+        target=NumericalTarget(name="Target", minimize=not negate)
     )
     tl_campaign = Campaign(
         searchspace=searchspace_tl,
