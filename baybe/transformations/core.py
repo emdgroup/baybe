@@ -427,7 +427,6 @@ class SigmoidTransformation(MonotonicTransformation):
 
         Example:
             >>> import torch
-            >>> from pandas.testing import assert_series_equal
             >>> p1 = (-2, 0.1)
             >>> p2 = (5, 0.6)
             >>> t = SigmoidTransformation.from_anchors([p1, p2])
