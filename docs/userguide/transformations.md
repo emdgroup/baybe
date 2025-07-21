@@ -193,7 +193,7 @@ range of the input values to a specified interval.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/clamping.svg)
 ````
 
 ````{grid-item}
@@ -233,7 +233,7 @@ transformation to the given input, i.e., it scales and shifts the incoming value
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/affine.svg)
 ````
 
 ````{grid-item}
@@ -272,7 +272,7 @@ transformation with two linear segments that meet at a midpoint.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/twosidedlinear.svg)
 ````
 
 ````{grid-item}
@@ -313,7 +313,7 @@ input to a specific set point value.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/bell.svg)
 ````
 
 ````{grid-item}
@@ -349,7 +349,7 @@ to a specific set point value.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/triangular.svg)
 ````
 
 ````{grid-item}
