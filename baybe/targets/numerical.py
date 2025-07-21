@@ -398,7 +398,7 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied inversion transformation.
         """
-        return self._append_transformation(AffineTransformation(factor=1))
+        return self._append_transformation(AffineTransformation(factor=-1))
 
     def normalize(self) -> NumericalTarget:
         """Normalize the target to the unit interval using an affine transformation.
