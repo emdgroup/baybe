@@ -8,14 +8,14 @@ from typing import Any
 
 import pandas as pd
 import torch
-from attrs import asdict, define, field, fields
+from attrs import Attribute, asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
-from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
-from botorch.acquisition.objective import PosteriorTransform as PTrans
+from botorch.acquisition.monte_carlo import MCAcquisitionObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
-    BoxDecomposition as BoPart,
+    BoxDecomposition,
 )
 from torch import Tensor
 
@@ -40,13 +40,28 @@ from baybe.transformations import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
+_OPT_FIELD: None = object()  # type: ignore[assignment]
+"""Sentinel value indicating optional acquisition function attributes."""
+
 
 def opt_v(x: Any, /) -> Callable:
     """Shorthand for an optional attrs isinstance validator."""  # noqa: D401
     return optional(instance_of(x))
 
 
-@define(kw_only=True)
+def _make_optional_fields(_, fields: list[Attribute]) -> list[Attribute]:
+    """Automatically set default values and validators for optional fields."""
+
+    def set_default_and_validator(fld: Attribute) -> Attribute:
+        """Set default value and validator for the given optional field."""
+        if fld.default is not _OPT_FIELD:
+            return fld
+        return fld.evolve(default=None, validator=instance_of(fld.type))  # type: ignore[arg-type]
+
+    return [set_default_and_validator(fld) for fld in fields]
+
+
+@define(kw_only=True, field_transformer=_make_optional_fields)
 class BotorchAcquisitionArgs:
     """The collection of (possible) arguments for BoTorch acquisition functions."""
 
@@ -54,18 +69,18 @@ class BotorchAcquisitionArgs:
     model: Model = field(validator=instance_of(Model))
 
     # Optional, depending on the specific acquisition function being used
-    best_f: float | None = field(default=None, validator=opt_v(float))
-    beta: float | None = field(default=None, validator=opt_v(float))
-    maximize: bool | None = field(default=None, validator=opt_v(bool))
-    mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    num_fantasies: int | None = field(default=None, validator=opt_v(int))
-    objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
-    partitioning: BoPart | None = field(default=None, validator=opt_v(BoPart))
-    posterior_transform: PTrans | None = field(default=None, validator=opt_v(PTrans))
-    prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
-    ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_pending: Tensor | None = field(default=None, validator=opt_v(Tensor))
+    best_f: float | None = _OPT_FIELD
+    beta: float | None = _OPT_FIELD
+    maximize: bool | None = _OPT_FIELD
+    mc_points: Tensor | None = _OPT_FIELD
+    num_fantasies: int | None = _OPT_FIELD
+    objective: MCAcquisitionObjective | None = _OPT_FIELD
+    partitioning: BoxDecomposition | None = _OPT_FIELD
+    posterior_transform: PosteriorTransform | None = _OPT_FIELD
+    prune_baseline: bool | None = _OPT_FIELD
+    ref_point: Tensor | None = _OPT_FIELD
+    X_baseline: Tensor | None = _OPT_FIELD
+    X_pending: Tensor | None = _OPT_FIELD
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
