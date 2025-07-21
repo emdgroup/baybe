@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="169.9mm" height="84.885mm" version="1.1" viewBox="0 0 84.949 42.442" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <marker id="ArrowWide" overflow="visible" markerHeight="1" markerWidth="1" orient="auto-start-reverse" preserveAspectRatio="xMidYMid" viewBox="0 0 1 1">
+   <path transform="rotate(180 .125 0)" d="m3-3-3 3 3 3" fill="none" stroke="context-stroke"/>
+  </marker>
+ </defs>
+ <g transform="translate(-115.57 -127.35)">
+  <path d="m115.57 127.35h42.474v42.442h-42.474z" fill="#0f69af"/>
+  <g fill="none">
+   <path d="m127.89 167.38v-36.952" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <path d="m117.35 156.9h37.425" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <text x="153.0041" y="160.80472" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="153.0041" y="160.80472" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">in</tspan></text>
+  </g>
+  <g>
+   <text x="141.38214" y="155.76936" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="141.38214" y="155.76936" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" fill="#abdfdb" font-size="1.8053px" stroke-width=".06628">max</tspan></tspan></text>
+   <text transform="rotate(-90)" x="-134.06367" y="124.99386" fill="none" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="-134.06367" y="124.99386" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">out</tspan></text>
+   <path d="m153.76 143.97h-13.162l-15.607 15.892h-7.2879" fill="none" stroke="#ffdcb9" stroke-width=".37042"/>
+   <text x="122.40617" y="155.79051" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="122.40617" y="155.79051" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" fill="#abdfdb" font-size="1.8053px" stroke-width=".06628">min</tspan></tspan></text>
+  </g>
+  <path d="m124.93 156.9v2.9905" fill="none" stroke="#abdfdb" stroke-dasharray="0.211667, 0.423332" stroke-dashoffset=".381" stroke-width=".21167"/>
+  <path d="m140.69 143.79v13.117" fill="none" stroke="#abdfdb" stroke-dasharray="0.211667, 0.423332" stroke-width=".21167"/>
+  <path d="m158.04 127.35h42.474v42.442h-42.474z" fill="#0f69af"/>
+  <g fill="none">
+   <path d="m170.36 167.38v-36.952" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <path d="m159.82 156.9h37.425" marker-end="url(#ArrowWide)" stroke="#fff" stroke-width=".21167"/>
+   <text x="195.47855" y="160.80472" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="195.47855" y="160.80472" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">in</tspan></text>
+  </g>
+  <g>
+   <text x="181.51559" y="155.76936" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="181.51559" y="155.76936" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" fill="#abdfdb" font-size="1.8053px" stroke-width=".06628">max</tspan></tspan></text>
+   <text x="163.96916" y="132.16644" fill="none" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="163.96916" y="132.16644" fill="#ffffff" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">out</tspan></text>
+   <path d="m162.09 164.43 24.984-22.87h9.4323" fill="none" stroke="#ffdcb9" stroke-width=".37042"/>
+   <text x="176.82286" y="163.45401" fill="#abdfdb" font-size="2.7774px" stroke="#ffffff" stroke-width=".06628" xml:space="preserve"><tspan x="176.82286" y="163.45401" fill="#abdfdb" font-family="Arial" font-size="2.7774px" stroke="none" stroke-width=".06628">c<tspan baseline-shift="sub" font-size="1.8053px" stroke-width=".06628">min</tspan> = None</tspan></text>
+  </g>
+  <path d="m186.93 141.69v15.224" fill="none" stroke="#abdfdb" stroke-dasharray="0.211667, 0.423332" stroke-width=".21167"/>
+ </g>
+</svg>

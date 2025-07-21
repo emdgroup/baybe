@@ -28,7 +28,7 @@ that leaves the input values unchanged.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/identity.svg)
 ````
 
 ````{grid-item}
@@ -59,7 +59,7 @@ the absolute value of the given input.
 
 ````{grid-item}
 :columns: auto
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/absolute.svg)
 ````
 
 ````{grid-item}
@@ -193,7 +193,7 @@ range of the input values to a specified interval.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/clamping.svg)
 ````
 
 ````{grid-item}
@@ -272,7 +272,7 @@ transformation with two linear segments that meet at a midpoint.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/twosidedlinear.svg)
 ````
 
 ````{grid-item}
@@ -349,7 +349,7 @@ to a specific set point value.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/favicon.ico)
+![Transforms](../_static/transformations/triangular.svg)
 ````
 
 ````{grid-item}
