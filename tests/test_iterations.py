@@ -72,29 +72,16 @@ for cls in get_subclasses(Surrogate):
         p = param(cls, marks=pytest.mark.skip(reason="missing optional dependency"))
     valid_surrogate_models.append(p)
 
-valid_initial_recommenders = []
-for cls in get_subclasses(NonPredictiveRecommender):
-    if cls.__name__ == "FPSRecommender":
-        valid_initial_recommenders.append(cls(random_tie_break=False))
-    else:
-        valid_initial_recommenders.append(cls())
-
+valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
 
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
-valid_discrete_recommenders = []
-for cls in get_subclasses(PureRecommender):
-    if cls.compatibility in [
-        SearchSpaceType.DISCRETE,
-        SearchSpaceType.HYBRID,
-        SearchSpaceType.EITHER,
-    ]:
-        if cls.__name__ == "FPSRecommender":
-            base = cls(random_tie_break=False)
-        else:
-            base = cls()
-        valid_discrete_recommenders.append(TwoPhaseMetaRecommender(recommender=base))
-
+valid_discrete_recommenders = [
+    TwoPhaseMetaRecommender(recommender=cls())
+    for cls in get_subclasses(PureRecommender)
+    if cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID, SearchSpaceType.EITHER]
+]
 # TODO the TwoPhaseMetaRecommender below can be removed if the SeqGreedy recommender
 #  allows no training data
 valid_continuous_recommenders = [
@@ -150,19 +137,12 @@ valid_hybrid_sequential_greedy_recommenders = [
     for sampler, per in sampling_strategies
 ]
 
-valid_discrete_non_predictive_recommenders = []
-for cls in get_subclasses(NonPredictiveRecommender):
-    if cls.compatibility in [
-        SearchSpaceType.DISCRETE,
-        SearchSpaceType.EITHER,
-        SearchSpaceType.HYBRID,
-    ]:
-        if cls.__name__ == "FPSRecommender":
-            valid_discrete_non_predictive_recommenders.append(
-                cls(random_tie_break=False)
-            )
-        else:
-            valid_discrete_non_predictive_recommenders.append(cls())
+valid_discrete_non_predictive_recommenders = [
+    cls()
+    for cls in get_subclasses(NonPredictiveRecommender)
+    if cls.compatibility
+    in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
+]
 
 valid_discrete_bayesian_recommenders = [
     cls()
