@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
-- `Metadata` class providing basic information for BayBE objects
-- `MeasurableMetadata` class providing metadata for `Parameter` objects
+- `Metadata` and `MeasurableMetadata` classes providing optional information for BayBE objects
+- `Objective` now has a `metadata` attribute as well as a `description` property
+- `Target` and `Parameter` now have a `metadata` attribute a well as `description` and `unit` properties
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
