@@ -13,174 +13,24 @@ their use for {class}`~baybe.parameters.numerical.NumericalContinuousParameter` 
 well.
 ```
 
-## Pre-defined Transformations
+## Pre-Defined Transformations
 
 The following pre-defined transformation types are available via the
 {mod}`baybe.transformations` module: 
 
-### IdentityTransformation
+### Simple Transformations
 
-The {class}`~baybe.transformations.core.IdentityTransformation` is a no-op transformation
-that leaves the input values unchanged.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
-![Transforms](../_static/favicon.ico)
-````
-
-````{grid-item}
-:columns: auto
-
-**Transformation rule**
-
-```{math}
-f(x) = x
-```
-````
-`````
-
-**Example**
-
-```python
-from baybe.transformations import IdentityTransformation
-
-t = IdentityTransformation()  # nothing to be configured here
-```
-
-### AbsoluteTransformation
-
-The {class}`~baybe.transformations.core.AbsoluteTransformation` computes
-the absolute value of the given input.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-![Transforms](../_static/favicon.ico)
-````
-
-````{grid-item}
-:columns: auto
-
-**Transformation rule**
-```{math}
-f(x) = |x|
-```
-````
-`````
-
-**Example**
-
-```python
-from baybe.transformations import AbsoluteTransformation
-
-t = AbsoluteTransformation()  # nothing to be configured here
-```
-
-### ExponentialTransformation
-
-The {class}`~baybe.transformations.core.ExponentialTransformation` computes the
-exponential of the given input.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
-![Transforms](../_static/favicon.ico)
-````
-
-````{grid-item}
-:columns: auto
-
-**Transformation rule**
-
-```{math}
-f(x) = e^x
-```
-````
-`````
-
-**Example**
-
-```python
-from baybe.transformations import ExponentialTransformation
-
-t = ExponentialTransformation()  # nothing to be configured here
-```
-
-### LogarithmicTransformation
-
-The {class}`~baybe.transformations.core.LogarithmicTransformation` computes the
-natural logarithm of the given input.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
-![Transforms](../_static/favicon.ico)
-````
-
-````{grid-item}
-:columns: auto
-
-**Transformation rule**
-
-```{math}
-f(x) = \ln(x)
-```
-````
-`````
-
-**Example**
-
-```python
-from baybe.transformations import LogarithmicTransformation
-
-t = LogarithmicTransformation()  # nothing to be configured here
-```
-
-### PowerTransformation
-
-The {class}`~baybe.transformations.core.PowerTransformation` raises its input to a
-specified power.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
-![Transforms](../_static/favicon.ico)
-````
-
-````{grid-item}
-:columns: auto
-
-**Transformation rule**
-
-```{math}
-f(x) = x^p
-```
-where $p$ is the exponent specified for the transformation.
-````
-`````
-
-**Example**
-
-```python
-from baybe.transformations import PowerTransformation
-
-t = PowerTransformation(power=2)  # squares the input
-```
+- {class}`~baybe.transformations.core.IdentityTransformation`: $f(x) = x$
+- {class}`~baybe.transformations.core.AbsoluteTransformation`: $f(x) = |x|$
+- {class}`~baybe.transformations.core.ExponentialTransformation`: $f(x) = e^x$
+- {class}`~baybe.transformations.core.LogarithmicTransformation`: $f(x) = \ln(x)$
+- {class}`~baybe.transformations.core.PowerTransformation`: $f(x) = x^p$
 
 ```{admonition} Integer Exponents
 :class: attention
-Currently, only integer exponents are supported to avoid obtaining complex numbers when
-transforming negative inputs. This may change in the future.
+Currently, only integer exponents are supported for 
+{class}`~baybe.transformations.core.PowerTransformation` to avoid obtaining 
+complex numbers when transforming negative inputs. This may change in the future.
 ```
 
 ### ClampingTransformation
