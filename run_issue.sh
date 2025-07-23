@@ -1,11 +1,7 @@
 #!/bin/bash
 
 PYTHON_VERSIONS=("3.10" "3.11" "3.12" "3.13")
-PYTHON_SCRIPT="reproducibility.py"
-PACKAGE_TO_INSTALL="baybe==0.13.2"
-
-
-# --- Script Logic ---
+PYTHON_SCRIPT="issue.py"
 
 # First, check if 'uv' is installed and available in the system's PATH.
 if ! command -v uv &> /dev/null; then
@@ -35,11 +31,9 @@ for VERSION in "${PYTHON_VERSIONS[@]}"; do
             echo "      $EXEC_RESULT"
         else
             echo "      Run $i: Failed to execute script with Python $VERSION."
-            # If one run fails, we break the inner loop as subsequent runs
-            # for this Python version will likely also fail.
             break
         fi
     done
 
-    echo "" # Add a newline for better separation in the output.
+    echo ""
 done

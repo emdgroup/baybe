@@ -68,6 +68,7 @@ campaign.add_measurements(df)
 best_joint_acqf_value = -np.inf
 proposed_experiments = None
 import copy
+
 from baybe.constraints import DiscreteExcludeConstraint, SubSelectionCondition
 
 for i, gas in enumerate(gases):
