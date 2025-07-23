@@ -34,7 +34,7 @@ def _add_type_to_dict(dct: dict[str, Any], type: str, /) -> dict[str, Any]:
             f"Cannot add type information to the dictionary since it already contains "
             f"a '{_TYPE_FIELD}' field."
         )
-    dct[_TYPE_FIELD] = type
+    dct = {_TYPE_FIELD: type, **dct}
     return dct
 
 
