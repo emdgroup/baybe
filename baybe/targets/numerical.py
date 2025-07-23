@@ -97,9 +97,9 @@ def _translate_legacy_arguments(
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    _transformation: Transformation | None = field(
+    _transformation: Transformation = field(
         alias="transformation",
-        default=None,
+        factory=IdentityTransformation,
         converter=optional(convert_transformation),
         eq=lambda x: x or IdentityTransformation(),
     )
@@ -369,8 +369,7 @@ class NumericalTarget(Target, SerialMixin):
     @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
-        transformation = self._transformation or IdentityTransformation()
-        return transformation.negate() if self.minimize else transformation
+        return (tr := self._transformation) if not self.minimize else tr.negate()
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
@@ -387,9 +386,9 @@ class NumericalTarget(Target, SerialMixin):
         """
         return evolve(  # type: ignore[call-arg]
             self,
-            transformation=transformation
-            if self._transformation is None
-            else ChainedTransformation([self._transformation, transformation]),
+            transformation=ChainedTransformation(
+                [self._transformation, transformation]
+            ),
         )
 
     def invert(self) -> NumericalTarget:
@@ -493,17 +492,13 @@ class NumericalTarget(Target, SerialMixin):
         assert isinstance(series, pd.Series)
         # <<<<<<<<<< Deprecation
 
-        # When a transformation is specified, apply it
-        if (self._transformation is not None) or self.minimize:
-            from baybe.utils.dataframe import to_tensor
+        from baybe.utils.dataframe import to_tensor
 
-            return pd.Series(
-                self.total_transformation(to_tensor(series)),
-                index=series.index,
-                name=series.name,
-            )
-
-        return series.copy()
+        return pd.Series(
+            self.total_transformation(to_tensor(series)),
+            index=series.index,
+            name=series.name,
+        )
 
     @override
     def summary(self):
