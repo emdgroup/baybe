@@ -26,13 +26,6 @@ The following pre-defined transformation types are available via the
 - {class}`~baybe.transformations.core.LogarithmicTransformation`: $f(x) = \ln(x)$
 - {class}`~baybe.transformations.core.PowerTransformation`: $f(x) = x^p$
 
-```{admonition} Integer Exponents
-:class: attention
-Currently, only integer exponents are supported for 
-{class}`~baybe.transformations.core.PowerTransformation` to avoid obtaining 
-complex numbers when transforming negative inputs. This may change in the future.
-```
-
 ### ClampingTransformation
 
 The {class}`~baybe.transformations.core.ClampingTransformation` is used to limit the
