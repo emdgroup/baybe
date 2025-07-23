@@ -23,8 +23,7 @@ from baybe.acquisition import (
     qUpperConfidenceBound,
 )
 from baybe.utils.sampling_algorithms import DiscreteSamplingMethod
-
-from ..hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats
 
 
 @st.composite

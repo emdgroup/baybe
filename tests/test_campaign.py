@@ -24,8 +24,7 @@ from baybe.surrogates import (
 )
 from baybe.targets import BinaryTarget, NumericalTarget
 from baybe.utils.basic import UNSPECIFIED
-
-from .conftest import run_iterations
+from tests.conftest import run_iterations
 
 
 @pytest.mark.parametrize(

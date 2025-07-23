@@ -2,13 +2,10 @@
 
 from typing import Protocol, runtime_checkable
 
-import cattrs
 import pandas as pd
 
 from baybe.objectives.base import Objective
 from baybe.searchspace import SearchSpace
-from baybe.serialization import converter, unstructure_base
-from baybe.serialization.core import get_base_structure_hook
 
 
 @runtime_checkable
@@ -49,41 +46,3 @@ class RecommenderProtocol(Protocol):
             as individual rows.
         """
         ...
-
-
-# TODO: The workarounds below are currently required since the hooks created through
-#   `unstructure_base` and `get_base_structure_hook` do not reuse the hooks of the
-#   actual class, hence we cannot control things there. Fix is already planned and also
-#   needed for other reasons.
-
-# Register (un-)structure hooks
-converter.register_unstructure_hook(
-    RecommenderProtocol,
-    lambda x: unstructure_base(
-        x,
-        # TODO: Remove once deprecation got expired:
-        overrides=dict(
-            # Temporary workaround (see TODO note above)
-            _surrogate_model=cattrs.override(rename="surrogate_model"),
-            _current_recommender=cattrs.override(omit=False),
-            _used_recommender_ids=cattrs.override(omit=False),
-            _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
-            _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
-            _deprecated_allow_recommending_pending_experiments=cattrs.override(
-                omit=True
-            ),
-        ),
-    ),
-)
-converter.register_structure_hook(
-    RecommenderProtocol,
-    get_base_structure_hook(
-        RecommenderProtocol,
-        # Temporary workaround (see TODO note above)
-        overrides=dict(
-            _surrogate_model=cattrs.override(rename="surrogate_model"),
-            _current_recommender=cattrs.override(omit=False),
-            _used_recommender_ids=cattrs.override(omit=False),
-        ),
-    ),
-)

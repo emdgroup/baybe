@@ -8,10 +8,9 @@ from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS
-
-from ..hypothesis_strategies.basic import finite_floats
-from ..hypothesis_strategies.targets import numerical_targets
-from ..hypothesis_strategies.utils import intervals as st_intervals
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.targets import numerical_targets
+from tests.hypothesis_strategies.utils import intervals as st_intervals
 
 _intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
 
@@ -69,3 +68,11 @@ _pareto_target_lists = st.lists(
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
     return ParetoObjective(draw(_pareto_target_lists))
+
+
+objectives = st.one_of(
+    single_target_objectives(),
+    desirability_objectives(),
+    pareto_objectives(),
+)
+"""A strategy that generates objectives."""

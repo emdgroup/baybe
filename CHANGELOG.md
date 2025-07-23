@@ -8,8 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API diagram in user guide
 
+### Changed
+- `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
+  have been replaced with `unstructure_with_type` and `make_base_structure_hook`
+- `to_dict` and `to_json` now accept an optional Boolean `add_type` argument
+
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
+- `MetaRecommender`'s no longer expose their private attributes via the constructor
 
 ## [0.13.2] - 2025-07-09
 ### Changed
