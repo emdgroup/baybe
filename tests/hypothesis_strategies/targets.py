@@ -3,44 +3,26 @@
 import hypothesis.strategies as st
 
 from baybe.targets import NumericalTarget
-from baybe.targets._deprecated import _VALID_TRANSFORMATIONS
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.enum import TargetMode
-from baybe.utils.interval import Interval
 
-from .utils import intervals as st_intervals
+from ..hypothesis_strategies.transformations import (
+    chained_transformations,
+    single_transformations,
+)
 
-target_name = st.text(min_size=1)
+target_names = st.text(min_size=1)
 """A strategy that generates target names."""
 
 
 @st.composite
-def numerical_targets(
-    draw: st.DrawFn, bounds_strategy: st.SearchStrategy[Interval] | None = None
-):
-    """Generate :class:`baybe.targets.numerical.NumericalTarget`.
-
-    Args:
-        draw: Hypothesis draw object.
-        bounds_strategy: An optional strategy for generating the target bounds.
-
-    Returns:
-        _type_: _description_
-    """
-    name = draw(target_name)
-    mode = draw(st.sampled_from(TargetMode))
-    transformation = draw(st.sampled_from(_VALID_TRANSFORMATIONS[mode]))
-    if bounds_strategy is None:
-        bounds_strategy = st_intervals(
-            exclude_half_bounded=True,
-            exclude_fully_unbounded=mode is TargetMode.MATCH
-            or transformation is not None,
-        )
-    bounds = draw(bounds_strategy)
-
-    return NumericalTarget(
-        name=name, mode=mode, bounds=bounds, transformation=transformation
+def numerical_targets(draw: st.DrawFn):
+    """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
+    name = draw(target_names)
+    transformation = draw(
+        st.one_of(st.none(), single_transformations, chained_transformations())
     )
+    minimize = draw(st.booleans())
+    return NumericalTarget(name, transformation, minimize=minimize)
 
 
 choice_values = st.one_of(
@@ -52,7 +34,7 @@ choice_values = st.one_of(
 @st.composite
 def binary_targets(draw: st.DrawFn):
     """A strategy that generates binary targets."""
-    name = draw(target_name)
+    name = draw(target_names)
     choices = draw(st.lists(choice_values, min_size=2, max_size=2, unique=True))
     return BinaryTarget(name, success_value=choices[0], failure_value=choices[1])
 
