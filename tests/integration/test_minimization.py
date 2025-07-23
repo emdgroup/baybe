@@ -19,7 +19,9 @@ from baybe.utils.random import set_random_seed
 def get_acqf_values(acqf_cls, surrogate, searchspace, objective, df):
     # TODO: Should be replace once a proper public interface is available
     acqf = acqf_cls().to_botorch(surrogate, searchspace, objective, df)
-    return acqf(torch.tensor(searchspace.transform(df).values).unsqueeze(-2))
+    return acqf(
+        torch.tensor(searchspace.transform(df, allow_extra=True).values).unsqueeze(-2)
+    )
 
 
 def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
