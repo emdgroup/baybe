@@ -16,23 +16,18 @@ from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
 
 
-def get_acqf_values(acqf_cls, surrogate, searchspace, objective, df):
-    # TODO: Should be replace once a proper public interface is available
-    acqf = acqf_cls().to_botorch(surrogate, searchspace, objective, df)
-    return acqf(
-        torch.tensor(searchspace.transform(df, allow_extra=True).values).unsqueeze(-2)
-    )
-
-
-def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
+def compute_posterior_and_acqf(
+    acqf_cls: type[AcquisitionFunction], df, searchspace, objective
+):
     surrogate = GaussianProcessSurrogate()
     if acqf_cls.supports_multi_output:
         surrogate = surrogate.replicate()
     surrogate.fit(searchspace, objective, df)
-    with torch.no_grad():
-        posterior = surrogate.posterior(df)
-    acqf = get_acqf_values(acqf_cls, surrogate, searchspace, objective, df)
-    return posterior, acqf
+    posterior = surrogate.posterior(df)
+    acqf = acqf_cls().evaluate(
+        df[list(searchspace.parameter_names)], surrogate, searchspace, objective, df
+    )
+    return posterior, torch.tensor(acqf)
 
 
 @pytest.mark.parametrize(
@@ -43,7 +38,7 @@ def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
         if not issubclass(a, qKnowledgeGradient)  # TODO: not yet clear how to handle
     ],
 )
-def test_minimization(acqf_cls: AcquisitionFunction):
+def test_minimization(acqf_cls: type[AcquisitionFunction]):
     """Maximizing targets is equivalent to minimizing target with inverted data."""
     values = np.linspace(10, 20)
     searchspace = NumericalDiscreteParameter("p", values).to_searchspace()
