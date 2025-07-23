@@ -349,16 +349,27 @@ class SearchSpace(SerialMixin):
         Returns:
             A corresponding dataframe with parameters in computational representation.
         """
-        # Transform subspaces separately
-        df_discrete = self.discrete.transform(
-            df, allow_missing=allow_missing, allow_extra=allow_extra
+        # Potentially existing columns of the respective other subspace would trivially
+        # be "extra" columns, so we drop them first. However, in this step, we can
+        # ignore if columns are not complete since a proper error will be raised in the
+        # corresponding transformation step of each space below.
+        df_disc_in = df.drop(
+            columns=list(self.continuous.parameter_names), errors="ignore"
         )
-        df_continuous = self.continuous.transform(
-            df, allow_missing=allow_missing, allow_extra=allow_extra
+        df_cont_in = df.drop(
+            columns=list(self.discrete.parameter_names), errors="ignore"
+        )
+
+        # Transform subspaces separately
+        df_disc_out = self.discrete.transform(
+            df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+        df_cont_out = self.continuous.transform(
+            df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # Combine Subspaces
-        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+        comp_rep = pd.concat([df_disc_out, df_cont_out], axis=1)
 
         return comp_rep
 
