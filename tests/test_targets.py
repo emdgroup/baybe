@@ -6,7 +6,7 @@ from pandas.testing import assert_series_equal
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations.core import AffineTransformation
+from baybe.transformations.basic import AffineTransformation
 from baybe.utils.interval import Interval
 
 
