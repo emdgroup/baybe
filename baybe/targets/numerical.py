@@ -232,10 +232,10 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied quadratic matching transformation.
         """
-        return NumericalTarget.match_power_distance(name, match_value, exponent=2.0)
+        return NumericalTarget.match_power(name, match_value, exponent=2.0)
 
     @classmethod
-    def match_power_distance(
+    def match_power(
         cls, name: str, match_value: float, exponent: float
     ) -> NumericalTarget:
         """Create a target to match a given value using a power transformation.
