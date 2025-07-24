@@ -235,7 +235,7 @@ def test_image_computation(transformation, bounds, expected):
     assert transformation.get_image(bounds) == Interval.create(expected)
 
 
-def test_affine_transformation_operation_order(series):
+def test_affine_transformation_operator_order(series):
     """The alternative construction yields the correct equivalent transformation."""
     t1 = AffineTransformation(factor=2, shift=10, shift_first=False)
     t2 = AffineTransformation(factor=2, shift=5, shift_first=True)
@@ -243,6 +243,14 @@ def test_affine_transformation_operation_order(series):
 
     assert t1 == t2
     assert t1(tensor).equal(t2(tensor))
+
+
+def test_identity_affine_transformation_chaining():
+    """Chaining an identity affine transformation has no effect."""
+    assert (
+        AffineTransformation() + ExponentialTransformation()
+        == ExponentialTransformation()
+    )
 
 
 def test_affine_transformation_chaining(series):
