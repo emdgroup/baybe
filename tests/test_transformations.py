@@ -260,9 +260,14 @@ def test_affine_transformation_chaining(series):
     assert chained(tensor).equal(expected(tensor))
 
 
-def test_chained_transformation_equality():
+@pytest.mark.parametrize(
+    ("t1", "t2"),
+    [
+        param(exp, ChainedTransformation([exp]), id="one-element-chain"),
+        param(IdentityTransformation(), AffineTransformation(), id="affine-identity"),
+    ],
+)
+def test_transformation_equality(t1, t2):
     """Length-one chained transformations are equivalent to their wrapped element."""
-    t1 = ExponentialTransformation()
-    t2 = ChainedTransformation([t1])
     assert t1 == t2
     assert t2 == t1

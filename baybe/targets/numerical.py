@@ -101,7 +101,6 @@ class NumericalTarget(Target, SerialMixin):
         alias="transformation",
         factory=IdentityTransformation,
         converter=optional(convert_transformation),
-        eq=lambda x: x or IdentityTransformation(),
     )
     """An optional target transformation."""
 
