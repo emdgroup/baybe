@@ -47,13 +47,13 @@ class Transformation(SerialMixin, ABC):
 
     def chain(self, transformation: Transformation, /) -> Transformation:
         """Chain another transformation with the existing one."""
-        return self + transformation
+        return self | transformation
 
     def negate(self) -> Transformation:
         """Negate the output of the transformation."""
         from baybe.transformations.basic import AffineTransformation
 
-        return self + AffineTransformation(factor=-1)
+        return self | AffineTransformation(factor=-1)
 
     def clamp(
         self, min: float = float("-inf"), max: float = float("inf")
@@ -65,16 +65,24 @@ class Transformation(SerialMixin, ABC):
             )
         from baybe.transformations.basic import ClampingTransformation
 
-        return self + ClampingTransformation(min, max)
+        return self | ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
         from baybe.transformations.basic import AbsoluteTransformation
 
-        return self + AbsoluteTransformation()
+        return self | AbsoluteTransformation()
 
-    def __add__(self, other: Transformation | int | float) -> Transformation:
-        """Chain another transformation or shift the output of the current one."""
+    def __add__(self, other: int | float) -> Transformation:
+        """Shift the output of the transformation."""
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __or__(self, other: Transformation) -> Transformation:
+        """Chain the transformation with another one."""
         from baybe.transformations import (
             AffineTransformation,
             ChainedTransformation,
@@ -88,8 +96,6 @@ class Transformation(SerialMixin, ABC):
             return combine_affine_transformations(*t)
         if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
-        if isinstance(other, (int, float)):
-            return self + AffineTransformation(shift=other)
         return NotImplemented
 
     def __mul__(self, other: int | float) -> Transformation:
@@ -97,7 +103,7 @@ class Transformation(SerialMixin, ABC):
         if isinstance(other, (int, float)):
             from baybe.transformations.basic import AffineTransformation
 
-            return self + AffineTransformation(factor=other)
+            return self | AffineTransformation(factor=other)
         return NotImplemented
 
     @classmethod
@@ -113,7 +119,7 @@ class Transformation(SerialMixin, ABC):
 
         from baybe.transformations.basic import CustomTransformation
 
-        return args[0] + CustomTransformation(func)
+        return args[0] | CustomTransformation(func)
 
 
 class MonotonicTransformation(Transformation, ABC):
