@@ -61,12 +61,12 @@ def compress_transformations(
 
     aggregated: list[Transformation] = []
     last = None
+    id_ = IdentityTransformation()
 
     for t in _flatten_transformations(transformations):
-        # Drop identity transformations
-        match t:
-            case IdentityTransformation() | AffineTransformation(factor=1, shift=0):
-                continue
+        # Drop identity transformations (and such that are equivalent to it)
+        if t == id_:
+            continue
 
         # Combine subsequent affine transformations
         if (
