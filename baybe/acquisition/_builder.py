@@ -280,6 +280,7 @@ class BotorchAcquisitionFunctionBuilder:
             self.acqf,
             (qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement),
         )
+        assert self._args.ref_point is not None
 
         self._args.partitioning = make_partitioning(
             self._posterior_mean_comp, self._args.ref_point, self.acqf.alpha
