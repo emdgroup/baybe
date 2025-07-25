@@ -442,7 +442,7 @@ class qExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
         # but a partitioning object derived from it, which we create on the fly.
         # Thus, we bypass the auto-matching mechanism and handle it manually.
         flds = fields(qLogExpectedHypervolumeImprovement)
-        return super()._non_botorch_attrs + (flds.alpha.name,)
+        return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
 
 
 @define(frozen=True)
@@ -461,7 +461,7 @@ class qLogExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
         # but a partitioning object derived from it, which we create on the fly.
         # Thus, we bypass the auto-matching mechanism and handle it manually.
         flds = fields(qLogExpectedHypervolumeImprovement)
-        return super()._non_botorch_attrs + (flds.alpha.name,)
+        return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
 
 
 @define(frozen=True)
