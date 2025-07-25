@@ -64,11 +64,11 @@ class _LegacyInterface:
 
 def _translate_legacy_arguments(
     mode: TargetMode, bounds: Interval, transformation: TargetTransformation | None
-) -> tuple[Transformation | None, bool]:
+) -> tuple[Transformation, bool]:
     """Translate legacy target arguments to modern arguments."""
     if mode in (TargetMode.MAX, TargetMode.MIN):
         if not bounds.is_bounded:
-            return (None, mode == TargetMode.MIN)
+            return (IdentityTransformation(), mode == TargetMode.MIN)
         else:
             # Use transformation from what would have been the appropriate call
             return (
