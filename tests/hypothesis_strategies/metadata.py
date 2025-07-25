@@ -14,7 +14,7 @@ def _miscs(draw: st.DrawFn, cls: type[Metadata]):
     """Generates miscellaneous metadata for various metadata classes."""
     misc = draw(
         st.dictionaries(
-            st.text(min_size=1),
+            st.text(min_size=0),
             st.one_of(st.text(), st.integers(), st.floats(allow_nan=False)),
             max_size=5,
         )
@@ -35,6 +35,6 @@ def metadata(draw: st.DrawFn):
 def measurable_metadata(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.base.MeasurableMetadata`."""
     description = draw(_descriptions)
-    unit = draw(st.one_of(st.none(), st.text(min_size=1)))
+    unit = draw(st.one_of(st.none(), st.text(min_size=0)))
     misc = draw(_miscs(MeasurableMetadata))
     return MeasurableMetadata(description=description, unit=unit, misc=misc)
