@@ -1,108 +1,66 @@
 """Integration tests for metadata with BayBE components."""
 
 import pytest
+from pytest import param
 
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.metadata import MeasurableMetadata, Metadata
+from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
+
+TMetadata = Metadata | dict | None
 
 
-class TestMeasurableMetadataIntegration:
-    """Tests for metadata integration with Parameter class."""
-
-    @pytest.mark.parametrize("as_dict", [True, False])
-    def test_parameter_with_metadata(self, as_dict: bool):
-        """Parameters accept, ingest, and surface metadata."""
-        meta = MeasurableMetadata(description="test", unit="m", misc={"key": "value"})
-        param = NumericalDiscreteParameter(
-            name="p",
-            values=(1, 2),
-            metadata=meta.to_dict() if as_dict else meta,
-        )
-        assert param.description == "test"
-        assert param.unit == "m"
-        assert param.metadata is not None
-        assert param.metadata.misc == {"key": "value"}
-
-    def test_parameter_without_metadata(self):
-        """Parameters without metadata have empty metadata and ``None`` properties."""
-        param = NumericalDiscreteParameter(name="p", values=(1, 2))
-        assert param.metadata is not None
-        assert param.metadata.is_empty
-        assert param.description is None
-        assert param.unit is None
+def make_parameter(metadata: TMetadata = None) -> NumericalDiscreteParameter:
+    return NumericalDiscreteParameter(
+        "p", (1, 2), metadata=metadata or MeasurableMetadata()
+    )
 
 
-class TestTargetMetadataIntegration:
-    """Tests for metadata integration with Target class."""
+def make_target(metadata: TMetadata = None) -> NumericalTarget:
+    return NumericalTarget(
+        "yield", TargetMode.MAX, metadata=metadata or MeasurableMetadata()
+    )
 
-    def _create_target(self, **kwargs) -> NumericalTarget:
-        """Create a standard NumericalTarget for testing."""
-        return NumericalTarget(
-            name="yield",
-            mode=TargetMode.MAX,
-            transformation=None,
-            **kwargs,
-        )
+
+def make_objective(metadata: TMetadata = None) -> SingleTargetObjective:
+    return SingleTargetObjective(
+        target=make_target(), metadata=metadata or MeasurableMetadata()
+    )
+
+
+@pytest.mark.parametrize(
+    ("constructor", "metadata_cls"),
+    [
+        param(make_parameter, MeasurableMetadata, id="parameter"),
+        param(make_target, MeasurableMetadata, id="target"),
+        param(make_objective, Metadata, id="objective"),
+    ],
+)
+class TestMetadataIntegration:
+    """Tests for metadata integration with BayBE objects."""
 
     @pytest.mark.parametrize("as_dict", [True, False])
-    def test_target_with_metadata(self, as_dict: bool):
-        """Targets accept, ingest, and surface metadata."""
-        meta = MeasurableMetadata(
-            description="test target", unit="kg", misc={"priority": "high"}
-        )
-        target = self._create_target(metadata=meta.to_dict() if as_dict else meta)
-        assert target.description == "test target"
-        assert target.unit == "kg"
-        assert target.metadata is not None
-        assert target.metadata.misc == {"priority": "high"}
-
-    def test_target_without_metadata(self):
-        """Targets without metadata have ``None`` properties."""
-        target = self._create_target()
-        assert target.metadata is not None
-        assert target.metadata.is_empty
-        assert target.description is None
-        assert target.unit is None
-
-
-class TestObjectiveMetadataIntegration:
-    """Tests for metadata integration with Objective class."""
-
-    def _create_target(self, **kwargs) -> NumericalTarget:
-        """Create a standard NumericalTarget for testing."""
-        return NumericalTarget(
-            name="yield",
-            mode=TargetMode.MAX,
-            transformation=None,
-            **kwargs,
+    def test_with_metadata(self, constructor, metadata_cls, as_dict: bool):
+        """BayBE objects accept, ingest, and surface metadata."""
+        meta = dict(description="test", unit="m", other="value")
+        container = constructor(
+            metadata=meta if as_dict else to_metadata(meta, metadata_cls)
         )
 
-    @pytest.mark.parametrize("as_dict", [True, False])
-    def test_objective_with_metadata(self, as_dict: bool):
-        """Objectives accept, ingest, and surface metadata."""
-        meta = Metadata(
-            description="test objective", misc={"algorithm": "GP", "priority": "high"}
-        )
+        assert container.description == "test"
+        if metadata_cls is MeasurableMetadata:
+            assert container.metadata.misc == {"other": "value"}
+            assert container.unit == "m"
+        else:
+            assert container.metadata.misc == {"unit": "m", "other": "value"}
 
-        # Create a target first
-        target = self._create_target()
+    def test_without_metadata(self, metadata_cls, constructor):
+        """BayBE objects without metadata have empty metadata and `None` properties."""
+        container = constructor().metadata
 
-        objective = SingleTargetObjective(
-            target=target,
-            metadata=meta.to_dict() if as_dict else meta,
-        )
-        assert objective.description == "test objective"
-        assert objective.metadata is not None
-        assert objective.metadata.misc == {"algorithm": "GP", "priority": "high"}
-
-    def test_objective_without_metadata(self):
-        """Objectives without metadata have ``None`` properties."""
-        target = self._create_target()
-
-        objective = SingleTargetObjective(target=target)
-        assert objective.metadata is not None
-        assert objective.metadata.is_empty
-        assert objective.description is None
+        assert container.is_empty
+        assert container.description is None
+        if metadata_cls is MeasurableMetadata:
+            assert container.unit is None
