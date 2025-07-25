@@ -368,7 +368,8 @@ class NumericalTarget(Target, SerialMixin):
     @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
-        return (tr := self._transformation) if not self.minimize else tr.negate()
+        tr = self._transformation
+        return self._transformation if not self.minimize else tr.negate()
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
