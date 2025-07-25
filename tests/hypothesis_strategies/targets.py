@@ -18,9 +18,7 @@ target_names = st.text(min_size=1)
 def numerical_targets(draw: st.DrawFn):
     """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
     name = draw(target_names)
-    transformation = draw(
-        st.one_of(st.none(), single_transformations, chained_transformations())
-    )
+    transformation = draw(st.one_of(single_transformations, chained_transformations()))
     minimize = draw(st.booleans())
     return NumericalTarget(name, transformation, minimize=minimize)
 

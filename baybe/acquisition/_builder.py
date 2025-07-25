@@ -8,20 +8,26 @@ from typing import Any
 
 import pandas as pd
 import torch
-from attrs import asdict, define, field, fields
+from attrs import Attribute, asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
-from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
-from botorch.acquisition.objective import PosteriorTransform as PTrans
+from botorch.acquisition.monte_carlo import MCAcquisitionObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
+from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
+    BoxDecomposition,
+)
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
     _ExpectedHypervolumeImprovement,
+    qExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
+from baybe.acquisition.utils import make_partitioning
 from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -34,13 +40,28 @@ from baybe.transformations import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
+_OPT_FIELD: None = object()  # type: ignore[assignment]
+"""Sentinel value indicating optional acquisition function attributes."""
+
 
 def opt_v(x: Any, /) -> Callable:
     """Shorthand for an optional attrs isinstance validator."""  # noqa: D401
     return optional(instance_of(x))
 
 
-@define(kw_only=True)
+def _make_optional_fields(_, fields: list[Attribute]) -> list[Attribute]:
+    """Automatically set default values and validators for optional fields."""
+
+    def set_default_and_validator(fld: Attribute) -> Attribute:
+        """Set default value and validator for the given optional field."""
+        if fld.default is not _OPT_FIELD:
+            return fld
+        return fld.evolve(default=None, validator=instance_of(fld.type))  # type: ignore[arg-type]
+
+    return [set_default_and_validator(fld) for fld in fields]
+
+
+@define(kw_only=True, field_transformer=_make_optional_fields)
 class BotorchAcquisitionArgs:
     """The collection of (possible) arguments for BoTorch acquisition functions."""
 
@@ -48,17 +69,18 @@ class BotorchAcquisitionArgs:
     model: Model = field(validator=instance_of(Model))
 
     # Optional, depending on the specific acquisition function being used
-    best_f: float | None = field(default=None, validator=opt_v(float))
-    beta: float | None = field(default=None, validator=opt_v(float))
-    maximize: bool | None = field(default=None, validator=opt_v(bool))
-    mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    num_fantasies: int | None = field(default=None, validator=opt_v(int))
-    objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
-    posterior_transform: PTrans | None = field(default=None, validator=opt_v(PTrans))
-    prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
-    ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_pending: Tensor | None = field(default=None, validator=opt_v(Tensor))
+    best_f: float | None = _OPT_FIELD
+    beta: float | None = _OPT_FIELD
+    maximize: bool | None = _OPT_FIELD
+    mc_points: Tensor | None = _OPT_FIELD
+    num_fantasies: int | None = _OPT_FIELD
+    objective: MCAcquisitionObjective | None = _OPT_FIELD
+    partitioning: BoxDecomposition | None = _OPT_FIELD
+    posterior_transform: PosteriorTransform | None = _OPT_FIELD
+    prune_baseline: bool | None = _OPT_FIELD
+    ref_point: Tensor | None = _OPT_FIELD
+    X_baseline: Tensor | None = _OPT_FIELD
+    X_pending: Tensor | None = _OPT_FIELD
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
@@ -113,6 +135,14 @@ class BotorchAcquisitionFunctionBuilder:
         return self.searchspace.transform(self.measurements, allow_extra=True)
 
     @cached_property
+    def _posterior_mean_comp(self) -> Tensor:
+        """The posterior mean of the (transformed) targets of the training data."""
+        # TODO: Currently, this is the "transformed posterior mean of the targets"
+        #   rather than the "posterior mean of the transformed targets".
+        posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
+        return self.objective.to_botorch()(posterior.mean)
+
+    @cached_property
     def _target_configurations(self) -> pd.DataFrame:
         """The target configurations used for reference point calculation.
 
@@ -153,6 +183,7 @@ class BotorchAcquisitionFunctionBuilder:
         self._set_X_pending()
         self._set_mc_points()
         self._set_ref_point()
+        self._set_partitioning()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
@@ -216,11 +247,9 @@ class BotorchAcquisitionFunctionBuilder:
         if flds.best_f.name not in self._signature:
             return
 
-        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
-
         match self.objective:
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = self.objective.to_botorch()(post_mean).max().item()
+                self._args.best_f = self._posterior_mean_comp.max().item()
             case _:
                 raise NotImplementedError("This line should be impossible to reach.")
 
@@ -240,6 +269,21 @@ class BotorchAcquisitionFunctionBuilder:
         assert isinstance(self.acqf, qNegIntegratedPosteriorVariance)
         self._args.mc_points = to_tensor(
             self.acqf.get_integration_points(self.searchspace)
+        )
+
+    def _set_partitioning(self) -> None:
+        """Set BoTorch's ``partitioning`` argument."""
+        if flds.partitioning.name not in self._signature:
+            return
+
+        assert isinstance(
+            self.acqf,
+            (qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement),
+        )
+        assert self._args.ref_point is not None
+
+        self._args.partitioning = make_partitioning(
+            self._posterior_mean_comp, self._args.ref_point, self.acqf.alpha
         )
 
     def _set_ref_point(self) -> None:

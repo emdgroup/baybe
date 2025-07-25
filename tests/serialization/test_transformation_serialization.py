@@ -6,6 +6,7 @@ from hypothesis import given
 from pytest import param
 
 from baybe.transformations import Transformation
+from baybe.transformations.core import ChainedTransformation, ClampingTransformation
 
 from ..hypothesis_strategies.transformations import (
     absolute_transformations,
@@ -18,7 +19,7 @@ from ..hypothesis_strategies.transformations import (
     logarithmic_transformations,
     power_transformations,
     triangular_transformations,
-    two_sided_linear_transformations,
+    two_sided_affine_transformations,
 )
 
 
@@ -32,8 +33,8 @@ from ..hypothesis_strategies.transformations import (
         param(clamping_transformations(), id="ClampingTransformation"),
         param(affine_transformations(), id="AffineTransformation"),
         param(
-            two_sided_linear_transformations(),
-            id="TwoSidedLinearTransformation",
+            two_sided_affine_transformations(),
+            id="TwoSidedAffineTransformation",
         ),
         param(bell_transformations(), id="BellTransformation"),
         param(triangular_transformations(), id="TriangularTransformation"),
@@ -45,6 +46,20 @@ from ..hypothesis_strategies.transformations import (
 def test_single_transformation_roundtrip(transformation_strategy, data):
     """A serialization roundtrip yields an equivalent object."""
     transformation = data.draw(transformation_strategy)
+    if (
+        isinstance(transformation, ClampingTransformation)
+        or isinstance(transformation, ChainedTransformation)
+        and any(
+            isinstance(t, ClampingTransformation)
+            for t in transformation.transformations
+        )
+    ):
+        pytest.xfail(
+            reason=(
+                "Serialization of clamping transformations is not yet supported. "
+                "Needs https://github.com/emdgroup/baybe/pull/577"
+            )
+        )
     string = transformation.to_json()
     transformation2 = Transformation.from_json(string)
     assert transformation == transformation2, (transformation, transformation2)
