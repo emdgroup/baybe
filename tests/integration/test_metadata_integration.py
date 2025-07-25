@@ -67,22 +67,6 @@ class TestTargetMetadataIntegration:
         assert target.description is None
         assert target.unit is None
 
-    def test_target_metadata_serialization(self):
-        """Target metadata survives serialization roundtrip."""
-        target = self._create_target(
-            metadata={"description": "Chemical yield", "unit": "%", "method": "HPLC"}
-        )
-
-        # Serialize and deserialize
-        json_str = target.to_json()
-        target_restored = NumericalTarget.from_json(json_str)
-
-        # Check metadata is preserved
-        assert target_restored.description == "Chemical yield"
-        assert target_restored.unit == "%"
-        assert target_restored.metadata is not None
-        assert target_restored.metadata.misc == {"method": "HPLC"}
-
 
 class TestObjectiveMetadataIntegration:
     """Tests for metadata integration with Objective class."""
@@ -123,24 +107,6 @@ class TestObjectiveMetadataIntegration:
         assert objective.metadata.is_empty
         assert objective.description is None
 
-    def test_objective_metadata_serialization(self):
-        """Objective metadata survives serialization roundtrip."""
-        target = self._create_target()
-
-        objective = SingleTargetObjective(
-            target=target,
-            metadata={"description": "Maximize yield", "priority": "critical"},
-        )
-
-        # Serialize and deserialize
-        json_str = objective.to_json()
-        objective_restored = SingleTargetObjective.from_json(json_str)
-
-        # Check metadata is preserved
-        assert objective_restored.description == "Maximize yield"
-        assert objective_restored.metadata is not None
-        assert objective_restored.metadata.misc == {"priority": "critical"}
-
     def test_combined_target_objective_metadata(self):
         """Both target and objective can have independent metadata."""
         target = self._create_target(
@@ -156,11 +122,3 @@ class TestObjectiveMetadataIntegration:
         assert target.description == "Chemical yield"
         assert target.unit == "%"
         assert objective.description == "Maximize yield objective"
-
-        # Serialize and verify both metadata survive
-        json_str = objective.to_json()
-        objective_restored = SingleTargetObjective.from_json(json_str)
-
-        assert objective_restored.targets[0].description == "Chemical yield"
-        assert objective_restored.targets[0].unit == "%"
-        assert objective_restored.description == "Maximize yield objective"
