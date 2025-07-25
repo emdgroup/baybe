@@ -68,7 +68,7 @@ class MeasurableMetadata(Metadata):
     @property
     def is_empty(self) -> bool:
         """Check if metadata contains any meaningful information."""
-        return self.description is None and self.unit is None and not self.misc
+        return super().is_empty and self.unit is None
 
 
 def to_metadata(
