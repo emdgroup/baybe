@@ -37,9 +37,7 @@ def numerical_targets(
             or transformation is not None,
         )
     bounds = draw(bounds_strategy)
-
     target_metadata = draw(measurable_metadata())
-
     return NumericalTarget(
         name=name,
         mode=mode,

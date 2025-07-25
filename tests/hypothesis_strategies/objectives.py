@@ -62,7 +62,6 @@ def _pareto_targets(draw: st.DrawFn):
         transformation = None
         bounds = None
 
-    # Optionally generate metadata for Pareto targets
     target_metadata = draw(measurable_metadata())
 
     return NumericalTarget(
