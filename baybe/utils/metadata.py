@@ -8,6 +8,7 @@ import cattrs
 from attrs import AttrsInstance, define, field, fields
 from attrs.validators import deep_mapping, instance_of
 from attrs.validators import optional as optional_v
+from typing_extensions import override
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.basic import classproperty
@@ -63,6 +64,7 @@ class MeasurableMetadata(Metadata):
     unit: str | None = field(default=None, validator=optional_v(instance_of(str)))
     """The unit of measurement for the parameter."""
 
+    @override
     @property
     def is_empty(self) -> bool:
         """Check if metadata contains any meaningful information."""
