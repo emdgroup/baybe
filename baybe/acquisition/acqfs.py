@@ -12,7 +12,7 @@ import numpy.typing as npt
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
-from attrs import define, field, fields
+from attrs import AttrsInstance, define, field, fields
 from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
@@ -73,8 +73,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
-        flds = fields(qNegIntegratedPosteriorVariance)
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        flds = fields(cls)
         return (
             flds.sampling_n_points.name,
             flds.sampling_method.name,
@@ -313,8 +313,8 @@ class qThompsonSampling(qSimpleRegret):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
-        flds = fields(qThompsonSampling)
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        flds = fields(cls)
         return (flds.n_mc_samples.name,)
 
     @override
@@ -359,11 +359,11 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
         # While BoTorch's acquisition function also expects a `ref_point` argument,
         # the attribute defined here is more general and can hence not be directly
         # matched. Thus, we bypass the auto-matching mechanism and handle it manually.
-        flds = fields(qLogNoisyExpectedHypervolumeImprovement)
+        flds = fields(cls)
         return (flds.reference_point.name,)
 
     @staticmethod
@@ -437,11 +437,11 @@ class qExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
         # BoTorch's acquisition functions do not directly expect an `alpha` argument
         # but a partitioning object derived from it, which we create on the fly.
         # Thus, we bypass the auto-matching mechanism and handle it manually.
-        flds = fields(qLogExpectedHypervolumeImprovement)
+        flds = fields(cls)
         return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
 
 
@@ -456,11 +456,11 @@ class qLogExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
         # BoTorch's acquisition functions do not directly expect an `alpha` argument
         # but a partitioning object derived from it, which we create on the fly.
         # Thus, we bypass the auto-matching mechanism and handle it manually.
-        flds = fields(qLogExpectedHypervolumeImprovement)
+        flds = fields(cls)
         return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
 
 
