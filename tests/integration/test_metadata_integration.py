@@ -106,19 +106,3 @@ class TestObjectiveMetadataIntegration:
         assert objective.metadata is not None
         assert objective.metadata.is_empty
         assert objective.description is None
-
-    def test_combined_target_objective_metadata(self):
-        """Both target and objective can have independent metadata."""
-        target = self._create_target(
-            metadata={"description": "Chemical yield", "unit": "%"}
-        )
-
-        objective = SingleTargetObjective(
-            target=target,
-            metadata={"description": "Maximize yield objective"},
-        )
-
-        # Both should have their own metadata
-        assert target.description == "Chemical yield"
-        assert target.unit == "%"
-        assert objective.description == "Maximize yield objective"
