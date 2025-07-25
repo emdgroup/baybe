@@ -13,6 +13,7 @@ from attrs import define, field
 
 from baybe.serialization import SerialMixin, converter
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.validation import non_nan_float
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -36,12 +37,14 @@ class Interval(SerialMixin):
     lower: float = field(
         default=float("-inf"),
         converter=lambda x: float("-inf") if x is None else float(x),
+        validator=non_nan_float,
     )
     """The lower end of the interval."""
 
     upper: float = field(
         default=float("inf"),
         converter=lambda x: float("inf") if x is None else float(x),
+        validator=non_nan_float,
     )
     """The upper end of the interval."""
 

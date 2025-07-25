@@ -11,6 +11,7 @@ from baybe.utils.interval import Interval
     [
         param((1.0, 0.0), id="wrong_order"),
         param(("a", 0.0), id="string"),
+        param((float("nan"), 0.0), id="nan"),
     ],
 )
 def test_invalid_range(request, bounds):
