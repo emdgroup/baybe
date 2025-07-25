@@ -19,7 +19,7 @@ def test_target_addition():
 def test_target_multiplication():
     """Target multiplication appends a scaling transformation."""
     t1 = NumericalTarget("t") * 2
-    assert t1._transformation == AffineTransformation(scale=2)
+    assert t1._transformation == AffineTransformation(factor=2)
 
 
 def test_target_inversion():
