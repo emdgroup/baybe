@@ -22,7 +22,7 @@ from baybe.transformations import (
         param(0, np.nan, "cannot be 'nan'", id="nan_max"),
         param("", 0, "could not convert", id="type_min"),
         param(0, "", "could not convert", id="type_max"),
-        param(1, 0, "must be greater than", id="min_greater_than_max"),
+        param(1, 0, "cannot be smaller than", id="min_greater_than_max"),
     ],
 )
 def test_invalid_clamping_transformation(min, max, match):
