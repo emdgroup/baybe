@@ -175,7 +175,6 @@ def substance_parameters(draw: st.DrawFn):
     encodings.remove(SubstanceEncoding.RDKIT)
     encoding = draw(st.sampled_from(encodings))
 
-    # Optionally generate metadata
     param_metadata = draw(measurable_metadata())
 
     return SubstanceParameter(

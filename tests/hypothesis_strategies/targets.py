@@ -38,7 +38,6 @@ def numerical_targets(
         )
     bounds = draw(bounds_strategy)
 
-    # Optionally generate metadata
     target_metadata = draw(measurable_metadata())
 
     return NumericalTarget(
@@ -62,7 +61,6 @@ def binary_targets(draw: st.DrawFn):
     name = draw(target_name)
     choices = draw(st.lists(choice_values, min_size=2, max_size=2, unique=True))
 
-    # Optionally generate metadata
     target_metadata = draw(measurable_metadata())
 
     return BinaryTarget(

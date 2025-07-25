@@ -4,7 +4,7 @@ import pytest
 from pytest import param
 
 from baybe.objectives.single import SingleTargetObjective
-from baybe.targets.enum import TargetMode, TargetTransformation
+from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
 
@@ -39,25 +39,7 @@ def test_invalid_arguments_for_metadata(description, misc, error, match):
 @pytest.mark.parametrize(
     ("description", "unit", "misc", "error", "match"),
     [
-        param(0, None, {}, TypeError, "must be <class 'str'>", id="desc-non-str"),
         param(None, 0, {}, TypeError, "must be <class 'str'>", id="unit-non-str"),
-        param(None, None, 0, TypeError, "must be <class 'dict'>", id="misc-non-dict"),
-        param(
-            None,
-            None,
-            {0: 0},
-            TypeError,
-            "must be <class 'str'>",
-            id="misc-non-str-keys",
-        ),
-        param(
-            None,
-            None,
-            {"description": 0},
-            ValueError,
-            "fields: {'description'}",
-            id="desc_in_misc",
-        ),
         param(
             None, None, {"unit": 0}, ValueError, "fields: {'unit'}", id="unit_in_misc"
         ),
@@ -91,39 +73,32 @@ def test_invalid_input_conversion(invalid_input):
 class TestTargetMetadataValidation:
     """Validation tests for target metadata."""
 
+    def _create_target(self, **kwargs) -> NumericalTarget:
+        """Create a standard NumericalTarget for testing."""
+        return NumericalTarget(
+            name="test",
+            mode=TargetMode.MAX,
+            transformation=None,
+            **kwargs,
+        )
+
     def test_target_invalid_metadata_type(self):
         """Creating target with invalid metadata type raises error."""
         with pytest.raises(
             TypeError, match="must be a dictionary or a 'MeasurableMetadata' instance"
         ):
-            NumericalTarget(
-                name="test",
-                bounds=(0, 1),
-                mode=TargetMode.MAX,
-                transformation=TargetTransformation.LINEAR,
-                metadata="invalid_string",
-            )
+            self._create_target(metadata="invalid_string")
 
     def test_target_metadata_with_invalid_unit(self):
         """Target metadata with invalid unit type raises error."""
         with pytest.raises(TypeError, match="must be <class 'str'>"):
-            NumericalTarget(
-                name="test",
-                bounds=(0, 1),
-                mode=TargetMode.MAX,
-                transformation=TargetTransformation.LINEAR,
-                metadata={"unit": 123},  # Invalid unit type
-            )
+            self._create_target(metadata={"unit": 123})  # Invalid unit type
 
     def test_target_metadata_with_unit_field_separation(self):
         """Target metadata should automatically separate unit from misc."""
         # This test shows that unit is automatically separated from misc
-        target = NumericalTarget(
-            name="test",
-            bounds=(0, 1),
-            mode=TargetMode.MAX,
-            transformation=TargetTransformation.LINEAR,
-            metadata={"description": "test", "unit": "kg", "extra": "value"},
+        target = self._create_target(
+            metadata={"description": "test", "unit": "kg", "extra": "value"}
         )
         # The unit should be extracted to the unit field
         assert target.unit == "kg"
@@ -141,14 +116,18 @@ class TestTargetMetadataValidation:
 class TestObjectiveMetadataValidation:
     """Validation tests for objective metadata."""
 
+    def _create_target(self, **kwargs) -> NumericalTarget:
+        """Create a standard NumericalTarget for testing."""
+        return NumericalTarget(
+            name="test",
+            mode=TargetMode.MAX,
+            transformation=None,
+            **kwargs,
+        )
+
     def test_objective_invalid_metadata_type(self):
         """Creating objective with invalid metadata type raises error."""
-        target = NumericalTarget(
-            name="test",
-            bounds=(0, 1),
-            mode=TargetMode.MAX,
-            transformation=TargetTransformation.LINEAR,
-        )
+        target = self._create_target()
 
         with pytest.raises(
             TypeError, match="must be a dictionary or a 'Metadata' instance"
@@ -157,12 +136,7 @@ class TestObjectiveMetadataValidation:
 
     def test_objective_metadata_field_separation(self):
         """Objective metadata should automatically separate description from misc."""
-        target = NumericalTarget(
-            name="test",
-            bounds=(0, 1),
-            mode=TargetMode.MAX,
-            transformation=TargetTransformation.LINEAR,
-        )
+        target = self._create_target()
 
         # Test that description is automatically separated from other fields
         objective = SingleTargetObjective(
