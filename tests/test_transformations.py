@@ -279,3 +279,17 @@ def test_transformation_equality(t1, t2):
     """Length-one chained transformations are equivalent to their wrapped element."""
     assert t1 == t2
     assert t2 == t1
+
+
+@pytest.mark.parametrize(
+    "transformation",
+    [
+        param(AffineTransformation(factor=0.0), id="affine"),
+        param(TwoSidedAffineTransformation(0, 0), id="two_sided"),
+        param(ClampingTransformation(0, 0), id="clamping"),
+    ],
+)
+def test_degenerate_transformations(transformation):
+    """Degenerate transformations produce proper (non-nan) outputs."""
+    assert transformation.get_image() == Interval(0, 0)
+    assert transformation.get_image((20, None)) == Interval(0, 0)

@@ -189,6 +189,10 @@ class AffineTransformation(MonotonicTransformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
+        # Handle problematic case where input contains infinity (to avoid 0 * inf)
+        if self.factor == 0.0:
+            return x.new_full(x.shape, fill_value=self.shift)
+
         return x * self.factor + self.shift
 
 
@@ -221,10 +225,13 @@ class TwoSidedAffineTransformation(Transformation):
     def __call__(self, x: Tensor, /) -> Tensor:
         import torch
 
+        # Note: the if conditions handle the problematic cases where input contains
+        #  infinity (to avoid 0 * inf)
+        mid = self.midpoint
         return torch.where(
-            x < self.midpoint,
-            (x - self.midpoint) * self.slope_left,
-            (x - self.midpoint) * self.slope_right,
+            x < mid,
+            (x - mid) * sl if (sl := self.slope_left) else x.new_zeros(x.shape),
+            (x - mid) * sr if (sr := self.slope_right) else x.new_zeros(x.shape),
         )
 
 
