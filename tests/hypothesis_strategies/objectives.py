@@ -30,7 +30,9 @@ def desirability_objectives(draw: st.DrawFn):
         )
     )
     scalarizer = draw(st.sampled_from(Scalarizer))
-    return DesirabilityObjective(targets, weights, scalarizer)
+    if require_normalization := draw(st.booleans()):
+        targets = [t.clamp(0, 1) for t in targets]
+    return DesirabilityObjective(targets, weights, scalarizer, require_normalization)
 
 
 @st.composite
