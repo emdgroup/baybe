@@ -18,7 +18,7 @@ from ..hypothesis_strategies.transformations import (
     logarithmic_transformations,
     power_transformations,
     triangular_transformations,
-    two_sided_linear_transformations,
+    two_sided_affine_transformations,
 )
 
 
@@ -32,8 +32,8 @@ from ..hypothesis_strategies.transformations import (
         param(clamping_transformations(), id="ClampingTransformation"),
         param(affine_transformations(), id="AffineTransformation"),
         param(
-            two_sided_linear_transformations(),
-            id="TwoSidedLinearTransformation",
+            two_sided_affine_transformations(),
+            id="TwoSidedAffineTransformation",
         ),
         param(bell_transformations(), id="BellTransformation"),
         param(triangular_transformations(), id="TriangularTransformation"),

@@ -11,7 +11,7 @@ from baybe.transformations import (
     ClampingTransformation,
     PowerTransformation,
     TriangularTransformation,
-    TwoSidedLinearTransformation,
+    TwoSidedAffineTransformation,
 )
 
 
@@ -62,10 +62,10 @@ def test_invalid_affine_transformation(factor, shift):
         param(0, 0, "", id="type_center"),
     ],
 )
-def test_invalid_two_sided_linear_transformation(slope_left, slope_right, center):
+def test_invalid_two_sided_affine_transformation(slope_left, slope_right, center):
     """Providing invalid arguments raises an exception."""
     with pytest.raises(ValueError):
-        TwoSidedLinearTransformation(slope_left, slope_right, center)
+        TwoSidedAffineTransformation(slope_left, slope_right, center)
 
 
 @pytest.mark.parametrize(
