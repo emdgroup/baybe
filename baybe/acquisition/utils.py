@@ -35,6 +35,9 @@ def make_partitioning(
         predictions: The predictions tensor of shape (n_samples, n_outputs).
         ref_point: The reference point tensor of shape (n_outputs,).
         alpha: Optional threshold parameter controlling the partitioning generation.
+            Hypercells with a volume fraction (relative to the total Pareto set
+            hypervolume) less than the specified value will be dropped, leading to more
+            approximation but faster computation.
 
     Raises:
         ValueError: If the predictions or reference point do not have the
@@ -73,7 +76,9 @@ def make_partitioning(
         else alpha
     )
 
-    if alpha > 0:
-        return NondominatedPartitioning(ref_point=ref_point, Y=predictions, alpha=alpha)
-    else:
+    # alpha=0 means requesting an exact partitioning, for which there is a specialized
+    # faster algorithm available
+    if alpha == 0:
         return FastNondominatedPartitioning(ref_point=ref_point, Y=predictions)
+
+    return NondominatedPartitioning(ref_point=ref_point, Y=predictions, alpha=alpha)
