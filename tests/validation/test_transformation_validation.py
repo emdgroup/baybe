@@ -103,16 +103,18 @@ def test_invalid_triangular_transformation(cutoffs, peak, match):
 
 
 @pytest.mark.parametrize(
-    "exponent",
+    ("exponent", "error"),
     [
-        param(np.inf, id="inf"),
-        param(np.nan, id="nan"),
-        param("", id="type"),
+        param(np.inf, TypeError, id="inf"),
+        param(np.nan, TypeError, id="nan"),
+        param("", TypeError, id="type"),
+        param(1.5, TypeError, id="non-int"),
+        param(1, ValueError, id="trivial"),
     ],
 )
-def test_invalid_power_transformation(exponent):
+def test_invalid_power_transformation(exponent, error):
     """Providing invalid arguments raises an exception."""
-    with pytest.raises(ValueError):
+    with pytest.raises(error):
         PowerTransformation(exponent)
 
 
