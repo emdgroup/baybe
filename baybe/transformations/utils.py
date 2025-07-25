@@ -82,4 +82,8 @@ def compress_transformations(
                 aggregated.append(last)
             aggregated.append(t)
 
+    # Handle edge case when there was only a single identity transformation
+    if not aggregated:
+        return (IdentityTransformation(),)
+
     return tuple(aggregated)

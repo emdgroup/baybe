@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Factory, define, field
-from attrs.validators import deep_iterable, ge, instance_of, is_callable, min_len
+from attrs.validators import deep_iterable, ge, gt, instance_of, is_callable, min_len
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -22,6 +22,7 @@ from baybe.transformations.utils import compress_transformations
 from baybe.utils.basic import compose
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
+from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -116,19 +117,23 @@ class ClampingTransformation(MonotonicTransformation):
 class AffineTransformation(MonotonicTransformation):
     """An affine transformation."""
 
-    factor: float = field(default=1.0, converter=float)
+    factor: float = field(default=1.0, converter=float, validator=finite_float)
     """The multiplicative factor of the transformation."""
 
-    shift: float = field(default=0.0, converter=float)
+    shift: float = field(default=0.0, converter=float, validator=finite_float)
     """The constant shift of the transformation."""
 
     def __init__(
         self,
         factor: float = 1.0,
         shift: float = 0.0,
+        *,
         shift_first: bool = False,
     ) -> None:
-        shift = shift * factor if shift_first else shift
+        if shift_first:
+            shift = shift * factor
+            if not np.isfinite(shift):
+                raise OverflowError("The transformation produces infinite values.")
         self.__attrs_init__(factor=factor, shift=shift)
 
     @override
@@ -191,13 +196,13 @@ class AffineTransformation(MonotonicTransformation):
 class TwoSidedAffineTransformation(Transformation):
     """A transformation with two affine segments on either side of a midpoint."""
 
-    slope_left: float = field(converter=float)
+    slope_left: float = field(converter=float, validator=finite_float)
     """The slope of the affine segment to the left of the midpoint."""
 
-    slope_right: float = field(converter=float)
+    slope_right: float = field(converter=float, validator=finite_float)
     """The slope of the affine segment to the right of the midpoint."""
 
-    midpoint: float = field(default=0.0, converter=float)
+    midpoint: float = field(default=0.0, converter=float, validator=finite_float)
     """The midpoint where the two affine segments meet."""
 
     @override
@@ -227,10 +232,12 @@ class TwoSidedAffineTransformation(Transformation):
 class BellTransformation(Transformation):
     """A Gaussian bell curve transformation."""
 
-    center: float = field(default=0.0, converter=float)
+    center: float = field(default=0.0, converter=float, validator=finite_float)
     """The center point of the bell curve."""
 
-    sigma: float = field(default=1.0, converter=float)
+    sigma: float = field(
+        default=1.0, converter=float, validator=[finite_float, gt(0.0)]
+    )
     """The scale parameter of the transformation.
 
     Concerning the width of the bell curve, it has the same interpretation as the
@@ -309,9 +316,20 @@ class TriangularTransformation(Transformation):
     _transformation: Transformation = field(init=False, repr=False)
     """Internal transformation object handling the operations."""
 
-    @_transformation.default
-    def _default_transformation(self) -> Transformation:
-        return (
+    def __attrs_post_init__(self) -> None:
+        # We use post-init here to ensure the attribute validators run first,
+        # since otherwise the validators of the transformation object created here
+        # would be executed first, raising difficult-to-interpret errors
+
+        slope_left = 1 / self.margins[0]
+        slope_right = -1 / self.margins[1]
+        if np.isinf([slope_left, slope_right]).any():
+            raise OverflowError(
+                "The triangular transformation could not be initialized because "
+                "the cutoffs are too close to the peak, leading to numerical overflow "
+                "when computing the slopes."
+            )
+        self._transformation = (
             TwoSidedAffineTransformation(
                 slope_left=1 / self.margins[0],
                 slope_right=-1 / self.margins[1],
@@ -322,11 +340,19 @@ class TriangularTransformation(Transformation):
 
     @cutoffs.validator
     def _validate_cutoffs(self, _, cutoffs: Interval) -> None:
-        if not (cutoffs.lower < self.peak < cutoffs.upper):
+        if not cutoffs.is_bounded:
+            raise ValueError(
+                "The cutoffs of the transformation must be bounded. "
+                f"Given cutoffs: {cutoffs.to_tuple()}."
+            )
+
+    @peak.validator
+    def _validate_peak(self, _, peak: float) -> None:
+        if not (self.cutoffs.lower < peak < self.cutoffs.upper):
             raise ValueError(
                 f"The peak of the transformation must be located strictly between the "
-                f"specified cutoff values. Given peak location: {self.peak}. "
-                f"Given cutoffs: {cutoffs.to_tuple()}."
+                f"specified cutoff values. Given peak location: {peak}. "
+                f"Given cutoffs: {self.cutoffs.to_tuple()}."
             )
 
     @property
