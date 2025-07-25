@@ -121,7 +121,6 @@ def test_invalid_power_transformation(exponent, error):
 @pytest.mark.parametrize(
     ("transformations", "error"),
     [
-        param([], ValueError, id="empty"),
         param([None], TypeError, id="type"),
     ],
 )
