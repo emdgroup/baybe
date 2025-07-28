@@ -13,13 +13,10 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe._optional.info import FPSAMPLE_INSTALLED
-from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSInitialization,
     FPSRecommender,
 )
-from baybe.searchspace import SearchSpace
-from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -123,22 +120,7 @@ def test_farthest_point_sampling_pathological_case():
 
 
 @pytest.mark.skipif(
-    not FPSAMPLE_INSTALLED, reason="Optional fpsample dependency not installed."
-)
-def test_fps_recommender_calls_fpsample(searchspace):
-    """Test that FPSRecommender uses fpsample when it is available."""
-    with patch("baybe._optional.fpsample.fps_sampling") as mock_fps:
-        mock_fps.return_value = np.array([0, 1, 2])
-
-        recommender = FPSRecommender()
-        result = recommender.recommend(3, searchspace)
-
-        mock_fps.assert_called_once()
-        assert result.index.tolist() == [0, 1, 2]
-
-
-@pytest.mark.skipif(
-    not FPSAMPLE_INSTALLED, reason="Optional fpsample dependency not installed."
+    not FPSAMPLE_INSTALLED, reason="Optional 'fpsample' package not installed."
 )
 @pytest.mark.parametrize(
     ("init", "tie_break", "match"),
@@ -147,7 +129,7 @@ def test_fps_recommender_calls_fpsample(searchspace):
             FPSInitialization.RANDOM,
             True,
             "does not support 'random'",
-            id="raise_initial",
+            id="raise_initial_random",
         ),
         param(
             FPSInitialization.FARTHEST,
@@ -157,72 +139,84 @@ def test_fps_recommender_calls_fpsample(searchspace):
         ),
     ],
 )
-def test_fps_recommender_warns_ignored_arguments(searchspace, init, tie_break, match):
-    """Test that FPSRecommender emits warnings for each unsupported argument."""
+def test_fps_recommender_expected_errors(searchspace, init, tie_break, match):
+    """Test that FPSRecommender emits exceptions for unsupported arguments."""
     recommender = FPSRecommender(initialization=init, random_tie_break=tie_break)
 
     with pytest.raises(ValueError, match=match):
         recommender.recommend(batch_size=3, searchspace=searchspace)
 
 
-@pytest.mark.skipif(FPSAMPLE_INSTALLED, reason="fpsample is installed")
-def test_fps_recommender_fallback_to_internal_fps(searchspace):
-    """Test FPSRecommender reverts to internal FPS when `fpsample` is not available."""
-    recommender = FPSRecommender()
+_valid_points = np.array([[1, 1], [2, 2], [3, 3]])
 
-    with patch(
-        "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
-        return_value=[0, 1, 2],
-    ) as mock_internal:
-        result = recommender.recommend(batch_size=3, searchspace=searchspace)
 
-    mock_internal.assert_called_once()
+@pytest.mark.parametrize(
+    ("points", "n_requested", "initialization", "match"),
+    [
+        param(
+            np.array([1, 2, 3]),
+            2,
+            "farthest",
+            "must be two-dimensional",
+            id="input_not_2D",
+        ),
+        param(
+            _valid_points,
+            4,
+            "farthest",
+            "3 - 0 = 3",
+            id="too_may_requested_no_init",
+        ),
+        param(
+            _valid_points,
+            3,
+            [0],
+            "3 - 1 = 2",
+            id="too_may_requested_with_init",
+        ),
+        param(
+            _valid_points,
+            3,
+            [0, 0],
+            "contain duplicates",
+            id="duplicated_init_points",
+        ),
+    ],
+)
+def test_fps_utility_expected_errors(points, n_requested, initialization, match):
+    """Test that FPSRecommender emits exceptions for unsupported arguments."""
+    with pytest.raises(ValueError, match=match):
+        farthest_point_sampling(points, n_requested, initialization=initialization)
+
+
+def test_fps_recommender_utility_call(searchspace):
+    """FPSRecommender calls expected underlying utility."""
+    if FPSAMPLE_INSTALLED:
+        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
+    else:
+        context = patch(
+            "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
+            return_value=[0, 1, 2],
+        )
+
+    with context as mock_:
+        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+
+    mock_.assert_called_once()
     assert result.index.tolist() == [0, 1, 2]
 
 
-@pytest.fixture
-def simple_searchspace():
-    param = NumericalDiscreteParameter(name="x", values=list(range(30)))
-    subspace = SubspaceDiscrete.from_parameter(param)
-    return SearchSpace(discrete=subspace)
-
-
 @pytest.mark.skipif(
-    not FPSAMPLE_INSTALLED, reason="Optional fpsample dependency not installed."
+    not FPSAMPLE_INSTALLED, reason="Optional 'fpsample' package not installed."
 )
-def test_fps_recommender_with_known_indices(simple_searchspace):
-    """Test FPSRecommender with fpsample using expected output."""
-    # Hardcoded known output
-    expected_indices = [0, 29, 15]
+def test_fps_recommender_result_consistency(searchspace):
+    """FPS utilities return consistent results."""
+    from baybe._optional.fpsample import fps_sampling
 
-    with patch(
-        "baybe._optional.fpsample.fps_sampling",
-        wraps=lambda X, n_samples, **kwargs: __import__("fpsample").fps_sampling(
-            X, n_samples=n_samples, start_idx=0, **kwargs
-        ),
-    ):
-        recommender = FPSRecommender()
-        result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
+    points = searchspace.discrete.comp_rep.values
+    inds1 = fps_sampling(points, 3, start_idx=0).tolist()
+    inds2 = farthest_point_sampling(
+        points, 3, initialization=[0], random_tie_break=False
+    )
 
-    assert result.index.tolist() == expected_indices
-
-
-@pytest.mark.skipif(FPSAMPLE_INSTALLED, reason="fpsample is installed")
-def test_fps_recommender_with_known_indices_fallback(simple_searchspace):
-    """Test FPSRecommender fallback returns expected indices with start_idx=0."""
-    expected_indices = [0, 29, 15]
-
-    with patch(
-        "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
-        wraps=lambda X, n_samples, **kwargs: farthest_point_sampling(
-            X,
-            n_samples=n_samples,
-            start_idx=0,
-            random_tie_break=kwargs.pop("random_tie_break", False),
-            **kwargs,
-        ),
-    ):
-        recommender = FPSRecommender()
-        result = recommender.recommend(batch_size=3, searchspace=simple_searchspace)
-
-    assert result.index.tolist() == expected_indices
+    assert inds1 == inds2, (inds1, inds2)
