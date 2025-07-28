@@ -25,35 +25,21 @@ class TestMetadata:
         assert meta.unit is None
         assert meta.misc == {}
 
-    def test_metadata_is_empty_detection(self):
+    @pytest.mark.parametrize(
+        ("metadata", "expected"),
+        [
+            param({}, True, id="empty"),
+            param({"description": "test"}, False, id="description_only"),
+            param({"unit": "kg"}, False, id="unit_only"),
+            param({"misc": {"key": "value"}}, False, id="misc_only"),
+        ],
+    )
+    @pytest.mark.parametrize("metadata_cls", [Metadata, MeasurableMetadata])
+    def test_metadata_is_empty_detection(self, metadata_cls, metadata, expected):
         """The is_empty property correctly identifies empty metadata."""
-        # Test empty MeasurableMetadata
-        meta1 = MeasurableMetadata()
-        assert meta1.is_empty
-
-        # Test MeasurableMetadata with description only
-        meta2 = MeasurableMetadata(description="test")
-        assert not meta2.is_empty
-
-        # Test MeasurableMetadata with unit only
-        meta3 = MeasurableMetadata(unit="kg")
-        assert not meta3.is_empty
-
-        # Test MeasurableMetadata with misc only
-        meta4 = MeasurableMetadata(misc={"key": "value"})
-        assert not meta4.is_empty
-
-        # Test empty base Metadata
-        meta5 = Metadata()
-        assert meta5.is_empty
-
-        # Test Metadata with description
-        meta6 = Metadata(description="test")
-        assert not meta6.is_empty
-
-        # Test Metadata with misc
-        meta7 = Metadata(misc={"key": "value"})
-        assert not meta7.is_empty
+        if metadata_cls is Metadata and "unit" in metadata:
+            pytest.skip("Metadata class has no 'unit' attribute.")
+        assert metadata_cls(**metadata).is_empty == expected
 
 
 class TestMetadataConverter:
