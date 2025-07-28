@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `unit` properties
 - `FPSRecommender` now optionally uses the fpsample library with fall back
   to internal implementation
+- `farthest_point_sampling` now also supports a collection of integers for 
+  `initialization`, using them for pre-selecting points 
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
