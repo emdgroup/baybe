@@ -1,6 +1,7 @@
 """A collection of point sampling algorithms."""
 
 import warnings
+from collections.abc import Collection
 from enum import Enum
 from typing import Literal
 
@@ -11,9 +12,8 @@ import pandas as pd
 def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
-    initialization: Literal["farthest", "random"] = "farthest",
+    initialization: Literal["farthest", "random"] | Collection[int] = "farthest",
     random_tie_break: bool = True,
-    start_idx: int | None = None,
 ) -> list[int]:
     """Select a subset of points using farthest point sampling.
 
@@ -32,12 +32,11 @@ def farthest_point_sampling(
               largest distance. If only a single point is requested, a deterministic
               choice is made based on the point coordinates.
             * ``"random"``: The first point is selected uniformly at random.
+            * Indices: Points corresponding to these indices will be pre-selected.
         random_tie_break: Determines if points are chosen deterministically or randomly
             in equidistant situations. If ``True``, a random point is selected from the
             candidates, otherwise the first point is selected. For non-equidistant
             points, the point with the largest minimum distance is always selected.
-        start_idx: Optional index to specify the first point in the selection.
-            Only compatible with ``initialization="random"``.
 
     Returns:
         A list containing the positional indices of the selected points.
@@ -46,7 +45,8 @@ def farthest_point_sampling(
         ValueError: If the provided array is not two-dimensional.
         ValueError: If the array contains no points.
         ValueError: If the input space has no dimensions.
-        ValueError: If an unknown method for initialization is specified.
+        ValueError: Indices for initialization are not unique.
+        ValueError: More points are requested than available.
     """
     if (n_dims := np.ndim(points)) != 2:
         raise ValueError(
@@ -57,15 +57,20 @@ def farthest_point_sampling(
         raise ValueError("The provided array must contain at least one row.")
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
-    if n_samples > n_points:
+
+    n_init_points = 0
+    if not isinstance(initialization, str):
+        n_init_points = len(initialization)
+        if n_init_points != len(set(initialization)):
+            raise ValueError(
+                "The provided initialization indices must be unique, but they contain "
+                "duplicates."
+            )
+    if n_samples > n_points - n_init_points:
         raise ValueError(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
-            f"total number of points provided ({n_points})."
-        )
-    if initialization == "random" and start_idx is not None:
-        raise ValueError(
-            "Cannot specify `start_idx` when using initialization='random'. "
-            "Either remove `start_idx` or choose initialization='farthest'."
+            f"total number of points provided minus the ones used for initialization "
+            f"(if any): {n_points} - {n_init_points} = {n_points - n_init_points}."
         )
 
     # Catch the pathological case upfront
@@ -86,9 +91,7 @@ def farthest_point_sampling(
     np.fill_diagonal(dist_matrix, -np.inf)
 
     # Initialize the point selection
-    if start_idx is not None:
-        selected_point_indices = [start_idx]
-    elif initialization == "random":
+    if initialization == "random":
         selected_point_indices = [np.random.randint(0, n_points)]
     elif initialization == "farthest":
         idx_1d = np.argmax(dist_matrix)
@@ -98,7 +101,7 @@ def farthest_point_sampling(
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
     else:
-        raise ValueError(f"unknown initialization recommender: '{initialization}'")
+        selected_point_indices = list(initialization)
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
