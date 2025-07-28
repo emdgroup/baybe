@@ -36,11 +36,14 @@ DiscreteParameter
       ~DiscreteParameter.active_values
       ~DiscreteParameter.comp_df
       ~DiscreteParameter.comp_rep_columns
+      ~DiscreteParameter.description
       ~DiscreteParameter.is_continuous
       ~DiscreteParameter.is_discrete
+      ~DiscreteParameter.unit
       ~DiscreteParameter.values
       ~DiscreteParameter.encoding
       ~DiscreteParameter.is_numerical
       ~DiscreteParameter.name
+      ~DiscreteParameter.metadata
    
    

@@ -32,5 +32,8 @@ Target
    .. autosummary::
    
       ~Target.name
+      ~Target.metadata
+      ~Target.description
+      ~Target.unit
    
    

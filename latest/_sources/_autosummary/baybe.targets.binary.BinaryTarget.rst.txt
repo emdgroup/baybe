@@ -33,6 +33,9 @@ BinaryTarget
    
       ~BinaryTarget.success_value
       ~BinaryTarget.failure_value
+      ~BinaryTarget.description
+      ~BinaryTarget.metadata
       ~BinaryTarget.name
+      ~BinaryTarget.unit
    
    

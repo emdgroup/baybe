@@ -32,9 +32,12 @@ Parameter
    .. autosummary::
    
       ~Parameter.comp_rep_columns
+      ~Parameter.description
       ~Parameter.is_continuous
       ~Parameter.is_discrete
+      ~Parameter.unit
       ~Parameter.is_numerical
       ~Parameter.name
+      ~Parameter.metadata
    
    

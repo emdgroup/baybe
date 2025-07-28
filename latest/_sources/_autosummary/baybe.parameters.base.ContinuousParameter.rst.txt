@@ -33,9 +33,12 @@ ContinuousParameter
    .. autosummary::
    
       ~ContinuousParameter.comp_rep_columns
+      ~ContinuousParameter.description
       ~ContinuousParameter.is_continuous
       ~ContinuousParameter.is_discrete
+      ~ContinuousParameter.unit
       ~ContinuousParameter.is_numerical
       ~ContinuousParameter.name
+      ~ContinuousParameter.metadata
    
    

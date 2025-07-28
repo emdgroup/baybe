@@ -36,11 +36,14 @@ TaskParameter
       ~TaskParameter.active_values
       ~TaskParameter.comp_df
       ~TaskParameter.comp_rep_columns
+      ~TaskParameter.description
       ~TaskParameter.is_continuous
       ~TaskParameter.is_discrete
       ~TaskParameter.is_numerical
+      ~TaskParameter.unit
       ~TaskParameter.values
       ~TaskParameter.encoding
       ~TaskParameter.name
+      ~TaskParameter.metadata
    
    

@@ -36,11 +36,14 @@ CategoricalParameter
       ~CategoricalParameter.active_values
       ~CategoricalParameter.comp_df
       ~CategoricalParameter.comp_rep_columns
+      ~CategoricalParameter.description
       ~CategoricalParameter.is_continuous
       ~CategoricalParameter.is_discrete
       ~CategoricalParameter.is_numerical
+      ~CategoricalParameter.unit
       ~CategoricalParameter.values
       ~CategoricalParameter.encoding
       ~CategoricalParameter.name
+      ~CategoricalParameter.metadata
    
    

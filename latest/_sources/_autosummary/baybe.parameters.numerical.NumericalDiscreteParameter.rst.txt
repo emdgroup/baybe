@@ -36,12 +36,15 @@ NumericalDiscreteParameter
       ~NumericalDiscreteParameter.active_values
       ~NumericalDiscreteParameter.comp_df
       ~NumericalDiscreteParameter.comp_rep_columns
+      ~NumericalDiscreteParameter.description
       ~NumericalDiscreteParameter.is_continuous
       ~NumericalDiscreteParameter.is_discrete
       ~NumericalDiscreteParameter.is_numerical
+      ~NumericalDiscreteParameter.unit
       ~NumericalDiscreteParameter.values
       ~NumericalDiscreteParameter.tolerance
       ~NumericalDiscreteParameter.encoding
       ~NumericalDiscreteParameter.name
+      ~NumericalDiscreteParameter.metadata
    
    

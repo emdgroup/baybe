@@ -34,6 +34,9 @@ NumericalTarget
       ~NumericalTarget.mode
       ~NumericalTarget.bounds
       ~NumericalTarget.transformation
+      ~NumericalTarget.description
+      ~NumericalTarget.metadata
       ~NumericalTarget.name
+      ~NumericalTarget.unit
    
    

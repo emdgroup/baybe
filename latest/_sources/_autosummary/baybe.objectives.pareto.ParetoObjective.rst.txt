@@ -29,8 +29,10 @@ ParetoObjective
 
    .. autosummary::
    
+      ~ParetoObjective.description
       ~ParetoObjective.is_multi_output
       ~ParetoObjective.n_outputs
       ~ParetoObjective.targets
+      ~ParetoObjective.metadata
    
    

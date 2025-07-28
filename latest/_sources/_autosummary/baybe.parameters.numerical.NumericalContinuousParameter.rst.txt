@@ -33,10 +33,13 @@ NumericalContinuousParameter
    .. autosummary::
    
       ~NumericalContinuousParameter.comp_rep_columns
+      ~NumericalContinuousParameter.description
       ~NumericalContinuousParameter.is_continuous
       ~NumericalContinuousParameter.is_discrete
       ~NumericalContinuousParameter.is_numerical
+      ~NumericalContinuousParameter.unit
       ~NumericalContinuousParameter.bounds
       ~NumericalContinuousParameter.name
+      ~NumericalContinuousParameter.metadata
    
    

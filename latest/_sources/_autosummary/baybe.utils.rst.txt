@@ -47,6 +47,8 @@ baybe.utils
 
    memory
 
+   metadata
+
    numerical
 
    random
