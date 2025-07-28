@@ -19,6 +19,10 @@ build
 # VSCode
 .vscode
 
+# Virtual environments
+.venv
+.env
+
 # Testing
 .tox
 .coverage
