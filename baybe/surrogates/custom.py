@@ -174,7 +174,11 @@ def _encode_onnx_string(dct: dict[str, Any], _) -> CustomONNXSurrogate:
     fn = cattrs.gen.make_dict_structure_fn(
         CustomONNXSurrogate,
         converter,
-        onnx_str=cattrs.override(struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)),
+        onnx_str=cattrs.override(
+            struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)
+            if isinstance(x, str)
+            else x
+        ),
     )
     return fn(dct)
 
