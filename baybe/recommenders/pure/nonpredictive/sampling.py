@@ -74,8 +74,7 @@ class FPSRecommender(NonPredictiveRecommender):
     # See base class.
 
     initialization: FPSInitialization = field(
-        default=FPSInitialization.FARTHEST,
-        converter=FPSInitialization,
+        default=FPSInitialization.FARTHEST, converter=FPSInitialization
     )
     """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
 
@@ -108,7 +107,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
         # Try fpsample first
         try:
-            from baybe._optional import fpsample
+            from baybe._optional.fpsample import fps_sampling
 
             if self.initialization != FPSInitialization.FARTHEST:
                 raise ValueError(
@@ -124,7 +123,7 @@ class FPSRecommender(NonPredictiveRecommender):
                     f"Selection will follow a deterministic order. "
                 )
 
-            ilocs = fpsample.fps_sampling(
+            ilocs = fps_sampling(
                 candidates_scaled,
                 n_samples=batch_size,
             )
