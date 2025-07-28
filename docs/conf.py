@@ -263,7 +263,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "polars": ("https://docs.pola.rs/api/python/stable/", None),
-    "skfp": ("https://scikit-fingerprints.github.io/scikit-fingerprints/", None),
+    "skfp": ("https://scikit-fingerprints.readthedocs.io/latest/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/main/", None),
