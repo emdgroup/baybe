@@ -5,7 +5,7 @@
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
 [`CustomDiscreteParameter`]: baybe.parameters.custom.CustomDiscreteParameter
 [`SubstanceEncoding`]: baybe.parameters.enum.SubstanceEncoding
-[scikit-fingerprints]: https://scikit-fingerprints.github.io/scikit-fingerprints/
+[scikit-fingerprints]: https://scikit-fingerprints.readthedocs.io
 
 # Parameters
 

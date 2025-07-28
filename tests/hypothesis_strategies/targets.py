@@ -7,6 +7,7 @@ from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.utils.interval import Interval
 
+from .metadata import measurable_metadata
 from .utils import intervals as st_intervals
 
 target_name = st.text(min_size=1)
@@ -36,9 +37,13 @@ def numerical_targets(
             or transformation is not None,
         )
     bounds = draw(bounds_strategy)
-
+    target_metadata = draw(measurable_metadata())
     return NumericalTarget(
-        name=name, mode=mode, bounds=bounds, transformation=transformation
+        name=name,
+        mode=mode,
+        bounds=bounds,
+        transformation=transformation,
+        metadata=target_metadata,
     )
 
 
@@ -53,7 +58,13 @@ def binary_targets(draw: st.DrawFn):
     """A strategy that generates binary targets."""
     name = draw(target_name)
     choices = draw(st.lists(choice_values, min_size=2, max_size=2, unique=True))
-    return BinaryTarget(name, success_value=choices[0], failure_value=choices[1])
+    target_metadata = draw(measurable_metadata())
+    return BinaryTarget(
+        name,
+        success_value=choices[0],
+        failure_value=choices[1],
+        metadata=target_metadata,
+    )
 
 
 targets = st.one_of([binary_targets(), numerical_targets()])
