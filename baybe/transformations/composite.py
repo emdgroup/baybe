@@ -59,6 +59,12 @@ class AdditiveTransformation(Transformation):
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
+        # NOTE: This only provides a conservative estimate of the image in that it
+        #   computes an "upper bound" (i.e. an interval that contains the actual image),
+        #   which is produced under the assumption that the extremal values of the two
+        #   individual transformations occur at the same input value. Computing the
+        #   exact image without additional information would require evaluating the
+        #   transformation on the entire (uncountable) input space, which is infeasible.
         interval = Interval.create(interval)
         im1 = self.transformations[0].get_image(interval)
         im2 = self.transformations[1].get_image(interval)
@@ -84,6 +90,12 @@ class MultiplicativeTransformation(Transformation):
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
+        # NOTE: This only provides a conservative estimate of the image in that it
+        #   computes an "upper bound" (i.e. an interval that contains the actual image),
+        #   which is produced under the assumption that the extremal values of the two
+        #   individual transformations occur at the same input value. Computing the
+        #   exact image without additional information would require evaluating the
+        #   transformation on the entire (uncountable) input space, which is infeasible.
         interval = Interval.create(interval)
         im1 = self.transformations[0].get_image(interval)
         im2 = self.transformations[1].get_image(interval)
