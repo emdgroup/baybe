@@ -1,5 +1,7 @@
-"""Surrogates from "Transfer Learning with GPs for BO" by Tighineanu et al. (2022)."""
+"""Transfer Learning Surrogates from Tighineanu et al. (2022)."""
 
-from baybe.surrogates.transfergpbo.torchmodels import MHGPModel, MHGPModelStable
+from baybe.surrogates.transfergpbo.mhgp import MHGPGaussianProcessSurrogate
 
-__all__ = ["MHGPModel", "MHGPModelStable"]
+__all__ = [
+    "MHGPGaussianProcessSurrogate",
+]
