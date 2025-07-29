@@ -1,6 +1,7 @@
 """A collection of point sampling algorithms."""
 
 import warnings
+from collections import Counter
 from collections.abc import Collection
 from enum import Enum
 from typing import Literal
@@ -61,10 +62,10 @@ def farthest_point_sampling(
     n_init_points = 0
     if not isinstance(initialization, str):
         n_init_points = len(initialization)
-        if n_init_points != len(set(initialization)):
+        if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
-                "The provided initialization indices must be unique, but they contain "
-                "duplicates."
+                f"The provided collection of initialization indices must be unique but "
+                f"contains duplicates: {duplicates}"
             )
     if n_samples > n_points - n_init_points:
         raise ValueError(

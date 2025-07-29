@@ -5,7 +5,7 @@ from typing import ClassVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
 
@@ -83,9 +83,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.default
     def _default_random_tie_break(self) -> bool:
-        if self.initialization is FPSInitialization.FARTHEST:
-            return False
-        return True
+        return self.initialization is not FPSInitialization.FARTHEST
 
     @override
     def _recommend_discrete(
@@ -109,18 +107,19 @@ class FPSRecommender(NonPredictiveRecommender):
         try:
             from baybe._optional.fpsample import fps_sampling
 
-            if self.initialization != FPSInitialization.FARTHEST:
+            if self.initialization is not FPSInitialization.FARTHEST:
                 raise ValueError(
-                    f"{self.__class__.__name__} is using the optional 'fpsample', "
-                    f"which does not support '{self.initialization.value}'. "
-                    f"Please choose a supported initialization."
+                    f"{self.__class__.__name__} is using the optional 'fpsample' "
+                    f"package, which does not support '{self.initialization}'. "
+                    f"Please choose a supported initialization method."
                 )
 
             if self.random_tie_break:
                 raise ValueError(
-                    f"{self.__class__.__name__} is using the optional 'fpsample' , "
-                    f"which does not support random tie-breaking. "
-                    f"Selection will follow a deterministic order. "
+                    f"'{self.__class__.__name__}' is using the optional 'fpsample' "
+                    f"package, which does not support random tie-breaking. "
+                    f"To disable the mechanism, set "
+                    f"'{fields(self.__class__).random_tie_break.name}=False'."
                 )
 
             ilocs = fps_sampling(

@@ -128,7 +128,7 @@ def test_farthest_point_sampling_pathological_case():
         param(
             FPSInitialization.RANDOM,
             True,
-            "does not support 'random'",
+            "does not support 'FPSInitialization.RANDOM'",
             id="raise_initial_random",
         ),
         param(
@@ -178,7 +178,7 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
             _valid_points,
             3,
             [0, 0],
-            "contain duplicates",
+            "but contains duplicates: {0}",
             id="duplicated_init_points",
         ),
     ],
