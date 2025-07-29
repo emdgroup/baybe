@@ -22,6 +22,10 @@ from baybe.transformations import (
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
+from baybe.transformations.composite import (
+    AdditiveTransformation,
+    MultiplicativeTransformation,
+)
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
@@ -293,3 +297,31 @@ def test_degenerate_transformations(transformation):
     """Degenerate transformations produce proper (non-nan) outputs."""
     assert transformation.get_image() == Interval(0, 0)
     assert transformation.get_image((20, None)) == Interval(0, 0)
+
+
+def test_additive_transformation(tensor):
+    """Additive transformations compute the sum of two transformations."""
+    t1 = ExponentialTransformation()
+    t2 = PowerTransformation(exponent=2)
+
+    expected = t1(tensor) + t2(tensor)
+    comp1 = AdditiveTransformation([t1, t2])
+    comp2 = t1 + t2
+
+    assert comp1 == comp2
+    assert torch.equal(comp1(tensor), expected)
+    assert torch.equal(comp2(tensor), expected)
+
+
+def test_multiplicative_transformation(tensor):
+    """Multiplicative transformations compute the product of two transformations."""
+    t1 = ExponentialTransformation()
+    t2 = PowerTransformation(exponent=2)
+
+    expected = t1(tensor) * t2(tensor)
+    comp1 = MultiplicativeTransformation([t1, t2])
+    comp2 = t1 * t2
+
+    assert comp1 == comp2
+    assert torch.equal(comp1(tensor), expected)
+    assert torch.equal(comp2(tensor), expected)
