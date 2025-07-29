@@ -51,7 +51,7 @@ class Transformation(SerialMixin, ABC):
 
     def negate(self) -> Transformation:
         """Negate the output of the transformation."""
-        from baybe.transformations.core import AffineTransformation
+        from baybe.transformations.basic import AffineTransformation
 
         return self + AffineTransformation(factor=-1)
 
@@ -63,24 +63,24 @@ class Transformation(SerialMixin, ABC):
             raise ValueError(
                 "A clamping transformation requires at least one finite boundary value."
             )
-        from baybe.transformations.core import ClampingTransformation
+        from baybe.transformations.basic import ClampingTransformation
 
         return self + ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
-        from baybe.transformations.core import AbsoluteTransformation
+        from baybe.transformations.basic import AbsoluteTransformation
 
         return self + AbsoluteTransformation()
 
     def __add__(self, other: Transformation | int | float) -> Transformation:
         """Chain another transformation or shift the output of the current one."""
-        from baybe.transformations.core import (
+        from baybe.transformations import (
             AffineTransformation,
             ChainedTransformation,
             IdentityTransformation,
+            combine_affine_transformations,
         )
-        from baybe.transformations.utils import combine_affine_transformations
 
         if isinstance(other, IdentityTransformation):
             return self
@@ -95,7 +95,7 @@ class Transformation(SerialMixin, ABC):
     def __mul__(self, other: int | float) -> Transformation:
         """Scale the output of the transformation."""
         if isinstance(other, (int, float)):
-            from baybe.transformations.core import AffineTransformation
+            from baybe.transformations.basic import AffineTransformation
 
             return self + AffineTransformation(factor=other)
         return NotImplemented
@@ -111,7 +111,7 @@ class Transformation(SerialMixin, ABC):
                 "if the transformation enters as the only (positional) argument."
             )
 
-        from baybe.transformations.core import CustomTransformation
+        from baybe.transformations.basic import CustomTransformation
 
         return args[0] + CustomTransformation(func)
 
