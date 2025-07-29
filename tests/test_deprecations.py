@@ -43,7 +43,7 @@ from baybe.targets._deprecated import (
     triangular_transform,
 )
 from baybe.targets.binary import BinaryTarget
-from baybe.transformations.core import AffineTransformation
+from baybe.transformations.basic import AffineTransformation
 
 
 def test_sequentialgreedyrecommender_class():

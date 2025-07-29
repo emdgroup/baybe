@@ -16,14 +16,14 @@ if TYPE_CHECKING:
 
 def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
     """Autowrap a torch callable as transformation (with transformation passthrough)."""
-    from baybe.transformations.core import CustomTransformation
+    from baybe.transformations.basic import CustomTransformation
 
     return x if isinstance(x, Transformation) else CustomTransformation(x)
 
 
 def combine_affine_transformations(t1, t2, /):
     """Combine two affine transformations into one."""
-    from baybe.transformations.core import AffineTransformation
+    from baybe.transformations.basic import AffineTransformation
 
     return AffineTransformation(
         factor=t2.factor * t1.factor,
@@ -35,7 +35,7 @@ def _flatten_transformations(
     transformations: Iterable[Transformation], /
 ) -> Iterable[Transformation]:
     """Recursively flatten nested chained transformations."""
-    from baybe.transformations.core import ChainedTransformation
+    from baybe.transformations.composite import ChainedTransformation
 
     for t in transformations:
         if isinstance(t, ChainedTransformation):
@@ -57,7 +57,7 @@ def compress_transformations(
     Returns:
         The minimum sequence of transformations that is equivalent to the input.
     """
-    from baybe.transformations.core import AffineTransformation, IdentityTransformation
+    from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 
     aggregated: list[Transformation] = []
     last = None

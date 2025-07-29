@@ -1,11 +1,10 @@
 """BayBE transformations."""
 
 from baybe.transformations.base import MonotonicTransformation, Transformation
-from baybe.transformations.core import (
+from baybe.transformations.basic import (
     AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
-    ChainedTransformation,
     ClampingTransformation,
     CustomTransformation,
     ExponentialTransformation,
@@ -16,6 +15,7 @@ from baybe.transformations.core import (
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
+from baybe.transformations.composite import ChainedTransformation
 from baybe.transformations.utils import (
     combine_affine_transformations,
     compress_transformations,
