@@ -61,10 +61,11 @@ def compress_transformations(
 
     aggregated: list[Transformation] = []
     last = None
+    id_ = IdentityTransformation()
 
     for t in _flatten_transformations(transformations):
-        # Drop identity transformations
-        if isinstance(t, IdentityTransformation):
+        # Drop identity transformations (and such that are equivalent to it)
+        if t == id_:
             continue
 
         # Combine subsequent affine transformations

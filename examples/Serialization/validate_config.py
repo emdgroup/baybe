@@ -62,7 +62,7 @@ CONFIG = str(
         "target":
             {
                 "type": "NumericalTarget",
-                "name": "Yield",
+                "name": "Yield"
             }
     },
     "recommender": {
@@ -131,7 +131,7 @@ INVALID_CONFIG = str(
         "target":
             {
                 "type": "NumericalTarget",
-                "name": "Yield",
+                "name": "Yield"
             }
     },
     "recommender": {

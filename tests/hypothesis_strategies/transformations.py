@@ -15,7 +15,7 @@ from baybe.transformations import (
     LogarithmicTransformation,
     PowerTransformation,
     TriangularTransformation,
-    TwoSidedLinearTransformation,
+    TwoSidedAffineTransformation,
 )
 from tests.hypothesis_strategies.utils import intervals
 
@@ -49,12 +49,12 @@ def affine_transformations(draw: st.DrawFn) -> AffineTransformation:  # type: ig
 
 
 @st.composite
-def two_sided_linear_transformations(draw: st.DrawFn) -> TwoSidedLinearTransformation:
-    """Generate :class:`baybe.transformations.core.TwoSidedLinearTransformation`."""
+def two_sided_affine_transformations(draw: st.DrawFn) -> TwoSidedAffineTransformation:
+    """Generate :class:`baybe.transformations.core.TwoSidedAffineTransformation`."""
     slope_left = draw(finite_floats())
     slope_right = draw(finite_floats())
     center = draw(finite_floats())
-    return TwoSidedLinearTransformation(slope_left, slope_right, center)
+    return TwoSidedAffineTransformation(slope_left, slope_right, center)
 
 
 @st.composite
@@ -121,7 +121,7 @@ single_transformations = st.one_of(
         exponential_transformations(),
         clamping_transformations(),
         affine_transformations(),
-        two_sided_linear_transformations(),
+        two_sided_affine_transformations(),
         bell_transformations(),
         triangular_transformations(),
         power_transformations(),

@@ -11,7 +11,7 @@ from baybe.transformations import (
     ClampingTransformation,
     PowerTransformation,
     TriangularTransformation,
-    TwoSidedLinearTransformation,
+    TwoSidedAffineTransformation,
 )
 
 
@@ -22,7 +22,7 @@ from baybe.transformations import (
         param(0, np.nan, "cannot be 'nan'", id="nan_max"),
         param("", 0, "could not convert", id="type_min"),
         param(0, "", "could not convert", id="type_max"),
-        param(1, 0, "must be greater than", id="min_greater_than_max"),
+        param(1, 0, "cannot be smaller than", id="min_greater_than_max"),
     ],
 )
 def test_invalid_clamping_transformation(min, max, match):
@@ -62,10 +62,10 @@ def test_invalid_affine_transformation(factor, shift):
         param(0, 0, "", id="type_center"),
     ],
 )
-def test_invalid_two_sided_linear_transformation(slope_left, slope_right, center):
+def test_invalid_two_sided_affine_transformation(slope_left, slope_right, center):
     """Providing invalid arguments raises an exception."""
     with pytest.raises(ValueError):
-        TwoSidedLinearTransformation(slope_left, slope_right, center)
+        TwoSidedAffineTransformation(slope_left, slope_right, center)
 
 
 @pytest.mark.parametrize(
@@ -103,23 +103,24 @@ def test_invalid_triangular_transformation(cutoffs, peak, match):
 
 
 @pytest.mark.parametrize(
-    "exponent",
+    ("exponent", "error"),
     [
-        param(np.inf, id="inf"),
-        param(np.nan, id="nan"),
-        param("", id="type"),
+        param(np.inf, TypeError, id="inf"),
+        param(np.nan, TypeError, id="nan"),
+        param("", TypeError, id="type"),
+        param(1.5, TypeError, id="non-int"),
+        param(1, ValueError, id="trivial"),
     ],
 )
-def test_invalid_power_transformation(exponent):
+def test_invalid_power_transformation(exponent, error):
     """Providing invalid arguments raises an exception."""
-    with pytest.raises(ValueError):
+    with pytest.raises(error):
         PowerTransformation(exponent)
 
 
 @pytest.mark.parametrize(
     ("transformations", "error"),
     [
-        param([], ValueError, id="empty"),
         param([None], TypeError, id="type"),
     ],
 )

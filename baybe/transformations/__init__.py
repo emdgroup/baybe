@@ -12,8 +12,9 @@ from baybe.transformations.core import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     TriangularTransformation,
-    TwoSidedLinearTransformation,
+    TwoSidedAffineTransformation,
 )
 from baybe.transformations.utils import (
     combine_affine_transformations,
@@ -38,8 +39,9 @@ __all__ = [
     "IdentityTransformation",
     "LogarithmicTransformation",
     "PowerTransformation",
+    "SigmoidTransformation",
     "TriangularTransformation",
-    "TwoSidedLinearTransformation",
+    "TwoSidedAffineTransformation",
     # Utilities
     # ---------
     "combine_affine_transformations",

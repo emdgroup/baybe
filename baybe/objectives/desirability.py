@@ -15,7 +15,6 @@ from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
 from baybe.objectives.base import Objective
-from baybe.objectives.botorch import ChainedMCObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
@@ -165,6 +164,8 @@ class DesirabilityObjective(Objective):
     def to_botorch(self) -> MCAcquisitionObjective:
         import torch
         from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
+
+        from baybe.objectives.botorch import ChainedMCObjective
 
         if self.scalarizer is Scalarizer.MEAN:
             outer = LinearMCObjective(torch.tensor(self._normalized_weights))

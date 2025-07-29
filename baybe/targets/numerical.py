@@ -22,6 +22,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.base import Target
 from baybe.transformations import (
+    AbsoluteTransformation,
     AffineTransformation,
     BellTransformation,
     ChainedTransformation,
@@ -30,6 +31,7 @@ from baybe.transformations import (
     IdentityTransformation,
     LogarithmicTransformation,
     PowerTransformation,
+    SigmoidTransformation,
     Transformation,
     TriangularTransformation,
     convert_transformation,
@@ -62,11 +64,11 @@ class _LegacyInterface:
 
 def _translate_legacy_arguments(
     mode: TargetMode, bounds: Interval, transformation: TargetTransformation | None
-) -> tuple[Transformation | None, bool]:
+) -> tuple[Transformation, bool]:
     """Translate legacy target arguments to modern arguments."""
     if mode in (TargetMode.MAX, TargetMode.MIN):
         if not bounds.is_bounded:
-            return (None, mode == TargetMode.MIN)
+            return (IdentityTransformation(), mode == TargetMode.MIN)
         else:
             # Use transformation from what would have been the appropriate call
             return (
@@ -95,8 +97,10 @@ def _translate_legacy_arguments(
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    _transformation: Transformation | None = field(
-        alias="transformation", default=None, converter=optional(convert_transformation)
+    _transformation: Transformation = field(
+        alias="transformation",
+        factory=IdentityTransformation,
+        converter=optional(convert_transformation),
     )
     """An optional target transformation."""
 
@@ -131,6 +135,12 @@ class NumericalTarget(Target, SerialMixin):
             legacy.mode, legacy.bounds, legacy.transformation
         )
         self.__attrs_init__(legacy.name, transformation, minimize=minimize)
+
+    def __add__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(shift=other))
+
+    def __mul__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(factor=other))
 
     @classmethod
     def from_modern_interface(
@@ -194,6 +204,55 @@ class NumericalTarget(Target, SerialMixin):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)
             return cls(name, mode, bounds, transformation)
+
+    @classmethod
+    def match_absolute(cls, name: str, match_value: float) -> NumericalTarget:
+        """Create a target to match a given value using an absolute transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+
+        Returns:
+            The target with applied absolute matching transformation.
+        """
+        return NumericalTarget(
+            name, AffineTransformation(shift=-match_value) + AbsoluteTransformation()
+        )
+
+    @classmethod
+    def match_quadratic(cls, name: str, match_value: float) -> NumericalTarget:
+        """Create a target to match a given value using a quadratic transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+
+        Returns:
+            The target with applied quadratic matching transformation.
+        """
+        return NumericalTarget.match_power(name, match_value, exponent=2)
+
+    @classmethod
+    def match_power(
+        cls, name: str, match_value: float, exponent: int
+    ) -> NumericalTarget:
+        """Create a target to match a given value using a power transformation.
+
+        Args:
+            name: The name of the target.
+            match_value: The value to be matched.
+            exponent: The exponent of applied the power transformation.
+
+        Returns:
+            The target with applied power matching transformation.
+        """
+        return NumericalTarget(
+            name,
+            AffineTransformation(shift=-match_value)
+            + AbsoluteTransformation()
+            + PowerTransformation(exponent),
+        )
 
     @classmethod
     def match_triangular(
@@ -286,6 +345,21 @@ class NumericalTarget(Target, SerialMixin):
             ).clamp(0, 1),
         )
 
+    @classmethod
+    def normalize_sigmoid(
+        cls, name: str, anchors: Sequence[Sequence[float]]
+    ) -> NumericalTarget:
+        """Create a sigmoid-transformed target.
+
+        Args:
+            name: The name of the target.
+            anchors: See :class:`baybe.transformations.core.SigmoidTransformation`.
+
+        Returns:
+            The target with applied sigmoid transformation.
+        """
+        return NumericalTarget(name, SigmoidTransformation.from_anchors(anchors))
+
     @property
     def is_normalized(self) -> bool:
         """Boolean flag indicating if the target is normalized to the unit interval."""
@@ -294,8 +368,8 @@ class NumericalTarget(Target, SerialMixin):
     @property
     def total_transformation(self) -> Transformation:
         """The total applied transformation, including potential negation."""
-        transformation = self._transformation or IdentityTransformation()
-        return transformation.negate() if self.minimize else transformation
+        tr = self._transformation
+        return self._transformation if not self.minimize else tr.negate()
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity)."""
@@ -312,10 +386,18 @@ class NumericalTarget(Target, SerialMixin):
         """
         return evolve(  # type: ignore[call-arg]
             self,
-            transformation=transformation
-            if self._transformation is None
-            else ChainedTransformation([self._transformation, transformation]),
+            transformation=ChainedTransformation(
+                [self._transformation, transformation]
+            ),
         )
+
+    def invert(self) -> NumericalTarget:
+        """Apply an inversion transformation to the target.
+
+        Returns:
+            The target with applied inversion transformation.
+        """
+        return self._append_transformation(AffineTransformation(factor=-1))
 
     def normalize(self) -> NumericalTarget:
         """Normalize the target to the unit interval using an affine transformation.
@@ -334,6 +416,14 @@ class NumericalTarget(Target, SerialMixin):
                 *self.get_image().to_tuple()
             )
         )
+
+    def abs(self) -> NumericalTarget:
+        """Apply an absolute transformation to the target.
+
+        Returns:
+            The target with applied absolute transformation.
+        """
+        return self._append_transformation(AbsoluteTransformation())
 
     def clamp(
         self, min: float | None = None, max: float | None = None
@@ -402,17 +492,13 @@ class NumericalTarget(Target, SerialMixin):
         assert isinstance(series, pd.Series)
         # <<<<<<<<<< Deprecation
 
-        # When a transformation is specified, apply it
-        if (self._transformation is not None) or self.minimize:
-            from baybe.utils.dataframe import to_tensor
+        from baybe.utils.dataframe import to_tensor
 
-            return pd.Series(
-                self.total_transformation(to_tensor(series)),
-                index=series.index,
-                name=series.name,
-            )
-
-        return series.copy()
+        return pd.Series(
+            self.total_transformation(to_tensor(series)),
+            index=series.index,
+            name=series.name,
+        )
 
     @override
     def summary(self):
