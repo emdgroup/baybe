@@ -73,8 +73,24 @@ class Transformation(SerialMixin, ABC):
 
         return self | AbsoluteTransformation()
 
-    def __add__(self, other: int | float) -> Transformation:
-        """Shift the output of the transformation."""
+    def __add__(self, other: Transformation | int | float) -> Transformation:
+        """Add a constant or the output from another transformation."""
+        if isinstance(other, Transformation):
+            from baybe.transformations import AdditiveTransformation
+
+            return AdditiveTransformation([self, other])
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __mul__(self, other: Transformation | int | float) -> Transformation:
+        """Multiply with a constant or the output from another transformation."""
+        if isinstance(other, Transformation):
+            from baybe.transformations import MultiplicativeTransformation
+
+            return MultiplicativeTransformation([self, other])
         if isinstance(other, (int, float)):
             from baybe.transformations import AffineTransformation
 
@@ -96,14 +112,6 @@ class Transformation(SerialMixin, ABC):
             return combine_affine_transformations(*t)
         if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
-        return NotImplemented
-
-    def __mul__(self, other: int | float) -> Transformation:
-        """Scale the output of the transformation."""
-        if isinstance(other, (int, float)):
-            from baybe.transformations.basic import AffineTransformation
-
-            return self | AffineTransformation(factor=other)
         return NotImplemented
 
     @classmethod

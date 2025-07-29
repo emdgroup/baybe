@@ -42,3 +42,59 @@ class ChainedTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return compose(*(t.__call__ for t in self.transformations))(x)
+
+
+@define
+class AdditiveTransformation(Transformation):
+    """A transformation implementing the sum of two transformations."""
+
+    transformations: tuple[Transformation, Transformation] = field(
+        converter=tuple,
+        validator=deep_iterable(
+            iterable_validator=min_len(2),
+            member_validator=instance_of(Transformation),
+        ),
+    )
+    """The transformations to be added."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        im1 = self.transformations[0].get_image(interval)
+        im2 = self.transformations[1].get_image(interval)
+        return Interval([im1.lower + im2.lower, im1.upper + im2.upper])
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return self.transformations[0](x) + self.transformations[1](x)
+
+
+@define
+class MultiplicativeTransformation(Transformation):
+    """A transformation implementing the product of two transformations."""
+
+    transformations: tuple[Transformation, Transformation] = field(
+        converter=tuple,
+        validator=deep_iterable(
+            iterable_validator=min_len(2),
+            member_validator=instance_of(Transformation),
+        ),
+    )
+    """The transformations to be multiplied."""
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        im1 = self.transformations[0].get_image(interval)
+        im2 = self.transformations[1].get_image(interval)
+        boundary_products = [
+            im1.lower * im2.lower,
+            im1.lower * im2.upper,
+            im1.upper * im2.lower,
+            im1.upper * im2.upper,
+        ]
+        return Interval(min(boundary_products), max(boundary_products))
+
+    @override
+    def __call__(self, x: Tensor, /) -> Tensor:
+        return self.transformations[0](x) * self.transformations[1](x)

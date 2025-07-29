@@ -15,7 +15,11 @@ from baybe.transformations.basic import (
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
-from baybe.transformations.composite import ChainedTransformation
+from baybe.transformations.composite import (
+    AdditiveTransformation,
+    ChainedTransformation,
+    MultiplicativeTransformation,
+)
 from baybe.transformations.utils import (
     combine_affine_transformations,
     compress_transformations,
@@ -27,12 +31,11 @@ __all__ = [
     # ------------
     "MonotonicTransformation",
     "Transformation",
-    # Core transformations
+    # Basic transformations
     # --------------------
     "AbsoluteTransformation",
     "AffineTransformation",
     "BellTransformation",
-    "ChainedTransformation",
     "ClampingTransformation",
     "CustomTransformation",
     "ExponentialTransformation",
@@ -42,6 +45,11 @@ __all__ = [
     "SigmoidTransformation",
     "TriangularTransformation",
     "TwoSidedAffineTransformation",
+    # Composite transformations
+    # -----------------------
+    "AdditiveTransformation",
+    "ChainedTransformation",
+    "MultiplicativeTransformation",
     # Utilities
     # ---------
     "combine_affine_transformations",
