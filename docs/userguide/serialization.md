@@ -263,9 +263,9 @@ from baybe.targets import NumericalTarget
 
 objective = DesirabilityObjective(
     targets=[
-        NumericalTarget(name="T_max")
-        NumericalTarget(name="T_min", minimize=True)
-        NumericalTarget.match_absolute(name="T_match", match_value=0)
+        NumericalTarget(name="T_max"),
+        NumericalTarget(name="T_min", minimize=True),
+        NumericalTarget.match_absolute(name="T_match", match_value=0),
     ],
     weights=[1, 5, 2],
     scalarizer="MEAN",
@@ -273,12 +273,12 @@ objective = DesirabilityObjective(
 )
 
 objective_json = """
-{   
+{
     "targets": [
         {
             "type": "NumericalTarget",
             "name": "T_max",
-        }, 
+        },
         {
             "type": "NumericalTarget",
             "name": "T_min",
@@ -292,7 +292,7 @@ objective_json = """
         }
     ],
     "weights": [1, 5, 2],
-    "scalarizer": "MEAN"
+    "scalarizer": "MEAN",
     "require_normalization": false
 }
 """

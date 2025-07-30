@@ -107,7 +107,7 @@ when the target ranges are unknown. In this case, using the unweighted arithmeti
 is a reasonable choice:
 ```python
 from baybe.targets import NumericalTarget
-from baybe.objectives import DesirabilityObjective  
+from baybe.objectives import DesirabilityObjective
 
 t1 = NumericalTarget(name="t_max")
 t2 = NumericalTarget.match_absolute(name="t_match", match_value=0)

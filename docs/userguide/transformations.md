@@ -102,8 +102,8 @@ from baybe.transformations import AffineTransformation
 
 t = AffineTransformation(factor=2)  # scales by 2
 t = AffineTransformation(shift=3)  # shifts by 3
-t = AffineTransformation(factor=2, shift=3)  # scales and *then* shifts
-t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts and *then* scales
+t = AffineTransformation(factor=2, shift=3)  # scales, *then* shifts
+t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts, *then* scales
 ```
 
 ### TwoSidedAffineTransformation
@@ -179,7 +179,7 @@ distribution except that it does not affect the magnitude of the curve.
 ```python
 from baybe.transformations import BellTransformation
 
-t = BellTransformation(center=0, sigma=1)  # like an **unnormalized** standard normal distribution
+t = BellTransformation(center=0, sigma=1)  # like an **unnormalized** standard normal
 t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the right by 5
 ```
 
@@ -219,10 +219,10 @@ respectively, and $c_\text{peak}$ is its peak location.
 **Example**
 
 ```python
-from baybe.transformations import TriangularTransformation  
+from baybe.transformations import TriangularTransformation
 
 # Symmetric triangle with peak at 3, reaching zero at 1 and 5
-t_sym1 = TriangularTransformation(cutoffs=(1, 5))  
+t_sym1 = TriangularTransformation(cutoffs=(1, 5))
 t_sym2 = TriangularTransformation.from_width(peak=3, width=2)
 t_sym3 = TriangularTransformation.from_margins(peak=3, margins=(2, 2))
 assert t1 == t2 == t3
@@ -314,10 +314,15 @@ compresses the resulting chain to remove redundancies, by
 ```python
 from baybe.transformations import IdentityTransformation, AffineTransformation
 
-t1 = IdentityTransformation() | AffineTransformation(factor=2) | AffineTransformation(shift=3)
+t1 = (
+    IdentityTransformation()
+    | AffineTransformation(factor=2)
+    | AffineTransformation(shift=3)
+)
 t2 = AffineTransformation(factor=2, shift=3)  # compressed version
 assert isinstance(t1, ChainedTransformation)
 assert t1 == t2  # both are equal, even though t1 is really a chained transformation
+
 ```
 ````
 
@@ -440,7 +445,7 @@ from baybe.transformations import (
     CustomTransformation,
 )
 
-t1 = torch.sin(AbsoluteTransformation()) 
+t1 = torch.sin(AbsoluteTransformation())
 t2 = AbsoluteTransformation() | torch.sin
 t3 = AbsoluteTransformation() | CustomTransformation(torch.sin)
 t4 = AbsoluteTransformation().chain(CustomTransformation(torch.sin))

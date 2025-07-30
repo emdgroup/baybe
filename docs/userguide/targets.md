@@ -87,9 +87,10 @@ The following is a non-comprehensive overview – for a complete list, please r
   an inversion transformation:
   ```python
   from baybe.transformations import AffineTransformation
+
   target = NumericalTarget(
       name="Yield",
-      transformation=LogarithmicTransformation() + AffineTransformation(factor=-1)
+      transformation=LogarithmicTransformation() + AffineTransformation(factor=-1),
   )
   ```
 
@@ -106,7 +107,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   For example:
   ```python
   # Absolute transformation
-  t_abs = NumericalTarget.match_absolute(name="Yield", match_value=42)  
+  t_abs = NumericalTarget.match_absolute(name="Yield", match_value=42)
 
   # Bell-shaped transformation
   t_bell = NumericalTarget.match_bell(name="Yield", match_value=42, sigma=5)
