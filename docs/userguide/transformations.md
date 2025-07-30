@@ -3,9 +3,10 @@
 Transformations allow you to customize the way numerical quantities enter the
 recommendation process. They can be used to express various optimization objectives and
 imprint your domain knowledge or use case requirements on the quantities being
-optimized.
+optimized. See, for example, the [targets user guide](./targets) to learn how to do
+this.
 
-```{admonition} Note
+```{admonition} Current Scope
 :class: note
 Currently, transformations are only used for the
 {class}`~baybe.targets.numerical.NumericalTarget` class but it is planned to enable
@@ -18,7 +19,7 @@ well.
 The following pre-defined transformation types are available via the
 {mod}`baybe.transformations` module: 
 
-### Simple Transformations
+### Basic Transformations
 
 - {class}`~baybe.transformations.basic.IdentityTransformation`: $f(x) = x$
 - {class}`~baybe.transformations.basic.AbsoluteTransformation`: $f(x) = |x|$
@@ -108,7 +109,7 @@ t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts and *the
 ### TwoSidedAffineTransformation
 
 The {class}`~baybe.transformations.basic.TwoSidedAffineTransformation` is a piecewise
-transformation with two linear segments that meet at a midpoint.
+transformation with two affine segments that meet at a midpoint.
 
 `````{grid} 2
 
@@ -119,7 +120,7 @@ transformation with two linear segments that meet at a midpoint.
 ````
 
 ````{grid-item}
-:columns: 6
+:columns: 5
 
 **Transformation rule**
 
@@ -130,7 +131,7 @@ f(x) =
     c_\text{right} (x - c_\text{mid}) & \text{if } c_\text{mid} \leq x \\
 \end{cases}
 ```
-where $c_\text{left}$ and $c_\text{right}$ are the slopes of the left and right linear
+where $c_\text{left}$ and $c_\text{right}$ are the slopes of the left and right affine
 segments, respectively, and $c_\text{mid}$ specifies the midpoint where the two
 segments meet.
 ````
@@ -147,9 +148,9 @@ t = TwoSidedAffineTransformation(left_slope=-1, right_slope=0, midpoint=1)  # hi
 
 ### BellTransformation
 
-The {class}`~baybe.transformations.basic.BellTransformation` is pipes the input through a
-bell-shaped function (i.e. an **unnormalized** Gaussian), useful for steering the the
-input to a specific set point value.
+The {class}`~baybe.transformations.basic.BellTransformation` pipes the input through a
+bell-shaped function (i.e. an **unnormalized** Gaussian), useful for steering the
+targets to a specific set point value.
 
 `````{grid} 2
 
@@ -167,8 +168,8 @@ input to a specific set point value.
 ```{math}
 f(x) = e^{-\frac{(x - c)^2}{2\sigma^2}}
 ```
-where $c$ is the center of the bell and $\sigma$ is a parameter controlling its width.
-The latter has the same interpretation as the standard deviation of a Gaussian
+where $c$ is the center of the bell curve and $\sigma$ is a parameter controlling its
+width. The latter has the same interpretation as the standard deviation of a Gaussian
 distribution except that it does not affect the magnitude of the curve.
 ````
 `````
@@ -179,13 +180,14 @@ distribution except that it does not affect the magnitude of the curve.
 from baybe.transformations import BellTransformation
 
 t = BellTransformation(center=0, sigma=1)  # like an **unnormalized** standard normal distribution
+t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the right by 5
 ```
 
 ### TriangularTransformation
 
-The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise
-linear transformation with the shape of a triangle, useful for steering the the input
-to a specific set point value.
+The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise affine
+transformation with the shape of a triangle, useful for steering targets to a specific
+set point value.
 
 `````{grid} 2
 
@@ -196,7 +198,7 @@ to a specific set point value.
 ````
 
 ````{grid-item}
-:columns: auto
+:columns: 5
 
 **Transformation rule**
 
