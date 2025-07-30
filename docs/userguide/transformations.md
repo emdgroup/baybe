@@ -233,51 +233,166 @@ t_skew2 = TriangularTransformation.from_margins(peak=2, margins=(1, 3))
 assert t_skew1 == t_skew2
 ```
 
-## Chaining Transformations
+## Composite Transformations
 
 Instead of applying [individual transformations](#pre-defined-transformations) directly,
 you can also use them as building blocks to enable more complex types of operations.
 This is enabled through the
-{class}`~baybe.transformations.composite.ChainedTransformation` class, which allows you
-to combine multiple transformations into a single one. The transformations are applied
-in sequence, with the output of one transformation serving as the input to the next.
+{class}`~baybe.transformations.composite.ChainedTransformation`
+{class}`~baybe.transformations.composite.AdditiveTransformation` and 
+{class}`~baybe.transformations.composite.MultiplicativeTransformation` classes,
+which allow you to combine multiple transformations into a single one.
+
+### Chaining
+
+The {class}`~baybe.transformations.composite.ChainedTransformation` class represents the
+mathematical concept of [function
+composition](https://en.wikipedia.org/wiki/Function_composition), which allows you to
+"chain" multiple transformations together. It gives you a higher-level transformation
+object that applies the specified transformation steps in sequence, where the output of
+one transformation serves as the input to the next.
+
+```{admonition} Order of Operations
+:class: important
+Since the given transformations are applied sequentially, the order in which they are
+specified matters! More specifically, the first transformation passed to
+{class}`~baybe.transformations.composite.ChainedTransformation` gets applied first, then
+the second, and so on. Therefore, `ChainedTransformation([f, g, h])` represent the
+mathematical operation $(h \circ g \circ f)(x) = h(g(f(x)))$, where the order in the
+notation is reversed.
+```
+
+```{admonition} Convenience Construction
+:class: tip
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.ChainedTransformation` 
+constructor to chain transformations, you can alternatively:
+* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
+* calling an existing transformation's
+{meth}`~baybe.transformations.base.Transformation.chain` method
+```
 
 ```python
+import torch
 from baybe.transformations import ChainTransformation
 
 twosided = TwoSidedAffineTransformation(left_slope=0, right_slope=1)
 power = PowerTransformation(power=2)
+shift = AffineTransformation(shift=1)
 
-# Create a transformation representing a one-sided square function
-t1 = ChainTransformation([twosided, power])  # explicit construction
-t2 = twosided | power  # using overloaded pipe operator
-t3 = twosided.chain(power)  # via method chaining
+# Create a transformation representing a shifted one-sided quadratic function:
+# 1) First, we cut the left side by multiplying by zero
+# 2) Then, we apply the quadratic transformation
+# 3) Finally, we shift to the right
+t1 = ChainTransformation([twosided, power, shift])  # explicit construction
+t2 = twosided | power | shift  # using overloaded pipe operator
+t3 = twosided.chain(power).chain(shift)  # via method chaining
 assert t1 == t2 == t3
+
+# Logically, we can achieve the same result by exchanging the first two steps:
+# 1) Here, we apply the quadratic transformation first
+# 2) Then, we cut as a second step
+# 3) Finally, we shift
+t4 = power | twosided | shift  # different order of operations
+
+# While these two constructions are mathematically equivalent, they are not "equal" from
+# an object perspective, because they rely on different transformation steps:
+values = torch.linspace(0, 2)
+assert torch.equal(t1(values), t4(values))  # they produce the same output
+assert t1 != t4  # but they are not "equal" objects
 ```
 
-```{admonition} Compression
+````{admonition} Compression
 :class: note
 
 BayBE is smart when it comes to chaining transformations in that it automatically
 compresses the resulting chain to remove redundancies, by
 * dropping unnecessary identity transformations,
 * combining successive affine transformations,
-* and removing the chaining wrapper if not needed. 
+* and removing the chaining wrapper for comparison operations if not needed. 
+
+```python
+from baybe.transformations import IdentityTransformation, AffineTransformation
+
+t1 = IdentityTransformation() | AffineTransformation(factor=2) | AffineTransformation(shift=3)
+t2 = AffineTransformation(factor=2, shift=3)  # compressed version
+assert isinstance(t1, ChainedTransformation)
+assert t1 == t2  # both are equal, even though t1 is really a chained transformation
 ```
+````
 
-## Creation from Existing Transformations
+````{admonition} Creation from Existing Transformations
+:class: tip
 
-For common chaining operation, BayBE provides a set convenience methods that
+For common chaining operations, BayBE provides a set convenience methods that
 allow you to quickly create new transformations from existing ones
 (see {class}`~baybe.transformations.base.Transformation` for all options):
 
 ```python
 t = IdentityTransformation()  # start with **any** existing transformation
-t1 = t.abs() 
-t2 = t.negate()  
-t3 = t2.clamp(min=-1)
-t4 = t3 + 5
-t5 = t4 * 10
+t1 = t.abs()  # compute absolute value
+t2 = t.negate()  # negate the input
+t3 = t2.clamp(min=-1)  # clamp to [-1, +inf)
+t4 = t3 + 5  # add a constant value
+t5 = t4 * 10  # multiply by a constant factor
+```
+````
+
+### Addition
+
+The {class}`~baybe.transformations.composite.AdditiveTransformation` computes the sum
+of the outputs of two transformations applied to the same input. More precisely,
+`AdditiveTransformation([f, g])` computes the transformation $h(x) := f(x) + g(x)$.
+
+```{admonition} Convenience Construction
+:class: tip
+
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.AdditiveTransformation` constructor,
+you can also use the overloaded `+` operator to add transformations.
+```
+
+```python
+import torch
+from baybe.transformations import AdditiveTransformation, PowerTransformation
+
+p1 = PowerTransformation(power=2)
+p2 = PowerTransformation(power=3)
+values = torch.linspace(0, 1)
+
+t1 = AdditiveTransformation([p1, p2])  # explicit construction
+t2 = p1 + p2  # using overloaded addition operator
+assert t1 == t2
+assert torch.equal(t1(values), p1(values) + p2(values)) 
+```
+
+### Multiplication
+
+Analogous to the [additive case above](#addition), the
+{class}`~baybe.transformations.composite.MultiplicativeTransformation` computes the
+product of the outputs of two transformations applied to the same input. More precisely,
+`MultiplicativeTransformation([f, g])` computes the transformation $h(x) := f(x)g(x)$.
+
+```{admonition} Convenience Construction
+:class: tip
+
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.MultiplicativeTransformation` constructor,
+you can also use the overloaded `*` operator to multiply transformations.
+```
+
+```python
+import torch
+from baybe.transformations import MultiplicativeTransformation, PowerTransformation
+
+p1 = PowerTransformation(power=2)
+p2 = PowerTransformation(power=3)
+values = torch.linspace(0, 1)
+
+t1 = MultiplicativeTransformation([p1, p2])  # explicit construction
+t2 = p1 * p2  # using overloaded multiplication operator
+assert t1 == t2
+assert torch.equal(t1(values), p1(values) * p2(values))
 ```
 
 ## Custom Transformations
