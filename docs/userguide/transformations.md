@@ -398,7 +398,7 @@ assert torch.equal(t1(values), p1(values) * p2(values))
 ## Custom Transformations
 
 If none of the [pre-defined transformations](#pre-defined-transformations) fit your
-needs and [chaining them](#chaining-transformations) does also not bring you to the
+needs and [composing them](#composite-transformations) does also not bring you to the
 desired result, you can easily define your custom logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, which accepts any
 one-argument `torch` callable as transformation function:
@@ -410,6 +410,9 @@ from baybe.transformations import CustomTransformation
 t = CustomTransformation(torch.sin)
 ```
 
+````{admonition} Automatic Wrapping
+:note:
+
 When embedding such transformations into another certain context, the wrapping happens
 automatically, so you can use them just like any other built-in transformation:
 
@@ -420,6 +423,10 @@ from baybe.transformations import CustomTransformation
 
 t = NumericalTarget(name="Sinusoid Target", transformation=torch.sin)
 ```
+````
+
+````{admonition} Chaining Custom Transformations
+:class: tip
 
 A convenient feature is that you can chain custom transformations with built-in ones
 directly, without needing to explicitly wrap them. Here is an example, demonstrating the
@@ -440,5 +447,6 @@ t4 = AbsoluteTransformation().chain(CustomTransformation(torch.sin))
 t5 = ChainedTransformation([AbsoluteTransformation(), CustomTransformation(torch.sin)])
 assert t1 == t2 == t3 == t4 == t5
 ```
+````
 
 
