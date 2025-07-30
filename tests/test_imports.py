@@ -50,15 +50,25 @@ def make_import_check(modules: Sequence[str], target: str) -> str:
     )
 
 
-@pytest.mark.parametrize("module", find_modules())
+_modules = find_modules()
+# TODO Remove fpsample workaround once fixed,
+#  see https://github.com/leonardodalinky/fpsample/issues/7
+_modules = [
+    param(
+        m,
+        marks=pytest.mark.xfail(
+            reason="fpsample is currently incompatible with Python 3.13", strict=True
+        ),
+    )
+    if sys.version_info[:2] == (3, 13) and "fpsample" in m
+    else m
+    for m in _modules
+]
+
+
+@pytest.mark.parametrize("module", _modules)
 def test_imports(module: str):
     """All modules can be imported without throwing errors."""
-    # TODO Remove once fixed, see https://github.com/leonardodalinky/fpsample/issues/7
-    if "fpsample" in module and sys.version_info[:2] == (3, 13):
-        pytest.skip(
-            "fpsample is currently incompatible with Python 3.13. "
-            "See: https://github.com/leonardodalinky/fpsample/issues/7"
-        )
     importlib.import_module(module)
 
 
