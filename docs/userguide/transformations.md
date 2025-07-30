@@ -248,7 +248,7 @@ power = PowerTransformation(power=2)
 
 # Create a transformation representing a one-sided square function
 t1 = ChainTransformation([twosided, power])  # explicit construction
-t2 = twosided + power  # using transformation arithmetic
+t2 = twosided | power  # using overloaded pipe operator
 t3 = twosided.chain(power)  # via method chaining
 assert t1 == t2 == t3
 ```
@@ -317,8 +317,8 @@ from baybe.transformations import (
 )
 
 t1 = torch.sin(AbsoluteTransformation()) 
-t2 = AbsoluteTransformation() + torch.sin
-t3 = AbsoluteTransformation() + CustomTransformation(torch.sin)
+t2 = AbsoluteTransformation() | torch.sin
+t3 = AbsoluteTransformation() | CustomTransformation(torch.sin)
 t4 = AbsoluteTransformation().chain(CustomTransformation(torch.sin))
 t5 = ChainedTransformation([AbsoluteTransformation(), CustomTransformation(torch.sin)])
 assert t1 == t2 == t3 == t4 == t5
