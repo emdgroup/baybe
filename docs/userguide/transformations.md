@@ -20,15 +20,15 @@ The following pre-defined transformation types are available via the
 
 ### Simple Transformations
 
-- {class}`~baybe.transformations.core.IdentityTransformation`: $f(x) = x$
-- {class}`~baybe.transformations.core.AbsoluteTransformation`: $f(x) = |x|$
-- {class}`~baybe.transformations.core.ExponentialTransformation`: $f(x) = e^x$
-- {class}`~baybe.transformations.core.LogarithmicTransformation`: $f(x) = \ln(x)$
-- {class}`~baybe.transformations.core.PowerTransformation`: $f(x) = x^p$
+- {class}`~baybe.transformations.basic.IdentityTransformation`: $f(x) = x$
+- {class}`~baybe.transformations.basic.AbsoluteTransformation`: $f(x) = |x|$
+- {class}`~baybe.transformations.basic.ExponentialTransformation`: $f(x) = e^x$
+- {class}`~baybe.transformations.basic.LogarithmicTransformation`: $f(x) = \ln(x)$
+- {class}`~baybe.transformations.basic.PowerTransformation`: $f(x) = x^p$
 
 ### ClampingTransformation
 
-The {class}`~baybe.transformations.core.ClampingTransformation` is used to limit the
+The {class}`~baybe.transformations.basic.ClampingTransformation` is used to limit the
 range of the input values to a specified interval.
 
 `````{grid} 2
@@ -68,7 +68,7 @@ t_both = ClampingTransformation(min=10, max=20)  # clamps to [10, 20]
 
 ### AffineTransformation
 
-The {class}`~baybe.transformations.core.AffineTransformation` applies an affine
+The {class}`~baybe.transformations.basic.AffineTransformation` applies an affine
 transformation to the given input, i.e., it scales and shifts the incoming values.
 
 `````{grid} 2
@@ -105,9 +105,9 @@ t = AffineTransformation(factor=2, shift=3)  # scales and *then* shifts
 t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts and *then* scales
 ```
 
-### TwoSidedLinearTransformation
+### TwoSidedAffineTransformation
 
-The {class}`~baybe.transformations.core.TwoSidedLinearTransformation` is a piecewise
+The {class}`~baybe.transformations.basic.TwoSidedAffineTransformation` is a piecewise
 transformation with two linear segments that meet at a midpoint.
 
 `````{grid} 2
@@ -115,7 +115,7 @@ transformation with two linear segments that meet at a midpoint.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/transformations/twosidedlinear.svg)
+![Transforms](../_static/transformations/twosidedaffine.svg)
 ````
 
 ````{grid-item}
@@ -139,15 +139,15 @@ segments meet.
 **Example**
 
 ```python
-from baybe.transformations import TwoSidedLinearTransformation
+from baybe.transformations import TwoSidedAffineTransformation
 
-t = TwoSidedLinearTransformation(left_slope=-1, right_slope=1)  # absolute value
-t = TwoSidedLinearTransformation(left_slope=-1, right_slope=0, midpoint=1)  # hinge loss
+t = TwoSidedAffineTransformation(left_slope=-1, right_slope=1)  # absolute value
+t = TwoSidedAffineTransformation(left_slope=-1, right_slope=0, midpoint=1)  # hinge loss
 ```
 
 ### BellTransformation
 
-The {class}`~baybe.transformations.core.BellTransformation` is pipes the input through a
+The {class}`~baybe.transformations.basic.BellTransformation` is pipes the input through a
 bell-shaped function (i.e. an **unnormalized** Gaussian), useful for steering the the
 input to a specific set point value.
 
@@ -183,7 +183,7 @@ t = BellTransformation(center=0, sigma=1)  # like an **unnormalized** standard n
 
 ### TriangularTransformation
 
-The {class}`~baybe.transformations.core.TriangularTransformation` is a piecewise
+The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise
 linear transformation with the shape of a triangle, useful for steering the the input
 to a specific set point value.
 
@@ -235,15 +235,15 @@ assert t_skew1 == t_skew2
 
 Instead of applying [individual transformations](#pre-defined-transformations) directly,
 you can also use them as building blocks to enable more complex types of operations.
-This is enabled through the {class}`~baybe.transformations.core.ChainedTransformation`
-class, which allows you to combine multiple transformations into a single one. The
-transformations are applied in sequence, with the output of one transformation serving
-as the input to the next.
+This is enabled through the
+{class}`~baybe.transformations.composite.ChainedTransformation` class, which allows you
+to combine multiple transformations into a single one. The transformations are applied
+in sequence, with the output of one transformation serving as the input to the next.
 
 ```python
 from baybe.transformations import ChainTransformation
 
-twosided = TwoSidedLinearTransformation(left_slope=0, right_slope=1)
+twosided = TwoSidedAffineTransformation(left_slope=0, right_slope=1)
 power = PowerTransformation(power=2)
 
 # Create a transformation representing a one-sided square function
@@ -283,7 +283,7 @@ t5 = t4 * 10
 If none of the [pre-defined transformations](#pre-defined-transformations) fit your
 needs and [chaining them](#chaining-transformations) does also not bring you to the
 desired result, you can easily define your custom logic using the
-{class}`~baybe.transformations.core.CustomTransformation` class, which accepts any
+{class}`~baybe.transformations.basic.CustomTransformation` class, which accepts any
 one-argument `torch` callable as transformation function:
 
 ```python
