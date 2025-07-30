@@ -9,6 +9,8 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
+from baybe.utils.basic import is_all_instance
+
 
 def farthest_point_sampling(
     points: np.ndarray,
@@ -47,6 +49,7 @@ def farthest_point_sampling(
         ValueError: If the array contains no points.
         ValueError: If the input space has no dimensions.
         ValueError: Indices for initialization are not unique.
+        ValueError: More initialization indices than available points are provided.
         ValueError: More points are requested than available.
     """
     if (n_dims := np.ndim(points)) != 2:
@@ -59,19 +62,22 @@ def farthest_point_sampling(
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
-    n_init_points = 0
     if not isinstance(initialization, str):
-        n_init_points = len(initialization)
         if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
                 f"The provided collection of initialization indices must be unique but "
                 f"contains duplicates: {duplicates}"
             )
-    if n_samples > n_points - n_init_points:
+        if len(initialization) > n_points:
+            raise ValueError(
+                f"The number of provided initialization indices "
+                f"({len(initialization)}) cannot be larger than the total number of "
+                f"points provided ({n_points})."
+            )
+    if n_samples > n_points:
         raise ValueError(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
-            f"total number of points provided minus the ones used for initialization "
-            f"(if any): {n_points} - {n_init_points} = {n_points - n_init_points}."
+            f"total number of points provided {n_points}."
         )
 
     # Catch the pathological case upfront
@@ -101,8 +107,12 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
-    else:
+    elif isinstance(initialization, Collection) and is_all_instance(
+        initialization, int
+    ):
         selected_point_indices = list(initialization)
+    else:
+        raise ValueError(f"unknown initialization: '{initialization}'")
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
