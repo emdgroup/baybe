@@ -85,6 +85,14 @@ class Transformation(SerialMixin, ABC):
             return self | AffineTransformation(shift=other)
         return NotImplemented
 
+    def __sub__(self, other: int | float) -> Transformation:
+        """Subtract a constant from the output of the transformation."""
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=-other)
+        return NotImplemented
+
     def __mul__(self, other: Transformation | int | float) -> Transformation:
         """Multiply with a constant or the output from another transformation."""
         if isinstance(other, Transformation):
@@ -95,6 +103,16 @@ class Transformation(SerialMixin, ABC):
             from baybe.transformations import AffineTransformation
 
             return self | AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __truediv__(self, other: int | float) -> Transformation:
+        """Divide the output of the transformation by a constant."""
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            if other == 0:
+                raise ValueError("Division by zero is not allowed.")
+            return self | AffineTransformation(factor=1 / other)
         return NotImplemented
 
     def __or__(self, other: Transformation) -> Transformation:
