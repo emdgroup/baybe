@@ -124,10 +124,12 @@ def test_transformation_addition(tensor):
     )
     t2 = AbsoluteTransformation() + 1
     t3 = AbsoluteTransformation() | AffineTransformation(shift=1)
+    t4 = AbsoluteTransformation() - (-1)
 
     transformed = t1(tensor)
     assert torch.equal(transformed, t2(tensor))
     assert torch.equal(transformed, t3(tensor))
+    assert torch.equal(transformed, t4(tensor))
 
 
 def test_transformation_multiplication(tensor):
@@ -137,10 +139,12 @@ def test_transformation_multiplication(tensor):
     )
     t2 = AbsoluteTransformation() * 2
     t3 = AbsoluteTransformation() | AffineTransformation(factor=2)
+    t4 = AbsoluteTransformation() / 0.5
 
     transformed = t1(tensor)
     assert torch.equal(transformed, t2(tensor))
     assert torch.equal(transformed, t3(tensor))
+    assert torch.equal(transformed, t4(tensor))
 
 
 def test_torch_overloading(tensor):
