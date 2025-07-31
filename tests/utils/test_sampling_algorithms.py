@@ -189,7 +189,7 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
     ],
 )
 def test_fps_utility_expected_errors(points, n_requested, initialization, match):
-    """Test that FPSRecommender emits exceptions for unsupported arguments."""
+    """FPSRecommender emits exceptions for unsupported arguments."""
     with pytest.raises(ValueError, match=match):
         farthest_point_sampling(points, n_requested, initialization=initialization)
 
