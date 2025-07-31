@@ -32,7 +32,13 @@ class ChainedTransformation(Transformation):
         # A chained transformation with only one element is equivalent to that element
         if len(self.transformations) == 1:
             return self.transformations[0] == other
-        return super().__eq__(other)
+
+        # TODO: https://github.com/python-attrs/attrs/issues/1452
+        return (
+            super().__eq__(other)
+            and isinstance(other, ChainedTransformation)
+            and self.transformations == other.transformations
+        )
 
     @override
     def get_image(self, interval: Interval | None = None, /) -> Interval:
