@@ -75,9 +75,9 @@ The following is a non-comprehensive overview – for a complete list, please r
   `minimize=True` argument to the constructor:
   ```python
   target = NumericalTarget(
-      name="Yield",
-      transformation=LogarithmicTransformation(),  # optional transformation object
-      minimize=True,  # this time, the yield is to be minimized
+      name="Sideproduct_Yield",
+      transformation=PowerTransformation(exponent=2),  # optional transformation object
+      minimize=True,  # yield of the side product is to be minimized
   )
   ```
 
@@ -89,8 +89,8 @@ The following is a non-comprehensive overview – for a complete list, please r
   from baybe.transformations import AffineTransformation
 
   target = NumericalTarget(
-      name="Yield",
-      transformation=LogarithmicTransformation() + AffineTransformation(factor=-1),
+      name="Sideproduct_Yield",
+      transformation=PowerTransformation(exponent=2) + AffineTransformation(factor=-1),
   )
   ```
 
