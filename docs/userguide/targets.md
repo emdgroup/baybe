@@ -12,7 +12,7 @@ The way BayBE treats multiple targets is then controlled via the
 :class: important
 
 The {class}`~baybe.targets.numerical.NumericalTarget` class has been redesigned from the
-ground up in version [0.14.0](https://github.com/emdgroup/baybe/releases/tag/0.13.1),
+ground up in version [0.14.0](https://github.com/emdgroup/baybe/releases/tag/0.14.0),
 providing a more concise and significantly **more expressive interface.**
 
 For a temporary transition period, the class constructor offers full backward
