@@ -139,7 +139,7 @@ def test_farthest_point_sampling_pathological_case():
         ),
     ],
 )
-def test_fps_recommender_expected_errors(searchspace, init, tie_break, match):
+def test_fps_recommender_expected_errors(init, tie_break, match):
     """Test that FPSRecommender emits exceptions for unsupported arguments."""
     with pytest.raises(ValueError, match=match):
         FPSRecommender(initialization=init, random_tie_break=tie_break)
