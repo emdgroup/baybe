@@ -12,7 +12,7 @@ The way BayBE treats multiple targets is then controlled via the
 :class: important
 
 The {class}`~baybe.targets.numerical.NumericalTarget` class has been redesigned from the
-ground up in version [0.14.0](https://github.com/emdgroup/baybe/releases/tag/0.14.0),
+ground up in version [0.14.0](https://github.com/emdgroup/baybe/releases/),
 providing a more concise and significantly **more expressive interface.**
 
 For a temporary transition period, the class constructor offers full backward
@@ -67,8 +67,9 @@ Especially the first two cases are so common that we provide convenient ways to 
 the corresponding target objects:
 
 ### Convenience Construction
-Instead of manually providing the necessary transformation object, BayBE offers several
-convenience approaches to construct targets for many common use cases.
+Eliminating the need to manually provide the necessary
+{class}`~baybe.transformations.base.Transformation` object for simple cases, BayBE
+offers several convenience approaches to construct targets for many common situations.
 The following is a non-comprehensive overview – for a complete list, please refer to the
 [`NumericalTarget` documentation](baybe.targets.numerical.NumericalTarget).
 * **Minimization**: Minimization of a target can be achieved by simply passing the
@@ -83,21 +84,33 @@ The following is a non-comprehensive overview – for a complete list, please r
 
   ````{admonition} Manual Inversion
   :class: note
-  Note that the above is virtually the same as chaining the existing transformation with
-  an inversion transformation:
+  Note that the above is mathematically equivalent to chaining the existing
+  transformation with an inversion transformation:
   ```python
   from baybe.transformations import AffineTransformation
 
   target = NumericalTarget(
       name="Sideproduct_Yield",
-      transformation=PowerTransformation(exponent=2) + AffineTransformation(factor=-1),
+      transformation=PowerTransformation(exponent=2) | AffineTransformation(factor=-1),
   )
   ```
 
-  Implementation-wise, however, the two approaches differ in that the inversion is
-  dynamically added before passing the target to the optimization algorithm in the
-  former case, while it becomes an integral part of the target transformation attribute
-  in the latter.
+  Semantically and implementation-wise, however, the two approaches differ:
+  * **Semantic difference:** While the handling everything in one transformation
+    produces an equivalent output, splitting the construction cleanly separates the
+    different user concerns of
+      1. Defining the observable itself (e.g. we observe a side product yield)
+      2. Defining how the observable enters the objective (e.g. use quadratic scaling
+        because small levels are acceptable but large levels are not) 
+      3. Defining the optimization direction (e.g. the transformed quantity is to be 
+        minimized)
+    
+    This separation results in a cleaner user interface that avoids mixing the
+    optimization goals with the definition of the involved observables.
+  * **Implementation difference:** Reflecting the above-mentioned split, the inversion
+    is dynamically added before passing the target to the optimization algorithm in the
+    one case, while it becomes an integral part of the target transformation attribute
+    in the other case.
   ````
 
 * **Matching a set point**: For common matching transformations, we provide
@@ -119,12 +132,12 @@ The following is a non-comprehensive overview – for a complete list, please r
   assert t1 == t2 == t3
   ```
 
-* **Normalizing targets**: Sometimes, it is necessary to normalize the targets to a
-  certain range, e.g. to ensure that values are always in the interval [0, 1]. 
-  One situation where this can be required is when combining the targets using a
-  {class}`baybe.objective.desirability.DesirabilityObjective`.
-  For this purpose, we provide convenience constructors with the `normalize_` prefix
-  (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+* **Normalizing targets**: Sometimes, it is necessary to normalize targets to a the
+  interval [0, 1], to [align them on a common scale](#target-normalization). One
+  situation where this can be required is when combining the targets using a
+  {class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we
+  provide convenience constructors with the `normalize_` prefix (see
+  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
   
   For example:
   ```python
@@ -132,7 +145,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   ```
 
   You can also create a normalized version of an existing target by calling its
-  {meth}`~baybe.targets.numerical.NumericalTarget.normalize` method, provided the latter
+  {meth}`~baybe.targets.numerical.NumericalTarget.normalize` method, provided the target
   already maps to a bounded domain. For brevity and demonstration purposes, we show an
   example using [method chaining](method-chaining): 
 
@@ -148,12 +161,12 @@ The following is a non-comprehensive overview – for a complete list, please r
   For example:
   ```python
   t1 = NumericalTarget("Yield")
-  t2 = t1 - 10
-  t3 = t2 / 5
-  t4 = t3.abs()
-  t5 = t4.power(2)
-  t6 = t5.clamp(max=100)
-  t7 = t6.normalize()
+  t2 = t1 - 10  # subtract a constant
+  t3 = t2 / 5  # divide by a constant
+  t4 = t3.abs()  # compute absolute value
+  t5 = t4.power(2)  # square the value
+  t6 = t5.clamp(max=100)  # clamp to (-inf, 100])
+  t7 = t6.normalize()  # normalize to [0, 1]
   ```
 
 ## Limitations
@@ -164,8 +177,8 @@ categorical targets if they are ordinal.
 
 **For example:**
 If your experimental outcome is a categorical ranking into "bad", "mediocre" and "good",
-you could use a {class}`~baybe.targets.numerical.NumericalTarget` with bounds (1, 3)
-and pre-map the categories to the values 1, 2 and 3, respectively.
+you could use a {class}`~baybe.targets.numerical.NumericalTarget`
+by pre-mapping the categories to the values 1, 2 and 3, respectively.
 
 If your target category is not ordinal, the transformation into a numerical target is
 not straightforward, which is a current limitation of BayBE. We are looking into adding

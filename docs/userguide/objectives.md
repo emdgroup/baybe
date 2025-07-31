@@ -47,6 +47,7 @@ enables the combination of multiple targets via scalarization into a single nume
 value (commonly referred to as the *overall desirability*), a method also utilized in
 classical DOE.
 
+(target-normalization)=
 ```{admonition} Target Normalization
 :class: important
 Since desirability computation relies on scalarization, and because targets can vary

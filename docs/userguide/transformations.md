@@ -339,7 +339,9 @@ assert t1 == t2  # both are equal, even though t1 is really a chained transforma
 
 For common chaining operations, BayBE provides a set convenience methods that
 allow you to quickly create new transformations from existing ones
-(see {class}`~baybe.transformations.base.Transformation` for all options):
+(see {class}`~baybe.transformations.base.Transformation` for all options).
+
+For example:
 
 ```python
 t = IdentityTransformation()  # start with **any** existing transformation
@@ -426,7 +428,7 @@ t = CustomTransformation(torch.sin)
 ````{admonition} Automatic Wrapping
 :note:
 
-When embedding such transformations into another certain context, the wrapping happens
+When embedding such transformations into another context, the wrapping happens
 automatically, so you can use them just like any other built-in transformation:
 
 ```python
