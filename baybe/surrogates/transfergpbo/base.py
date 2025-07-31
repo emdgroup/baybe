@@ -41,8 +41,8 @@ class TransferGPBOSurrogate(Surrogate, ABC):
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding multi-output compatibility."""
 
-    # Instance variables
-    input_dim: int = field()
+    # Input dim of the problem
+    input_dim: int | None = field(default=None)
     """Dimensionality of the input space (excluding task feature)."""
 
     # Private attributes for storing model state
@@ -154,6 +154,9 @@ class TransferGPBOSurrogate(Surrogate, ABC):
                 "No task parameter found in search space. "
                 "TransferGPBOSurrogate requires a TaskParameter for transfer learning."
             )
+        # Set input_dim if not provided at initialization
+        if self.input_dim is None:
+            self.input_dim = len(self._searchspace.comp_rep_columns) - 1
 
         # Validate that we have the expected number of feature dimensions
         expected_total_dims = self.input_dim + 1  # features + task

@@ -61,13 +61,11 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         >>>
         >>> # Create stable surrogate (recommended for production)
         >>> surrogate_basic = MHGPGaussianProcessSurrogate(
-        ...     input_dim=2,
         ...     numerical_stability=False
         ... )
         >>>
         >>> # Or create basic surrogate for well-conditioned problems
         >>> surrogate_basic = MHGPGaussianProcessSurrogate(
-        ...     input_dim=2,
         ...     numerical_stability=False
         ... )
         >>>
@@ -200,12 +198,11 @@ def get_mhgp_info() -> dict[str, Any]:
 
 
 def create_mhgp_surrogate(
-    input_dim: int, variant: Literal["stable", "basic"] = "stable"
+    variant: Literal["stable", "basic"] = "stable",
 ) -> MHGPGaussianProcessSurrogate:
     """Create an MHGP surrogate with specified variant.
 
     Args:
-        input_dim: Dimensionality of the input space (excluding task feature).
         variant: Which variant to use:
             - "stable": Enhanced numerical stability (recommended for production)
             - "basic": Standard implementation (faster for well-conditioned problems)
@@ -214,6 +211,4 @@ def create_mhgp_surrogate(
         Configured MHGPGaussianProcessSurrogate instance.
     """
     numerical_stability = variant == "stable"
-    return MHGPGaussianProcessSurrogate(
-        input_dim=input_dim, numerical_stability=numerical_stability
-    )
+    return MHGPGaussianProcessSurrogate(numerical_stability=numerical_stability)
