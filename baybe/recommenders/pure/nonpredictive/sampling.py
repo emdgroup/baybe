@@ -76,10 +76,18 @@ class FPSRecommender(NonPredictiveRecommender):
     initialization: FPSInitialization = field(
         default=FPSInitialization.FARTHEST, converter=FPSInitialization
     )
-    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+    """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
+    
+    If the optional package 'fpsample' is installed, only 
+    :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
+    is supported.
+    """
 
     random_tie_break: bool = field(validator=instance_of(bool), kw_only=True)
-    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+    """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
+    
+    If the optional package 'fpsample' is installed, only ``False`` is supported.
+    """
 
     @random_tie_break.default
     def _default_random_tie_break(self) -> bool:
@@ -103,8 +111,8 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        # Try fpsample first
         try:
+            # Try optimized algorithm from 'fpsample' first
             from baybe._optional.fpsample import fps_sampling
 
             if self.initialization is not FPSInitialization.FARTHEST:
