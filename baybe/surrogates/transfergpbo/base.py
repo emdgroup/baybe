@@ -98,7 +98,7 @@ class TransferGPBOSurrogate(Surrogate, ABC):
 
         if len(active_values) != 1:
             raise ValueError(
-                f"Expected exactly one active task, got {len(active_values)}: {active_values}. "
+                f"Got {len(active_values)}: {active_values} actives values. "
                 f"Transfer learning requires exactly one target task."
             )
 
@@ -192,13 +192,17 @@ class TransferGPBOSurrogate(Surrogate, ABC):
 
         Args:
             train_x: Training inputs in BayBE's computational representation.
-                    Shape: (n_points, n_features + 1) where last column may be task indices.
+                    Shape: (n_points, n_features + 1) last column may be task indices.
             train_y: Training targets. Shape: (n_points, 1).
+
+        Raises:
+            ValueError: If received empty training data or if context is invalid.
         """
         # Check if we receive empty data
         if train_x.shape[0] == 0 or train_y.shape[0] == 0:
             raise ValueError(
-                f"Received empty training data! train_x.shape={train_x.shape}, train_y.shape={train_y.shape}"
+                f"Received empty training data! train_x.shape={train_x.shape},"
+                f" train_y.shape={train_y.shape}"
             )
 
         # 1. Validate transfer learning context
@@ -235,7 +239,7 @@ class TransferGPBOSurrogate(Surrogate, ABC):
 
         Args:
             candidates_comp_scaled: Candidate points in computational representation.
-                                  Should include task indices in the same format as training data.
+                            Should include task indices in same format as training data.
 
         Returns:
             Posterior distribution for the candidate points.
@@ -275,7 +279,7 @@ class TransferGPBOSurrogate(Surrogate, ABC):
         return self._model
 
     def __str__(self) -> str:
-        """String representation of the surrogate."""
+        """Return string representation of the surrogate."""
         fields = [
             f"Input Dim: {self.input_dim}",
             f"Supports Transfer Learning: {self.supports_transfer_learning}",

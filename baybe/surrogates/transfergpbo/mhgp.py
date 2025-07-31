@@ -24,8 +24,8 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
     from source tasks to a target task.
 
     This implementation provides two variants:
-    - **Basic**: Standard MHGP implementation for well-conditioned problems
-    - **Stable**: Enhanced numerical stability for production use and ill-conditioned problems
+    - **Basic**: Standard MHGP implementation
+    - **Stable**: Enhanced numerical stability
 
     The stability enhancements include:
     - Nearest positive-definite matrix computation for covariance matrices
@@ -60,10 +60,16 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         >>> objective = SingleTargetObjective(target)
         >>>
         >>> # Create stable surrogate (recommended for production)
-        >>> surrogate = MHGPGaussianProcessSurrogate(input_dim=2, numerical_stability=True)
+        >>> surrogate_basic = MHGPGaussianProcessSurrogate(
+        ...     input_dim=2,
+        ...     numerical_stability=False
+        ... )
         >>>
         >>> # Or create basic surrogate for well-conditioned problems
-        >>> surrogate_basic = MHGPGaussianProcessSurrogate(input_dim=2, numerical_stability=False)
+        >>> surrogate_basic = MHGPGaussianProcessSurrogate(
+        ...     input_dim=2,
+        ...     numerical_stability=False
+        ... )
         >>>
         >>> # Training data with multiple tasks
         >>> measurements = pd.DataFrame({
@@ -100,13 +106,13 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
 
     numerical_stability: bool = field(default=True)
     """Whether to use numerically stable implementation.
-    
+
     When True, uses enhanced numerical stability features including:
     - Nearest positive-definite matrix computation for covariance matrices
-    - Positive definiteness checks during prediction  
+    - Positive definiteness checks during prediction
     - Iterative diagonal regularization for Cholesky decomposition
-    
-    Recommended for production use, especially with small datasets or 
+
+    Recommended for production use, especially with small datasets or
     ill-conditioned problems.
     """
 
@@ -122,7 +128,7 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         return MHGPModel(input_dim=self.input_dim)
 
     def __str__(self) -> str:
-        """String representation of the MHGP surrogate."""
+        """Return string representation of the MHGP surrogate."""
         stability_str = "Stable" if self.numerical_stability else "Basic"
         return f"MHGP ({stability_str})"
 
@@ -142,7 +148,8 @@ def get_mhgp_info() -> dict[str, Any]:
     return {
         "surrogates": {
             "MHGPGaussianProcessSurrogate": {
-                "description": "Multi-task Hierarchical Gaussian Process with configurable stability",
+                "description": "Multi-task Hierarchical Gaussian Process with"
+                "configurable stability",
                 "class_name": "MHGPGaussianProcessSurrogate",
                 "module": "baybe.surrogates.transfergpbo.mhgp",
             }
@@ -152,7 +159,8 @@ def get_mhgp_info() -> dict[str, Any]:
                 "description": "Numerically stable MHGP implementation",
                 "parameter": "numerical_stability=True",
                 "stability": "Enhanced",
-                "recommended_for": "Production use, small datasets, ill-conditioned problems",
+                "recommended_for": "Production use, small datasets,"
+                "ill-conditioned problems",
                 "underlying_model": "MHGPModelStable",
                 "features": [
                     "Nearest positive-definite matrix computation",
@@ -182,10 +190,11 @@ def get_mhgp_info() -> dict[str, Any]:
         },
         "usage": {
             "default_config": "numerical_stability=True",
-            "recommendation": "Use stable variant (default) for production applications",
+            "recommendation": "Use stable variant (default) for production",
             "input_requirements": "Requires TaskParameter in search space",
         },
-        "reference": "Tighineanu et al. (2022): Transfer Learning with Gaussian Processes for Bayesian Optimization",
+        "reference": "Tighineanu et al. (2022): Transfer Learning with Gaussian"
+        "Processes for Bayesian Optimization",
         "paper_url": "https://arxiv.org/abs/2111.11223",
     }
 

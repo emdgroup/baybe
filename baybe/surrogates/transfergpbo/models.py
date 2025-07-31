@@ -1,7 +1,5 @@
 """Torch Models for "Transfer Learning with GPs for BO" by Tighineanu et al. (2022)."""
 
-from typing import List, Optional, Tuple
-
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models import SingleTaskGP
@@ -27,6 +25,9 @@ class MHGPModel(Model):
     prior mean, creating a hierarchical structure that enables transfer learning
     from source tasks to a target task.
 
+    Args:
+        input_dim: Dimensionality of the input space (excluding task feature).
+
     Note:
         This is the basic implementation without numerical stability enhancements.
         For production use with small datasets or ill-conditioned problems,
@@ -46,20 +47,12 @@ class MHGPModel(Model):
     """
 
     def __init__(self, input_dim: int) -> None:
-        """Initialize the MHGP model.
-
-        Args:
-            input_dim: Dimensionality of the input space (excluding task feature).
-        """
         super().__init__()
         self.input_dim = input_dim
-
-        self.source_gps: List[SingleTaskGP] = []
+        self.source_gps: list[SingleTaskGP] = []
         """List of fitted source Gaussian Process models."""
-
-        self.target_gp: Optional[SingleTaskGP] = None
+        self.target_gp: SingleTaskGP | None = None
         """The target Gaussian Process model."""
-
         self._fitted: bool = False
         """Whether the model has been fully fitted (including target task)."""
 
@@ -70,7 +63,7 @@ class MHGPModel(Model):
 
     def _extract_task_data(
         self, X: Tensor, Y: Tensor, task_feature: int, target_task: int
-    ) -> Tuple[List[Tuple[Tensor, Tensor]], Tuple[Tensor, Tensor]]:
+    ) -> tuple[list[tuple[Tensor, Tensor]], tuple[Tensor, Tensor]]:
         """Extract source and target data from multi-task format.
 
         Args:
@@ -125,9 +118,6 @@ class MHGPModel(Model):
             Y: Output data, shape (n_total, 1).
             task_feature: Index of the task feature dimension (default: -1).
             target_task: Task ID for the target task (default: 2).
-
-        Raises:
-            RuntimeError: If fitting any of the source GPs fails.
         """
         # Extract source and target data
         source_data, _ = self._extract_task_data(X, Y, task_feature, target_task)
@@ -167,9 +157,6 @@ class MHGPModel(Model):
             Y: Output data, shape (n_total, 1).
             task_feature: Index of the task feature dimension (default: -1).
             target_task: Task ID for the target task (default: 2).
-
-        Raises:
-            RuntimeError: If fitting the target GP fails.
         """
         # Extract target data
         _, (X_target, Y_target) = self._extract_task_data(
@@ -268,7 +255,7 @@ class MHGPModel(Model):
 
     def _predict_from_stack(
         self, X: Tensor, up_to_task_id: int
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         """Predict using the stack up to the specified task ID.
 
         Args:
@@ -333,7 +320,7 @@ class MHGPModelStable(MHGPModel):
     @override
     def _predict_from_stack(
         self, X: Tensor, up_to_task_id: int
-    ) -> Tuple[Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor]:
         """Predict using the stack up to the specified task ID.
 
         Args:
