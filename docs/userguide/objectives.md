@@ -90,10 +90,10 @@ it a higher weight:
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-target_1 = NumericalTarget.normalize_ramp(name="t_1", bounds=(0, 100), descending=True)
+target_1 = NumericalTarget.normalize_ramp(name="t_1", cutoffs=(0, 100), descending=True)
 target_2 = NumericalTarget.normalize_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
 target_3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
-target_4 = NumericalTarget(name="t4").exp().clamp(10).normalize()
+target_4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
 objective = DesirabilityObjective(
     targets=[target_1, target_2, target_3, target_4],
     weights=[2.0, 1.0, 1.0, 1.0],  # optional (by default, all weights are equal)

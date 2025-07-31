@@ -277,7 +277,7 @@ objective_json = """
     "targets": [
         {
             "type": "NumericalTarget",
-            "name": "T_max",
+            "name": "T_max"
         },
         {
             "type": "NumericalTarget",

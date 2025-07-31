@@ -142,8 +142,8 @@ segments meet.
 ```python
 from baybe.transformations import TwoSidedAffineTransformation
 
-t = TwoSidedAffineTransformation(left_slope=-1, right_slope=1)  # absolute value
-t = TwoSidedAffineTransformation(left_slope=-1, right_slope=0, midpoint=1)  # hinge loss
+t = TwoSidedAffineTransformation(slope_left=-1, slope_right=1)  # absolute value
+t = TwoSidedAffineTransformation(slope_left=-1, slope_right=0, midpoint=1)  # hinge loss
 ```
 
 ### BellTransformation
@@ -223,12 +223,12 @@ from baybe.transformations import TriangularTransformation
 
 # Symmetric triangle with peak at 3, reaching zero at 1 and 5
 t_sym1 = TriangularTransformation(cutoffs=(1, 5))
-t_sym2 = TriangularTransformation.from_width(peak=3, width=2)
+t_sym2 = TriangularTransformation.from_width(peak=3, width=4)
 t_sym3 = TriangularTransformation.from_margins(peak=3, margins=(2, 2))
-assert t1 == t2 == t3
+assert t_sym1 == t_sym2 == t_sym3
 
 # Positively skewed triangle with peak at 2 (same cutoffs as above)
-t_skew1 = TriangularTransformation(cutoffs=(1, 3), peak=2)
+t_skew1 = TriangularTransformation(cutoffs=(1, 5), peak=2)
 t_skew2 = TriangularTransformation.from_margins(peak=2, margins=(1, 3))
 assert t_skew1 == t_skew2
 ```
@@ -274,17 +274,22 @@ constructor to chain transformations, you can alternatively:
 
 ```python
 import torch
-from baybe.transformations import ChainTransformation
+from baybe.transformations import (
+    AffineTransformation,
+    ChainedTransformation,
+    PowerTransformation,
+    TwoSidedAffineTransformation,
+)
 
-twosided = TwoSidedAffineTransformation(left_slope=0, right_slope=1)
-power = PowerTransformation(power=2)
+twosided = TwoSidedAffineTransformation(slope_left=0, slope_right=1)
+power = PowerTransformation(exponent=2)
 shift = AffineTransformation(shift=1)
 
 # Create a transformation representing a shifted one-sided quadratic function:
 # 1) First, we cut the left side by multiplying by zero
 # 2) Then, we apply the quadratic transformation
 # 3) Finally, we shift to the right
-t1 = ChainTransformation([twosided, power, shift])  # explicit construction
+t1 = ChainedTransformation([twosided, power, shift])  # explicit construction
 t2 = twosided | power | shift  # using overloaded pipe operator
 t3 = twosided.chain(power).chain(shift)  # via method chaining
 assert t1 == t2 == t3
@@ -297,7 +302,7 @@ t4 = power | twosided | shift  # different order of operations
 
 # While these two constructions are mathematically equivalent, they are not "equal" from
 # an object perspective, because they rely on different transformation steps:
-values = torch.linspace(0, 2)
+values = torch.linspace(0, 2, steps=100)
 assert torch.equal(t1(values), t4(values))  # they produce the same output
 assert t1 != t4  # but they are not "equal" objects
 ```
@@ -312,7 +317,11 @@ compresses the resulting chain to remove redundancies, by
 * and removing the chaining wrapper for comparison operations if not needed. 
 
 ```python
-from baybe.transformations import IdentityTransformation, AffineTransformation
+from baybe.transformations import (
+    AffineTransformation,
+    ChainedTransformation,
+    IdentityTransformation,
+)
 
 t1 = (
     IdentityTransformation()
@@ -322,7 +331,6 @@ t1 = (
 t2 = AffineTransformation(factor=2, shift=3)  # compressed version
 assert isinstance(t1, ChainedTransformation)
 assert t1 == t2  # both are equal, even though t1 is really a chained transformation
-
 ```
 ````
 
@@ -361,9 +369,9 @@ you can also use the overloaded `+` operator to add transformations.
 import torch
 from baybe.transformations import AdditiveTransformation, PowerTransformation
 
-p1 = PowerTransformation(power=2)
-p2 = PowerTransformation(power=3)
-values = torch.linspace(0, 1)
+p1 = PowerTransformation(exponent=2)
+p2 = PowerTransformation(exponent=3)
+values = torch.linspace(0, 1, steps=100)
 
 t1 = AdditiveTransformation([p1, p2])  # explicit construction
 t2 = p1 + p2  # using overloaded addition operator
@@ -390,9 +398,9 @@ you can also use the overloaded `*` operator to multiply transformations.
 import torch
 from baybe.transformations import MultiplicativeTransformation, PowerTransformation
 
-p1 = PowerTransformation(power=2)
-p2 = PowerTransformation(power=3)
-values = torch.linspace(0, 1)
+p1 = PowerTransformation(exponent=2)
+p2 = PowerTransformation(exponent=3)
+values = torch.linspace(0, 1, steps=100)
 
 t1 = MultiplicativeTransformation([p1, p2])  # explicit construction
 t2 = p1 * p2  # using overloaded multiplication operator

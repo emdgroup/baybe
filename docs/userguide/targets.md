@@ -113,10 +113,10 @@ The following is a non-comprehensive overview – for a complete list, please r
   t_bell = NumericalTarget.match_bell(name="Yield", match_value=42, sigma=5)
 
   # Triangular transformation
-  t_tr1 = NumericalTarget.match_triangle(name="Yield", match_value=42, width=10)
-  t_tr2 = NumericalTarget.match_triangle(name="Yield", match_value=42, cutoffs=(37, 47))
-  t_tr3 = NumericalTarget.match_triangle(name="Yield", match_value=42, margins=(5, 5))
-  assert t_tr1 == t_tr2 == t_tr3
+  t1 = NumericalTarget.match_triangular(name="Yield", match_value=42, width=10)
+  t2 = NumericalTarget.match_triangular(name="Yield", match_value=42, cutoffs=(37, 47))
+  t3 = NumericalTarget.match_triangular(name="Yield", match_value=42, margins=(5, 5))
+  assert t1 == t2 == t3
   ```
 
 * **Normalizing targets**: Sometimes, it is necessary to normalize the targets to a
@@ -128,7 +128,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   
   For example:
   ```python
-  target = NumericalTarget.normalize_ramp(name="Yield", bounds=(0, 1), descending=True)
+  target = NumericalTarget.normalize_ramp(name="Yield", cutoffs=(0, 1), descending=True)
   ```
 
   You can also create a normalized version of an existing target by calling its
@@ -137,7 +137,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   example using [method chaining](method-chaining): 
 
   ```python
-  target = NumericalTarget(name="Yield").power(2).clamp(1).normalize()
+  target = NumericalTarget(name="Yield").power(2).clamp(max=1).normalize()
   ```
 
 (method-chaining)=
@@ -149,7 +149,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   ```python
   t1 = NumericalTarget("Yield")
   t2 = t1 - 10
-  t3 = t2 * 5
+  t3 = t2 / 5
   t4 = t3.abs()
   t5 = t4.power(2)
   t6 = t5.clamp(max=100)
