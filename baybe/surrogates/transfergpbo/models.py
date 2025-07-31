@@ -34,13 +34,20 @@ class MHGPModel(Model):
         consider using :class:`MHGPModelStable` instead.
 
     Examples:
+        >>> import torch
+        >>>
         >>> # Create model and fit with MultiTaskGP-like interface
         >>> model = MHGPModel(input_dim=2)
+        >>>
         >>> # X_multi includes task indices, Y contains all outputs
-        >>> model.meta_fit(X_multi, Y, task_feature=-1, target_task=2)
-        >>> model.fit(X_multi, Y, task_feature=-1, target_task=2)
+        >>> X_multi = torch.tensor([[0.1, 0.2, 0], [0.3, 0.4, 0], [0.5, 0.6, 1]])
+        >>> Y = torch.tensor([[0.5], [0.7], [0.9]])
+        >>>
+        >>> model.meta_fit(X_multi, Y, task_feature=-1, target_task=1)
+        >>> model.fit(X_multi, Y, task_feature=-1, target_task=1)
         >>>
         >>> # Make predictions
+        >>> X_test = torch.tensor([[0.1, 0.4, 0], [0.5, 0.8, 1], [0.7, 0.8, 1]])
         >>> posterior = model.posterior(X_test)
         >>> mean = posterior.mean
         >>> variance = posterior.variance
@@ -307,14 +314,23 @@ class MHGPModelStable(MHGPModel):
     or when numerical stability is a concern.
 
     Examples:
-        >>> # Create stable model with MultiTaskGP-like interface
-        >>> model = MHGPModelStable(input_dim=2)
-        >>> # X_multi includes task indices, Y contains all outputs
-        >>> model.meta_fit(X_multi, Y, task_feature=-1, target_task=2)
-        >>> model.fit(X_multi, Y, task_feature=-1, target_task=2)
+        >>> import torch
         >>>
-        >>> # Predictions are computed the same way
+        >>> # Create model and fit with MultiTaskGP-like interface
+        >>> model = MHGPModelStable(input_dim=2)
+        >>>
+        >>> # X_multi includes task indices, Y contains all outputs
+        >>> X_multi = torch.tensor([[0.1, 0.2, 0], [0.3, 0.4, 0], [0.5, 0.6, 1]])
+        >>> Y = torch.tensor([[0.5], [0.7], [0.9]])
+        >>>
+        >>> model.meta_fit(X_multi, Y, task_feature=-1, target_task=1)
+        >>> model.fit(X_multi, Y, task_feature=-1, target_task=1)
+        >>>
+        >>> # Make predictions
+        >>> X_test = torch.tensor([[0.1, 0.4, 0], [0.5, 0.8, 1], [0.7, 0.8, 1]])
         >>> posterior = model.posterior(X_test)
+        >>> mean = posterior.mean
+        >>> variance = posterior.variance
     """
 
     @override

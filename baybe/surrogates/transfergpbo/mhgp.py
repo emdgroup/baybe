@@ -1,6 +1,6 @@
 """MHGP surrogate implementations."""
 
-from typing import Any, Literal
+from typing import Literal
 
 from attrs import define, field
 from botorch.models.model import Model
@@ -60,14 +60,7 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         >>> objective = SingleTargetObjective(target)
         >>>
         >>> # Create stable surrogate (recommended for production)
-        >>> surrogate_basic = MHGPGaussianProcessSurrogate(
-        ...     numerical_stability=False
-        ... )
-        >>>
-        >>> # Or create basic surrogate for well-conditioned problems
-        >>> surrogate_basic = MHGPGaussianProcessSurrogate(
-        ...     numerical_stability=False
-        ... )
+        >>> surrogate = MHGPGaussianProcessSurrogate()
         >>>
         >>> # Training data with multiple tasks
         >>> measurements = pd.DataFrame({
@@ -129,72 +122,6 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         """Return string representation of the MHGP surrogate."""
         stability_str = "Stable" if self.numerical_stability else "Basic"
         return f"MHGP ({stability_str})"
-
-
-def get_mhgp_info() -> dict[str, Any]:
-    """Get comprehensive information about MHGP surrogate implementations.
-
-    Returns:
-        Dictionary containing information about the MHGP surrogate variants,
-        capabilities, and usage recommendations.
-
-    Examples:
-        >>> info = get_mhgp_info()
-        >>> print(info["capabilities"]["transfer_learning"])  # True
-        >>> print(info["variants"]["stable"]["recommended_for"])
-    """
-    return {
-        "surrogates": {
-            "MHGPGaussianProcessSurrogate": {
-                "description": "Multi-task Hierarchical Gaussian Process with"
-                "configurable stability",
-                "class_name": "MHGPGaussianProcessSurrogate",
-                "module": "baybe.surrogates.transfergpbo.mhgp",
-            }
-        },
-        "variants": {
-            "stable": {
-                "description": "Numerically stable MHGP implementation",
-                "parameter": "numerical_stability=True",
-                "stability": "Enhanced",
-                "recommended_for": "Production use, small datasets,"
-                "ill-conditioned problems",
-                "underlying_model": "MHGPModelStable",
-                "features": [
-                    "Nearest positive-definite matrix computation",
-                    "Positive definiteness checks during prediction",
-                    "Iterative diagonal regularization for Cholesky decomposition",
-                ],
-            },
-            "basic": {
-                "description": "Basic MHGP implementation",
-                "parameter": "numerical_stability=False",
-                "stability": "Standard",
-                "recommended_for": "Well-conditioned problems, faster computation",
-                "underlying_model": "MHGPModel",
-                "features": [
-                    "Standard hierarchical GP implementation",
-                    "Faster computation for well-conditioned matrices",
-                ],
-            },
-        },
-        "capabilities": {
-            "transfer_learning": True,
-            "multi_output": False,
-            "hierarchical_modeling": True,
-            "residual_modeling": True,
-            "numerical_stability": True,
-            "configurable_stability": True,
-        },
-        "usage": {
-            "default_config": "numerical_stability=True",
-            "recommendation": "Use stable variant (default) for production",
-            "input_requirements": "Requires TaskParameter in search space",
-        },
-        "reference": "Tighineanu et al. (2022): Transfer Learning with Gaussian"
-        "Processes for Bayesian Optimization",
-        "paper_url": "https://arxiv.org/abs/2111.11223",
-    }
 
 
 def create_mhgp_surrogate(
