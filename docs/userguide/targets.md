@@ -43,7 +43,7 @@ from baybe.transformations import LogarithmicTransformation
 
 target = NumericalTarget(
     name="Yield",
-    transformation=LogarithmicTransformation(),  # optional transformation object
+    transformation=LogarithmicTransformation(),  # optional transformation
 )
 ```
 
@@ -182,5 +182,5 @@ by pre-mapping the categories to the values 1, 2 and 3, respectively.
 
 If your target category is not ordinal, the transformation into a numerical target is
 not straightforward, which is a current limitation of BayBE. We are looking into adding
-more target options in the future.
+more target variants in the future.
 ```

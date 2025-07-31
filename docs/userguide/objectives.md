@@ -61,7 +61,7 @@ via the [`require_normalization`](#require-normalization) flag.
 ```
 
 Besides the list of [`Target`](baybe.targets.base.Target)s to be scalarized, this
-objective type takes additional optional parameters that let us control its behavior:
+objective type takes additional optional arguments that let us control its behavior:
 * `weights`: Specifies the relative importance of the targets in the form of a sequence
   of positive numbers, one for each target considered.  
   Note that BayBE automatically normalizes the weights, so only their relative scales
