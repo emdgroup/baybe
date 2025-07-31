@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+from pytest import param
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget
@@ -42,3 +43,22 @@ def test_target_normalization():
         t.normalize()
     assert t.clamp(-2, 4).get_image() == Interval(-2, 4)
     assert t.clamp(-2, 4).normalize().get_image() == Interval(0, 1)
+
+
+@pytest.mark.parametrize(
+    "target",
+    [
+        param(NumericalTarget.match_bell("t", 2, 1), id="match"),
+        param(NumericalTarget.match_power("t", 2, 2), id="power"),
+        param(NumericalTarget.match_absolute("t", 2), id="absolute"),
+        param(NumericalTarget.match_triangular("t", 2, width=2), id="triangular"),
+    ],
+)
+def test_match_constructors(target):
+    """Match targets constructors provide expected transformation results."""
+    input_optimal, input_suboptimal = 2, 4
+
+    transformed_optimal, transformed_suboptimal = target.transform(
+        pd.Series([input_optimal, input_suboptimal])
+    )
+    assert transformed_optimal > transformed_suboptimal
