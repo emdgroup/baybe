@@ -13,11 +13,7 @@ from baybe.recommenders import (
 from baybe.recommenders.meta.sequential import StreamingSequentialMetaRecommender
 from tests.conftest import select_recommender
 
-RECOMMENDERS = [
-    RandomRecommender(),
-    FPSRecommender(),
-    BotorchRecommender(),
-]
+RECOMMENDERS = [RandomRecommender(), FPSRecommender(), BotorchRecommender()]
 
 
 @pytest.mark.parametrize("remain_switched", [False, True])
