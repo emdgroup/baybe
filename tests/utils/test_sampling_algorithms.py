@@ -183,7 +183,7 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
             _valid_points,
             3,
             "bla",
-            "unknown initialization: 'bla'",
+            "Unknown initialization type: 'bla'",
             id="unknown_init",
         ),
     ],

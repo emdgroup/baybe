@@ -50,19 +50,23 @@ def farthest_point_sampling(
         ValueError: If the input space has no dimensions.
         ValueError: Indices for initialization are not unique.
         ValueError: More initialization indices than available points are provided.
+        ValueError: Unknown initialization method.
         ValueError: More points are requested than available.
     """
+    # Input validation
     if (n_dims := np.ndim(points)) != 2:
         raise ValueError(
             f"The provided array must be two-dimensional but the given input had "
             f"{n_dims} dimensions."
         )
+
     if (n_points := len(points)) == 0:
         raise ValueError("The provided array must contain at least one row.")
+
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
-    if not isinstance(initialization, str):
+    if is_all_instance(initialization, int):
         if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
                 f"The provided collection of initialization indices must be unique but "
@@ -74,6 +78,12 @@ def farthest_point_sampling(
                 f"({len(initialization)}) cannot be larger than the total number of "
                 f"points provided ({n_points})."
             )
+    elif initialization not in {"farthest", "random"}:
+        raise ValueError(
+            f"Unknown initialization type: '{initialization}'. "
+            f"Expected 'farthest', 'random', or a collection of integers."
+        )
+
     if n_samples > n_points:
         raise ValueError(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
@@ -111,8 +121,6 @@ def farthest_point_sampling(
         initialization, int
     ):
         selected_point_indices = list(initialization)
-    else:
-        raise ValueError(f"unknown initialization: '{initialization}'")
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
