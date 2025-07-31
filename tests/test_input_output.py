@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.parameters import NumericalDiscreteParameter
+from baybe.parameters import NumericalContinuousParameter, NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -96,3 +96,55 @@ def test_recommendation_is_not_ordered(n_values, n_parameters):
     rec = recommender.recommend(5, searchspace, objective, measurements)
     rec = rec.assign(t=rec.sum(axis=1))
     assert not rec["t"].is_monotonic_increasing, rec["t"].values
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        (
+            NumericalDiscreteParameter("p_disc", values=(0.0, 1.0, 2.0)),
+            NumericalContinuousParameter("p_conti", bounds=(0.0, 2.0)),
+        )
+    ],
+)
+@pytest.mark.parametrize(
+    "row_dict",
+    [
+        param(
+            {
+                "p_disc": np.nextafter(0.0, -np.inf),
+                "p_conti": 1.0,
+                "Target_max": 1.1,
+            },
+            id="disc_below_exact",
+        ),
+        param(
+            {
+                "p_disc": np.nextafter(0.0, np.inf),
+                "p_conti": 1.0,
+                "Target_max": 1.1,
+            },
+            id="disc_above_exact",
+        ),
+        param(
+            {
+                "p_disc": 1.0,
+                "p_conti": np.nextafter(0.0, -np.inf),
+                "Target_max": 1.1,
+            },
+            id="conti_below_bounds",
+        ),
+        param(
+            {
+                "p_disc": 1.0,
+                "p_conti": np.nextafter(2.0, np.inf),
+                "Target_max": 1.1,
+            },
+            id="conti_above_bounds",
+        ),
+    ],
+)
+def test_numerical_tolerance(campaign, row_dict):
+    """Data addition is possible despite numerical inaccuracies."""
+    df = pd.DataFrame.from_records([row_dict])
+    campaign.add_measurements(df, numerical_measurements_must_be_within_tolerance=True)
