@@ -126,19 +126,21 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
 @mark.parametrize(
     "objective",
     [
-        param(SingleTargetObjective(NumericalTarget("t1", "MAX")), id="single"),
+        param(SingleTargetObjective(NumericalTarget("t1")), id="single"),
         param(
             DesirabilityObjective(
                 (
-                    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
-                    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
+                    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 100)),
+                    NumericalTarget.normalize_ramp(
+                        "t2", cutoffs=(0, 100), descending=True
+                    ),
                 )
             ),
             id="desirability",
         ),
         param(
             ParetoObjective(
-                (NumericalTarget("t1", mode="MAX"), NumericalTarget("t2", mode="MIN"))
+                (NumericalTarget("t1"), NumericalTarget("t2", minimize=True))
             ),
             id="pareto",
         ),

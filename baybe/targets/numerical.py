@@ -139,8 +139,14 @@ class NumericalTarget(Target, SerialMixin):
     def __add__(self, other: int | float) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=other))
 
+    def __sub__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(shift=-other))
+
     def __mul__(self, other: int | float) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(factor=other))
+
+    def __truediv__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(factor=1 / other))
 
     @classmethod
     def from_modern_interface(
@@ -398,11 +404,11 @@ class NumericalTarget(Target, SerialMixin):
             ),
         )
 
-    def invert(self) -> NumericalTarget:
-        """Apply an inversion transformation to the target.
+    def negate(self) -> NumericalTarget:
+        """Apply a negation transformation to the target.
 
         Returns:
-            The target with applied inversion transformation.
+            The target with applied negation transformation.
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 
