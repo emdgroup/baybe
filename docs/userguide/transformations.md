@@ -146,6 +146,41 @@ t = TwoSidedAffineTransformation(slope_left=-1, slope_right=1)  # absolute value
 t = TwoSidedAffineTransformation(slope_left=-1, slope_right=0, midpoint=1)  # hinge loss
 ```
 
+### SigmoidTransformation
+The {class}`~baybe.transformations.basic.SigmoidTransformation` normalized its input
+to the range $[0, 1]$ using a sigmoid function.
+
+`````{grid} 2
+
+````{grid-item}
+:columns: auto
+
+![Transforms](../_static/transformations/bell.svg)
+````
+
+````{grid-item}
+:columns: 6
+
+**Transformation rule**
+
+```{math}
+f(x) = \frac{1}{1 + e^{-a(x - c)}}
+```
+where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
+parameter controlling the steepness.
+````
+`````
+
+**Example**
+
+```python
+from baybe.transformations import SigmoidTransformation
+
+t = SigmoidTransformation(center=0.0, steepness=1.0)  # vanilla sigmoid function
+t = SigmoidTransformation(center=1.0, steepness=2.0)  # shifted and steeper
+t = SigmoidTransformation.from_anchors([(1, 0.1), (2, 0.9)])  # passes through anchors
+```
+
 ### BellTransformation
 
 The {class}`~baybe.transformations.basic.BellTransformation` pipes the input through a
