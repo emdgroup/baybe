@@ -118,30 +118,6 @@ class TransferGPBOSurrogate(Surrogate, ABC):
 
         return target_task_id
 
-    def _ensure_task_feature_last(self, tensor: Tensor, task_col_idx: int) -> Tensor:
-        """Reorder tensor columns so task feature is last.
-
-        Your transfergpbo models expect task_feature=-1, but BayBE might
-        place the task column at any position. This method reorders the
-        columns to ensure the task feature is in the last position.
-
-        Args:
-            tensor: Input tensor with task feature at arbitrary position.
-            task_col_idx: Current column index of the task feature.
-
-        Returns:
-            Tensor with task feature moved to the last column.
-        """
-        if task_col_idx == -1 or task_col_idx == tensor.shape[1] - 1:
-            return tensor  # Already in the last position
-
-        # Create new column order: all features except task, then task
-        n_cols = tensor.shape[1]
-        feature_cols = [i for i in range(n_cols) if i != task_col_idx]
-        reordered_cols = feature_cols + [task_col_idx]
-
-        return tensor[:, reordered_cols]
-
     def _validate_transfer_learning_context(self) -> None:
         """Validate that we have a proper transfer learning setup.
 
@@ -215,9 +191,6 @@ class TransferGPBOSurrogate(Surrogate, ABC):
         self._target_task_id = self._identify_target_task()
         self._task_column_idx = self._searchspace.task_idx
 
-        # 3. Reorder tensor so task feature is last (required by transfergpbo models)
-        X_multi = self._ensure_task_feature_last(train_x, self._task_column_idx)
-
         # 4. Create model if not exists
         if self._model is None:
             self._model = self._create_model()
@@ -225,12 +198,18 @@ class TransferGPBOSurrogate(Surrogate, ABC):
         # 5. Train the transfergpbo model
         # meta_fit: Train source GPs on residuals
         self._model.meta_fit(
-            X_multi, train_y, task_feature=-1, target_task=self._target_task_id
+            train_x,
+            train_y,
+            task_feature=self._task_column_idx,
+            target_task=self._target_task_id,
         )
 
         # fit: Train target GP on remaining residuals
         self._model.fit(
-            X_multi, train_y, task_feature=-1, target_task=self._target_task_id
+            train_x,
+            train_y,
+            task_feature=self._task_column_idx,
+            target_task=self._target_task_id,
         )
 
     @override
@@ -254,15 +233,8 @@ class TransferGPBOSurrogate(Surrogate, ABC):
             raise ModelNotTrainedError(
                 "Model must be fitted before making predictions. Call fit() first."
             )
-
-        # Ensure task feature is in the last column (as expected by transfergpbo models)
-        candidates_reordered = self._ensure_task_feature_last(
-            candidates_comp_scaled, self._task_column_idx
-        )
-
-        # Get predictions from the transfergpbo model
-        # The model can predict for any task based on the task indices in the input
-        return self._model.posterior(candidates_reordered)
+        posterior = self._model.posterior(candidates_comp_scaled)
+        return posterior
 
     @override
     def to_botorch(self) -> Model:

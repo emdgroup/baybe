@@ -56,6 +56,11 @@ class MHGPModel(Model):
     def __init__(self, input_dim: int) -> None:
         super().__init__()
         self.input_dim = input_dim
+        """Input dimension excluding TaskParameter"""
+        self.task_feature: int | None = None
+        """The index of the task descriptors in the data"""
+        self.target_task: int | None = None
+        """The descriptor of the target task"""
         self.source_gps: list[SingleTaskGP] = []
         """List of fitted source Gaussian Process models."""
         self.target_gp: SingleTaskGP | None = None
@@ -126,6 +131,9 @@ class MHGPModel(Model):
             task_feature: Index of the task feature dimension (default: -1).
             target_task: Task ID for the target task (default: 2).
         """
+        # Store task configuration
+        self.task_feature = task_feature
+        self.target_task = target_task
         # Extract source and target data
         source_data, _ = self._extract_task_data(X, Y, task_feature, target_task)
 
@@ -214,13 +222,42 @@ class MHGPModel(Model):
         if not self._fitted:
             raise RuntimeError("Model must be fitted first. Call meta_fit() and fit().")
 
-        # Extract task indices (assume last column contains task indices)
-        task_indices = X[:, -1].long()
-        X_features = X[:, :-1]  # Remove task indices
+        if self.task_feature is None:
+            raise RuntimeError("Task feature not configured. Call meta_fit() first.")
 
-        # Get unique tasks and validate
+        # Handle both 2D and 3D tensors
+        if X.dim() == 3:
+            # Squeeze the middle dimension: (batch, 1, features) -> (batch, features)
+            X = X.squeeze(1)
+        elif X.dim() != 2:
+            raise ValueError(
+                f"Expected 2D or 3D tensor, got {X.dim()}D tensor with shape {X.shape}"
+            )
+
+        # Now X is guaranteed to be 2D: (batch, features)
+
+        # Extract task indices using stored task_feature
+        if self.task_feature == -1:
+            task_indices = X[:, -1].long()
+            X_features = X[:, :-1]
+        else:
+            task_indices = X[:, self.task_feature].long()
+            # Remove task column from features
+            if self.task_feature == 0:
+                # Task is first column
+                X_features = X[:, 1:]
+            elif self.task_feature == X.shape[1] - 1:
+                # Task is last column
+                X_features = X[:, :-1]
+            else:
+                # Task is in the middle
+                X_features = torch.cat(
+                    [X[:, : self.task_feature], X[:, self.task_feature + 1 :]], dim=1
+                )
+
+        # Rest of the method remains the same
         unique_tasks = torch.unique(task_indices)
-        max_task_id = len(self.source_gps)  # Target task has ID = len(source_gps)
+        max_task_id = len(self.source_gps)
 
         # Validate task indices
         if torch.any(task_indices < 0) or torch.any(task_indices > max_task_id):
@@ -256,9 +293,11 @@ class MHGPModel(Model):
                 # final_cov[torch.ix_(task_indices_list, task_indices_list)] = task_var
                 # final_cov[task_mask] = task_var
 
-            return GPyTorchPosterior(
+            posterior = GPyTorchPosterior(
                 MultivariateNormal(final_means.squeeze(-1), final_cov)
             )
+
+            return posterior
 
     def _predict_from_stack(
         self, X: Tensor, up_to_task_id: int
