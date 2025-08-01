@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
+- Measurement input validation now respects typical tolerances associated with floating
+  point representation inaccuracy
 
 ## [0.13.2] - 2025-07-09
 ### Changed
