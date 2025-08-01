@@ -27,6 +27,9 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
+_OUTPUT_NAME = "Desirability"
+"""The name of output column produced by the desirability transform."""
+
 
 def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
     """Calculate the geometric mean of an array along a given dimension.
@@ -88,8 +91,15 @@ class DesirabilityObjective(Objective):
     scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
-    require_normalization: bool = field(default=True, validator=instance_of(bool))
-    """Boolean flag controlling whether the targets must be normalized."""
+    require_normalization: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the targets must be normalized."""
+
+    as_pre_transformation: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the desirability transform is applied as a pre-transformation."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
@@ -138,8 +148,17 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def _modeled_quantity_names(self) -> tuple[str, ...]:
+        return (
+            (_OUTPUT_NAME,)
+            if self.as_pre_transformation
+            else tuple(t.name for t in self.targets)
+        )
+
+    @override
+    @property
+    def outputs(self) -> tuple[str, ...]:
+        return (_OUTPUT_NAME,)
 
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
@@ -162,6 +181,19 @@ class DesirabilityObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
+        if self.as_pre_transformation:
+            return NumericalTarget(_OUTPUT_NAME).to_objective().to_botorch()
+        else:
+            return self._to_botorch_full()
+
+    def _to_botorch_full(self) -> MCAcquisitionObjective:
+        """Create a BoTorch objective conducting the full desirability transform.
+
+        Full transformation means:
+            1. Starting from the raw target values
+            2. Applying the individual target transformations
+            3. Scalarizing the transformed values into a desirability score
+        """
         import torch
         from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
 
@@ -184,6 +216,33 @@ class DesirabilityObjective(Objective):
 
         inner = super().to_botorch()
         return ChainedMCObjective(inner, outer)
+
+    @override
+    def _pre_transform(
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
+        if not self.as_pre_transformation:
+            return super()._pre_transform(
+                df, allow_missing=allow_missing, allow_extra=allow_extra
+            )
+
+        targets = get_transform_objects(
+            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+        )
+
+        import torch
+
+        with torch.no_grad():
+            transformed = self._to_botorch_full()(
+                to_tensor(df[[t.name for t in targets]])
+            )
+
+        return pd.DataFrame(transformed.numpy(), columns=self.outputs, index=df.index)
 
     @override
     def transform(
@@ -232,11 +291,11 @@ class DesirabilityObjective(Objective):
         import torch
 
         with torch.no_grad():
-            transformed = self.to_botorch()(to_tensor(df[[t.name for t in targets]]))
+            transformed = self._to_botorch_full()(
+                to_tensor(df[[t.name for t in targets]])
+            )
 
-        return pd.DataFrame(
-            transformed.numpy(), columns=["Desirability"], index=df.index
-        )
+        return pd.DataFrame(transformed.numpy(), columns=self.outputs, index=df.index)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
