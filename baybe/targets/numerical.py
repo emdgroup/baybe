@@ -169,7 +169,11 @@ class NumericalTarget(Target, SerialMixin):
             DeprecationWarning,
         )
 
-        return cls(name, transformation, minimize=minimize)
+        return (
+            cls(name, minimize=minimize)
+            if transformation is None
+            else cls(name, transformation, minimize=minimize)
+        )
 
     @classmethod
     def from_legacy_interface(
