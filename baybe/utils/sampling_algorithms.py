@@ -87,7 +87,7 @@ def farthest_point_sampling(
     if n_samples > n_points:
         raise ValueError(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
-            f"total number of points provided {n_points}."
+            f"total number of points provided ({n_points})."
         )
 
     # Catch the pathological case upfront
