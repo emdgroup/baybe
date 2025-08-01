@@ -169,7 +169,11 @@ class NumericalTarget(Target, SerialMixin):
             DeprecationWarning,
         )
 
-        return cls(name, transformation, minimize=minimize)
+        return (
+            cls(name, minimize=minimize)
+            if transformation is None
+            else cls(name, transformation, minimize=minimize)
+        )
 
     @classmethod
     def from_legacy_interface(
@@ -217,7 +221,9 @@ class NumericalTarget(Target, SerialMixin):
             The target with applied absolute matching transformation.
         """
         return NumericalTarget(
-            name, AffineTransformation(shift=-match_value) + AbsoluteTransformation()
+            name,
+            AffineTransformation(shift=-match_value) + AbsoluteTransformation(),
+            minimize=True,
         )
 
     @classmethod
@@ -252,6 +258,7 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation(shift=-match_value)
             + AbsoluteTransformation()
             + PowerTransformation(exponent),
+            minimize=True,
         )
 
     @classmethod
