@@ -47,13 +47,13 @@ class Transformation(SerialMixin, ABC):
 
     def chain(self, transformation: Transformation, /) -> Transformation:
         """Chain another transformation with the existing one."""
-        return self + transformation
+        return self | transformation
 
     def negate(self) -> Transformation:
         """Negate the output of the transformation."""
-        from baybe.transformations.core import AffineTransformation
+        from baybe.transformations.basic import AffineTransformation
 
-        return self + AffineTransformation(factor=-1)
+        return self | AffineTransformation(factor=-1)
 
     def clamp(
         self, min: float = float("-inf"), max: float = float("inf")
@@ -63,24 +63,48 @@ class Transformation(SerialMixin, ABC):
             raise ValueError(
                 "A clamping transformation requires at least one finite boundary value."
             )
-        from baybe.transformations.core import ClampingTransformation
+        from baybe.transformations.basic import ClampingTransformation
 
-        return self + ClampingTransformation(min, max)
+        return self | ClampingTransformation(min, max)
 
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
-        from baybe.transformations.core import AbsoluteTransformation
+        from baybe.transformations.basic import AbsoluteTransformation
 
-        return self + AbsoluteTransformation()
+        return self | AbsoluteTransformation()
 
     def __add__(self, other: Transformation | int | float) -> Transformation:
-        """Chain another transformation or shift the output of the current one."""
-        from baybe.transformations.core import (
+        """Add a constant or the output from another transformation."""
+        if isinstance(other, Transformation):
+            from baybe.transformations import AdditiveTransformation
+
+            return AdditiveTransformation([self, other])
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __mul__(self, other: Transformation | int | float) -> Transformation:
+        """Multiply with a constant or the output from another transformation."""
+        if isinstance(other, Transformation):
+            from baybe.transformations import MultiplicativeTransformation
+
+            return MultiplicativeTransformation([self, other])
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=other)
+        return NotImplemented
+
+    def __or__(self, other: Transformation) -> Transformation:
+        """Chain the transformation with another one."""
+        from baybe.transformations import (
             AffineTransformation,
             ChainedTransformation,
             IdentityTransformation,
+            combine_affine_transformations,
         )
-        from baybe.transformations.utils import combine_affine_transformations
 
         if isinstance(other, IdentityTransformation):
             return self
@@ -88,16 +112,6 @@ class Transformation(SerialMixin, ABC):
             return combine_affine_transformations(*t)
         if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
-        if isinstance(other, (int, float)):
-            return self + AffineTransformation(shift=other)
-        return NotImplemented
-
-    def __mul__(self, other: int | float) -> Transformation:
-        """Scale the output of the transformation."""
-        if isinstance(other, (int, float)):
-            from baybe.transformations.core import AffineTransformation
-
-            return self + AffineTransformation(factor=other)
         return NotImplemented
 
     @classmethod
@@ -111,9 +125,9 @@ class Transformation(SerialMixin, ABC):
                 "if the transformation enters as the only (positional) argument."
             )
 
-        from baybe.transformations.core import CustomTransformation
+        from baybe.transformations.basic import CustomTransformation
 
-        return args[0] + CustomTransformation(func)
+        return args[0] | CustomTransformation(func)
 
 
 class MonotonicTransformation(Transformation, ABC):

@@ -22,6 +22,10 @@ from baybe.transformations import (
     TriangularTransformation,
     TwoSidedAffineTransformation,
 )
+from baybe.transformations.composite import (
+    AdditiveTransformation,
+    MultiplicativeTransformation,
+)
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 
@@ -50,9 +54,9 @@ def test_transformation_chaining(chained_first):
 
     expected = ChainedTransformation([t1, t2, t3, t1, t2])
     if chained_first:
-        actual = (c + t3) + c
+        actual = (c | t3) | c
     else:
-        actual = c + (t3 + c)
+        actual = c | (t3 | c)
     assert actual == expected
 
 
@@ -82,10 +86,10 @@ def test_affine_transformation_compression():
     """Compression of affine transformations works as expected."""
     t = IdentityTransformation()
 
-    t1 = t * 2 + 3 + t
+    t1 = t * 2 + 3 | t
     assert t1 == AffineTransformation(factor=2, shift=3)
 
-    t2 = (t + 3) * 2 + t
+    t2 = (t + 3) * 2 | t
     assert t2 == AffineTransformation(factor=2, shift=3, shift_first=True)
 
 
@@ -119,7 +123,7 @@ def test_transformation_addition(tensor):
         [AbsoluteTransformation(), AffineTransformation(shift=1)]
     )
     t2 = AbsoluteTransformation() + 1
-    t3 = AbsoluteTransformation() + AffineTransformation(shift=1)
+    t3 = AbsoluteTransformation() | AffineTransformation(shift=1)
 
     transformed = t1(tensor)
     assert torch.equal(transformed, t2(tensor))
@@ -132,7 +136,7 @@ def test_transformation_multiplication(tensor):
         [AbsoluteTransformation(), AffineTransformation(factor=2)]
     )
     t2 = AbsoluteTransformation() * 2
-    t3 = AbsoluteTransformation() + AffineTransformation(factor=2)
+    t3 = AbsoluteTransformation() | AffineTransformation(factor=2)
 
     transformed = t1(tensor)
     assert torch.equal(transformed, t2(tensor))
@@ -141,7 +145,7 @@ def test_transformation_multiplication(tensor):
 
 def test_torch_overloading(tensor):
     """Transformations can be passed to torch callables for chaining."""
-    t1 = AffineTransformation(factor=2) + CustomTransformation(torch.abs)
+    t1 = AffineTransformation(factor=2) | CustomTransformation(torch.abs)
     t2 = torch.abs(AffineTransformation(factor=2))
     torch.equal(t1(tensor), t2(tensor))
 
@@ -248,7 +252,7 @@ def test_affine_transformation_operator_order(series):
 def test_identity_affine_transformation_chaining():
     """Chaining an identity affine transformation has no effect."""
     assert (
-        AffineTransformation() + ExponentialTransformation()
+        AffineTransformation() | ExponentialTransformation()
         == ExponentialTransformation()
     )
 
@@ -258,7 +262,7 @@ def test_affine_transformation_chaining(series):
     t1 = AffineTransformation(factor=3, shift=2)
     t2 = AffineTransformation(factor=4, shift=3)
 
-    chained = t1 + t2
+    chained = t1 | t2
     chained_factor = t2.factor * t1.factor
     chained_shift = t2.factor * t1.shift + t2.shift
     expected = AffineTransformation(factor=chained_factor, shift=chained_shift)
@@ -293,3 +297,31 @@ def test_degenerate_transformations(transformation):
     """Degenerate transformations produce proper (non-nan) outputs."""
     assert transformation.get_image() == Interval(0, 0)
     assert transformation.get_image((20, None)) == Interval(0, 0)
+
+
+def test_additive_transformation(tensor):
+    """Additive transformations compute the sum of two transformations."""
+    t1 = ExponentialTransformation()
+    t2 = PowerTransformation(exponent=2)
+
+    expected = t1(tensor) + t2(tensor)
+    comp1 = AdditiveTransformation([t1, t2])
+    comp2 = t1 + t2
+
+    assert comp1 == comp2
+    assert torch.equal(comp1(tensor), expected)
+    assert torch.equal(comp2(tensor), expected)
+
+
+def test_multiplicative_transformation(tensor):
+    """Multiplicative transformations compute the product of two transformations."""
+    t1 = ExponentialTransformation()
+    t2 = PowerTransformation(exponent=2)
+
+    expected = t1(tensor) * t2(tensor)
+    comp1 = MultiplicativeTransformation([t1, t2])
+    comp2 = t1 * t2
+
+    assert comp1 == comp2
+    assert torch.equal(comp1(tensor), expected)
+    assert torch.equal(comp2(tensor), expected)
