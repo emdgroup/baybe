@@ -5,10 +5,11 @@ from typing import ClassVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
 from baybe.utils.conversion import to_string
@@ -73,15 +74,43 @@ class FPSRecommender(NonPredictiveRecommender):
     # See base class.
 
     initialization: FPSInitialization = field(
-        default=FPSInitialization.FARTHEST,
-        converter=FPSInitialization,
+        default=FPSInitialization.FARTHEST, converter=FPSInitialization
     )
-    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+    """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
-    random_tie_break: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
-    """See :func:`baybe.utils.sampling_algorithms.farthest_point_sampling`."""
+    If the optional package 'fpsample' is installed, only
+    :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
+    is supported.
+    """
+
+    random_tie_break: bool = field(validator=instance_of(bool), kw_only=True)
+    """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
+
+    If the optional package 'fpsample' is installed, only ``False`` is supported.
+    """
+
+    @initialization.validator
+    def _validate_initialization(self, _, value):
+        if FPSAMPLE_INSTALLED and value is not FPSInitialization.FARTHEST:
+            raise ValueError(
+                f"{self.__class__.__name__} is using the optional 'fpsample' "
+                f"package, which does not support '{self.initialization}'. "
+                f"Please choose a supported initialization method."
+            )
+
+    @random_tie_break.default
+    def _default_random_tie_break(self) -> bool:
+        return self.initialization is not FPSInitialization.FARTHEST
+
+    @random_tie_break.validator
+    def _validate_random_tie_break(self, _, value):
+        if FPSAMPLE_INSTALLED and value:
+            raise ValueError(
+                f"'{self.__class__.__name__}' is using the optional 'fpsample' "
+                f"package, which does not support random tie-breaking. "
+                f"To disable the mechanism, set "
+                f"'{fields(self.__class__).random_tie_break.name}=False'."
+            )
 
     @override
     def _recommend_discrete(
@@ -100,12 +129,22 @@ class FPSRecommender(NonPredictiveRecommender):
         # Scale and sample
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
-        ilocs = farthest_point_sampling(
-            candidates_scaled,
-            batch_size,
-            initialization=self.initialization.value,
-            random_tie_break=self.random_tie_break,
-        )
+
+        if FPSAMPLE_INSTALLED:
+            from baybe._optional.fpsample import fps_sampling
+
+            ilocs = fps_sampling(
+                candidates_scaled,
+                n_samples=batch_size,
+            )
+        else:
+            # Custom implementation as fallback
+            ilocs = farthest_point_sampling(
+                candidates_scaled,
+                batch_size,
+                initialization=self.initialization.value,
+                random_tie_break=self.random_tie_break,
+            )
         return candidates_comp.index[ilocs]
 
     @override

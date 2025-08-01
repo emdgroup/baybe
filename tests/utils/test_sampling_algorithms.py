@@ -1,6 +1,7 @@
 """Tests for sampling algorithm utilities."""
 
 import math
+from unittest.mock import patch
 
 import hypothesis.extra.numpy as hnp
 import hypothesis.strategies as st
@@ -8,8 +9,14 @@ import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import example, given
+from pytest import param
 from sklearn.metrics import pairwise_distances
 
+from baybe._optional.info import FPSAMPLE_INSTALLED
+from baybe.recommenders.pure.nonpredictive.sampling import (
+    FPSInitialization,
+    FPSRecommender,
+)
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -110,3 +117,111 @@ def test_farthest_point_sampling_pathological_case():
     with pytest.warns(UserWarning, match="identical"):
         selection = farthest_point_sampling(points, 2)
     assert selection == [0, 1]
+
+
+@pytest.mark.skipif(
+    not FPSAMPLE_INSTALLED, reason="Optional 'fpsample' package not installed."
+)
+@pytest.mark.parametrize(
+    ("init", "tie_break", "match"),
+    [
+        param(
+            FPSInitialization.RANDOM,
+            True,
+            "does not support 'FPSInitialization.RANDOM'",
+            id="raise_initial_random",
+        ),
+        param(
+            FPSInitialization.FARTHEST,
+            True,
+            "does not support random tie-breaking",
+            id="raise_tiebreak",
+        ),
+    ],
+)
+def test_fps_recommender_expected_errors(init, tie_break, match):
+    """Test that FPSRecommender emits exceptions for unsupported arguments."""
+    with pytest.raises(ValueError, match=match):
+        FPSRecommender(initialization=init, random_tie_break=tie_break)
+
+
+_valid_points = np.array([[1, 1], [2, 2], [3, 3]])
+
+
+@pytest.mark.parametrize(
+    ("points", "n_requested", "initialization", "match"),
+    [
+        param(
+            np.array([1, 2, 3]),
+            2,
+            "farthest",
+            "must be two-dimensional",
+            id="input_not_2D",
+        ),
+        param(
+            _valid_points,
+            4,
+            "farthest",
+            r"number of requested samples \(4\)",
+            id="too_many_requested",
+        ),
+        param(
+            _valid_points,
+            3,
+            [0, 1, 2, 3],
+            r"number of provided initialization indices \(4\)",
+            id="too_many_initial",
+        ),
+        param(
+            _valid_points,
+            3,
+            [0, 0],
+            r"but contains duplicates: \{0\}",
+            id="duplicated_init_points",
+        ),
+        param(
+            _valid_points,
+            3,
+            "bla",
+            "Unknown initialization type: 'bla'",
+            id="unknown_init",
+        ),
+    ],
+)
+def test_fps_utility_expected_errors(points, n_requested, initialization, match):
+    """FPSRecommender emits exceptions for unsupported arguments."""
+    with pytest.raises(ValueError, match=match):
+        farthest_point_sampling(points, n_requested, initialization=initialization)
+
+
+def test_fps_recommender_utility_call(searchspace):
+    """FPSRecommender calls expected underlying utility."""
+    if FPSAMPLE_INSTALLED:
+        context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
+    else:
+        context = patch(
+            "baybe.recommenders.pure.nonpredictive.sampling.farthest_point_sampling",
+            return_value=[0, 1, 2],
+        )
+
+    with context as mock_:
+        result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
+
+    mock_.assert_called_once()
+    assert result.index.tolist() == [0, 1, 2]
+
+
+@pytest.mark.skipif(
+    not FPSAMPLE_INSTALLED, reason="Optional 'fpsample' package not installed."
+)
+def test_fps_recommender_result_consistency(searchspace):
+    """FPS utilities return consistent results."""
+    from baybe._optional.fpsample import fps_sampling
+
+    points = searchspace.discrete.comp_rep.values
+    inds1 = fps_sampling(points, 3, start_idx=0).tolist()
+    inds2 = farthest_point_sampling(
+        points, 3, initialization=[0], random_tie_break=False
+    )
+
+    assert inds1 == inds2, (inds1, inds2)

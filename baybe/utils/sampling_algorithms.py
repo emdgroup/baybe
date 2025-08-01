@@ -1,17 +1,21 @@
 """A collection of point sampling algorithms."""
 
 import warnings
+from collections import Counter
+from collections.abc import Collection
 from enum import Enum
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 
+from baybe.utils.basic import is_all_instance
+
 
 def farthest_point_sampling(
     points: np.ndarray,
     n_samples: int = 1,
-    initialization: Literal["farthest", "random"] = "farthest",
+    initialization: Literal["farthest", "random"] | Collection[int] = "farthest",
     random_tie_break: bool = True,
 ) -> list[int]:
     """Select a subset of points using farthest point sampling.
@@ -31,6 +35,7 @@ def farthest_point_sampling(
               largest distance. If only a single point is requested, a deterministic
               choice is made based on the point coordinates.
             * ``"random"``: The first point is selected uniformly at random.
+            * Indices: Points corresponding to these indices will be pre-selected.
         random_tie_break: Determines if points are chosen deterministically or randomly
             in equidistant situations. If ``True``, a random point is selected from the
             candidates, otherwise the first point is selected. For non-equidistant
@@ -43,17 +48,42 @@ def farthest_point_sampling(
         ValueError: If the provided array is not two-dimensional.
         ValueError: If the array contains no points.
         ValueError: If the input space has no dimensions.
-        ValueError: If an unknown method for initialization is specified.
+        ValueError: Indices for initialization are not unique.
+        ValueError: More initialization indices than available points are provided.
+        ValueError: Unknown initialization method.
+        ValueError: More points are requested than available.
     """
+    # Input validation
     if (n_dims := np.ndim(points)) != 2:
         raise ValueError(
             f"The provided array must be two-dimensional but the given input had "
             f"{n_dims} dimensions."
         )
+
     if (n_points := len(points)) == 0:
         raise ValueError("The provided array must contain at least one row.")
+
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
+
+    if is_all_instance(initialization, int):
+        if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
+            raise ValueError(
+                f"The provided collection of initialization indices must be unique but "
+                f"contains duplicates: {duplicates}"
+            )
+        if len(initialization) > n_points:
+            raise ValueError(
+                f"The number of provided initialization indices "
+                f"({len(initialization)}) cannot be larger than the total number of "
+                f"points provided ({n_points})."
+            )
+    elif initialization not in {"farthest", "random"}:
+        raise ValueError(
+            f"Unknown initialization type: '{initialization}'. "
+            f"Expected 'farthest', 'random', or a collection of integers."
+        )
+
     if n_samples > n_points:
         raise ValueError(
             f"The number of requested samples ({n_samples}) cannot be larger than the "
@@ -87,8 +117,10 @@ def farthest_point_sampling(
         )
         if n_samples == 1:
             return [sort_idx[selected_point_indices[0]]]
-    else:
-        raise ValueError(f"unknown initialization recommender: '{initialization}'")
+    elif isinstance(initialization, Collection) and is_all_instance(
+        initialization, int
+    ):
+        selected_point_indices = list(initialization)
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))
@@ -102,15 +134,15 @@ def farthest_point_sampling(
 
         # Find for each candidate point the smallest distance to the selected points
         min_dists = np.min(dist, axis=1)
+        max_val = np.max(min_dists)
+        max_indices = np.where(min_dists == max_val)[0]
 
         if random_tie_break:
             # Select a random point that has the "largest smallest distance"
-            max_val = np.max(min_dists)
-            max_indices = np.where(min_dists == max_val)[0]
             choice = np.random.choice(max_indices)
         else:
-            # Choose the first point with the "largest smallest distance"
-            choice = np.argmax(min_dists)
+            # Choose the last point with the "largest smallest distance"
+            choice = max_indices[-1]
         selected_point_index = remaining_point_indices[choice]
 
         # Add the chosen point to the selection
