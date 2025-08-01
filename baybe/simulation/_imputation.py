@@ -46,14 +46,8 @@ def _impute_lookup(
             elif target.mode is TargetMode.MIN:
                 worst_vals.append(lookup.loc[:, target.name].max().flatten()[0])
             if target.mode is TargetMode.MATCH:
-                worst_vals.append(
-                    lookup.loc[
-                        lookup.loc[
-                            (lookup[target.name] - target.bounds.center).abs().idxmax(),
-                        ],
-                        target.name,
-                    ].flatten()[0]
-                )
+                worst_idx = (lookup[target.name] - target.bounds.center).abs().idxmax()
+                worst_vals.append(lookup.loc[worst_idx, target.name].flatten()[0])
         match_vals = np.array(worst_vals)
     elif mode == "best":
         best_vals = []
@@ -63,14 +57,8 @@ def _impute_lookup(
             elif target.mode is TargetMode.MIN:
                 best_vals.append(lookup.loc[:, target.name].min().flatten()[0])
             if target.mode is TargetMode.MATCH:
-                best_vals.append(
-                    lookup.loc[
-                        lookup.loc[
-                            (lookup[target.name] - target.bounds.center).abs().idxmin(),
-                        ],
-                        target.name,
-                    ].flatten()[0]
-                )
+                best_idx = (lookup[target.name] - target.bounds.center).abs().idxmin()
+                best_vals.append(lookup.loc[best_idx, target.name].flatten()[0])
         match_vals = np.array(best_vals)
     elif mode == "random":
         vals = []
