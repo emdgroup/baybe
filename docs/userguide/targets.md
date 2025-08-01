@@ -75,6 +75,9 @@ The following is a non-comprehensive overview – for a complete list, please r
 * **Minimization**: Minimization of a target can be achieved by simply passing the
   `minimize=True` argument to the constructor:
   ```python
+  from baybe.targets import NumericalTarget
+  from baybe.transformations import PowerTransformation
+
   target = NumericalTarget(
       name="Sideproduct_Yield",
       transformation=PowerTransformation(exponent=2),  # optional transformation object
@@ -82,32 +85,37 @@ The following is a non-comprehensive overview – for a complete list, please r
   )
   ```
 
-  ````{admonition} Manual Inversion
+  ````{admonition} Manual Negation
   :class: note
   Note that the above is mathematically equivalent to chaining the existing
-  transformation with an inversion transformation:
+  transformation with a negation transformation:
   ```python
   from baybe.transformations import AffineTransformation
 
-  target = NumericalTarget(
+  t_alt1 = NumericalTarget(
       name="Sideproduct_Yield",
       transformation=PowerTransformation(exponent=2) | AffineTransformation(factor=-1),
   )
+  t_alt2 = NumericalTarget(
+      name="Sideproduct_Yield", transformation=PowerTransformation(exponent=2)
+  ).negate()  # also appends the negation transformation
+  assert t_alt1 == t_alt2
   ```
 
-  Semantically and implementation-wise, however, the two approaches differ:
-  * **Semantic difference:** While the handling everything in one transformation
-    produces an equivalent output, splitting the construction cleanly separates the
-    different user concerns of
+  Semantically and implementation-wise, however, these two approaches differ from the
+  original one shown above:
+  * **Semantic difference:** While the handling everything in a single (chained)
+    transformation produces an equivalent output, splitting the construction cleanly
+    separates the different user concerns of
       1. Defining the observable itself (e.g. we observe a side product yield)
       2. Defining how the observable enters the objective (e.g. use quadratic scaling
         because small levels are acceptable but large levels are not) 
       3. Defining the optimization direction (e.g. the transformed quantity is to be 
         minimized)
     
-    This separation results in a cleaner user interface that avoids mixing the
+    This separation results in a user-friendly interface that avoids mixing the
     optimization goals with the definition of the involved observables.
-  * **Implementation difference:** Reflecting the above-mentioned split, the inversion
+  * **Implementation difference:** Reflecting the above-mentioned split, the negation
     is dynamically added before passing the target to the optimization algorithm in the
     one case, while it becomes an integral part of the target transformation attribute
     in the other case.

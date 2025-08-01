@@ -397,11 +397,11 @@ class NumericalTarget(Target, SerialMixin):
             ),
         )
 
-    def invert(self) -> NumericalTarget:
-        """Apply an inversion transformation to the target.
+    def negate(self) -> NumericalTarget:
+        """Apply a negation transformation to the target.
 
         Returns:
-            The target with applied inversion transformation.
+            The target with applied negation transformation.
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 
