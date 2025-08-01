@@ -50,15 +50,15 @@ def test_target_normalization():
     [
         param(NumericalTarget.match_bell("t", 2, 1), id="match"),
         param(NumericalTarget.match_power("t", 2, 2), id="power"),
+        param(NumericalTarget.match_quadratic("t", 2), id="quadratic"),
         param(NumericalTarget.match_absolute("t", 2), id="absolute"),
-        param(NumericalTarget.match_triangular("t", 2, width=2), id="triangular"),
+        param(NumericalTarget.match_triangular("t", 2, width=40), id="triangular"),
     ],
 )
 def test_match_constructors(target):
-    """Match targets constructors provide expected transformation results."""
-    input_optimal, input_suboptimal = 2, 4
+    """Larger distance to match values yields smaller transformed values."""
+    delta = [0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
+    match_value = 2
 
-    transformed_optimal, transformed_suboptimal = target.transform(
-        pd.Series([input_optimal, input_suboptimal])
-    )
-    assert transformed_optimal > transformed_suboptimal
+    transformed = target.transform(pd.Series(delta) + match_value)
+    assert (transformed.diff().dropna() < 0).all()
