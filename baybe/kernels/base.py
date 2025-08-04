@@ -7,6 +7,8 @@ from abc import ABC
 from typing import TYPE_CHECKING, Any
 
 from attrs import define
+import gpytorch
+from torch import Tensor
 
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
@@ -113,6 +115,36 @@ class Kernel(ABC, SerialMixin):
                 )
 
         return gpytorch_kernel
+
+
+@define(frozen=True)
+class ProjectionKernel(Kernel, ABC):
+    """
+    A kernel that performs random projection to reduce dimensionality before
+    applying the underlying kernel computation.
+    """
+    base_kernel: Kernel
+    proj_dim: int
+
+    def to_gpytorch(self, *args, **kwargs):
+        import torch
+        gpytorch_kernel = self.base_kernel.to_gpytorch(*args, **kwargs)
+
+        # generate gaussian JL projection matrix
+        A = torch.randn(self.proj_dim, gpytorch_kernel.ard_num_dims) / (self.proj_dim ** 0.5)
+        return GPytorchProjectionKernel(gpytorch_kernel, A)
+
+
+class GPytorchProjectionKernel(gpytorch.kernels.Kernel):
+    """GPyTorch implementation of projection kernel"""
+    base_kernel: base_kernel
+    proj_matrix: torch.Tensor
+
+    def forward(self, x1: Tensor, x2: Tensor, **kwargs):
+        x1_proj = torch.matmul(x1, self.proj_matrix.t())  # [N, proj_dim]
+        x2_proj = torch.matmul(x2, self.proj_matrix.t())  # [M, proj_dim]
+
+        return self.base_kernel(x1_proj, x2_proj, **kwargs)
 
 
 @define(frozen=True)
