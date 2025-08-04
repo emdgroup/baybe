@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Factory, define, field
-from attrs.validators import ge, gt, instance_of, is_callable
+from attrs.validators import gt, is_callable
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -388,10 +388,7 @@ class ExponentialTransformation(MonotonicTransformation):
 class PowerTransformation(Transformation):
     """A transformation computing the power."""
 
-    # TODO: Could be generalized to floats but then requires runtime checks on the input
-    #   tensor exponents to avoid producing complex numbers and adjusting the image
-    #   computation logic
-    exponent: int = field(validator=[instance_of(int), ge(2)])
+    exponent: int = field(converter=float, validator=finite_float)
     """The exponent of the power transformation."""
 
     @override
@@ -406,6 +403,11 @@ class PowerTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
+        if not (int(self.exponent) == self.exponent) and any(x < 0):
+            raise RuntimeError(
+                "For non-integer exponents, the provided input tensor must contain "
+                "non-negative elements only."
+            )
         return x.pow(self.exponent)
 
 

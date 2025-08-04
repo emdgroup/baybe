@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+import torch
 from pytest import param
 
 from baybe.transformations import (
@@ -105,17 +106,21 @@ def test_invalid_triangular_transformation(cutoffs, peak, match):
 @pytest.mark.parametrize(
     ("exponent", "error"),
     [
-        param(np.inf, TypeError, id="inf"),
-        param(np.nan, TypeError, id="nan"),
-        param("", TypeError, id="type"),
-        param(1.5, TypeError, id="non-int"),
-        param(1, ValueError, id="trivial"),
+        param(np.inf, ValueError, id="inf"),
+        param(np.nan, ValueError, id="nan"),
+        param("", ValueError, id="type"),
     ],
 )
 def test_invalid_power_transformation(exponent, error):
     """Providing invalid arguments raises an exception."""
     with pytest.raises(error):
         PowerTransformation(exponent)
+
+
+def test_non_integer_power_transformation():
+    """Providing negative inputs for non-integer exponents raises an exception."""
+    with pytest.raises(RuntimeError, match="non-negative elements only"):
+        PowerTransformation(1.5)(torch.tensor([-1, 0, 1]))
 
 
 @pytest.mark.parametrize(
