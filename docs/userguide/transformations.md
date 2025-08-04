@@ -13,18 +13,24 @@ Currently, transformations are only used for the
 their use for parameters as well.
 ```
 
-## Pre-Defined Transformations
+## Basic Transformations
 
-The following pre-defined transformation types are available via the
+The following pre-defined basic transformation types are available via the
 {mod}`baybe.transformations` module: 
 
-### Basic Transformations
 
 - {class}`~baybe.transformations.basic.IdentityTransformation`: $f(x) = x$
 - {class}`~baybe.transformations.basic.AbsoluteTransformation`: $f(x) = |x|$
 - {class}`~baybe.transformations.basic.ExponentialTransformation`: $f(x) = e^x$
 - {class}`~baybe.transformations.basic.LogarithmicTransformation`: $f(x) = \ln(x)$
 - {class}`~baybe.transformations.basic.PowerTransformation`: $f(x) = x^p$
+
+
+## Advanced Transformations
+
+In addition to the [basic transformations](#basic-transformations), the
+{mod}`baybe.transformations` module provides a number of advanced transformation types
+that allow for more customization:
 
 ### ClampingTransformation
 
