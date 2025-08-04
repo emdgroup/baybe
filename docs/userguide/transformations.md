@@ -213,7 +213,7 @@ distribution except that it does not affect the magnitude of the curve.
 ```python
 from baybe.transformations import BellTransformation
 
-t = BellTransformation(center=0, sigma=1)  # like an **unnormalized** standard normal
+t = BellTransformation(center=0, sigma=1)  # like an unnormalized standard normal
 t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the right by 5
 ```
 
