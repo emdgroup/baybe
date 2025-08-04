@@ -463,7 +463,8 @@ t = CustomTransformation(torch.sin)
 ````{admonition} Automatic Wrapping
 :note:
 
-When embedding such transformations into another context, the wrapping happens
+When embedding custom transformations into another context, wrapping the `torch`
+callable into a {class}`~baybe.transformations.basic.CustomTransformation` happens
 automatically, so you can use them just like any other built-in transformation:
 
 ```python
