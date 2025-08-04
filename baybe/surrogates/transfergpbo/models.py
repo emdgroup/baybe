@@ -221,83 +221,132 @@ class MHGPModel(Model):
         """
         if not self._fitted:
             raise RuntimeError("Model must be fitted first. Call meta_fit() and fit().")
-
         if self.task_feature is None:
             raise RuntimeError("Task feature not configured. Call meta_fit() first.")
 
-        # Handle both 2D and 3D tensors
-        if X.dim() == 3:
-            # Squeeze the middle dimension: (batch, 1, features) -> (batch, features)
-            X = X.squeeze(1)
-        elif X.dim() != 2:
-            raise ValueError(
-                f"Expected 2D or 3D tensor, got {X.dim()}D tensor with shape {X.shape}"
-            )
-
-        # Now X is guaranteed to be 2D: (batch, features)
-
-        # Extract task indices using stored task_feature
-        if self.task_feature == -1:
-            task_indices = X[:, -1].long()
-            X_features = X[:, :-1]
+        # Handle non-batched inputs by adding a batch dimension
+        if X.dim() == 2:
+            X = X.unsqueeze(0)
+            unbatch_output = True
         else:
-            task_indices = X[:, self.task_feature].long()
-            # Remove task column from features
-            if self.task_feature == 0:
+            unbatch_output = False
+
+        # Save original shape for reshaping outputs later
+        batch_shape = X.shape[:-2]  # Everything except the last two dimensions
+        n_points = X.shape[-2]  # Number of points
+
+        # Extract task feature index
+        task_feature = self.task_feature
+
+        # Extract task indices and features
+        if task_feature == -1:
+            # Task is last column
+            task_indices = X[..., -1].long()
+            X_features = X[..., :-1]
+        else:
+            # Task is at specified position
+            task_indices = X[..., task_feature].long()
+            # Remove task column while preserving batch dimensions
+            if task_feature == 0:
                 # Task is first column
-                X_features = X[:, 1:]
-            elif self.task_feature == X.shape[1] - 1:
+                X_features = X[..., 1:]
+            elif task_feature == X.shape[-1] - 1:
                 # Task is last column
-                X_features = X[:, :-1]
+                X_features = X[..., :-1]
             else:
                 # Task is in the middle
                 X_features = torch.cat(
-                    [X[:, : self.task_feature], X[:, self.task_feature + 1 :]], dim=1
+                    [X[..., :task_feature], X[..., task_feature + 1 :]], dim=-1
                 )
 
-        # Rest of the method remains the same
-        unique_tasks = torch.unique(task_indices)
+        # Validate max task ID
         max_task_id = len(self.source_gps)
-
-        # Validate task indices
         if torch.any(task_indices < 0) or torch.any(task_indices > max_task_id):
             raise ValueError(
                 f"Task indices must be in range [0, {max_task_id}]. "
-                f"Got task indices: {unique_tasks.tolist()}"
+                f"Got invalid task indices."
             )
 
-        with torch.no_grad():
-            # Initialize output tensors
-            n_points = X_features.shape[0]
-            final_means = torch.zeros(n_points, 1, dtype=X.dtype, device=X.device)
-            final_cov = torch.zeros(n_points, n_points, dtype=X.dtype, device=X.device)
+        # Process each batch element separately
+        batch_means = []
+        batch_covs = []
 
-            # Process each unique task
-            for task_id in unique_tasks:
-                task_mask = task_indices == task_id
-                ##############
-                task_indices_list = torch.where(task_mask)[0]
-                ##################
-                X_task = X_features[task_mask]
+        with torch.set_grad_enabled(X.requires_grad):
+            # Iterate over batch elements
+            for batch_idx in range(batch_shape.numel()):
+                # Get flat batch index
+                batch_indices = []
+                remaining = batch_idx
+                for dim_size in reversed(batch_shape):
+                    batch_indices.insert(0, remaining % dim_size)
+                    remaining = remaining // dim_size
 
-                # Prediction from source GP
-                task_mean, task_var = self._predict_from_stack(X_task, task_id.item())
+                # Extract data for this batch
+                if batch_shape.numel() == 1:
+                    # Single batch dimension
+                    task_indices_batch = task_indices[batch_idx]
+                    X_features_batch = X_features[batch_idx]
+                else:
+                    # Multiple batch dimensions
+                    task_indices_batch = task_indices[tuple(batch_indices)]
+                    X_features_batch = X_features[tuple(batch_indices)]
 
-                # Store results
-                final_means[task_mask] = task_mean
-                # Assign covariance block using meshgrid indexing
-                idx_i, idx_j = torch.meshgrid(
-                    task_indices_list, task_indices_list, indexing="ij"
+                # Initialize output tensors for this batch
+                batch_mean = torch.zeros(n_points, 1, dtype=X.dtype, device=X.device)
+                batch_cov = torch.zeros(
+                    n_points, n_points, dtype=X.dtype, device=X.device
                 )
-                final_cov[idx_i, idx_j] = task_var
-                # final_cov[torch.ix_(task_indices_list, task_indices_list)] = task_var
-                # final_cov[task_mask] = task_var
 
-            posterior = GPyTorchPosterior(
-                MultivariateNormal(final_means.squeeze(-1), final_cov)
+                # Process each unique task in this batch
+                unique_tasks_batch = torch.unique(task_indices_batch)
+                for task_id in unique_tasks_batch:
+                    task_mask = task_indices_batch == task_id
+                    task_indices_list = torch.where(task_mask)[0]
+                    X_task = X_features_batch[task_mask]
+
+                    # Prediction from source GP
+                    task_mean, task_cov = self._predict_from_stack(
+                        X_task, task_id.item()
+                    )
+
+                    # Store results
+                    batch_mean[task_mask] = task_mean
+
+                    # Assign covariance block using meshgrid indexing
+                    idx_i, idx_j = torch.meshgrid(
+                        task_indices_list, task_indices_list, indexing="ij"
+                    )
+                    batch_cov[idx_i, idx_j] = task_cov
+
+                batch_means.append(batch_mean)
+                batch_covs.append(batch_cov)
+
+        # Stack results along batch dimension
+        if batch_shape.numel() == 1:
+            # Single batch dimension
+            stacked_means = torch.stack(batch_means, dim=0)
+            stacked_covs = torch.stack(batch_covs, dim=0)
+        else:
+            # Multiple batch dimensions - reshape to original batch shape
+            stacked_means = torch.stack(batch_means, dim=0).reshape(
+                *batch_shape, n_points, 1
+            )
+            stacked_covs = torch.stack(batch_covs, dim=0).reshape(
+                *batch_shape, n_points, n_points
             )
 
-            return posterior
+        # Remove extra batch dimension if input wasn't batched
+        if unbatch_output:
+            stacked_means = stacked_means.squeeze(0)
+            stacked_covs = stacked_covs.squeeze(0)
+
+        # Create the MultivariateNormal distribution
+        mvn = MultivariateNormal(
+            stacked_means.squeeze(-1),  # Remove last dimension: (..., n, 1) -> (..., n)
+            stacked_covs,
+        )
+
+        return GPyTorchPosterior(mvn)
 
     def _predict_from_stack(
         self, X: Tensor, up_to_task_id: int
