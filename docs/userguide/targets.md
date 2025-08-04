@@ -105,7 +105,7 @@ The following is a non-comprehensive overview – for a complete list, please r
 
   Semantically and implementation-wise, however, these two approaches differ from the
   original one shown above:
-  * **Semantic difference:** While the handling everything in a single (chained)
+  * **Semantic difference:** While handling everything in a single (chained)
     transformation produces an equivalent output, splitting the construction cleanly
     separates the different user concerns of
       1. Defining the observable itself (e.g. we observe a side product yield)
@@ -141,7 +141,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   assert t1 == t2 == t3
   ```
 
-* **Normalizing targets**: Sometimes, it is necessary to normalize targets to a the
+* **Normalizing targets**: Sometimes, it is necessary to normalize targets to the
   interval [0, 1], to [align them on a common scale](#target-normalization). One
   situation where this can be required is when combining the targets using a
   {class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we

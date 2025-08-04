@@ -146,7 +146,7 @@ t = TwoSidedAffineTransformation(slope_left=-1, slope_right=0, midpoint=1)  # hi
 ```
 
 ### SigmoidTransformation
-The {class}`~baybe.transformations.basic.SigmoidTransformation` normalized its input
+The {class}`~baybe.transformations.basic.SigmoidTransformation` normalizes its input
 to the range $[0, 1]$ using a sigmoid function.
 
 `````{grid} 2
@@ -272,7 +272,7 @@ assert t_skew1 == t_skew2
 Instead of applying [individual transformations](#pre-defined-transformations) directly,
 you can also use them as building blocks to enable more complex types of operations.
 This is enabled through the
-{class}`~baybe.transformations.composite.ChainedTransformation`
+{class}`~baybe.transformations.composite.ChainedTransformation`,
 {class}`~baybe.transformations.composite.AdditiveTransformation` and 
 {class}`~baybe.transformations.composite.MultiplicativeTransformation` classes,
 which allow you to combine multiple transformations into a single one.
