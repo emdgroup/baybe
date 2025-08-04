@@ -5,8 +5,11 @@ import pytest
 from hypothesis import given
 from pytest import param
 
-from baybe.transformations import Transformation
-from baybe.transformations.core import ChainedTransformation, ClampingTransformation
+from baybe.transformations import (
+    ChainedTransformation,
+    ClampingTransformation,
+    Transformation,
+)
 
 from ..hypothesis_strategies.transformations import (
     absolute_transformations,

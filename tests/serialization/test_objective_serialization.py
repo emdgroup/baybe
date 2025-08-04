@@ -9,8 +9,11 @@ from pytest import param
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.transformations.base import Transformation
-from baybe.transformations.core import ChainedTransformation, ClampingTransformation
+from baybe.transformations import (
+    ChainedTransformation,
+    ClampingTransformation,
+    Transformation,
+)
 from tests.hypothesis_strategies.objectives import (
     desirability_objectives,
     pareto_objectives,

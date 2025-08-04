@@ -320,7 +320,7 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
-                details, see :class:`baybe.transformations.core.BellTransformation`.
+                details, see :class:`baybe.transformations.basic.BellTransformation`.
 
         Returns:
             The target with applied bell matching transformation.
@@ -360,7 +360,7 @@ class NumericalTarget(Target, SerialMixin):
 
         Args:
             name: The name of the target.
-            anchors: See :class:`baybe.transformations.core.SigmoidTransformation`.
+            anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.
 
         Returns:
             The target with applied sigmoid transformation.
