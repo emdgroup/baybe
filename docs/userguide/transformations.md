@@ -221,7 +221,7 @@ t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the ri
 
 The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise affine
 transformation with the shape of a triangle, useful for steering targets to a specific
-set point value.
+set point value with symmetric or asymmetric penalty.
 
 `````{grid} 2
 
