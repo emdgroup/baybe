@@ -375,8 +375,6 @@ For common chaining operations, BayBE provides a set convenience methods that
 allow you to quickly create new transformations from existing ones
 (see {class}`~baybe.transformations.base.Transformation` for all options).
 
-For example:
-
 ```python
 t = IdentityTransformation()  # start with **any** existing transformation
 t1 = t.abs()  # compute absolute value
