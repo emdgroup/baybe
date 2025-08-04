@@ -89,10 +89,10 @@ def make_initial_data(
     function: Callable,
     function_name: str,
     num_of_points: int,
-    settings: ConvergenceBenchmarkSettings,
+    random_seed,
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
-    with temporary_seed(settings.random_seed):
+    with temporary_seed(random_seed):
         # Create random samples in [0, pi]^dim
         samples = np.random.uniform(low=0, high=math.pi, size=(num_of_points, 5))
 
@@ -154,9 +154,12 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 ),
                 initial_data=[
                     make_initial_data(
-                        functions["Source_Function"], "Source_Function", p, settings
+                        functions["Source_Function"],
+                        "Source_Function",
+                        p,
+                        settings.random_seed + i,
                     )
-                    for _ in range(settings.n_mc_iterations)
+                    for i in range(settings.n_mc_iterations)
                 ],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
