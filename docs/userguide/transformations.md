@@ -420,7 +420,8 @@ assert torch.equal(t1(values), p1(values) + p2(values))
 Analogous to the [additive case above](#addition), the
 {class}`~baybe.transformations.composite.MultiplicativeTransformation` computes the
 product of the outputs of two transformations applied to the same input. More precisely,
-`MultiplicativeTransformation([f, g])` computes the transformation $h(x) := f(x)g(x)$.
+`MultiplicativeTransformation([f, g])` computes the transformation
+$h(x) := f(x) \cdot g(x)$.
 
 ```{admonition} Convenience Construction
 :class: tip
