@@ -29,7 +29,7 @@ exponential_transformations = lambda: st.just(ExponentialTransformation())  # no
 
 @st.composite
 def clamping_transformations(draw: st.DrawFn) -> ClampingTransformation:
-    """Generate :class:`baybe.transformations.core.ClampingTransformation`."""
+    """Generate :class:`baybe.transformations.basic.ClampingTransformation`."""
     min = draw(st.floats(allow_nan=False, max_value=float("inf"), exclude_max=True))
     max = draw(st.floats(allow_nan=False, min_value=min, exclude_min=True))
     return ClampingTransformation(min, max)
@@ -37,7 +37,7 @@ def clamping_transformations(draw: st.DrawFn) -> ClampingTransformation:
 
 @st.composite
 def affine_transformations(draw: st.DrawFn) -> AffineTransformation:  # type: ignore[return]
-    """Generate :class:`baybe.transformations.core.AffineTransformation`."""
+    """Generate :class:`baybe.transformations.basic.AffineTransformation`."""
     factor = draw(finite_floats())
     shift = draw(finite_floats())
     shift_first = draw(st.booleans())
@@ -50,7 +50,7 @@ def affine_transformations(draw: st.DrawFn) -> AffineTransformation:  # type: ig
 
 @st.composite
 def two_sided_affine_transformations(draw: st.DrawFn) -> TwoSidedAffineTransformation:
-    """Generate :class:`baybe.transformations.core.TwoSidedAffineTransformation`."""
+    """Generate :class:`baybe.transformations.basic.TwoSidedAffineTransformation`."""
     slope_left = draw(finite_floats())
     slope_right = draw(finite_floats())
     center = draw(finite_floats())
@@ -59,7 +59,7 @@ def two_sided_affine_transformations(draw: st.DrawFn) -> TwoSidedAffineTransform
 
 @st.composite
 def bell_transformations(draw: st.DrawFn) -> BellTransformation:
-    """Generate :class:`baybe.transformations.core.BellTransformation`."""
+    """Generate :class:`baybe.transformations.basic.BellTransformation`."""
     center = draw(finite_floats())
     sigma = draw(positive_finite_floats())
     return BellTransformation(center=center, sigma=sigma)
@@ -67,7 +67,7 @@ def bell_transformations(draw: st.DrawFn) -> BellTransformation:
 
 @st.composite
 def triangular_transformations(draw: st.DrawFn) -> TriangularTransformation:  # type: ignore[return]
-    """Generate :class:`baybe.transformations.core.TriangularTransformation`."""
+    """Generate :class:`baybe.transformations.basic.TriangularTransformation`."""
     cutoffs = draw(intervals(exclude_fully_unbounded=True, exclude_half_bounded=True))
     try:
         peak = draw(
@@ -93,7 +93,7 @@ def triangular_transformations(draw: st.DrawFn) -> TriangularTransformation:  # 
 
 @st.composite
 def power_transformations(draw: st.DrawFn) -> PowerTransformation:
-    """Generate :class:`baybe.transformations.core.PowerTransformation`."""
+    """Generate :class:`baybe.transformations.basic.PowerTransformation`."""
     exponent = draw(st.integers(min_value=2))
     return PowerTransformation(exponent=exponent)
 
@@ -102,7 +102,7 @@ def power_transformations(draw: st.DrawFn) -> PowerTransformation:
 def chained_transformations(
     draw: st.DrawFn, min_size: int = 2, max_size: int = 3
 ) -> ChainedTransformation:
-    """Generate :class:`baybe.transformations.core.ChainedTransformation`."""
+    """Generate :class:`baybe.transformations.basic.ChainedTransformation`."""
     transformations = draw(
         st.lists(single_transformations, min_size=min_size, max_size=max_size)
     )
