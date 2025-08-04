@@ -71,8 +71,8 @@ the corresponding target objects:
 BayBE offers several convenience approaches to construct targets for many common
 situations, eliminating the need to manually provide the necessary
 {class}`~baybe.transformations.base.Transformation` object for simple cases.
-The following is a non-comprehensive overview – for a complete list, please refer to the
-[`NumericalTarget` documentation](baybe.targets.numerical.NumericalTarget).
+The following is a non-comprehensive overview – for a complete list, please refer to
+{class}`~baybe.targets.numerical.NumericalTarget`.
 * **Minimization**: Minimization of a target can be achieved by simply passing the
   `minimize=True` argument to the constructor:
   ```python
