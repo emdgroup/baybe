@@ -10,8 +10,7 @@ this.
 :class: note
 Currently, transformations are only used for the
 {class}`~baybe.targets.numerical.NumericalTarget` class but it is planned to enable
-their use for {class}`~baybe.parameters.numerical.NumericalContinuousParameter` as
-well.
+their use for parameters as well.
 ```
 
 ## Pre-Defined Transformations
