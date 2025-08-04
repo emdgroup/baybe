@@ -163,9 +163,9 @@ to the range $[0, 1]$ using a sigmoid function.
 **Transformation rule**
 
 ```{math}
-f(x) = \frac{1}{1 + e^{-a(x - c)}}
+f(x) = \frac{1}{1 + e^{-a(x - \mu)}}
 ```
-where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
+where $\mu$ is the center point where the curve crosses the value 0.5 and $a$ is a
 parameter controlling the steepness.
 ````
 `````
