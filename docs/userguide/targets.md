@@ -170,11 +170,11 @@ The following is a non-comprehensive overview – for a complete list, please r
   For example:
   ```python
   t1 = NumericalTarget("Yield")
-  t2 = t1 - 10  # subtract a constant
+  t2 = t1 - 1  # subtract a constant
   t3 = t2 / 5  # divide by a constant
   t4 = t3.abs()  # compute absolute value
-  t5 = t4.power(2)  # square the value
-  t6 = t5.clamp(max=100)  # clamp to (-inf, 100])
+  t5 = t4.power(3)  # compute the cube
+  t6 = t5.clamp(max=10)  # upper-bound to 10 (lower bound is 0 due to abs() call above)
   t7 = t6.normalize()  # normalize to [0, 1]
   ```
 
