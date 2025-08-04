@@ -246,7 +246,9 @@ f(x) =
 \end{cases}
 ```
 where $c_\text{min}$ and $c_\text{max}$ are the cutoff values of the triangle,
-respectively, and $c_\text{peak}$ is its peak location.
+respectively, and $c_\text{peak}$ is its peak location. Note that there also exist
+convenience constructors that allow for alternative parameterizations of the
+transformation, as exemplified below.
 ````
 `````
 
