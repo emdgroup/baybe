@@ -1,22 +1,26 @@
 # Checklist for designing BayBE experiments
 
+- Should be multiple target optimized simultaneously?
+
+  > See how to use [multi-target objectives](https://emdgroup.github.io/baybe/stable/userguide/objectives.html).
+
 - Are only some parameter values of interest/possible?
 
   > See how to exclude some 
 [parameter values](https://emdgroup.github.io/baybe/stable/userguide/getting_recommendations.html#excluding-configurations) 
 from being recommended, such as by defining
-[bounds for continuous parameters](https://emdgroup.github.io/baybe/stable/userguide/parameters.html#numericalcontinuousparameter).
+[bounds for continuous parameters](https://emdgroup.github.io/baybe/stable/userguide/parameters.html#numericalcontinuousparameter)
 or [active values for discrete parameters](https://emdgroup.github.io/baybe/stable/userguide/parameters.html#discrete-parameters).
 
 - Are only some parameter combinations of interest/possible?
 
   > See how to exclude some 
-[parameter combinations](https://emdgroup.github.io/baybe/stable/userguide/constraints.html)
-from being considered.
-
-- Should be multiple target optimized simultaneously?
-
-  > See how to use [multi-target objectives](https://emdgroup.github.io/baybe/stable/userguide/objectives.html).
+parameter combinations from being considered by using 
+[constraints](https://emdgroup.github.io/baybe/stable/userguide/constraints.html) or
+[constrained searchspaces](https://emdgroup.github.io/baybe/stable/userguide/searchspace.html#creating-a-simplex-bound-discrete-subspace).
+Alternatively, if the aim is to use only a few specific parameter configurations the search space can be created from a 
+[dataframe](https://emdgroup.github.io/baybe/stable/userguide/searchspace.html#id3) 
+rather than from the product of all possible parameter combinations.
 
 - Is it possible to encode discrete parameters based on domain knowledge 
 (e.g., ordered values, molecular fingerprints, model embeddings)?
