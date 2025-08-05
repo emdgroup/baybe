@@ -78,8 +78,8 @@ corresponding target weights:
 
 ```{math}
 \begin{align*}
-  \text{MEAN} &= \frac{1}{\sum w_i}\sum_{i} w_i \cdot t_i \\
-  \text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum w_i}
+  \text{MEAN} &= \frac{\sum_{i} w_i \cdot t_i}{\sum_{i} w_i} \\
+  \text{GEOM_MEAN} &= \left( \prod_i t_i^{w_i} \right)^{1/\sum_{i} w_i}
 \end{align*}
 ```
 
