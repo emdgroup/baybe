@@ -152,6 +152,20 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
     ("points", "n_requested", "initialization", "match"),
     [
         param(
+            _valid_points,
+            0,
+            "farthest",
+            "must be at least 1. Provided: n_samples=0.",
+            id="n_samples_zero",
+        ),
+        param(
+            _valid_points,
+            -1,
+            "farthest",
+            "must be at least 1. Provided: n_samples=-1.",
+            id="n_samples_neg",
+        ),
+        param(
             np.array([1, 2, 3]),
             2,
             "farthest",
@@ -182,8 +196,15 @@ _valid_points = np.array([[1, 1], [2, 2], [3, 3]])
         param(
             _valid_points,
             3,
+            [0, -1, 5],
+            r"contains out-of-bounds indices: \[-1, 5\]",
+            id="invalid_init_points",
+        ),
+        param(
+            _valid_points,
+            3,
             "bla",
-            "Unknown initialization type: 'bla'",
+            "Unknown initialization type.",
             id="unknown_init",
         ),
     ],

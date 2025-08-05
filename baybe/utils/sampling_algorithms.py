@@ -45,15 +45,23 @@ def farthest_point_sampling(
         A list containing the positional indices of the selected points.
 
     Raises:
+        ValueError: If the number of requested samples is less than 1.
         ValueError: If the provided array is not two-dimensional.
         ValueError: If the array contains no points.
         ValueError: If the input space has no dimensions.
         ValueError: Indices for initialization are not unique.
         ValueError: More initialization indices than available points are provided.
+        ValueError: Initialization indices are out of bounds.
         ValueError: Unknown initialization method.
         ValueError: More points are requested than available.
     """
     # Input validation
+    if n_samples < 1:
+        raise ValueError(
+            f"The number of requested samples must be at least 1. "
+            f"Provided: {n_samples=}."
+        )
+
     if (n_dims := np.ndim(points)) != 2:
         raise ValueError(
             f"The provided array must be two-dimensional but the given input had "
@@ -66,7 +74,7 @@ def farthest_point_sampling(
     if points.shape[-1] == 0:
         raise ValueError("The provided input space must be at least one-dimensional.")
 
-    if is_all_instance(initialization, int):
+    if isinstance(initialization, Collection) and is_all_instance(initialization, int):
         if duplicates := {k for k, v in Counter(initialization).items() if v > 1}:
             raise ValueError(
                 f"The provided collection of initialization indices must be unique but "
@@ -78,10 +86,18 @@ def farthest_point_sampling(
                 f"({len(initialization)}) cannot be larger than the total number of "
                 f"points provided ({n_points})."
             )
+        if problematic_indices := [
+            idx for idx in initialization if not (0 <= idx < n_points)
+        ]:
+            raise ValueError(
+                f"The provided collection of initialization indices must be within the "
+                f"range of available points (0 to {n_points - 1}) but contains "
+                f"out-of-bounds indices: {problematic_indices}"
+            )
     elif initialization not in {"farthest", "random"}:
         raise ValueError(
-            f"Unknown initialization type: '{initialization}'. "
-            f"Expected 'farthest', 'random', or a collection of integers."
+            f"Unknown initialization type. Expected 'farthest', 'random', or a "
+            f"collection of integers. Provided: {initialization=}"
         )
 
     if n_samples > n_points:
