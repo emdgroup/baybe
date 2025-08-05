@@ -6,7 +6,6 @@ import warnings
 from collections.abc import Callable
 from contextlib import nullcontext
 from copy import deepcopy
-from functools import partial
 from typing import Literal
 
 import numpy as np
@@ -15,9 +14,8 @@ import pandas as pd
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
 from baybe.simulation.lookup import look_up_targets
-from baybe.targets.enum import TargetMode
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.numerical import DTypeFloatNumpy, closer_element, closest_element
+from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.random import temporary_seed
 
 
@@ -201,30 +199,39 @@ def simulate_experiment(
 
         # Add the instantaneous and running best values for all targets
         for target in campaign.targets:
-            # Define the summary functions for the current target
-            if target.mode is TargetMode.MAX:
-                agg_fun = np.max
-                cum_fun = np.maximum.accumulate
-            elif target.mode is TargetMode.MIN:
-                agg_fun = np.min
-                cum_fun = np.minimum.accumulate
-            elif target.mode is TargetMode.MATCH:
-                match_val = target.bounds.center
-                agg_fun = partial(closest_element, target=match_val)
-                cum_fun = lambda x: np.array(  # noqa: E731
-                    np.frompyfunc(
-                        partial(closer_element, target=match_val),
-                        2,
-                        1,
-                    ).accumulate(x),
-                    dtype=float,
-                )
-
-            # Add the summary columns
             measurement_col = f"{target.name}_Measurements"
             iterbest_col = f"{target.name}_IterBest"
-            cumbest_cols = f"{target.name}_CumBest"
-            results[iterbest_col] = results[measurement_col].apply(agg_fun)
-            results[cumbest_cols] = cum_fun(results[iterbest_col])
+            cumbest_col = f"{target.name}_CumBest"
+
+            # Collect raw and transformed measurements
+            arr = np.array(results[measurement_col].tolist())
+            transformed = results[measurement_col].apply(
+                lambda x: target.transform(pd.Series(x)).tolist()
+            )
+
+            # Compute the instantaneous best
+            iterbest_idx = transformed.apply(np.argmax)
+            iterbest_transformed = transformed.apply(np.max)
+            results[iterbest_col] = np.take_along_axis(
+                arr, iterbest_idx.values[:, None], axis=1
+            )
+
+            # Compute the cumulative best
+            cumargmax = _cumargmax(iterbest_transformed.values)
+            results[cumbest_col] = np.take_along_axis(arr, cumargmax[:, None], axis=0)
 
         return results
+
+
+def _cumargmax(arr: np.ndarray, /) -> np.ndarray:
+    """Compute the cumulative argmax of a one-dimensional array."""
+    if arr.ndim != 1:
+        raise ValueError("The given array must be one-dimensional.")
+
+    cummax = np.maximum.accumulate(arr)
+    jump_idxs = np.nonzero(arr == cummax)[0]
+
+    cumargmax = np.zeros_like(arr, dtype=int)
+    cumargmax[jump_idxs] = jump_idxs
+    cumargmax = np.maximum.accumulate(cumargmax)
+    return cumargmax
