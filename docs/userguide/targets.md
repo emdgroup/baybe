@@ -31,8 +31,8 @@ Whenever you want to optimize a real-valued quantity, the
 {class}`~baybe.targets.numerical.NumericalTarget` class is the right choice.
 Optimization with targets of this type follows two basic rules:
 1. Targets are transformed as specified by their
-   {class}`~baybe.transformations.base.Transformation` (with no transformation
-   defined being equivalent to the identity transformation).
+   {class}`~baybe.transformations.base.Transformation`, with no transformation
+   defined being equivalent to the identity transformation.
 2. Whenever an optimization direction is required (i.e., when the context is *not*
    [active learning](/userguide/active_learning)), the transformed targets are assumed to
    be **maximized**.
