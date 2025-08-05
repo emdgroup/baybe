@@ -204,7 +204,7 @@ def simulate_experiment(
             cumbest_col = f"{target.name}_CumBest"
 
             # Collect raw and transformed measurements
-            arr = np.array(results[measurement_col].tolist())
+            raw = np.array(results[measurement_col].tolist())
             transformed = results[measurement_col].apply(
                 lambda x: target.transform(pd.Series(x)).tolist()
             )
@@ -213,12 +213,12 @@ def simulate_experiment(
             iterbest_idx = transformed.apply(np.argmax)
             iterbest_transformed = transformed.apply(np.max)
             results[iterbest_col] = np.take_along_axis(
-                arr, iterbest_idx.values[:, None], axis=1
+                raw, iterbest_idx.values[:, None], axis=1
             )
 
             # Compute the cumulative best
             cumargmax = _cumargmax(iterbest_transformed.values)
-            results[cumbest_col] = np.take_along_axis(arr, cumargmax[:, None], axis=0)
+            results[cumbest_col] = np.take_along_axis(raw, cumargmax[:, None], axis=0)
 
         return results
 
