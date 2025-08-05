@@ -23,13 +23,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.2215591"
-     inkscape:cx="479.71481"
-     inkscape:cy="246.81573"
-     inkscape:window-width="1512"
-     inkscape:window-height="916"
-     inkscape:window-x="0"
-     inkscape:window-y="38"
+     inkscape:zoom="1.7275454"
+     inkscape:cx="222.2807"
+     inkscape:cy="126.76946"
+     inkscape:window-width="3440"
+     inkscape:window-height="1387"
+     inkscape:window-x="1512"
+     inkscape:window-y="25"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg19" />
   <defs
@@ -123,7 +123,7 @@
      fill="#0f69af"
      id="path2" />
   <path
-     d="M 6.70929,40.03 V 3.078"
+     d="M 9.3129053,40.03 V 3.078"
      marker-end="url(#ArrowWide)"
      stroke="#ffffff"
      stroke-width="0.21167"
@@ -153,7 +153,7 @@
      id="path17"
      style="fill:none" />
   <path
-     d="M 38.93886,16.34178 7.33437,39.42106"
+     d="M 32.981364,40.465482 6.1140846,7.8575794"
      fill="none"
      stroke="#ffdcb9"
      stroke-width=".37042"
@@ -161,36 +161,36 @@
      style="stroke-width:0.463015;stroke-dasharray:none"
      sodipodi:nodetypes="cc" />
   <text
-     x="9.5316734"
-     y="11.982858"
+     x="26.033998"
+     y="25.39534"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
      stroke-width="0.0805638"
      xml:space="preserve"
      id="text9"><tspan
-       x="9.5316734"
-       y="11.982858"
+       x="26.033998"
+       y="25.39534"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
        stroke="none"
        stroke-width="0.0805638"
        id="tspan9"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'">0 &lt; <tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
-   id="tspan23">a</tspan> &lt; 1</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
+         id="tspan23">a</tspan></tspan></text>
   <path
-     d="M 61.094581,39.890706 77.34656,11.56694"
+     d="M 55.279904,39.890706 76.08032,10.429831"
      fill="none"
      stroke="#ffdcb9"
      stroke-width=".37042"
      id="path16"
-     style="stroke-width:0.46299454;stroke-dasharray:none"
+     style="stroke-width:0.462995;stroke-dasharray:none"
      sodipodi:nodetypes="cc" />
   <text
-     x="9.7871771"
-     y="7.6188569"
+     x="12.314582"
+     y="5.7185006"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
@@ -198,8 +198,8 @@
      xml:space="preserve"
      id="text18"
      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Serif Upright Italic';-inkscape-font-specification:'CMU Serif Upright Italic, '"><tspan
-       x="9.7871771"
-       y="7.6188569"
+       x="12.314582"
+       y="5.7185006"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
@@ -211,7 +211,7 @@
          id="tspan20">shift_first = False</tspan></tspan></text>
   <text
      x="52.134197"
-     y="6.969687"
+     y="5.7185006"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
@@ -220,7 +220,7 @@
      id="text2"
      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Serif Upright Italic';-inkscape-font-specification:'CMU Serif Upright Italic, '"><tspan
        x="52.134197"
-       y="6.969687"
+       y="5.7185006"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
@@ -231,15 +231,15 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete';stroke-width:0.0805638"
          id="tspan1">shift_first = True</tspan></tspan></text>
   <path
-     d="M 17.428729,26.386251 H 6.7140615"
+     d="M 6.306559,11.913977 V 31.949042"
      marker-end="url(#marker50)"
      marker-start="url(#Stop)"
      stroke-dashoffset="0.71966"
      id="path26"
-     style="stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
+     style="stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423326;stroke-dashoffset:0;stroke-opacity:1"
      sodipodi:nodetypes="cc" />
   <path
-     d="M 65.636692,26.38625 H 48.164498"
+     d="M 60.917148,26.386249 H 48.13424"
      marker-end="url(#marker50)"
      marker-start="url(#Stop)"
      stroke-dashoffset="0.71966"
@@ -247,16 +247,16 @@
      style="stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
      sodipodi:nodetypes="cc" />
   <text
-     x="52.124306"
-     y="11.982858"
+     x="76.531372"
+     y="18.719267"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
      stroke-width="0.0805638"
      xml:space="preserve"
      id="text19"><tspan
-       x="52.124306"
-       y="11.982858"
+       x="76.531372"
+       y="18.719267"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
@@ -264,32 +264,30 @@
        stroke-width="0.0805638"
        id="tspan19"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"><tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
-   id="tspan5">a</tspan> &gt; 1</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
+         id="tspan5">a</tspan></tspan></text>
   <text
-     x="9.7979813"
-     y="23.960442"
+     x="2.3174658"
+     y="22.349535"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
      stroke-width="0.0805638"
      xml:space="preserve"
      id="text21"><tspan
-       x="9.7979813"
-       y="23.960442"
+       x="2.3174658"
+       y="22.349535"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
        stroke="none"
        stroke-width="0.0805638"
        id="tspan21"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'">-<tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
-   id="tspan3">b<tspan
-   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"
-   id="tspan4">/</tspan>a</tspan></tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'"
+         id="tspan3">b</tspan></tspan></text>
   <text
-     x="54.877773"
+     x="53.173176"
      y="23.960442"
      fill="#abdfdb"
      font-size="3.37594px"
@@ -297,7 +295,7 @@
      stroke-width="0.0805638"
      xml:space="preserve"
      id="text22"><tspan
-       x="54.877773"
+       x="53.173176"
        y="23.960442"
        fill="#abdfdb"
        font-family="Arial"
@@ -310,10 +308,64 @@
    id="tspan26">b</tspan></tspan></text>
   <path
      style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423329;stroke-dashoffset:0;stroke-opacity:1"
-     d="m 65.653572,26.449854 v 5.382563"
+     d="m 60.915617,26.449854 v 5.382563"
      id="path27" />
   <path
      style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
-     d="m 17.430159,26.4273 v 5.59978"
+     d="m 74.215669,13.29756 v 9.389519"
+     id="path27-9" />
+  <path
+     style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
+     d="M 6.28448,11.913348 H 9.4816591"
      id="path28" />
+  <path
+     style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
+     d="M 74.324444,22.296103 H 67.736576"
+     id="path5" />
+  <path
+     style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
+     d="m 23.825126,19.973632 v 9.389519"
+     id="path6" />
+  <path
+     style="fill:none;stroke:#abdfdb;stroke-width:0.211664;stroke-dasharray:0.211664, 0.423328;stroke-dashoffset:0;stroke-opacity:1"
+     d="M 23.933901,20.082039 H 16.408594"
+     id="path8" />
+  <text
+     x="18.324167"
+     y="18.243174"
+     fill="#abdfdb"
+     font-size="2.7774px"
+     stroke="#ffffff"
+     stroke-width="0.06628"
+     xml:space="preserve"
+     id="text16"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"><tspan
+       x="18.324167"
+       y="18.243174"
+       fill="#abdfdb"
+       font-family="Arial"
+       font-size="2.7774px"
+       stroke="none"
+       stroke-width="0.06628"
+       id="tspan16"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'">1.0</tspan></text>
+  <text
+     x="69.183434"
+     y="25.832773"
+     fill="#abdfdb"
+     font-size="2.7774px"
+     stroke="#ffffff"
+     stroke-width="0.06628"
+     xml:space="preserve"
+     id="text16-9"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'"><tspan
+       x="69.183434"
+       y="25.832773"
+       fill="#abdfdb"
+       font-family="Arial"
+       font-size="2.7774px"
+       stroke="none"
+       stroke-width="0.06628"
+       id="tspan16-7"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Concrete';-inkscape-font-specification:'CMU Concrete'">1.0</tspan></text>
 </svg>
