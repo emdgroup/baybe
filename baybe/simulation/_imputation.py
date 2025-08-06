@@ -27,6 +27,7 @@ def impute_target_values(
 
     Raises:
         ValueError: If the given imputation mode is not supported.
+        ValueError: If the lookup dataframe is missing columns for any of the targets.
     """
     names = [t.name for t in targets]
 
