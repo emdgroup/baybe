@@ -41,3 +41,6 @@ docs/_autosummary
 docs/_build
 docs/examples
 docs/sdk
+
+# Benchmark results
+*_result.json
