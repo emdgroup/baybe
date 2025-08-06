@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 _OUTPUT_NAME = "Desirability"
-"""The name of output column produced by the desirability transform."""
+"""The name of the output column produced by the desirability transform."""
 
 
 def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
