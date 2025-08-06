@@ -117,7 +117,7 @@ class Objective(ABC, SerialMixin):
         allow_missing: bool = False,
         allow_extra: bool = False,
     ) -> pd.DataFrame:
-        """Transform target values from experimental to computational representation.
+        """Evaluate the objective on the target columns of the given dataframe.
 
         Args:
             df: The dataframe to be transformed. The allowed columns of the dataframe
@@ -131,7 +131,7 @@ class Objective(ABC, SerialMixin):
                 will be ignored.
 
         Returns:
-            A corresponding dataframe with the targets in computational representation.
+            A dataframe containing the objective values for the given input dataframe.
         """
         return transform_target_columns(
             df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
