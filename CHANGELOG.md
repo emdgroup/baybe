@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `transformations` subpackage 
 - New `NumericalTarget` interface, including advanced machinery for defining and
-  manipulating target transformations based on the new `transformations` subpackage
+  manipulating target transformations based on the new `Transformation` class hierarchy
 - `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
   for reproducing the legacy `MATCH` modes
 - `normalize_ramp` convenience constructor to `NumericalTarget` for reproducing the
@@ -42,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
-
 
 ### Removed
 - Option to specify reference values for `add_fake_measurements`

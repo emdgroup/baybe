@@ -139,8 +139,14 @@ class NumericalTarget(Target, SerialMixin):
     def __add__(self, other: int | float) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=other))
 
+    def __sub__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(shift=-other))
+
     def __mul__(self, other: int | float) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(factor=other))
+
+    def __truediv__(self, other: int | float) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(factor=1 / other))
 
     @classmethod
     def from_modern_interface(
@@ -320,7 +326,7 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
-                details, see :class:`baybe.transformations.core.BellTransformation`.
+                details, see :class:`baybe.transformations.basic.BellTransformation`.
 
         Returns:
             The target with applied bell matching transformation.
@@ -360,7 +366,7 @@ class NumericalTarget(Target, SerialMixin):
 
         Args:
             name: The name of the target.
-            anchors: See :class:`baybe.transformations.core.SigmoidTransformation`.
+            anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.
 
         Returns:
             The target with applied sigmoid transformation.
@@ -398,11 +404,11 @@ class NumericalTarget(Target, SerialMixin):
             ),
         )
 
-    def invert(self) -> NumericalTarget:
-        """Apply an inversion transformation to the target.
+    def negate(self) -> NumericalTarget:
+        """Apply a negation transformation to the target.
 
         Returns:
-            The target with applied inversion transformation.
+            The target with applied negation transformation.
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 

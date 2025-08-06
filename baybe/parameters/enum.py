@@ -27,7 +27,7 @@ class CustomEncoding(ParameterEncoding):
 class SubstanceEncoding(ParameterEncoding):
     """Available encodings for substance parameters from `scikit-fingerprints`_ package.
 
-    .. _scikit-fingerprints: https://scikit-fingerprints.github.io/scikit-fingerprints/
+    .. _scikit-fingerprints: https://scikit-fingerprints.readthedocs.io/
     """
 
     ATOMPAIR = "ATOMPAIR"

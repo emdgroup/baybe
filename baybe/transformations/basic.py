@@ -1,15 +1,14 @@
-"""Target transformations."""
+"""Basic transformations."""
 
 from __future__ import annotations
 
 import gc
 from collections.abc import Callable, Sequence
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Factory, define, field
-from attrs.validators import deep_iterable, ge, gt, instance_of, is_callable, min_len
+from attrs.validators import gt, is_callable
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -18,8 +17,6 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.transformations.base import MonotonicTransformation, Transformation
-from baybe.transformations.utils import compress_transformations
-from baybe.utils.basic import compose
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 from baybe.utils.validation import finite_float
@@ -31,36 +28,6 @@ if TYPE_CHECKING:
 
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
-
-
-@define
-class ChainedTransformation(Transformation):
-    """A chained transformation composing several individual transformations."""
-
-    transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
-        validator=[
-            min_len(1),
-            deep_iterable(member_validator=instance_of(Transformation)),
-        ],
-    )
-    """The transformations to be composed."""
-
-    @override
-    def __eq__(self, other: Any, /) -> bool:
-        # A chained transformation with only one element is equivalent to that element
-        if len(self.transformations) == 1:
-            return self.transformations[0] == other
-        return super().__eq__(other)
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
-
-    @override
-    def __call__(self, x: Tensor, /) -> Tensor:
-        return compose(*(t.__call__ for t in self.transformations))(x)
 
 
 @define
@@ -146,7 +113,14 @@ class AffineTransformation(MonotonicTransformation):
             and self.shift == 0.0
         ):
             return True
-        return super().__eq__(other)
+
+        # TODO: https://github.com/python-attrs/attrs/issues/1452
+        return (
+            super().__eq__(other)
+            and isinstance(other, AffineTransformation)
+            and self.factor == other.factor
+            and self.shift == other.shift
+        )
 
     def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
         """Convert to BoTorch posterior transform.
@@ -414,10 +388,7 @@ class ExponentialTransformation(MonotonicTransformation):
 class PowerTransformation(Transformation):
     """A transformation computing the power."""
 
-    # TODO: Could be generalized to floats but then requires runtime checks on the input
-    #   tensor exponents to avoid producing complex numbers and adjusting the image
-    #   computation logic
-    exponent: int = field(validator=[instance_of(int), ge(2)])
+    exponent: int = field(converter=float, validator=finite_float)
     """The exponent of the power transformation."""
 
     @override
@@ -432,6 +403,11 @@ class PowerTransformation(Transformation):
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
+        if not (int(self.exponent) == self.exponent) and any(x < 0):
+            raise RuntimeError(
+                "For non-integer exponents, the provided input tensor must contain "
+                "non-negative elements only."
+            )
         return x.pow(self.exponent)
 
 
