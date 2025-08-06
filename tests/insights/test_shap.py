@@ -118,6 +118,7 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         if use_comp_rep:
             df = campaign.searchspace.transform(df)
         shap_explanations = shap_insight.explain(df)
+        assert len(shap_explanations) == campaign.objective._n_models
         assert isinstance(shap_explanations, tuple)
         assert is_all_instance(shap_explanations, shap.Explanation)
 
