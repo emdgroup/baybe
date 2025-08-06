@@ -101,7 +101,7 @@ class DesirabilityObjective(Objective):
     as_pre_transformation: bool = field(
         default=False, validator=instance_of(bool), kw_only=True
     )
-    """Controls if the desirability transform is applied as a pre-transformation."""
+    """Controls if the desirability computation is applied as a pre-transformation."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
