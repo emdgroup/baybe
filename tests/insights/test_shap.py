@@ -122,19 +122,24 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         assert is_all_instance(shap_explanations, shap.Explanation)
 
 
+_desirabilty_targets = [
+    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
+    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
+]
+
+
 @mark.slow
 @mark.parametrize(
     "objective",
     [
         param(SingleTargetObjective(NumericalTarget("t1", "MAX")), id="single"),
         param(
-            DesirabilityObjective(
-                (
-                    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
-                    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
-                )
-            ),
-            id="desirability",
+            DesirabilityObjective(_desirabilty_targets, as_pre_transformation=False),
+            id="desirability_post",
+        ),
+        param(
+            DesirabilityObjective(_desirabilty_targets, as_pre_transformation=True),
+            id="desirability_pre",
         ),
         param(
             ParetoObjective(
