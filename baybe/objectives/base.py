@@ -61,13 +61,13 @@ class Objective(ABC, SerialMixin):
 
     @property
     @abstractmethod
-    def outputs(self) -> tuple[str, ...]:
+    def output_names(self) -> tuple[str, ...]:
         """The names of the outputs of the objective."""
 
     @property
     def n_outputs(self) -> int:
         """The number of outputs of the objective."""
-        return len(self.outputs)
+        return len(self.output_names)
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""
