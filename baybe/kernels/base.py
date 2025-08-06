@@ -6,8 +6,8 @@ import gc
 from abc import ABC
 from typing import TYPE_CHECKING, Any
 
-from attrs import define
 import gpytorch
+from attrs import define
 from torch import Tensor
 
 from baybe.exceptions import UnmatchedAttributeError
@@ -119,31 +119,71 @@ class Kernel(ABC, SerialMixin):
 
 @define(frozen=True)
 class ProjectionKernel(Kernel, ABC):
-    """
-    A kernel that performs random projection to reduce dimensionality before
-    applying the underlying kernel computation.
-    """
+    """A random projection kernel for dimensionality reduction."""
+
     base_kernel: Kernel
+    """The underlying kernel to apply after projection"""
+
     proj_dim: int
+    """Target dimensionality"""
 
-    def to_gpytorch(self, *args, **kwargs):
-        import torch
-        gpytorch_kernel = self.base_kernel.to_gpytorch(*args, **kwargs)
+    learn_projection: bool = False
+    """Learn the projection matrix"""
 
-        # generate gaussian JL projection matrix
-        A = torch.randn(self.proj_dim, gpytorch_kernel.ard_num_dims) / (self.proj_dim ** 0.5)
-        return GPytorchProjectionKernel(gpytorch_kernel, A)
+    def to_gpytorch(
+        self,
+        *,
+        ard_num_dims: int | None = None,
+        batch_shape: torch.Size | None = None,
+        active_dims: tuple[int, ...] | None = None,
+    ):
+        """Create the gpytorch representation of the projected kernel."""
+        gpytorch_kernel = self.base_kernel.to_gpytorch(ard_num_dims=self.proj_dim)
+        return GPytorchProjectionKernel(
+            gpytorch_kernel,
+            proj_dim=self.proj_dim,
+            learn_projection=self.learn_projection,
+        )
 
 
 class GPytorchProjectionKernel(gpytorch.kernels.Kernel):
-    """GPyTorch implementation of projection kernel"""
-    base_kernel: base_kernel
-    proj_matrix: torch.Tensor
+    """GPyTorch implementation of projection kernel."""
+
+    def __init__(
+        self,
+        base_kernel: gpytorch.kernels.Kernel,
+        proj_dim: int,
+        learn_projection: bool = False,
+    ):
+        super().__init__()
+
+        self.base_kernel = base_kernel
+        self.proj_dim = proj_dim
+        self.learn_projection = learn_projection
+        self._initialized = False
 
     def forward(self, x1: Tensor, x2: Tensor, **kwargs):
-        x1_proj = torch.matmul(x1, self.proj_matrix.t())  # [N, proj_dim]
-        x2_proj = torch.matmul(x2, self.proj_matrix.t())  # [M, proj_dim]
+        """Calculate projection matrix and apply in kernel computation."""
+        import torch
 
+        if not self._initialized:
+            input_dim = x1.shape[-1]
+            proj_matrix = torch.randn(
+                input_dim, self.proj_dim, device=x1.device, dtype=x1.dtype
+            ) / (self.proj_dim**0.5)
+
+            if self.learn_projection:
+                self.register_parameter("proj_matrix", torch.nn.Parameter(proj_matrix))
+            else:
+                self.register_buffer("proj_matrix", proj_matrix)
+
+            self._initialized = True
+
+        # [N, input_dim] @ [input_dim, proj_dim] -> [N, proj_dim]
+        x1_proj = torch.matmul(x1, self.proj_matrix)
+
+        # [M, input_dim] @ [input_dim, proj_dim] -> [M, proj_dim]
+        x2_proj = torch.matmul(x2, self.proj_matrix)
         return self.base_kernel(x1_proj, x2_proj, **kwargs)
 
 
