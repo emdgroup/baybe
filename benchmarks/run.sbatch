@@ -7,8 +7,8 @@
 #SBATCH -n 1
 #SBATCH --mem=10G #Memory required
 #SBATCH -t 23:00:00 #Job runtime
-#SBATCH --nice=0
-#SBATCH --nodelist=stdg22 # Specify the node to run on
+#SBATCH --nice=2
+#SBATCH --nodelist=stdg25 # Specify the node to run on
 
 
 while getopts p:e: flag
@@ -19,8 +19,15 @@ do
     esac
 done
 
+source $HOME/.bashrc
+
 cd $path
 
 conda activate $env
 
-python -m benchmarks --name $SLURM_NODELIST
+name="$SLURM_NODELIST"_"$RANDOM"
+echo $name
+
+python -m benchmarks --name $name
+
+echo "FINISHED!"

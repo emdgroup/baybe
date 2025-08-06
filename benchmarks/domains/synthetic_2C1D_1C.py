@@ -108,8 +108,8 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=5,
-    n_doe_iterations=40,
-    n_mc_iterations=100,
+    n_doe_iterations=3,
+    n_mc_iterations=1,
 )
 
 synthetic_2C1D_1C_benchmark = ConvergenceBenchmark(
