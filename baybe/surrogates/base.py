@@ -375,6 +375,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 if stat == "std":
                     vals = torch.sqrt(vals)
 
+                # Enforce a consistent shape
+                # https://github.com/pytorch/botorch/issues/2958
+                vals = vals.reshape((len(candidates), 1))
+
                 result[
                     [
                         f"{name}_{stat_name}"
