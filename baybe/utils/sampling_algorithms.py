@@ -31,11 +31,13 @@ def farthest_point_sampling(
             dimensionality of the points.
         n_samples: The total number of points to be selected.
         initialization: Determines how the first points are selected:
+
             * ``"farthest"``: The first two selected points are those with the
               largest distance. If only a single point is requested, a deterministic
               choice is made based on the point coordinates.
             * ``"random"``: The first point is selected uniformly at random.
             * Indices: Points corresponding to these indices will be pre-selected.
+
         random_tie_break: Determines if points are chosen deterministically or randomly
             in equidistant situations. If ``True``, a random point is selected from the
             candidates, otherwise the first point is selected. For non-equidistant
