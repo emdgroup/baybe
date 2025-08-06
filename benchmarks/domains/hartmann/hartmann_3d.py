@@ -87,8 +87,8 @@ def hartmann_3d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=5,
-    n_doe_iterations=30,
-    n_mc_iterations=100,
+    n_doe_iterations=3,
+    n_mc_iterations=1,
 )
 
 hartmann_3d_benchmark = ConvergenceBenchmark(

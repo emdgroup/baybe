@@ -17,30 +17,32 @@ from benchmarks.result import Result
 RUNS_IN_CI = "CI" in os.environ
 
 
-def save_benchmark_data(benchmark: Benchmark, result: Result) -> None:
+def save_benchmark_data(
+    benchmark: Benchmark, result: Result, name: str | None = None
+) -> None:
     """Save the benchmark data to the object storage."""
-    path_constructor = PathConstructor.from_result(result)
+    path_constructor = PathConstructor.from_result(result, name=name)
     persist_dict = benchmark.to_dict() | result.to_dict()
 
     object_storage = S3ObjectStorage() if RUNS_IN_CI else LocalFileObjectStorage()
     object_storage.write_json(persist_dict, path_constructor)
 
 
-def run_all_benchmarks() -> None:
+def run_all_benchmarks(name: str | None = None) -> None:
     """Run all benchmarks."""
     for benchmark in BENCHMARKS:
         result = benchmark()
-        save_benchmark_data(benchmark, result)
+        save_benchmark_data(benchmark, result, name=name)
 
 
-def run_benchmarks(benchmark_names: Collection[str]) -> None:
+def run_benchmarks(benchmark_names: Collection[str], name: str | None = None) -> None:
     """Run a subset based on the benchmark name."""
     for benchmark in BENCHMARKS:
         if benchmark.name not in benchmark_names:
             continue
 
         result = benchmark()
-        save_benchmark_data(benchmark, result)
+        save_benchmark_data(benchmark, result, name=name)
 
 
 def main() -> None:
@@ -49,13 +51,16 @@ def main() -> None:
     parser.add_argument(
         "--benchmark-list", nargs="+", help="List of benchmarks to run", default=None
     )
+    parser.add_argument(
+        "--name", help="Additional name to add to saved file", default=None
+    )
     args = parser.parse_args()
     if not args.benchmark_list:
-        run_all_benchmarks()
+        run_all_benchmarks(name=args.name)
         return
 
     benchmark_execute_set = set(args.benchmark_list)
-    run_benchmarks(benchmark_execute_set)
+    run_benchmarks(benchmark_execute_set, name=args.name)
 
 
 if __name__ == "__main__":

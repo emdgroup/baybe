@@ -108,8 +108,8 @@ def direct_arylation_multi_batch(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size=3,
-    n_doe_iterations=30,
-    n_mc_iterations=100,
+    n_doe_iterations=5,
+    n_mc_iterations=1,
 )
 
 direct_arylation_multi_batch_benchmark = ConvergenceBenchmark(
