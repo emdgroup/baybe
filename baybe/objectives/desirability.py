@@ -248,7 +248,9 @@ class DesirabilityObjective(Objective):
                 to_tensor(df[[t.name for t in targets]])
             )
 
-        return pd.DataFrame(transformed.numpy(), columns=self.outputs, index=df.index)
+        return pd.DataFrame(
+            transformed.numpy(), columns=self._modeled_quantity_names, index=df.index
+        )
 
     @override
     def transform(
