@@ -43,7 +43,7 @@ class ParetoObjective(Objective):
 
     @override
     @property
-    def outputs(self) -> tuple[str, ...]:
+    def output_names(self) -> tuple[str, ...]:
         return tuple(target.name for target in self.targets)
 
     @override

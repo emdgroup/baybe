@@ -53,7 +53,7 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def outputs(self) -> tuple[str, ...]:
+    def output_names(self) -> tuple[str, ...]:
         return (self._target.name,)
 
     @override

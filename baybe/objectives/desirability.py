@@ -164,7 +164,7 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def outputs(self) -> tuple[str, ...]:
+    def output_names(self) -> tuple[str, ...]:
         return (_OUTPUT_NAME,)
 
     @cached_property
@@ -319,7 +319,9 @@ class DesirabilityObjective(Objective):
                 to_tensor(df[[t.name for t in targets]])
             )
 
-        return pd.DataFrame(transformed.numpy(), columns=self.outputs, index=df.index)
+        return pd.DataFrame(
+            transformed.numpy(), columns=self.output_names, index=df.index
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
