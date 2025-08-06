@@ -27,6 +27,7 @@ class MHGPModel(Model):
 
     Args:
         input_dim: Dimensionality of the input space (excluding task feature).
+        numerical_stability: Flag whether to enable numerical stable predictions.
 
     Note:
         This is the basic implementation without numerical stability enhancements.
@@ -53,10 +54,12 @@ class MHGPModel(Model):
         >>> variance = posterior.variance
     """
 
-    def __init__(self, input_dim: int) -> None:
+    def __init__(self, input_dim: int, numerical_stability: bool) -> None:
         super().__init__()
         self.input_dim = input_dim
         """Input dimension excluding TaskParameter"""
+        self.numerical_stability = numerical_stability
+        """Whether to use numerically stable implementation."""
         self.task_feature: int | None = None
         """The index of the task descriptors in the data"""
         self.target_task: int | None = None
@@ -118,7 +121,7 @@ class MHGPModel(Model):
         return source_data, (X_target, Y_target)
 
     def meta_fit(
-        self, X: Tensor, Y: Tensor, task_feature: int = -1, target_task: int = 2
+        self, X: Tensor, Y: Tensor, task_feature: int = 0, target_task: int = 0
     ) -> None:
         """Fit source GPs sequentially on residuals.
 
@@ -136,6 +139,14 @@ class MHGPModel(Model):
         self.target_task = target_task
         # Extract source and target data
         source_data, _ = self._extract_task_data(X, Y, task_feature, target_task)
+
+        if len(source_data) == 0:
+            print(
+                "No source data was provided to train the model."
+                "MHGP will fall back to standard GP."
+            )
+        else:
+            print("Meta-fitting MHGP on source data.")
 
         for i, (X_source, Y_source) in enumerate(source_data):
             # Compute residuals from previous GPs
@@ -178,23 +189,33 @@ class MHGPModel(Model):
             X, Y, task_feature, target_task
         )
 
-        if len(self.source_gps) == 0:
-            residuals = Y_target.clone()
+        if X_target.shape[0] == 0:
+            print(
+                "No target data provided for fitting the model."
+                "The posterior will fall back to the last model in the stack."
+            )
+
         else:
-            residuals = Y_target.clone()
-            for gp in self.source_gps:
-                with torch.no_grad():
-                    pred_mean = gp.posterior(X_target).mean
-                    residuals = residuals - pred_mean.detach()
+            print("Fitting MHGP on target data")
 
-        # Ensure clean tensors
-        residuals = residuals.detach().clone()
-        X_target_clean = X_target.detach().clone()
+            if len(self.source_gps) == 0:
+                residuals = Y_target.clone()
+            else:
+                residuals = Y_target.clone()
+                for gp in self.source_gps:
+                    with torch.no_grad():
+                        pred_mean = gp.posterior(X_target).mean
+                        residuals = residuals - pred_mean.detach()
 
-        # Create and fit target GP
-        self.target_gp = SingleTaskGP(X_target_clean, residuals)
-        mll = ExactMarginalLogLikelihood(self.target_gp.likelihood, self.target_gp)
-        fit_gpytorch_mll(mll)
+            # Ensure clean tensors
+            residuals = residuals.detach().clone()
+            X_target_clean = X_target.detach().clone()
+
+            # Create and fit target GP
+            self.target_gp = SingleTaskGP(X_target_clean, residuals)
+
+            mll = ExactMarginalLogLikelihood(self.target_gp.likelihood, self.target_gp)
+            fit_gpytorch_mll(mll)
 
         self._fitted = True
 
@@ -369,86 +390,23 @@ class MHGPModel(Model):
                 gp_posterior = gp.posterior(X)
                 total_mean += gp_posterior.mean
 
-            # Add target GP prediction
-            target_posterior = self.target_gp.posterior(X)
-            total_mean = total_mean + target_posterior.mean
+            if self.target_gp is None:
+                print(
+                    "No target data provided."
+                    "Falling back to the last model in the stack for predictions."
+                )
+                covar_matrix = (
+                    self.source_gps[up_to_task_id - 1].posterior(X).covariance_matrix
+                )
 
-            # Apply numerical stability fixes (TransferGPBO style)
-            covar_matrix = target_posterior.covariance_matrix
+            else:
+                print("Target data was provided. Predicting from target GP.")
+                # Add target GP prediction
+                target_posterior = self.target_gp.posterior(X)
+                total_mean = total_mean + target_posterior.mean
 
-        else:
-            for task_id in range(up_to_task_id):
-                gp_posterior = self.source_gps[task_id].posterior(X)
-                total_mean += gp_posterior.mean
-
-            # Apply numerical stability fixes (TransferGPBO style)
-            covar_matrix = self.source_gps[up_to_task_id].posterior(X).covariance_matrix
-
-        return total_mean, covar_matrix
-
-
-class MHGPModelStable(MHGPModel):
-    """Numerically stable Multi-task Hierarchical Gaussian Process model.
-
-    This is an enhanced version of :class:`MHGPModel` that includes numerical
-    stability improvements to handle small datasets, ill-conditioned covariance
-    matrices, and other numerical issues that can arise in practice.
-
-    The stability enhancements include:
-    - Nearest positive-definite matrix computation for covariance matrices
-    - Positive definiteness checks during prediction
-
-    This version is recommended for production use, especially with small datasets
-    or when numerical stability is a concern.
-
-    Examples:
-        >>> import torch
-        >>>
-        >>> # Create model and fit with MultiTaskGP-like interface
-        >>> model = MHGPModelStable(input_dim=2)
-        >>>
-        >>> # X_multi includes task indices, Y contains all outputs
-        >>> X_multi = torch.tensor([[0.1, 0.2, 0], [0.3, 0.4, 0], [0.5, 0.6, 1]])
-        >>> Y = torch.tensor([[0.5], [0.7], [0.9]])
-        >>>
-        >>> model.meta_fit(X_multi, Y, task_feature=-1, target_task=1)
-        >>> model.fit(X_multi, Y, task_feature=-1, target_task=1)
-        >>>
-        >>> # Make predictions
-        >>> X_test = torch.tensor([[0.1, 0.4, 0], [0.5, 0.8, 1], [0.7, 0.8, 1]])
-        >>> posterior = model.posterior(X_test)
-        >>> mean = posterior.mean
-        >>> variance = posterior.variance
-    """
-
-    @override
-    def _predict_from_stack(
-        self, X: Tensor, up_to_task_id: int
-    ) -> tuple[Tensor, Tensor]:
-        """Predict using the stack up to the specified task ID.
-
-        Args:
-            X: Input features (without task indices).
-            up_to_task_id: Task ID to predict up to (inclusive).
-
-        Returns:
-            Tuple of (mean, variance) predictions.
-        """
-        # Sum predictions from source GPs up to the specified task
-        total_mean = torch.zeros(X.shape[0], 1, dtype=X.dtype, device=X.device)
-
-        # Check if we need to include target GP
-        if up_to_task_id == len(self.source_gps):
-            for gp in self.source_gps:
-                gp_posterior = gp.posterior(X)
-                total_mean += gp_posterior.mean
-
-            # Add target GP prediction
-            target_posterior = self.target_gp.posterior(X)
-            total_mean = total_mean + target_posterior.mean
-
-            # Apply numerical stability fixes (TransferGPBO style)
-            covar_matrix = target_posterior.covariance_matrix
+                # Apply numerical stability fixes (TransferGPBO style)
+                covar_matrix = target_posterior.covariance_matrix
 
         else:
             for task_id in range(up_to_task_id):
@@ -459,7 +417,7 @@ class MHGPModelStable(MHGPModel):
             covar_matrix = self.source_gps[up_to_task_id].posterior(X).covariance_matrix
 
         # Check if covariance is positive definite, fix if not
-        if not is_pd(covar_matrix):
+        if not is_pd(covar_matrix) and self.numerical_stability:
             covar_matrix = nearest_pd(covar_matrix)
 
         return total_mean, covar_matrix

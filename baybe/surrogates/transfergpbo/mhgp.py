@@ -7,7 +7,7 @@ from botorch.models.model import Model
 from typing_extensions import override
 
 from baybe.surrogates.transfergpbo.base import TransferGPBOSurrogate
-from baybe.surrogates.transfergpbo.models import MHGPModel, MHGPModelStable
+from baybe.surrogates.transfergpbo.models import MHGPModel
 
 
 @define
@@ -114,9 +114,9 @@ class MHGPGaussianProcessSurrogate(TransferGPBOSurrogate):
         Returns:
             MHGPModelStable if numerical_stability=True, otherwise MHGPModel.
         """
-        if self.numerical_stability:
-            return MHGPModelStable(input_dim=self.input_dim)
-        return MHGPModel(input_dim=self.input_dim)
+        return MHGPModel(
+            input_dim=self.input_dim, numerical_stability=self.numerical_stability
+        )
 
     def __str__(self) -> str:
         """Return string representation of the MHGP surrogate."""
