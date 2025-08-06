@@ -1,5 +1,6 @@
 """Recommenders based on sampling."""
 
+import os
 from enum import Enum
 from typing import ClassVar
 
@@ -12,8 +13,13 @@ from typing_extensions import override
 from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
+from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
+
+FPSAMPLE_ACTIVE = FPSAMPLE_INSTALLED and not strtobool(
+    os.environ.get("BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION", "False")
+)
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -91,11 +97,13 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @initialization.validator
     def _validate_initialization(self, _, value):
-        if FPSAMPLE_INSTALLED and value is not FPSInitialization.FARTHEST:
+        if FPSAMPLE_ACTIVE and value is not FPSInitialization.FARTHEST:
             raise ValueError(
                 f"{self.__class__.__name__} is using the optional 'fpsample' "
                 f"package, which does not support '{self.initialization}'. "
-                f"Please choose a supported initialization method."
+                f"Please choose a supported initialization method or bypass `fpsmaple` "
+                f"usage by setting the environment variable "
+                f"BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION."
             )
 
     @random_tie_break.default
@@ -104,12 +112,14 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.validator
     def _validate_random_tie_break(self, _, value):
-        if FPSAMPLE_INSTALLED and value:
+        if FPSAMPLE_ACTIVE and value:
             raise ValueError(
                 f"'{self.__class__.__name__}' is using the optional 'fpsample' "
                 f"package, which does not support random tie-breaking. "
                 f"To disable the mechanism, set "
-                f"'{fields(self.__class__).random_tie_break.name}=False'."
+                f"'{fields(self.__class__).random_tie_break.name}=False' or bypass "
+                f"`fpsmaple` usage by setting the environment variable "
+                f"BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION."
             )
 
     @override
@@ -130,7 +140,7 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        if FPSAMPLE_INSTALLED:
+        if FPSAMPLE_ACTIVE:
             from baybe._optional.fpsample import fps_sampling
 
             ilocs = fps_sampling(

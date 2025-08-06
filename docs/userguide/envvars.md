@@ -149,9 +149,24 @@ results = simulate_scenarios(
 )
 ~~~
 
-```{admonition} Experimental Feature -->
+```{admonition} Experimental Feature
 :class: warning
 While parallel execution usually speeds up computation significantly, the performance
 impact can vary depending on the machine and simulation configuration. In some cases, it
 might even lead to longer run times due to overhead costs.
+```
+
+## FPS Sampling Implementation
+The optional package `fpsample` can be installed, e.g. by specifying the optional
+dependency group in `pip install baybe[extras]`. This prompts BayBE to use an 
+implementation of [farthest point sampling](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender)
+which is far more memory-efficient and scalable. This implementation, however, requires
+setting [`FPSRecommender.initialization="farthest"`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.initialization)
+and [`FPSRecommender.random_tie_break=False`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.random_tie_break).
+
+In case you want to use other settings while having `fpsample` installed, you can
+bypass the use of `fpsample` via an environment variable:
+
+```bash
+BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION="True"  # Do not use `fpsample` even if installed
 ```
