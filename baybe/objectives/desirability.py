@@ -14,6 +14,7 @@ from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
@@ -237,8 +238,16 @@ class DesirabilityObjective(Objective):
                 df, allow_missing=allow_missing, allow_extra=allow_extra
             )
 
+        if allow_missing:
+            raise IncompatibilityError(
+                f"Setting 'allow_missing=True' is not supported for "
+                f"'{self.__class__.__name__}.{self._pre_transform.__name__}' "
+                f"when 'as_pre_transformation=True' since the involved "
+                f"desirability computation requires all target columns to be present."
+            )
+
         targets = get_transform_objects(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+            df, self.targets, allow_missing=False, allow_extra=allow_extra
         )
 
         import torch
@@ -292,8 +301,15 @@ class DesirabilityObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
+        if allow_missing:
+            raise IncompatibilityError(
+                f"Setting 'allow_missing=True' is not supported for "
+                f"'{self.__class__.__name__}.{self.transform.__name__}' since "
+                f"desirability computation requires all target columns to be present."
+            )
+
         targets = get_transform_objects(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+            df, self.targets, allow_missing=False, allow_extra=allow_extra
         )
 
         import torch
