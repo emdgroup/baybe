@@ -241,9 +241,10 @@ class DesirabilityObjective(Objective):
         if allow_missing:
             raise IncompatibilityError(
                 f"Setting 'allow_missing=True' is not supported for "
-                f"'{self.__class__.__name__}.{self._pre_transform.__name__}' "
-                f"when 'as_pre_transformation=True' since the involved "
-                f"desirability computation requires all target columns to be present."
+                f"'{self.__class__.__name__}.{self._pre_transform.__name__}' when "
+                f"'{fields(self.__class__).as_pre_transformation.name}=True' since "
+                f"the involved desirability computation requires all target columns "
+                f"to be present."
             )
 
         targets = get_transform_objects(
