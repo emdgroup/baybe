@@ -200,6 +200,13 @@ class DesirabilityObjective(Objective):
             1. Starting from the raw target values
             2. Applying the individual target transformations
             3. Scalarizing the transformed values into a desirability score
+
+        This differs from the regular :meth:`to_botorch` in that the entire
+        transformation step is represented end-to-end by the returned objective, whereas
+        the former only captures the part of the transformation starting from the point
+        where the surrogate model(s) are applied (i.e. which may or may not include the
+        desirability scalarization step, depending on the  chosen`as_pre_transformation`
+        setting).
         """
         import torch
         from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
