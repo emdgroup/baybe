@@ -157,7 +157,7 @@ class DesirabilityObjective(Objective):
     @property
     def _modeled_quantity_names(self) -> tuple[str, ...]:
         return (
-            (_OUTPUT_NAME,)
+            self.output_names
             if self.as_pre_transformation
             else tuple(t.name for t in self.targets)
         )
