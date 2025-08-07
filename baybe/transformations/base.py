@@ -98,7 +98,7 @@ class Transformation(SerialMixin, ABC):
         return NotImplemented
 
     def __or__(self, other: Transformation) -> Transformation:
-        """Chain the transformation with another one."""
+        """Chain the transformation with another one. Inspired by the Unix "pipe"."""
         from baybe.transformations import (
             AffineTransformation,
             ChainedTransformation,
