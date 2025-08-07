@@ -168,5 +168,5 @@ In case you want to use other settings while having `fpsample` installed, you ca
 bypass the use of `fpsample` via an environment variable:
 
 ```bash
-BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION="True"  # Do not use `fpsample` even if installed
+BAYBE_USE_FPSAMPLE="False"  # Do not use `fpsample` even if installed
 ```

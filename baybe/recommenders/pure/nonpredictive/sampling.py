@@ -17,9 +17,7 @@ from baybe.utils.boolean import strtobool
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
 
-FPSAMPLE_ACTIVE = FPSAMPLE_INSTALLED and not strtobool(
-    os.environ.get("BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION", "False")
-)
+FPSAMPLE_USED = strtobool(os.environ.get("BAYBE_USE_FPSAMPLE", str(FPSAMPLE_INSTALLED)))
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -97,13 +95,13 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @initialization.validator
     def _validate_initialization(self, _, value):
-        if FPSAMPLE_ACTIVE and value is not FPSInitialization.FARTHEST:
+        if FPSAMPLE_USED and value is not FPSInitialization.FARTHEST:
             raise ValueError(
                 f"{self.__class__.__name__} is using the optional 'fpsample' "
                 f"package, which does not support '{self.initialization}'. "
                 f"Please choose a supported initialization method or bypass `fpsmaple` "
                 f"usage by setting the environment variable "
-                f"BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION."
+                f"BAYBE_USE_FPSAMPLE."
             )
 
     @random_tie_break.default
@@ -112,14 +110,14 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.validator
     def _validate_random_tie_break(self, _, value):
-        if FPSAMPLE_ACTIVE and value:
+        if FPSAMPLE_USED and value:
             raise ValueError(
                 f"'{self.__class__.__name__}' is using the optional 'fpsample' "
                 f"package, which does not support random tie-breaking. "
                 f"To disable the mechanism, set "
                 f"'{fields(self.__class__).random_tie_break.name}=False' or bypass "
                 f"`fpsmaple` usage by setting the environment variable "
-                f"BAYBE_ENFORCE_FALLBACK_FPS_IMPLEMENTATION."
+                f"BAYBE_USE_FPSAMPLE."
             )
 
     @override
@@ -140,7 +138,7 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        if FPSAMPLE_ACTIVE:
+        if FPSAMPLE_USED:
             from baybe._optional.fpsample import fps_sampling
 
             ilocs = fps_sampling(

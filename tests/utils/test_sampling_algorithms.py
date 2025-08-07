@@ -13,7 +13,7 @@ from pytest import param
 from sklearn.metrics import pairwise_distances
 
 from baybe.recommenders.pure.nonpredictive.sampling import (
-    FPSAMPLE_ACTIVE,
+    FPSAMPLE_USED,
     FPSInitialization,
     FPSRecommender,
 )
@@ -120,8 +120,8 @@ def test_farthest_point_sampling_pathological_case():
 
 
 @pytest.mark.skipif(
-    not FPSAMPLE_ACTIVE,
-    reason="Optional 'fpsample' package not active or not installed.",
+    not FPSAMPLE_USED,
+    reason="Optional 'fpsample' package not used.",
 )
 @pytest.mark.parametrize(
     ("init", "tie_break", "match"),
@@ -218,7 +218,7 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
 
 def test_fps_recommender_utility_call(searchspace):
     """FPSRecommender calls expected underlying utility."""
-    if FPSAMPLE_ACTIVE:
+    if FPSAMPLE_USED:
         context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
     else:
         context = patch(
@@ -234,8 +234,8 @@ def test_fps_recommender_utility_call(searchspace):
 
 
 @pytest.mark.skipif(
-    not FPSAMPLE_ACTIVE,
-    reason="Optional 'fpsample' package not active or not installed.",
+    not FPSAMPLE_USED,
+    reason="Optional 'fpsample' package not used.",
 )
 def test_fps_recommender_result_consistency(searchspace):
     """FPS utilities return consistent results."""
