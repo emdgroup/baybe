@@ -74,7 +74,7 @@ class Transformation(SerialMixin, ABC):
         return self | AbsoluteTransformation()
 
     def __add__(self, other: Transformation | int | float) -> Transformation:
-        """Add a constant or the output from another transformation."""
+        """Add a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import AdditiveTransformation
 
@@ -86,7 +86,7 @@ class Transformation(SerialMixin, ABC):
         return NotImplemented
 
     def __mul__(self, other: Transformation | int | float) -> Transformation:
-        """Multiply with a constant or the output from another transformation."""
+        """Multiply with a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import MultiplicativeTransformation
 
