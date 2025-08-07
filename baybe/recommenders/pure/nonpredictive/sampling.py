@@ -71,7 +71,13 @@ class FPSInitialization(Enum):
 
 @define
 class FPSRecommender(NonPredictiveRecommender):
-    """An initial recommender that selects candidates via Farthest Point Sampling."""
+    """An initial recommender that selects candidates via Farthest Point Sampling.
+
+    If the optional package `fpsample` is installed, it's implementation will be used,
+    otherwise a custom fallback implementation is used. The use of a specific
+    implementation can be enforced by setting the environment variable
+    'BAYBE_USE_FPSAMPLE'.
+    """
 
     # Class variables
     compatibility: ClassVar[SearchSpaceType] = SearchSpaceType.DISCRETE
@@ -82,7 +88,7 @@ class FPSRecommender(NonPredictiveRecommender):
     )
     """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
-    If the optional package 'fpsample' is installed, only
+    If the optional package 'fpsample' is used, only
     :attr:`~baybe.recommenders.pure.nonpredictive.sampling.FPSInitialization.FARTHEST`
     is supported.
     """
@@ -90,7 +96,7 @@ class FPSRecommender(NonPredictiveRecommender):
     random_tie_break: bool = field(validator=instance_of(bool), kw_only=True)
     """See :func:`~baybe.utils.sampling_algorithms.farthest_point_sampling`.
 
-    If the optional package 'fpsample' is installed, only ``False`` is supported.
+    If the optional package 'fpsample' is used, only ``False`` is supported.
     """
 
     @initialization.validator
@@ -99,7 +105,7 @@ class FPSRecommender(NonPredictiveRecommender):
             raise ValueError(
                 f"{self.__class__.__name__} is using the optional 'fpsample' "
                 f"package, which does not support '{self.initialization}'. "
-                f"Please choose a supported initialization method or bypass `fpsmaple` "
+                f"Please choose a supported initialization method or bypass `fpsample` "
                 f"usage by setting the environment variable "
                 f"BAYBE_USE_FPSAMPLE."
             )
@@ -116,7 +122,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 f"package, which does not support random tie-breaking. "
                 f"To disable the mechanism, set "
                 f"'{fields(self.__class__).random_tie_break.name}=False' or bypass "
-                f"`fpsmaple` usage by setting the environment variable "
+                f"`fpsample` usage by setting the environment variable "
                 f"BAYBE_USE_FPSAMPLE."
             )
 
