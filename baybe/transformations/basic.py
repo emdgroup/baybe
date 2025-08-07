@@ -1,15 +1,14 @@
-"""Target transformations."""
+"""Basic transformations."""
 
 from __future__ import annotations
 
 import gc
 from collections.abc import Callable, Sequence
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Factory, define, field
-from attrs.validators import deep_iterable, ge, gt, instance_of, is_callable, min_len
+from attrs.validators import ge, gt, instance_of, is_callable
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -18,8 +17,6 @@ from baybe.serialization.core import (
     unstructure_base,
 )
 from baybe.transformations.base import MonotonicTransformation, Transformation
-from baybe.transformations.utils import compress_transformations
-from baybe.utils.basic import compose
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 from baybe.utils.validation import finite_float
@@ -31,36 +28,6 @@ if TYPE_CHECKING:
 
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
-
-
-@define
-class ChainedTransformation(Transformation):
-    """A chained transformation composing several individual transformations."""
-
-    transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
-        validator=[
-            min_len(1),
-            deep_iterable(member_validator=instance_of(Transformation)),
-        ],
-    )
-    """The transformations to be composed."""
-
-    @override
-    def __eq__(self, other: Any, /) -> bool:
-        # A chained transformation with only one element is equivalent to that element
-        if len(self.transformations) == 1:
-            return self.transformations[0] == other
-        return super().__eq__(other)
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
-
-    @override
-    def __call__(self, x: Tensor, /) -> Tensor:
-        return compose(*(t.__call__ for t in self.transformations))(x)
 
 
 @define
