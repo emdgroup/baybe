@@ -126,6 +126,22 @@ class Campaign(SerialMixin):
     When passing a :class:`baybe.targets.base.Target`, conversion to
     :class:`baybe.objectives.single.SingleTargetObjective` is automatically applied."""
 
+    @objective.validator
+    def _validate_objective(  # noqa: DOC101, DOC103
+        self, _: Any, value: Objective | None
+    ) -> None:
+        """Validate no overlapping names between targets and parameters."""
+        if value is None:
+            return
+
+        p_names = {p.name for p in self.searchspace.parameters}
+        t_names = {t.name for t in value.targets}
+        if overlap := p_names.intersection(t_names):
+            raise ValueError(
+                f"Parameters and targets cannot have overlapping names. "
+                f"The following names appear in both collections: {overlap}."
+            )
+
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
         validator=instance_of(RecommenderProtocol),

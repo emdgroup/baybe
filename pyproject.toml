@@ -93,7 +93,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.3.0", #  `uv lock` (for lockfiles) is stable since 0.3.0: https://github.com/astral-sh/uv/issues/2679#event-13950215962
+    "uv>=0.7.0",
 ]
 
 insights = [
@@ -112,6 +112,7 @@ docs = [
     "sphinx-paramlinks==0.6.0",
     "sphinx-design==0.6.1",
     "sphinxcontrib-bibtex>=2.6.2",
+    "tqdm",
 ]
 
 examples = [
@@ -126,11 +127,11 @@ examples = [
 ]
 
 lint = [
-    "flake8==7.2.0", # see DEV TOOLS NOTE
-    "pre-commit==3.7.1", # see DEV TOOLS NOTE
+    "flake8==7.3.0", # see DEV TOOLS NOTE
+    "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
-    "pyupgrade==3.19.1", # see DEV TOOLS NOTE
-    "ruff==0.11.5", # see DEV TOOLS NOTE
+    "pyupgrade==3.20.0", # see DEV TOOLS NOTE
+    "ruff==0.12.2", # see DEV TOOLS NOTE
 ]
 
 mypy = [

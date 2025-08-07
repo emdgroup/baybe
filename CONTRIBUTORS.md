@@ -27,8 +27,10 @@
 - Julian Streibel (Merck Life Science KGaA, Darmstadt, Germany):\
   Bernoulli multi-armed bandit and Thompson sampling
 - Karin Hrovatin (Merck KGaA, Darmstadt, Germany):\
-  `scikit-fingerprints` support
+  `scikit-fingerprints` support, API overview diagram
 - Fabian Liebig (Merck KGaA, Darmstadt, Germany):\
   Benchmarking structure and persistence capabilities for benchmarking results
 - Alexander Wieczorek (Swiss Federal Institute for Materials Science and Technology, Dübendorf, Switzerland):\
   SHAP explainers for insights
+- Tobias Plötz (Merck KGaA, Darmstadt, Germany):\
+  Metadata system

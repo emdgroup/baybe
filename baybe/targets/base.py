@@ -16,6 +16,7 @@ from baybe.serialization import (
     get_base_structure_hook,
     unstructure_base,
 )
+from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
     from baybe.objectives import SingleTargetObjective
@@ -30,6 +31,23 @@ class Target(ABC, SerialMixin):
 
     name: str = field()
     """The name of the target."""
+
+    metadata: MeasurableMetadata = field(
+        factory=MeasurableMetadata,
+        converter=lambda x: to_metadata(x, MeasurableMetadata),
+        kw_only=True,
+    )
+    """Optional metadata containing description, unit, and other information."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the target."""
+        return self.metadata.description
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of measurement for the target."""
+        return self.metadata.unit
 
     def to_objective(self) -> SingleTargetObjective:
         """Create a single-task objective from the target."""
