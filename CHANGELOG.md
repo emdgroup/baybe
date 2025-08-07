@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
+- Random seed context is correctly set within benchmarks.
 
 ## [0.13.2] - 2025-07-09
 ### Changed
