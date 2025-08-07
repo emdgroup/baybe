@@ -105,8 +105,8 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     )
 
     initial_data_samples = {}
-    for p in percentages:
-        with temporary_seed(settings.random_seed):
+    with temporary_seed(settings.random_seed):
+        for p in percentages:
             initial_data_samples[p] = [
                 initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
             ]

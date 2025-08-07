@@ -136,8 +136,8 @@ def direct_arylation_tl_temperature(
     percentages = [0.01, 0.1, 0.2]
 
     initial_data_samples = {}
-    for p in percentages:
-        with temporary_seed(settings.random_seed):
+    with temporary_seed(settings.random_seed):
+        for p in percentages:
             initial_data_samples[p] = [
                 initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
             ]
