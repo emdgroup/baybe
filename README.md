@@ -328,6 +328,24 @@ host machine names are anonymized with via truncated hashing.
   inability of specifying opt-out dependencies, these are installed by default, but the
   package works without them.
 
+## 📖 Citation
+If you find BayBE useful, please consider citing [our paper](https://doi.org/10.1039/D5DD00050E):
+
+```bibtex
+@article{baybe_2025,
+  author = "Fitzner, Martin and Šošić, Adrian and Hopp, Alexander V. and Müller, Marcel and Rihana, Rim and Hrovatin, Karin and Liebig, Fabian and Winkel, Mathias and Halter, Wolfgang and Brandenburg, Jan Gerit",
+  title  = "BayBE: a Bayesian Back End for experimental planning in the low-to-no-data regime",
+  journal = "Digital Discovery",
+  year = "2025",
+  volume = "4",
+  issue = "8",
+  pages = "1991-2000",
+  publisher = "RSC",
+  doi = "10.1039/D5DD00050E",
+  url = "http://dx.doi.org/10.1039/D5DD00050E",
+}
+```
+
 ## 👨🏻‍🔧 Maintainers
 
 - Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
