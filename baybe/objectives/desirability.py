@@ -254,20 +254,7 @@ class DesirabilityObjective(Objective):
                 f"to be present."
             )
 
-        targets = get_transform_objects(
-            df, self.targets, allow_missing=False, allow_extra=allow_extra
-        )
-
-        import torch
-
-        with torch.no_grad():
-            transformed = self._to_botorch_full()(
-                to_tensor(df[[t.name for t in targets]])
-            )
-
-        return pd.DataFrame(
-            transformed.numpy(), columns=self._modeled_quantity_names, index=df.index
-        )
+        return self.transform(df, allow_missing=False, allow_extra=allow_extra)
 
     @override
     def transform(
