@@ -413,21 +413,27 @@ class NumericalTarget(Target, SerialMixin):
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 
-    def normalize(self) -> NumericalTarget:
+    def normalize(self, codomain: bool = False) -> NumericalTarget:
         """Normalize the target to the unit interval using an affine transformation.
 
+        Args:
+            codomain: Boolean flag controlling if the image or the codomain of the
+                target should be normalized.
+
         Raises:
-            IncompatibilityError: If the target is not bounded.
+            IncompatibilityError: If the target image or codomain (depending on the
+                flag) is not bounded.
 
         Returns:
             The normalized target.
         """
-        if not self.get_image().is_bounded:
+        bounds = self.get_codomain() if codomain else self.get_image()
+        if not bounds.is_bounded:
             raise IncompatibilityError("Only bounded targets can be normalized.")
 
         return self._append_transformation(
             AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *self.get_image().to_tuple()
+                *bounds.to_tuple()
             )
         )
 
