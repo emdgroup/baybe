@@ -1,14 +1,135 @@
-"""Common evaluation utilities for transfer learning benchmarks."""
+"""Base implementation for transfer learning regression benchmarks."""
 
-from collections.abc import Sequence
+from __future__ import annotations
+
+from collections.abc import Callable, Sequence
 from typing import Any
 
+import numpy as np
 import pandas as pd
+import torch
 
 from baybe.objectives import SingleTargetObjective
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.transfergpbo import MHGPGaussianProcessSurrogate
+from benchmarks.definition import TransferLearningRegressionSettings
 from benchmarks.definition.regression import REGRESSION_METRICS
+
+
+def run_tl_regression_benchmark(
+    settings: TransferLearningRegressionSettings,
+    load_data_fn: Callable[[], pd.DataFrame],
+    create_searchspaces_fn: Callable[
+        [pd.DataFrame], tuple[SearchSpace, SearchSpace, str, list[str], str]
+    ],
+    create_objective_fn: Callable[[], SingleTargetObjective],
+) -> tuple[pd.DataFrame, list[str], list[str]]:
+    """Run a transfer learning regression benchmark.
+
+    Args:
+        settings: The benchmark settings.
+        load_data_fn: Function that loads the dataset.
+        create_searchspaces_fn: Function that creates search spaces.
+        create_objective_fn: Function that creates the objective function.
+
+    Returns:
+        Tuple containing:
+        - DataFrame with benchmark results
+        - List of metric names used
+        - List of model names used
+    """
+    # Set random seed for reproducibility
+    np.random.seed(settings.random_seed)
+    torch.manual_seed(settings.random_seed)
+
+    # Create target objective
+    objective = create_objective_fn()
+    target_column = objective._target.name
+
+    # Load data and create search spaces
+    data = load_data_fn()
+    vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task = (
+        create_searchspaces_fn(data)
+    )
+
+    # Split data into source and target
+    source_data = data[data[name_task].isin(source_tasks)]
+    target_data = data[data[name_task] == target_task]
+
+    # Main benchmark loop
+    results = []
+    for mc_iter in range(settings.num_mc_iterations):
+        print(f"Monte Carlo iteration {mc_iter + 1}/{settings.num_mc_iterations}")
+
+        # Create train/test split for target task
+        target_indices = np.random.permutation(len(target_data))
+        max_train_points = min(
+            settings.max_train_points,
+            len(target_data) - 10,  # Ensure at least 10 test points
+        )
+
+        # Create models
+        vanilla_gp = GaussianProcessSurrogate()
+        tl_models = [
+            {
+                "name": "MHGP_Stable",
+                "model": MHGPGaussianProcessSurrogate(numerical_stability=True),
+            },
+            {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
+        ]
+
+        for fraction_source in settings.source_fractions:
+            # Sample source data and keep it constant for all models
+            source_subset = source_data.sample(
+                frac=fraction_source, random_state=settings.random_seed + mc_iter
+            )
+
+            # Generate the source data subset
+            for n_train_pts in range(1, max_train_points + 1):
+                train_indices = target_indices[:n_train_pts]
+                test_indices = target_indices[
+                    n_train_pts : n_train_pts + 50
+                ]  # Use up to 50 test points
+                target_train = target_data.iloc[train_indices].copy()
+                target_test = target_data.iloc[test_indices].copy()
+
+                # Evaluate models
+                eval_results = evaluate_models(
+                    vanilla_gp=vanilla_gp,
+                    tl_models=tl_models,
+                    source_data=source_subset,
+                    target_train=target_train,
+                    target_test=target_test,
+                    vanilla_searchspace=vanilla_searchspace,
+                    tl_searchspace=tl_searchspace,
+                    objective=objective,
+                    metrics=settings.metrics,
+                    target_column=target_column,
+                    task_column=name_task,
+                    task_value=target_task,
+                )
+
+                # Add metadata
+                eval_results.update(
+                    {
+                        "mc_iter": mc_iter,
+                        "n_train_pts": n_train_pts,
+                        "fraction_source": fraction_source,
+                        "n_source_pts": len(source_subset),
+                        "n_test_pts": len(target_test),
+                    }
+                )
+                results.append(eval_results)
+
+    # Convert results to DataFrame
+    results_df = pd.DataFrame(results)
+
+    # Extract model names for return value
+    model_names = ["vanilla"] + [model_dict["name"] for model_dict in tl_models]
+
+    # Return results, metrics, and model names for plotting
+    return results_df, settings.metrics, model_names
 
 
 def evaluate_models(
