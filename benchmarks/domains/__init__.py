@@ -13,10 +13,10 @@ from benchmarks.domains.hartmann.hartmann_3d_discretized import (
 )
 from benchmarks.domains.hartmann.hartmann_6d import hartmann_6d_benchmark
 from benchmarks.domains.regression.aryl_halides.sou_CT_I_tar_BM_tl_regr import (
-    aryl_halide_CT_I_BM_tl_regression_benchmark,
+    aryl_halide_CT_I_BM_tl_regr_benchmark,
 )
 from benchmarks.domains.regression.direct_arylation_temperature_tl_regr import (
-    direct_arylation_temperature_tl_regression_benchmark,
+    direct_arylation_temperature_tl_regr_benchmark,
 )
 from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
 from benchmarks.domains.transfer_learning.aryl_halides.sou_CT_I_tar_BM import (
@@ -55,8 +55,8 @@ BENCHMARKS: list[Benchmark] = [
     easom_tl_47_negate_noise5_benchmark,
     hartmann_tl_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
-    direct_arylation_temperature_tl_regression_benchmark,
-    aryl_halide_CT_I_BM_tl_regression_benchmark,
+    direct_arylation_temperature_tl_regr_benchmark,
+    aryl_halide_CT_I_BM_tl_regr_benchmark,
 ]
 
 

@@ -82,7 +82,7 @@ def create_objective() -> SingleTargetObjective:
     return SingleTargetObjective(target)
 
 
-def sou_CT_I_tar_BM_tl_regr(
+def aryl_halide_CT_I_BM_tl_regr(
     settings: TransferLearningRegressionSettings,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
     """Benchmark function for comparing regression performance of GP vs TL models.
@@ -122,8 +122,8 @@ benchmark_config = TransferLearningRegressionSettings(
 )
 
 # Create the benchmark
-aryl_halide_CT_I_BM_tl_regression_benchmark = TransferLearningRegression(
-    function=sou_CT_I_tar_BM_tl_regr,
+aryl_halide_CT_I_BM_tl_regr_benchmark = TransferLearningRegression(
+    function=aryl_halide_CT_I_BM_tl_regr,
     settings=benchmark_config,
 )
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
     # Run the benchmark directly
     print("Starting Aryl Halide Transfer Learning Regression Benchmark...")
-    result_df, metrics, model_names = sou_CT_I_tar_BM_tl_regr(benchmark_config)
+    result_df, metrics, model_names = aryl_halide_CT_I_BM_tl_regr(benchmark_config)
 
     # Print summary
     print(f"Benchmark completed with {len(result_df)} result rows")

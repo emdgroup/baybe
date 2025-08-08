@@ -137,7 +137,7 @@ benchmark_config = TransferLearningRegressionSettings(
 )
 
 # Create the benchmark
-direct_arylation_temperature_tl_regression_benchmark = TransferLearningRegression(
+direct_arylation_temperature_tl_regr_benchmark = TransferLearningRegression(
     function=direct_arylation_temperature_tl_regr, settings=benchmark_config
 )
 
