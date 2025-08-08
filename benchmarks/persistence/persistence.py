@@ -12,7 +12,7 @@ from typing import Protocol
 import boto3
 import boto3.session
 from attr import define, field
-from attrs.validators import instance_of
+from attrs.validators import instance_of, optional
 from boto3.session import Session
 from typing_extensions import override
 
@@ -64,19 +64,34 @@ class PathConstructor:
     commit_hash: str = field(validator=instance_of(str))
     """The hash of the commit checked out at benchmark execution time."""
 
-    def _sanitize_string(self, string: str) -> str:
+    name: str | None = field(validator=optional(instance_of(str)), default=None)
+    """Custom name to add to the path."""
+
+    outdir: str | None = field(validator=optional(instance_of(str)), default=None)
+    """Custom directory to prepend to the file path."""
+
+    def _sanitize_string(self, string: str, is_path: bool = False) -> str:
         """Replace disallowed characters for filesystems in the given string."""
         ALLOWED_CHARS = (
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
         )
+        if is_path:
+            ALLOWED_CHARS += os.sep
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
     @classmethod
-    def from_result(cls, result: Result) -> PathConstructor:
+    def from_result(
+        cls,
+        result: Result,
+        name: str | None = None,
+        outdir: str | None = None,
+    ) -> PathConstructor:
         """Create a path constructor from result.
 
         Args:
             result: The result of the benchmark.
+            name: Optional custom name to add to the path.
+            outdir: Optional custom directory to prepend to the file path.
 
         Returns:
             The path constructor.
@@ -93,6 +108,8 @@ class PathConstructor:
             commit_hash=commit_hash,
             execution_date_time=start_datetime,
             branch=branch,
+            name=name,
+            outdir=outdir,
         )
 
     def get_path(self, strategy: PathStrategy) -> Path:
@@ -120,13 +137,19 @@ class PathConstructor:
             file_usable_date,
             self.commit_hash,
         ]
+        if self.name:
+            components.append(self.name)
 
         sanitized_components = [
             self._sanitize_string(component) for component in components
         ]
         path = separator.join(sanitized_components) + separator + "result.json"
+        path = Path(path)
 
-        return Path(path)
+        if self.outdir:
+            path = Path(self._sanitize_string(self.outdir, is_path=True)).joinpath(path)
+
+        return path
 
 
 class ObjectStorage(Protocol):

@@ -8,6 +8,7 @@ from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from typing import Generic, TypeVar
 
+import attr
 from attrs import define, field
 from attrs.validators import instance_of
 from cattrs import override
@@ -62,25 +63,29 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         assert self.function.__doc__ is not None
         return self.function.__doc__
 
-    def __call__(self) -> Result:
+    def __call__(self, smoketest: str | None = None) -> Result:
         """Execute the benchmark and return the result."""
+        settings = self.settings
+        if smoketest == "runthrough":
+            settings = attr.evolve(self.settings, n_doe_iterations=2, n_mc_iterations=1)
+
         start_datetime = datetime.now(timezone.utc)
 
         logger.info(
             "=" * 80
             + f"\nRunning benchmark '{self.name}' with "
-            + f"random seed {self.settings.random_seed}.\n"
+            + f"random seed {settings.random_seed}.\n"
         )
-        
+
         start_sec = time.perf_counter()
-        result = self.function(self.settings)
+        result = self.function(settings)
         stop_sec = time.perf_counter()
 
         duration = timedelta(seconds=stop_sec - start_sec)
 
         logger.info(
             f"\nFinished benchmark '{self.name}' after {duration} "
-            + f"with random seed {self.settings.random_seed}.\n"
+            + f"with random seed {settings.random_seed}.\n"
             + "=" * 80
         )
 
