@@ -125,7 +125,7 @@ benchmark_config = TransferLearningRegressionSettings(
 )
 
 # Create the benchmark
-aryl_halide_tl_regression_benchmark = TransferLearningRegression(
+aryl_halide_CT_I_BM_tl_regression_benchmark = TransferLearningRegression(
     function=sou_CT_I_tar_BM_tl_regr,
     settings=benchmark_config,
 )
