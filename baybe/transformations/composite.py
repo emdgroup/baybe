@@ -65,7 +65,7 @@ class AdditiveTransformation(Transformation):
         interval = Interval.create(interval)
         im1 = self.transformations[0].get_codomain(interval)
         im2 = self.transformations[1].get_codomain(interval)
-        return Interval([im1.lower + im2.lower, im1.upper + im2.upper])
+        return Interval(im1.lower + im2.lower, im1.upper + im2.upper)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
