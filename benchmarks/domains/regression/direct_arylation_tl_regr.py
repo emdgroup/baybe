@@ -21,7 +21,10 @@ from benchmarks.definition import (
     TransferLearningRegression,
     TransferLearningRegressionSettings,
 )
-from benchmarks.domains.regression.evaluation import evaluate_models
+from benchmarks.domains.regression.base import (
+    evaluate_models,
+    run_tl_regression_benchmark,
+)
 
 
 def load_data() -> pd.DataFrame:
@@ -100,6 +103,35 @@ def create_objective() -> SingleTargetObjective:
 
 
 def direct_arylation_tl_regression(
+    settings: TransferLearningRegressionSettings,
+) -> tuple[pd.DataFrame, list[str], list[str]]:
+    """Benchmark function for comparing regression performance of GP vs TL models.
+
+    This benchmark uses reactions at different temperatures:
+    - Source tasks: 90°C and 120°C
+    - Target task: 105°C
+
+    It trains models with varying amounts of source and target data, and evaluates
+    their predictive performance on held-out target data.
+
+    Args:
+        settings: The benchmark settings.
+
+    Returns:
+        Tuple containing:
+            - DataFrame with benchmark results
+            - List of metric names used
+            - List of model names used
+    """
+    return run_tl_regression_benchmark(
+        settings=settings,
+        load_data_fn=load_data,
+        create_searchspaces_fn=create_searchspaces,
+        create_objective_fn=create_objective,
+    )
+
+
+def direct_arylation_tl_regression_old(
     settings: TransferLearningRegressionSettings,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
     """Benchmark function for comparing regression performance of GP vs TL models.
@@ -234,7 +266,7 @@ direct_arylation_tl_regression_benchmark = TransferLearningRegression(
 
 if __name__ == "__main__":
     # Import the plotting function from the original module
-    from benchmarks.domains.transfer_learning.regression.visualization import (
+    from benchmarks.domains.regression.visualization import (
         plot_results,
     )
 
