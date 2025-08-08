@@ -8,12 +8,13 @@ from attrs.validators import and_, deep_iterable, instance_of, max_len, min_len
 from torch import Tensor
 from typing_extensions import override
 
-from baybe.transformations.base import Transformation
+from baybe.transformations.base import Transformation, _image_equals_codomain
 from baybe.transformations.utils import compress_transformations
 from baybe.utils.basic import compose
 from baybe.utils.interval import Interval
 
 
+@_image_equals_codomain
 @define
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
@@ -35,9 +36,11 @@ class ChainedTransformation(Transformation):
         return super().__eq__(other)
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
-        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
+        return reduce(
+            lambda acc, t: t.get_codomain(acc), self.transformations, interval
+        )
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -58,16 +61,10 @@ class AdditiveTransformation(Transformation):
     """The transformations to be added."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        # NOTE: This only provides a conservative estimate of the image in that it
-        #   computes an "upper bound" (i.e. an interval that contains the actual image),
-        #   which is produced under the assumption that the extremal values of the two
-        #   individual transformations occur at the same input value. Computing the
-        #   exact image without additional information would require evaluating the
-        #   transformation on the entire (uncountable) input space, which is infeasible.
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
-        im1 = self.transformations[0].get_image(interval)
-        im2 = self.transformations[1].get_image(interval)
+        im1 = self.transformations[0].get_codomain(interval)
+        im2 = self.transformations[1].get_codomain(interval)
         return Interval([im1.lower + im2.lower, im1.upper + im2.upper])
 
     @override
@@ -89,16 +86,10 @@ class MultiplicativeTransformation(Transformation):
     """The transformations to be multiplied."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        # NOTE: This only provides a conservative estimate of the image in that it
-        #   computes an "upper bound" (i.e. an interval that contains the actual image),
-        #   which is produced under the assumption that the extremal values of the two
-        #   individual transformations occur at the same input value. Computing the
-        #   exact image without additional information would require evaluating the
-        #   transformation on the entire (uncountable) input space, which is infeasible.
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
-        im1 = self.transformations[0].get_image(interval)
-        im2 = self.transformations[1].get_image(interval)
+        im1 = self.transformations[0].get_codomain(interval)
+        im2 = self.transformations[1].get_codomain(interval)
         boundary_products = [
             im1.lower * im2.lower,
             im1.lower * im2.upper,

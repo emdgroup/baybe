@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from attrs import define
 from typing_extensions import override
@@ -17,6 +17,14 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
+_TTransformation = TypeVar("_TTransformation", bound="Transformation")
+
+
+def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformation]:
+    """Make the image of a transformation identical to its codomain."""
+    cls.get_image = cls.get_codomain
+    return cls
+
 
 @define
 class Transformation(SerialMixin, ABC):
@@ -27,6 +35,16 @@ class Transformation(SerialMixin, ABC):
         """Transform a given input tensor."""
 
     @abstractmethod
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        """Get the codomain of a certain interval (assuming transformation continuity).
+
+        We use a slightly generalized definition of a function's
+        `codomain <https://en.wikipedia.org/wiki/Codomain>`_ here, which extends
+        to arbitrary intervals. Like the image of an interval obtained under a given
+        function, we define the codomain of that interval to be any suitable
+        superset of its image, i.e. an interval that contains the image.
+        """
+
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity).
 
@@ -38,6 +56,13 @@ class Transformation(SerialMixin, ABC):
         the :class:`~Transformation` is applied to all points in the input
         :class:`~baybe.utils.interval.Interval`.
         """
+        # By default, it is assumed that the exact image of an interval cannot be
+        # computed but only the codomain is available (see :meth:`get_codomain`).
+        # Transformations that can provide the exact image should override this method.
+        raise NotImplementedError(
+            f"The exact image of the interval cannot be computed. "
+            f"If sufficient, use '{self.get_codomain.__name__}' instead."
+        )
 
     def to_botorch_objective(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""
@@ -130,11 +155,12 @@ class Transformation(SerialMixin, ABC):
         return args[0] | CustomTransformation(func)
 
 
+@_image_equals_codomain
 class MonotonicTransformation(Transformation, ABC):
     """Abstract base class for monotonic transformations."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
         return Interval(
             *sorted(
