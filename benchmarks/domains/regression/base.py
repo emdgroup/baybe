@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
 from baybe.searchspace import SearchSpace
@@ -58,7 +59,27 @@ def run_tl_regression_benchmark(
 
     # Main benchmark loop
     results = []
-    for mc_iter in range(settings.num_mc_iterations):
+
+    # Create progress bar for Monte Carlo iterations
+    mc_iter_bar = tqdm(
+        range(settings.num_mc_iterations),
+        desc="Monte Carlo iterations",
+        unit="iter",
+        position=0,
+        leave=True,
+    )
+
+    # Calculate total number of evaluations for overall progress
+    total_evals = (
+        settings.num_mc_iterations
+        * len(settings.source_fractions)
+        * settings.max_train_points
+    )
+    overall_progress = tqdm(
+        total=total_evals, desc="Overall progress", unit="eval", position=1, leave=True
+    )
+
+    for mc_iter in mc_iter_bar:  # range(settings.num_mc_iterations)
         print(f"Monte Carlo iteration {mc_iter + 1}/{settings.num_mc_iterations}")
 
         # Create train/test split for target task
@@ -68,14 +89,32 @@ def run_tl_regression_benchmark(
             len(target_data) - 10,  # Ensure at least 10 test points
         )
 
-        for fraction_source in settings.source_fractions:
+        # Create progress bar for source fractions
+        source_fraction_bar = tqdm(
+            settings.source_fractions,
+            desc=f"MC iter {mc_iter + 1}/{settings.num_mc_iterations}: Source frac",
+            unit="frac",
+            position=2,
+            leave=False,
+        )
+
+        for fraction_source in source_fraction_bar:  # settings.source_fractions:
             # Sample source data and keep it constant for all models
             source_subset = source_data.sample(
                 frac=fraction_source, random_state=settings.random_seed + mc_iter
             )
 
+            # Create progress bar for training points
+            train_pts_bar = tqdm(
+                range(1, max_train_points + 1),
+                desc=f"Source fraction {fraction_source:.2f}: Training points",
+                unit="pts",
+                position=3,
+                leave=False,
+            )
+
             # Generate the source data subset
-            for n_train_pts in range(1, max_train_points + 1):
+            for n_train_pts in train_pts_bar:  # range(1, max_train_points + 1):
                 # Create models
                 vanilla_gp = GaussianProcessSurrogate()
                 tl_models = [
@@ -93,6 +132,13 @@ def run_tl_regression_benchmark(
                 ]  # Use up to 50 test points
                 target_train = target_data.iloc[train_indices].copy()
                 target_test = target_data.iloc[test_indices].copy()
+
+                # Update progress bar description with current evaluation details
+                train_pts_bar.set_description(
+                    f"Source: {len(source_subset)} pts,"
+                    "Target train: {n_train_pts} pts,"
+                    "Test: {len(target_test)} pts"
+                )
 
                 # Evaluate models
                 eval_results = evaluate_models(
@@ -124,6 +170,8 @@ def run_tl_regression_benchmark(
 
     # Convert results to DataFrame
     results_df = pd.DataFrame(results)
+
+    overall_progress.close()
 
     # Extract model names for return value
     model_names = ["vanilla"] + [model_dict["name"] for model_dict in tl_models]
