@@ -8,13 +8,12 @@ from attrs.validators import and_, deep_iterable, instance_of, max_len, min_len
 from torch import Tensor
 from typing_extensions import override
 
-from baybe.transformations.base import Transformation, _image_equals_codomain
+from baybe.transformations.base import Transformation
 from baybe.transformations.utils import compress_transformations
 from baybe.utils.basic import compose
 from baybe.utils.interval import Interval
 
 
-@_image_equals_codomain
 @define
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
@@ -41,6 +40,11 @@ class ChainedTransformation(Transformation):
         return reduce(
             lambda acc, t: t.get_codomain(acc), self.transformations, interval
         )
+
+    @override
+    def get_image(self, interval: Interval | None = None, /) -> Interval:
+        interval = Interval.create(interval)
+        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
