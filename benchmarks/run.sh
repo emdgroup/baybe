@@ -1,16 +1,5 @@
 #!/bin/bash
 
-#SBATCH -o /dfs/is/home/m332296/slurm/baybe_benchmark_%j.job
-#SBATCH -e /dfs/is/home/m332296/slurm/baybe_benchmark_%j.job
-#SBATCH -J baybe_benchmark
-#SBATCH -c 10  #CPU cores required
-#SBATCH -n 1
-#SBATCH --mem=10G #Memory required
-#SBATCH -t 23:00:00 #Job runtime
-#SBATCH --nice=1000
-#SBATCH --exclude=stdg[11-15] # HPC nodes without internet access
-
-
 while getopts b:e:o:l:s: flag
 do
     case "${flag}" in
@@ -29,7 +18,8 @@ conda activate $env
 cd $baybe
 
 # Create result file name suffix to store information on node and prevent name collisions
-name="$SLURM_NODELIST"_"$RANDOM"
+node=$(hostname)
+name="$node"_"$RANDOM"
 echo $name
 
 # Optional benchmark flags
