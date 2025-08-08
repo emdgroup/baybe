@@ -40,6 +40,30 @@ UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
 
 
+class UncertainBool(enum.Enum):
+    """Enum for representing uncertain Boolean values."""
+
+    TRUE = "TRUE"
+    FALSE = "FALSE"
+    UNKNOWN = "UNKNOWN"
+
+    def __bool__(self):
+        if self is UncertainBool.TRUE:
+            return True
+        elif self is UncertainBool.FALSE:
+            return False
+        else:
+            raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
+
+    @classmethod
+    def from_erroneous_callable(cls, callable_: callable, /) -> UncertainBool:
+        """Create an uncertain Boolean from a potentially erroneous Boolean call."""
+        try:
+            return cls.TRUE if callable_() else cls.FALSE
+        except Exception:
+            return cls.UNKNOWN
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """Placeholder element for array-like data types.
