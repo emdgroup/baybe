@@ -15,6 +15,7 @@ from cattrs import override
 from cattrs.gen import make_dict_unstructure_fn
 from pandas import DataFrame
 
+from benchmarks import ConvergenceBenchmarkSettings
 from benchmarks.result import Result, ResultMetadata
 from benchmarks.serialization import BenchmarkSerialization, converter
 
@@ -66,7 +67,9 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
     def __call__(self, smoketest: str | None = None) -> Result:
         """Execute the benchmark and return the result."""
         settings = self.settings
-        if smoketest == "runthrough":
+        if smoketest == "runthrough" and isinstance(
+            self.settings, ConvergenceBenchmarkSettings
+        ):
             settings = attr.evolve(self.settings, n_doe_iterations=2, n_mc_iterations=1)
 
         start_datetime = datetime.now(timezone.utc)
