@@ -61,10 +61,10 @@ class IdentityTransformation(MonotonicTransformation):
         return x
 
     @override
-    def __add__(self, other: Transformation | int | float) -> Transformation:
-        if isinstance(other, (int, float)):
-            return AffineTransformation(shift=other)
-        return other
+    def __or__(self, other: Transformation) -> Transformation:
+        if isinstance(other, Transformation):
+            return other
+        return NotImplemented
 
 
 @define(init=False)
