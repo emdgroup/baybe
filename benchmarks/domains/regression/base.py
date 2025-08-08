@@ -12,7 +12,6 @@ import torch
 from baybe.objectives import SingleTargetObjective
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.surrogates.transfergpbo import MHGPGaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionSettings
 from benchmarks.definition.regression import REGRESSION_METRICS
 
@@ -80,10 +79,12 @@ def run_tl_regression_benchmark(
                 # Create models
                 vanilla_gp = GaussianProcessSurrogate()
                 tl_models = [
-                    {
-                        "name": "MHGP_Stable",
-                        "model": MHGPGaussianProcessSurrogate(numerical_stability=True),
-                    },
+                    # {
+                    #     "name": "MHGP_Stable",
+                    #     "model": MHGPGaussianProcessSurrogate(
+                    #         numerical_stability=True
+                    #         ),
+                    # },
                     {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
                 ]
                 train_indices = target_indices[:n_train_pts]
