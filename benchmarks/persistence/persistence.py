@@ -143,8 +143,7 @@ class PathConstructor:
         sanitized_components = [
             self._sanitize_string(component) for component in components
         ]
-        path = separator.join(sanitized_components) + separator + "result.json"
-        path = Path(path)
+        path = Path(separator.join(sanitized_components) + separator + "result.json")
 
         if self.outdir:
             path = Path(self._sanitize_string(self.outdir, is_path=True)).joinpath(path)
