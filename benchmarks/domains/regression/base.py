@@ -69,16 +69,6 @@ def run_tl_regression_benchmark(
             len(target_data) - 10,  # Ensure at least 10 test points
         )
 
-        # Create models
-        vanilla_gp = GaussianProcessSurrogate()
-        tl_models = [
-            {
-                "name": "MHGP_Stable",
-                "model": MHGPGaussianProcessSurrogate(numerical_stability=True),
-            },
-            {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
-        ]
-
         for fraction_source in settings.source_fractions:
             # Sample source data and keep it constant for all models
             source_subset = source_data.sample(
@@ -87,6 +77,15 @@ def run_tl_regression_benchmark(
 
             # Generate the source data subset
             for n_train_pts in range(1, max_train_points + 1):
+                # Create models
+                vanilla_gp = GaussianProcessSurrogate()
+                tl_models = [
+                    {
+                        "name": "MHGP_Stable",
+                        "model": MHGPGaussianProcessSurrogate(numerical_stability=True),
+                    },
+                    {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
+                ]
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
                     n_train_pts : n_train_pts + 50
