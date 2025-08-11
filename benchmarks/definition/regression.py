@@ -109,7 +109,7 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
     noise_std: float = field(validator=instance_of(float), default=0.1)
     """Standard deviation of noise to add to the data."""
 
-    metrics: list[str] = field(default=["RMSE", "R2", "LPD"])
+    metrics: list[str] = field(default=["RMSE", "R2", "MAE"])
     """Metrics to evaluate. Must be keys in the REGRESSION_METRICS registry."""
 
     def __attrs_post_init__(self):
