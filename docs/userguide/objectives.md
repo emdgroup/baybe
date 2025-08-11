@@ -84,9 +84,10 @@ corresponding target weights:
 ```
 
 ### Example 1 – Normalized Targets
-Here, we consider four **normalized** targets, each with a distinct (randomly selected)
-optimization goal. The first target is given twice as much importance as each of the
-other three by assigning it a higher weight:
+Here, we consider four **normalized** targets, each with a distict
+{ref}`optimization goal <userguide/targets:NumericalTarget>` chosen arbitrarily
+for demonstration purposes. The first target is given twice as much importance as each
+of the other three by assigning it a higher weight:
 ```python
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
