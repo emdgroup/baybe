@@ -167,6 +167,11 @@ class DesirabilityObjective(Objective):
     def output_names(self) -> tuple[str, ...]:
         return (_OUTPUT_NAME,)
 
+    @override
+    @property
+    def needs_complete_measurements(self) -> bool:
+        return self.as_pre_transformation
+
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
         """The normalized target weights."""

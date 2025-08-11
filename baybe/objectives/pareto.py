@@ -47,6 +47,11 @@ class ParetoObjective(Objective):
         return tuple(target.name for target in self.targets)
 
     @override
+    @property
+    def needs_complete_measurements(self) -> bool:
+        return False
+
+    @override
     def transform(
         self,
         df: pd.DataFrame | None = None,

@@ -69,6 +69,11 @@ class Objective(ABC, SerialMixin):
         """The number of outputs of the objective."""
         return len(self.output_names)
 
+    @property
+    @abstractmethod
+    def needs_complete_measurements(self) -> bool:
+        """Boolean indicating if the objective requires measurements for all targets."""
+
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""
         if not is_all_instance(self.targets, NumericalTarget):

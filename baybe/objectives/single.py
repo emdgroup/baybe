@@ -57,6 +57,11 @@ class SingleTargetObjective(Objective):
         return (self._target.name,)
 
     @override
+    @property
+    def needs_complete_measurements(self) -> bool:
+        return True
+
+    @override
     def to_botorch(self) -> MCAcquisitionObjective:
         from botorch.acquisition.objective import IdentityMCObjective
 

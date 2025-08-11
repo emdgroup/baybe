@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   used in `DesirabilityObjective`
 - `as_pre_transformation` flag to `DesirabilityObjective` for controlling whether the 
   desirability transformation is applied before or after model fitting
+- `needs_complete_measurements` property to `Objective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
 - `invert`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
   `NumericalTarget` for easy creation of transformed targets from existing ones
