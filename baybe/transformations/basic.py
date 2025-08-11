@@ -109,15 +109,13 @@ class AffineTransformation(MonotonicTransformation):
 
     @override
     def __eq__(self, other: Any, /) -> bool:
-        # An affine transformation without shift and scaling is effectively an
-        # identity transformation
-        if (
-            isinstance(other, IdentityTransformation)
-            and self.factor == 1.0
-            and self.shift == 0.0
-        ):
-            return True
-        return super().__eq__(other)
+        if isinstance(other, IdentityTransformation):
+            # An affine transformation without shift and scaling is effectively an
+            # identity transformation
+            return self.factor == 1.0 and self.shift == 0.0
+        if isinstance(other, AffineTransformation):
+            return self.factor == other.factor and self.shift == other.shift
+        return NotImplemented
 
     def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
         """Convert to BoTorch posterior transform.

@@ -29,10 +29,13 @@ class ChainedTransformation(Transformation):
 
     @override
     def __eq__(self, other: Any, /) -> bool:
-        # A chained transformation with only one element is equivalent to that element
         if len(self.transformations) == 1:
+            # A chained transformation with only one element is equivalent to that
+            # element
             return self.transformations[0] == other
-        return super().__eq__(other)
+        if isinstance(other, ChainedTransformation):
+            return self.transformations == other.transformations
+        return NotImplemented
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
