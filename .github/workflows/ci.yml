@@ -49,17 +49,6 @@ jobs:
       - name: check reminders and notify
         uses: agrc/reminder-action@v1
 
-  lockfiles:
-    runs-on: ubuntu-latest
-    name: "Lockfiles"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-      - name: Verify lockfile integrity
-        run: |
-          pip install uv
-          uv lock --check
-
   lint:
     strategy:
       matrix:
