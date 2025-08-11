@@ -94,7 +94,9 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     initial_data_tensor = torch.tensor(initial_data[coord_columns].values)
 
     with temporary_seed(settings.random_seed):
-        target_values_tensor = source_function(initial_data_tensor)
+        target_values_tensor = source_function(
+            initial_data_tensor
+        )  # Randomness from source function
 
     # Assign the results back to a new DataFrame for initial_data
     initial_data["Target"] = target_values_tensor.detach().numpy()

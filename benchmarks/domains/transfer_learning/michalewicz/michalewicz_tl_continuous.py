@@ -147,7 +147,9 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     with temporary_seed(settings.random_seed):
         for p in n_points:
             initial_data_samples[p] = [
-                make_initial_data(functions["Source_Function"], "Source_Function", p)
+                make_initial_data(
+                    functions["Source_Function"], "Source_Function", p
+                )  # Randomness from source function and sampling
                 for _ in range(settings.n_mc_iterations)
             ]
 
