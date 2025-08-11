@@ -11,9 +11,9 @@ import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
-from baybe.objectives.base import Objective
 
 if TYPE_CHECKING:
+    from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
