@@ -73,7 +73,7 @@ class FPSInitialization(Enum):
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling.
 
-    If the optional package `fpsample` is installed, it's implementation will be used,
+    If the optional package `fpsample` is installed, its implementation will be used,
     otherwise a custom fallback implementation is used. The use of a specific
     implementation can be enforced by setting the environment variable
     'BAYBE_USE_FPSAMPLE'.
