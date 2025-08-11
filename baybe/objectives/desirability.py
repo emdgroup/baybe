@@ -124,7 +124,8 @@ class DesirabilityObjective(Objective):
                 f"Either normalize your targets (e.g. using their "
                 f"'{NumericalTarget.normalize.__name__}' method / by specifying "
                 f"a suitable target transformation) or explicitly set "
-                f"'{fields(DesirabilityObjective).require_normalization.name}' to "
+                f"'{DesirabilityObjective.__name__}."
+                f"{fields(DesirabilityObjective).require_normalization.name}' to "
                 f"'True' to allow unnormalized targets."
             )
 
