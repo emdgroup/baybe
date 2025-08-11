@@ -16,6 +16,7 @@ from benchmarks.definition import (
     TransferLearningRegressionSettings,
 )
 from benchmarks.domains.regression.base import (
+    generate_result_filename,
     run_tl_regression_benchmark,
 )
 from benchmarks.domains.transfer_learning.aryl_halides.base import load_data
@@ -118,7 +119,6 @@ benchmark_config = TransferLearningRegressionSettings(
     max_train_points=10,
     source_fractions=[0.01, 0.05, 0.1],
     noise_std=0.0,  # Not used for real data
-    metrics=["RMSE", "R2", "MAE", "LPD", "NLPD"],
 )
 
 # Create the benchmark
@@ -129,8 +129,6 @@ aryl_halide_CT_I_BM_tl_regr_benchmark = TransferLearningRegression(
 
 # For debugging/testing
 if __name__ == "__main__":
-    from benchmarks.domains.regression.visualization import plot_results
-
     # Run the benchmark directly
     print("Starting Aryl Halide Transfer Learning Regression Benchmark...")
     result_df, metrics, model_names = aryl_halide_CT_I_BM_tl_regr(benchmark_config)
@@ -143,14 +141,6 @@ if __name__ == "__main__":
     print(result_df.head())
 
     # Save results to CSV for further analysis
-    result_df.to_csv("aryl_halide_tl_regression_results.csv", index=False)
-
-    # Generate plots using the visualization module
-    print("\nGenerating plots...")
-    plot_results(
-        result_df,
-        metrics,
-        model_names,
-        file_name_prefix="aryl_halide_sou_CT_I_tar_BM_tl_regr",
-    )
-    print("Plots saved.")
+    filename = generate_result_filename("aryl_halide_tl_regression")
+    result_df.to_csv(filename, index=False)
+    print(f"\nResults saved to '{filename}'")

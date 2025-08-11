@@ -18,6 +18,7 @@ from benchmarks.definition import (
     TransferLearningRegressionSettings,
 )
 from benchmarks.domains.regression.base import (
+    generate_result_filename,
     run_tl_regression_benchmark,
 )
 
@@ -133,7 +134,6 @@ benchmark_config = TransferLearningRegressionSettings(
     max_train_points=10,  # 10,
     source_fractions=[0.01, 0.05, 0.1, 0.2],  # 0.5, 0.7, 0.9],
     noise_std=0.0,  # Not used for real data
-    metrics=["RMSE", "R2", "MAE", "LPD", "NLPD"],
 )
 
 # Create the benchmark
@@ -143,11 +143,6 @@ direct_arylation_temperature_tl_regr_benchmark = TransferLearningRegression(
 
 
 if __name__ == "__main__":
-    # Import the plotting function from the original module
-    from benchmarks.domains.regression.visualization import (
-        plot_results,
-    )
-
     # Run the benchmark directly
     print("Starting Direct Arylation Transfer Learning Regression Benchmark...")
 
@@ -164,12 +159,6 @@ if __name__ == "__main__":
     print(result_df.head())
 
     # Save results to CSV for further analysis
-    result_df.to_csv("direct_arylation_tl_regression_results.csv", index=False)
-    print("\nResults saved to 'direct_arylation_tl_regression_results.csv'")
-
-    # Generate plots using the imported function
-    print("\nGenerating plots...")
-    plot_results(
-        result_df, metrics, model_names, file_name_prefix="direct_arylation_tl_regr"
-    )
-    print("Plots saved.")
+    filename = generate_result_filename("direct_arylation_tl_regression")
+    result_df.to_csv(filename, index=False)
+    print(f"\nResults saved to '{filename}'")
