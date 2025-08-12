@@ -74,7 +74,7 @@ def load_quadratic_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFr
         y_clean = a * (x + b) ** 2 + c
         y_noisy = y_clean + np.random.normal(0, noise_std, n_points)
 
-        # Create task name using integer ID for MHGP compatibility
+        # Create task name using integer ID
         task_name = f"source_{i}"
 
         # Create DataFrame for this source
