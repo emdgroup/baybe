@@ -131,6 +131,7 @@ def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
         IncompleteMeasurementsError: If the objective requires complete measurements
             but the input dataframe contains missing target values.
     """
+    data = data[[t.name for t in objective.targets]]
     if objective.needs_complete_measurements and (
         cols := data.columns[data.isna().any()].tolist()
     ):
