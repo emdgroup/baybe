@@ -1,6 +1,10 @@
 name: Benchmark
 
 on:
+  release:
+    types:
+      - published
+      
   workflow_dispatch:
     inputs:
       group_selection:
@@ -29,23 +33,25 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       benchmarks_to_execute: ${{ steps.set_benchmarks.outputs.benchmarks_to_execute }}
+    env:
+      RUN_GROUP: ${{ github.event.inputs.group_selection || 'All' }}
     steps:
       - name: Build matrix from group
         id: build_matrix_from_group
         run: |
           benchmarks_to_execute='{"benchmark_list": []}'
-          run_all_benchmarks="${{ github.event.inputs.group_selection }}"
+          run_group="${RUN_GROUP}"
 
-          if [ "$run_all_benchmarks" = "Transfer Learning" ]; then
+          if [ "$run_group" = "Transfer Learning" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_BENCHMARKS }} }'
           fi
-          if [ "$run_all_benchmarks" = "Non Transfer Learning" ]; then
-            benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
+          if [ "$run_group" = "Non Transfer Learning" ]; then
+            benchmarks_to_execute='{"benchmark_list": ${{ env.NON_TL_BENCHMARKS }} }'
           fi
-          if [ "$run_all_benchmarks" = "Synthetic" ]; then
+          if [ "$run_group" = "Synthetic" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.SYNTHETIC_BENCHMARKS }} }'
           fi
-          if [ "$run_all_benchmarks" = "All" ]; then
+          if [ "$run_group" = "All" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
           fi
 
