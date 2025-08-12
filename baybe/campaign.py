@@ -39,11 +39,6 @@ from baybe.searchspace.core import (
 from baybe.serialization import SerialMixin, converter
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
-from baybe.telemetry import (
-    TELEM_LABELS,
-    telemetry_record_recommended_measurement_percentage,
-    telemetry_record_value,
-)
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
@@ -329,12 +324,6 @@ class Campaign(SerialMixin):
             )
             self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
 
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
-        telemetry_record_recommended_measurement_percentage(
-            self._cached_recommendation, data, self.parameters
-        )
-
     def update_measurements(
         self,
         data: pd.DataFrame,
@@ -582,10 +571,6 @@ class Campaign(SerialMixin):
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
-
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
 
