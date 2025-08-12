@@ -24,6 +24,7 @@ def save_benchmark_data(
     outdir: str | None = None,
 ) -> None:
     """Save the benchmark data to the object storage."""
+    # TODO should we do something with runmode here as well?
     path_constructor = PathConstructor.from_result(result, name=name, outdir=outdir)
     if outdir:
         os.makedirs(outdir, exist_ok=True)
@@ -34,19 +35,19 @@ def save_benchmark_data(
 
 
 def run_all_benchmarks(
-    smoketest: str | None = None,
+    runmode: str | None = None,
     name: str | None = None,
     outdir: str | None = None,
 ) -> None:
     """Run all benchmarks."""
     for benchmark in BENCHMARKS:
-        result = benchmark(smoketest=smoketest)
+        result = benchmark(runmode=runmode)
         save_benchmark_data(benchmark, result, name=name, outdir=outdir)
 
 
 def run_benchmarks(
     benchmark_names: Collection[str],
-    smoketest: str | None = None,
+    runmode: str | None = None,
     name: str | None = None,
     outdir: str | None = None,
 ) -> None:
@@ -55,7 +56,7 @@ def run_benchmarks(
         if benchmark.name not in benchmark_names:
             continue
 
-        result = benchmark(smoketest=smoketest)
+        result = benchmark(runmode=runmode)
         save_benchmark_data(benchmark, result, name=name, outdir=outdir)
 
 
@@ -66,7 +67,7 @@ def main() -> None:
         "--benchmark-list", nargs="+", help="List of benchmarks to run", default=None
     )
     parser.add_argument(
-        "--smoketest", type=str, help="Smoketest setting to use.", default=None
+        "--runmode", type=str, help="Runmode setting to use.", default=None
     )
     parser.add_argument(
         "--name", help="Additional name to add to saved file.", default=None
@@ -74,13 +75,13 @@ def main() -> None:
     parser.add_argument("--outdir", help="Save files into directory.", default=None)
     args = parser.parse_args()
     if not args.benchmark_list:
-        run_all_benchmarks(smoketest=args.smoketest, name=args.name)
+        run_all_benchmarks(runmode=args.runmode, name=args.name)
         return
 
     benchmark_execute_set = set(args.benchmark_list)
     run_benchmarks(
         benchmark_execute_set,
-        smoketest=args.smoketest,
+        runmode=args.runmode,
         name=args.name,
         outdir=args.outdir,
     )
