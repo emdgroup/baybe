@@ -55,7 +55,7 @@ class TestInvalidObjectiveCreation:
         """Unnormalized targets are not allowed unless explicitly declared."""
         t1 = NumericalTarget("t1").clamp(min=1, max=2)
         t2 = NumericalTarget("t2").clamp(min=0, max=3)
-        with pytest.raises(ValueError, match="are not normalized"):
+        with pytest.raises(ValueError, match="are either not normalized"):
             DesirabilityObjective([t1, t2])
         DesirabilityObjective([t1.normalize(), t2.normalize()])
         DesirabilityObjective([t1, t2], require_normalization=False)
