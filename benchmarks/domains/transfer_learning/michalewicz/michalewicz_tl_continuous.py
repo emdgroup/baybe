@@ -21,6 +21,7 @@ from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 
 
@@ -85,7 +86,9 @@ def wrap_function(
 
 
 def make_initial_data(
-    function: Callable, function_name: str, num_of_points: int
+    function: Callable,
+    function_name: str,
+    num_of_points: int,
 ) -> pd.DataFrame:
     """Create initial data points for the Michalewicz benchmark."""
     # Create random samples in [0, pi]^dim
@@ -121,6 +124,8 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     Returns:
         DataFrame containing benchmark results for all test cases
     """
+    n_points = [1, 10, 50, 100]
+
     functions = {
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
         "Target_Function": Michalewicz(dim=5, negate=True),
@@ -138,24 +143,29 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         objective=objective,
     )
 
-    results = []
+    initial_data_samples = {}
+    with temporary_seed(settings.random_seed):
+        for p in n_points:
+            initial_data_samples[p] = [
+                make_initial_data(
+                    functions["Source_Function"], "Source_Function", p
+                )  # Randomness from source function and sampling
+                for _ in range(settings.n_mc_iterations)
+            ]
 
-    for p in [1, 10, 50, 100]:
+    results = []
+    for p in n_points:
         results.append(
             simulate_scenarios(
                 {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
-                initial_data=[
-                    make_initial_data(
-                        functions["Source_Function"], "Source_Function", p
-                    )
-                    for _ in range(settings.n_mc_iterations)
-                ],
+                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -166,6 +176,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)
