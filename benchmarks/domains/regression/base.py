@@ -15,6 +15,7 @@ from tqdm import tqdm
 from baybe.objectives import SingleTargetObjective
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.transfergpbo.mhgp import MHGPGaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionSettings
 from benchmarks.definition.regression import REGRESSION_METRICS
 
@@ -39,6 +40,8 @@ def generate_result_filename(benchmark_name: str, extension: str = "csv") -> str
             check=True,
         )
         branch = branch_result.stdout.strip()
+        branch = branch.replace("/", "-")  # Replace slashes to avoid directory issues
+        print(f"Current branch: {branch}")
 
         # Get current commit hash
         commit_result = subprocess.run(
@@ -156,10 +159,19 @@ def run_tl_regression_benchmark(
         )
 
         for fraction_source in source_fraction_bar:  # settings.source_fractions:
-            # Sample source data and keep it constant for all models
-            source_subset = source_data.sample(
-                frac=fraction_source, random_state=settings.random_seed + mc_iter
-            )
+            # Sample source data ensuring same fraction from each source task
+            source_subsets = []
+            for source_task in source_tasks:
+                task_data = source_data[source_data[name_task] == source_task]
+                if len(task_data) > 0:
+                    task_subset = task_data.sample(
+                        frac=fraction_source,
+                        random_state=settings.random_seed + mc_iter,
+                    )
+                    source_subsets.append(task_subset)
+
+            # Combine all source task subsets
+            source_subset = pd.concat(source_subsets, ignore_index=True)
 
             # Create progress bar for training points
             train_pts_bar = tqdm(
@@ -175,12 +187,10 @@ def run_tl_regression_benchmark(
                 # Create models
                 vanilla_gp = GaussianProcessSurrogate()
                 tl_models = [
-                    # {
-                    #     "name": "MHGP_Stable",
-                    #     "model": MHGPGaussianProcessSurrogate(
-                    #         numerical_stability=True
-                    #         ),
-                    # },
+                    {
+                        "name": "MHGP_Stable",
+                        "model": MHGPGaussianProcessSurrogate(),
+                    },
                     {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
                 ]
                 train_indices = target_indices[:n_train_pts]
@@ -193,8 +203,8 @@ def run_tl_regression_benchmark(
                 # Update progress bar description with current evaluation details
                 train_pts_bar.set_description(
                     f"Source: {len(source_subset)} pts,"
-                    "Target train: {n_train_pts} pts,"
-                    "Test: {len(target_test)} pts"
+                    f"Target train: {n_train_pts} pts,"
+                    f"Test: {len(target_test)} pts"
                 )
 
                 # Evaluate models

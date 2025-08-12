@@ -1,4 +1,9 @@
-"""TL regression benchmark for quadratic functions."""
+"""Base functionality for quadratic transfer learning regression benchmarks.
+
+This module provides common functionality for regression benchmarks using synthetic
+quadratic functions: y = a*(x+b)^2 + c. Unlike convergence benchmarks, these focus
+on predictive performance metrics (RMSE, R2, MAE, etc.) rather than optimization.
+"""
 
 from __future__ import annotations
 
@@ -10,26 +15,35 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from benchmarks.definition import (
-    TransferLearningRegression,
-    TransferLearningRegressionSettings,
-)
-from benchmarks.domains.regression.base import (
-    run_tl_regression_benchmark,
+from benchmarks.definition.regression import TransferLearningRegressionSettings
+from benchmarks.domains.regression.base import run_tl_regression_benchmark
+
+# Define the benchmark settings
+benchmark_config = TransferLearningRegressionSettings(
+    random_seed=42,
+    num_mc_iterations=30,
+    max_train_points=5,
+    source_fractions=[0.01, 0.02, 0.05, 0.10],
+    noise_std=0.0,  # Noise is already added in data generation
+    metrics=["RMSE", "R2", "MAE"],
 )
 
 
-def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
-    """Load synthetic quadratic data for transfer learning regression benchmark.
+def load_quadratic_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
+    """Load synthetic quadratic data for transfer learning regression benchmarks.
 
     Creates source and target tasks using quadratic functions: y = a*(x+b)^2 + c
+    with added noise for realistic regression scenarios.
 
     Args:
         n_sources: Number of source tasks to generate (default: 3)
-        keep_min: If True, freeze b=0 for all functions (default: True)
+        keep_min: If True, freeze b=0 for all functions (same minimum location)
 
     Returns:
-        DataFrame containing both source and target task data.
+        DataFrame containing both source and target task data with columns:
+        - x: Input variable
+        - y: Output variable (quadratic function value + noise)
+        - task: Task identifier (source_a_b_c format or "target")
     """
     # Fixed parameters for data generation
     n_points = 100
@@ -60,8 +74,8 @@ def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
         y_clean = a * (x + b) ** 2 + c
         y_noisy = y_clean + np.random.normal(0, noise_std, n_points)
 
-        # Create task name
-        task_name = f"source_{a:.2f}_{b:.2f}_{c:.2f}"
+        # Create task name using integer ID for MHGP compatibility
+        task_name = f"source_{i}"
 
         # Create DataFrame for this source
         source_df = pd.DataFrame({"x": x, "y": y_noisy, "task": task_name})
@@ -80,10 +94,11 @@ def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
 
     # Combine all data
     combined_data = pd.concat(all_data, ignore_index=True)
+
     return combined_data
 
 
-def create_searchspaces(
+def create_quadratic_searchspaces(
     data: pd.DataFrame,
 ) -> tuple[SearchSpace, SearchSpace, str, list[str], str]:
     """Create search spaces for vanilla GP and transfer learning models.
@@ -117,36 +132,33 @@ def create_searchspaces(
     # Create transfer learning search space (with task parameter)
     name_task = "task"
     task_param = TaskParameter(
-        name=name_task, values=source_tasks + [target_task], active_values=[target_task]
+        name=name_task,
+        values=source_tasks + [target_task],
+        active_values=[target_task],
     )
+
     tl_params = params + [task_param]
     tl_searchspace = SearchSpace.from_product(tl_params)
 
     return vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task
 
 
-def create_target() -> NumericalTarget:
-    """Create the target task for the benchmark."""
-    return NumericalTarget(name="y", mode="MIN")
+def create_quadratic_objective() -> SingleTargetObjective:
+    """Create the objective for quadratic regression benchmarks."""
+    return SingleTargetObjective(NumericalTarget(name="y", mode="MIN"))
 
 
-def create_objective() -> SingleTargetObjective:
-    """Create the objective for the benchmark."""
-    target = create_target()
-    return SingleTargetObjective(target)
-
-
-def quadratic_tl_regr(
+def run_quadratic_tl_regression_benchmark(
     settings: TransferLearningRegressionSettings,
     n_sources: int = 3,
     keep_min: bool = False,
 ) -> tuple[pd.DataFrame, list[str], list[str]]:
-    """Benchmark function for regression performance of vanilla GP vs TL models.
+    """Run a quadratic transfer learning regression benchmark.
 
     Args:
         settings: The benchmark settings.
         n_sources: Number of source tasks to generate (default: 3)
-        keep_min: If True, freeze b=0 for all functions (default: True)
+        keep_min: If True, freeze b=0 for all functions (same minimum location)
 
     Returns:
         Tuple containing:
@@ -156,41 +168,8 @@ def quadratic_tl_regr(
     """
     return run_tl_regression_benchmark(
         settings=settings,
-        load_data_fn=load_data,
-        create_searchspaces_fn=create_searchspaces,
-        create_objective_fn=create_objective,
+        load_data_fn=load_quadratic_data,
+        create_searchspaces_fn=create_quadratic_searchspaces,
+        create_objective_fn=create_quadratic_objective,
         load_data_kwargs={"n_sources": n_sources, "keep_min": keep_min},
     )
-
-
-# Define the benchmark settings
-benchmark_config = TransferLearningRegressionSettings(
-    random_seed=42,
-    num_mc_iterations=30,
-    max_train_points=5,
-    source_fractions=[0.01, 0.02, 0.03, 0.05, 0.10, 0.20],
-    noise_std=0.0,  # Not used for this synthetic data
-)
-
-# Create the benchmark
-quadratic_tl_regr_benchmark = TransferLearningRegression(
-    function=quadratic_tl_regr, settings=benchmark_config
-)
-
-
-# For debugging/testing
-if __name__ == "__main__":
-    # Run the benchmark directly
-    print("Starting Quadratic Transfer Learning Regression Benchmark...")
-    result_df, metrics, model_names = quadratic_tl_regr(benchmark_config)
-
-    # Print summary
-    print(f"Benchmark completed with {len(result_df)} result rows")
-    print(f"Metrics evaluated: {metrics}")
-    print(f"Models compared: {model_names}")
-    print("\nSample results:")
-    print(result_df.head())
-
-    # Save results to CSV for further analysis
-    result_df.to_csv("quadratic_tl_regression_results.csv", index=False)
-    print("\nResults saved to 'quadratic_tl_regression_results.csv'")

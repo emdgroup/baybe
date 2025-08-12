@@ -127,20 +127,34 @@ aryl_halide_CT_I_BM_tl_regr_benchmark = TransferLearningRegression(
     settings=benchmark_config,
 )
 
-# For debugging/testing
-if __name__ == "__main__":
-    # Run the benchmark directly
-    print("Starting Aryl Halide Transfer Learning Regression Benchmark...")
-    result_df, metrics, model_names = aryl_halide_CT_I_BM_tl_regr(benchmark_config)
 
-    # Print summary
-    print(f"Benchmark completed with {len(result_df)} result rows")
+if __name__ == "__main__":
+    """Run the aryl halide transfer learning regression benchmark."""
+    import pandas as pd
+
+    from benchmarks.domains.regression.base import generate_result_filename
+
+    print("Running Aryl Halide CT-I-BM Transfer Learning Regression Benchmark...")
+
+    # Run the benchmark
+    results_df, metrics, model_names = aryl_halide_CT_I_BM_tl_regr(benchmark_config)
+
+    # Generate filename and save results
+    filename = generate_result_filename("aryl_halide_tl_regression")
+    results_df.to_csv(filename, index=False)
+
+    print("Benchmark completed!")
+    print(f"Results saved to: {filename}")
     print(f"Metrics evaluated: {metrics}")
     print(f"Models compared: {model_names}")
-    print("\nSample results:")
-    print(result_df.head())
+    print(f"Total experiments: {len(results_df)}")
 
-    # Save results to CSV for further analysis
-    filename = generate_result_filename("aryl_halide_tl_regression")
-    result_df.to_csv(filename, index=False)
-    print(f"\nResults saved to '{filename}'")
+    # Show summary statistics
+    print("\nSummary Statistics:")
+    for metric in metrics:
+        for model in model_names:
+            col_name = f"{model}_{metric.lower()}"
+            if col_name in results_df.columns:
+                mean_val = results_df[col_name].mean()
+                std_val = results_df[col_name].std()
+                print(f"{model} {metric}: {mean_val:.4f} ± {std_val:.4f}")

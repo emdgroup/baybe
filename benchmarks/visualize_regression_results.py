@@ -88,6 +88,10 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
 
     # Get unique source fractions
     fractions = sorted(df["fraction_source"].unique())
+    fractions = [
+        fraction.item() if isinstance(fraction, np.generic) else fraction
+        for fraction in fractions
+    ]
     print(f"Source fractions: {fractions}")
 
     # Determine output file prefix from input file
@@ -105,9 +109,12 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
             n_rows, n_cols, figsize=(6 * n_cols, 5 * n_rows)
         )
         if n_metrics == 1:
-            axes = [axes]
+            axes = np.array([[axes]])
         elif n_rows == 1:
             axes = axes.reshape(1, -1)
+        else:
+            # axes is already in the correct shape for multiple rows and columns
+            pass
 
         for i, metric in enumerate(metrics):
             metric_lower = metric.lower()
@@ -115,7 +122,10 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
             better_text = "higher" if higher_is_better else "lower"
 
             row, col = divmod(i, n_cols)
-            ax = axes[row, col] if n_rows > 1 else axes[col]
+            if n_rows == 1:
+                ax = axes[0, col]
+            else:
+                ax = axes[row, col]
 
             # Plot vanilla GP on the subplot
             if vanilla_name:
@@ -217,7 +227,10 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
         # Hide empty subplots
         for i in range(n_metrics, n_rows * n_cols):
             row, col = divmod(i, n_cols)
-            ax = axes[row, col] if n_rows > 1 else axes[col]
+            if n_rows == 1:
+                ax = axes[0, col]
+            else:
+                ax = axes[row, col]
             ax.set_visible(False)
 
         plt.tight_layout()
