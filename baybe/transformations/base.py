@@ -122,7 +122,7 @@ class Transformation(SerialMixin, ABC):
         if isinstance(other, (int, float)):
             from baybe.transformations import AffineTransformation
 
-            return self | AffineTransformation(shift=other)
+            return self | AffineTransformation(factor=other)
         return NotImplemented
 
     def __or__(self, other: Transformation) -> Transformation:
