@@ -40,18 +40,17 @@ jobs:
         id: build_matrix_from_group
         run: |
           benchmarks_to_execute='{"benchmark_list": []}'
-          run_group="${RUN_GROUP}"
 
-          if [ "$run_group" = "Transfer Learning" ]; then
+          if [ "$RUN_GROUP" = "Transfer Learning" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.TRANSFER_LEARNING_BENCHMARKS }} }'
           fi
-          if [ "$run_group" = "Non Transfer Learning" ]; then
+          if [ "$RUN_GROUP" = "Non Transfer Learning" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.NON_TL_BENCHMARKS }} }'
           fi
-          if [ "$run_group" = "Synthetic" ]; then
+          if [ "$RUN_GROUP" = "Synthetic" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.SYNTHETIC_BENCHMARKS }} }'
           fi
-          if [ "$run_group" = "All" ]; then
+          if [ "$RUN_GROUP" = "All" ]; then
             benchmarks_to_execute='{"benchmark_list": ${{ env.ALL_BENCHMARKS }} }'
           fi
 
