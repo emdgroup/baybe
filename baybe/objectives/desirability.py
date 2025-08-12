@@ -14,6 +14,7 @@ from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
@@ -27,6 +28,9 @@ from baybe.utils.validation import finite_float
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
+_OUTPUT_NAME = "Desirability"
+"""The name of the output column produced by the desirability transform."""
 
 
 def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
@@ -89,8 +93,15 @@ class DesirabilityObjective(Objective):
     scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
-    require_normalization: bool = field(default=True, validator=instance_of(bool))
-    """Boolean flag controlling whether the targets must be normalized."""
+    require_normalization: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the targets must be normalized."""
+
+    as_pre_transformation: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the desirability computation is applied as a pre-transformation."""
 
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
@@ -144,8 +155,22 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def _modeled_quantity_names(self) -> tuple[str, ...]:
+        return (
+            self.output_names
+            if self.as_pre_transformation
+            else tuple(t.name for t in self.targets)
+        )
+
+    @override
+    @property
+    def output_names(self) -> tuple[str, ...]:
+        return (_OUTPUT_NAME,)
+
+    @override
+    @property
+    def needs_complete_measurements(self) -> bool:
+        return self.as_pre_transformation
 
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
@@ -168,6 +193,26 @@ class DesirabilityObjective(Objective):
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
+        if self.as_pre_transformation:
+            return NumericalTarget(_OUTPUT_NAME).to_objective().to_botorch()
+        else:
+            return self._to_botorch_full()
+
+    def _to_botorch_full(self) -> MCAcquisitionObjective:
+        """Create a BoTorch objective conducting the full desirability transform.
+
+        Full transformation means:
+            1. Starting from the raw target values
+            2. Applying the individual target transformations
+            3. Scalarizing the transformed values into a desirability score
+
+        This differs from the regular :meth:`to_botorch` in that the entire
+        transformation step is represented end-to-end by the returned objective, whereas
+        the former only captures the part of the transformation starting from the point
+        where the surrogate model(s) are applied (i.e. which may or may not include the
+        desirability scalarization step, depending on the  chosen`as_pre_transformation`
+        setting).
+        """
         import torch
         from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
 
@@ -190,6 +235,31 @@ class DesirabilityObjective(Objective):
 
         inner = super().to_botorch()
         return ChainedMCObjective(inner, outer)
+
+    @override
+    def _pre_transform(
+        self,
+        df: pd.DataFrame,
+        /,
+        *,
+        allow_missing: bool = False,
+        allow_extra: bool = False,
+    ) -> pd.DataFrame:
+        if not self.as_pre_transformation:
+            return super()._pre_transform(
+                df, allow_missing=allow_missing, allow_extra=allow_extra
+            )
+
+        if allow_missing:
+            raise IncompatibilityError(
+                f"Setting 'allow_missing=True' is not supported for "
+                f"'{self.__class__.__name__}.{self._pre_transform.__name__}' when "
+                f"'{fields(self.__class__).as_pre_transformation.name}=True' since "
+                f"the involved desirability computation requires all target columns "
+                f"to be present."
+            )
+
+        return self.transform(df, allow_missing=False, allow_extra=allow_extra)
 
     @override
     def transform(
@@ -231,17 +301,26 @@ class DesirabilityObjective(Objective):
                 )
         # <<<<<<<<<< Deprecation
 
+        if allow_missing:
+            raise IncompatibilityError(
+                f"Setting 'allow_missing=True' is not supported for "
+                f"'{self.__class__.__name__}.{self.transform.__name__}' since "
+                f"desirability computation requires all target columns to be present."
+            )
+
         targets = get_transform_objects(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
+            df, self.targets, allow_missing=False, allow_extra=allow_extra
         )
 
         import torch
 
         with torch.no_grad():
-            transformed = self.to_botorch()(to_tensor(df[[t.name for t in targets]]))
+            transformed = self._to_botorch_full()(
+                to_tensor(df[[t.name for t in targets]])
+            )
 
         return pd.DataFrame(
-            transformed.numpy(), columns=["Desirability"], index=df.index
+            transformed.numpy(), columns=self.output_names, index=df.index
         )
 
 

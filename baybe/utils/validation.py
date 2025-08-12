@@ -10,7 +10,10 @@ import numpy as np
 import pandas as pd
 from attrs import Attribute
 
+from baybe.exceptions import IncompleteMeasurementsError
+
 if TYPE_CHECKING:
+    from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
@@ -115,6 +118,28 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
                     f"The binary target '{t.name}' has invalid entries {invalid} "
                     f"in the provided dataframe. Allowed values are: {allowed}."
                 )
+
+
+def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
+    """Validate the input dataframe for the given objective.
+
+    Args:
+        data: The input dataframe to be validated.
+        objective: The objective to validate against.
+
+    Raises:
+        IncompleteMeasurementsError: If the objective requires complete measurements
+            but the input dataframe contains missing target values.
+    """
+    data = data[[t.name for t in objective.targets]]
+    if objective.needs_complete_measurements and (
+        cols := data.columns[data.isna().any()].tolist()
+    ):
+        raise IncompleteMeasurementsError(
+            f"The used objective requires complete measurements of all "
+            f"involved targets but the provided dataframe contains missing "
+            f"values for the following targets: {cols}"
+        )
 
 
 def validate_parameter_input(

@@ -16,7 +16,11 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_objective_input,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -107,6 +111,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             and searchspace is not None
         ):
             validate_target_input(measurements, objective.targets)
+            validate_objective_input(measurements, objective)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
                 measurements, searchspace.parameters + objective.targets

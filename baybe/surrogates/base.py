@@ -210,14 +210,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return _IDENTITY_TRANSFORM
 
         if objective.n_outputs != 1:
-            # There is execution path yet that could lead to this situation
+            # There is no execution path yet that could lead to this situation
             raise NotImplementedError(
                 "Output scalers for multi-output models are not available."
             )
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
-        scaler(to_tensor(objective.transform(measurements, allow_extra=True)))
+        scaler(to_tensor(objective._pre_transform(measurements, allow_extra=True)))
         scaler.eval()
 
         return scaler
@@ -349,36 +349,42 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         import torch
 
-        targets = [t.name for t in self._objective.targets]
         result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
-            for k, target_name in enumerate(targets):
-                for stat in stats:
-                    try:
-                        if isinstance(stat, float):  # Calculate quantile statistic
-                            stat_name = f"Q_{stat}"
-                            vals = posterior.quantile(torch.tensor(stat))
-                        else:  # Calculate non-quantile statistic
-                            stat_name = stat
-                            vals = getattr(
-                                posterior,
-                                stat if stat not in ["std", "var"] else "variance",
-                            )
-                    except (AttributeError, NotImplementedError) as e:
-                        # We could arrive here because an invalid statistics string has
-                        # been requested or because a quantile point has been requested,
-                        # but the posterior type does not implement quantiles.
-                        raise TypeError(
-                            f"The utilized posterior of type "
-                            f"'{posterior.__class__.__name__}' does not support the "
-                            f"statistic associated with the requested input '{stat}'."
-                        ) from e
+            for stat in stats:
+                try:
+                    if isinstance(stat, float):  # Calculate quantile statistic
+                        stat_name = f"Q_{stat}"
+                        vals = posterior.quantile(torch.tensor(stat))
+                    else:  # Calculate non-quantile statistic
+                        stat_name = stat
+                        vals = getattr(
+                            posterior,
+                            stat if stat not in ["std", "var"] else "variance",
+                        )
+                except (AttributeError, NotImplementedError) as e:
+                    # We could arrive here because an invalid statistics string has
+                    # been requested or because a quantile point has been requested,
+                    # but the posterior type does not implement quantiles.
+                    raise TypeError(
+                        f"The utilized posterior of type "
+                        f"'{posterior.__class__.__name__}' does not support the "
+                        f"statistic associated with the requested input '{stat}'."
+                    ) from e
 
-                    if stat == "std":
-                        vals = torch.sqrt(vals)
+                if stat == "std":
+                    vals = torch.sqrt(vals)
 
-                    numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                    result[f"{target_name}_{stat_name}"] = numpyvals[:, k]
+                # Enforce a consistent shape
+                # https://github.com/pytorch/botorch/issues/2958
+                vals = vals.reshape((len(candidates), 1))
+
+                result[
+                    [
+                        f"{name}_{stat_name}"
+                        for name in self._objective._modeled_quantity_names
+                    ]
+                ] = vals.cpu().numpy()
 
         return result
 
@@ -449,14 +455,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._output_scaler = self._make_output_scaler(objective, measurements)
 
         # Transform and fit
-        # Note: The targets are not transformed here because their transformations
+        # Note: The targets are only pre-transformed here. The remaining transformations
         #  are applied in form of BoTorch objectives. This has the consequence that:
-        #  * the trained surrogate model can be called with untransformed target values,
-        #    enabling predictions with input from the original target domain
-        #  * the transformation is part of the computational backpropagation graph
+        #  * The trained surrogate model can be called with pre-transformed target
+        #    values, enabling predictions with input from the pre-transformed domain
+        #   (this allows us to control precisely on which level the model is placed)
+        #  * The main transformation is part of the computational backpropagation graph
+        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
         train_x_comp_rep, train_y_tensor = to_tensor(
-            searchspace.transform(measurements, allow_extra=True),
-            measurements[[t.name for t in objective.targets]],
+            searchspace.transform(measurements, allow_extra=True), pre_transformed
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
