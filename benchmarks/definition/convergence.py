@@ -8,6 +8,7 @@ from attrs.validators import deep_mapping, instance_of, optional
 from benchmarks.definition.base import (
     Benchmark,
     BenchmarkSettings,
+    RunMode,
     make_runmode_attr_validator,
 )
 
@@ -16,17 +17,17 @@ from benchmarks.definition.base import (
 class ConvergenceBenchmarkSettings(BenchmarkSettings):
     """Benchmark configuration for recommender convergence analyses."""
 
-    batch_size_settings: dict[str, int] = field(
+    batch_size_settings: dict[RunMode, int] = field(
         validator=make_runmode_attr_validator(int)
     )
     """The settings for recommendation batch size."""
 
-    n_doe_iterations_settings: dict[str, int] = field(
+    n_doe_iterations_settings: dict[RunMode, int] = field(
         validator=make_runmode_attr_validator(int)
     )
     """The settings for number of Design of Experiment iterations."""
 
-    n_mc_iterations_settings: dict[str, int] = field(
+    n_mc_iterations_settings: dict[RunMode, int] = field(
         validator=make_runmode_attr_validator(int)
     )
     """The settings for number of Monte Carlo iterations."""

@@ -146,16 +146,16 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD.value: 2,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 2,
+        RunMode.RUNTHROUGH: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD.value: 25,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 25,
+        RunMode.RUNTHROUGH: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD.value: 75,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 75,
+        RunMode.RUNTHROUGH: 2,
     },
 )
 
