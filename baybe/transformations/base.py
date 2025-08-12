@@ -38,11 +38,14 @@ class Transformation(SerialMixin, ABC):
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         """Get the codomain of a certain interval (assuming transformation continuity).
 
-        We use a slightly generalized definition of a function's
-        `codomain <https://en.wikipedia.org/wiki/Codomain>`_ here, which extends
-        to arbitrary intervals. Like the image of an interval obtained under a given
-        function, we define the codomain of that interval to be any suitable
-        superset of its image, i.e. an interval that contains the image.
+        In accordance with the mathematical definition of a function's `codomain
+        <https://en.wikipedia.org/wiki/Codomain>`_, we define the codomain of a given
+        :class:`~baybe.utils.interval.Interval` under a certain (assumed continuous)
+        :class:`~Transformation` to be an :class:`~baybe.utils.interval.Interval`
+        guaranteed to contain all possible outcomes when the :class:`~Transformation` is
+        applied to all points in the input :class:`~baybe.utils.interval.Interval`. In
+        cases where the image cannot exactly be computed, it is often still possible to
+        compute a codomain. The codomain always contains the image, but might be larger.
         """
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
