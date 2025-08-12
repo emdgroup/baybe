@@ -1,17 +1,21 @@
 """Composite transformations."""
 
+from __future__ import annotations
+
 from functools import reduce
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
 from attrs.validators import and_, deep_iterable, instance_of, max_len, min_len
-from torch import Tensor
 from typing_extensions import override
 
 from baybe.transformations.base import Transformation
 from baybe.transformations.utils import compress_transformations
 from baybe.utils.basic import compose, to_tuple
 from baybe.utils.interval import Interval
+
+if TYPE_CHECKING:
+    from torch import Tensor
 
 
 @define
