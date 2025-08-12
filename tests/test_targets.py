@@ -59,19 +59,20 @@ def test_target_normalization(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "target",
+    ("target", "transformed_value"),
     [
-        param(NumericalTarget.match_bell("t", 2, 1), id="match"),
-        param(NumericalTarget.match_power("t", 2, 2), id="power"),
-        param(NumericalTarget.match_quadratic("t", 2), id="quadratic"),
-        param(NumericalTarget.match_absolute("t", 2), id="absolute"),
-        param(NumericalTarget.match_triangular("t", 2, width=40), id="triangular"),
+        param(NumericalTarget.match_bell("t", 2, 1), 1, id="bell"),
+        param(NumericalTarget.match_power("t", 2, 2), 0, id="power"),
+        param(NumericalTarget.match_quadratic("t", 2), 0, id="quadratic"),
+        param(NumericalTarget.match_absolute("t", 2), 0, id="absolute"),
+        param(NumericalTarget.match_triangular("t", 2, width=40), 1, id="triangular"),
     ],
 )
-def test_match_constructors(target):
+def test_match_constructors(target, transformed_value):
     """Larger distance to match values yields smaller transformed values."""
-    delta = [0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
+    delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     match_value = 2
 
     transformed = target.transform(pd.Series(delta) + match_value)
+    assert transformed[0] == transformed_value
     assert (transformed.diff().dropna() < 0).all()
