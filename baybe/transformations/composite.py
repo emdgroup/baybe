@@ -10,7 +10,7 @@ from typing_extensions import override
 
 from baybe.transformations.base import Transformation
 from baybe.transformations.utils import compress_transformations
-from baybe.utils.basic import compose
+from baybe.utils.basic import compose, to_tuple
 from baybe.utils.interval import Interval
 
 
@@ -59,7 +59,7 @@ class AdditiveTransformation(Transformation):
     """A transformation implementing the sum of two transformations."""
 
     transformations: tuple[Transformation, Transformation] = field(
-        converter=tuple,
+        converter=to_tuple,
         validator=deep_iterable(
             iterable_validator=and_(min_len(2), max_len(2)),
             member_validator=instance_of(Transformation),
@@ -84,7 +84,7 @@ class MultiplicativeTransformation(Transformation):
     """A transformation implementing the product of two transformations."""
 
     transformations: tuple[Transformation, Transformation] = field(
-        converter=tuple,
+        converter=to_tuple,
         validator=deep_iterable(
             iterable_validator=and_(min_len(2), max_len(2)),
             member_validator=instance_of(Transformation),

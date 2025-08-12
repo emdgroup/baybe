@@ -22,7 +22,7 @@ _TTransformation = TypeVar("_TTransformation", bound="Transformation")
 
 def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformation]:
     """Make the image of a transformation identical to its codomain."""
-    cls.get_image = cls.get_codomain
+    cls.get_image = cls.get_codomain  # type: ignore[method-assign]
     return cls
 
 

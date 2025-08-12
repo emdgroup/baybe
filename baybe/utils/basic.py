@@ -56,7 +56,7 @@ class UncertainBool(enum.Enum):
             raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
 
     @classmethod
-    def from_erroneous_callable(cls, callable_: callable, /) -> UncertainBool:
+    def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
         """Create an uncertain Boolean from a potentially erroneous Boolean call."""
         try:
             return cls.TRUE if callable_() else cls.FALSE
