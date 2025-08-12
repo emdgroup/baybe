@@ -12,6 +12,7 @@ from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.base import RunMode
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
     aryl_halide_tl_substance_benchmark,
 )
@@ -52,9 +53,18 @@ def aryl_halide_IP_CP_tl(
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=2,
-    n_doe_iterations=25,
-    n_mc_iterations=60,
+    batch_size_settings={
+        RunMode.STANDARD.value: 2,
+        RunMode.RUNTHROUGH.value: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.STANDARD.value: 25,
+        RunMode.RUNTHROUGH.value: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.STANDARD.value: 60,
+        RunMode.RUNTHROUGH.value: 2,
+    },
 )
 
 aryl_halide_IP_CP_tl_benchmark = ConvergenceBenchmark(
