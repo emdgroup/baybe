@@ -223,7 +223,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return NumericalTarget(
             name,
-            AffineTransformation(shift=-match_value) + AbsoluteTransformation(),
+            AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=True,
         )
 
@@ -257,8 +257,8 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(
             name,
             AffineTransformation(shift=-match_value)
-            + AbsoluteTransformation()
-            + PowerTransformation(exponent),
+            | AbsoluteTransformation()
+            | PowerTransformation(exponent),
             minimize=True,
         )
 
