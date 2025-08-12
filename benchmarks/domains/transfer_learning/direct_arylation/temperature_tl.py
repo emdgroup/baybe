@@ -175,16 +175,16 @@ def direct_arylation_tl_temperature(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD.value: 2,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 2,
+        RunMode.RUNTHROUGH: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD.value: 20,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 20,
+        RunMode.RUNTHROUGH: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD.value: 55,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 55,
+        RunMode.RUNTHROUGH: 2,
     },
 )
 

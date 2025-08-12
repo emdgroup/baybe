@@ -164,16 +164,16 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD.value: 2,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 2,
+        RunMode.RUNTHROUGH: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD.value: 30,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 30,
+        RunMode.RUNTHROUGH: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD.value: 100,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 100,
+        RunMode.RUNTHROUGH: 2,
     },
 )
 

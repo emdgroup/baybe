@@ -9,10 +9,8 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
-from attr import Attribute
-from attr.validators import optional
-from attrs import define, field
-from attrs.validators import instance_of
+from attrs import Attribute, define, field
+from attrs.validators import deep_mapping, instance_of
 from cattrs import override
 from cattrs.gen import make_dict_unstructure_fn
 from pandas import DataFrame
@@ -46,19 +44,24 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     random_seed: int = field(validator=instance_of(int), default=1337)
     """The used random seed."""
 
-    runmode: str | None = field(
-        validator=optional(instance_of(str)),
-        default=None,
-        converter=lambda x: RunMode.STANDARD.value if x is None else x,
+    runmode: RunMode = field(
+        validator=instance_of(RunMode),
+        default=RunMode.STANDARD,
     )
     """Mode to run benchmark in.
     Can be used to adjust the selection of setting parameters.
     """
 
+    def set_runmode(self, runmode: RunMode) -> None:
+        """Set the runmode for the benchmark settings."""
+        if runmode not in RunMode:
+            raise ValueError(f"Invalid runmode: {runmode}")
+        self.runmode = runmode
+
 
 def make_runmode_attr_validator(
     value_type: type,
-) -> Callable[[BenchmarkSettings, Attribute, dict[str, Any]], None]:
+) -> Callable[[BenchmarkSettings, Attribute, dict[RunMode, Any]], None]:
     """Maker validator for attributes that depend on the runmode.
 
     Make sure that all required runmodes are defined
@@ -66,28 +69,22 @@ def make_runmode_attr_validator(
     """
 
     def runmode_attr_validator(
-        instance: BenchmarkSettings, attribute: Attribute, value: dict[str, Any]
+        instance: BenchmarkSettings, attribute: Attribute, value: dict[RunMode, Any]
     ) -> None:
         # Check type
-        if (
-            not isinstance(value, dict)
-            or not all(isinstance(key, str) for key in value.keys())
-            or not all(isinstance(val, value_type) for val in value.values())
-        ):
-            raise TypeError(
-                f"{str(attribute.name)} mut be of type Dict[str,{value_type.__name__}"
-            )
+        VALID_DICT = deep_mapping(
+            key_validator=instance_of(RunMode),
+            value_validator=instance_of(value_type),
+            mapping_validator=instance_of(dict),
+        )
+        VALID_DICT(instance, attribute, value)
+        REQUIERED_RUNMODES_SET = (
+            RunMode.STANDARD in value and RunMode.RUNTHROUGH in value
+        )
 
-        # Check obligatory runmodes
-        missing_runmodes = []
-        for rm in RunMode:
-            runmode = rm.value
-            if runmode not in value:
-                missing_runmodes.append(runmode)
-        if len(missing_runmodes) > 0:
+        if not REQUIERED_RUNMODES_SET:
             raise ValueError(
-                "Missing settings for runmodes: "
-                + ", ".join([rm for rm in missing_runmodes])
+                f"Runmode {RunMode.STANDARD} must be defined in {attribute.name}."
             )
 
     return runmode_attr_validator
@@ -122,9 +119,9 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         assert self.function.__doc__ is not None
         return self.function.__doc__
 
-    def __call__(self, runmode: str | None = None) -> Result:
+    def __call__(self, runmode: RunMode) -> Result:
         """Execute the benchmark and return the result."""
-        self.settings.runmode = runmode
+        self.settings.set_runmode(runmode)
 
         start_datetime = datetime.now(timezone.utc)
 

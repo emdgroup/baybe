@@ -54,16 +54,16 @@ def aryl_halide_IP_CP_tl(
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD.value: 2,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 2,
+        RunMode.RUNTHROUGH: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD.value: 25,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 25,
+        RunMode.RUNTHROUGH: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD.value: 60,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 60,
+        RunMode.RUNTHROUGH: 2,
     },
 )
 

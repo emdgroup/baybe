@@ -81,16 +81,16 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD.value: 5,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 5,
+        RunMode.RUNTHROUGH: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD.value: 30,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 30,
+        RunMode.RUNTHROUGH: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD.value: 100,
-        RunMode.RUNTHROUGH.value: 2,
+        RunMode.STANDARD: 100,
+        RunMode.RUNTHROUGH: 2,
     },
 )
 

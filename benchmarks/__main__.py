@@ -5,7 +5,7 @@ import argparse
 import os
 from collections.abc import Collection
 
-from benchmarks.definition import Benchmark
+from benchmarks.definition import Benchmark, RunMode
 from benchmarks.domains import BENCHMARKS
 from benchmarks.persistence import (
     LocalFileObjectStorage,
@@ -34,53 +34,69 @@ def save_benchmark_data(
     object_storage.write_json(persist_dict, path_constructor)
 
 
-def run_all_benchmarks(
-    runmode: str | None = None,
-    name: str | None = None,
-    outdir: str | None = None,
-) -> None:
-    """Run all benchmarks."""
-    for benchmark in BENCHMARKS:
-        result = benchmark(runmode=runmode)
-        save_benchmark_data(benchmark, result, name=name, outdir=outdir)
-
-
 def run_benchmarks(
-    benchmark_names: Collection[str],
-    runmode: str | None = None,
+    benchmark_list: Collection[Benchmark],
+    runmode: RunMode,
     name: str | None = None,
     outdir: str | None = None,
 ) -> None:
     """Run a subset based on the benchmark name."""
-    for benchmark in BENCHMARKS:
-        if benchmark.name not in benchmark_names:
-            continue
-
+    for benchmark in benchmark_list:
         result = benchmark(runmode=runmode)
-        save_benchmark_data(benchmark, result, name=name, outdir=outdir)
+
+        if runmode == RunMode.STANDARD:
+            save_benchmark_data(benchmark, result, name=name, outdir=outdir)
 
 
 def main() -> None:
     """Execute the benchmarking module."""
     parser = argparse.ArgumentParser(description="Executes the benchmarking module.")
     parser.add_argument(
-        "--benchmark-list", nargs="+", help="List of benchmarks to run", default=None
+        "--benchmark-list",
+        "-b",
+        nargs="+",
+        help="List of benchmarks to run, e.g. --benchmark-list direct_arylation"
+        " temperature_tl. Runs all benchmarks if not specified.",
+        default=None,
+        type=str,
     )
     parser.add_argument(
-        "--runmode", type=str, help="Runmode setting to use.", default=None
+        "--runmode",
+        "-r",
+        type=RunMode,
+        help="Runmode setting to use.",
+        default=RunMode.STANDARD,
+        choices=list(RunMode),
     )
     parser.add_argument(
-        "--name", help="Additional name to add to saved file.", default=None
+        "--name",
+        "-n",
+        help="Additional name to add to saved file.",
+        default=None,
+        type=str,
     )
-    parser.add_argument("--outdir", help="Save files into directory.", default=None)
+    parser.add_argument(
+        "--outdir", "-o", help="Save files into directory.", default=None, type=str
+    )
     args = parser.parse_args()
-    if not args.benchmark_list:
-        run_all_benchmarks(runmode=args.runmode, name=args.name)
-        return
 
-    benchmark_execute_set = set(args.benchmark_list)
+    if args.outdir and RUNS_IN_CI:
+        raise AttributeError("Output directory cannot be set in CI mode.")
+
+    if args.name and RUNS_IN_CI:
+        raise AttributeError("Name cannot be set in CI mode.")
+
+    if not args.benchmark_list:
+        benchmark_list = BENCHMARKS
+    else:
+        benchmark_list = [
+            benchmark
+            for benchmark in BENCHMARKS
+            if benchmark.name in set(args.benchmark_list)
+        ]
+
     run_benchmarks(
-        benchmark_execute_set,
+        benchmark_list=benchmark_list,
         runmode=args.runmode,
         name=args.name,
         outdir=args.outdir,
