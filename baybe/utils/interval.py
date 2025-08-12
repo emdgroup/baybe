@@ -123,7 +123,7 @@ class Interval(SerialMixin):
             number: The number that should be checked.
 
         Returns:
-            Whether or not the interval contains the number.
+            Whether the interval contains the number.
         """
         return (
             bool(np.isclose(number, self.lower))
