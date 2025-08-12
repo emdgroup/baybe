@@ -1,15 +1,14 @@
-"""Target transformations."""
+"""Basic transformations."""
 
 from __future__ import annotations
 
 import gc
 from collections.abc import Callable, Sequence
-from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Factory, define, field
-from attrs.validators import deep_iterable, ge, gt, instance_of, is_callable, min_len
+from attrs.validators import ge, gt, instance_of, is_callable
 from typing_extensions import override
 
 from baybe.serialization.core import (
@@ -17,9 +16,11 @@ from baybe.serialization.core import (
     get_base_structure_hook,
     unstructure_base,
 )
-from baybe.transformations.base import MonotonicTransformation, Transformation
-from baybe.transformations.utils import compress_transformations
-from baybe.utils.basic import compose
+from baybe.transformations.base import (
+    MonotonicTransformation,
+    Transformation,
+    _image_equals_codomain,
+)
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
 from baybe.utils.validation import finite_float
@@ -34,36 +35,6 @@ if TYPE_CHECKING:
 
 
 @define
-class ChainedTransformation(Transformation):
-    """A chained transformation composing several individual transformations."""
-
-    transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
-        validator=[
-            min_len(1),
-            deep_iterable(member_validator=instance_of(Transformation)),
-        ],
-    )
-    """The transformations to be composed."""
-
-    @override
-    def __eq__(self, other: Any, /) -> bool:
-        # A chained transformation with only one element is equivalent to that element
-        if len(self.transformations) == 1:
-            return self.transformations[0] == other
-        return super().__eq__(other)
-
-    @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        interval = Interval.create(interval)
-        return reduce(lambda acc, t: t.get_image(acc), self.transformations, interval)
-
-    @override
-    def __call__(self, x: Tensor, /) -> Tensor:
-        return compose(*(t.__call__ for t in self.transformations))(x)
-
-
-@define
 class CustomTransformation(Transformation):
     """A custom transformation applying an arbitrary torch callable."""
 
@@ -71,9 +42,9 @@ class CustomTransformation(Transformation):
     """The torch callable representing the transformation."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         raise NotImplementedError(
-            "Custom transformations do not provide details about their image."
+            "Custom transformations do not provide details about their codomain."
         )
 
     @override
@@ -90,10 +61,10 @@ class IdentityTransformation(MonotonicTransformation):
         return x
 
     @override
-    def __add__(self, other: Transformation | int | float) -> Transformation:
-        if isinstance(other, (int, float)):
-            return AffineTransformation(shift=other)
-        return other
+    def __or__(self, other: Transformation) -> Transformation:
+        if isinstance(other, Transformation):
+            return other
+        return NotImplemented
 
 
 @define(init=False)
@@ -138,15 +109,13 @@ class AffineTransformation(MonotonicTransformation):
 
     @override
     def __eq__(self, other: Any, /) -> bool:
-        # An affine transformation without shift and scaling is effectively an
-        # identity transformation
-        if (
-            isinstance(other, IdentityTransformation)
-            and self.factor == 1.0
-            and self.shift == 0.0
-        ):
-            return True
-        return super().__eq__(other)
+        if isinstance(other, IdentityTransformation):
+            # An affine transformation without shift and scaling is effectively an
+            # identity transformation
+            return self.factor == 1.0 and self.shift == 0.0
+        if isinstance(other, AffineTransformation):
+            return self.factor == other.factor and self.shift == other.shift
+        return NotImplemented
 
     def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
         """Convert to BoTorch posterior transform.
@@ -196,6 +165,7 @@ class AffineTransformation(MonotonicTransformation):
         return x * self.factor + self.shift
 
 
+@_image_equals_codomain
 @define(slots=False)
 class TwoSidedAffineTransformation(Transformation):
     """A transformation with two affine segments on either side of a midpoint."""
@@ -210,7 +180,7 @@ class TwoSidedAffineTransformation(Transformation):
     """The midpoint where the two affine segments meet."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
 
         image_lower = self(to_tensor(interval.lower)).item()
@@ -235,6 +205,7 @@ class TwoSidedAffineTransformation(Transformation):
         )
 
 
+@_image_equals_codomain
 @define(slots=False)
 class BellTransformation(Transformation):
     """A Gaussian bell curve transformation."""
@@ -253,7 +224,7 @@ class BellTransformation(Transformation):
     """
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
 
         image_lower = self(to_tensor(interval.lower)).item()
@@ -268,6 +239,7 @@ class BellTransformation(Transformation):
         return x.sub(self.center).div(self.sigma).pow(2.0).div(2.0).neg().exp()
 
 
+@_image_equals_codomain
 @define(slots=False)
 class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
@@ -280,14 +252,15 @@ class AbsoluteTransformation(Transformation):
     """Internal transformation object handling the operations."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        return self._transformation.get_image(interval)
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        return self._transformation.get_codomain(interval)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return self._transformation(x)
 
 
+@_image_equals_codomain
 @define(slots=False)
 class TriangularTransformation(Transformation):
     r"""A transformation with a triangular shape.
@@ -384,8 +357,8 @@ class TriangularTransformation(Transformation):
         return cls.from_margins(peak, (width / 2, width / 2))
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
-        return self._transformation.get_image(interval)
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        return self._transformation.get_codomain(interval)
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -410,6 +383,7 @@ class ExponentialTransformation(MonotonicTransformation):
         return x.exp()
 
 
+@_image_equals_codomain
 @define(slots=False)
 class PowerTransformation(Transformation):
     """A transformation computing the power."""
@@ -421,7 +395,7 @@ class PowerTransformation(Transformation):
     """The exponent of the power transformation."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
         image_lower = self(to_tensor(interval.lower)).item()
         image_upper = self(to_tensor(interval.upper)).item()

@@ -43,7 +43,7 @@ def test_invalid_target(target):
         ),
         param([t1], ValueError, "must be >= 2: 1", id="too_short"),
         param([t1, t1], ValueError, "unique names", id="duplicate_names"),
-        param([t1, t3], ValueError, "are not normalized", id="unnormalized"),
+        param([t1, t3], ValueError, "are either not normalized", id="unnormalized"),
         param([t1, t4], ValueError, "non-negative range", id="negative"),
         param(
             [t1, t_mock],

@@ -36,6 +36,7 @@ from baybe.transformations import (
     TriangularTransformation,
     convert_transformation,
 )
+from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 
@@ -222,7 +223,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return NumericalTarget(
             name,
-            AffineTransformation(shift=-match_value) + AbsoluteTransformation(),
+            AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=True,
         )
 
@@ -256,8 +257,8 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(
             name,
             AffineTransformation(shift=-match_value)
-            + AbsoluteTransformation()
-            + PowerTransformation(exponent),
+            | AbsoluteTransformation()
+            | PowerTransformation(exponent),
             minimize=True,
         )
 
@@ -320,7 +321,7 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
-                details, see :class:`baybe.transformations.core.BellTransformation`.
+                details, see :class:`baybe.transformations.basic.BellTransformation`.
 
         Returns:
             The target with applied bell matching transformation.
@@ -360,7 +361,7 @@ class NumericalTarget(Target, SerialMixin):
 
         Args:
             name: The name of the target.
-            anchors: See :class:`baybe.transformations.core.SigmoidTransformation`.
+            anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.
 
         Returns:
             The target with applied sigmoid transformation.
@@ -368,9 +369,11 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, SigmoidTransformation.from_anchors(anchors))
 
     @property
-    def is_normalized(self) -> bool:
+    def is_normalized(self) -> UncertainBool:
         """Boolean flag indicating if the target is normalized to the unit interval."""
-        return self.get_image() == Interval(0, 1)
+        return UncertainBool.from_erroneous_callable(
+            lambda: self.get_image() == Interval(0, 1)
+        )
 
     @property
     def total_transformation(self) -> Transformation:
@@ -378,8 +381,12 @@ class NumericalTarget(Target, SerialMixin):
         tr = self._transformation
         return self._transformation if not self.minimize else tr.negate()
 
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        """Get the codomain of an interval (assuming transformation continuity)."""
+        return self.total_transformation.get_codomain(interval)
+
     def get_image(self, interval: Interval | None = None, /) -> Interval:
-        """Get the image of a certain interval (assuming transformation continuity)."""
+        """Get the image of an interval (assuming transformation continuity)."""
         return self.total_transformation.get_image(interval)
 
     def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
@@ -410,17 +417,18 @@ class NumericalTarget(Target, SerialMixin):
         """Normalize the target to the unit interval using an affine transformation.
 
         Raises:
-            IncompatibilityError: If the target is not bounded.
+            IncompatibilityError: If the target image is not bounded.
 
         Returns:
             The normalized target.
         """
-        if not self.get_image().is_bounded:
+        bounds = self.get_image()
+        if not bounds.is_bounded:
             raise IncompatibilityError("Only bounded targets can be normalized.")
 
         return self._append_transformation(
             AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *self.get_image().to_tuple()
+                *bounds.to_tuple()
             )
         )
 

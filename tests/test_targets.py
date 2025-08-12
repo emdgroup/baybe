@@ -7,7 +7,7 @@ from pytest import param
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations.core import AffineTransformation
+from baybe.transformations.basic import AffineTransformation, ClampingTransformation
 from baybe.utils.interval import Interval
 
 
@@ -36,29 +36,43 @@ def test_target_inversion():
     assert_series_equal(transformed, tii.transform(series))
 
 
-def test_target_normalization():
+def test_target_normalization(monkeypatch):
     """Target normalization works as expected."""
+    # We artificially create some transform whose codomain does not coincide with the
+    # image but is twice as broad.
+    monkeypatch.setattr(
+        ClampingTransformation,
+        "get_codomain",
+        lambda self, interval=None: Interval.create(
+            self.get_image(interval).to_ndarray() * 2
+        ),
+    )
+
     t = NumericalTarget("t")
     with pytest.raises(IncompatibilityError, match="Only bounded targets"):
         t.normalize()
+
     assert t.clamp(-2, 4).get_image() == Interval(-2, 4)
+    assert t.clamp(-2, 4).get_codomain() == Interval(-4, 8)
     assert t.clamp(-2, 4).normalize().get_image() == Interval(0, 1)
+    assert t.clamp(-2, 4).normalize().get_codomain() != Interval(0, 1)
 
 
 @pytest.mark.parametrize(
-    "target",
+    ("target", "transformed_value"),
     [
-        param(NumericalTarget.match_bell("t", 2, 1), id="match"),
-        param(NumericalTarget.match_power("t", 2, 2), id="power"),
-        param(NumericalTarget.match_quadratic("t", 2), id="quadratic"),
-        param(NumericalTarget.match_absolute("t", 2), id="absolute"),
-        param(NumericalTarget.match_triangular("t", 2, width=40), id="triangular"),
+        param(NumericalTarget.match_bell("t", 2, 1), 1, id="bell"),
+        param(NumericalTarget.match_power("t", 2, 2), 0, id="power"),
+        param(NumericalTarget.match_quadratic("t", 2), 0, id="quadratic"),
+        param(NumericalTarget.match_absolute("t", 2), 0, id="absolute"),
+        param(NumericalTarget.match_triangular("t", 2, width=40), 1, id="triangular"),
     ],
 )
-def test_match_constructors(target):
+def test_match_constructors(target, transformed_value):
     """Larger distance to match values yields smaller transformed values."""
-    delta = [0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
+    delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     match_value = 2
 
     transformed = target.transform(pd.Series(delta) + match_value)
+    assert transformed[0] == transformed_value
     assert (transformed.diff().dropna() < 0).all()

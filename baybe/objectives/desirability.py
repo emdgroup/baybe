@@ -18,6 +18,7 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
+from baybe.targets.numerical import UncertainBool
 from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df, to_tensor
@@ -100,7 +101,7 @@ class DesirabilityObjective(Objective):
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
         # Validate non-negativity when using geometric mean
         if self.scalarizer is Scalarizer.GEOM_MEAN and (
-            negative := {t.name for t in targets if t.get_image().lower < 0}
+            negative := {t.name for t in targets if t.get_codomain().lower < 0}
         ):
             raise ValueError(
                 f"Using '{Scalarizer.GEOM_MEAN}' for '{self.__class__.__name__}' "
@@ -111,15 +112,20 @@ class DesirabilityObjective(Objective):
 
         # Validate normalization
         if self.require_normalization and (
-            unnormalized := {t.name for t in targets if not t.is_normalized}
+            unnormalized := {
+                t.name for t in targets if t.is_normalized is not UncertainBool.TRUE
+            }
         ):
             raise ValueError(
                 f"By default, '{self.__class__.__name__}' only accepts normalized "
-                f"targets but the following targets are not normalized: "
-                f"{unnormalized}. Either normalize your targets (e.g. using their "
+                f"targets but the following targets are either not normalized or their "
+                f"normalization status is unclear because the image "
+                f"of the underlying transformation is unknown: {unnormalized}. "
+                f"Either normalize your targets (e.g. using their "
                 f"'{NumericalTarget.normalize.__name__}' method / by specifying "
                 f"a suitable target transformation) or explicitly set "
-                f"'{fields(DesirabilityObjective).require_normalization.name}' to "
+                f"'{DesirabilityObjective.__name__}."
+                f"{fields(DesirabilityObjective).require_normalization.name}' to "
                 f"'True' to allow unnormalized targets."
             )
 

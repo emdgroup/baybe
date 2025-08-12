@@ -5,7 +5,7 @@ from hypothesis import given
 
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations.core import ClampingTransformation
+from baybe.transformations.basic import ClampingTransformation
 from tests.serialization.test_objective_serialization import (
     _get_involved_transformations,
 )
