@@ -4,89 +4,40 @@ from __future__ import annotations
 
 import pandas as pd
 
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
-    NumericalDiscreteParameter,
-    SubstanceParameter,
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
-from baybe.targets import NumericalTarget
-from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import (
     TransferLearningRegression,
     TransferLearningRegressionSettings,
 )
 from benchmarks.domains.regression.base import run_tl_regression_benchmark
-
-
-def load_data() -> pd.DataFrame:
-    """Load direct arylation data for the benchmark."""
-    data = pd.read_table(
-        DATA_PATH / "direct_arylation" / "data.csv",
-        sep=",",
-        index_col=0,
-        dtype={"Temp_C": str},  # Ensure temperature is treated as a string
-    )
-
-    # Keep only necessary columns
-    keep_columns = [
-        "Base",
-        "Ligand",
-        "Solvent",
-        "Base_SMILES",
-        "Ligand_SMILES",
-        "Solvent_SMILES",
-        "Concentration",
-        "Temp_C",
-        "yield",
-    ]
-
-    return data[keep_columns]
+from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import (
+    load_data,
+    make_objective,
+    make_searchspace,
+)
 
 
 def create_searchspaces(data: pd.DataFrame) -> tuple[SearchSpace, SearchSpace]:
     """Create search spaces for vanilla GP and transfer learning models."""
-    # Parameters for both search spaces
-    substance_params = [
-        SubstanceParameter(
-            name=substance,
-            data=dict(zip(data[substance], data[f"{substance}_SMILES"])),
-            encoding="RDKIT2DDESCRIPTORS",
-        )
-        for substance in ["Base", "Ligand", "Solvent"]
-    ]
-
-    concentration_param = NumericalDiscreteParameter(
-        name="Concentration",
-        values=sorted(data["Concentration"].unique()),
-    )
-
-    # Common parameters
-    common_params = substance_params + [concentration_param]
-
-    # Create vanilla GP search space (no task parameter)
-    vanilla_searchspace = SearchSpace.from_product(common_params)
+    # Create SearchSpace without task parameter (vanilla GP)
+    vanilla_searchspace = make_searchspace(data=data, use_task_parameter=False)
 
     # Create transfer learning search space (with task parameter)
-    name_task = "Temp_C"
-    source_tasks = ["90", "120"]
-    target_task = "105"  # Active value for the task parameter
-    task_param = TaskParameter(
-        name=name_task,
-        values=source_tasks + [target_task],
-        active_values=[target_task],
-    )
+    tl_searchspace = make_searchspace(data=data, use_task_parameter=True)
 
-    tl_params = common_params + [task_param]
-    tl_searchspace = SearchSpace.from_product(tl_params)
+    # Extract task parameter details
+    task_param = next(
+        p for p in tl_searchspace.parameters if isinstance(p, TaskParameter)
+    )
+    name_task = task_param.name
+    target_task = task_param.active_values
+    all_values = task_param.values
+    source_tasks = [val for val in all_values if val not in target_task]
 
     return vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task
-
-
-def create_objective() -> SingleTargetObjective:
-    """Create the objective for the benchmark."""
-    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
 def direct_arylation_temperature_tl_regr(
@@ -111,7 +62,7 @@ def direct_arylation_temperature_tl_regr(
         settings=settings,
         load_data_fn=load_data,
         create_searchspaces_fn=create_searchspaces,
-        create_objective_fn=create_objective,
+        create_objective_fn=make_objective,
     )
     return results_df
 

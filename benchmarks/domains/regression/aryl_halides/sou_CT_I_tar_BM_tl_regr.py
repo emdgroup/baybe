@@ -6,7 +6,6 @@ import pandas as pd
 
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import (
-    SubstanceParameter,
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
@@ -16,7 +15,10 @@ from benchmarks.definition import (
     TransferLearningRegressionSettings,
 )
 from benchmarks.domains.regression.base import run_tl_regression_benchmark
-from benchmarks.domains.transfer_learning.aryl_halides.base import load_data
+from benchmarks.domains.transfer_learning.aryl_halides.base import (
+    load_data,
+    make_searchspace,
+)
 
 
 def create_searchspaces(
@@ -35,36 +37,21 @@ def create_searchspaces(
         - source_tasks: List of source task values
         - target_task: Target task value
     """
-    # Parameters for both search spaces
-    substance_params = [
-        SubstanceParameter(
-            name=substance,
-            data=dict(zip(data[substance], data[f"{substance}_smiles"])),
-            encoding="MORDRED",
-        )
-        for substance in ["base", "ligand", "additive"]
-    ]
+    source_tasks = (["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],)
+    target_task = "1-iodo-4-methoxybenzene"
 
-    # Common parameters
-    common_params = substance_params
-
-    # Create vanilla GP search space (no task parameter)
-    vanilla_searchspace = SearchSpace.from_product(common_params)
-
-    # Create transfer learning search space (with task parameter)
-    name_task = "aryl_halide"
-    source_tasks = ["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"]
-    target_task = "1-bromo-4-methoxybenzene"
-
-    # Active value for the task parameter
-    task_param = TaskParameter(
-        name=name_task,
-        values=source_tasks + [target_task],
-        active_values=[target_task],
+    vanilla_searchspace = make_searchspace(
+        data=data, target_tasks=None, source_tasks=source_tasks
+    )
+    tl_searchspace = make_searchspace(
+        data=data, target_tasks=[target_task], source_tasks=source_tasks
     )
 
-    tl_params = common_params + [task_param]
-    tl_searchspace = SearchSpace.from_product(tl_params)
+    # Extract task parameter details
+    task_param = next(
+        p for p in tl_searchspace.parameters if isinstance(p, TaskParameter)
+    )
+    name_task = task_param.name
 
     return vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task
 
