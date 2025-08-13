@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Random seed context is correctly set within benchmarks
 
 ### Removed
-- Telemetry usage statistics collection
+- Telemetry
 
 ## [0.13.2] - 2025-07-09
 ### Changed
