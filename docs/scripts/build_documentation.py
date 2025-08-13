@@ -9,8 +9,6 @@ from build_examples import build_examples
 from check_links import check_links
 from utils import adjust_pictures
 
-from baybe.telemetry import VARNAME_TELEMETRY_ENABLED
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "-e",
@@ -129,8 +127,6 @@ def build_documentation(
 if __name__ == "__main__":
     if not INCLUDE_WARNINGS:
         os.environ["PYTHONWARNINGS"] = "ignore"
-
-    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
 
     print(f"{LINKCHECK=}")
 

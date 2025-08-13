@@ -71,11 +71,6 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
-from baybe.telemetry import (
-    VARNAME_TELEMETRY_ENABLED,
-    VARNAME_TELEMETRY_HOSTNAME,
-    VARNAME_TELEMETRY_USERNAME,
-)
 from baybe.utils.basic import hilberts_factory
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import (
@@ -93,39 +88,6 @@ if strtobool(os.getenv("CI", "false")):
 # All fixture functions have prefix 'fixture_' and explicitly declared name, so they
 # can be reused by other fixtures, see
 # https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
-
-
-@pytest.fixture(scope="session", autouse=True)
-def disable_telemetry():
-    """Disables telemetry during pytesting via fixture."""
-    # Remember the original value of the environment variables
-    telemetry_enabled_before = os.environ.get(VARNAME_TELEMETRY_ENABLED)
-    telemetry_userhash_before = os.environ.get(VARNAME_TELEMETRY_USERNAME)
-    telemetry_hosthash_before = os.environ.get(VARNAME_TELEMETRY_HOSTNAME)
-
-    # Set the environment variable to a certain value for the duration of the tests
-    os.environ[VARNAME_TELEMETRY_ENABLED] = "false"
-    os.environ[VARNAME_TELEMETRY_USERNAME] = "PYTEST"
-    os.environ[VARNAME_TELEMETRY_HOSTNAME] = "PYTEST"
-
-    # Yield control to the tests
-    yield
-
-    # Restore the original value of the environment variables
-    if telemetry_enabled_before is not None:
-        os.environ[VARNAME_TELEMETRY_ENABLED] = telemetry_enabled_before
-    else:
-        os.environ.pop(VARNAME_TELEMETRY_ENABLED)
-
-    if telemetry_userhash_before is not None:
-        os.environ[VARNAME_TELEMETRY_USERNAME] = telemetry_userhash_before
-    else:
-        os.environ.pop(VARNAME_TELEMETRY_USERNAME)
-
-    if telemetry_hosthash_before is not None:
-        os.environ[VARNAME_TELEMETRY_HOSTNAME] = telemetry_hosthash_before
-    else:
-        os.environ.pop(VARNAME_TELEMETRY_HOSTNAME)
 
 
 # Add option to only run fast tests

@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Campaign` no longer allows overlapping names between parameters and targets
 - Random seed context is correctly set within benchmarks
 
+### Removed
+- Telemetry
+
 ## [0.13.2] - 2025-07-09
 ### Changed
 - Lockfiles are now generated using `uv lock` and consumed using `uv sync`

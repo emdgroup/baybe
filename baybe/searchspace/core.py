@@ -26,7 +26,6 @@ from baybe.searchspace.discrete import (
 )
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.telemetry import TELEM_LABELS, telemetry_record_value
 from baybe.utils.conversion import to_string
 
 
@@ -80,17 +79,9 @@ class SearchSpace(SerialMixin):
         return to_string(self.__class__.__name__, *fields)
 
     def __attrs_post_init__(self):
-        """Perform validation and record telemetry values."""
+        """Perform validation."""
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
-
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_SEARCHSPACE_CREATION"], 1)
-        telemetry_record_value(TELEM_LABELS["NUM_PARAMETERS"], len(self.parameters))
-        telemetry_record_value(
-            TELEM_LABELS["NUM_CONSTRAINTS"],
-            len(self.constraints) if self.constraints else 0,
-        )
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:
