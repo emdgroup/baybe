@@ -485,9 +485,10 @@ t = NumericalTarget(name="Sinusoid Target", transformation=torch.sin)
 ````{admonition} Chaining Custom Transformations
 :class: tip
 
-A convenient feature is that you can chain custom transformations with built-in ones
-directly, without needing to explicitly wrap them. Here is an example, demonstrating the
-same chaining operation from the most concise to the most explicit construction:
+A convenient feature is that you can [chain](#chaining) custom transformations with
+built-in ones directly, without needing to explicitly wrap them. Here is an example,
+demonstrating the same chaining operation from the most concise to the most explicit
+construction:
 
 ```python
 import torch
