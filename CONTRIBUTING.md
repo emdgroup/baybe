@@ -97,7 +97,7 @@ pull requests. This might be due various reasons, most prominently to reduce wor
 for you in case small fixes, typos or style related changes arise. A rebase plus
 force-push might also be performed to enable the CI run on the PR. In any case, make
 sure your local branch is always synced with the origin (fetch and pull) before you
-start to commit changes - this avoids problems and confusion arising form such external
+start to commit changes – this avoids problems and confusion arising form such external
 changes to your branches.
 
 (developer-tools)=
