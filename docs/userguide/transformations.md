@@ -506,4 +506,12 @@ assert t1 == t2 == t3 == t4 == t5
 ```
 ````
 
+```{admonition} Serialization
+:class: warning
+
+Due to the arbitrary logic that can be involved, (de-)serialization
+of custom transformations not supported.
+```
+
+
 
