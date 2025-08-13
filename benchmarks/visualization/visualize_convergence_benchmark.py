@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 """Script to visualize benchmark results from JSON files."""
 
-import argparse
 import base64
 import json
-import os
 import pickle
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -27,7 +24,7 @@ def load_benchmark_data(json_file_path):
     return df, result
 
 
-def extract_benchmark_info(df, metadata):
+def extract_benchmark_info(df):
     """Extract detailed information about the benchmark configuration."""
     info = {"surrogates": [], "scenario_descriptions": {}}
 
@@ -69,7 +66,7 @@ def extract_benchmark_info(df, metadata):
     return info
 
 
-def create_visualization(json_file_path):
+def visualize_convergence_benchmark(json_file_path):
     """Create visualization for benchmark results."""
     # Load data
     df, metadata = load_benchmark_data(json_file_path)
@@ -95,7 +92,7 @@ def create_visualization(json_file_path):
     print(f"Detected target columns: {iter_best_col}, {cum_best_col}")
 
     # Extract detailed benchmark information
-    benchmark_info = extract_benchmark_info(df, metadata)
+    benchmark_info = extract_benchmark_info(df)
 
     # Set up the plot style
     plt.style.use("default")
@@ -275,73 +272,3 @@ def create_visualization(json_file_path):
     print(f"- Iterations per run: {df['Iteration'].max() + 1}")
 
     return output_path
-
-
-def main():
-    """Run benchmark."""
-    parser = argparse.ArgumentParser(
-        description="Visualize benchmark results from JSON files.",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  python visualize_benchmark_results.py single_file.json
-  python visualize_benchmark_results.py --file-names file1.json file2.json file3.json
-  python visualize_benchmark_results.py --file-names *_result.json
-        """,
-    )
-
-    # Support both single file (positional) and multiple files (--file-names)
-    parser.add_argument("file", nargs="?", help="Single JSON result file to visualize")
-    parser.add_argument(
-        "--file-names", nargs="+", help="List of JSON result files to visualize"
-    )
-
-    args = parser.parse_args()
-
-    # Determine which files to process
-    if args.file and args.file_names:
-        print("Error: Cannot specify both positional file and --file-names option.")
-        sys.exit(1)
-    elif args.file:
-        json_file_paths = [args.file]
-    elif args.file_names:
-        json_file_paths = args.file_names
-    else:
-        print("Error: Must specify either a file or use --file-names option.")
-        parser.print_help()
-        sys.exit(1)
-
-    successful_files = []
-    failed_files = []
-
-    for json_file_path in json_file_paths:
-        if not os.path.exists(json_file_path):
-            print(f"Error: File '{json_file_path}' does not exist.")
-            failed_files.append(json_file_path)
-            continue
-
-        if not json_file_path.endswith(".json"):
-            print(f"Error: File '{json_file_path}' is not a JSON file.")
-            failed_files.append(json_file_path)
-            continue
-
-        try:
-            output_path = create_visualization(json_file_path)
-            print(f"Successfully created visualization: {output_path}")
-            successful_files.append(json_file_path)
-        except Exception as e:
-            print(f"Error creating visualization for '{json_file_path}': {e}")
-            failed_files.append(json_file_path)
-
-    # Summary
-    print("\nSummary:")
-    print(f"  Successfully processed: {len(successful_files)} files")
-    print(f"  Failed: {len(failed_files)} files")
-
-    if failed_files:
-        print(f"  Failed files: {', '.join(failed_files)}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
