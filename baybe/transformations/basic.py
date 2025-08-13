@@ -61,7 +61,7 @@ class IdentityTransformation(MonotonicTransformation):
         return x
 
     @override
-    def __or__(self, other: Transformation) -> Transformation:
+    def __or__(self, other: Any) -> Transformation:
         if isinstance(other, Transformation):
             return other
         return NotImplemented
