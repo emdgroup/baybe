@@ -29,7 +29,11 @@ from baybe.surrogates.base import (
     SurrogateProtocol,
 )
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_objective_input,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -96,7 +100,7 @@ class BayesianRecommender(PureRecommender, ABC):
         # This fit applies internal caching and does not necessarily involve computation
         surrogate = (
             _autoreplicate(self._surrogate_model)
-            if objective.is_multi_output
+            if objective._is_multi_model
             else self._surrogate_model
         )
         surrogate.fit(searchspace, objective, measurements)
@@ -168,6 +172,7 @@ class BayesianRecommender(PureRecommender, ABC):
             )
         if not isinstance(measurements, _ValidatedDataFrame):
             validate_target_input(measurements, objective.targets)
+            validate_objective_input(measurements, objective)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
                 measurements, searchspace.parameters + objective.targets

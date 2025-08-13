@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full support for accessing posterior information of `NumericalTarget`, i.e. now
   including settings considered `MATCH` mode in the legacy interface, as well as targets
   used in `DesirabilityObjective`
+- `as_pre_transformation` flag to `DesirabilityObjective` for controlling whether the 
+  desirability transformation is applied before or after model fitting
+- `needs_complete_measurements` property to `Objective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
 - `invert`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
   `NumericalTarget` for easy creation of transformed targets from existing ones
@@ -37,8 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the definition of mathematical optimization problems. Also, it avoids the need to
   explicitly specify an irrelevant optimization direction in the context of active
   learning.
-- Evaluating posteriors using a `DesirabilityObjective` now returns information 
-  for each target instead of for the desirability value
+- By default, `DesirabilityObjective` now fits separate models for each target, rather
+  than modeling only the scalarized desirability value (see new
+  `DesirabilityObjective.as_pre_transform` flag). As a result, posterior evaluations now
+  return information for each target individually, instead of just for the desirability
+  value.
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed

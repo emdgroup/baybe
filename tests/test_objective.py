@@ -12,6 +12,8 @@ from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.targets import NumericalTarget
 from baybe.transformations import ClampingTransformation
+from baybe.transformations.basic import IdentityTransformation
+from baybe.utils.interval import Interval
 
 
 class TestInvalidObjectiveCreation:
@@ -53,10 +55,24 @@ class TestInvalidObjectiveCreation:
         """Unnormalized targets are not allowed unless explicitly declared."""
         t1 = NumericalTarget("t1").clamp(min=1, max=2)
         t2 = NumericalTarget("t2").clamp(min=0, max=3)
-        with pytest.raises(ValueError, match="are not normalized"):
+        with pytest.raises(ValueError, match="are either not normalized"):
             DesirabilityObjective([t1, t2])
-        DesirabilityObjective([t1, t2], require_normalization=False)
         DesirabilityObjective([t1.normalize(), t2.normalize()])
+        DesirabilityObjective([t1, t2], require_normalization=False)
+
+    def test_unknown_target_images_for_desirability(self):
+        """Unknown target images are not allowed unless explicitly declared."""
+        # Create some targets with bounded codomain but unknown image
+        t = IdentityTransformation()
+        t1 = NumericalTarget.match_bell("t1", 0, 1)._append_transformation(t + t)
+        t2 = NumericalTarget.match_bell("t2", 0, 1)._append_transformation(t + t)
+        assert t1.get_codomain() == Interval(0, 2)
+
+        with pytest.raises(ValueError, match="normalization status is unclear"):
+            DesirabilityObjective([t1, t2], require_normalization=True)
+        with pytest.raises(NotImplementedError, match="cannot be computed"):
+            DesirabilityObjective([t1.normalize(), t2.normalize()])
+        DesirabilityObjective([t1, t2], require_normalization=False)
 
     def test_invalid_combination_function(self):
         with pytest.raises(ValueError):

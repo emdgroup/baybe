@@ -53,7 +53,11 @@ from baybe.utils.dataframe import (
     fuzzy_row_match,
     normalize_input_dtypes,
 )
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_objective_input,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction
@@ -290,6 +294,8 @@ class Campaign(SerialMixin):
 
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
+        if self.objective is not None:
+            validate_objective_input(data, self.objective)
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
@@ -342,6 +348,8 @@ class Campaign(SerialMixin):
         """
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
+        if self.objective is not None:
+            validate_objective_input(data, self.objective)
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )

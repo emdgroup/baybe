@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from attrs import define
 from typing_extensions import override
@@ -18,6 +18,14 @@ if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
 
+_TTransformation = TypeVar("_TTransformation", bound="Transformation")
+
+
+def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformation]:
+    """Make the image of a transformation identical to its codomain."""
+    cls.get_image = cls.get_codomain  # type: ignore[method-assign]
+    return cls
+
 
 @define
 class Transformation(SerialMixin, ABC):
@@ -28,6 +36,19 @@ class Transformation(SerialMixin, ABC):
         """Transform a given input tensor."""
 
     @abstractmethod
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        """Get the codomain of a certain interval (assuming transformation continuity).
+
+        In accordance with the mathematical definition of a function's `codomain
+        <https://en.wikipedia.org/wiki/Codomain>`_, we define the codomain of a given
+        :class:`~baybe.utils.interval.Interval` under a certain (assumed continuous)
+        :class:`~Transformation` to be an :class:`~baybe.utils.interval.Interval`
+        guaranteed to contain all possible outcomes when the :class:`~Transformation` is
+        applied to all points in the input :class:`~baybe.utils.interval.Interval`. In
+        cases where the image cannot exactly be computed, it is often still possible to
+        compute a codomain. The codomain always contains the image, but might be larger.
+        """
+
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of a certain interval (assuming transformation continuity).
 
@@ -39,6 +60,13 @@ class Transformation(SerialMixin, ABC):
         the :class:`~Transformation` is applied to all points in the input
         :class:`~baybe.utils.interval.Interval`.
         """
+        # By default, it is assumed that the exact image of an interval cannot be
+        # computed but only the codomain is available (see :meth:`get_codomain`).
+        # Transformations that can provide the exact image should override this method.
+        raise NotImplementedError(
+            f"The exact image of the interval cannot be computed. "
+            f"If sufficient, use '{self.get_codomain.__name__}' instead."
+        )
 
     def to_botorch_objective(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""
@@ -75,7 +103,7 @@ class Transformation(SerialMixin, ABC):
         return self | AbsoluteTransformation()
 
     def __add__(self, other: Transformation | int | float) -> Transformation:
-        """Add a constant or the output from another transformation."""
+        """Add a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import AdditiveTransformation
 
@@ -95,7 +123,7 @@ class Transformation(SerialMixin, ABC):
         return NotImplemented
 
     def __mul__(self, other: Transformation | int | float) -> Transformation:
-        """Multiply with a constant or the output from another transformation."""
+        """Multiply with a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import MultiplicativeTransformation
 
@@ -103,7 +131,7 @@ class Transformation(SerialMixin, ABC):
         if isinstance(other, (int, float)):
             from baybe.transformations import AffineTransformation
 
-            return self | AffineTransformation(shift=other)
+            return self | AffineTransformation(factor=other)
         return NotImplemented
 
     def __truediv__(self, other: int | float) -> Transformation:
@@ -117,7 +145,7 @@ class Transformation(SerialMixin, ABC):
         return NotImplemented
 
     def __or__(self, other: Transformation | Callable) -> Transformation:
-        """Chain the transformation with another one."""
+        """Chain the transformation with another one. Inspired by the Unix "pipe"."""
         from baybe.transformations import (
             AffineTransformation,
             ChainedTransformation,
@@ -153,11 +181,12 @@ class Transformation(SerialMixin, ABC):
         return args[0] | CustomTransformation(func)
 
 
+@_image_equals_codomain
 class MonotonicTransformation(Transformation, ABC):
     """Abstract base class for monotonic transformations."""
 
     @override
-    def get_image(self, interval: Interval | None = None, /) -> Interval:
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
         return Interval(
             *sorted(

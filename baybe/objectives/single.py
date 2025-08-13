@@ -53,8 +53,13 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def output_names(self) -> tuple[str, ...]:
+        return (self._target.name,)
+
+    @override
+    @property
+    def needs_complete_measurements(self) -> bool:
+        return True
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:

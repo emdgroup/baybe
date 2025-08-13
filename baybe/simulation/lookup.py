@@ -9,7 +9,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from baybe.simulation._imputation import _impute_lookup
+from baybe.simulation._imputation import impute_target_values
 from baybe.targets.base import Target
 from baybe.utils.dataframe import add_fake_measurements
 
@@ -115,7 +115,7 @@ def _look_up_targets_from_dataframe(
                 "random one.",
                 ind,
             )
-            match_vals = lookup.loc[np.random.choice(ind), target_names].values
+            match_vals = lookup.loc[np.random.choice(ind), target_names]
 
         elif len(ind) < 1:
             # Parameter combination cannot be looked up and needs to be
@@ -126,14 +126,19 @@ def _look_up_targets_from_dataframe(
                     "It seems the search space was not correctly "
                     "reduced before recommendations were generated."
                 )
-            match_vals = _impute_lookup(row, lookup, targets, impute_mode)
+            if impute_mode == "error":
+                raise IndexError(
+                    f"Cannot look up target values for {row}. "
+                    "No matching row found in the lookup dataframe."
+                )
+            match_vals = impute_target_values(targets, lookup, impute_mode)
 
         else:
             # Exactly one match has been found
-            match_vals = lookup.loc[ind[0], target_names].values
+            match_vals = lookup.loc[ind[0], target_names]
 
         # Collect the matches
-        all_match_vals.append(match_vals)
+        all_match_vals.append(match_vals.values)
 
     # Add the lookup values
     queries.loc[:, target_names] = np.asarray(all_match_vals)
