@@ -27,8 +27,8 @@ transition period that offer full typing support, which are useful for code deve
 {meth}`~baybe.targets.numerical.NumericalTarget.from_modern_interface`.
 ```
 
-Whenever you want to optimize a real-valued quantity, the 
-{class}`~baybe.targets.numerical.NumericalTarget` class is the right choice.
+Use the {class}`~baybe.targets.numerical.NumericalTarget` class for optimizing
+**real-valued** quantities.
 Optimization with targets of this type follows two basic rules:
 1. Targets are transformed as specified by their
    {class}`~baybe.transformations.base.Transformation`, with no transformation
