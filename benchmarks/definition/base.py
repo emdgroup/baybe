@@ -59,6 +59,9 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
         self.runmode = runmode
 
 
+MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.RUNTHROUGH})
+
+
 def make_runmode_attr_validator(
     value_type: type,
 ) -> Callable[[BenchmarkSettings, Attribute, dict[RunMode, Any]], None]:
@@ -78,13 +81,13 @@ def make_runmode_attr_validator(
             mapping_validator=instance_of(dict),
         )
         VALID_DICT(instance, attribute, value)
-        REQUIERED_RUNMODES_SET = (
-            RunMode.STANDARD in value and RunMode.RUNTHROUGH in value
-        )
 
-        if not REQUIERED_RUNMODES_SET:
+        missing_runmodes = [rm for rm in MANDATORY_RUNMODES if rm not in value]
+
+        if len(missing_runmodes) > 0:
             raise ValueError(
-                f"Runmode {RunMode.STANDARD} must be defined in {attribute.name}."
+                f"Runmode(s) {', '.join(missing_runmodes)} "
+                f"must be defined in {attribute.name}."
             )
 
     return runmode_attr_validator
