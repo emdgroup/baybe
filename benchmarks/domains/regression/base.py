@@ -25,7 +25,7 @@ def run_tl_regression_benchmark(
     ],
     create_objective_fn: Callable[[], SingleTargetObjective],
     load_data_kwargs: dict[str, Any] | None = None,
-) -> tuple[pd.DataFrame, list[str], list[str]]:
+) -> pd.DataFrame:
     """Run a transfer learning regression benchmark.
 
     Args:
@@ -36,10 +36,7 @@ def run_tl_regression_benchmark(
         load_data_kwargs: Additional keyword arguments for load_data_fn.
 
     Returns:
-        Tuple containing:
-        - DataFrame with benchmark results
-        - List of metric names used
-        - List of model names used
+        DataFrame with benchmark results.
     """
     # Set random seed for reproducibility
     np.random.seed(settings.random_seed)
@@ -73,17 +70,7 @@ def run_tl_regression_benchmark(
         leave=True,
     )
 
-    # Calculate total number of evaluations for overall progress
-    total_evals = (
-        settings.num_mc_iterations
-        * len(settings.source_fractions)
-        * settings.max_train_points
-    )
-    overall_progress = tqdm(
-        total=total_evals, desc="Overall progress", unit="eval", position=1, leave=True
-    )
-
-    for mc_iter in mc_iter_bar:  # range(settings.num_mc_iterations)
+    for mc_iter in mc_iter_bar:
         print(f"Monte Carlo iteration {mc_iter + 1}/{settings.num_mc_iterations}")
 
         # Create train/test split for target task
@@ -102,7 +89,7 @@ def run_tl_regression_benchmark(
             leave=False,
         )
 
-        for fraction_source in source_fraction_bar:  # settings.source_fractions:
+        for fraction_source in source_fraction_bar:
             # Sample source data ensuring same fraction from each source task
             source_subsets = []
             for source_task in source_tasks:
@@ -127,7 +114,7 @@ def run_tl_regression_benchmark(
             )
 
             # Generate the source data subset
-            for n_train_pts in train_pts_bar:  # range(1, max_train_points + 1):
+            for n_train_pts in train_pts_bar:
                 # Create models
                 vanilla_gp = GaussianProcessSurrogate()
                 tl_models = [
@@ -177,8 +164,6 @@ def run_tl_regression_benchmark(
 
     # Convert results to DataFrame
     results_df = pd.DataFrame(results)
-
-    overall_progress.close()
 
     # Return results
     return results_df
