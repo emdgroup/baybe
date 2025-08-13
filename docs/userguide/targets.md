@@ -121,18 +121,19 @@ The following is a non-comprehensive overview – for a complete list, please r
   convenience constructors with the `match_` prefix (see
   {class}`~baybe.targets.numerical.NumericalTarget` for all options).
   
-  For example:
+  Below an example modeling the outcome of a nanoparticle growth experiment with the
+  goal of creating particles of a specific size:
   ```python
   # Absolute transformation
-  t_abs = NumericalTarget.match_absolute(name="Yield", match_value=42)
+  t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 
   # Bell-shaped transformation
-  t_bell = NumericalTarget.match_bell(name="Yield", match_value=42, sigma=5)
+  t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 
   # Triangular transformation
-  t1 = NumericalTarget.match_triangular(name="Yield", match_value=42, width=10)
-  t2 = NumericalTarget.match_triangular(name="Yield", match_value=42, cutoffs=(37, 47))
-  t3 = NumericalTarget.match_triangular(name="Yield", match_value=42, margins=(5, 5))
+  t1 = NumericalTarget.match_triangular(name="Size", match_value=42, width=10)
+  t2 = NumericalTarget.match_triangular(name="Size", match_value=42, cutoffs=(37, 47))
+  t3 = NumericalTarget.match_triangular(name="Size", match_value=42, margins=(5, 5))
   assert t1 == t2 == t3
   ```
 
@@ -145,7 +146,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   
   For example:
   ```python
-  target = NumericalTarget.normalize_ramp(name="Yield", cutoffs=(0, 1), descending=True)
+  t = NumericalTarget.normalize_ramp(name="Target", cutoffs=(0, 1), descending=True)
   ```
 
   You can also create a normalized version of an existing target by calling its
@@ -154,7 +155,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   example using [method chaining](method-chaining): 
 
   ```python
-  target = NumericalTarget(name="Yield").power(2).clamp(max=1).normalize()
+  t = NumericalTarget(name="Target").power(2).clamp(max=1).normalize()
   ```
 
 (method-chaining)=
@@ -164,7 +165,7 @@ The following is a non-comprehensive overview – for a complete list, please r
   
   For example:
   ```python
-  t1 = NumericalTarget("Yield")
+  t1 = NumericalTarget("Target")
   t2 = t1 - 1  # subtract a constant
   t3 = t2 / 5  # divide by a constant
   t4 = t3.abs()  # compute absolute value
