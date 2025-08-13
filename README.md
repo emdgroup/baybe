@@ -311,6 +311,9 @@ The available groups are:
 - `test`: Required for running the tests.
 - `dev`: All of the above plus dev tools. For code contributors.
 
+## 📡 Telemetry
+Telemetry was fully and permanently removed in version 0.14.0.
+
 ## 📖 Citation
 If you find BayBE useful, please consider citing [our paper](https://doi.org/10.1039/D5DD00050E):
 
