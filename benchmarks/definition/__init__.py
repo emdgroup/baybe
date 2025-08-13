@@ -8,10 +8,16 @@ from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.regression import (
+    RegressionBenchmark,
+    RegressionBenchmarkSettings,
+)
 
 __all__ = [
     "Benchmark",
     "BenchmarkSettings",
     "ConvergenceBenchmark",
     "ConvergenceBenchmarkSettings",
+    "RegressionBenchmark",
+    "RegressionBenchmarkSettings",
 ]
