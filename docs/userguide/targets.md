@@ -64,115 +64,120 @@ For example:
   transformation that assigns higher values to more desirable outcomes and lower values
   to less desirable outcomes.
 
-Especially the first two cases are so common that we provide convenient ways to create
-the corresponding target objects:
+Many cases – especially the first two described above – are so common that we offer
+convenient ways to directly create the corresponding target objects for many
+optimization workflows, eliminating the need to manually specify the necessary
+{class}`~baybe.transformations.base.Transformation` object yourself:
 
-### Convenience Construction
-BayBE offers several convenience approaches to construct targets for many common
-situations, eliminating the need to manually provide the necessary
-{class}`~baybe.transformations.base.Transformation` object for simple cases.
-The following is a non-comprehensive overview – for a complete list, please refer to
-{class}`~baybe.targets.numerical.NumericalTarget`.
-* **Minimization**: Minimization of a target can be achieved by simply passing the
-  `minimize=True` argument to the constructor:
-  ```python
-  from baybe.targets import NumericalTarget
+### Minimization
 
-  t = NumericalTarget(
-      name="Cost",
-      minimize=True,  # cost is to be minimized
-  )
-  ```
+Minimization of a target can be achieved by simply passing the `minimize=True` argument
+to the constructor:
+```python
+from baybe.targets import NumericalTarget
 
-  ````{admonition} Equality
-  :class: caution
+t = NumericalTarget(
+    name="Cost",
+    minimize=True,  # cost is to be minimized
+)
+```
 
-  While several target configurations can lead to the same transformation result, the
-  respective objects are not necessarily equal because they might use
-  {ref}`different transformation chains <transformation-equality>`:
+What happens behind the scenes is that an negating transformation is applied before
+the target enters the optimization process, allowing us to reuse the same
+*maximization-based* optimization machinery for all targets.
 
-  ```python
-  import numpy as np
-  import pandas as pd
-  from pandas.testing import assert_series_equal
+````{admonition} Equality
+:class: caution
 
-  from baybe.targets import NumericalTarget
-  from baybe.transformations import AffineTransformation
+While several target configurations can lead to the same transformation result, the
+respective objects are not necessarily equal because they might use
+{ref}`different transformation chains <transformation-equality>`:
 
-  t_using_flag = NumericalTarget(name="Cost", minimize=True)
-  t_manual_transform = NumericalTarget(
-      name="Cost",
-      transformation=AffineTransformation(factor=-1),
-  )
-  t_manual_negation = NumericalTarget(name="Cost").negate()
+```python
+import numpy as np
+import pandas as pd
+from pandas.testing import assert_series_equal
 
-  # The objects are not necessarily equal ...
-  assert t_manual_transform == t_manual_negation
-  assert t_manual_transform != t_using_flag
+from baybe.targets import NumericalTarget
+from baybe.transformations import AffineTransformation
 
-  # ... although they produce the same transformed values
-  s = pd.Series(np.linspace(0, 10), name="Cost")
-  assert_series_equal(t_manual_transform.transform(s), t_manual_negation.transform(s))
-  assert_series_equal(t_manual_transform.transform(s), t_using_flag.transform(s))
-  ```
-  ````
+t_using_flag = NumericalTarget(name="Cost", minimize=True)
+t_manual_transform = NumericalTarget(
+    name="Cost",
+    transformation=AffineTransformation(factor=-1),
+)
+t_manual_negation = NumericalTarget(name="Cost").negate()
 
-* **Matching a set point**: For common matching transformations, we provide
-  convenience constructors with the `match_` prefix (see
-  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+# The objects are not necessarily equal ...
+assert t_manual_transform == t_manual_negation
+assert t_manual_transform != t_using_flag
+
+# ... although they produce the same transformed values
+s = pd.Series(np.linspace(0, 10), name="Cost")
+assert_series_equal(t_manual_transform.transform(s), t_manual_negation.transform(s))
+assert_series_equal(t_manual_transform.transform(s), t_using_flag.transform(s))
+```
+````
+
+### Setpoint Matching
+For common matching transformations, we provide convenience constructors with the
+`match_` prefix (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+Like for [minimization](#minimization) targets, these constructors inject a
+suitable transformation computing the proximity to the set point value.
   
-  Below an example modeling the outcome of a nanoparticle growth experiment with the
-  goal of creating particles of a specific size:
-  ```python
-  # Absolute transformation
-  t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
+Below an example for modeling the outcome of a nanoparticle growth experiment with the
+goal of creating particles of a specific size:
+```python
+# Absolute transformation
+t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 
-  # Bell-shaped transformation
-  t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
+# Bell-shaped transformation
+t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 
-  # Triangular transformation
-  t1 = NumericalTarget.match_triangular(name="Size", match_value=42, width=10)
-  t2 = NumericalTarget.match_triangular(name="Size", match_value=42, cutoffs=(37, 47))
-  t3 = NumericalTarget.match_triangular(name="Size", match_value=42, margins=(5, 5))
-  assert t1 == t2 == t3
-  ```
+# Triangular transformation
+t1 = NumericalTarget.match_triangular(name="Size", match_value=42, width=10)
+t2 = NumericalTarget.match_triangular(name="Size", match_value=42, cutoffs=(37, 47))
+t3 = NumericalTarget.match_triangular(name="Size", match_value=42, margins=(5, 5))
+assert t1 == t2 == t3
+```
 
-* **Normalizing targets**: Sometimes, it is necessary to normalize targets to the
-  interval [0, 1], to [align them on a common scale](#target-normalization). One
-  situation where this can be required is when combining the targets using a
-  {class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we
-  provide convenience constructors with the `normalize_` prefix (see
-  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+### Target Normalization
+Sometimes, it is necessary to normalize targets to the interval [0, 1], to [align them
+on a common scale](#target-normalization). One situation where this can be required is
+when combining the targets using a
+{class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we
+provide convenience constructors with the `normalize_` prefix (see
+{class}`~baybe.targets.numerical.NumericalTarget` for all options).
   
-  For example:
-  ```python
-  t = NumericalTarget.normalize_ramp(name="Target", cutoffs=(0, 1), descending=True)
-  ```
+For example:
+```python
+t = NumericalTarget.normalize_ramp(name="Target", cutoffs=(0, 1), descending=True)
+```
 
-  You can also create a normalized version of an existing target by calling its
-  {meth}`~baybe.targets.numerical.NumericalTarget.normalize` method, provided the target
-  already maps to a bounded domain. For brevity and demonstration purposes, we show an
-  example using [method chaining](method-chaining): 
+You can also create a normalized version of an existing target by calling its
+{meth}`~baybe.targets.numerical.NumericalTarget.normalize` method, provided the target
+already maps to a bounded domain. For brevity and demonstration purposes, we show an
+example using [method chaining](method-chaining): 
 
-  ```python
-  t = NumericalTarget(name="Target").power(2).clamp(max=1).normalize()
-  ```
+```python
+t = NumericalTarget(name="Target").power(2).clamp(max=1).normalize()
+```
 
 (method-chaining)=
-* **Creation from existing targets**: Targets can also be quickly created from existing
-  ones by calling certain transformation methods on them (see
-  {class}`~baybe.targets.numerical.NumericalTarget` for all options).
-  
-  For example:
-  ```python
-  t1 = NumericalTarget("Target")
-  t2 = t1 - 1  # subtract a constant
-  t3 = t2 / 5  # divide by a constant
-  t4 = t3.abs()  # compute absolute value
-  t5 = t4.power(3)  # compute the cube
-  t6 = t5.clamp(max=10)  # upper-bound to 10 (lower bound is 0 due to abs() call above)
-  t7 = t6.normalize()  # normalize to [0, 1]
-  ```
+### Creation From Existing Targets
+Targets can also be quickly created from existing ones by calling certain transformation
+methods on them (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
+
+For example:
+```python
+t1 = NumericalTarget("Target")
+t2 = t1 - 1  # subtract a constant
+t3 = t2 / 5  # divide by a constant
+t4 = t3.abs()  # compute absolute value
+t5 = t4.power(3)  # compute the cube
+t6 = t5.clamp(max=10)  # upper-bound to 10 (lower bound is 0 due to abs() call above)
+t7 = t6.normalize()  # normalize to [0, 1]
+```
 
 ## Limitations
 ```{important}
