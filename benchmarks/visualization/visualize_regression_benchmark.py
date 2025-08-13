@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Script to visualize TL regression benchmark results from JSON files."""
 
 import math

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Script to visualize benchmark results from JSON files."""
 
 import base64

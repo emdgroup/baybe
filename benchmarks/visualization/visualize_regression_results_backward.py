@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Script to visualize transfer learning regression benchmark from JSON or CSV files."""
 
 import argparse
