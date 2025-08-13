@@ -145,7 +145,7 @@ target. If you use an unsupported surrogate model, an error will be thrown at ru
 :class: important
 The described workflow is only possible if the underlying mechanism of the used
 {class}`~baybe.objectives.base.Objective` can handle missing values, as indicated
-by its {attr}`~baybe.objectives.base.Objective.needs_complete_measurements` property.
+by its {attr}`~baybe.objectives.base.Objective.supports_partial_measurements` property.
 
 For example, the
 [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective)
@@ -161,7 +161,7 @@ t2 = NumericalTarget.normalize_sigmoid("t2", anchors=[(0.0, 0.1), (1.0, 0.9)])
 
 obj = DesirabilityObjective(targets=[t1, t2])
 obj_pre = DesirabilityObjective(targets=[t1, t2], as_pre_transformation=True)
-assert not obj.needs_complete_measurements
-assert obj_pre.needs_complete_measurements
+assert obj.supports_partial_measurements
+assert not obj_pre.supports_partial_measurements
 ```
 ````
