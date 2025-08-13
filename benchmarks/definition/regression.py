@@ -1,10 +1,8 @@
 """Regression benchmark configuration."""
 
 import numpy as np
-import torch
 from attrs import define, field
 from attrs.validators import instance_of
-from scipy import stats
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -15,65 +13,20 @@ from sklearn.metrics import (
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
-
-# Custom function for log predictive density
-def log_predictive_density(
-    y_true: torch.Tensor, y_pred_mean: torch.Tensor, y_pred_var: torch.Tensor
-) -> float:
-    """Calculate the log predictive density for Gaussian predictions.
-
-    Args:
-        y_true: True target values
-        y_pred_mean: Predicted mean values
-        y_pred_var: Predicted variance values
-
-    Returns:
-        Average log predictive density
-    """
-    # For numerical stability, ensure variances are positive
-    y_pred_var = np.maximum(y_pred_var, 1e-8)
-
-    # Calculate log PDF for each prediction
-    log_pdf = stats.norm.logpdf(y_true, loc=y_pred_mean, scale=np.sqrt(y_pred_var))
-
-    # Return average log density
-    return np.mean(log_pdf)
-
-
-def negative_log_predictive_density(
-    y_true: torch.Tensor, y_pred_mean: torch.Tensor, y_pred_var: torch.Tensor
-) -> float:
-    """Calculate the negative log predictive density (lower is better)."""
-    return -log_predictive_density(y_true, y_pred_mean, y_pred_var)
-
-
-# Dictionary mapping metric names to functions and whether they need variance
+# Dictionary mapping metric names to functions
 REGRESSION_METRICS = {
     "RMSE": {
         "function": mean_squared_error,
-        "needs_variance": False,
         "transform": np.sqrt,
     },
-    "R2": {"function": r2_score, "needs_variance": False, "transform": None},
+    "R2": {"function": r2_score, "transform": None},
     "MAE": {
         "function": mean_absolute_error,
-        "needs_variance": False,
         "transform": None,
     },
-    "MAX_ERROR": {"function": max_error, "needs_variance": False, "transform": None},
+    "MAX_ERROR": {"function": max_error, "transform": None},
     "EXPLAINED_VARIANCE": {
         "function": explained_variance_score,
-        "needs_variance": False,
-        "transform": None,
-    },
-    "LPD": {
-        "function": log_predictive_density,
-        "needs_variance": True,
-        "transform": None,
-    },
-    "NLPD": {
-        "function": negative_log_predictive_density,
-        "needs_variance": True,
         "transform": None,
     },
 }
@@ -85,8 +38,6 @@ METRICS_HIGHER_IS_BETTER = {
     "MAE": False,
     "MAX_ERROR": False,
     "EXPLAINED_VARIANCE": True,
-    "LPD": True,
-    "NLPD": False,
 }
 
 
@@ -117,8 +68,8 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
         for metric in self.metrics:
             if metric not in REGRESSION_METRICS:
                 raise ValueError(
-                    f"Metric '{metric}' is not available."
-                    "Available metrics: {list(REGRESSION_METRICS.keys())}"
+                    f"Metric '{metric}' is not available. "
+                    f"Available metrics: {list(REGRESSION_METRICS.keys())}"
                 )
 
 

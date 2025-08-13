@@ -274,15 +274,8 @@ def evaluate_models(
     Returns:
         Dictionary with evaluation results
     """
-    # Determine if we need variance for any of the requested metrics
-    need_variance = any(
-        REGRESSION_METRICS[metric]["needs_variance"] for metric in metrics
-    )
-
     # Define which stats to request from posterior_stats
     stats_to_request = ["mean"]
-    if need_variance:
-        stats_to_request.append("var")
 
     # Results dictionary
     results = {}
@@ -308,19 +301,11 @@ def evaluate_models(
         metric_func = metric_info["function"]
         transform_func = metric_info["transform"]
 
-        if metric_info["needs_variance"]:
-            # Call with both mean and variance
-            metric_value = metric_func(
-                y_true=target_test[target_column].values,
-                y_pred_mean=vanilla_pred[f"{target_column}_mean"].values,
-                y_pred_var=vanilla_pred[f"{target_column}_var"].values,
-            )
-        else:
-            # Call with just mean predictions
-            metric_value = metric_func(
-                target_test[target_column].values,
-                vanilla_pred[f"{target_column}_mean"].values,
-            )
+        # Call with just mean predictions
+        metric_value = metric_func(
+            target_test[target_column].values,
+            vanilla_pred[f"{target_column}_mean"].values,
+        )
 
         # Apply transformation if needed (e.g., sqrt for RMSE)
         if transform_func is not None:
@@ -363,19 +348,11 @@ def evaluate_models(
             metric_func = metric_info["function"]
             transform_func = metric_info["transform"]
 
-            if metric_info["needs_variance"]:
-                # Call with both mean and variance
-                metric_value = metric_func(
-                    y_true=target_test[target_column].values,
-                    y_pred_mean=tl_pred[f"{target_column}_mean"].values,
-                    y_pred_var=tl_pred[f"{target_column}_var"].values,
-                )
-            else:
-                # Call with just mean predictions
-                metric_value = metric_func(
-                    target_test[target_column].values,
-                    tl_pred[f"{target_column}_mean"].values,
-                )
+            # Call with just mean predictions
+            metric_value = metric_func(
+                target_test[target_column].values,
+                tl_pred[f"{target_column}_mean"].values,
+            )
 
             # Apply transformation if needed (e.g., sqrt for RMSE)
             if transform_func is not None:
