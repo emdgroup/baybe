@@ -4,6 +4,7 @@
 import argparse
 import os
 from collections.abc import Collection
+from pathlib import Path
 
 from benchmarks.definition import Benchmark, RunMode
 from benchmarks.domains import BENCHMARKS
@@ -20,25 +21,31 @@ RUNS_IN_CI = "CI" in os.environ
 def save_benchmark_data(
     benchmark: Benchmark,
     result: Result,
+    runmode: RunMode,
+    outdir: Path,
     name: str | None = None,
-    outdir: str | None = None,
 ) -> None:
     """Save the benchmark data to the object storage."""
-    # TODO should we do something with runmode here as well?
-    path_constructor = PathConstructor.from_result(result, name=name, outdir=outdir)
+    path_constructor = PathConstructor.from_result(result)
     if outdir:
         os.makedirs(outdir, exist_ok=True)
     persist_dict = benchmark.to_dict() | result.to_dict()
 
-    object_storage = S3ObjectStorage() if RUNS_IN_CI else LocalFileObjectStorage()
+    object_storage = (
+        S3ObjectStorage()
+        if RUNS_IN_CI
+        else LocalFileObjectStorage(
+            runmode=runmode, folder_path_prefix=outdir, name=name
+        )
+    )
     object_storage.write_json(persist_dict, path_constructor)
 
 
 def run_benchmarks(
     benchmark_list: Collection[Benchmark],
     runmode: RunMode,
+    outdir: Path,
     name: str | None = None,
-    outdir: str | None = None,
     save: bool = True,
 ) -> None:
     """Run a subset based on the benchmark name."""
@@ -46,7 +53,7 @@ def run_benchmarks(
         result = benchmark(runmode=runmode)
 
         if save:
-            save_benchmark_data(benchmark, result, name=name, outdir=outdir)
+            save_benchmark_data(benchmark, result, runmode, name=name, outdir=outdir)
 
 
 def main() -> None:
@@ -81,7 +88,11 @@ def main() -> None:
         type=str,
     )
     parser.add_argument(
-        "--outdir", "-o", help="Save files into directory.", default=None, type=str
+        "--outdir",
+        "-o",
+        help="Save files into directory.",
+        default=Path("."),
+        type=Path,
     )
     parser.add_argument(
         "-s",

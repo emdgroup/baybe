@@ -17,6 +17,7 @@ from boto3.session import Session
 from typing_extensions import override
 
 from benchmarks import Result
+from benchmarks.definition.base import RunMode
 
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
 
@@ -64,12 +65,6 @@ class PathConstructor:
     commit_hash: str = field(validator=instance_of(str))
     """The hash of the commit checked out at benchmark execution time."""
 
-    name: str | None = field(validator=optional(instance_of(str)), default=None)
-    """Custom name to add to the path."""
-
-    outdir: str | None = field(validator=optional(instance_of(str)), default=None)
-    """Custom directory to prepend to the file path."""
-
     def _sanitize_string(self, string: str, is_path: bool = False) -> str:
         """Replace disallowed characters for filesystems in the given string."""
         ALLOWED_CHARS = (
@@ -83,15 +78,11 @@ class PathConstructor:
     def from_result(
         cls,
         result: Result,
-        name: str | None = None,
-        outdir: str | None = None,
     ) -> PathConstructor:
         """Create a path constructor from result.
 
         Args:
             result: The result of the benchmark.
-            name: Optional custom name to add to the path.
-            outdir: Optional custom directory to prepend to the file path.
 
         Returns:
             The path constructor.
@@ -108,8 +99,6 @@ class PathConstructor:
             commit_hash=commit_hash,
             execution_date_time=start_datetime,
             branch=branch,
-            name=name,
-            outdir=outdir,
         )
 
     def get_path(self, strategy: PathStrategy) -> Path:
@@ -137,16 +126,11 @@ class PathConstructor:
             file_usable_date,
             self.commit_hash,
         ]
-        if self.name:
-            components.append(self.name)
 
         sanitized_components = [
             self._sanitize_string(component) for component in components
         ]
         path = Path(separator.join(sanitized_components) + separator + "result.json")
-
-        if self.outdir:
-            path = Path(self._sanitize_string(self.outdir, is_path=True)).joinpath(path)
 
         return path
 
@@ -214,8 +198,14 @@ class S3ObjectStorage(ObjectStorage):
 class LocalFileObjectStorage(ObjectStorage):
     """Class for persisting objects locally."""
 
+    runmode: RunMode = field(validator=instance_of(RunMode))
+    """The run mode under which the benchmark was executed."""
+
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
     """The prefix of the folder path where the results are stored."""
+
+    name: str | None = field(validator=optional(instance_of(str)), default=None)
+    """Custom name to add to the path."""
 
     @folder_path_prefix.validator
     def _folder_path_prefix_validator(self, _, folder_path_prefix: Path) -> None:
@@ -238,5 +228,17 @@ class LocalFileObjectStorage(ObjectStorage):
         path_object = self.folder_path_prefix.joinpath(
             path_constructor.get_path(strategy=PathStrategy.FLAT)
         )
+        path_object = path_object.with_name(f"{self.runmode.value}_{path_object.name}")
+
+        if self.name:
+            path_object = path_object.with_name(f"{self.name}_{path_object.name}")
+
+        if path_object.exists():
+            base_stem = path_object.stem
+            counter = len(list(path_object.parent.glob(f"{base_stem}*")))
+            path_object = path_object.with_name(
+                f"{path_object.stem}_{counter}{path_object.suffix}"
+            )
+
         with open(path_object.resolve(), "w") as file:
             json.dump(object, file)
