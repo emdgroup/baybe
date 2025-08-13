@@ -54,9 +54,6 @@ def load_data(
     """
     # Fixed parameters for data generation
     n_points = 100  # Dense grid for lookup coverage
-    seed = 42
-
-    np.random.seed(seed)
 
     # Parameter sampling ranges
     a_range = (0.01, 2.0)  # Scale parameter

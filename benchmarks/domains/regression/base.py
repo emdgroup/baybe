@@ -7,7 +7,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import torch
 from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
@@ -40,10 +39,6 @@ def run_tl_regression_benchmark(
     Returns:
         DataFrame with benchmark results.
     """
-    # Set random seed for reproducibility
-    np.random.seed(settings.random_seed)
-    torch.manual_seed(settings.random_seed)
-
     # Create target objective
     objective = create_objective_fn()
     target_column = objective._target.name
