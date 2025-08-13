@@ -85,7 +85,7 @@ def create_objective() -> SingleTargetObjective:
 
 def aryl_halide_CT_I_BM_tl_regr(
     settings: TransferLearningRegressionSettings,
-) -> tuple[pd.DataFrame, list[str], list[str]]:
+) -> pd.DataFrame:
     """Benchmark function for comparing regression performance of GP vs TL models.
 
     This benchmark uses aryl halide reactions with different substrates:
@@ -99,17 +99,15 @@ def aryl_halide_CT_I_BM_tl_regr(
         settings: The benchmark settings.
 
     Returns:
-        Tuple containing:
-        - DataFrame with benchmark results
-        - List of metric names used
-        - List of model names used
+        DataFrame with benchmark results
     """
-    return run_tl_regression_benchmark(
+    results_df = run_tl_regression_benchmark(
         settings=settings,
         load_data_fn=load_data,
         create_searchspaces_fn=create_searchspaces,
         create_objective_fn=create_objective,
     )
+    return results_df
 
 
 # Define the benchmark settings

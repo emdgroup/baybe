@@ -235,11 +235,8 @@ def run_tl_regression_benchmark(
 
     overall_progress.close()
 
-    # Extract model names for return value
-    model_names = ["vanilla"] + [model_dict["name"] for model_dict in tl_models]
-
-    # Return results, metrics, and model names for plotting
-    return results_df, settings.metrics, model_names
+    # Return results
+    return results_df
 
 
 def evaluate_models(

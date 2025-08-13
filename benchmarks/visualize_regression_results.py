@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Script to visualize transfer learning regression benchmark results from CSV files."""
+"""Script to visualize transfer learning regression benchmark from JSON or CSV files."""
 
 import argparse
+import base64
+import json
 import math
 import os
+import pickle
 import sys
 from pathlib import Path
 
@@ -12,25 +15,52 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-# Define whether higher values are better for each metric
-METRICS_HIGHER_IS_BETTER = {
-    "RMSE": False,
-    "R2": True,
-    "MAE": False,
-    "MAX_ERROR": False,
-    "EXPLAINED_VARIANCE": True,
-    "LPD": True,
-    "NLPD": False,
-}
+from benchmarks.definition.regression import METRICS_HIGHER_IS_BETTER
 
 plt.style.use("seaborn-v0_8-whitegrid")
 sns.set_palette("colorblind")
 
 
-def extract_metrics_and_models_from_csv(
+def load_benchmark_data(file_path: str) -> pd.DataFrame:
+    """Load benchmark data from JSON or CSV file.
+
+    Args:
+        file_path: Path to the JSON or CSV file
+
+    Returns:
+        DataFrame with benchmark results
+
+    Raises:
+        ValueError: If the file format is not supported
+    """
+    file_path_obj = Path(file_path)
+
+    if file_path_obj.suffix.lower() == ".json":
+        # Load JSON file
+        with open(file_path) as f:
+            data = json.load(f)
+
+        # Extract and decode the DataFrame
+        encoded_data = data["data"]
+        decoded_data = base64.b64decode(encoded_data)
+        df = pickle.loads(decoded_data)
+        return df
+
+    elif file_path_obj.suffix.lower() == ".csv":
+        # Load CSV file
+        return pd.read_csv(file_path)
+
+    else:
+        raise ValueError(
+            f"Unsupported file format: {file_path_obj.suffix}."
+            "Only .json and .csv are supported."
+        )
+
+
+def extract_metrics_and_models_from_data(
     df: pd.DataFrame,
 ) -> tuple[list[str], list[str]]:
-    """Extract available metrics and model names from CSV columns.
+    """Extract available metrics and model names from DataFrame columns.
 
     Args:
         df: DataFrame with regression benchmark results
@@ -63,18 +93,19 @@ def extract_metrics_and_models_from_csv(
     return metrics, models
 
 
-def plot_regression_results_from_csv(csv_file_path: str) -> None:
-    """Plot regression metrics from CSV file and save combined PNG file.
+def plot_regression_results_from_file(file_path: str) -> None:
+    """Plot regression metrics from JSON or CSV file and save combined PNG file.
 
     Args:
-        csv_file_path: Path to the CSV file with regression benchmark results
+        file_path: Path to the JSON or CSV file with regression benchmark results
     """
-    # Load the CSV file
-    df = pd.read_csv(csv_file_path)
-    print(f"Loaded CSV with {len(df)} rows and {len(df.columns)} columns")
+    # Load the data file
+    df = load_benchmark_data(file_path)
+    file_type = Path(file_path).suffix.upper()
+    print(f"Loaded {file_type} with {len(df)} rows and {len(df.columns)} columns")
 
     # Extract metrics and model names from the data
-    metrics, model_names = extract_metrics_and_models_from_csv(df)
+    metrics, model_names = extract_metrics_and_models_from_data(df)
     print(f"Found metrics: {metrics}")
     print(f"Found models: {model_names}")
 
@@ -95,8 +126,8 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
     print(f"Source fractions: {fractions}")
 
     # Determine output file prefix from input file
-    input_path = Path(csv_file_path)
-    file_name_prefix = input_path.stem.replace("_results", "")
+    input_path = Path(file_path)
+    file_name_prefix = input_path.stem.replace("_results", "").replace("_result", "")
     output_dir = input_path.parent
 
     # Create combined figure with all metrics
@@ -246,20 +277,23 @@ def plot_regression_results_from_csv(csv_file_path: str) -> None:
 def main():
     """Run benchmark."""
     parser = argparse.ArgumentParser(
-        description="Visualize TL regression benchmark results from CSV.",
+        description="Visualize TL regression benchmark results from JSON or CSV files.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  python visualize_regression_results.py single_file.json
   python visualize_regression_results.py single_file.csv
-  python visualize_regression_results.py --file-names file1.csv file2.csv file3.csv
-  python visualize_regression_results.py --file-names *_results.csv
+  python visualize_regression_results.py --file-names file1.json file2.json file3.csv
+  python visualize_regression_results.py --file-names *_result.json
         """,
     )
 
     # Support both single file (positional) and multiple files (--file-names)
-    parser.add_argument("file", nargs="?", help="Single CSV result file to visualize")
     parser.add_argument(
-        "--file-names", nargs="+", help="List of CSV result files to visualize"
+        "file", nargs="?", help="Single JSON or CSV result file to visualize"
+    )
+    parser.add_argument(
+        "--file-names", nargs="+", help="List of JSON or CSV result files to visualize"
     )
 
     args = parser.parse_args()
@@ -280,26 +314,24 @@ Examples:
     successful_files = []
     failed_files = []
 
-    for csv_file_path in csv_file_paths:
-        if not os.path.exists(csv_file_path):
-            print(f"Error: File '{csv_file_path}' does not exist.")
-            failed_files.append(csv_file_path)
+    for file_path in csv_file_paths:
+        if not os.path.exists(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            failed_files.append(file_path)
             continue
 
-        if not csv_file_path.endswith(".csv"):
-            print(f"Error: File '{csv_file_path}' is not a CSV file.")
-            failed_files.append(csv_file_path)
+        if not (file_path.endswith(".csv") or file_path.endswith(".json")):
+            print(f"Error: File '{file_path}' is not a CSV or JSON file.")
+            failed_files.append(file_path)
             continue
 
         try:
-            plot_regression_results_from_csv(csv_file_path)
-            print(
-                f"Successfully created regression visualization for '{csv_file_path}'!"
-            )
-            successful_files.append(csv_file_path)
+            plot_regression_results_from_file(file_path)
+            print(f"Successfully created regression visualization for '{file_path}'!")
+            successful_files.append(file_path)
         except Exception as e:
-            print(f"Error creating visualization for '{csv_file_path}': {e}")
-            failed_files.append(csv_file_path)
+            print(f"Error creating visualization for '{file_path}': {e}")
+            failed_files.append(file_path)
 
     # Summary
     print("\nSummary:")

@@ -21,7 +21,7 @@ from benchmarks.domains.regression.quadratic.base import (
 
 def quadratic_diff_min_few_sources_tl_regr(
     settings: TransferLearningRegressionSettings,
-) -> tuple[pd.DataFrame, list[str], list[str]]:
+) -> pd.DataFrame:
     """Regression benchmark for TL with different quadratic functions and few sources.
 
     Key characteristics:
@@ -42,16 +42,14 @@ def quadratic_diff_min_few_sources_tl_regr(
         settings: Configuration settings for the regression benchmark
 
     Returns:
-        Tuple containing:
-        - DataFrame with benchmark results
-        - List of metric names used
-        - List of model names used
+        DataFrame with benchmark results
     """
-    return run_quadratic_tl_regression_benchmark(
+    results_df = run_quadratic_tl_regression_benchmark(
         settings=settings,
         n_sources=3,
         keep_min=False,  # Different minima
     )
+    return results_df
 
 
 # Create the benchmark
@@ -69,9 +67,14 @@ if __name__ == "__main__":
     print("Transfer Learning Regression Benchmark...")
 
     # Run the benchmark
-    results_df, metrics, model_names = quadratic_diff_min_few_sources_tl_regr(
-        benchmark_config
+    results_df = quadratic_diff_min_few_sources_tl_regr(benchmark_config)
+
+    # Extract metrics and model names from column names for local run
+    from benchmarks.visualize_regression_results import (
+        extract_metrics_and_models_from_data,
     )
+
+    metrics, model_names = extract_metrics_and_models_from_data(results_df)
 
     # Generate filename and save results
     filename = generate_result_filename("quadratic_diff_min_few_sources_tl_regression")

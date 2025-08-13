@@ -21,9 +21,9 @@ from benchmarks.domains.regression.base import run_tl_regression_benchmark
 # Define the benchmark settings
 benchmark_config = TransferLearningRegressionSettings(
     random_seed=42,
-    num_mc_iterations=30,
-    max_train_points=5,
-    source_fractions=[0.01, 0.02, 0.05, 0.10],
+    num_mc_iterations=2,  # 30,
+    max_train_points=1,  # 5,
+    source_fractions=[0.01],  # , 0.02, 0.05, 0.10],
     noise_std=0.0,  # Noise is already added in data generation
     metrics=["RMSE", "R2", "MAE"],
 )
@@ -152,7 +152,7 @@ def run_quadratic_tl_regression_benchmark(
     settings: TransferLearningRegressionSettings,
     n_sources: int = 3,
     keep_min: bool = False,
-) -> tuple[pd.DataFrame, list[str], list[str]]:
+) -> pd.DataFrame:
     """Run a quadratic transfer learning regression benchmark.
 
     Args:
@@ -161,10 +161,7 @@ def run_quadratic_tl_regression_benchmark(
         keep_min: If True, freeze b=0 for all functions (same minimum location)
 
     Returns:
-        Tuple containing:
-        - DataFrame with benchmark results
-        - List of metric names used
-        - List of model names used
+        DataFrame with benchmark results
     """
     return run_tl_regression_benchmark(
         settings=settings,
