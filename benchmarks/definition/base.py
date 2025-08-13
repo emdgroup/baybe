@@ -6,7 +6,7 @@ import time
 from abc import ABC
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from enum import StrEnum
+from enum import Enum
 from typing import Any, Generic, TypeVar
 
 from attrs import Attribute, define, field
@@ -26,7 +26,7 @@ logger.addHandler(stdout)
 logger.setLevel(logging.INFO)
 
 
-class RunMode(StrEnum):
+class RunMode(Enum):
     """Enum for different run modes of benchmarks.
 
     This collects all modes that must be defined for all runmode-dependent attributes of
@@ -78,9 +78,11 @@ def make_runmode_attr_validator(
             mapping_validator=instance_of(dict),
         )
         VALID_DICT(instance, attribute, value)
-        STANDARD_RUNMODE_SET = RunMode.STANDARD in value
+        REQUIERED_RUNMODES_SET = (
+            RunMode.STANDARD in value and RunMode.RUNTHROUGH in value
+        )
 
-        if not STANDARD_RUNMODE_SET:
+        if not REQUIERED_RUNMODES_SET:
             raise ValueError(
                 f"Runmode {RunMode.STANDARD} must be defined in {attribute.name}."
             )
