@@ -160,19 +160,20 @@ to the range $[0, 1]$ using a sigmoid function.
 ````{grid-item}
 :columns: auto
 
-![Transforms](../_static/transformations/bell.svg)
+![Transforms](../_static/transformations/sigmoid.svg)
 ````
 
 ````{grid-item}
-:columns: 6
+:columns: 5
 
 **Transformation rule**
 
 ```{math}
-f(x) = \frac{1}{1 + e^{-a(x - \mu)}}
+f(x) = \frac{1}{1 + e^{-a(x - c)}}
 ```
-where $\mu$ is the center point where the curve crosses the value 0.5 and $a$ is a
-parameter controlling the steepness.
+where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
+parameter controlling the steepness. Note that the transformation can also be specified
+using anchors points instead, as demonstrated below.
 ````
 `````
 
@@ -183,7 +184,7 @@ from baybe.transformations import SigmoidTransformation
 
 t = SigmoidTransformation(center=0.0, steepness=1.0)  # vanilla sigmoid function
 t = SigmoidTransformation(center=1.0, steepness=2.0)  # shifted and steeper
-t = SigmoidTransformation.from_anchors([(1, 0.1), (2, 0.9)])  # passes through anchors
+t = SigmoidTransformation.from_anchors(anchors=[(1, 0.1), (2, 0.9)])  # passes through anchors
 ```
 
 ### BellTransformation
