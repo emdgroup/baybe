@@ -15,6 +15,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
+from baybe.serialization.core import select_constructor_hook
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -531,6 +532,8 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+converter.register_structure_hook(NumericalTarget, select_constructor_hook)
+
 # >>> Deprecation >>> #
 _hook = converter.get_structure_hook(NumericalTarget)
 
@@ -538,6 +541,7 @@ _hook = converter.get_structure_hook(NumericalTarget)
 @converter.register_structure_hook
 def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
     """Accept legacy target argument for backward compatibility."""
+    x.pop("type", None)
     try:
         return _hook(x, _)
     except Exception:
