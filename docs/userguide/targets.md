@@ -88,8 +88,8 @@ The following is a non-comprehensive overview – for a complete list, please r
   :class: caution
 
   While several target configurations can lead to the same transformation result, the
-  respective objects are not necessarily equal because they might use different
-  transformation chains:
+  respective objects are not necessarily equal because they might use
+  {ref}`different transformation chains <transformation-equality>`:
 
   ```python
   import numpy as np

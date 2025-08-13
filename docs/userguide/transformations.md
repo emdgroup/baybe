@@ -304,18 +304,7 @@ mathematical operation $(h \circ g \circ f)(x) = h(g(f(x)))$, where the order in
 notation is reversed.
 ```
 
-```{admonition} Convenience Construction
-:class: tip
-Instead of explicitly calling the
-{class}`~baybe.transformations.composite.ChainedTransformation` 
-constructor to chain transformations, you can alternatively:
-* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
-* calling an existing transformation's
-{meth}`~baybe.transformations.base.Transformation.chain` method
-```
-
 ```python
-import torch
 from baybe.transformations import (
     AffineTransformation,
     ChainedTransformation,
@@ -335,8 +324,18 @@ t1 = ChainedTransformation([twosided, power, shift])  # explicit construction
 t2 = twosided | power | shift  # using overloaded pipe operator
 t3 = twosided.chain(power).chain(shift)  # via method chaining
 assert t1 == t2 == t3
+```
 
-# Logically, we can achieve the same result by exchanging the first two steps:
+(transformation-equality)=
+````{admonition} Equality
+:class: caution
+While several transformations can produce the same output, the corresponding objects
+are not necessarily equal because they might rely on different construction logic:
+
+```python
+import torch
+
+# Logically, we can achieve the same result as above by exchanging the first two steps:
 # 1) Here, we apply the quadratic transformation first
 # 2) Then, we cut as a second step
 # 3) Finally, we shift
@@ -347,6 +346,17 @@ t4 = power | twosided | shift  # different order of operations
 values = torch.linspace(0, 2, steps=100)
 assert torch.equal(t1(values), t4(values))  # they produce the same output
 assert t1 != t4  # but they are not "equal" objects
+```
+````
+
+```{admonition} Convenience Construction
+:class: tip
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.ChainedTransformation` 
+constructor to chain transformations, you can alternatively:
+* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
+* calling an existing transformation's
+{meth}`~baybe.transformations.base.Transformation.chain` method
 ```
 
 ````{admonition} Compression
