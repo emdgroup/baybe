@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import subprocess
 from collections.abc import Callable, Sequence
-from datetime import datetime
 from typing import Any
 
 import numpy as np
@@ -17,59 +15,6 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionSettings
 from benchmarks.definition.regression import REGRESSION_METRICS
-
-
-def generate_result_filename(benchmark_name: str, extension: str = "csv") -> str:
-    """Generate a consistent filename pattern for benchmark results.
-
-    Args:
-        benchmark_name: Name of the benchmark (e.g., "quadratic_tl_regression")
-        extension: File extension (default: "csv")
-
-    Returns:
-        Filename following pattern:
-        {benchmark-name}_{branch-info}_{version}_{date}_{commit-hash}_results.{extension}
-    """
-    try:
-        # Get current branch
-        branch_result = subprocess.run(
-            ["git", "branch", "--show-current"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        branch = branch_result.stdout.strip()
-        branch = branch.replace("/", "-")  # Replace slashes to avoid directory issues
-        print(f"Current branch: {branch}")
-
-        # Get current commit hash
-        commit_result = subprocess.run(
-            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True
-        )
-        commit = commit_result.stdout.strip()
-
-        # Get BayBE version (try to read from pyproject.toml or use fallback)
-        try:
-            import baybe
-
-            version = baybe.__version__
-        except (ImportError, AttributeError):
-            version = "0.13.2"  # Fallback version
-
-        # Get current date
-        date = datetime.now().strftime("%Y-%m-%d")
-
-        # Generate filename
-        filename = (
-            f"{benchmark_name}_{branch}_{version}_{date}_{commit}_results.{extension}"
-        )
-
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback to simple naming if git is not available
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{benchmark_name}_results_{timestamp}.{extension}"
-
-    return filename
 
 
 def run_tl_regression_benchmark(

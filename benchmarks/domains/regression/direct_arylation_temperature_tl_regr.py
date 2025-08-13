@@ -17,10 +17,7 @@ from benchmarks.definition import (
     TransferLearningRegression,
     TransferLearningRegressionSettings,
 )
-from benchmarks.domains.regression.base import (
-    generate_result_filename,
-    run_tl_regression_benchmark,
-)
+from benchmarks.domains.regression.base import run_tl_regression_benchmark
 
 
 def load_data() -> pd.DataFrame:
@@ -138,39 +135,3 @@ benchmark_config = TransferLearningRegressionSettings(
 direct_arylation_temperature_tl_regr_benchmark = TransferLearningRegression(
     function=direct_arylation_temperature_tl_regr, settings=benchmark_config
 )
-
-
-if __name__ == "__main__":
-    """Run the direct arylation temperature transfer learning regression benchmark."""
-    import pandas as pd
-
-    from benchmarks.domains.regression.base import generate_result_filename
-
-    print(
-        "Running Direct Arylation Temperature Transfer Learning Regression Benchmark..."
-    )
-
-    # Run the benchmark
-    results_df, metrics, model_names = direct_arylation_temperature_tl_regr(
-        benchmark_config
-    )
-
-    # Generate filename and save results
-    filename = generate_result_filename("direct_arylation_tl_regression")
-    results_df.to_csv(filename, index=False)
-
-    print("Benchmark completed!")
-    print(f"Results saved to: {filename}")
-    print(f"Metrics evaluated: {metrics}")
-    print(f"Models compared: {model_names}")
-    print(f"Total experiments: {len(results_df)}")
-
-    # Show summary statistics
-    print("\nSummary Statistics:")
-    for metric in metrics:
-        for model in model_names:
-            col_name = f"{model}_{metric.lower()}"
-            if col_name in results_df.columns:
-                mean_val = results_df[col_name].mean()
-                std_val = results_df[col_name].std()
-                print(f"{model} {metric}: {mean_val:.4f} ± {std_val:.4f}")
