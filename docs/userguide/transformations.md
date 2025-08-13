@@ -184,7 +184,9 @@ from baybe.transformations import SigmoidTransformation
 
 t = SigmoidTransformation(center=0.0, steepness=1.0)  # vanilla sigmoid function
 t = SigmoidTransformation(center=1.0, steepness=2.0)  # shifted and steeper
-t = SigmoidTransformation.from_anchors(anchors=[(1, 0.1), (2, 0.9)])  # passes through anchors
+t = SigmoidTransformation.from_anchors(
+    anchors=[(1, 0.1), (2, 0.9)]  # passes through anchors
+)
 ```
 
 ### BellTransformation
