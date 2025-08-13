@@ -15,9 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from benchmarks.definition.regression import TransferLearningRegressionSettings
 from benchmarks.domains.regression.base import run_tl_regression_benchmark
-from benchmarks.domains.regression.quadratic.base import (
-    load_data,
-)
+from benchmarks.domains.transfer_learning.quadratic.base import load_data
 
 # Define the benchmark settings
 benchmark_config = TransferLearningRegressionSettings(

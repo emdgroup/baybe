@@ -104,7 +104,7 @@ def load_data(
     # Combine all data
     combined_data = pd.concat(all_data, ignore_index=True)
 
-    return combined_data, c_target
+    return combined_data
 
 
 def make_searchspace(

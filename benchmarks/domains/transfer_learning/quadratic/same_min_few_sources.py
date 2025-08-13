@@ -76,7 +76,7 @@ benchmark_config = ConvergenceBenchmarkSettings(
 )
 
 # Calculate optimal target value
-optimal_value = get_optimal_target_value(n_sources=3, keep_min=True)
+optimal_value = get_optimal_target_value()
 
 # Create the benchmark
 quadratic_same_min_few_sources_tl_benchmark = ConvergenceBenchmark(
