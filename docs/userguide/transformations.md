@@ -367,7 +367,7 @@ BayBE is smart when it comes to chaining transformations in that it automaticall
 compresses the resulting chain to remove redundancies, by
 * dropping unnecessary identity transformations,
 * combining successive affine transformations,
-* and removing the chaining wrapper for comparison operations if not needed. 
+* and ignoring the chaining layer for comparison operations when it's not needed. 
 
 ```python
 from baybe.transformations import (
@@ -376,14 +376,23 @@ from baybe.transformations import (
     IdentityTransformation,
 )
 
-t1 = (
+t1 = ChainedTransformation(
+    [
+        IdentityTransformation(),
+        AffineTransformation(factor=2),
+        AffineTransformation(shift=3),
+    ]
+)
+t2 = (
     IdentityTransformation()
     | AffineTransformation(factor=2)
     | AffineTransformation(shift=3)
 )
-t2 = AffineTransformation(factor=2, shift=3)  # compressed version
-assert isinstance(t1, ChainedTransformation)
-assert t1 == t2  # both are equal, even though t1 is really a chained transformation
+t3 = AffineTransformation(factor=2, shift=3)  # compressed version
+
+assert isinstance(t1, ChainedTransformation)  # t1 is a explicitly constructed as chain
+assert not isinstance(t2, ChainedTransformation)  # not a chain due to auto-compression
+assert t1 == t2 == t3  # all are equal, even though t1 is a ChainedTransformation object
 ```
 ````
 
