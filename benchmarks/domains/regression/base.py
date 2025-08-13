@@ -299,17 +299,12 @@ def evaluate_models(
     for metric_name in metrics:
         metric_info = REGRESSION_METRICS[metric_name]
         metric_func = metric_info["function"]
-        transform_func = metric_info["transform"]
 
         # Call with just mean predictions
         metric_value = metric_func(
             target_test[target_column].values,
             vanilla_pred[f"{target_column}_mean"].values,
         )
-
-        # Apply transformation if needed (e.g., sqrt for RMSE)
-        if transform_func is not None:
-            metric_value = transform_func(metric_value)
 
         results[f"vanilla_{metric_name.lower()}"] = metric_value
 
@@ -346,17 +341,12 @@ def evaluate_models(
         for metric_name in metrics:
             metric_info = REGRESSION_METRICS[metric_name]
             metric_func = metric_info["function"]
-            transform_func = metric_info["transform"]
 
             # Call with just mean predictions
             metric_value = metric_func(
                 target_test[target_column].values,
                 tl_pred[f"{target_column}_mean"].values,
             )
-
-            # Apply transformation if needed (e.g., sqrt for RMSE)
-            if transform_func is not None:
-                metric_value = transform_func(metric_value)
 
             results[f"{model_name}_{metric_name.lower()}"] = metric_value
 

@@ -1,6 +1,5 @@
 """Regression benchmark configuration."""
 
-import numpy as np
 from attrs import define, field
 from attrs.validators import instance_of
 from sklearn.metrics import (
@@ -9,31 +8,25 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
     r2_score,
+    root_mean_squared_error,
 )
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
 # Dictionary mapping metric names to functions
 REGRESSION_METRICS = {
-    "RMSE": {
-        "function": mean_squared_error,
-        "transform": np.sqrt,
-    },
-    "R2": {"function": r2_score, "transform": None},
-    "MAE": {
-        "function": mean_absolute_error,
-        "transform": None,
-    },
-    "MAX_ERROR": {"function": max_error, "transform": None},
-    "EXPLAINED_VARIANCE": {
-        "function": explained_variance_score,
-        "transform": None,
-    },
+    "RMSE": {"function": root_mean_squared_error},
+    "MSE": {"function": mean_squared_error},
+    "R2": {"function": r2_score},
+    "MAE": {"function": mean_absolute_error},
+    "MAX_ERROR": {"function": max_error},
+    "EXPLAINED_VARIANCE": {"function": explained_variance_score},
 }
 
 # Define whether higher values are better for each metric
 METRICS_HIGHER_IS_BETTER = {
     "RMSE": False,
+    "MSE": False,
     "R2": True,
     "MAE": False,
     "MAX_ERROR": False,
