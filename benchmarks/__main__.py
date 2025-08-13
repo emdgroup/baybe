@@ -87,19 +87,14 @@ def main() -> None:
         raise AttributeError("Name cannot be set in CI mode.")
 
     if not args.benchmark_list:
-        run_benchmarks(
-            BENCHMARKS,
-            runmode=args.runmode,
-            name=args.name,
-            outdir=args.outdir,
-        )
-        return
+        benchmark_list = BENCHMARKS
+    else:
+        benchmark_list = [
+            benchmark
+            for benchmark in BENCHMARKS
+            if benchmark.name in set(args.benchmark_list)
+        ]
 
-    benchmark_list = [
-        benchmark
-        for benchmark in BENCHMARKS
-        if benchmark.name in set(args.benchmark_list)
-    ]
     run_benchmarks(
         benchmark_list=benchmark_list,
         runmode=args.runmode,
