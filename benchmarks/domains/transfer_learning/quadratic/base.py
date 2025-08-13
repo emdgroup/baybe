@@ -24,7 +24,18 @@ from baybe.targets import NumericalTarget
 from benchmarks.definition import ConvergenceBenchmarkSettings
 
 
-def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
+def get_optimal_target_value() -> float:
+    """Calculate the theoretical optimal target value for the benchmark.
+
+    Returns:
+        Minimum value of the target quadratic function
+    """
+    return 0.0
+
+
+def load_data(
+    n_sources: int = 3, keep_min: bool = False, noise_std: float = 0.05
+) -> pd.DataFrame:
     """Load synthetic quadratic data for transfer learning benchmarks.
 
     Creates source and target tasks using quadratic functions: y = a*(x+b)^2 + c
@@ -33,6 +44,7 @@ def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
     Args:
         n_sources: Number of source tasks to generate
         keep_min: If True, freeze b=0 for all functions (same minimum location)
+        noise_std: Standard deviation of noise added to outputs (default: 0.05).
 
     Returns:
         DataFrame containing both source and target task data with columns:
@@ -47,7 +59,7 @@ def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
     np.random.seed(seed)
 
     # Parameter sampling ranges
-    a_range = (0.1, 2.0)  # Scale parameter
+    a_range = (0.01, 2.0)  # Scale parameter
     b_range = (-1.0, 1.0) if not keep_min else (0.0, 0.0)  # Shift parameter
     c_range = (-2.0, 2.0)  # Offset parameter
 
@@ -66,33 +78,33 @@ def load_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
 
         # Generate quadratic function: y = a*(x+b)^2 + c (no noise for lookup)
         y_clean = a * (x + b) ** 2 + c
+        y_noisy = y_clean + np.random.normal(0, noise_std, n_points)
 
         # Create task name
-        task_name = f"source_{a:.2f}_{b:.2f}_{c:.2f}"
+        task_name = f"source_{i}"
         task_names.append(task_name)
 
         # Create DataFrame for this source
-        source_df = pd.DataFrame({"x": x, "y": y_clean, "task": task_name})
+        source_df = pd.DataFrame({"x": x, "y": y_noisy, "task": task_name})
         all_data.append(source_df)
 
     # Generate target task
     a_target = np.random.uniform(*a_range)
-    b_target = np.random.uniform(*b_range)
     c_target = np.random.uniform(*c_range)
+    # Fix c_target to 0 for convergence benchmarks
+    b_target = 0
 
     y_target_clean = a_target * (x + b_target) ** 2 + c_target
+    y_target_noisy = y_target_clean + np.random.normal(0, noise_std, n_points)
 
-    target_df = pd.DataFrame({"x": x, "y": y_target_clean, "task": "target"})
+    target_df = pd.DataFrame({"x": x, "y": y_target_noisy, "task": "target"})
     all_data.append(target_df)
     task_names.append("target")
 
     # Combine all data
     combined_data = pd.concat(all_data, ignore_index=True)
 
-    # Round x values to avoid floating point precision issues in lookup
-    combined_data["x"] = combined_data["x"].round(6)
-
-    return combined_data
+    return combined_data, c_target
 
 
 def make_searchspace(
@@ -191,7 +203,7 @@ def quadratic_tl_convergence_benchmark(
     • Comparison: Transfer learning vs. non-transfer learning campaigns
     """
     # Load data with specified configuration
-    data = load_data(n_sources=n_sources, keep_min=keep_min)
+    data, _ = load_data(n_sources=n_sources, keep_min=keep_min)
 
     # Create search spaces
     searchspace = make_searchspace(
@@ -248,90 +260,3 @@ def quadratic_tl_convergence_benchmark(
     )
 
     return pd.concat(results)
-
-
-def get_optimal_target_value(n_sources: int = 3, keep_min: bool = True) -> float:
-    """Calculate the theoretical optimal target value for the benchmark.
-
-    Args:
-        n_sources: Number of source tasks (used for seeding)
-        keep_min: If True, minimum is at x=0; otherwise varies
-
-    Returns:
-        Theoretical minimum value of the target quadratic function
-    """
-    # Use same data generation logic to get target function parameters
-    seed = 42
-    np.random.seed(seed)
-
-    # Parameter sampling ranges
-    a_range = (0.1, 2.0)
-    b_range = (-1.0, 1.0) if not keep_min else (0.0, 0.0)
-    c_range = (-2.0, 2.0)
-
-    # Skip source tasks to get same target parameters
-    for _ in range(n_sources):
-        np.random.uniform(*a_range)
-        np.random.uniform(*b_range)
-        np.random.uniform(*c_range)
-
-    # Generate target task parameters
-    _ = np.random.uniform(*a_range)  # a_target (unused)
-    _ = np.random.uniform(*b_range)  # b_target (unused)
-    c_target = np.random.uniform(*c_range)
-
-    # Theoretical minimum: y = a*(x+b)^2 + c has minimum at x = -b, with value c
-    return float(c_target)
-
-
-def create_continuous_function(n_sources: int = 3, keep_min: bool = True) -> callable:
-    """Create a continuous function for the target task that can be evaluated anywhere.
-
-    This avoids lookup table issues by providing a direct function evaluation.
-
-    Args:
-        n_sources: Number of source tasks (used for seeding)
-        keep_min: If True, minimum is at x=0; otherwise varies
-
-    Returns:
-        Function that takes (x, task) and returns y value
-    """
-    # Generate the same parameters as load_data
-    seed = 42
-    np.random.seed(seed)
-
-    # Parameter sampling ranges
-    a_range = (0.1, 2.0)
-    b_range = (-1.0, 1.0) if not keep_min else (0.0, 0.0)
-    c_range = (-2.0, 2.0)
-
-    # Store all task parameters
-    task_params = {}
-
-    # Generate source tasks
-    for i in range(n_sources):
-        a = np.random.uniform(*a_range)
-        b = np.random.uniform(*b_range)
-        c = np.random.uniform(*c_range)
-        task_name = f"source_{a:.2f}_{b:.2f}_{c:.2f}"
-        task_params[task_name] = (a, b, c)
-
-    # Generate target task
-    a_target = np.random.uniform(*a_range)
-    b_target = np.random.uniform(*b_range)
-    c_target = np.random.uniform(*c_range)
-    task_params["target"] = (a_target, b_target, c_target)
-
-    def quadratic_function(x_val, task_name):
-        """Evaluate quadratic function for given x and task."""
-        if task_name not in task_params:
-            raise ValueError(f"Unknown task: {task_name}")
-
-        a, b, c = task_params[task_name]
-        noise_std = 0.01
-        y_clean = a * (x_val + b) ** 2 + c
-        # Add small random noise
-        y_noisy = y_clean + np.random.normal(0, noise_std)
-        return y_noisy
-
-    return quadratic_function

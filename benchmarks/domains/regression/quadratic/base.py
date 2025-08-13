@@ -7,9 +7,7 @@ on predictive performance metrics (RMSE, R2, MAE, etc.) rather than optimization
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
-import torch
 
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
@@ -17,6 +15,9 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from benchmarks.definition.regression import TransferLearningRegressionSettings
 from benchmarks.domains.regression.base import run_tl_regression_benchmark
+from benchmarks.domains.regression.quadratic.base import (
+    load_data,
+)
 
 # Define the benchmark settings
 benchmark_config = TransferLearningRegressionSettings(
@@ -27,75 +28,6 @@ benchmark_config = TransferLearningRegressionSettings(
     noise_std=0.0,  # Noise is already added in data generation
     metrics=["RMSE", "R2", "MAE"],
 )
-
-
-def load_quadratic_data(n_sources: int = 3, keep_min: bool = False) -> pd.DataFrame:
-    """Load synthetic quadratic data for transfer learning regression benchmarks.
-
-    Creates source and target tasks using quadratic functions: y = a*(x+b)^2 + c
-    with added noise for realistic regression scenarios.
-
-    Args:
-        n_sources: Number of source tasks to generate (default: 3)
-        keep_min: If True, freeze b=0 for all functions (same minimum location)
-
-    Returns:
-        DataFrame containing both source and target task data with columns:
-        - x: Input variable
-        - y: Output variable (quadratic function value + noise)
-        - task: Task identifier (source_a_b_c format or "target")
-    """
-    # Fixed parameters for data generation
-    n_points = 100
-    noise_std = 0.05
-    seed = 42
-
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-    # Parameter sampling ranges
-    a_range = (0.1, 2.0)  # Scale parameter
-    b_range = (-1.0, 1.0) if not keep_min else (0.0, 0.0)  # Shift parameter
-    c_range = (-2.0, 2.0)  # Offset parameter
-
-    # Generate input points (same for all tasks)
-    x = np.linspace(-2, 2, n_points)
-
-    all_data = []
-
-    # Generate source tasks
-    for i in range(n_sources):
-        # Sample parameters for source task
-        a = np.random.uniform(*a_range)
-        b = np.random.uniform(*b_range)
-        c = np.random.uniform(*c_range)
-
-        # Generate quadratic function: y = a*(x+b)^2 + c
-        y_clean = a * (x + b) ** 2 + c
-        y_noisy = y_clean + np.random.normal(0, noise_std, n_points)
-
-        # Create task name using integer ID
-        task_name = f"source_{i}"
-
-        # Create DataFrame for this source
-        source_df = pd.DataFrame({"x": x, "y": y_noisy, "task": task_name})
-        all_data.append(source_df)
-
-    # Generate target task
-    a_target = np.random.uniform(*a_range)
-    b_target = np.random.uniform(*b_range)
-    c_target = np.random.uniform(*c_range)
-
-    y_target_clean = a_target * (x + b_target) ** 2 + c_target
-    y_target_noisy = y_target_clean + np.random.normal(0, noise_std, n_points)
-
-    target_df = pd.DataFrame({"x": x, "y": y_target_noisy, "task": "target"})
-    all_data.append(target_df)
-
-    # Combine all data
-    combined_data = pd.concat(all_data, ignore_index=True)
-
-    return combined_data
 
 
 def create_quadratic_searchspaces(
@@ -165,7 +97,7 @@ def run_quadratic_tl_regression_benchmark(
     """
     return run_tl_regression_benchmark(
         settings=settings,
-        load_data_fn=load_quadratic_data,
+        load_data_fn=load_data,
         create_searchspaces_fn=create_quadratic_searchspaces,
         create_objective_fn=create_quadratic_objective,
         load_data_kwargs={"n_sources": n_sources, "keep_min": keep_min},
