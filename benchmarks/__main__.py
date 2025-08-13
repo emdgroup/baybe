@@ -39,17 +39,22 @@ def run_benchmarks(
     runmode: RunMode,
     name: str | None = None,
     outdir: str | None = None,
+    save: bool = True,
 ) -> None:
     """Run a subset based on the benchmark name."""
     for benchmark in benchmark_list:
         result = benchmark(runmode=runmode)
 
-        if runmode == RunMode.STANDARD:
+        if save:
             save_benchmark_data(benchmark, result, name=name, outdir=outdir)
 
 
 def main() -> None:
     """Execute the benchmarking module."""
+
+    def intstr_to_bool(x):
+        return bool(int(x))
+
     parser = argparse.ArgumentParser(description="Executes the benchmarking module.")
     parser.add_argument(
         "--benchmark-list",
@@ -78,6 +83,13 @@ def main() -> None:
     parser.add_argument(
         "--outdir", "-o", help="Save files into directory.", default=None, type=str
     )
+    parser.add_argument(
+        "-s",
+        "--save",
+        help="Whether to save the benchmark results. Use 1 for True and 0 for False.",
+        default=True,
+        type=intstr_to_bool,
+    )
     args = parser.parse_args()
 
     if args.outdir and RUNS_IN_CI:
@@ -100,6 +112,7 @@ def main() -> None:
         runmode=args.runmode,
         name=args.name,
         outdir=args.outdir,
+        save=args.save,
     )
 
 
