@@ -31,7 +31,9 @@ def run_tl_regression_benchmark(
     Args:
         settings: The benchmark settings.
         load_data_fn: Function that loads the dataset.
-        create_searchspaces_fn: Function that creates search spaces.
+        create_searchspaces_fn: Function that creates search spaces for
+            non-TL and TL models, name of the task parameter, list
+            of source task names and name of the target task.
         create_objective_fn: Function that creates the objective function.
         load_data_kwargs: Additional keyword arguments for load_data_fn.
 

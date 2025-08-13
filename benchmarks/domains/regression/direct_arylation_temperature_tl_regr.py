@@ -84,15 +84,9 @@ def create_searchspaces(data: pd.DataFrame) -> tuple[SearchSpace, SearchSpace]:
     return vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task
 
 
-def create_target() -> NumericalTarget:
-    """Create the target task for the benchmark."""
-    return NumericalTarget(name="yield", mode="MAX")
-
-
 def create_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
-    target = NumericalTarget(name="yield", mode="MAX")
-    return SingleTargetObjective(target)
+    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
 
 
 def direct_arylation_temperature_tl_regr(
