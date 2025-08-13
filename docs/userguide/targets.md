@@ -77,49 +77,44 @@ The following is a non-comprehensive overview – for a complete list, please r
   `minimize=True` argument to the constructor:
   ```python
   from baybe.targets import NumericalTarget
-  from baybe.transformations import PowerTransformation
 
-  target = NumericalTarget(
-      name="Sideproduct_Yield",
-      transformation=PowerTransformation(exponent=2),  # optional transformation object
-      minimize=True,  # yield of the side product is to be minimized
+  t = NumericalTarget(
+      name="Cost",
+      minimize=True,  # cost is to be minimized
   )
   ```
 
-  ````{admonition} Manual Negation
-  :class: note
-  Note that the above is mathematically equivalent to chaining the existing
-  transformation with a negation transformation:
+  ````{admonition} Equality
+  :class: caution
+
+  While several target configurations can lead to the same transformation result, the
+  respective objects are not necessarily equal because they might use different
+  transformation chains:
+
   ```python
+  import numpy as np
+  import pandas as pd
+  from pandas.testing import assert_series_equal
+
+  from baybe.targets import NumericalTarget
   from baybe.transformations import AffineTransformation
 
-  t_alt1 = NumericalTarget(
-      name="Sideproduct_Yield",
-      transformation=PowerTransformation(exponent=2) | AffineTransformation(factor=-1),
+  t_using_flag = NumericalTarget(name="Cost", minimize=True)
+  t_manual_transform = NumericalTarget(
+      name="Cost",
+      transformation=AffineTransformation(factor=-1),
   )
-  t_alt2 = NumericalTarget(
-      name="Sideproduct_Yield", transformation=PowerTransformation(exponent=2)
-  ).negate()  # also appends the negation transformation
-  assert t_alt1 == t_alt2
-  ```
+  t_manual_negation = NumericalTarget(name="Cost").negate()
 
-  Semantically and implementation-wise, however, these two approaches differ from the
-  original one shown above:
-  * **Semantic difference:** While handling everything in a single (chained)
-    transformation produces an equivalent output, splitting the construction cleanly
-    separates the different user concerns of
-      1. Defining the observable itself (e.g. we observe a side product yield)
-      2. Defining how the observable enters the objective (e.g. use quadratic scaling
-        because small levels are acceptable but large levels are not) 
-      3. Defining the optimization direction (e.g. the transformed quantity is to be 
-        minimized)
-    
-    This separation results in a user-friendly interface that avoids mixing the
-    optimization goals with the definition of the involved observables.
-  * **Implementation difference:** Reflecting the above-mentioned split, the negation
-    is dynamically added before passing the target to the optimization algorithm in the
-    one case, while it becomes an integral part of the target transformation attribute
-    in the other case.
+  # The objects are not necessarily equal ...
+  assert t_manual_transform == t_manual_negation
+  assert t_manual_transform != t_using_flag
+
+  # ... although they produce the same transformed values
+  s = pd.Series(np.linspace(0, 10), name="Cost")
+  assert_series_equal(t_manual_transform.transform(s), t_manual_negation.transform(s))
+  assert_series_equal(t_manual_transform.transform(s), t_using_flag.transform(s))
+  ```
   ````
 
 * **Matching a set point**: For common matching transformations, we provide
