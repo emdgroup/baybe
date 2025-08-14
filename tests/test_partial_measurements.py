@@ -15,8 +15,8 @@ from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
 desirability_targets = [
-    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1)),
-    NumericalTarget.normalize_ramp("t2", cutoffs=(0, 1), descending=True),
+    NumericalTarget.normalized_ramp("t1", cutoffs=(0, 1)),
+    NumericalTarget.normalized_ramp("t2", cutoffs=(0, 1), descending=True),
 ]
 
 

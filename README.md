@@ -73,10 +73,7 @@ which we wrap into a `SingleTargetObjective`:
 from baybe.targets import NumericalTarget
 from baybe.objectives import SingleTargetObjective
 
-target = NumericalTarget(
-    name="Yield",
-    mode="MAX",
-)
+target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target=target)
 ```
 In cases where we are confronted with multiple (potentially conflicting) targets,

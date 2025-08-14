@@ -11,18 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   manipulating target transformations based on the new `Transformation` class hierarchy
 - `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
   for reproducing the legacy `MATCH` modes
-- `normalize_ramp` convenience constructor to `NumericalTarget` for reproducing the
+- `normalized_ramp` convenience constructor to `NumericalTarget` for reproducing the
   legacy behavior when imposing bounds on `MIN`/`MAX` targets
-- `normalize_sigmoid`, `match_absolute`, `match_quadratic` and `match_power` convenience
-  constructors to `NumericalTarget` enabling additional matching/normalizing behaviors 
+- `normalized_sigmoid`, `match_absolute`, `match_quadratic` and `match_power`
+  convenience constructors to `NumericalTarget` enabling additional matching/normalizing
+  behaviors 
 - Full support for accessing posterior information of `NumericalTarget`, i.e. now
   including settings considered `MATCH` mode in the legacy interface, as well as targets
   used in `DesirabilityObjective`
 - `as_pre_transformation` flag to `DesirabilityObjective` for controlling whether the 
   desirability transformation is applied before or after model fitting
-- `needs_complete_measurements` property to `Objective`
+- `supports_partial_measurements` property to `Objective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
-- `invert`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
+- `negate`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
   `NumericalTarget` for easy creation of transformed targets from existing ones
 - Addition and multiplication dunder methods (for scalar values) to `NumericalTarget`
 - `get_image` method to `NumericalTarget` for computing the images of transformed
@@ -42,9 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   learning.
 - By default, `DesirabilityObjective` now fits separate models for each target, rather
   than modeling only the scalarized desirability value (see new
-  `DesirabilityObjective.as_pre_transform` flag). As a result, posterior evaluations now
-  return information for each target individually, instead of just for the desirability
-  value.
+  `DesirabilityObjective.as_pre_transformation` flag). As a result, posterior
+  evaluations now return information for each target individually, instead of just for
+  the desirability value.
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed

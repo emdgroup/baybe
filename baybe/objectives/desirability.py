@@ -169,8 +169,8 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def needs_complete_measurements(self) -> bool:
-        return self.as_pre_transformation
+    def supports_partial_measurements(self) -> bool:
+        return not self.as_pre_transformation
 
     @cached_property
     def _normalized_weights(self) -> np.ndarray:

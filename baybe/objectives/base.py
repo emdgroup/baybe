@@ -71,8 +71,8 @@ class Objective(ABC, SerialMixin):
 
     @property
     @abstractmethod
-    def needs_complete_measurements(self) -> bool:
-        """Boolean indicating if the objective requires measurements for all targets."""
+    def supports_partial_measurements(self) -> bool:
+        """Boolean indicating if the objective accepts partial target measurements."""
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""

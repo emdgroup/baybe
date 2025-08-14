@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define
 from typing_extensions import override
@@ -101,7 +101,7 @@ class Transformation(SerialMixin, ABC):
 
         return self | AbsoluteTransformation()
 
-    def __add__(self, other: Transformation | int | float) -> Transformation:
+    def __add__(self, other: Any) -> Transformation:
         """Add a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import AdditiveTransformation
@@ -113,7 +113,15 @@ class Transformation(SerialMixin, ABC):
             return self | AffineTransformation(shift=other)
         return NotImplemented
 
-    def __mul__(self, other: Transformation | int | float) -> Transformation:
+    def __sub__(self, other: Any) -> Transformation:
+        """Subtract a constant from the output of the transformation."""
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            return self | AffineTransformation(shift=-other)
+        return NotImplemented
+
+    def __mul__(self, other: Any) -> Transformation:
         """Multiply with a constant or the output of another transformation."""
         if isinstance(other, Transformation):
             from baybe.transformations import MultiplicativeTransformation
@@ -125,7 +133,17 @@ class Transformation(SerialMixin, ABC):
             return self | AffineTransformation(factor=other)
         return NotImplemented
 
-    def __or__(self, other: Transformation) -> Transformation:
+    def __truediv__(self, other: Any) -> Transformation:
+        """Divide the output of the transformation by a constant."""
+        if isinstance(other, (int, float)):
+            from baybe.transformations import AffineTransformation
+
+            if other == 0:
+                raise ValueError("Division by zero is not allowed.")
+            return self | AffineTransformation(factor=1 / other)
+        return NotImplemented
+
+    def __or__(self, other: Any) -> Transformation:
         """Chain the transformation with another one. Inspired by the Unix "pipe"."""
         from baybe.transformations import (
             AffineTransformation,
@@ -140,6 +158,10 @@ class Transformation(SerialMixin, ABC):
             return combine_affine_transformations(*t)
         if isinstance(other, Transformation):
             return ChainedTransformation([self, other])
+        if callable(other):
+            from baybe.transformations.basic import CustomTransformation
+
+            return self | CustomTransformation(other)
         return NotImplemented
 
     @classmethod

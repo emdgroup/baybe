@@ -29,7 +29,7 @@ class ChainedTransformation(Transformation):
             deep_iterable(member_validator=instance_of(Transformation)),
         ],
     )
-    """The transformations to be composed."""
+    """The transformations to be composed (the first element gets applied first)."""
 
     @override
     def __eq__(self, other: Any, /) -> bool:

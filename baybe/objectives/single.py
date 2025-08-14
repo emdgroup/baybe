@@ -58,8 +58,8 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def needs_complete_measurements(self) -> bool:
-        return True
+    def supports_partial_measurements(self) -> bool:
+        return False
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:

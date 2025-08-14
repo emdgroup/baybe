@@ -45,7 +45,7 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
         NumericalDiscreteParameter("x3", np.linspace(0, 1, 25)),
     ]
 
-    target = NumericalTarget(name="target", mode="MIN")
+    target = NumericalTarget(name="target", minimmize=True)
     searchspace = SearchSpace.from_product(parameters=parameters)
     objective = target.to_objective()
 

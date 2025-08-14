@@ -15,6 +15,7 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
+from baybe.serialization.core import select_constructor_hook
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -73,7 +74,7 @@ def _translate_legacy_arguments(
         else:
             # Use transformation from what would have been the appropriate call
             return (
-                NumericalTarget.normalize_ramp(
+                NumericalTarget.normalized_ramp(
                     "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
                 )._transformation,
                 False,
@@ -137,11 +138,17 @@ class NumericalTarget(Target, SerialMixin):
         )
         self.__attrs_init__(legacy.name, transformation, minimize=minimize)
 
-    def __add__(self, other: int | float) -> NumericalTarget:
+    def __add__(self, other: Any) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=other))
 
-    def __mul__(self, other: int | float) -> NumericalTarget:
+    def __sub__(self, other: Any) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(shift=-other))
+
+    def __mul__(self, other: Any) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(factor=other))
+
+    def __truediv__(self, other: Any) -> NumericalTarget:
+        return self._append_transformation(AffineTransformation(factor=1 / other))
 
     @classmethod
     def from_modern_interface(
@@ -329,7 +336,7 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, BellTransformation(match_value, sigma))
 
     @classmethod
-    def normalize_ramp(
+    def normalized_ramp(
         cls, name: str, cutoffs: ConvertibleToInterval, *, descending: bool = False
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
@@ -354,7 +361,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
-    def normalize_sigmoid(
+    def normalized_sigmoid(
         cls, name: str, anchors: Sequence[Sequence[float]]
     ) -> NumericalTarget:
         """Create a sigmoid-transformed target.
@@ -405,11 +412,11 @@ class NumericalTarget(Target, SerialMixin):
             ),
         )
 
-    def invert(self) -> NumericalTarget:
-        """Apply an inversion transformation to the target.
+    def negate(self) -> NumericalTarget:
+        """Apply a negation transformation to the target.
 
         Returns:
-            The target with applied inversion transformation.
+            The target with applied negation transformation.
         """
         return self._append_transformation(AffineTransformation(factor=-1))
 
@@ -525,6 +532,8 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+converter.register_structure_hook(NumericalTarget, select_constructor_hook)
+
 # >>> Deprecation >>> #
 _hook = converter.get_structure_hook(NumericalTarget)
 
@@ -532,6 +541,7 @@ _hook = converter.get_structure_hook(NumericalTarget)
 @converter.register_structure_hook
 def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
     """Accept legacy target argument for backward compatibility."""
+    x.pop("type", None)
     try:
         return _hook(x, _)
     except Exception:

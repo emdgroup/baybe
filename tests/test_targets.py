@@ -14,12 +14,16 @@ from baybe.utils.interval import Interval
 def test_target_addition():
     """Target addition appends a shifting transformation."""
     t1 = NumericalTarget("t") + 1
+    t2 = NumericalTarget("t") - (-1)
+    assert t1 == t2
     assert t1._transformation == AffineTransformation(shift=1)
 
 
 def test_target_multiplication():
     """Target multiplication appends a scaling transformation."""
     t1 = NumericalTarget("t") * 2
+    t2 = NumericalTarget("t") / 0.5
+    assert t1 == t2
     assert t1._transformation == AffineTransformation(factor=2)
 
 

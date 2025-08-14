@@ -124,8 +124,8 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
 
 
 _desirabilty_targets = [
-    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
-    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
+    NumericalTarget.normalized_ramp("t1", cutoffs=(0, 100)),
+    NumericalTarget.normalized_ramp("t2", cutoffs=(0, 100), descending=True),
 ]
 
 
@@ -133,7 +133,7 @@ _desirabilty_targets = [
 @mark.parametrize(
     "objective",
     [
-        param(SingleTargetObjective(NumericalTarget("t1", "MAX")), id="single"),
+        param(SingleTargetObjective(NumericalTarget("t1")), id="single"),
         param(
             DesirabilityObjective(_desirabilty_targets, as_pre_transformation=False),
             id="desirability_post",
@@ -144,7 +144,7 @@ _desirabilty_targets = [
         ),
         param(
             ParetoObjective(
-                (NumericalTarget("t1", mode="MAX"), NumericalTarget("t2", mode="MIN"))
+                (NumericalTarget("t1"), NumericalTarget("t2", minimize=True))
             ),
             id="pareto",
         ),

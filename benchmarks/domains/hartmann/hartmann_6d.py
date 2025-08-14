@@ -54,7 +54,7 @@ def hartmann_6d(settings: ConvergenceBenchmarkSettings) -> DataFrame:
         NumericalContinuousParameter("x6", (0.0, 1.0)),
     ]
 
-    target = NumericalTarget(name="target", mode="MIN")
+    target = NumericalTarget(name="target", minimize=True)
     searchspace = SearchSpace.from_product(parameters=parameters)
     objective = target.to_objective()
 

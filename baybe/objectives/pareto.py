@@ -48,8 +48,8 @@ class ParetoObjective(Objective):
 
     @override
     @property
-    def needs_complete_measurements(self) -> bool:
-        return False
+    def supports_partial_measurements(self) -> bool:
+        return True
 
     @override
     def transform(

@@ -162,8 +162,8 @@ def test_update_measurements(ongoing_campaign):
             ["Categorical_1", "Num_disc_1", "Conti_finite1"],
             DesirabilityObjective(
                 (
-                    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1)),
-                    NumericalTarget.normalize_ramp(
+                    NumericalTarget.normalized_ramp("t1", cutoffs=(0, 1)),
+                    NumericalTarget.normalized_ramp(
                         "t2", cutoffs=(0, 1), descending=True
                     ),
                 )
