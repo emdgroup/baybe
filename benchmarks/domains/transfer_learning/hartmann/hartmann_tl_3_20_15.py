@@ -15,6 +15,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -94,7 +95,10 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     # Convert coordinates to a PyTorch tensor
     initial_data_tensor = torch.tensor(initial_data[coord_columns].values)
 
-    target_values_tensor = source_function(initial_data_tensor)
+    with temporary_seed(settings.random_seed):
+        target_values_tensor = source_function(
+            initial_data_tensor
+        )  # Randomness from source function
 
     # Assign the results back to a new DataFrame for initial_data
     initial_data["Target"] = target_values_tensor.detach().numpy()
@@ -103,6 +107,13 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     lookup = arrays_to_dataframes([p.name for p in params], ["Target"], use_torch=True)(
         target_function
     )
+
+    initial_data_samples = {}
+    with temporary_seed(settings.random_seed):
+        for p in percentages:
+            initial_data_samples[p] = [
+                initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+            ]
 
     results = []
     for p in percentages:
@@ -113,12 +124,11 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
-                initial_data=[
-                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -129,6 +139,7 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)

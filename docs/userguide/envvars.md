@@ -29,50 +29,6 @@ os.environ["ENVAR_NAME"] = "my_value"
 However, this needs to be done carefully at the entry point of your script or session and
 will not persist between sessions.
 
-## Telemetry
-
-```{admonition} Telemetry Scope
-:class: important
-BayBE collects anonymous usage statistics **only** for employees of Merck KGaA, 
-Darmstadt, Germany and/or its affiliates. The recording of metrics is turned off for
-all other users and impossible due to a VPN block. In any case, the usage statistics
-do **not** involve logging of recorded measurements, targets or any project information
-that would allow for reconstruction of details. The user and host machine names are
-anonymized.
-```
-
-Monitored quantities:
-* `batch_size` used when querying recommendations
-* Number of parameters in the search space
-* Number of constraints in the search space
-* How often [`recommend`](baybe.campaign.Campaign.recommend) was called
-* How often [`add_measurements`](baybe.campaign.Campaign.add_measurements) was called
-* How often a search space is newly created
-* How often initial measurements are added before recommendations were calculated
-  ("naked initial measurements")
-* The fraction of measurements added that correspond to previous recommendations
-* Each measurement is associated with a truncated hash of the user- and hostname
-
-The following environment variables control the behavior of BayBE telemetry:
-- `BAYBE_TELEMETRY_ENABLED`: Flag that can turn off telemetry entirely (default is
-  `True`). To turn it off set it to `False`.
-- `BAYBE_TELEMETRY_ENDPOINT`: The receiving endpoint URL for telemetry data.
-- `BAYBE_TELEMETRY_VPN_CHECK`: Flag turning an initial telemetry connectivity check
-  on/off (default is `True`).
-- `BAYBE_TELEMETRY_VPN_CHECK_TIMEOUT`: The timeout in seconds for the check whether the
-  endpoint URL is reachable.
-- `BAYBE_TELEMETRY_USERNAME`: The name of the user executing BayBE code. Defaults to a
-  truncated hash of the username according to the OS.
-- `BAYBE_TELEMETRY_HOSTNAME`: The name of the machine executing BayBE code. Defaults to
-  a truncated hash of the machine name.
-
-```{admonition} Uninstalling Internet Packages
-:class: important
-If you do not trust the instructions above, you are free to uninstall all
-internet-related packages such as `opentelemetry*` or its secondary dependencies. These
-are being shipped in the default dependencies because there is no good way of creating
-opt-out dependencies, but the baybe package will work without them.
-```
 
 ## Polars
 If BayBE was installed with the additional `polars` dependency (`baybe[polars]`), it
@@ -149,9 +105,24 @@ results = simulate_scenarios(
 )
 ~~~
 
-```{admonition} Experimental Feature -->
+```{admonition} Experimental Feature
 :class: warning
 While parallel execution usually speeds up computation significantly, the performance
 impact can vary depending on the machine and simulation configuration. In some cases, it
 might even lead to longer run times due to overhead costs.
+```
+
+## FPS Sampling Implementation
+The optional package `fpsample` can be installed, e.g. by specifying the optional
+dependency group in `pip install baybe[extras]`. This prompts BayBE to use an 
+implementation of [farthest point sampling](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender)
+which is far more memory-efficient and scalable. This implementation, however, requires
+setting [`FPSRecommender.initialization="farthest"`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.initialization)
+and [`FPSRecommender.random_tie_break=False`](baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.random_tie_break).
+
+In case you want to use other settings while having `fpsample` installed, you can
+bypass the use of `fpsample` via an environment variable:
+
+```bash
+BAYBE_USE_FPSAMPLE="False"  # Do not use `fpsample` even if installed
 ```

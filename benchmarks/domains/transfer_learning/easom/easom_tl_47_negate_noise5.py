@@ -14,6 +14,7 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.random import temporary_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -107,18 +108,28 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
     meshgrid = np.meshgrid(*[points for points in grid_locations.values()])
 
-    lookups = []
-    for function_name, function in functions.items():
-        lookup = pd.DataFrame(
-            {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(meshgrid)}
-        )
-        lookup["Target"] = lookup.apply(function, axis=1)
-        lookup["Function"] = function_name
-        lookups.append(lookup)
-    concat_lookups = pd.concat(lookups)
+    with temporary_seed(settings.random_seed):
+        lookups = []
+        for function_name, function in functions.items():
+            lookup = pd.DataFrame(
+                {f"x{d}": grid_d.ravel() for d, grid_d in enumerate(meshgrid)}
+            )
+            lookup["Target"] = lookup.apply(
+                function, axis=1
+            )  # Randomness from source function
+            lookup["Function"] = function_name
+            lookups.append(lookup)
+        concat_lookups = pd.concat(lookups)
 
     lookup = concat_lookups[concat_lookups["Function"] == "Target_Function"]
     initial_data = concat_lookups[concat_lookups["Function"] == "Source_Function"]
+
+    initial_data_samples = {}
+    with temporary_seed(settings.random_seed):
+        for p in percentages:
+            initial_data_samples[p] = [
+                initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+            ]
 
     results = []
     for p in percentages:
@@ -129,12 +140,11 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
-                initial_data=[
-                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -145,6 +155,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)

@@ -39,11 +39,6 @@ from baybe.searchspace.core import (
 from baybe.serialization import SerialMixin, converter
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
-from baybe.telemetry import (
-    TELEM_LABELS,
-    telemetry_record_recommended_measurement_percentage,
-    telemetry_record_value,
-)
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
@@ -129,6 +124,22 @@ class Campaign(SerialMixin):
     """The optimization objective.
     When passing a :class:`baybe.targets.base.Target`, conversion to
     :class:`baybe.objectives.single.SingleTargetObjective` is automatically applied."""
+
+    @objective.validator
+    def _validate_objective(  # noqa: DOC101, DOC103
+        self, _: Any, value: Objective | None
+    ) -> None:
+        """Validate no overlapping names between targets and parameters."""
+        if value is None:
+            return
+
+        p_names = {p.name for p in self.searchspace.parameters}
+        t_names = {t.name for t in value.targets}
+        if overlap := p_names.intersection(t_names):
+            raise ValueError(
+                f"Parameters and targets cannot have overlapping names. "
+                f"The following names appear in both collections: {overlap}."
+            )
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
@@ -318,12 +329,6 @@ class Campaign(SerialMixin):
                 self.searchspace.discrete.exp_rep, data, self.parameters
             )
             self._searchspace_metadata.loc[idxs_matched, _MEASURED] = True
-
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_ADD_RESULTS"], 1)
-        telemetry_record_recommended_measurement_percentage(
-            self._cached_recommendation, data, self.parameters
-        )
 
     def update_measurements(
         self,
@@ -574,10 +579,6 @@ class Campaign(SerialMixin):
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
             self._searchspace_metadata.loc[rec.index, _RECOMMENDED] = True
-
-        # Telemetry
-        telemetry_record_value(TELEM_LABELS["COUNT_RECOMMEND"], 1)
-        telemetry_record_value(TELEM_LABELS["BATCH_SIZE"], batch_size)
 
         return rec
 

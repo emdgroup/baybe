@@ -12,12 +12,14 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceParameter
+from baybe.utils.metadata import MeasurableMetadata
 
 __all__ = [
     "CategoricalEncoding",
     "CategoricalParameter",
     "CustomDiscreteParameter",
     "CustomEncoding",
+    "MeasurableMetadata",
     "NumericalContinuousParameter",
     "NumericalDiscreteParameter",
     "SubstanceEncoding",

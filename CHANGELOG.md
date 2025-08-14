@@ -32,6 +32,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective.to_botorch` method for converting objectives to BoTorch
 - `qEHVI` and `qLogEHVI` acquisition functions (in addition to their noisy variants)
 - Tests for migrating to new `NumericalTarget` interface
+- API diagram in user guide
+- `Metadata` and `MeasurableMetadata` classes providing optional information for BayBE
+  objects
+- `Objective` now has a `metadata` attribute as well as a `description` property
+- `Target` and `Parameter` now have a `metadata` attribute as well as `description` and
+  `unit` properties
+- `FPSRecommender` now optionally uses the fpsample library (if installed) with fallback
+  to internal implementation. The use of `fpsample` can be deactivated by setting the
+  environment variable `BAYBE_USE_FPSAMPLE`
+- `farthest_point_sampling` now also supports a collection of integers for 
+  `initialization`, using them for pre-selecting points 
 
 ### Changed
 - The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
@@ -47,6 +58,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   evaluations now return information for each target individually, instead of just for
   the desirability value.
 - Specifying bounds for `Interval` is now optional
+
+### Fixed
+- `Campaign` no longer allows overlapping names between parameters and targets
+- Random seed context is correctly set within benchmarks
+
+### Removed
+- Telemetry
+
+## [0.13.2] - 2025-07-09
+### Changed
+- Lockfiles are now generated using `uv lock` and consumed using `uv sync`
 
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13

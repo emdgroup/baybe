@@ -8,14 +8,18 @@ from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 
 from ..hypothesis_strategies.basic import finite_floats
+from ..hypothesis_strategies.metadata import metadata
 from ..hypothesis_strategies.targets import numerical_targets
 
 _target_lists = st.lists(numerical_targets(), min_size=2, unique_by=lambda t: t.name)
 
 
-def single_target_objectives():
+@st.composite
+def single_target_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.single.SingleTargetObjective`."""
-    return st.builds(SingleTargetObjective, target=numerical_targets())
+    target = draw(numerical_targets())
+    objective_metadata = draw(metadata())
+    return SingleTargetObjective(target=target, metadata=objective_metadata)
 
 
 @st.composite
@@ -32,10 +36,14 @@ def desirability_objectives(draw: st.DrawFn):
     scalarizer = draw(st.sampled_from(Scalarizer))
     if require_normalization := draw(st.booleans()):
         targets = [t.clamp(0, 1) for t in targets]
-    return DesirabilityObjective(targets, weights, scalarizer, require_normalization)
+    objective_metadata = draw(metadata())
+    return DesirabilityObjective(
+        targets, weights, scalarizer, require_normalization, metadata=objective_metadata
+    )
 
 
 @st.composite
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
-    return ParetoObjective(draw(_target_lists))
+    objective_metadata = draw(metadata())
+    return ParetoObjective(_target_lists, metadata=objective_metadata)

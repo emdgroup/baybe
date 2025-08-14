@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import define
+from attrs import define, field
 
 from baybe.serialization.core import (
     converter,
@@ -20,6 +20,7 @@ from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import get_transform_objects, transform_target_columns
+from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
@@ -35,6 +36,18 @@ class Objective(ABC, SerialMixin):
 
     is_multi_output: ClassVar[bool]
     """Class variable indicating if the objective produces multiple outputs."""
+
+    metadata: Metadata = field(
+        factory=Metadata,
+        converter=lambda x: to_metadata(x, Metadata),
+        kw_only=True,
+    )
+    """Optional metadata containing description and other information."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the objective."""
+        return self.metadata.description
 
     @property
     @abstractmethod

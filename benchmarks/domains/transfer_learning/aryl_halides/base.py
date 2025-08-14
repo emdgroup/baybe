@@ -21,6 +21,7 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.random import temporary_seed
 from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import ConvergenceBenchmarkSettings
 
@@ -120,6 +121,13 @@ def aryl_halide_tl_substance_benchmark(
     )
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
+    initial_data_samples = {}
+    with temporary_seed(settings.random_seed):
+        for p in percentages:
+            initial_data_samples[p] = [
+                initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
+            ]
+
     results = []
     for p in percentages:
         results.append(
@@ -129,12 +137,11 @@ def aryl_halide_tl_substance_benchmark(
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
-                initial_data=[
-                    initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
-                ],
+                initial_data=initial_data_samples[p],
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,
                 impute_mode="error",
+                random_seed=settings.random_seed,
             )
         )
     results.append(
@@ -145,6 +152,7 @@ def aryl_halide_tl_substance_benchmark(
             n_doe_iterations=settings.n_doe_iterations,
             n_mc_iterations=settings.n_mc_iterations,
             impute_mode="error",
+            random_seed=settings.random_seed,
         )
     )
     return pd.concat(results)

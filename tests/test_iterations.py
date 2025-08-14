@@ -143,6 +143,7 @@ valid_discrete_non_predictive_recommenders = [
     if cls.compatibility
     in [SearchSpaceType.DISCRETE, SearchSpaceType.EITHER, SearchSpaceType.HYBRID]
 ]
+
 valid_discrete_bayesian_recommenders = [
     cls()
     for cls in get_subclasses(BayesianRecommender)
