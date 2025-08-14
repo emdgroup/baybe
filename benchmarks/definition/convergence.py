@@ -37,7 +37,8 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
         """The batch size for the current runmode."""
         if self.runmode not in self.batch_size_settings:
             raise ValueError(
-                "Current runmode not found in batch_size_settings: " + self.runmode
+                "Current runmode not found in batch_size_settings: "
+                + self.runmode.value
             )
         return self.batch_size_settings[self.runmode]
 
@@ -47,7 +48,7 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
         if self.runmode not in self.n_doe_iterations_settings:
             raise ValueError(
                 "Current runmode not found in n_doe_iterations_settings: "
-                + self.runmode
+                + self.runmode.value
             )
         return self.n_doe_iterations_settings[self.runmode]
 
@@ -56,7 +57,8 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
         """The number of Monte Carlo iterations for the current runmode."""
         if self.runmode not in self.n_mc_iterations_settings:
             raise ValueError(
-                "Current runmode not found in n_mc_iterations_settings: " + self.runmode
+                "Current runmode not found in n_mc_iterations_settings: "
+                + self.runmode.value
             )
         return self.n_mc_iterations_settings[self.runmode]
 

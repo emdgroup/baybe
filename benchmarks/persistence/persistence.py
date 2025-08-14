@@ -65,13 +65,11 @@ class PathConstructor:
     commit_hash: str = field(validator=instance_of(str))
     """The hash of the commit checked out at benchmark execution time."""
 
-    def _sanitize_string(self, string: str, is_path: bool = False) -> str:
+    def _sanitize_string(self, string: str) -> str:
         """Replace disallowed characters for filesystems in the given string."""
         ALLOWED_CHARS = (
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-."
         )
-        if is_path:
-            ALLOWED_CHARS += os.sep
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
     @classmethod
