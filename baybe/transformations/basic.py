@@ -114,16 +114,9 @@ class AffineTransformation(MonotonicTransformation):
             # identity transformation
             return self.factor == 1.0 and self.shift == 0.0
         if isinstance(other, AffineTransformation):
+            # TODO: https://github.com/python-attrs/attrs/issues/1452
             return self.factor == other.factor and self.shift == other.shift
         return NotImplemented
-
-        # TODO: https://github.com/python-attrs/attrs/issues/1452
-        return (
-            super().__eq__(other)
-            and isinstance(other, AffineTransformation)
-            and self.factor == other.factor
-            and self.shift == other.shift
-        )
 
     def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
         """Convert to BoTorch posterior transform.
