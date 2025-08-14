@@ -59,7 +59,5 @@
 
    targets
 
-   telemetry
-
    utils
 
