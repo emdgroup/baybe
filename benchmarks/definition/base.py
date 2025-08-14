@@ -82,7 +82,7 @@ def make_runmode_attr_validator(
         )
         VALID_DICT(instance, attribute, value)
 
-        missing_runmodes = [rm for rm in MANDATORY_RUNMODES if rm not in value]
+        missing_runmodes = [rm.value for rm in MANDATORY_RUNMODES if rm not in value]
 
         if len(missing_runmodes) > 0:
             raise ValueError(
