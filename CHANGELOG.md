@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   desirability transformation is applied before or after model fitting
 - `supports_partial_measurements` property to `Objective`
 - `total_transformation` and `is_normalized` properties to `NumericalTarget`
-- `invert`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
+- `negate`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
   `NumericalTarget` for easy creation of transformed targets from existing ones
 - Addition and multiplication dunder methods (for scalar values) to `NumericalTarget`
 - `get_image` method to `NumericalTarget` for computing the images of transformed
