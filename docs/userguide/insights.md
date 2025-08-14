@@ -152,7 +152,7 @@ there are multiple models to be analyzed. By default, for a
 [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective), you
 will also be able to analyze the individual targets. However, if
 [`DesirabilityObjective.as_pre_transformation=True`](baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation),
-then the shap analysis can only be performed based on the overall "Desirability". 
+then the SHAP analysis can only be performed based on the overall "Desirability". 
 
 [`SHAPInsight`](baybe.insights.shap.SHAPInsight) calculates a separate explanation for
 each model. When requesting a plot, you must select for which target the assessment
