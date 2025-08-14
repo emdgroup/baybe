@@ -7,7 +7,7 @@
    version="1.1"
    viewBox="0 0 42.474 42.442"
    id="svg6"
-   sodipodi:docname="ab.svg"
+   sodipodi:docname="absolute.svg"
    inkscape:version="1.3.2 (091e20e, 2023-11-25)"
    xml:space="preserve"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -118,7 +118,7 @@
      d="M 0,0 H 42.474 V 42.442 H 0 Z"
      fill="#0f69af"
      id="path2" /><path
-     d="M 7.882857,12.828308 23.668844,33.009283 39.007452,12.828308"
+     d="M 7.7350186,32.195138 23.668844,14.529483 39.007452,32.195139"
      stroke="#ffdcb9"
      stroke-width=".37042"
      id="path20"
@@ -130,14 +130,14 @@
      stroke-width="0.21167"
      id="path3"
      style="fill:none" /><path
-     d="M 2.2903363,33.216448 H 39.715336"
+     d="M 2.2903363,14.440971 H 39.715336"
      marker-end="url(#ArrowWide)"
      stroke="#ffffff"
      stroke-width="0.21167"
      id="path4"
      style="fill:none" /><text
      x="15.103849"
-     y="37.350842"
+     y="12.809668"
      fill="#abdfdb"
      font-size="3.37594px"
      stroke="#ffffff"
@@ -145,7 +145,7 @@
      xml:space="preserve"
      id="text5"><tspan
        x="15.103849"
-       y="37.350842"
+       y="12.809668"
        fill="#abdfdb"
        font-family="Arial"
        font-size="3.37594px"
@@ -153,11 +153,11 @@
        stroke-width="0.0805638"
        id="tspan5"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'CMU Classical Serif';-inkscape-font-specification:'CMU Classical Serif'">match value</tspan></text><path
-     d="m 23.586577,32.438399 v 1.556099"
+     d="m 23.586577,13.515084 v 1.556099"
      stroke-width="0.37042"
      id="path13"
      style="fill:none;fill-opacity:1;stroke:#abdfdb;stroke-opacity:1" /><path
-     d="m 23.758361,6.8336548 h -13.112"
+     d="m 23.758361,11.564484 h -13.112"
      stroke-dasharray="0.211666, 0.423332"
      stroke-width="0.21167"
      id="path23"

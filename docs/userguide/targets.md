@@ -239,8 +239,8 @@ t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 :columns: 6
 If you need more precise control over how strongly deviations from the set point are
 penalized, you can use the {meth}`~baybe.targets.numerical.NumericalTarget.match_power`
-constructor, which applies a power transformation to the absolute distance. For the
-common case of squared penalties, we also provide a separate
+constructor, which applies a power transformation to the *negative absolute distance*.
+For the common case of squared penalties, we also provide a separate
 {meth}`~baybe.targets.numerical.NumericalTarget.match_quadratic` constructor.
 ````
 `````
