@@ -74,7 +74,7 @@ def _translate_legacy_arguments(
         else:
             # Use transformation from what would have been the appropriate call
             return (
-                NumericalTarget.normalize_ramp(
+                NumericalTarget.normalized_ramp(
                     "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
                 )._transformation,
                 False,
@@ -336,7 +336,7 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(name, BellTransformation(match_value, sigma))
 
     @classmethod
-    def normalize_ramp(
+    def normalized_ramp(
         cls, name: str, cutoffs: ConvertibleToInterval, *, descending: bool = False
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
@@ -361,7 +361,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
-    def normalize_sigmoid(
+    def normalized_sigmoid(
         cls, name: str, anchors: Sequence[Sequence[float]]
     ) -> NumericalTarget:
         """Create a sigmoid-transformed target.

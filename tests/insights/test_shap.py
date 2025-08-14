@@ -124,8 +124,8 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
 
 
 _desirabilty_targets = [
-    NumericalTarget.normalize_ramp("t1", cutoffs=(0, 100)),
-    NumericalTarget.normalize_ramp("t2", cutoffs=(0, 100), descending=True),
+    NumericalTarget.normalized_ramp("t1", cutoffs=(0, 100)),
+    NumericalTarget.normalized_ramp("t2", cutoffs=(0, 100), descending=True),
 ]
 
 

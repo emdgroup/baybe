@@ -154,8 +154,8 @@ def test_objective_transform_interface():
     single = SingleTargetObjective(NumericalTarget("A"))
     desirability = DesirabilityObjective(
         [
-            NumericalTarget.normalize_ramp("A", cutoffs=(0, 1)),
-            NumericalTarget.normalize_ramp("B", cutoffs=(-1, 1), descending=True),
+            NumericalTarget.normalized_ramp("A", cutoffs=(0, 1)),
+            NumericalTarget.normalized_ramp("B", cutoffs=(-1, 1), descending=True),
         ]
     )
 
@@ -330,7 +330,7 @@ def test_constructor_equivalence_min_max(mode):
             ModernTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
             # ------------
             # Modern style
-            ModernTarget.normalize_ramp(
+            ModernTarget.normalized_ramp(
                 name="t", cutoffs=(1, 2), descending=mode == "MIN"
             ),
         ),
@@ -400,7 +400,7 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
             ModernTarget("t", "MAX", (2, 5), "LINEAR"),
-            ModernTarget.normalize_ramp("t", (2, 5)),
+            ModernTarget.normalized_ramp("t", (2, 5)),
             linear_transform(sample_input(), 2, 5, descending=False),
             id="max_shifted_clamped",
         ),
@@ -437,14 +437,14 @@ def test_constructor_equivalence_match(transformation):
         param(
             LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
             ModernTarget("t", "MIN", (0, 1), "LINEAR"),
-            ModernTarget.normalize_ramp("t", (0, 1), descending=True),
+            ModernTarget.normalized_ramp("t", (0, 1), descending=True),
             linear_transform(sample_input(), 0, 1, descending=True),
             id="min_clamped",
         ),
         param(
             LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
             ModernTarget("t", "MIN", (2, 5), "LINEAR"),
-            ModernTarget.normalize_ramp("t", (2, 5), descending=True),
+            ModernTarget.normalized_ramp("t", (2, 5), descending=True),
             linear_transform(sample_input(), 2, 5, descending=True),
             id="min_shifted_clamped",
         ),

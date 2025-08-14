@@ -156,8 +156,8 @@ is set to `True`:
 from baybe.objectives import DesirabilityObjective
 from baybe.targets import NumericalTarget
 
-t1 = NumericalTarget.normalize_ramp("t1", cutoffs=(0, 1))
-t2 = NumericalTarget.normalize_sigmoid("t2", anchors=[(0.0, 0.1), (1.0, 0.9)])
+t1 = NumericalTarget.normalized_ramp("t1", cutoffs=(0, 1))
+t2 = NumericalTarget.normalized_sigmoid("t2", anchors=[(0.0, 0.1), (1.0, 0.9)])
 
 obj = DesirabilityObjective(targets=[t1, t2])
 obj_pre = DesirabilityObjective(targets=[t1, t2], as_pre_transformation=True)

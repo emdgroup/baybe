@@ -274,7 +274,7 @@ Sometimes, it is necessary to normalize targets to the interval [0, 1], to [alig
 on a common scale](#target-normalization). One situation where this can be required is
 when combining the targets using a
 {class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we
-provide convenience constructors with the `normalize_` prefix:
+provide convenience constructors with the `normalized_` prefix:
 
 #### Ramp Transformation
 `````{grid} 2
@@ -286,7 +286,7 @@ provide convenience constructors with the `normalize_` prefix:
 
 ````{grid-item}
 :columns: 6
-The {meth}`~baybe.targets.numerical.NumericalTarget.normalize_ramp` constructor offers
+The {meth}`~baybe.targets.numerical.NumericalTarget.normalized_ramp` constructor offers
 the simplest way to create a normalized target. It does so by linearly mapping the
 target values to the range [0, 1] inside a specified interval and clamping the output
 outside.
@@ -295,7 +295,7 @@ outside.
 
 **Example**
 ```python
-t = NumericalTarget.normalize_ramp(name="Target", cutoffs=(0, 1), descending=True)
+t = NumericalTarget.normalized_ramp(name="Target", cutoffs=(0, 1), descending=True)
 ```
 
 ```{admonition} Practical Considerations
@@ -316,7 +316,7 @@ optimization if the thresholds are chosen too tight.
 
 ````{grid-item}
 :columns: 6
-The {meth}`~baybe.targets.numerical.NumericalTarget.normalize_sigmoid` constructor
+The {meth}`~baybe.targets.numerical.NumericalTarget.normalized_sigmoid` constructor
 can be considered a softened version of the [ramp transformation](#ramp-transformation).
 Instead of using hard cutoffs, it smoothly interpolates the target values between 
 0 and 1 using a sigmoid function. 
@@ -325,7 +325,7 @@ Instead of using hard cutoffs, it smoothly interpolates the target values betwee
 
 **Example**
 ```python
-t = NumericalTarget.normalize_sigmoid(name="Target", anchors=[(-1, 0.1), (1, 0.9)])
+t = NumericalTarget.normalized_sigmoid(name="Target", anchors=[(-1, 0.1), (1, 0.9)])
 ```
 
 ```{admonition} Practical Considerations
