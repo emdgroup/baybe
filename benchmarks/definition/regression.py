@@ -23,6 +23,16 @@ REGRESSION_METRICS = {
     "EXPLAINED_VARIANCE": {"function": explained_variance_score},
 }
 
+# Define whether higher values are better for each metric
+METRICS_HIGHER_IS_BETTER = {
+    "RMSE": False,
+    "MSE": False,
+    "R2": True,
+    "MAE": False,
+    "MAX_ERROR": False,
+    "EXPLAINED_VARIANCE": True,
+}
+
 
 def _validate_metrics(instance, attribute, value):
     """Validate that all specified metrics are available."""

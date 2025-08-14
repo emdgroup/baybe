@@ -113,7 +113,7 @@ def run_tl_regression_benchmark(
                 ]
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
-                    n_train_pts : n_train_pts + settings.max_test_points
+                    n_train_pts : n_train_pts + settings.max_train_points
                 ]
                 target_train = target_data.iloc[train_indices].copy()
                 target_test = target_data.iloc[test_indices].copy()
