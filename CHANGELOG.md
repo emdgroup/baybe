@@ -42,9 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   learning.
 - By default, `DesirabilityObjective` now fits separate models for each target, rather
   than modeling only the scalarized desirability value (see new
-  `DesirabilityObjective.as_pre_transform` flag). As a result, posterior evaluations now
-  return information for each target individually, instead of just for the desirability
-  value.
+  `DesirabilityObjective.as_pre_transformation` flag). As a result, posterior
+  evaluations now return information for each target individually, instead of just for
+  the desirability value.
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed
