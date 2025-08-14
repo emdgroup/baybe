@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <3.14"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -198,7 +198,6 @@ benchmarking = [
     { name = "plotly" },
     { name = "polars", extra = ["pyarrow"] },
     { name = "psutil" },
-    { name = "py-cpuinfo" },
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
     { name = "shap", extra = ["others"] },
@@ -233,7 +232,6 @@ dev = [
     { name = "polars", extra = ["pyarrow"] },
     { name = "pre-commit" },
     { name = "psutil" },
-    { name = "py-cpuinfo" },
     { name = "pydoclint" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -403,7 +401,6 @@ requires-dist = [
     { name = "polars", extras = ["pyarrow"], marker = "extra == 'polars'", specifier = ">=0.19.19,<2" },
     { name = "pre-commit", marker = "extra == 'lint'", specifier = "==4.2.0" },
     { name = "psutil", marker = "extra == 'benchmarking'", specifier = ">=7.0.0" },
-    { name = "py-cpuinfo", marker = "extra == 'benchmarking'", specifier = ">=9.0.0" },
     { name = "pydoclint", marker = "extra == 'lint'", specifier = "==0.5.5" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=7.2.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1.0" },
@@ -3450,15 +3447,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/cd/05/0a34433a064256a578f1783a10da6df098ceaa4a57bbeaa96a6c0352786b/pure_eval-0.2.3.tar.gz", hash = "sha256:5f4e983f40564c576c7c8635ae88db5956bb2229d7e9237d03b3c0b0190eaf42", size = 19752, upload-time = "2024-07-21T12:58:21.801Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/37/efad0257dc6e593a18957422533ff0f87ede7c9c6ea010a2177d738fb82f/pure_eval-0.2.3-py3-none-any.whl", hash = "sha256:1db8e35b67b3d218d818ae653e27f06c3aa420901fa7b081ca98cbedc874e0d0", size = 11842, upload-time = "2024-07-21T12:58:20.04Z" },
-]
-
-[[package]]
-name = "py-cpuinfo"
-version = "9.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/37/a8/d832f7293ebb21690860d2e01d8115e5ff6f2ae8bbdc953f0eb0fa4bd2c7/py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690", size = 104716, upload-time = "2022-10-25T20:38:06.303Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/a9/023730ba63db1e494a271cb018dcd361bd2c917ba7004c3e49d5daf795a2/py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5", size = 22335, upload-time = "2022-10-25T20:38:27.636Z" },
 ]
 
 [[package]]

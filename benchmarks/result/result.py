@@ -6,7 +6,6 @@ import importlib.metadata
 import platform
 import sys
 
-import cpuinfo
 import psutil
 import torch
 from attrs import define, field
@@ -56,16 +55,10 @@ class Result(BenchmarkSerialization):
     @benchmarking_system_details.default
     def _default_benchmarking_system_technical_details(self) -> dict[str, str]:
         """Get the technical details of the system where the benchmark was executed."""
-        cpu_info = cpuinfo.get_cpu_info()
-
-        cpu_brand = cpu_info.get("brand_raw", "Unknown CPU")
-        clock_advertised = cpu_info.get("hz_advertised_friendly", "Unknown Clock Speed")
-        clock_max = cpu_info.get("hz_actual_friendly", "Unknown Max Clock Speed")
-        layer_1_cache_size = str(
-            cpu_info.get("l1_data_cache_size", "Unknown L1 Cache Size")
-        )
-        layer_2_cache_size = str(cpu_info.get("l2_cache_size", "Unknown L2 Cache Size"))
-        layer_3_cache_size = str(cpu_info.get("l3_cache_size", "Unknown L3 Cache Size"))
+        cpu_info = platform.processor()
+        cpu_count = psutil.cpu_count(logical=False)
+        logical_cpu_count = psutil.cpu_count(logical=True)
+        cpu_frequency = psutil.cpu_freq()
 
         gpu_device_properties: dict[str, str] = {}
         if torch.cuda.is_available():
@@ -95,12 +88,12 @@ class Result(BenchmarkSerialization):
             "cpu_count": str(psutil.cpu_count(logical=False)),
             "cpu_logical_count": str(psutil.cpu_count(logical=True)),
             "swap_memory_total": str(psutil.swap_memory().total // (1024**2)) + " MB",
-            "cpu_brand": cpu_brand,
-            "clock_advertised": clock_advertised,
-            "clock_max": clock_max,
-            "layer_1_cache_size": layer_1_cache_size,
-            "layer_2_cache_size": layer_2_cache_size,
-            "layer_3_cache_size": layer_3_cache_size,
+            "processor": cpu_info,
+            "cpu_count_physical": str(cpu_count),
+            "cpu_count_logical": str(logical_cpu_count),
+            "cpu_frequency_current": str(cpu_frequency.current) + " MHz",
+            "cpu_frequency_min": str(cpu_frequency.min) + " MHz",
+            "cpu_frequency_max": str(cpu_frequency.max) + " MHz",
         } | gpu_device_properties
 
 
