@@ -538,9 +538,16 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
-converter.register_structure_hook(NumericalTarget, select_constructor_hook)
-
 # >>> Deprecation >>> #
+
+
+@converter.register_structure_hook
+def _(dct, cls) -> NumericalTarget:
+    if "mode" in dct:
+        return NumericalTarget(*dct)
+    return select_constructor_hook(dct, cls)
+
+
 _hook = converter.get_structure_hook(NumericalTarget)
 
 
