@@ -27,6 +27,14 @@ def run_tl_regression_benchmark(
 ) -> pd.DataFrame:
     """Run a transfer learning regression benchmark.
 
+    This function evaluates the performance of transfer learning models compared to
+    vanilla Gaussian Process models on regression tasks. It varies the fraction of
+    source data used for training and the number of training points in the target task.
+
+    For each combination, it trains both vanilla GP (target data only) and transfer
+    learning models (source + target data), then evaluates their predictive
+    performance on held-out target test data using the provided regression metrics.
+
     Args:
         settings: The benchmark settings.
         load_data_fn: Function that loads the dataset.
@@ -37,7 +45,8 @@ def run_tl_regression_benchmark(
         load_data_kwargs: Additional keyword arguments for load_data_fn.
 
     Returns:
-        DataFrame with benchmark results.
+        DataFrame with benchmark results containing performance metrics for each
+        model, training scenario, and Monte Carlo iteration.
     """
     # Create target objective
     objective = create_objective_fn()
@@ -68,25 +77,10 @@ def run_tl_regression_benchmark(
     )
 
     for mc_iter in mc_iter_bar:
-        print(f"Monte Carlo iteration {mc_iter + 1}/{settings.num_mc_iterations}")
-
         # Create train/test split for target task
         target_indices = np.random.permutation(len(target_data))
-        max_train_points = min(
-            settings.max_train_points,
-            len(target_data) - 10,  # Ensure at least 10 test points
-        )
 
-        # Create progress bar for source fractions
-        source_fraction_bar = tqdm(
-            settings.source_fractions,
-            desc=f"MC iter {mc_iter + 1}/{settings.num_mc_iterations}: Source frac",
-            unit="frac",
-            position=2,
-            leave=False,
-        )
-
-        for fraction_source in source_fraction_bar:
+        for fraction_source in settings.source_fractions:
             # Sample source data ensuring same fraction from each source task
             source_subsets = []
             for source_task in source_tasks:
@@ -103,14 +97,14 @@ def run_tl_regression_benchmark(
 
             # Create progress bar for training points
             train_pts_bar = tqdm(
-                range(1, max_train_points + 1),
-                desc=f"Source fraction {fraction_source:.2f}: Training points",
+                range(1, settings.max_train_points + 1),
+                desc=f"MC {mc_iter + 1}/{settings.num_mc_iterations},"
+                f"Source frac {fraction_source:.1f}",
                 unit="pts",
-                position=3,
+                position=1,
                 leave=False,
             )
 
-            # Generate the source data subset
             for n_train_pts in train_pts_bar:
                 # Create models
                 vanilla_gp = GaussianProcessSurrogate()
@@ -119,20 +113,13 @@ def run_tl_regression_benchmark(
                 ]
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
-                    n_train_pts : n_train_pts + 50
-                ]  # Use up to 50 test points
+                    n_train_pts : n_train_pts + settings.max_test_points
+                ]
                 target_train = target_data.iloc[train_indices].copy()
                 target_test = target_data.iloc[test_indices].copy()
 
-                # Update progress bar description with current evaluation details
-                train_pts_bar.set_description(
-                    f"Source: {len(source_subset)} pts,"
-                    f"Target train: {n_train_pts} pts,"
-                    f"Test: {len(target_test)} pts"
-                )
-
                 # Evaluate models
-                eval_results = evaluate_models(
+                eval_results = _evaluate_models(
                     vanilla_gp=vanilla_gp,
                     tl_models=tl_models,
                     source_data=source_subset,
@@ -162,11 +149,41 @@ def run_tl_regression_benchmark(
     # Convert results to DataFrame
     results_df = pd.DataFrame(results)
 
-    # Return results
     return results_df
 
 
-def evaluate_models(
+def _calculate_metrics(
+    true_values: np.ndarray,
+    predictions: pd.DataFrame,
+    metrics: Sequence[str],
+    target_column: str,
+    model_prefix: str,
+) -> dict[str, float]:
+    """Calculate regression metrics for model predictions.
+
+    Args:
+        true_values: True target values
+        predictions: Model predictions DataFrame with mean columns
+        metrics: List of metric names to calculate
+        target_column: Name of the target column
+        model_prefix: Prefix for result keys (e.g., "vanilla", "GP_Index_Kernel")
+
+    Returns:
+        Dictionary with metric results
+    """
+    results = {}
+    pred_values = predictions[f"{target_column}_mean"].values
+
+    for metric_name in metrics:
+        metric_info = REGRESSION_METRICS[metric_name]
+        metric_func = metric_info["function"]
+        metric_value = metric_func(true_values, pred_values)
+        results[f"{model_prefix}_{metric_name.lower()}"] = metric_value
+
+    return results
+
+
+def _evaluate_models(
     vanilla_gp: GaussianProcessSurrogate,
     tl_models: list[dict[str, Any]],
     source_data: pd.DataFrame,
@@ -179,7 +196,6 @@ def evaluate_models(
     target_column: str = "y",
     task_column: str | None = None,
     task_value: str | None = None,
-    drop_columns: list[str] | None = None,
 ) -> dict[str, Any]:
     """Train models and evaluate their performance using specified metrics.
 
@@ -196,12 +212,11 @@ def evaluate_models(
         target_column: Name of the target column in the data
         task_column: Name of the task column (e.g., "task" or "Temp_C")
         task_value: Value to set for the task column in test data
-        drop_columns: Columns to drop when making predictions
 
     Returns:
         Dictionary with evaluation results
     """
-    # Define which stats to request from posterior_stats
+    # Crurrent implemented metrics require mean predictions only
     stats_to_request = ["mean"]
 
     # Results dictionary
@@ -216,24 +231,19 @@ def evaluate_models(
 
     # Prepare test data for vanilla GP
     test_for_vanilla = target_test.copy()
-    if drop_columns:
-        test_for_vanilla = test_for_vanilla.drop(columns=drop_columns)
 
     # Evaluate vanilla GP
     vanilla_pred = vanilla_gp.posterior_stats(test_for_vanilla, stats=stats_to_request)
 
     # Calculate all requested metrics for vanilla GP
-    for metric_name in metrics:
-        metric_info = REGRESSION_METRICS[metric_name]
-        metric_func = metric_info["function"]
-
-        # Call with just mean predictions
-        metric_value = metric_func(
-            target_test[target_column].values,
-            vanilla_pred[f"{target_column}_mean"].values,
-        )
-
-        results[f"vanilla_{metric_name.lower()}"] = metric_value
+    vanilla_metrics = _calculate_metrics(
+        true_values=target_test[target_column].values,
+        predictions=vanilla_pred,
+        metrics=metrics,
+        target_column=target_column,
+        model_prefix="vanilla",
+    )
+    results.update(vanilla_metrics)
 
     # Sample source data and prepare combined data for TL models
     combined_data = pd.concat([source_data, target_train])
@@ -251,30 +261,21 @@ def evaluate_models(
         )
 
         # Prepare test data for TL model
-        test_data_with_task = target_test.copy()
+        test_for_tl = target_test.copy()
         if task_column and task_value:
-            test_data_with_task[task_column] = task_value
-
-        # Drop columns if needed
-        test_for_tl = test_data_with_task
-        if drop_columns:
-            drop_cols = [col for col in drop_columns if col != task_column]
-            test_for_tl = test_data_with_task.drop(columns=drop_cols)
+            test_for_tl[task_column] = task_value
 
         # Evaluate TL model
         tl_pred = tl_model.posterior_stats(test_for_tl, stats=stats_to_request)
 
         # Calculate all requested metrics
-        for metric_name in metrics:
-            metric_info = REGRESSION_METRICS[metric_name]
-            metric_func = metric_info["function"]
-
-            # Call with just mean predictions
-            metric_value = metric_func(
-                target_test[target_column].values,
-                tl_pred[f"{target_column}_mean"].values,
-            )
-
-            results[f"{model_name}_{metric_name.lower()}"] = metric_value
+        tl_metrics = _calculate_metrics(
+            true_values=target_test[target_column].values,
+            predictions=tl_pred,
+            metrics=metrics,
+            target_column=target_column,
+            model_prefix=model_name,
+        )
+        results.update(tl_metrics)
 
     return results

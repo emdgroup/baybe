@@ -23,15 +23,16 @@ REGRESSION_METRICS = {
     "EXPLAINED_VARIANCE": {"function": explained_variance_score},
 }
 
-# Define whether higher values are better for each metric
-METRICS_HIGHER_IS_BETTER = {
-    "RMSE": False,
-    "MSE": False,
-    "R2": True,
-    "MAE": False,
-    "MAX_ERROR": False,
-    "EXPLAINED_VARIANCE": True,
-}
+
+def _validate_metrics(instance, attribute, value):
+    """Validate that all specified metrics are available."""
+    for metric in value:
+        if metric not in REGRESSION_METRICS:
+            raise ValueError(
+                f"Metric '{metric}' is not available. "
+                f"Available metrics: {list(REGRESSION_METRICS.keys())}"
+            )
+    return value
 
 
 @define(frozen=True, kw_only=True)
@@ -40,9 +41,6 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
 
     num_mc_iterations: int = field(validator=instance_of(int))
     """Number of Monte Carlo iterations."""
-
-    input_dim: int = field(validator=instance_of(int), default=2)
-    """Input dimension of the test functions."""
 
     max_train_points: int = field(validator=instance_of(int), default=10)
     """Maximum number of target training points to consider."""
@@ -53,17 +51,10 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
     noise_std: float = field(validator=instance_of(float), default=0.1)
     """Standard deviation of noise to add to the data."""
 
-    metrics: list[str] = field(default=["RMSE", "R2", "MAE"])
+    metrics: list[str] = field(
+        default=["RMSE", "R2", "MAE"], validator=_validate_metrics
+    )
     """Metrics to evaluate. Must be keys in the REGRESSION_METRICS registry."""
-
-    def __attrs_post_init__(self):
-        # Validate that all specified metrics are available
-        for metric in self.metrics:
-            if metric not in REGRESSION_METRICS:
-                raise ValueError(
-                    f"Metric '{metric}' is not available. "
-                    f"Available metrics: {list(REGRESSION_METRICS.keys())}"
-                )
 
 
 @define(frozen=True)
@@ -75,5 +66,3 @@ class TransferLearningRegression(Benchmark[TransferLearningRegressionSettings]):
     models with varying amounts of source and target data, evaluates their performance
     on held-out target data.
     """
-
-    # No additional settings.
