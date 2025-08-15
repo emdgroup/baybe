@@ -19,6 +19,11 @@ the list can be called with:
 python -m benchmarks --benchmark-list synthetic_2C1D_1C
 ```
 
+Special transfer learning regression benchmarks are 
+`direct_arylation_temperature_tl_regr`, `aryl_halide_CT_I_BM_tl_regr`, 
+`quadratic_diff_min_few_sources_tl_regr`, `quadratic_same_min_few_sources_tl_regr`, 
+and `quadratic_diff_min_many_sources_tl_regr`.
+
 Please find instruction on how to add the benchmarks to the CI/CD pipeline in the
 section [Add benchmark to CI/CD pipeline](#add-benchmark-to-ci/cd-pipeline).
 
@@ -191,4 +196,16 @@ you have to add:
           elif [ "$run_all_benchmarks" = "Foo bar" ]; then                   #<-- Add this line
             benchmarks_to_execute='{"benchmark_list": ${{ env.FOO_BAR }} }'  #<-- Add this line
           fi
-``` 
+```
+
+# Visualization
+
+Benchmark results can be visualized using the unified visualization command:
+
+```bash
+python -m benchmarks.visualization --type regression --file-names result1.json result2.json
+python -m benchmarks.visualization --type convergence --file-names result1.json result2.json
+```
+
+The `--type` parameter specifies whether to create regression metric plots or convergence 
+plots, and `--file-names` accepts one or more JSON result files.
