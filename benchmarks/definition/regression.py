@@ -39,10 +39,10 @@ def _validate_metrics(instance, attribute, value):
 class TransferLearningRegressionSettings(BenchmarkSettings):
     """Settings for transfer learning regression benchmark."""
 
-    num_mc_iterations: int = field(validator=instance_of(int))
+    n_mc_iterations: int = field(validator=instance_of(int))
     """Number of Monte Carlo iterations."""
 
-    max_train_points: int = field(validator=instance_of(int), default=10)
+    max_n_train_points: int = field(validator=instance_of(int), default=10)
     """Maximum number of target training points to consider."""
 
     source_fractions: list[float] = field(default=[0.1, 0.3, 0.5, 0.7, 0.9])
