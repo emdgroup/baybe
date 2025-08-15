@@ -56,10 +56,6 @@ def run_benchmarks(
 
 def main() -> None:
     """Execute the benchmarking module."""
-
-    def intstr_to_bool(x):
-        return bool(int(x))
-
     parser = argparse.ArgumentParser(description="Executes the benchmarking module.")
     parser.add_argument(
         "--benchmark-list",
@@ -93,11 +89,10 @@ def main() -> None:
         type=Path,
     )
     parser.add_argument(
-        "-s",
-        "--save",
-        help="Whether to save the benchmark results. Use 1 for True and 0 for False.",
-        default=True,
-        type=intstr_to_bool,
+        "-d",
+        "--dry",
+        help="Run benchmarks without saving results.",
+        action="store_true",
     )
     args = parser.parse_args()
 
@@ -122,12 +117,14 @@ def main() -> None:
             if benchmark.name in set(args.benchmark_list)
         ]
 
+    SAVE_RESULTS = not args.dry
+
     run_benchmarks(
         benchmark_list=benchmark_list,
         runmode=args.runmode,
         name=args.name,
         outdir=args.outdir,
-        save=args.save,
+        save=SAVE_RESULTS,
     )
 
 
