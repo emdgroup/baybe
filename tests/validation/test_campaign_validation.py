@@ -5,7 +5,7 @@ import pytest
 from baybe import Campaign
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.recommenders import TwoPhaseMetaRecommender
+from baybe.recommenders import FPSRecommender, TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -36,13 +36,15 @@ def test_overlapping_target_parameter_names_campaign():
 @pytest.mark.parametrize(
     "recommender",
     [
-        # Note that a non-predictive recommender is not tested here because they do not
-        # support objectives and are not passed an objective if they are part of
-        # meta-recommenders.
-        pytest.param(BayesianRecommender(), id="pure"),
+        pytest.param(BayesianRecommender(), id="pure_predictive"),
         pytest.param(
             TwoPhaseMetaRecommender(initial_recommender=BayesianRecommender()),
-            id="meta",
+            id="meta_predictive",
+        ),
+        pytest.param(FPSRecommender(), id="pure_non-predictive"),
+        pytest.param(
+            TwoPhaseMetaRecommender(initial_recommender=FPSRecommender()),
+            id="meta_non-predictive",
         ),
     ],
 )
