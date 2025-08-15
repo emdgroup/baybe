@@ -27,8 +27,6 @@ def save_benchmark_data(
 ) -> None:
     """Save the benchmark data to the object storage."""
     path_constructor = PathConstructor.from_result(result)
-    if outdir:
-        os.makedirs(outdir, exist_ok=True)
     persist_dict = benchmark.to_dict() | result.to_dict()
 
     object_storage = (
@@ -108,6 +106,12 @@ def main() -> None:
 
     if args.name and RUNS_IN_CI:
         raise AttributeError("Name cannot be set in CI mode.")
+
+    if not args.outdir.exists():
+        raise FileNotFoundError(
+            f"Output directory {args.outdir} does not exist. "
+            "Please create it before running the benchmarks."
+        )
 
     if not args.benchmark_list:
         benchmark_list = BENCHMARKS
