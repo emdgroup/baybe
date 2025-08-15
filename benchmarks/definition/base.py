@@ -55,7 +55,10 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     def set_runmode(self, runmode: RunMode) -> None:
         """Set the runmode for the benchmark settings."""
         if runmode not in RunMode:
-            raise ValueError(f"Invalid runmode: {runmode}")
+            raise ValueError(
+                f"Invalid runmode: {runmode}. Available "
+                "runmodes: {RunMode._member_names_}"
+            )
         self.runmode = runmode
 
 
