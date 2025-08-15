@@ -9,6 +9,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -167,24 +168,12 @@ class GaussianProcessSurrogate(Surrogate):
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
+        covar_module = self.kernel_factory(
             context.searchspace, train_x, train_y
         ).to_gpytorch(
             ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
             batch_shape=batch_shape,
         )
-
-        # create GP covariance
-        if not context.is_multitask:
-            covar_module = base_covar_module
-        else:
-            task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=context.n_tasks,
-                active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
-            )
-            covar_module = base_covar_module * task_covar_module
 
         # create GP likelihood
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
@@ -193,8 +182,47 @@ class GaussianProcessSurrogate(Surrogate):
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
+        # Whether to use multi- or single-task model
+        if not context.is_multitask:
+            model_cls = botorch.models.SingleTaskGP
+            model_kwargs = {}
+        else:
+            model_cls = botorch.models.MultiTaskGP
+            # TODO - is te below ok?
+            #  It is required that there is only one task parameter with only
+            #  one active value.
+            #  ...
+            #  One active task value is required for MultiTaskGP as else
+            #  one posterior per task would be returned:
+            #  https://github.com/pytorch/botorch/blob/a018a5ffbcbface6229d6c39f7ac6ef9baf5765e/botorch/models/gpytorch.py#L951
+            #  This would cause issues with current acquisition function implementation.
+            #  ...
+            #  The below code implicitly assumes there is a single task parameter,
+            #  which is already checked in the SearchSpace.
+            task_param = next(
+                p
+                for p in context.searchspace.discrete.parameters
+                if isinstance(p, TaskParameter)
+            )
+            # The below code assumes there is a single active value
+            if len(task_param.active_values) > 1:
+                raise NotImplementedError(
+                    "Does not support multiple active task values."
+                )
+            model_kwargs = {
+                "task_feature": context.task_idx,
+                "output_tasks": [
+                    # Assumption (checked above): single active value
+                    # Assumption (as implemented in TaskParameter class):
+                    # comp_df is always 1-dimensional (DF with single numerical column)
+                    task_param.comp_df.squeeze(axis=1).at[task_param.active_values[0]]
+                ],
+                "rank": context.n_tasks,
+                "all_tasks": task_param.comp_df.squeeze(axis=1).to_list(),
+            }
+
         # construct and fit the Gaussian process
-        self._model = botorch.models.SingleTaskGP(
+        self._model = model_cls(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -202,6 +230,7 @@ class GaussianProcessSurrogate(Surrogate):
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,
+            **model_kwargs,
         )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
