@@ -1255,15 +1255,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base         Ligand  Temperature  \
-405       p-Xylene  Potassium pivalate  (t-Bu)PhCPhos         90.0   
-195  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-300           DMAc  Potassium pivalate  (t-Bu)PhCPhos        105.0   
+           Solvent                Base                        Ligand  \
+199  Butyornitrile  Potassium pivalate                     BrettPhos   
+29     Butyl Ester     Cesium pivalate                 (t-Bu)PhCPhos   
+317           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration  
-405          0.057  
-195          0.057  
-300          0.057  
+     Temperature  Concentration  
+199         90.0          0.100  
+29          90.0          0.153  
+317         90.0          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1272,15 +1272,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base         Ligand  Temperature  \
-405       p-Xylene  Potassium pivalate  (t-Bu)PhCPhos         90.0   
-195  Butyornitrile  Potassium pivalate  (t-Bu)PhCPhos        120.0   
-300           DMAc  Potassium pivalate  (t-Bu)PhCPhos        105.0   
+           Solvent                Base                        Ligand  \
+199  Butyornitrile  Potassium pivalate                     BrettPhos   
+29     Butyl Ester     Cesium pivalate                 (t-Bu)PhCPhos   
+317           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration      yield  
-405          0.057   6.676852  
-195          0.057  30.699454  
-300          0.057  15.814181  
+     Temperature  Concentration      yield  
+199         90.0          0.100  22.101546  
+29          90.0          0.153  32.773710  
+317         90.0          0.153   3.362629  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
