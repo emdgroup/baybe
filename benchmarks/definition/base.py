@@ -29,8 +29,17 @@ logger.setLevel(logging.INFO)
 class RunMode(Enum):
     """Enum for different run modes of benchmarks.
 
-    This collects all modes that must be defined for all runmode-dependent attributes of
-    any settings instance.
+    This collects the different run modes that can be used to
+    adjust the selection of setting parameters for benchmarks.
+    The purpose is to allow for different configurations
+    or behaviors of benchmarks based on predefined modes which
+    encode settings where for example more or less DoE-iterations
+    are necessary.
+
+    Standard: The default run mode for benchmarks with
+              performance relevant settings.
+    Runthrough: Performs a functionality check of the benchmark
+                only with minimal settings.
     """
 
     STANDARD = "standard"

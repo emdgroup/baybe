@@ -25,7 +25,14 @@ def save_benchmark_data(
     outdir: Path,
     name: str | None = None,
 ) -> None:
-    """Save the benchmark data to the object storage."""
+    """Save the benchmark data to the object storage.
+
+    benchmark: The benchmark instance that was executed.
+    result: The result of the benchmark execution.
+    runmode: The mode of benchmark settings used for the execution.
+    outdir: The directory where the results should be saved.
+    name: An additional name to add to the saved file.
+    """
     path_constructor = PathConstructor.from_result(result)
     persist_dict = benchmark.to_dict() | result.to_dict()
 
@@ -46,7 +53,14 @@ def run_benchmarks(
     name: str | None = None,
     save: bool = True,
 ) -> None:
-    """Run a subset based on the benchmark name."""
+    """Run a subset based on the benchmark name.
+
+    benchmark_list: The list of benchmarks to run.
+    runmode: The run mode to use for the benchmarks which decide the settings to use.
+    outdir: The directory where the results should be saved.
+    name: An additional name to add to the saved file.
+    save: Whether to save the results to the object storage.
+    """
     for benchmark in benchmark_list:
         result = benchmark(runmode=runmode)
 
