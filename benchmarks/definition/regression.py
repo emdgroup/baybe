@@ -48,7 +48,7 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
     source_fractions: list[float] = field(default=[0.1, 0.3, 0.5, 0.7, 0.9])
     """Fractions of source data to use."""
 
-    noise_std: float = field(validator=instance_of(float), default=0.1)
+    noise_std: float = field(default=0.1, converter=float)
     """Standard deviation of noise to add to the data."""
 
     metrics: list[str] = field(
