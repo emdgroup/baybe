@@ -96,7 +96,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         parameters = [p for p in self.parameters if p not in parameter_names]
         coefficients = [
             c
-            for p, c in zip(self.parameters, self.coefficients)
+            for p, c in zip(self.parameters, self.coefficients, strict=True)
             if p not in parameter_names
         ]
         return ContinuousLinearConstraint(
