@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Random seed context is correctly set within benchmarks
 - Measurement input validation now respects typical tolerances associated with floating
   point representation inaccuracy
+- Exotic serialization issues with constraints and conditions arising from missing
+  converters for floats
 
 ### Removed
 - Telemetry
