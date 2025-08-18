@@ -183,7 +183,7 @@ def validate_object_names(objects: Iterable[Parameter | Target]) -> None:
     """Validate that the provided objects have unique names.
 
     Args:
-        objects: An iterable of parameters or targets.
+        objects: An iterable containing a combination of parameters and targets.
 
     Raises:
         ValueError: If two or more objects have the same name.
