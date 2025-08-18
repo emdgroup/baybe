@@ -10,8 +10,8 @@ from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import gt, in_, lt
 from attrs import define, field
+from attrs.validators import deep_iterable, gt, in_, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -42,7 +42,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     """Defines the operator used in the equation. Internally this will negate rhs and
     coefficients for `<=`."""
 
-    coefficients: list[float] = field()
+    coefficients: list[float] = field(
+        converter=lambda x: list(float(itm) for itm in x),
+        validator=deep_iterable(member_validator=finite_float),
+    )
     """In-/equality coefficient for each entry in ``parameters``."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
