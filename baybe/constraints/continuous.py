@@ -10,6 +10,7 @@ from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import torch
 from attr.validators import gt, in_, instance_of, lt
 from attrs import define, field
 
@@ -137,8 +138,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             RuntimeError: When the constraint is an interpoint constraint but
                 ``batch_size`` is ``None``.
         """
-        import torch
-
         from baybe.utils.torch import DTypeFloatTorch
 
         # NOTE: The interpoint constraint case requires indices to be a 2-d tensor.
@@ -156,7 +155,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 if p in param_names
             ]
             coefficients = self.coefficients
-            torch_indices = torch.tensor(param_indices, dtype=DTypeFloatTorch)
+            torch_indices = torch.tensor(param_indices)
         elif batch_size is None:
             raise RuntimeError(
                 "No ``batch_size`` set but using interpoint constraints."
@@ -175,9 +174,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             # [coef_0,...,coef_0, coef_1,...,coef_1,...,coef_n,...,coef_n]
             # where each coefficient is repeated ``batch_size`` times.
             coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
-            torch_indices = torch.tensor(
-                param_indices_interpoint, dtype=DTypeFloatTorch
-            )
+            torch_indices = torch.tensor(param_indices_interpoint)
 
         return (
             torch_indices,
