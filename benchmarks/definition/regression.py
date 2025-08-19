@@ -7,7 +7,7 @@ from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
 
 @define(frozen=True, kw_only=True)
-class TransferLearningRegressionSettings(BenchmarkSettings):
+class TransferLearningRegressionBenchmarkSettings(BenchmarkSettings):
     """Settings for transfer learning regression benchmark."""
 
     n_mc_iterations: int = field(validator=instance_of(int))
@@ -24,7 +24,9 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
 
 
 @define(frozen=True)
-class TransferLearningRegression(Benchmark[TransferLearningRegressionSettings]):
+class TransferLearningRegressionBenchmark(
+    Benchmark[TransferLearningRegressionBenchmarkSettings]
+):
     """Benchmark for comparing regression performance of non-TL vs TL models.
 
     Evaluates the predictive performance of transfer learning models compared
