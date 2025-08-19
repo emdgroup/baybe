@@ -16,7 +16,7 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
     max_n_train_points: int = field(validator=instance_of(int), default=10)
     """Maximum number of target training points to consider."""
 
-    source_fractions: tuple[float, ...] = field(default=(0.1, 0.3, 0.5, 0.7, 0.9))
+    source_fractions: tuple[float, ...]
     """Fractions of source data to use."""
 
     noise_std: float = field(default=0.1, converter=float)
