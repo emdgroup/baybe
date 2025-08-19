@@ -2,53 +2,8 @@
 
 from attrs import define, field
 from attrs.validators import instance_of
-from scipy.stats import kendalltau, spearmanr
-from sklearn.metrics import (
-    explained_variance_score,
-    max_error,
-    mean_absolute_error,
-    mean_squared_error,
-    r2_score,
-    root_mean_squared_error,
-)
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
-
-
-def kendall_tau_score(y_true, y_pred):
-    """Calculate Kendall's Tau correlation coefficient."""
-    tau, _ = kendalltau(y_true, y_pred)
-    return tau
-
-
-def spearman_rho_score(y_true, y_pred):
-    """Calculate Spearman's Rho correlation coefficient."""
-    rho, _ = spearmanr(y_true, y_pred)
-    return rho
-
-
-# Dictionary mapping metric names to functions
-REGRESSION_METRICS = {
-    "RMSE": {"function": root_mean_squared_error},
-    "MSE": {"function": mean_squared_error},
-    "R2": {"function": r2_score},
-    "MAE": {"function": mean_absolute_error},
-    "MAX_ERROR": {"function": max_error},
-    "EXPLAINED_VARIANCE": {"function": explained_variance_score},
-    "KENDALL_TAU": {"function": kendall_tau_score},
-    "SPEARMAN_RHO": {"function": spearman_rho_score},
-}
-
-
-def _validate_metrics(instance, attribute, value):
-    """Validate that all specified metrics are available."""
-    for metric in value:
-        if metric not in REGRESSION_METRICS:
-            raise ValueError(
-                f"Metric '{metric}' is not available. "
-                f"Available metrics: {list(REGRESSION_METRICS.keys())}"
-            )
-    return value
 
 
 @define(frozen=True, kw_only=True)
@@ -67,15 +22,10 @@ class TransferLearningRegressionSettings(BenchmarkSettings):
     noise_std: float = field(default=0.1, converter=float)
     """Standard deviation of noise to add to the data."""
 
-    metrics: list[str] = field(
-        default=["RMSE", "R2", "MAE"], validator=_validate_metrics
-    )
-    """Metrics to evaluate. Must be keys in the REGRESSION_METRICS registry."""
-
 
 @define(frozen=True)
 class TransferLearningRegression(Benchmark[TransferLearningRegressionSettings]):
-    """Benchmark for comparing regression performance of vanilla GP vs TL models.
+    """Benchmark for comparing regression performance of non-TL vs TL models.
 
     Evaluates the predictive performance of transfer learning models compared
     to GP models. It generates synthetic data for source and target tasks, trains
