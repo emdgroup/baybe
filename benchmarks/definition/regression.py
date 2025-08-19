@@ -2,6 +2,7 @@
 
 from attrs import define, field
 from attrs.validators import instance_of
+from scipy.stats import kendalltau, spearmanr
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -13,6 +14,19 @@ from sklearn.metrics import (
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
+
+def kendall_tau_score(y_true, y_pred):
+    """Calculate Kendall's Tau correlation coefficient."""
+    tau, _ = kendalltau(y_true, y_pred)
+    return tau
+
+
+def spearman_rho_score(y_true, y_pred):
+    """Calculate Spearman's Rho correlation coefficient."""
+    rho, _ = spearmanr(y_true, y_pred)
+    return rho
+
+
 # Dictionary mapping metric names to functions
 REGRESSION_METRICS = {
     "RMSE": {"function": root_mean_squared_error},
@@ -21,6 +35,8 @@ REGRESSION_METRICS = {
     "MAE": {"function": mean_absolute_error},
     "MAX_ERROR": {"function": max_error},
     "EXPLAINED_VARIANCE": {"function": explained_variance_score},
+    "KENDALL_TAU": {"function": kendall_tau_score},
+    "SPEARMAN_RHO": {"function": spearman_rho_score},
 }
 
 
