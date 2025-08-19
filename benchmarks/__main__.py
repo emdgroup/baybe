@@ -56,11 +56,12 @@ def run_benchmarks(
 ) -> None:
     """Run a subset based on the benchmark name.
 
-    benchmark_list: The list of benchmarks to run.
-    runmode: The run mode to use for the benchmarks which decide the settings to use.
-    outdir: The directory where the results should be saved.
-    name: An additional name to add to the saved file.
-    save: Whether to save the results to the object storage.
+    Args:
+        benchmark_list: The list of benchmarks to run.
+        runmode: The run mode to use for the benchmarks which decide the used settings.
+        outdir: The directory where the results should be saved.
+        name: Additional string that is added to the generated file name.
+        save: Whether to save the results to the object storage.
     """
     for benchmark in benchmark_list:
         result = benchmark(runmode=runmode)
