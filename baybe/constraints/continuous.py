@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import cattrs
 import numpy as np
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, in_, lt
+from attrs.validators import deep_iterable, gt, in_, instance_of, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -51,6 +51,17 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
+
+    is_interpoint: bool = field(
+        alias="interpoint", default=False, validator=instance_of(bool)
+    )
+    """Flag for defining an interpoint constraint.
+
+    While intrapoint constraints impose conditions on each individual point of a batch,
+    interpoint constraints do so **across** the points of the batch. That is, an
+    interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
+    ``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
+    """
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
