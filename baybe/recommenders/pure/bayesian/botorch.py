@@ -407,6 +407,13 @@ class BotorchRecommender(BayesianRecommender):
             The recommended points.
         """
         assert self._objective is not None
+
+        # TODO Defining interpoint constraints for hybrid spaces is probably not
+        # that hard, but should be investigated in a follow up PR.
+        if searchspace.continuous.has_interpoint_constraints:
+            raise NotImplementedError(
+                "Interpoint constraints are not available in hybrid spaces."
+            )
         if (
             batch_size > 1
             and not self._get_acquisition_function(self._objective).supports_batching
