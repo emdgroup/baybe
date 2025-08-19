@@ -453,6 +453,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=len(candidates_comp.columns),
+                    batch_size=batch_size,
                 )
                 for c in searchspace.continuous.constraints_lin_eq
             ]
@@ -461,6 +462,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=num_comp_columns,
+                    batch_size=batch_size,
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
             ]
