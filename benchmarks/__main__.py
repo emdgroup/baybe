@@ -91,7 +91,7 @@ def main() -> None:
     parser.add_argument(
         "--name",
         "-n",
-        help="Additional name to add to saved file.",
+        help="Additional string that is added to the generated file name.",
         default=None,
         type=str,
     )
