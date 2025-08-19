@@ -495,16 +495,74 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
-        points = get_polytope_samples(
-            n=batch_size,
-            bounds=torch.from_numpy(bounds),
-            equality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_eq
-            ],
-            inequality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
-            ],
-        )
+        if not self.has_interpoint_constraints:
+            points = get_polytope_samples(
+                n=batch_size,
+                bounds=torch.from_numpy(bounds),
+                equality_constraints=[
+                    c.to_botorch(self.parameters) for c in self.constraints_lin_eq
+                ],
+                inequality_constraints=[
+                    c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
+                ],
+            )
+        else:
+            # If the space has interpoint constraints, we need to sample from a larger
+            # searchspace that models the batch size via additional dimension. This is
+            # necessary since `get_polytope_samples` cannot handle interpoint
+            # constraints, see https://github.com/pytorch/botorch/issues/2468
+
+            n_params = len(self.comp_rep_columns)
+
+            eq_constraints, ineq_constraints = [], []
+
+            for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
+                if not c.is_interpoint:
+                    param_indices, coefficients, rhs = c.to_botorch(self.parameters)
+                    for b in range(batch_size):
+                        # Repeat the constraint for each "row"
+                        botorch_tuple = (
+                            param_indices + b * n_params,
+                            coefficients,
+                            rhs,
+                        )
+                        if c.is_eq:
+                            eq_constraints.append(botorch_tuple)
+                        else:
+                            ineq_constraints.append(botorch_tuple)
+                else:
+                    # Get the indices of the parameters used in the constraint
+                    param_index = {
+                        name: self.parameter_names.index(name) for name in c.parameters
+                    }
+                    param_indices_list = [
+                        param_index[param] + b * n_params
+                        for param in c.parameters
+                        for b in range(batch_size)
+                    ]
+                    _, coefficients, rhs = c.to_botorch(
+                        parameters=self.parameters, batch_size=batch_size
+                    )
+                    botorch_tuple = (
+                        torch.tensor(param_indices_list),
+                        coefficients,
+                        rhs,
+                    )
+                    if c.is_eq:
+                        eq_constraints.append(botorch_tuple)
+                    else:
+                        ineq_constraints.append(botorch_tuple)
+            bounds_joint = torch.cat(
+                [torch.from_numpy(bounds) for _ in range(batch_size)], dim=-1
+            )
+
+            points = get_polytope_samples(
+                n=1,
+                bounds=bounds_joint,
+                equality_constraints=eq_constraints,
+                inequality_constraints=ineq_constraints,
+            )
+            points = points.reshape(batch_size, points.shape[-1] // batch_size)
         return pd.DataFrame(points, columns=self.parameter_names)
 
     def _sample_from_polytope_with_cardinality_constraints(
