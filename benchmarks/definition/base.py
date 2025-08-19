@@ -72,6 +72,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
 
 
 MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.RUNTHROUGH})
+"""Mandatory runmodes that must be defined in all benchmark settings."""
 
 
 def make_runmode_attr_validator(
