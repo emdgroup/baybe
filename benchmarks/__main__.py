@@ -1,4 +1,5 @@
 """Executes the benchmarking module."""
+
 # Run this via 'python -m benchmarks' from the root directory.
 
 import argparse
@@ -107,7 +108,10 @@ def main() -> None:
     parser.add_argument(
         "-d",
         "--dry",
-        help="Run benchmarks without saving results.",
+        help=(
+            "Run benchmarks without saving results. Note that this will "
+            "cause all other storing-related flags to be ignored."
+        ),
         action="store_true",
     )
     args = parser.parse_args()
