@@ -27,11 +27,12 @@ def save_benchmark_data(
 ) -> None:
     """Save the benchmark data to the object storage.
 
-    benchmark: The benchmark instance that was executed.
-    result: The result of the benchmark execution.
-    runmode: The mode of benchmark settings used for the execution.
-    outdir: The directory where the results should be saved.
-    name: An additional name to add to the saved file.
+    Args:
+        benchmark: The benchmark instance that was executed.
+        result: The result of the benchmark execution.
+        runmode: The mode of benchmark settings used for the execution.
+        outdir: The directory where the results should be saved.
+        name: Additional string that is added to the generated file name.
     """
     path_constructor = PathConstructor.from_result(result)
     persist_dict = benchmark.to_dict() | result.to_dict()
