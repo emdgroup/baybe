@@ -1,7 +1,7 @@
 """Regression benchmark configuration."""
 
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import and_, deep_iterable, ge, instance_of, le
 
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
@@ -13,10 +13,10 @@ class RegressionBenchmarkSettings(BenchmarkSettings):
     n_mc_iterations: int = field(validator=instance_of(int))
     """Number of Monte Carlo iterations."""
 
-    max_n_train_points: int = field(validator=instance_of(int), default=10)
+    max_n_train_points: int = field(validator=instance_of(int))
     """Maximum number of training points to consider."""
 
-    noise_std: float = field(default=0.1, converter=float)
+    noise_std: float = field(converter=float, validator=ge(0.0))
     """Standard deviation of noise to add to the data."""
 
 
@@ -24,7 +24,12 @@ class RegressionBenchmarkSettings(BenchmarkSettings):
 class TransferLearningRegressionBenchmarkSettings(RegressionBenchmarkSettings):
     """Settings for transfer learning regression benchmark."""
 
-    source_fractions: tuple[float, ...]
+    source_fractions: tuple[float, ...] = field(
+        validator=deep_iterable(
+            member_validator=and_(ge(0.0), le(1.0)),
+            iterable_validator=instance_of(tuple),
+        )
+    )
     """Fractions of source data to use."""
 
 
