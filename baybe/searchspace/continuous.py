@@ -346,6 +346,24 @@ class SubspaceContinuous(SerialMixin):
             ],
         )
 
+    @property
+    def is_constrained(self) -> bool:
+        """Return whether the subspace is constrained in any way."""
+        return any(
+            (
+                self.constraints_lin_eq,
+                self.constraints_lin_ineq,
+                self.constraints_nonlin,
+            )
+        )
+
+    @property
+    def has_interpoint_constraints(self) -> bool:
+        """Return whether the space has any interpoint constraints."""
+        return any(
+            c.is_interpoint for c in self.constraints_lin_eq + self.constraints_lin_ineq
+        )
+
     def _enforce_cardinality_constraints(
         self,
         inactive_parameter_names: Collection[str],
@@ -453,11 +471,8 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
-        if (
-            len(self.constraints_lin_eq) == 0
-            and len(self.constraints_lin_ineq) == 0
-            and len(self.constraints_cardinality) == 0
-        ):
+        # If the space is completely unconstrained, we can sample from bounds.
+        if not self.is_constrained:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
         if len(self.constraints_cardinality) == 0:
