@@ -60,6 +60,14 @@ class Result(BenchmarkSerialization):
         logical_cpu_count = psutil.cpu_count(logical=True)
         cpu_frequency = psutil.cpu_freq()
 
+        cpu_frequency_info: dict[str, str] = {}
+        if cpu_frequency:
+            cpu_frequency_info = {
+                "cpu_frequency_current": str(cpu_frequency.current) + " MHz",
+                "cpu_frequency_min": str(cpu_frequency.min) + " MHz",
+                "cpu_frequency_max": str(cpu_frequency.max) + " MHz",
+            }
+
         gpu_device_properties: dict[str, str] = {}
         if torch.cuda.is_available():
             gpu_name = torch.cuda.get_device_name()
@@ -72,29 +80,31 @@ class Result(BenchmarkSerialization):
                 + str(gpu_info.minor),
             }
 
-        return {
-            "platform": platform.platform(),
-            "architecture": platform.architecture()[0],
-            "arch": platform.machine(),
-            "system": platform.system(),
-            "release": platform.release(),
-            "RAM": str(psutil.virtual_memory().total // (1024**2)) + " MB",
-            "version": platform.version(),
-            "node": platform.node(),
-            "python_implementation": platform.python_implementation(),
-            "python_compiler": platform.python_compiler(),
-            "python_revision": platform.python_revision(),
-            "linkage_format": platform.architecture()[1],
-            "cpu_count": str(psutil.cpu_count(logical=False)),
-            "cpu_logical_count": str(psutil.cpu_count(logical=True)),
-            "swap_memory_total": str(psutil.swap_memory().total // (1024**2)) + " MB",
-            "processor": cpu_info,
-            "cpu_count_physical": str(cpu_count),
-            "cpu_count_logical": str(logical_cpu_count),
-            "cpu_frequency_current": str(cpu_frequency.current) + " MHz",
-            "cpu_frequency_min": str(cpu_frequency.min) + " MHz",
-            "cpu_frequency_max": str(cpu_frequency.max) + " MHz",
-        } | gpu_device_properties
+        return (
+            {
+                "platform": platform.platform(),
+                "architecture": platform.architecture()[0],
+                "arch": platform.machine(),
+                "system": platform.system(),
+                "release": platform.release(),
+                "RAM": str(psutil.virtual_memory().total // (1024**2)) + " MB",
+                "version": platform.version(),
+                "node": platform.node(),
+                "python_implementation": platform.python_implementation(),
+                "python_compiler": platform.python_compiler(),
+                "python_revision": platform.python_revision(),
+                "linkage_format": platform.architecture()[1],
+                "cpu_count": str(cpu_count),
+                "cpu_logical_count": str(logical_cpu_count),
+                "swap_memory_total": str(psutil.swap_memory().total // (1024**2))
+                + " MB",
+                "processor": cpu_info,
+                "cpu_count_physical": str(cpu_count),
+                "cpu_count_logical": str(logical_cpu_count),
+            }
+            | gpu_device_properties
+            | cpu_frequency_info
+        )
 
 
 converter.register_unstructure_hook(
