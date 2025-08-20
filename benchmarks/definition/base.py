@@ -62,7 +62,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
         if runmode not in RunMode:
             raise ValueError(
                 f"Invalid runmode: {runmode}. Available "
-                "runmodes: {RunMode._member_names_}"
+                f"runmodes: {RunMode._member_names_}"
             )
         self.runmode = runmode
 
