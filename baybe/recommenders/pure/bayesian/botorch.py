@@ -348,6 +348,14 @@ class BotorchRecommender(BayesianRecommender):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # When interpoint constraints are present, we must use batch optimization
+        # instead of sequential optimization, as interpoint constraints are not
+        # supported for sequential optimization in BoTorch
+        sequential = (
+            self.sequential_continuous
+            and not subspace_continuous.has_interpoint_constraints
+        )
+
         # NOTE: The explicit `or None` conversion is added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
@@ -369,7 +377,7 @@ class BotorchRecommender(BayesianRecommender):
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,
-            sequential=self.sequential_continuous,
+            sequential=sequential,
         )
         return points, acqf_values
 
