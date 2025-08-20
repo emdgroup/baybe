@@ -116,7 +116,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if args.outdir and RUNS_IN_CI:
+    if args.outdir != Path(".") and RUNS_IN_CI:
         raise AttributeError("Output directory cannot be set in CI mode.")
 
     if args.name and RUNS_IN_CI:
