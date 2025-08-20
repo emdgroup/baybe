@@ -12,11 +12,12 @@ from typing import Protocol
 import boto3
 import boto3.session
 from attr import define, field
-from attrs.validators import instance_of
+from attrs.validators import instance_of, optional
 from boto3.session import Session
 from typing_extensions import override
 
 from benchmarks import Result
+from benchmarks.definition.base import RunMode
 
 VARNAME_BENCHMARKING_PERSISTENCE_PATH = "BAYBE_BENCHMARKING_PERSISTENCE_PATH"
 
@@ -72,7 +73,10 @@ class PathConstructor:
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
     @classmethod
-    def from_result(cls, result: Result) -> PathConstructor:
+    def from_result(
+        cls,
+        result: Result,
+    ) -> PathConstructor:
         """Create a path constructor from result.
 
         Args:
@@ -124,9 +128,9 @@ class PathConstructor:
         sanitized_components = [
             self._sanitize_string(component) for component in components
         ]
-        path = separator.join(sanitized_components) + separator + "result.json"
+        path = Path(separator.join(sanitized_components) + separator + "result.json")
 
-        return Path(path)
+        return path
 
 
 class ObjectStorage(Protocol):
@@ -192,8 +196,14 @@ class S3ObjectStorage(ObjectStorage):
 class LocalFileObjectStorage(ObjectStorage):
     """Class for persisting objects locally."""
 
+    runmode: RunMode = field(validator=instance_of(RunMode))
+    """The run mode under which the benchmark was executed."""
+
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
     """The prefix of the folder path where the results are stored."""
+
+    name: str | None = field(validator=optional(instance_of(str)), default=None)
+    """Custom name to add to the path."""
 
     @folder_path_prefix.validator
     def _folder_path_prefix_validator(self, _, folder_path_prefix: Path) -> None:
@@ -216,5 +226,17 @@ class LocalFileObjectStorage(ObjectStorage):
         path_object = self.folder_path_prefix.joinpath(
             path_constructor.get_path(strategy=PathStrategy.FLAT)
         )
+        path_object = path_object.with_name(f"{self.runmode.value}_{path_object.name}")
+
+        if self.name:
+            path_object = path_object.with_name(f"{self.name}_{path_object.name}")
+
+        if path_object.exists():
+            base_stem = path_object.stem
+            counter = len(list(path_object.parent.glob(f"{base_stem}*")))
+            path_object = path_object.with_name(
+                f"{path_object.stem}_{counter}{path_object.suffix}"
+            )
+
         with open(path_object.resolve(), "w") as file:
             json.dump(object, file)

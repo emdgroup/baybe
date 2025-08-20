@@ -23,6 +23,7 @@ from benchmarks.data.utils import DATA_PATH
 from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.base import RunMode
 from benchmarks.definition.convergence import ConvergenceBenchmark
 
 
@@ -173,9 +174,18 @@ def direct_arylation_tl_temperature(
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=2,
-    n_doe_iterations=20,
-    n_mc_iterations=55,
+    batch_size_settings={
+        RunMode.STANDARD: 2,
+        RunMode.RUNTHROUGH: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.STANDARD: 20,
+        RunMode.RUNTHROUGH: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.STANDARD: 55,
+        RunMode.RUNTHROUGH: 2,
+    },
 )
 
 direct_arylation_tl_temperature_benchmark = ConvergenceBenchmark(
