@@ -360,12 +360,12 @@ class BotorchRecommender(BayesianRecommender):
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
             equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_eq
             ]
             or None,
             inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,
