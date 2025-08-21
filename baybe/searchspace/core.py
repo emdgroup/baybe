@@ -13,6 +13,7 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import (
+    DiscretePermutationInvarianceConstraint,
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
@@ -26,6 +27,7 @@ from baybe.searchspace.discrete import (
 )
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.augmentation import df_apply_permutation_augmentation
 from baybe.utils.conversion import to_string
 
 
@@ -82,6 +84,42 @@ class SearchSpace(SerialMixin):
         """Perform validation."""
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
+
+    def augment_measurements(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Apply data augmentation to measurements.
+
+        Args:
+            data: A dataframe with measurements.
+
+        Returns:
+            A dataframe with the augmented measurements, also containing the original
+            ones.
+        """
+        for c in self.constraints:
+            match c:
+                case DiscretePermutationInvarianceConstraint(
+                    consider_data_augmentation=True
+                ):
+                    # Associated parameters can come from dependencies and need to be
+                    # co-permuted in the same manner as the parameters of this
+                    # constraint.
+                    associated_parameters = (
+                        c.dependencies.parameters if c.dependencies else []
+                    )
+
+                    # This creates groups like (("p1", "a1"), ("p2", "a2"), ...) if the
+                    # parameters "p_k" have associated parameters "a_k". It results in
+                    # just (("p1",), ("p2",), ...) if there are no associated
+                    # parameters.
+                    groups = tuple(
+                        zip(c.parameters, associated_parameters, strict=True)
+                        if associated_parameters
+                        else zip(c.parameters)
+                    )
+
+                    data = df_apply_permutation_augmentation(data, groups)
+
+        return data
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:

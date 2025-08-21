@@ -128,9 +128,9 @@ class BayesianRecommender(PureRecommender, ABC):
             and self._surrogate_model.consider_data_augmentation
         )
 
+        # Augment measurements if desired
         if surrogate_considers and constraints_considered:
-            for c in constraints_considered:
-                measurements = c.augment_measurements(measurements)
+            measurements = searchspace.augment_measurements(measurements)
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
