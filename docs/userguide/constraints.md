@@ -58,7 +58,7 @@ from baybe.constraints import ContinuousLinearConstraint
 ContinuousLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],  # these parameters must exist in the search space
     operator="=",
-    coefficients=[1.0, 1.0, 1.0],
+    coefficients=(1.0, 1.0, 1.0),
     rhs=1.0,
 )
 ```
@@ -74,7 +74,7 @@ from baybe.constraints import ContinuousLinearConstraint
 ContinuousLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],
     operator="<=",
-    coefficients=[1.0, 1.0, 1.0],
+    coefficients=(1.0, 1.0, 1.0),
     rhs=0.8,
 )
 ```
