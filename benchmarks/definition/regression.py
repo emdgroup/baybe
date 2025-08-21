@@ -3,6 +3,7 @@
 from attrs import define, field
 from attrs.validators import and_, deep_iterable, ge, instance_of, le
 
+from baybe.utils.validation import finite_float
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
 
 
@@ -16,7 +17,7 @@ class RegressionBenchmarkSettings(BenchmarkSettings):
     max_n_train_points: int = field(validator=instance_of(int))
     """Maximum number of training points to consider."""
 
-    noise_std: float = field(converter=float, validator=ge(0.0))
+    noise_std: float = field(converter=float, validator=and_(finite_float, ge(0.0)))
     """Standard deviation of noise to add to the data."""
 
 
@@ -50,7 +51,7 @@ class TransferLearningRegressionBenchmark(
     """Benchmark for comparing regression performance of non-TL vs TL models.
 
     Evaluates the predictive performance of transfer learning models compared
-    to GP models. It generates synthetic data for source and target tasks, trains
-    models with varying amounts of source and target data, evaluates their performance
+    to GP models. It generates data for source and target tasks, trains models
+    with varying amounts of source and target data, evaluates their performance
     on held-out target data.
     """
