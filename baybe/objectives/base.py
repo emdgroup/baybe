@@ -99,7 +99,7 @@ class Objective(ABC, SerialMixin):
             GenericMCMultiOutputObjective,
         )
 
-        oriented_targets = (t.negate() if t.minimize else t for t in self.targets)
+        oriented_targets = [t.negate() if t.minimize else t for t in self.targets]
 
         return GenericMCMultiOutputObjective(
             lambda samples, X: torch.stack(
