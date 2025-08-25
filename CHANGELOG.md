@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scalar addition and subtraction for `Interval` objects
 - Methods `hshift` and `vshift` to `Transformation` for conveniently performing
   horizontal / vertical shifts
+- Interpoint constraints for continuous search spaces
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
