@@ -56,6 +56,16 @@ class CustomTransformation(Transformation):
 class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
 
+    def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
+        """Convert to BoTorch posterior transform.
+
+        Returns:
+            The representation of the transform as BoTorch posterior transform.
+        """
+        from baybe.targets.botorch import AffinePosteriorTransform
+
+        return AffinePosteriorTransform(factor=1.0, shift=0.0)
+
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x
