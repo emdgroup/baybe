@@ -36,7 +36,7 @@ from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations import AffineTransformation, IdentityTransformation
+from baybe.transformations import AffineTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
@@ -198,12 +198,6 @@ class BotorchAcquisitionFunctionBuilder:
         #   We use the former for affine transformations and the latter to handle
         #   all other cases.
 
-        match self.objective:
-            case SingleTargetObjective(
-                NumericalTarget(total_transformation=IdentityTransformation())
-            ):
-                return
-
         if self.acqf.is_analytic:
             if not isinstance(self.objective, SingleTargetObjective):
                 targets = self.objective.targets
@@ -222,9 +216,12 @@ class BotorchAcquisitionFunctionBuilder:
                 case _:
                     raise NotImplementedError("No transformation handling implemented.")
 
-            match t := target.total_transformation:
+            match t := target.transformation:
                 case AffineTransformation():
-                    self._args.posterior_transform = t.to_botorch_posterior_transform()
+                    oriented = t.negate() if target.minimize else t
+                    self._args.posterior_transform = (
+                        oriented.to_botorch_posterior_transform()
+                    )
                 case _:
                     raise NotImplementedError(
                         f"The selected analytic acquisition "

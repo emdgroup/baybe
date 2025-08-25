@@ -23,7 +23,7 @@ from tests.hypothesis_strategies.objectives import (
 
 def _get_involved_transformations(target: Target) -> list[Transformation]:
     """Get all transformations involved in a target."""
-    match t := target._transformation:
+    match t := target.transformation:
         case ChainedTransformation():
             return t.transformations
         case _:

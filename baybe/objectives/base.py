@@ -99,11 +99,13 @@ class Objective(ABC, SerialMixin):
             GenericMCMultiOutputObjective,
         )
 
+        oriented_targets = (t.negate() if t.minimize else t for t in self.targets)
+
         return GenericMCMultiOutputObjective(
             lambda samples, X: torch.stack(
                 [
-                    t.total_transformation.to_botorch_objective()(samples[..., i])
-                    for i, t in enumerate(self.targets)
+                    t.transformation.to_botorch_objective()(samples[..., i])
+                    for i, t in enumerate(oriented_targets)
                 ],
                 dim=-1,
             )

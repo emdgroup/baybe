@@ -16,7 +16,7 @@ def test_target_addition():
     t1 = NumericalTarget("t") + 1
     t2 = NumericalTarget("t") - (-1)
     assert t1 == t2
-    assert t1._transformation == AffineTransformation(shift=1)
+    assert t1.transformation == AffineTransformation(shift=1)
 
 
 def test_target_multiplication():
@@ -24,7 +24,7 @@ def test_target_multiplication():
     t1 = NumericalTarget("t") * 2
     t2 = NumericalTarget("t") / 0.5
     assert t1 == t2
-    assert t1._transformation == AffineTransformation(factor=2)
+    assert t1.transformation == AffineTransformation(factor=2)
 
 
 def test_target_inversion():

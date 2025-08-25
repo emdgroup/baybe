@@ -76,7 +76,7 @@ def _translate_legacy_arguments(
             return (
                 NumericalTarget.normalized_ramp(
                     "dummy", cutoffs=bounds, descending=mode == TargetMode.MIN
-                )._transformation,
+                ).transformation,
                 False,
             )
     else:
@@ -90,7 +90,7 @@ def _translate_legacy_arguments(
                 Transformation,
                 NumericalTarget.match_triangular(
                     "dummy", cutoffs=bounds
-                )._transformation,
+                ).transformation,
             )
         return (modern_transformation, False)
 
@@ -99,10 +99,8 @@ def _translate_legacy_arguments(
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
-    _transformation: Transformation = field(
-        alias="transformation",
-        factory=IdentityTransformation,
-        converter=optional(convert_transformation),
+    transformation: Transformation = field(
+        factory=IdentityTransformation, converter=optional(convert_transformation)
     )
     """An optional target transformation."""
 
@@ -382,19 +380,13 @@ class NumericalTarget(Target, SerialMixin):
             lambda: self.get_image() == Interval(0, 1)
         )
 
-    @property
-    def total_transformation(self) -> Transformation:
-        """The total applied transformation, including potential negation."""
-        tr = self._transformation
-        return self._transformation if not self.minimize else tr.negate()
-
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         """Get the codomain of an interval (assuming transformation continuity)."""
-        return self.total_transformation.get_codomain(interval)
+        return self.transformation.get_codomain(interval)
 
     def get_image(self, interval: Interval | None = None, /) -> Interval:
         """Get the image of an interval (assuming transformation continuity)."""
-        return self.total_transformation.get_image(interval)
+        return self.transformation.get_image(interval)
 
     def _append_transformation(self, transformation: Transformation) -> NumericalTarget:
         """Append a new transformation.
@@ -407,9 +399,7 @@ class NumericalTarget(Target, SerialMixin):
         """
         return evolve(  # type: ignore[call-arg]
             self,
-            transformation=ChainedTransformation(
-                [self._transformation, transformation]
-            ),
+            transformation=ChainedTransformation([self.transformation, transformation]),
         )
 
     def negate(self) -> NumericalTarget:
@@ -517,7 +507,7 @@ class NumericalTarget(Target, SerialMixin):
         from baybe.utils.dataframe import to_tensor
 
         return pd.Series(
-            self.total_transformation(to_tensor(series)),
+            self.transformation(to_tensor(series)),
             index=series.index,
             name=series.name,
         )
@@ -527,7 +517,7 @@ class NumericalTarget(Target, SerialMixin):
         return dict(
             Type=self.__class__.__name__,
             Name=self.name,
-            Transformation=self._transformation,
+            Transformation=self.transformation,
             Minimize=self.minimize,
         )
 
