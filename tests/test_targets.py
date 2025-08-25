@@ -40,7 +40,8 @@ def test_target_inversion():
     assert_series_equal(transformed, tii.transform(series))
 
 
-def test_target_normalization(monkeypatch):
+@pytest.mark.parametrize("minimize", [True, False])
+def test_target_normalization(monkeypatch, minimize):
     """Target normalization works as expected."""
     # We artificially create some transform whose codomain does not coincide with the
     # image but is twice as broad.
@@ -52,14 +53,17 @@ def test_target_normalization(monkeypatch):
         ),
     )
 
-    t = NumericalTarget("t")
+    t_raw = NumericalTarget("t", minimize=minimize)
     with pytest.raises(IncompatibilityError, match="Only bounded targets"):
-        t.normalize()
+        t_raw.normalize()
 
-    assert t.clamp(-2, 4).get_image() == Interval(-2, 4)
-    assert t.clamp(-2, 4).get_codomain() == Interval(-4, 8)
-    assert t.clamp(-2, 4).normalize().get_image() == Interval(0, 1)
-    assert t.clamp(-2, 4).normalize().get_codomain() != Interval(0, 1)
+    t = t_raw.clamp(-2, 4)
+    assert not t.is_normalized
+    assert t.get_image() == Interval(-2, 4)
+    assert t.get_codomain() == Interval(-4, 8)
+    assert t.normalize().is_normalized
+    assert t.normalize().get_image() == Interval(0, 1)
+    assert t.normalize().get_codomain() != Interval(0, 1)
 
 
 @pytest.mark.parametrize(
