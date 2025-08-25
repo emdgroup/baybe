@@ -76,6 +76,45 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
+### Continuous Interpoint Constraints
+
+The constraints discussed in the previous paragraph belong to the class of so called
+"intrapoint constraints". That is, they impose conditions on each individual point of a batch.
+In contrast to this, interpoint constraints do so **across** the points of the batch.
+That is, an interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
+``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
+A possible relevant constraint might be that only 100ml of a given solvent are available for 
+a full batch, but there is no limit for the amount of solvent to use for a single experiment
+within that batch.
+
+They can be defined by using the `interpoint` keyword of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+class. 
+```python
+from baybe.constraints import ContinuousLinearConstraint
+
+ContinuousLinearConstraint(
+    parameters=["SolventAmount[ml]"],
+    operator="<=",
+    coefficients=[1.0],
+    rhs=100,
+    interpoint=True,
+)
+```
+
+```{admonition} Experimental feature
+:class: warning
+Interpoint constraints are currently considered an *experimental feature* and are still
+under active development. This means that there are some limitations, and that the
+usage as well as the implementation of interpoint constraints might change in the future.
+The currently know main limitatations are the following:
+- BayBE does not support to use both interpoint and cardinality constraints
+within the same search space.
+- When using interpoint constraints, the optimization will not be done sequentially,
+potentially increasing the runtime.
+- Interpoint constraints are only supported in purely continuous spaces and are not
+available in hybrid spaces.
+```
+
 ### ContinuousCardinalityConstraint
 The {class}`~baybe.constraints.continuous.ContinuousCardinalityConstraint` gives you a
 tool to control the number of active factors (i.e. parameters that take a non-zero
