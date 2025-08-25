@@ -10,7 +10,6 @@ from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import torch
 from attr.validators import gt, in_, instance_of, lt
 from attrs import define, field
 
@@ -138,6 +137,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             RuntimeError: When the constraint is an interpoint constraint but
                 ``batch_size`` is ``None``.
         """
+        import torch
+
         from baybe.utils.torch import DTypeFloatTorch
 
         # NOTE: The interpoint constraint case requires indices to be a 2-d tensor.
