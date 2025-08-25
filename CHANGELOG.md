@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective.to_botorch_posterior_transform` for use of affine transformations with
   analytical acquisition functions
 - `DesirabilityObjective.normalized_weights` property 
+- Interpoint constraints for continuous search spaces
 
 ### Changed
 - Creating one-element composite transformations now returns the contained
