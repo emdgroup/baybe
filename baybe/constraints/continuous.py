@@ -5,12 +5,12 @@ from __future__ import annotations
 import gc
 import math
 from collections.abc import Collection, Iterator, Sequence
-from itertools import combinations
+from itertools import chain, combinations, repeat
 from math import comb
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from attr.validators import gt, in_, lt
+from attr.validators import gt, in_, instance_of, lt
 from attrs import define, field
 
 from baybe.constraints.base import (
@@ -47,6 +47,17 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
+
+    is_interpoint: bool = field(
+        alias="interpoint", default=False, validator=instance_of(bool)
+    )
+    """Flag for defining an interpoint constraint.
+
+    While intrapoint constraints impose conditions on each individual point of a batch,
+    interpoint constraints do so **across** the points of the batch. That is, an
+    interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
+    ``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
+    """
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -101,7 +112,11 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         )
 
     def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+        self,
+        parameters: Sequence[NumericalContinuousParameter],
+        idx_offset: int = 0,
+        *,
+        batch_size: int | None = None,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -111,25 +126,61 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         Args:
             parameters: The parameter objects of the continuous space.
             idx_offset: Offset to the provided parameter indices.
+            batch_size: The batch size used for the recommendation. Necessary
+                for interpoint constraints as indices need to be adjusted.
+                Ignored by all other constraints.
 
         Returns:
             The tuple required by botorch.
+
+        Raises:
+            RuntimeError: When the constraint is an interpoint constraint but
+                ``batch_size`` is ``None``.
         """
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
+        # NOTE: The interpoint constraint case requires indices to be a 2-d tensor.
+        # This requires some adjustments to the indices.
+        # See https://botorch.readthedocs.io/en/latest/optim.html, in particular the
+        # docstring of ``optimize_acqf`` for details.
+
         param_names = [p.name for p in parameters]
-        param_indices = [
-            param_names.index(p) + idx_offset
-            for p in self.parameters
-            if p in param_names
-        ]
+        coefficients: list[float]
+        torch_indices: Tensor
+        if not self.is_interpoint:
+            param_indices = [
+                param_names.index(p) + idx_offset
+                for p in self.parameters
+                if p in param_names
+            ]
+            coefficients = self.coefficients
+            torch_indices = torch.tensor(param_indices)
+        elif batch_size is None:
+            raise RuntimeError(
+                "No ``batch_size`` set but using interpoint constraints."
+                "This should not happen and means that there is a bug in the code."
+            )
+        else:
+            param_index_dict = {
+                name: param_names.index(name) for name in self.parameters
+            }
+            param_indices_interpoint = [
+                (batch, param_index_dict[name] + idx_offset)
+                for name in self.parameters
+                for batch in range(batch_size)
+            ]
+            # Collect the coefficients such that there they have the form
+            # [coef_0,...,coef_0, coef_1,...,coef_1,...,coef_n,...,coef_n]
+            # where each coefficient is repeated ``batch_size`` times.
+            coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
+            torch_indices = torch.tensor(param_indices_interpoint)
 
         return (
-            torch.tensor(param_indices),
+            torch_indices,
             torch.tensor(
-                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
+                [self._multiplier * c for c in coefficients], dtype=DTypeFloatTorch
             ),
             np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
         )
