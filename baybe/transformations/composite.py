@@ -18,9 +18,11 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
-@define
+@define(frozen=True)
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
+
+    __hash__ = object.__hash__
 
     transformations: tuple[Transformation, ...] = field(
         converter=compress_transformations,
@@ -58,7 +60,7 @@ class ChainedTransformation(Transformation):
         return compose(*(t.__call__ for t in self.transformations))(x)
 
 
-@define
+@define(frozen=True)
 class AdditiveTransformation(Transformation):
     """A transformation implementing the sum of two transformations."""
 
@@ -83,7 +85,7 @@ class AdditiveTransformation(Transformation):
         return self.transformations[0](x) + self.transformations[1](x)
 
 
-@define
+@define(frozen=True)
 class MultiplicativeTransformation(Transformation):
     """A transformation implementing the product of two transformations."""
 

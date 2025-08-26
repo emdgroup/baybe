@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     """Type alias for a torch-based function mapping from reals to reals."""
 
 
-@define
+@define(frozen=True)
 class CustomTransformation(Transformation):
     """A custom transformation applying an arbitrary torch callable."""
 
@@ -52,7 +52,7 @@ class CustomTransformation(Transformation):
         return self.function(x)
 
 
-@define
+@define(frozen=True)
 class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
 
@@ -67,7 +67,7 @@ class IdentityTransformation(MonotonicTransformation):
         return NotImplemented
 
 
-@define(init=False)
+@define(frozen=True, init=False)
 class ClampingTransformation(MonotonicTransformation):
     """A transformation clamping values between specified bounds."""
 
@@ -84,9 +84,11 @@ class ClampingTransformation(MonotonicTransformation):
         return x.clamp(*self.bounds.to_tuple())
 
 
-@define(slots=False, init=False)
+@define(frozen=True, init=False)
 class AffineTransformation(MonotonicTransformation):
     """An affine transformation."""
+
+    __hash__ = object.__hash__
 
     factor: float = field(default=1.0, converter=float, validator=finite_float)
     """The multiplicative factor of the transformation."""
@@ -167,7 +169,7 @@ class AffineTransformation(MonotonicTransformation):
 
 
 @_image_equals_codomain
-@define(slots=False)
+@define(frozen=True)
 class TwoSidedAffineTransformation(Transformation):
     """A transformation with two affine segments on either side of a midpoint."""
 
@@ -207,7 +209,7 @@ class TwoSidedAffineTransformation(Transformation):
 
 
 @_image_equals_codomain
-@define(slots=False)
+@define(frozen=True)
 class BellTransformation(Transformation):
     """A Gaussian bell curve transformation."""
 
@@ -241,7 +243,7 @@ class BellTransformation(Transformation):
 
 
 @_image_equals_codomain
-@define(slots=False)
+@define(frozen=True)
 class AbsoluteTransformation(Transformation):
     """A transformation computing absolute values."""
 
@@ -262,7 +264,7 @@ class AbsoluteTransformation(Transformation):
 
 
 @_image_equals_codomain
-@define(slots=False)
+@define(frozen=True)
 class TriangularTransformation(Transformation):
     r"""A transformation with a triangular shape.
 
@@ -310,7 +312,7 @@ class TriangularTransformation(Transformation):
                 "the cutoffs are too close to the peak, leading to numerical overflow "
                 "when computing the slopes."
             )
-        self._transformation = (
+        t = (
             TwoSidedAffineTransformation(
                 slope_left=1 / self.margins[0],
                 slope_right=-1 / self.margins[1],
@@ -318,6 +320,7 @@ class TriangularTransformation(Transformation):
             )
             + 1
         ).clamp(min=0)
+        object.__setattr__(self, "_transformation", t)
 
     @cutoffs.validator
     def _validate_cutoffs(self, _, cutoffs: Interval) -> None:
@@ -385,7 +388,7 @@ class ExponentialTransformation(MonotonicTransformation):
 
 
 @_image_equals_codomain
-@define(slots=False)
+@define(frozen=True)
 class PowerTransformation(Transformation):
     """A transformation computing the power."""
 
@@ -412,7 +415,7 @@ class PowerTransformation(Transformation):
         return x.pow(self.exponent)
 
 
-@define(slots=False)
+@define(frozen=True)
 class SigmoidTransformation(MonotonicTransformation):
     """A sigmoid transformation."""
 
