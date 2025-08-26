@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent               Base                        Ligand  \
-    356       p-Xylene    Cesium pivalate                 (t-Bu)PhCPhos   
-    188  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-    13     Butyl Ester     Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    120  Butyornitrile      Cesium acetate                     BrettPhos   
+    80     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    356        105.0          0.153  
-    188        120.0          0.153  
-    13         105.0          0.100  
+    318        105.0          0.057  
+    120        105.0          0.057  
+    80         120.0          0.153  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent               Base                        Ligand  \
-    356       p-Xylene    Cesium pivalate                 (t-Bu)PhCPhos   
-    188  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
-    13     Butyl Ester     Cesium acetate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    120  Butyornitrile      Cesium acetate                     BrettPhos   
+    80     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    356        105.0          0.153  22.456259  
-    188        120.0          0.153  22.158613  
-    13         105.0          0.100  29.616348  
+    318        105.0          0.057  13.468018  
+    120        105.0          0.057  18.206993  
+    80         120.0          0.153  28.153899  
 
 
 
