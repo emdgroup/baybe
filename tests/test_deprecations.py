@@ -419,7 +419,7 @@ def test_constructor_equivalence_match(transformation):
             None,
             None,
             ModernTarget("t", minimize=True),
-            -sample_input(),
+            sample_input(),
             id="min_no_bounds_with_flag",
         ),
         param(
@@ -431,7 +431,7 @@ def test_constructor_equivalence_match(transformation):
             None,  # should be `LegacyTarget("t", "MIN")` but see explanation above
             ModernTarget("t", "MIN"),
             ModernTarget("t", minimize=True),
-            -sample_input(),
+            sample_input(),
             id="min",
         ),
         param(
