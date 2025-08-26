@@ -1,5 +1,7 @@
 """Target tests."""
 
+import operator
+
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
@@ -77,10 +79,19 @@ def test_target_normalization(monkeypatch, minimize):
     ],
 )
 def test_match_constructors(target, transformed_value):
-    """Larger distance to match values yields smaller transformed values."""
+    """Larger distance to match values yields "worse" transformed values."""
     delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     match_value = 2
+    series = pd.Series(delta) + match_value
 
-    transformed = target.transform(pd.Series(delta) + match_value)
-    assert transformed[0] == transformed_value
-    assert (transformed.diff().dropna() < 0).all()
+    # On the target level, "worse" can mean "larger" or "smaller",
+    # depending on the minimization flag
+    t1 = target.transform(series)
+    op = operator.gt if target.minimize else operator.lt
+    assert t1[0] == transformed_value
+    assert op(t1.diff().dropna(), 0).all()
+
+    # Objectives, on the other hand, are always to be maximized.
+    # Hence, "worse" means "smaller".
+    t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
+    assert (t2.diff().dropna() < 0).all()
