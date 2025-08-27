@@ -41,17 +41,17 @@ def spearman_rho_score(y_true, y_pred):
     return rho
 
 
-# Dictionary mapping metric names to functions
-REGRESSION_METRICS = {
-    "RMSE": root_mean_squared_error,
-    "MSE": mean_squared_error,
-    "R2": r2_score,
-    "MAE": mean_absolute_error,
-    "MAX_ERROR": max_error,
-    "EXPLAINED_VARIANCE": explained_variance_score,
-    "KENDALL_TAU": kendall_tau_score,
-    "SPEARMAN_RHO": spearman_rho_score,
-}
+# List of regression metric functions
+REGRESSION_METRICS = [
+    root_mean_squared_error,
+    mean_squared_error,
+    r2_score,
+    mean_absolute_error,
+    max_error,
+    explained_variance_score,
+    kendall_tau_score,
+    spearman_rho_score,
+]
 
 
 def run_tl_regression_benchmark(
@@ -215,9 +215,9 @@ def _calculate_metrics(
     results = {}
     pred_values = predictions[f"{target_column}_mean"].values
 
-    for metric_name, metric_func in REGRESSION_METRICS.items():
+    for metric_func in REGRESSION_METRICS:
         metric_value = metric_func(true_values, pred_values)
-        results[f"{model_prefix}_{metric_name.lower()}"] = metric_value
+        results[f"{model_prefix}_{metric_func.__name__}"] = metric_value
 
     return results
 
