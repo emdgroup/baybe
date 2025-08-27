@@ -120,7 +120,7 @@ def run_tl_regression_benchmark(
             # Sample source data ensuring same fraction from each source task
             source_subset = _sample_source_data(
                   source_data, source_tasks, fraction_source,
-                  name_task, settings.random_seed, mc_iter
+                  name_task, settings.random_seed + mc_iter
               )
 
             # Create progress bar for training points
@@ -165,6 +165,7 @@ def run_tl_regression_benchmark(
                             "fraction_source": fraction_source,
                             "n_source_pts": len(source_subset),
                             "n_test_pts": len(target_test),
+                            "source_data_seed": settings.random_seed + mc_iter,
                         }
                     )
                     results.append(scenario_result)
@@ -192,8 +193,7 @@ def _sample_source_data(
     source_tasks: list[str], 
     fraction_source: float,
     task_column: str,
-    random_seed: int,
-    mc_iter: int
+    source_data_seed: int,
 ) -> pd.DataFrame:
     """Sample source data ensuring same fraction from each source task."""
     source_subsets = []
@@ -202,7 +202,7 @@ def _sample_source_data(
         if len(task_data) > 0:
             task_subset = task_data.sample(
                 frac=fraction_source,
-                random_state=random_seed + mc_iter,
+                random_state=source_data_seed,
             )
             source_subsets.append(task_subset)
     return pd.concat(source_subsets, ignore_index=True)
