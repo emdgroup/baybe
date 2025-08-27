@@ -43,15 +43,15 @@ class TestInvalidObjectiveCreation:
             SingleTargetObjective(target={"A": 1, "B": 2})
 
     def test_negative_targets_for_desirability(self):
+        """Negative targets are not allowed unless explicitly declared."""
         t1 = NumericalTarget("t1").clamp(0, 1)
-
-        # Is normalized but the minimize flag appends another transformation
         t2 = NumericalTarget(
-            "t2", transformation=ClampingTransformation(0, 1), minimize=True
+            "t2", transformation=ClampingTransformation(-1, 0), minimize=True
         )
-
         with pytest.raises(ValueError, match="transformed to a non-negative range"):
             DesirabilityObjective([t1, t2])
+        DesirabilityObjective([t1.normalize(), t2.normalize()])
+        DesirabilityObjective([t1, t2], require_normalization=False, scalarizer="MEAN")
 
     def test_unnormalized_targets_for_desirability(self):
         """Unnormalized targets are not allowed unless explicitly declared."""
