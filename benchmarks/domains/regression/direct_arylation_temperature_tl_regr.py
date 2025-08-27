@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import pandas as pd
 
-from baybe.parameters import (
-    TaskParameter,
-)
-from baybe.searchspace import SearchSpace
 from benchmarks.definition import (
     TransferLearningRegressionBenchmark,
     TransferLearningRegressionBenchmarkSettings,
@@ -18,6 +14,7 @@ from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import
     make_objective,
     make_searchspace,
 )
+
 
 def direct_arylation_temperature_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
@@ -48,9 +45,12 @@ def direct_arylation_temperature_tl_regr(
 
 # Define the benchmark settings
 benchmark_config = TransferLearningRegressionBenchmarkSettings(
-    n_mc_iterations=2,#30,  # 30,  # 5,
-    max_n_train_points=2,#10,  # 10,  # 10,
-    source_fractions=(0.01, 0.05),#, 0.1, 0.2),  # , 0.05, 0.1, 0.2],  # 0.5, 0.7, 0.9],
+    n_mc_iterations=2,  # 30,  # 30,  # 5,
+    max_n_train_points=2,  # 10,  # 10,  # 10,
+    source_fractions=(
+        0.01,
+        0.05,
+    ),  # , 0.1, 0.2),  # , 0.05, 0.1, 0.2],  # 0.5, 0.7, 0.9],
     noise_std=0.0,  # Not used for real data
 )
 
