@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from functools import cached_property
 from typing import TYPE_CHECKING, ClassVar
 
@@ -19,10 +18,11 @@ from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
+from baybe.targets.base import Target
 from baybe.targets.numerical import UncertainBool
 from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import get_transform_objects, pretty_print_df, to_tensor
+from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -191,6 +191,20 @@ class DesirabilityObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @property
+    def _oriented_targets(self) -> tuple[Target, ...]:
+        # For desirability, we do not only negate but also shift by 1 so that
+        # normalized minimization targets are still mapped to [0, 1] instead of [-1, 0]
+        # to enable geometric averaging.
+        return tuple(
+            t.negate() + 1 if isinstance(t, NumericalTarget) and t.minimize else t
+            for t in self.targets
+        )
+
+    @property
+    def _full_transformation(self) -> pd.DataFrame:
+        return self._to_botorch_full()
+
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
         if self.as_pre_transformation:
@@ -260,68 +274,6 @@ class DesirabilityObjective(Objective):
             )
 
         return self.transform(df, allow_missing=False, allow_extra=allow_extra)
-
-    @override
-    def transform(
-        self,
-        df: pd.DataFrame | None = None,
-        /,
-        *,
-        allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the dataframe to be transformed as first positional argument."
-            )
-
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
-
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df.columns) - {p.name for p in self.targets}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
-
-        if allow_missing:
-            raise IncompatibilityError(
-                f"Setting 'allow_missing=True' is not supported for "
-                f"'{self.__class__.__name__}.{self.transform.__name__}' since "
-                f"desirability computation requires all target columns to be present."
-            )
-
-        targets = get_transform_objects(
-            df, self.targets, allow_missing=False, allow_extra=allow_extra
-        )
-
-        import torch
-
-        with torch.no_grad():
-            transformed = self._to_botorch_full()(
-                to_tensor(df[[t.name for t in targets]])
-            )
-
-        return pd.DataFrame(
-            transformed.numpy(), columns=self.output_names, index=df.index
-        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
