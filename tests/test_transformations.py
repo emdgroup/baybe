@@ -239,7 +239,7 @@ bell_off_01 = bell(to_tensor(bell.center + 0.1))
 )
 def test_image_computation(transformation, bounds, expected):
     """The image of a transformation is computed correctly."""
-    bounds = (None, None) if bounds is None else bounds
+    bounds = Interval.create(bounds)
     assert transformation.get_image(bounds) == Interval.create(expected)
 
 
