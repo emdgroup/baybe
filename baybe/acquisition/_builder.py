@@ -237,10 +237,18 @@ class BotorchAcquisitionFunctionBuilder:
             # TODO: Enable once clarified:
             # https://github.com/pytorch/botorch/discussions/2849
             if isinstance(self.acqf, qNegIntegratedPosteriorVariance):
-                raise IncompatibilityError(
-                    f"'{qNegIntegratedPosteriorVariance.__name__}' currently supports "
-                    f"no target transformations."
-                )
+                # Type narrowing: qNIPV implies a single target
+                assert isinstance(self.objective, SingleTargetObjective)
+
+                if isinstance(
+                    (t := self.objective._target), NumericalTarget
+                ) and not isinstance(t.transformation, IdentityTransformation):
+                    raise IncompatibilityError(
+                        f"'{qNegIntegratedPosteriorVariance.__name__}' currently "
+                        f"does not support any target transformations."
+                    )
+                else:
+                    return
 
             self._args.objective = self.objective.to_botorch()
 
