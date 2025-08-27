@@ -218,8 +218,6 @@ def _train_and_evaluate_model(
 ) -> dict[str, Any]:
     """Train a single model and evaluate its performance.
 
-    Implements the common pattern: prepare data → train → predict → evaluate.
-
     Args:
         model: The Gaussian Process model to train
         train_data: Training data
@@ -227,8 +225,8 @@ def _train_and_evaluate_model(
         searchspace: Search space for the model
         objective: Optimization objective
         scenario_name: Name of the scenario for results
-        task_column: Name of task parameter column (if any)
-        task_value: Value to set for task parameter (if any)
+        task_column: Name of task parameter column
+        task_value: Value to set for task parameter
 
     Returns:
         Dictionary with scenario name and evaluation metrics
