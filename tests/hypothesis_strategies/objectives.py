@@ -34,11 +34,17 @@ def desirability_objectives(draw: st.DrawFn):
         )
     )
     scalarizer = draw(st.sampled_from(Scalarizer))
-    if require_normalization := draw(st.booleans()):
+    if require_normalization := (
+        draw(st.booleans()) or scalarizer is Scalarizer.GEOM_MEAN
+    ):
         targets = [t.clamp(0, 1) for t in targets]
     objective_metadata = draw(metadata())
     return DesirabilityObjective(
-        targets, weights, scalarizer, require_normalization, metadata=objective_metadata
+        targets,
+        weights,
+        scalarizer,
+        require_normalization=require_normalization,
+        metadata=objective_metadata,
     )
 
 
