@@ -46,4 +46,5 @@ def desirability_objectives(draw: st.DrawFn):
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
     objective_metadata = draw(metadata())
-    return ParetoObjective(_target_lists, metadata=objective_metadata)
+    targets = draw(_target_lists)
+    return ParetoObjective(targets, metadata=objective_metadata)
