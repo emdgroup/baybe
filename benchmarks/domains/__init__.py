@@ -34,6 +34,7 @@ from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_20_15 import (
 from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous import (
     michalewicz_tl_continuous_benchmark,
 )
+from benchmarks.domains.regression.direct_arylation_temperature_tl_regr import direct_arylation_temperature_tl_regr_benchmark
 
 BENCHMARKS: list[Benchmark] = [
     direct_arylation_multi_batch_benchmark,
@@ -49,6 +50,7 @@ BENCHMARKS: list[Benchmark] = [
     easom_tl_47_negate_noise5_benchmark,
     hartmann_tl_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
+    direct_arylation_temperature_tl_regr_benchmark
 ]
 
 
