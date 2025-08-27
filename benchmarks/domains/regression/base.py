@@ -144,7 +144,6 @@ def run_tl_regression_benchmark(
             )
 
             for n_train_pts in train_pts_bar:
-                
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
                     n_train_pts : n_train_pts + settings.max_n_train_points
@@ -152,8 +151,8 @@ def run_tl_regression_benchmark(
                 target_train = target_data.iloc[train_indices].copy()
                 target_test = target_data.iloc[test_indices].copy()
 
-                # Evaluate models
-                eval_results = _evaluate_models(
+                # Evaluate models - now returns list of scenario results
+                scenario_results = _evaluate_models(
                     fraction_source=fraction_source,
                     source_data=source_subset,
                     target_train=target_train,
@@ -166,17 +165,18 @@ def run_tl_regression_benchmark(
                     task_value=target_task,
                 )
 
-                # Add metadata
-                eval_results.update(
-                    {
-                        "mc_iter": mc_iter,
-                        "n_train_pts": n_train_pts,
-                        "fraction_source": fraction_source,
-                        "n_source_pts": len(source_subset),
-                        "n_test_pts": len(target_test),
-                    }
-                )
-                results.append(eval_results)
+                # Add metadata to each scenario result
+                for scenario_result in scenario_results:
+                    scenario_result.update(
+                        {
+                            "mc_iter": mc_iter,
+                            "n_train_pts": n_train_pts,
+                            "fraction_source": fraction_source,
+                            "n_source_pts": len(source_subset),
+                            "n_test_pts": len(target_test),
+                        }
+                    )
+                    results.append(scenario_result)
 
     # Convert results to DataFrame
     results_df = pd.DataFrame(results)
@@ -188,7 +188,6 @@ def _calculate_metrics(
     true_values: np.ndarray,
     predictions: pd.DataFrame,
     target_column: str,
-    model_prefix: str,
 ) -> dict[str, float]:
     """Calculate regression metrics for model predictions.
 
@@ -196,7 +195,6 @@ def _calculate_metrics(
         true_values: True target values
         predictions: Model predictions DataFrame with mean columns
         target_column: Name of the target column
-        model_prefix: Prefix for result keys (e.g., "vanilla", "GP_Index_Kernel")
 
     Returns:
         Dictionary with metric results
@@ -206,7 +204,7 @@ def _calculate_metrics(
 
     for metric_func in REGRESSION_METRICS:
         metric_value = metric_func(true_values, pred_values)
-        results[f"{model_prefix}_{metric_func.__name__}"] = metric_value
+        results[metric_func.__name__] = metric_value
 
     return results
 
@@ -222,7 +220,7 @@ def _evaluate_models(
     target_column: str = "y",
     task_column: str | None = None,
     task_value: str | None = None,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     """Train models and evaluate their performance using specified metrics.
 
     Args:
@@ -238,14 +236,14 @@ def _evaluate_models(
         task_value: Value to set for the task column in test data
 
     Returns:
-        Dictionary with evaluation results
+        List of dictionaries, one per scenario with scenario column and metrics
     """
-        # Crurrent implemented metrics require mean predictions only
+    # Crurrent implemented metrics require mean predictions only
     stats_to_request = ["mean"]
 
-    # Results dictionary
-    results = {}
-    
+    # Results list - one entry per scenario
+    results = []
+
     # Create models
     gp_reduced = GaussianProcessSurrogate()
     # tl_models = [
@@ -275,16 +273,21 @@ def _evaluate_models(
     test_for_gp_reduced = target_test.copy()
 
     # Evaluate vanilla GP
-    gp_reduced_pred = gp_reduced.posterior_stats(test_for_gp_reduced, stats=stats_to_request)
+    gp_reduced_pred = gp_reduced.posterior_stats(
+        test_for_gp_reduced, stats=stats_to_request
+    )
 
     # Calculate all requested metrics for vanilla GP
     gp_reduced_metrics = _calculate_metrics(
         true_values=target_test[target_column].values,
         predictions=gp_reduced_pred,
         target_column=target_column,
-        model_prefix="0_reduced_searchspace",
     )
-    results.update(gp_reduced_metrics)
+    
+    # Create vanilla GP result row
+    vanilla_result = {"scenario": "0_reduced_searchspace"}
+    vanilla_result.update(gp_reduced_metrics)
+    results.append(vanilla_result)
 
     # # TODO: Add the vanilla GP on full searchspace here.
     # vanilla_gp_full = GaussianProcessSurrogate()
@@ -311,7 +314,6 @@ def _evaluate_models(
     # )
     # results.update(gp_full_metrics)
 
-
     # Sample source data and prepare combined data for TL models
     combined_data = pd.concat([source_data, target_train])
 
@@ -337,8 +339,11 @@ def _evaluate_models(
             true_values=target_test[target_column].values,
             predictions=tl_pred,
             target_column=target_column,
-            model_prefix=scenario,
         )
-        results.update(tl_metrics)
+        
+        # Create TL model result row
+        tl_result = {"scenario": scenario}
+        tl_result.update(tl_metrics)
+        results.append(tl_result)
 
     return results
