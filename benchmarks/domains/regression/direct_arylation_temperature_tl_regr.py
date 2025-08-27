@@ -19,29 +19,6 @@ from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import
     make_searchspace,
 )
 
-
-def create_searchspaces(
-    data: pd.DataFrame,
-) -> tuple[SearchSpace, SearchSpace, str, list[str], str]:
-    """Create search spaces for vanilla GP and transfer learning models."""
-    # Create SearchSpace without task parameter (vanilla GP)
-    vanilla_searchspace = make_searchspace(data=data, use_task_parameter=False)
-
-    # Create transfer learning search space (with task parameter)
-    tl_searchspace = make_searchspace(data=data, use_task_parameter=True)
-
-    # Extract task parameter details
-    task_param = next(
-        p for p in tl_searchspace.parameters if isinstance(p, TaskParameter)
-    )
-    name_task = task_param.name
-    target_task = task_param.active_values[0]  # Extract single target task
-    all_values = task_param.values
-    source_tasks = [val for val in all_values if val != target_task]
-
-    return vanilla_searchspace, tl_searchspace, name_task, source_tasks, target_task
-
-
 def direct_arylation_temperature_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
 ) -> pd.DataFrame:
@@ -63,7 +40,7 @@ def direct_arylation_temperature_tl_regr(
     results_df = run_tl_regression_benchmark(
         settings=settings,
         load_data_fn=load_data,
-        create_searchspaces_fn=create_searchspaces,
+        make_searchspace_fn=make_searchspace,
         create_objective_fn=make_objective,
     )
     return results_df
