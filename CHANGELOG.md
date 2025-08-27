@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DesirabilityObjective.as_pre_transformation` flag). As a result, posterior
   evaluations now return information for each target individually, instead of just for
   the desirability value.
+- Objective transformations (both tensor and dataframe based) now always use the Torch
+  computation route, avoiding the need for duplicated transformation logic
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed
