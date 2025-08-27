@@ -52,7 +52,10 @@ def impute_target_values(
             # TODO: Add option to control how ties are handled (e.g. random, first, all)
             transformed = transformed.sample(frac=1, replace=False)
 
-            opt_idx = transformed.idxmax() if mode == "best" else transformed.idxmin()
+            operator = (
+                "idxmax" if (mode == "best") == (not target.minimize) else "idxmin"
+            )
+            opt_idx = getattr(transformed, operator)()
             values[target.name] = lookup.loc[opt_idx, target.name]
         return pd.Series(values)
 
