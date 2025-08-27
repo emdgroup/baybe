@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 from cattrs import IterableValidationError
+from pandas.testing import assert_frame_equal
 
-from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.desirability import _OUTPUT_NAME, DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
+from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
@@ -137,7 +139,7 @@ def test_desirability_scalarization(values, scalarizer, weights, expected):
         (NumericalTarget.normalized_ramp("t", cutoffs=(0, 1)), 1),
     ],
 )
-def test_single_objective(target, opt):
+def test_single_objective_recommendation(target, opt):
     """Recommendations yield expected results with and without bounded objective."""
     searchspace = NumericalContinuousParameter("p", [0, 1]).to_searchspace()
     objective = target.to_objective()
@@ -147,3 +149,60 @@ def test_single_objective(target, opt):
     )
     rec = recommender.recommend(1, searchspace, objective, measurements)
     assert np.isclose(rec["p"].item(), opt)
+
+
+@pytest.mark.parametrize("minimize", [True, False])
+def test_single_objective(minimize):
+    """The objective transformation yields the expected result."""
+    obj = NumericalTarget("t", minimize=minimize).exp().to_objective()
+    df = pd.DataFrame({"t": np.random.randn(100)})
+    transformed = obj.transform(df)
+    expected = -np.exp(df) if minimize else np.exp(df)
+    assert_frame_equal(transformed, expected)
+
+
+@pytest.mark.parametrize("minimize", [True, False])
+@pytest.mark.parametrize("as_pre_transformation", [True, False])
+def test_desirability_objective(minimize, as_pre_transformation):
+    """The objective transformation yields the expected result."""
+    t1 = NumericalTarget("t1").exp()
+    t2 = NumericalTarget("t2", minimize=minimize).power(2)
+    obj = DesirabilityObjective(
+        [t1, t2],
+        scalarizer=Scalarizer.MEAN,
+        weights=[1, 1],
+        require_normalization=False,
+        as_pre_transformation=as_pre_transformation,
+    )
+    df = pd.DataFrame(np.random.randn(100, 2), columns=["t1", "t2"])
+    transformed = obj.transform(df)
+    expected = (
+        pd.concat(
+            [
+                np.exp(df["t1"]),
+                1 - (df["t2"] ** 2) if minimize else df["t2"] ** 2,
+            ],
+            axis=1,
+        )
+        .mean(axis=1)
+        .to_frame(name=_OUTPUT_NAME)
+    )
+    assert_frame_equal(transformed, expected)
+
+
+@pytest.mark.parametrize("minimize", [True, False])
+def test_pareto_objective(minimize):
+    """The objective transformation yields the expected result."""
+    t1 = NumericalTarget("t1").exp()
+    t2 = NumericalTarget("t2", minimize=minimize).power(2)
+    obj = ParetoObjective([t1, t2])
+    df = pd.DataFrame(np.random.randn(100, 2), columns=["t1", "t2"])
+    transformed = obj.transform(df)
+    expected = pd.concat(
+        [
+            np.exp(df["t1"]),
+            -(df["t2"] ** 2) if minimize else df["t2"] ** 2,
+        ],
+        axis=1,
+    )
+    assert_frame_equal(transformed, expected)
