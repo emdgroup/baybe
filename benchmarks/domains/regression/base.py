@@ -144,17 +144,7 @@ def run_tl_regression_benchmark(
             )
 
             for n_train_pts in train_pts_bar:
-                # Create models
-                vanilla_gp = GaussianProcessSurrogate()
-                tl_models = [
-                    {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
-                    {"name": "MHGP", "model": MHGPGaussianProcessSurrogate()},
-                    {"name": "SHGP", "model": SHGPGaussianProcessSurrogate()},
-                    {
-                        "name": "Karins_Source_Prior",
-                        "model": SourcePriorGaussianProcessSurrogate(),
-                    },
-                ]
+                
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
                     n_train_pts : n_train_pts + settings.max_n_train_points
@@ -164,8 +154,7 @@ def run_tl_regression_benchmark(
 
                 # Evaluate models
                 eval_results = _evaluate_models(
-                    vanilla_gp=vanilla_gp,
-                    tl_models=tl_models,
+                    fraction_source=fraction_source,
                     source_data=source_subset,
                     target_train=target_train,
                     target_test=target_test,
@@ -223,8 +212,7 @@ def _calculate_metrics(
 
 
 def _evaluate_models(
-    vanilla_gp: GaussianProcessSurrogate,
-    tl_models: list[dict[str, Any]],
+    fraction_source: float,
     source_data: pd.DataFrame,
     target_train: pd.DataFrame,
     target_test: pd.DataFrame,
@@ -238,8 +226,7 @@ def _evaluate_models(
     """Train models and evaluate their performance using specified metrics.
 
     Args:
-        vanilla_gp: Vanilla GP model
-        tl_models: List of transfer learning models with their names
+        fraction_source: Fraction of source data
         source_data: Source task data
         target_train: Target task training data
         target_test: Target task test data
@@ -253,42 +240,83 @@ def _evaluate_models(
     Returns:
         Dictionary with evaluation results
     """
-    # Crurrent implemented metrics require mean predictions only
+        # Crurrent implemented metrics require mean predictions only
     stats_to_request = ["mean"]
 
     # Results dictionary
     results = {}
+    
+    # Create models
+    gp_reduced = GaussianProcessSurrogate()
+    # tl_models = [
+    #     {"name": "GP_Index_Kernel", "model": GaussianProcessSurrogate()},
+    #     {"name": "MHGP", "model": MHGPGaussianProcessSurrogate()},
+    #     {"name": "SHGP", "model": SHGPGaussianProcessSurrogate()},
+    #     {
+    #         "name": "Karins_Source_Prior",
+    #         "model": SourcePriorGaussianProcessSurrogate(),
+    #     },
+    # ]
+    tl_scenarios = {
+        f"{int(100 * fraction_source)}_index_kernel": GaussianProcessSurrogate(),
+        f"{int(100 * fraction_source)}_mhgp": MHGPGaussianProcessSurrogate(),
+        f"{int(100 * fraction_source)}_shgp": SHGPGaussianProcessSurrogate(),
+        f"{int(100 * fraction_source)}_source_prior": SourcePriorGaussianProcessSurrogate(),
+    }
 
-    # Train vanilla GP on target data only
-    vanilla_gp.fit(
+    # Train vanilla GP on the reduced searchspace and the target data only
+    gp_reduced.fit(
         searchspace=vanilla_searchspace,
         objective=objective,
         measurements=target_train,
     )
 
     # Prepare test data for vanilla GP
-    test_for_vanilla = target_test.copy()
+    test_for_gp_reduced = target_test.copy()
 
     # Evaluate vanilla GP
-    vanilla_pred = vanilla_gp.posterior_stats(test_for_vanilla, stats=stats_to_request)
+    gp_reduced_pred = gp_reduced.posterior_stats(test_for_gp_reduced, stats=stats_to_request)
 
     # Calculate all requested metrics for vanilla GP
-    vanilla_metrics = _calculate_metrics(
+    gp_reduced_metrics = _calculate_metrics(
         true_values=target_test[target_column].values,
-        predictions=vanilla_pred,
+        predictions=gp_reduced_pred,
         target_column=target_column,
-        model_prefix="vanilla",
+        model_prefix="0_reduced_searchspace",
     )
-    results.update(vanilla_metrics)
+    results.update(gp_reduced_metrics)
+
+    # # TODO: Add the vanilla GP on full searchspace here.
+    # vanilla_gp_full = GaussianProcessSurrogate()
+    # # Train vanilla GP on the reduced searchspace and the target data only
+    # vanilla_gp_full.fit(
+    #     searchspace=tl_searchspace,
+    #     objective=objective,
+    #     # TODO: Here we probably need to add a TaskParameter column
+    #     measurements=target_train,
+    # )
+    # # Prepare test data for vanilla GP
+    # # TODO: Slo here we might need to add a task column
+    # test_for_gp_full = target_test.copy()
+
+    # # Evaluate vanilla GP
+    # gp_full_pred = gp_reduced.posterior_stats(test_for_gp_full, stats=stats_to_request)
+
+    # # Calculate all requested metrics for vanilla GP
+    # gp_full_metrics = _calculate_metrics(
+    #     true_values=target_test[target_column].values,
+    #     predictions=gp_full_pred,
+    #     target_column=target_column,
+    #     model_prefix="0_full_searchspace",
+    # )
+    # results.update(gp_full_metrics)
+
 
     # Sample source data and prepare combined data for TL models
     combined_data = pd.concat([source_data, target_train])
 
     # Train and evaluate each TL model
-    for tl_model_dict in tl_models:
-        model_name = tl_model_dict["name"]
-        tl_model = tl_model_dict["model"]
-
+    for scenario, tl_model in tl_scenarios.items():
         # Train TL model with combined data
         tl_model.fit(
             searchspace=tl_searchspace,
@@ -309,7 +337,7 @@ def _evaluate_models(
             true_values=target_test[target_column].values,
             predictions=tl_pred,
             target_column=target_column,
-            model_prefix=model_name,
+            model_prefix=scenario,
         )
         results.update(tl_metrics)
 
