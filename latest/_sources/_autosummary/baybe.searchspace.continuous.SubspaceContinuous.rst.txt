@@ -26,8 +26,6 @@ SubspaceContinuous
       ~SubspaceContinuous.inactive_parameter_combinations
       ~SubspaceContinuous.sample_from_full_factorial
       ~SubspaceContinuous.sample_uniform
-      ~SubspaceContinuous.samples_full_factorial
-      ~SubspaceContinuous.samples_random
       ~SubspaceContinuous.to_dict
       ~SubspaceContinuous.to_json
       ~SubspaceContinuous.to_searchspace

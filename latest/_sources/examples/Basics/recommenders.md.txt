@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-    120  Butyornitrile      Cesium acetate                     BrettPhos   
-    80     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    65   Butyl Ester   Potassium acetate                     BrettPhos   
+    419     p-Xylene  Potassium pivalate                     BrettPhos   
+    431     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    318        105.0          0.057  
-    120        105.0          0.057  
-    80         120.0          0.153  
+    65          90.0          0.153  
+    419        105.0          0.153  
+    431        120.0          0.153  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    318           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
-    120  Butyornitrile      Cesium acetate                     BrettPhos   
-    80     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    65   Butyl Ester   Potassium acetate                     BrettPhos   
+    419     p-Xylene  Potassium pivalate                     BrettPhos   
+    431     p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    318        105.0          0.057  13.468018  
-    120        105.0          0.057  18.206993  
-    80         120.0          0.153  28.153899  
+    65          90.0          0.153   2.276139  
+    419        105.0          0.153  13.364231  
+    431        120.0          0.153   9.419703  
 
 
 

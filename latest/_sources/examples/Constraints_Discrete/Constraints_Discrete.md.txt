@@ -6,8 +6,8 @@ can be applied to discrete search spaces.
 ```{toctree}
 :maxdepth: 1
 
-Product/Sum <prodsum_constraints>
-Dependency <dependency_constraints>
 Custom <custom_constraints>
+Dependency <dependency_constraints>
 Exclusion <exclusion_constraints>
+Product/Sum <prodsum_constraints>
 ```
