@@ -179,7 +179,7 @@ def validate_parameter_input(
                 )
 
 
-def validate_object_names(objects: Iterable[Parameter | Target]) -> None:
+def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
     """Validate that the provided objects have unique names.
 
     Args:
