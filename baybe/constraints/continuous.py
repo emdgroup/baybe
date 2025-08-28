@@ -9,9 +9,10 @@ from itertools import combinations
 from math import comb
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 import numpy as np
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, in_, instance_of, lt
+from attrs.validators import deep_iterable, gt, in_, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -43,10 +44,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     coefficients for `<=`."""
 
     coefficients: tuple[float, ...] = field(
-        converter=lambda x: tuple(float(itm) for itm in x),
-        validator=deep_iterable(
-            member_validator=finite_float, iterable_validator=instance_of(tuple)
-        ),
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=deep_iterable(member_validator=finite_float),
     )
     """In-/equality coefficient for each entry in ``parameters``."""
 
@@ -55,7 +54,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
-        self, _: Any, coefficients: tuple[float, ...]
+        self, _: Any, coefficients: Sequence[float]
     ) -> None:
         """Validate the coefficients.
 
