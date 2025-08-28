@@ -1106,7 +1106,7 @@ the total of all ingredients is 100%:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c_total_sum</span> <span class="o">=</span> <span class="n">ContinuousLinearConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="n">g1</span> <span class="o">+</span> <span class="n">g2</span> <span class="o">+</span> <span class="n">g3</span><span class="p">,</span>
     <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;=&quot;</span><span class="p">,</span>
-    <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g1</span> <span class="o">+</span> <span class="n">g2</span> <span class="o">+</span> <span class="n">g3</span><span class="p">),</span>
+    <span class="n">coefficients</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g1</span> <span class="o">+</span> <span class="n">g2</span> <span class="o">+</span> <span class="n">g3</span><span class="p">),</span>
     <span class="n">rhs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -1115,7 +1115,7 @@ the total of all ingredients is 100%:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c_g2_min</span> <span class="o">=</span> <span class="n">ContinuousLinearConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="n">g2</span><span class="p">,</span>
     <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span>
-    <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g2</span><span class="p">),</span>
+    <span class="n">coefficients</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g2</span><span class="p">),</span>
     <span class="n">rhs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -1124,7 +1124,7 @@ the total of all ingredients is 100%:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">c_g3_max</span> <span class="o">=</span> <span class="n">ContinuousLinearConstraint</span><span class="p">(</span>
     <span class="n">parameters</span><span class="o">=</span><span class="n">g3</span><span class="p">,</span>
     <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span>
-    <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g3</span><span class="p">),</span>
+    <span class="n">coefficients</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">g3</span><span class="p">),</span>
     <span class="n">rhs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -1150,16 +1150,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0   2.897634  17.977216     0.032530     4.785303  64.279417  10.027900
-1   7.241315   7.878412     1.226731     2.369171  37.250128  44.034244
-2  17.924795   5.784793     0.531229     1.143777  65.716524   8.898881
-3  14.190793  11.869930     1.095815     3.473209  15.233627  54.136626
-4  16.173735  16.286480     0.333582     0.595998   0.664179  65.946025
-5  13.666452   0.839197     2.862869     1.746995  12.311716  68.572771
-6   1.289171  12.928198     2.889867     0.945490  18.716532  63.230742
-7   6.629843   6.437180     1.323973     3.544026  17.648565  64.416413
-8  18.807997   2.225689     1.419673     1.848146  44.187347  31.511148
-9  18.480417   6.490951     0.102010     4.362486  44.872161  25.691976
+0  11.232829  11.907689     1.282099     1.771454  53.716834  20.089094
+1   8.043909  17.368295     2.008696     0.290001  41.738272  30.550827
+2  14.530932   2.214472     3.707855     0.482508  26.484643  52.579590
+3   5.563971   9.455211     2.656897     1.538387  27.087783  53.697750
+4  11.640637   1.834585     2.581133     1.619960  47.041939  35.281747
+5   9.643536   2.760894     0.259296     2.101467  36.513397  48.721411
+6  18.897252   9.208457     1.137839     0.211762  59.260515  11.284174
+7   4.091774   9.946054     0.221865     1.211100  52.198747  32.330461
+8  11.762112  11.704191     1.718225     2.641313  37.413633  34.760526
+9   3.496835  16.523233     4.439336     0.052085  29.836957  45.651554
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1174,16 +1174,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    20.874850            4.817833
-1  100.0    15.119726            3.595902
-2  100.0    23.709588            1.675006
-3  100.0    26.060723            4.569023
-4  100.0    32.460216            0.929580
-5  100.0    14.505649            4.609863
-6  100.0    14.217368            3.835358
-7  100.0    13.067023            4.867998
-8  100.0    21.033686            3.267819
-9  100.0    24.971368            4.464495
+0  100.0    23.140518            3.053553
+1  100.0    25.412204            2.298697
+2  100.0    16.745404            4.190363
+3  100.0    15.019182            4.195285
+4  100.0    13.475222            4.201092
+5  100.0    12.404429            2.360763
+6  100.0    28.105709            1.349601
+7  100.0    14.037828            1.432964
+8  100.0    23.466303            4.359538
+9  100.0    20.020068            4.491421
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>
