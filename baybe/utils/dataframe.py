@@ -645,7 +645,7 @@ def get_transform_objects(
 
     if (not allow_extra) and (extra := set(df) - set(names)):
         raise ValueError(
-            f"The provided dataframe column(s) {extra} cannot be matched against"
+            f"The provided dataframe column(s) {extra} cannot be matched against "
             f"the given objects. If you want to transform a dataframe "
             f"with additional columns, explicitly set `allow_extra=True'."
         )

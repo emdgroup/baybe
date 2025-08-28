@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import math
-import warnings
 from collections.abc import Collection, Iterator, Sequence
 from itertools import chain, product
 from typing import TYPE_CHECKING, Any, cast
@@ -414,44 +413,13 @@ class SubspaceContinuous(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame | None = None,
+        df: pd.DataFrame,
         /,
         *,
         allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
+        allow_extra: bool = False,
     ) -> pd.DataFrame:
         """See :func:`baybe.searchspace.core.SearchSpace.transform`."""
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the data to be transformed as first positional argument."
-            )
-
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
-
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df) - {p.name for p in self.parameters}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
-
         # Extract the parameters to be transformed
         parameters = get_transform_objects(
             df, self.parameters, allow_missing=allow_missing, allow_extra=allow_extra
@@ -459,16 +427,6 @@ class SubspaceContinuous(SerialMixin):
 
         # Transform the parameters
         return df[[p.name for p in parameters]]
-
-    def samples_random(self, n_points: int = 1) -> pd.DataFrame:
-        """Deprecated!"""  # noqa: D401
-        warnings.warn(
-            f"The method '{SubspaceContinuous.samples_random.__name__}' "
-            f"has been deprecated and will be removed in a future version. "
-            f"Use '{SubspaceContinuous.sample_uniform.__name__}' instead.",
-            DeprecationWarning,
-        )
-        return self.sample_uniform(n_points)
 
     def sample_uniform(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw uniform random parameter configurations from the continuous space.
@@ -600,16 +558,6 @@ class SubspaceContinuous(SerialMixin):
             for con in self.constraints_cardinality
         ]
         return [set(chain(*x)) for x in zip(*inactives_per_constraint)]
-
-    def samples_full_factorial(self, n_points: int = 1) -> pd.DataFrame:
-        """Deprecated!"""  # noqa: D401
-        warnings.warn(
-            f"The method '{SubspaceContinuous.samples_full_factorial.__name__}' "
-            f"has been deprecated and will be removed in a future version. "
-            f"Use '{SubspaceContinuous.sample_from_full_factorial.__name__}' instead.",
-            DeprecationWarning,
-        )
-        return self.sample_from_full_factorial(n_points)
 
     def sample_from_full_factorial(self, batch_size: int = 1) -> pd.DataFrame:
         """Draw parameter configurations from the full factorial of the space.
