@@ -6,8 +6,6 @@ from hypothesis import given
 from pytest import param
 
 from baybe.transformations import (
-    ChainedTransformation,
-    ClampingTransformation,
     Transformation,
 )
 
@@ -49,20 +47,6 @@ from ..hypothesis_strategies.transformations import (
 def test_single_transformation_roundtrip(transformation_strategy, data):
     """A serialization roundtrip yields an equivalent object."""
     transformation = data.draw(transformation_strategy)
-    if (
-        isinstance(transformation, ClampingTransformation)
-        or isinstance(transformation, ChainedTransformation)
-        and any(
-            isinstance(t, ClampingTransformation)
-            for t in transformation.transformations
-        )
-    ):
-        pytest.xfail(
-            reason=(
-                "Serialization of clamping transformations is not yet supported. "
-                "Needs https://github.com/emdgroup/baybe/pull/577"
-            )
-        )
     string = transformation.to_json()
     transformation2 = Transformation.from_json(string)
     assert transformation == transformation2, (transformation, transformation2)
