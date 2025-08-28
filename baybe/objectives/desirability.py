@@ -191,6 +191,7 @@ class DesirabilityObjective(Objective):
 
         return to_string("Objective", *fields)
 
+    @override
     @property
     def _oriented_targets(self) -> tuple[Target, ...]:
         # For desirability, we do not only negate but also shift by 1 so that
@@ -201,6 +202,7 @@ class DesirabilityObjective(Objective):
             for t in self.targets
         )
 
+    @override
     @property
     def _full_transformation(self) -> pd.DataFrame:
         return self._to_botorch_full()
