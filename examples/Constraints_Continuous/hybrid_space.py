@@ -83,7 +83,7 @@ constraints = [
         ),
     ),
     ContinuousLinearConstraint(
-        parameters=["x_3", "x_4"], operator="=", coefficients=[1.0, -1.0], rhs=2.0
+        parameters=["x_3", "x_4"], operator="=", coefficients=(1.0, -1.0), rhs=2.0
     ),
 ]
 
