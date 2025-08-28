@@ -9,7 +9,6 @@ from typing import Any, cast
 
 import pandas as pd
 from attrs import define, evolve, field
-from attrs.converters import optional
 from attrs.validators import instance_of
 from typing_extensions import override
 
@@ -100,7 +99,7 @@ class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
 
     transformation: Transformation = field(
-        factory=IdentityTransformation, converter=optional(convert_transformation)
+        factory=IdentityTransformation, converter=convert_transformation
     )
     """An optional target transformation."""
 
