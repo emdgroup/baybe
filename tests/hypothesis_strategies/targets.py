@@ -4,6 +4,7 @@ import hypothesis.strategies as st
 
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
+from baybe.transformations.basic import ClampingTransformation
 
 from ..hypothesis_strategies.transformations import (
     chained_transformations,
@@ -16,10 +17,15 @@ target_names = st.text(min_size=1)
 
 
 @st.composite
-def numerical_targets(draw: st.DrawFn):
+def numerical_targets(draw: st.DrawFn, normalized: bool = False):
     """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
     name = draw(target_names)
-    transformation = draw(st.one_of(single_transformations, chained_transformations()))
+    if normalized:
+        transformation = ClampingTransformation(0, 1)
+    else:
+        transformation = draw(
+            st.one_of(single_transformations, chained_transformations())
+        )
     minimize = draw(st.booleans())
     metadata = draw(measurable_metadata())
     return NumericalTarget(name, transformation, minimize=minimize, metadata=metadata)

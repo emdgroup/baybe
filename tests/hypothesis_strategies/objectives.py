@@ -12,6 +12,9 @@ from ..hypothesis_strategies.metadata import metadata
 from ..hypothesis_strategies.targets import numerical_targets
 
 _target_lists = st.lists(numerical_targets(), min_size=2, unique_by=lambda t: t.name)
+_normalized_target_lists = st.lists(
+    numerical_targets(normalized=True), min_size=2, unique_by=lambda t: t.name
+)
 
 
 @st.composite
@@ -25,7 +28,13 @@ def single_target_objectives(draw: st.DrawFn):
 @st.composite
 def desirability_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.desirability.DesirabilityObjective`."""
-    targets = draw(_target_lists)
+    scalarizer = draw(st.sampled_from(Scalarizer))
+    if require_normalization := (
+        draw(st.booleans()) or scalarizer is Scalarizer.GEOM_MEAN
+    ):
+        targets = draw(_normalized_target_lists)
+    else:
+        targets = draw(_normalized_target_lists)
     weights = draw(
         st.lists(
             finite_floats(min_value=0.0, exclude_min=True),
@@ -33,11 +42,6 @@ def desirability_objectives(draw: st.DrawFn):
             max_size=len(targets),
         )
     )
-    scalarizer = draw(st.sampled_from(Scalarizer))
-    if require_normalization := (
-        draw(st.booleans()) or scalarizer is Scalarizer.GEOM_MEAN
-    ):
-        targets = [t.clamp(0, 1) for t in targets]
     objective_metadata = draw(metadata())
     return DesirabilityObjective(
         targets,
