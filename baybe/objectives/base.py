@@ -103,7 +103,7 @@ class Objective(ABC, SerialMixin):
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch representation."""
-        if not is_all_instance(self.targets, NumericalTarget):
+        if not is_all_instance(self._oriented_targets, NumericalTarget):
             raise NotImplementedError(
                 "Conversion to BoTorch is only supported for numerical targets."
             )
