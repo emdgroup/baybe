@@ -501,6 +501,19 @@ class SigmoidTransformation(MonotonicTransformation):
 
 
 # Register (un-)structure hooks
+# -----------------------------
+
+
+# >>>>> Workaround
+# # Becomes obsolete after https://github.com/emdgroup/baybe/pull/577
+@converter.register_structure_hook
+def _(dct, _) -> ClampingTransformation:
+    interval = Interval.from_dict(dct["bounds"])
+    return ClampingTransformation(*interval.to_tuple())
+
+
+# <<<<< Workaround
+
 converter.register_structure_hook(
     Transformation, get_base_structure_hook(Transformation)
 )

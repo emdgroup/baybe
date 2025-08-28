@@ -81,6 +81,14 @@ def get_base_structure_hook(
             type_ = val if isinstance(val, str) else val.pop("type")
             concrete_cls = find_subclass(base, type_)
 
+        # >>>>> Workaround
+        # Becomes obsolete after https://github.com/emdgroup/baybe/pull/577
+        from baybe.transformations.basic import ClampingTransformation
+
+        if concrete_cls == ClampingTransformation:
+            return converter.structure(val, ClampingTransformation)
+        # <<<<< Workaround
+
         # Create the structuring function for the class and call it
         fn = make_dict_structure_fn(
             concrete_cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
