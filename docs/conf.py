@@ -88,6 +88,7 @@ extensions = [
 bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
+myst_heading_anchors = 4
 
 
 # Tell sphinx where to find the templates
