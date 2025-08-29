@@ -80,7 +80,7 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = res_grouped["Conti_finite1"].sum()
-    np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
+    assert np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
