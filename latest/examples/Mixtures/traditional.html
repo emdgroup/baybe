@@ -987,6 +987,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_object_names.html">baybe.utils.validation.validate_object_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
@@ -1150,16 +1151,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  11.232829  11.907689     1.282099     1.771454  53.716834  20.089094
-1   8.043909  17.368295     2.008696     0.290001  41.738272  30.550827
-2  14.530932   2.214472     3.707855     0.482508  26.484643  52.579590
-3   5.563971   9.455211     2.656897     1.538387  27.087783  53.697750
-4  11.640637   1.834585     2.581133     1.619960  47.041939  35.281747
-5   9.643536   2.760894     0.259296     2.101467  36.513397  48.721411
-6  18.897252   9.208457     1.137839     0.211762  59.260515  11.284174
-7   4.091774   9.946054     0.221865     1.211100  52.198747  32.330461
-8  11.762112  11.704191     1.718225     2.641313  37.413633  34.760526
-9   3.496835  16.523233     4.439336     0.052085  29.836957  45.651554
+0  10.012083  13.443906     0.635794     0.934921   4.748419  70.224877
+1  16.908700   4.298097     0.155441     4.020832  33.123720  41.493210
+2  17.731896  15.886460     1.967666     1.848354  48.674017  13.891607
+3   5.902842  11.145937     2.311958     2.424956  69.409471   8.804836
+4   3.124304  11.557691     1.089980     1.073801  51.952430  31.201793
+5  18.084968  17.086016     3.664751     0.235810  33.629302  27.299153
+6  12.992040  19.904754     0.546442     1.574585  57.660679   7.321501
+7   1.807784  13.079556     1.331598     2.688064  30.917479  50.175519
+8   5.389398  17.683591     3.576716     1.350177  35.994513  36.005605
+9  15.147521   6.599368     1.280061     2.121480  65.548477   9.303093
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1174,16 +1175,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    23.140518            3.053553
-1  100.0    25.412204            2.298697
-2  100.0    16.745404            4.190363
-3  100.0    15.019182            4.195285
-4  100.0    13.475222            4.201092
-5  100.0    12.404429            2.360763
-6  100.0    28.105709            1.349601
-7  100.0    14.037828            1.432964
-8  100.0    23.466303            4.359538
-9  100.0    20.020068            4.491421
+0  100.0    23.455989            1.570715
+1  100.0    21.206797            4.176273
+2  100.0    33.618356            3.816020
+3  100.0    17.048779            4.736914
+4  100.0    14.681995            2.163781
+5  100.0    35.170984            3.900561
+6  100.0    32.896794            2.121026
+7  100.0    14.887340            4.019662
+8  100.0    23.072989            4.926893
+9  100.0    21.746889            3.401541
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

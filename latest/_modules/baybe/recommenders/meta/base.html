@@ -986,6 +986,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.validate_object_names.html">baybe.utils.validation.validate_object_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
@@ -1056,6 +1057,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span><span class="p">,</span> <span class="n">converter</span><span class="p">,</span> <span class="n">unstructure_base</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_base_structure_hook</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">validate_object_names</span>
 
 
 <div class="viewcode-block" id="MetaRecommender">
@@ -1155,6 +1157,9 @@
         <span class="n">pending_experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">validate_object_names</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+
         <span class="n">recommender</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_recommender</span><span class="p">(</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span>

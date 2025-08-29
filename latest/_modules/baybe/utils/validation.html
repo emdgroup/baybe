@@ -986,6 +986,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_object_names.html">baybe.utils.validation.validate_object_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_parameter_input.html">baybe.utils.validation.validate_parameter_input</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.validate_target_input.html">baybe.utils.validation.validate_target_input</a></li>
 </ul>
@@ -1225,6 +1226,27 @@
                     <span class="sa">f</span><span class="s2">&quot;the flag &#39;numerical_measurements_must_be_within_tolerance&#39; &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;to &#39;False&#39; to disable this behavior.&quot;</span>
                 <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_object_names">
+<a class="viewcode-back" href="../../../_autosummary/baybe.utils.validation.validate_object_names.html#baybe.utils.validation.validate_object_names">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_object_names</span><span class="p">(</span><span class="n">objects</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Parameter</span> <span class="o">|</span> <span class="n">Target</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that the provided objects have unique names.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        objects: An iterable containing a combination of parameters and targets.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If two or more objects have the same name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">)):</span>
+        <span class="n">duplicates</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span> <span class="k">if</span> <span class="n">names</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;All parameters and targets must have unique names. The following names &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;appear multiple times: </span><span class="si">{</span><span class="n">duplicates</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span></div>
 
 </pre></div>
         </article>
