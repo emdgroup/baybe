@@ -101,12 +101,12 @@ of the other three by assigning it a higher weight:
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-target_1 = NumericalTarget.normalized_ramp(name="t_1", cutoffs=(0, 100), descending=True)
-target_2 = NumericalTarget.normalized_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
-target_3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
-target_4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
+t1 = NumericalTarget.normalized_ramp(name="t_1", cutoffs=(0, 100), descending=True)
+t2 = NumericalTarget.normalized_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
+t3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
+t4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
 objective = DesirabilityObjective(
-    targets=[target_1, target_2, target_3, target_4],
+    targets=[t1, t2, t3, t4],
     weights=[2.0, 1.0, 1.0, 1.0],  # optional (by default, all weights are equal)
     scalarizer="GEOM_MEAN",  # optional
 )

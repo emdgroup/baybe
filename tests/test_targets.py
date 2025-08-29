@@ -29,12 +29,12 @@ def test_target_multiplication():
     assert t1.transformation == AffineTransformation(factor=2)
 
 
-def test_target_inversion():
-    """Double inversion cancels out."""
+def test_target_negation():
+    """Double negation cancels out."""
     series = pd.Series([-2, 0, 3], dtype=float)
     t = NumericalTarget("t")
-    ti = t.invert()
-    tii = ti.invert()
+    ti = t.negate()
+    tii = ti.negate()
 
     transformed = t.transform(series)
     assert tii == t

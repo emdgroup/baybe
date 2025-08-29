@@ -380,6 +380,7 @@ class TriangularTransformation(Transformation):
         return self._transformation(x)
 
 
+@_image_equals_codomain
 @define(frozen=True)
 class LogarithmicTransformation(MonotonicTransformation):
     """A logarithmic transformation."""
@@ -387,6 +388,12 @@ class LogarithmicTransformation(MonotonicTransformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.log()
+
+    @override
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        # Everything smaller than zero does not extend the codomain but gives NaN
+        interval = Interval.create(interval)
+        return super().get_codomain(interval.clamp(min=0.0))
 
 
 @define(frozen=True)
@@ -494,6 +501,19 @@ class SigmoidTransformation(MonotonicTransformation):
 
 
 # Register (un-)structure hooks
+# -----------------------------
+
+
+# >>>>> Workaround
+# # Becomes obsolete after https://github.com/emdgroup/baybe/pull/577
+@converter.register_structure_hook
+def _(dct, _) -> ClampingTransformation:
+    interval = Interval.from_dict(dct["bounds"])
+    return ClampingTransformation(*interval.to_tuple())
+
+
+# <<<<< Workaround
+
 converter.register_structure_hook(
     Transformation, get_base_structure_hook(Transformation)
 )
