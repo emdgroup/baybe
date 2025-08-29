@@ -110,7 +110,7 @@ inform the corresponding {class}`~baybe.objectives.base.Objective` holding the
 {class}`~baybe.targets.numerical.NumericalTarget` object to inject an appropriate
 negating transformation **just before** passing the target values to the optimization
 engine, allowing us to reuse the same maximization-based routines for all targets. The
-details of this negation step depends on the objective type being used.
+details of this negation step depend on the objective type being used.
 
 However, while numerically equivalent, there is a semantic difference between minimizing a
 quantity and maximizing the negated signal derived from it. This difference is both
@@ -141,7 +141,7 @@ assert_frame_equal(
 # ... the targets themselves are not equal ...
 assert t1 != t2
 
-# ... and the derivative signal they specify differ!
+# ... and the derivative signals they specify differ!
 assert not t1.transform(s).equals(t2.transform(s))
 ```
 ````
@@ -184,7 +184,7 @@ t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 :class: note
 ✅ Simple to use: no configuration required other than the set point value itself
 
-❌ Cannot be used in situation where normalized targets are required
+❌ Cannot be used in situations where normalized targets are required
 ```
 
 #### Triangular Transformation
@@ -286,7 +286,7 @@ assert t_power == t_quad
 
 ✅ Smooth gradient on the entire domain, which can be beneficial for optimization
 
-❌ Cannot be used in situation where normalized targets are required
+❌ Cannot be used in situations where normalized targets are required
 ```
 
 #### Custom Transformation
