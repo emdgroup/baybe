@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `initialization`, using them for pre-selecting points 
 
 ### Fixed
-- `Campaign` no longer allows overlapping names between parameters and targets
+- It is no longer possible to use identical names between parameters and targets
 - Random seed context is correctly set within benchmarks
 - Measurement input validation now respects typical tolerances associated with floating
   point representation inaccuracy
