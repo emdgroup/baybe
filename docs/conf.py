@@ -132,6 +132,7 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
+    (r"py:obj", "baybe.acquisition.base.*.is_analytic"),
     # KMedoids
     (r"py:.*", r".*clustering_algorithms.*KMedoids.*"),
     (r"ref:.*", r".*clustering_algorithms.*KMedoids.*"),
