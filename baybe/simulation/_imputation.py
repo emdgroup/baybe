@@ -45,18 +45,18 @@ def impute_target_values(
 
     if mode in ("best", "worst"):
         values: dict[str, Any] = {}
-        for target in targets:
-            transformed = target.transform(lookup[target.name])
+        for t in targets:
+            # We transform via the objective instead of using the target directly,
+            # so that the optional minimization is taken into account
+            # --> "worse" target values always result in smaller transformed values
+            transformed = t.to_objective().transform(lookup[[t.name]]).iloc[:, 0]
 
             # Shuffle for random tie-breaking
             # TODO: Add option to control how ties are handled (e.g. random, first, all)
             transformed = transformed.sample(frac=1, replace=False)
 
-            operator = (
-                "idxmax" if (mode == "best") == (not target.minimize) else "idxmin"
-            )
-            opt_idx = getattr(transformed, operator)()
-            values[target.name] = lookup.loc[opt_idx, target.name]
+            opt_idx = transformed.idxmax() if mode == "best" else transformed.idxmin()
+            values[t.name] = lookup.loc[opt_idx, t.name]
         return pd.Series(values)
 
     raise ValueError(f"Unsupported imputation mode: {mode}")
