@@ -241,8 +241,8 @@ class BotorchAcquisitionFunctionBuilder:
                 assert isinstance(self.objective, SingleTargetObjective)
 
                 if isinstance(
-                    (t := self.objective._target), NumericalTarget
-                ) and not isinstance(t.transformation, IdentityTransformation):
+                    (target := self.objective._target), NumericalTarget
+                ) and not isinstance(target.transformation, IdentityTransformation):
                     raise IncompatibilityError(
                         f"'{qNegIntegratedPosteriorVariance.__name__}' currently "
                         f"does not support any target transformations."
