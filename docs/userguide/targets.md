@@ -149,8 +149,8 @@ assert not t1.transform(s).equals(t2.transform(s))
 ### Set Point Matching
 For common matching transformations, we provide convenience constructors with the
 `match_` prefix (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
-Like for [minimization](#minimization) targets, these constructors inject a
-suitable transformation computing the proximity to the set point value.
+Similar to [minimization](#minimization) targets, these constructors inject a
+suitable transformation computing some form of "proximity" to the set point value.
   
 While you can easily implement your own (potentially complex) matching logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, let us have a look at
@@ -168,11 +168,10 @@ how we can match a single set point using built-in constructors:
 ````{grid-item}
 :columns: 6
 
-The potentially simplest way to match a set point value is by penalizing the absolute
+The potentially simplest way to match a set point value is by minimizing the absolute
 distance to it, since it requires no configuration other than specifying the set point
 value itself. The {meth}`~baybe.targets.numerical.NumericalTarget.match_absolute`
-constructor implements this approach by creating a target whose *negative absolute
-distance* to the set point is maximized. 
+constructor allows you to do exactly that in a single line of code.
 ````
 `````
 
@@ -183,7 +182,7 @@ t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 
 ```{admonition} Practical Considerations
 :class: note
-✅ Simple to use: no configuration required other than set point value itself
+✅ Simple to use: no configuration required other than the set point value itself
 
 ❌ Cannot be used in situation where normalized targets are required
 ```
@@ -198,8 +197,8 @@ t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 
 ````{grid-item}
 :columns: 4
-In some cases, we want to penalize [absolute distance](#absolute-distance) to the set point but only
-up to a certain threshold, above which any further deviation does not matter. Here,
+In some cases, we want to penalize [absolute distance](#absolute-transformation) to the set point but only
+up to a certain threshold, above which any further deviation does not matter. For this purpose,
 the {meth}`~baybe.targets.numerical.NumericalTarget.match_triangular` constructor can be used,
 which allows us to specify these thresholds in various ways.
 ````
@@ -216,10 +215,11 @@ assert t1 == t2 == t3
 ```{admonition} Practical Considerations
 :class: note
 ✅ Normalized output: enables direct comparison with other normalized targets
+
 ✅ Possibility to directly specify an "acceptable range" around the set point value 
 
-❌ Outside the triangular region, there gradient is zero, which can complicate
-optimization if the thresholds are chosen too tight.
+❌ Outside the triangular region, the gradient is zero, which can complicate
+optimization if the thresholds are chosen too tight
 ```
 
 #### Bell Transformation
@@ -232,10 +232,10 @@ optimization if the thresholds are chosen too tight.
 
 ````{grid-item}
 :columns: 6
-The bell-transformed targets created via the
+Bell-transformed targets created via the
 {meth}`~baybe.targets.numerical.NumericalTarget.match_bell` constructor can be
 considered relaxed versions of their [triangular](#triangular-transformation)
-counterparts. Unlike the latter, they have no strict cutoff points, resulting a smooth
+counterparts. Unlike the latter, they have no strict cutoff points, resulting in a smooth
 change in the output with non-zero gradient on the entire domain.
 ````
 `````
@@ -249,6 +249,7 @@ t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 ```{admonition} Practical Considerations
 :class: note
 ✅ Normalized output: enables direct comparison with other normalized targets
+
 ✅ Smooth gradient on the entire domain, which can be beneficial for optimization
 
 ❌ Width of the bell is sometimes not intuitive to set
@@ -266,7 +267,7 @@ t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 :columns: 6
 If you need more precise control over how strongly deviations from the set point are
 penalized, you can use the {meth}`~baybe.targets.numerical.NumericalTarget.match_power`
-constructor, which applies a power transformation to the *negative absolute distance*.
+constructor, which applies a power transformation to the [absolute distance](#absolute-transformation).
 For the common case of squared penalties, we also provide a separate
 {meth}`~baybe.targets.numerical.NumericalTarget.match_quadratic` constructor.
 ````
@@ -281,7 +282,8 @@ assert t_power == t_quad
 
 ```{admonition} Practical Considerations
 :class: note
-✅ Offers control over how strongly deviations from the set point are penalized 
+✅ Offers control over how strongly deviations from the set point are penalized
+
 ✅ Smooth gradient on the entire domain, which can be beneficial for optimization
 
 ❌ Cannot be used in situation where normalized targets are required
@@ -289,17 +291,17 @@ assert t_power == t_quad
 
 #### Custom Transformation
 If none of the built-in constructors fit your needs because you need more fine-grained
-control over the matching behavior (e.g. there are multiple acceptable set points), you
-can always have the fallback option to create a custom
+control over the matching behavior (e.g. when there are multiple acceptable set points),
+you always have the fallback option to create a custom
 {class}`~baybe.transformations.basic.CustomTransformation` that implements the
 corresponding logic and pass it to the regular
 {class}`~baybe.targets.numerical.NumericalTarget` constructor.
 
 
 ### Target Normalization
-Sometimes, it is necessary to normalize targets to the interval [0, 1], to [align them
-on a common scale](#target-normalization). One situation where this can be required is
-when combining the targets using a
+Sometimes, it is necessary to normalize targets to the interval [0, 1] – especially when
+multiple targets are present – in order to align them on a common scale. One situation
+where this can be required is when combining the targets using a
 {class}`~baybe.objectives.desirability.DesirabilityObjective`. For this purpose, we
 provide convenience constructors with the `normalized_` prefix:
 
@@ -329,8 +331,8 @@ t = NumericalTarget.normalized_ramp(name="Target", cutoffs=(0, 1), descending=Tr
 :class: note
 ✅ Easy to interpret: output value changes linearly inside the specified range
 
-❌ Outside the linear region, there gradient is zero, which can complicate
-optimization if the thresholds are chosen too tight.
+❌ Outside the linear region, the gradient is zero, which can complicate
+optimization if the thresholds are chosen too tight
 ```
 
 #### Sigmoid Transformation
