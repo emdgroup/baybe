@@ -513,7 +513,6 @@ class SubspaceContinuous(SerialMixin):
             # constraints, see https://github.com/pytorch/botorch/issues/2468
 
             n_params = len(self.comp_rep_columns)
-
             eq_constraints, ineq_constraints = [], []
 
             for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
