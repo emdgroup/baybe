@@ -131,6 +131,7 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.is_analytic"),
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
     (r"py:obj", "baybe.acquisition.base.*.is_analytic"),
     # KMedoids
@@ -315,5 +316,6 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     """Skip the docstring for the acqf classproperties."""
-    if name in ["supports_batching", "supports_pending_experiments"]:
+    # Skip class properties that cause issues with abstract classes
+    if name in ["supports_batching", "supports_pending_experiments", "is_analytic"]:
         return True
