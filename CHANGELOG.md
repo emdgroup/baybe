@@ -71,6 +71,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Telemetry
+- Option to specify reference values for `add_fake_measurements`
+- `convert_bounds` utility (since now equivalent to `Interval.create`)
+- `geom_mean` utility 
+
+### Deprecations
+- Creating `NumericalTarget`s using a `mode` argument
+- `TargetMode` and `TargetTransformation` enums
+- `linear_transform`, `triangular_transform` and `bell_transform` functions
 
 ### Expired Deprecations (from 0.10.*)
 - `SequentialGreedyRecommender` class
@@ -80,23 +88,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatically setting `allow_extra=True` in `transform` methods of search space
   classes when left unspecified
 
-
 ## [0.13.2] - 2025-07-09
 ### Changed
 - Lockfiles are now generated using `uv lock` and consumed using `uv sync`
 
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
-
-### Removed
-- Option to specify reference values for `add_fake_measurements`
-- `convert_bounds` utility (since now equivalent to `Interval.create`)
-- `geom_mean` utility 
-
-### Deprecations
-- Creating `NumericalTarget`s using a `mode` argument
-- `TargetMode` and `TargetTransformation` enums
-- `linear_transform`, `triangular_transform` and `bell_transform` functions
 
 ## [0.13.1] - 2025-06-06
 - Support for Python 3.13
