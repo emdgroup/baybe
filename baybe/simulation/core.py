@@ -205,8 +205,11 @@ def simulate_experiment(
 
             # Collect raw and transformed measurements
             raw = np.array(results[measurement_col].tolist())
+            objective = target.to_objective()
             transformed = results[measurement_col].apply(
-                lambda x: target.transform(pd.Series(x)).tolist()
+                lambda x: objective.transform(pd.Series(x).to_frame(target.name))
+                .iloc[:, 0]
+                .tolist()
             )
 
             # Compute the instantaneous best
