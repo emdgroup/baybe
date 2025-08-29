@@ -1,5 +1,7 @@
 """Target tests."""
 
+import operator
+
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
@@ -16,7 +18,7 @@ def test_target_addition():
     t1 = NumericalTarget("t") + 1
     t2 = NumericalTarget("t") - (-1)
     assert t1 == t2
-    assert t1._transformation == AffineTransformation(shift=1)
+    assert t1.transformation == AffineTransformation(shift=1)
 
 
 def test_target_multiplication():
@@ -24,7 +26,7 @@ def test_target_multiplication():
     t1 = NumericalTarget("t") * 2
     t2 = NumericalTarget("t") / 0.5
     assert t1 == t2
-    assert t1._transformation == AffineTransformation(factor=2)
+    assert t1.transformation == AffineTransformation(factor=2)
 
 
 def test_target_inversion():
@@ -40,7 +42,8 @@ def test_target_inversion():
     assert_series_equal(transformed, tii.transform(series))
 
 
-def test_target_normalization(monkeypatch):
+@pytest.mark.parametrize("minimize", [True, False])
+def test_target_normalization(monkeypatch, minimize):
     """Target normalization works as expected."""
     # We artificially create some transform whose codomain does not coincide with the
     # image but is twice as broad.
@@ -52,14 +55,17 @@ def test_target_normalization(monkeypatch):
         ),
     )
 
-    t = NumericalTarget("t")
+    t_raw = NumericalTarget("t", minimize=minimize)
     with pytest.raises(IncompatibilityError, match="Only bounded targets"):
-        t.normalize()
+        t_raw.normalize()
 
-    assert t.clamp(-2, 4).get_image() == Interval(-2, 4)
-    assert t.clamp(-2, 4).get_codomain() == Interval(-4, 8)
-    assert t.clamp(-2, 4).normalize().get_image() == Interval(0, 1)
-    assert t.clamp(-2, 4).normalize().get_codomain() != Interval(0, 1)
+    t = t_raw.clamp(-2, 4)
+    assert not t.is_normalized
+    assert t.get_image() == Interval(-2, 4)
+    assert t.get_codomain() == Interval(-4, 8)
+    assert t.normalize().is_normalized
+    assert t.normalize().get_image() == Interval(0, 1)
+    assert t.normalize().get_codomain() != Interval(0, 1)
 
 
 @pytest.mark.parametrize(
@@ -73,10 +79,19 @@ def test_target_normalization(monkeypatch):
     ],
 )
 def test_match_constructors(target, transformed_value):
-    """Larger distance to match values yields smaller transformed values."""
+    """Larger distance to match values yields "worse" transformed values."""
     delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     match_value = 2
+    series = pd.Series(delta) + match_value
 
-    transformed = target.transform(pd.Series(delta) + match_value)
-    assert transformed[0] == transformed_value
-    assert (transformed.diff().dropna() < 0).all()
+    # On the target level, "worse" can mean "larger" or "smaller",
+    # depending on the minimization flag
+    t1 = target.transform(series)
+    op = operator.gt if target.minimize else operator.lt
+    assert t1[0] == transformed_value
+    assert op(t1.diff().dropna(), 0).all()
+
+    # Objectives, on the other hand, are always to be maximized.
+    # Hence, "worse" means "smaller".
+    t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
+    assert (t2.diff().dropna() < 0).all()

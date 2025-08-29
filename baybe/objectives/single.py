@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
@@ -17,7 +16,6 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     pretty_print_df,
-    transform_target_columns,
 )
 
 if TYPE_CHECKING:
@@ -71,50 +69,6 @@ class SingleTargetObjective(Objective):
             return ChainedMCObjective(super().to_botorch(), IdentityMCObjective())
 
         return IdentityMCObjective()
-
-    @override
-    def transform(
-        self,
-        df: pd.DataFrame | None = None,
-        /,
-        *,
-        allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the dataframe to be transformed as first positional argument."
-            )
-
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
-
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df.columns) - {p.name for p in self.targets}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
-
-        return transform_target_columns(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
-        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

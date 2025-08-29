@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `as_pre_transformation` flag to `DesirabilityObjective` for controlling whether the 
   desirability transformation is applied before or after model fitting
 - `supports_partial_measurements` property to `Objective`
-- `total_transformation` and `is_normalized` properties to `NumericalTarget`
+- `is_normalized` property to `NumericalTarget`
 - `negate`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
   `NumericalTarget` for easy creation of transformed targets from existing ones
 - Addition and multiplication dunder methods (for scalar values) to `NumericalTarget`
@@ -57,6 +57,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `DesirabilityObjective.as_pre_transformation` flag). As a result, posterior
   evaluations now return information for each target individually, instead of just for
   the desirability value.
+- Objective transformations (both tensor and dataframe based) now always use the Torch
+  computation route, avoiding the need for duplicated transformation logic
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed

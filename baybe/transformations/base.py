@@ -26,7 +26,7 @@ def _image_equals_codomain(cls: type[_TTransformation], /) -> type[_TTransformat
     return cls
 
 
-@define
+@define(frozen=True)
 class Transformation(SerialMixin, ABC):
     """Abstract base class for all transformations."""
 
@@ -181,6 +181,7 @@ class Transformation(SerialMixin, ABC):
 
 
 @_image_equals_codomain
+@define(frozen=True)
 class MonotonicTransformation(Transformation, ABC):
     """Abstract base class for monotonic transformations."""
 

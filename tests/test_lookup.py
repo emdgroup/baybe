@@ -36,7 +36,7 @@ def targets():
     return [
         NumericalTarget("t_max"),
         NumericalTarget("t_min", minimize=True),
-        NumericalTarget.match_triangular("t_match", 40, cutoffs=(20, 60)),
+        NumericalTarget.match_triangular("t_match", 40, cutoffs=(10, 60)),
     ]
 
 

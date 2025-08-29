@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 import torch
@@ -198,12 +198,6 @@ class BotorchAcquisitionFunctionBuilder:
         #   We use the former for affine transformations and the latter to handle
         #   all other cases.
 
-        match self.objective:
-            case SingleTargetObjective(
-                NumericalTarget(total_transformation=IdentityTransformation())
-            ):
-                return
-
         if self.acqf.is_analytic:
             if not isinstance(self.objective, SingleTargetObjective):
                 targets = self.objective.targets
@@ -222,9 +216,17 @@ class BotorchAcquisitionFunctionBuilder:
                 case _:
                     raise NotImplementedError("No transformation handling implemented.")
 
-            match t := target.total_transformation:
-                case AffineTransformation():
-                    self._args.posterior_transform = t.to_botorch_posterior_transform()
+            match t := target.transformation:
+                case IdentityTransformation() | AffineTransformation():
+                    # The identity/affine type narrowing is lost due to the `negate`
+                    # call, but we know that the result will be an AffineTransformation
+                    # in this specific context
+                    oriented = cast(
+                        AffineTransformation, t.negate() if target.minimize else t
+                    )
+                    self._args.posterior_transform = (
+                        oriented.to_botorch_posterior_transform()
+                    )
                 case _:
                     raise NotImplementedError(
                         f"The selected analytic acquisition "
