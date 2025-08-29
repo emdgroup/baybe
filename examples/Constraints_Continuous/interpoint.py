@@ -3,12 +3,7 @@
 # Example for optimizing a synthetic test functions in a continuous space with linear
 # interpoint constraints.
 # While intrapoint constraints impose conditions on each individual point of a batch,
-# interpoint constraints do so **across** the points of the batch. That is, an
-# interpoint constraint of the form ``x_1 + x_2 <= 1`` enforces that the sum of all
-# ``x_1`` values plus the sum of all ``x_2`` values in the batch must not exceed 1.
-# A possible relevant constraint might be that only 100ml of a given solvent are available for
-# a full batch, but there is no limit for the amount of solvent to use for a single experiment
-# within that batch.
+# interpoint constraints do so **across** the points of the batch.
 
 # This example is a variant of the example for linear constraints, and we thus refer
 # to [`linear_constraints`](./linear_constraints.md) for more details and explanations.
