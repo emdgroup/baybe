@@ -49,6 +49,7 @@ from baybe.utils.dataframe import (
     normalize_input_dtypes,
 )
 from baybe.utils.validation import (
+    validate_object_names,
     validate_objective_input,
     validate_parameter_input,
     validate_target_input,
@@ -133,13 +134,7 @@ class Campaign(SerialMixin):
         if value is None:
             return
 
-        p_names = {p.name for p in self.searchspace.parameters}
-        t_names = {t.name for t in value.targets}
-        if overlap := p_names.intersection(t_names):
-            raise ValueError(
-                f"Parameters and targets cannot have overlapping names. "
-                f"The following names appear in both collections: {overlap}."
-            )
+        validate_object_names(self.searchspace.parameters + value.targets)
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,

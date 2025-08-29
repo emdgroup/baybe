@@ -92,6 +92,14 @@ depending on the complexity of your PR commit history, we reserve the right to m
 your branch using a squash-rebase as a last resort to keep our history clean.
 By following the guideline above, this step can be easily avoided in most cases.
 
+**Please be aware** that maintainers might push commits to your branches in ongoing
+pull requests. This might be due various reasons, most prominently to reduce workload
+for you in case small fixes, typos or style related changes arise. A rebase plus
+force-push might also be performed to enable the CI run on the PR. In any case, make
+sure your local branch is always synced with the origin (fetch and pull) before you
+start to commit changes – this avoids problems and confusion arising form such external
+changes to your branches.
+
 (developer-tools)=
 ## Developer Tools
 

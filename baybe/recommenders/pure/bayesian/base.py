@@ -30,6 +30,7 @@ from baybe.surrogates.base import (
 )
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import (
+    validate_object_names,
     validate_objective_input,
     validate_parameter_input,
     validate_target_input,
@@ -163,6 +164,8 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"Recommenders of type '{BayesianRecommender.__name__}' require "
                 f"that an objective is specified."
             )
+
+        validate_object_names(searchspace.parameters + objective.targets)
 
         # Experimental input validation
         if (measurements is None) or measurements.empty:

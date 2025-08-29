@@ -22,16 +22,13 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
-    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
-    SequentialGreedyRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
 from baybe.targets import NumericalTarget
@@ -44,49 +41,6 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
-
-
-def test_sequentialgreedyrecommender_class():
-    """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        SequentialGreedyRecommender()
-
-
-def test_samples_random():
-    """Using the deprecated `samples_random` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_random(n_points=1)
-
-
-def test_samples_full_factorial():
-    """Using the deprecated `samples_full_factorial` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
-
-
-def test_subspace_transform_interface(searchspace):
-    """Using the deprecated transform interface raises a warning."""
-    # Not providing `allow_extra` when there are additional columns
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-
-    # Passing dataframe via `data`
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
 
 
 def test_surrogate_registration():

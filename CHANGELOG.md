@@ -62,11 +62,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Specifying bounds for `Interval` is now optional
 
 ### Fixed
-- `Campaign` no longer allows overlapping names between parameters and targets
+- It is no longer possible to use identical names between parameters and targets
 - Random seed context is correctly set within benchmarks
+- Measurement input validation now respects typical tolerances associated with floating
+  point representation inaccuracy
+- Exotic serialization issues with constraints and conditions arising from missing
+  converters for floats
 
 ### Removed
 - Telemetry
+
+### Expired Deprecations (from 0.10.*)
+- `SequentialGreedyRecommender` class
+- `SubspaceContinuous.samples_random` method
+- `SubspaceContinuous.samples_full_factorial` method
+- `data` argument to `transform` method of search space classes
+- Automatically setting `allow_extra=True` in `transform` methods of search space
+  classes when left unspecified
+
 
 ## [0.13.2] - 2025-07-09
 ### Changed

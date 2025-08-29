@@ -145,9 +145,13 @@ class Interval(SerialMixin):
             number: The number that should be checked.
 
         Returns:
-            Whether or not the interval contains the number.
+            Whether the interval contains the number.
         """
-        return self.lower <= number <= self.upper
+        return (
+            bool(np.isclose(number, self.lower))
+            or bool(np.isclose(number, self.upper))
+            or (self.lower < number < self.upper)
+        )
 
 
 def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
