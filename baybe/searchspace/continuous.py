@@ -515,7 +515,7 @@ class SubspaceContinuous(SerialMixin):
             n_params = len(self.comp_rep_columns)
             eq_constraints, ineq_constraints = [], []
 
-            for c in [*self.constraints_lin_eq, *self.constraints_lin_ineq]:
+            for c in self.constraints_lin_eq + self.constraints_lin_ineq:
                 if not c.is_interpoint:
                     param_indices, coefficients, rhs = c.to_botorch(self.parameters)
                     for b in range(batch_size):
