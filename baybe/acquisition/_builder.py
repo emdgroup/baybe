@@ -36,8 +36,7 @@ from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations import AffineTransformation
-from baybe.transformations.basic import IdentityTransformation
+from baybe.transformations import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
