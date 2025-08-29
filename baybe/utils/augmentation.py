@@ -132,16 +132,6 @@ def df_apply_dependency_augmentation(
         0  0  4  5  6
         1  1  3  5  7
 
-        >>> causing = ('A', [0])
-        >>> affected = [('B', [2,3,4])]
-        >>> dfa = df_apply_dependency_augmentation(df, causing, affected)
-        >>> dfa
-           A  B  C  D
-        0  0  2  5  6
-        0  0  3  5  6
-        0  0  4  5  6
-        1  1  3  5  7
-
         >>> causing = ('A', [0, 1])
         >>> affected = [('B', [2,3])]
         >>> dfa = df_apply_dependency_augmentation(df, causing, affected)

@@ -33,10 +33,6 @@ class Constraint(ABC, SerialMixin):
     eval_during_modeling: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during modeling."""
 
-    eval_during_augmentation: ClassVar[bool] = False
-    """Class variable encoding whether the constraint could be considered during data
-    augmentation."""
-
     numerical_only: ClassVar[bool] = False
     """Class variable encoding whether the constraint is valid only for numerical
     parameters."""
@@ -44,6 +40,12 @@ class Constraint(ABC, SerialMixin):
     # Object variables
     parameters: list[str] = field(validator=min_len(1))
     """The list of parameters used for the constraint."""
+
+    consider_data_augmentation: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True, init=False
+    )
+    """Flag indicating whether the constraint would use data augmentation with
+    surrogates that support this."""
 
     @parameters.validator
     def _validate_params(  # noqa: DOC101, DOC103
