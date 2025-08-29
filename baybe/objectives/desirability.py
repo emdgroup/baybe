@@ -204,7 +204,7 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def _full_transformation(self) -> pd.DataFrame:
+    def _full_transformation(self) -> MCAcquisitionObjective:
         return self._to_botorch_full()
 
     @override
