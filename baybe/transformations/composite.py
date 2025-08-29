@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
+    # https://github.com/python-attrs/attrs/issues/1462
     __hash__ = object.__hash__
 
     transformations: tuple[Transformation, ...] = field(

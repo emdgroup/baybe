@@ -98,6 +98,7 @@ class ClampingTransformation(MonotonicTransformation):
 class AffineTransformation(MonotonicTransformation):
     """An affine transformation."""
 
+    # https://github.com/python-attrs/attrs/issues/1462
     __hash__ = object.__hash__
 
     factor: float = field(default=1.0, converter=float, validator=finite_float)
