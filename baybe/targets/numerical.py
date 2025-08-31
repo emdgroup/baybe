@@ -150,7 +150,15 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     def __add__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, NumericalTarget):
+            if self.name != other.name:
+                raise ValueError()
+            return evolve(
+                self, transformation=self.transformation + other.transformation
+            )
+        return NotImplemented
 
     def __sub__(self, other: Any) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=-other))
