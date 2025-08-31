@@ -142,8 +142,13 @@ nitpick_ignore_regex = [
     ("ref", "k_medoids"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
+    (r"py:obj", "baybe.utils.basic.UncertainBool.*"),
+    ("py:obj", "baybe.targets.botorch.*"),
+    ("py:obj", "baybe.objectives.botorch.*"),
     ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
     ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
+    # Deprecation
+    ("py:.*", "baybe.targets._deprecated.*"),
 ]
 
 # Ignore the following links when checking inks for viability
@@ -318,5 +323,10 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 def autodoc_skip_member(app, what, name, obj, skip, options):
     """Skip the docstring for the acqf classproperties."""
     # Skip class properties that cause issues with abstract classes
-    if name in ["supports_batching", "supports_pending_experiments", "is_analytic"]:
+    if name in [
+        "supports_batching",
+        "supports_pending_experiments",
+        "is_analytic",
+        "load_state_dict",
+    ]:
         return True
