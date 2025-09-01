@@ -39,12 +39,14 @@ from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous 
 )
 
 BENCHMARKS: list[Benchmark] = [
+    # Convergence Benchmarks
     direct_arylation_multi_batch_benchmark,
     direct_arylation_single_batch_benchmark,
     hartmann_3d_discretized_benchmark,
     synthetic_2C1D_1C_benchmark,
     hartmann_3d_benchmark,
     hartmann_6d_benchmark,
+    # Transfer-Learning Convergence Benchmarks
     aryl_halide_CT_IM_tl_benchmark,
     aryl_halide_IP_CP_tl_benchmark,
     aryl_halide_CT_I_BM_tl_benchmark,
@@ -52,6 +54,7 @@ BENCHMARKS: list[Benchmark] = [
     easom_tl_47_negate_noise5_benchmark,
     hartmann_tl_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
+    # Transfer-Learning Regression Benchmarks
     direct_arylation_temperature_tl_regr_benchmark,
 ]
 
