@@ -110,15 +110,15 @@ def direct_arylation_multi_batch(
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
         RunMode.STANDARD: 3,
-        RunMode.RUNTHROUGH: 2,
+        RunMode.SMOKETEST: 2,
     },
     n_doe_iterations_settings={
         RunMode.STANDARD: 30,
-        RunMode.RUNTHROUGH: 2,
+        RunMode.SMOKETEST: 2,
     },
     n_mc_iterations_settings={
         RunMode.STANDARD: 100,
-        RunMode.RUNTHROUGH: 2,
+        RunMode.SMOKETEST: 2,
     },
 )
 

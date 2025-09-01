@@ -35,11 +35,11 @@ class RunMode(Enum):
     settings where for example more or less DoE-iterations are necessary.
 
     ``STANDARD``: Default run mode for benchmarks with performance relevant settings.
-    ``RUNTHROUGH``: Minimal run mode for verifying that the benchmarks are executable.
+    ``SMOKETEST``: Minimal run mode for verifying that the benchmarks are executable.
     """
 
     STANDARD = "standard"
-    RUNTHROUGH = "runthrough"
+    SMOKETEST = "smoketest"
 
 
 @define(kw_only=True)
@@ -51,6 +51,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
 
     runmode: RunMode = field(
         validator=instance_of(RunMode),
+        converter=RunMode,
         default=RunMode.STANDARD,
     )
     """Mode to run benchmark in.
@@ -67,7 +68,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
         self.runmode = runmode
 
 
-MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.RUNTHROUGH})
+MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.SMOKETEST})
 """Mandatory runmodes that must be defined in all benchmark settings."""
 
 
@@ -131,9 +132,15 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         assert self.function.__doc__ is not None
         return self.function.__doc__
 
-    def __call__(self, runmode: RunMode) -> Result:
-        """Execute the benchmark and return the result."""
-        self.settings.set_runmode(runmode)
+    def __call__(self, runmode: RunMode | None = None) -> Result:
+        """Execute the benchmark and return the result.
+
+        Args:
+            runmode: The run mode to use for the benchmark.
+                If not specified, the runmode previously set in the settings will be used.
+        """
+        if runmode:
+            self.settings.set_runmode(runmode)
 
         start_datetime = datetime.now(timezone.utc)
 
