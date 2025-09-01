@@ -57,6 +57,18 @@ def spearman_rho_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return rho
 
 
+REGRESSION_METRICS = [
+    root_mean_squared_error,
+    mean_squared_error,
+    r2_score,
+    mean_absolute_error,
+    max_error,
+    explained_variance_score,
+    kendall_tau_score,
+    spearman_rho_score,
+]
+
+
 def run_tl_regression_benchmark(
     settings: TransferLearningRegressionBenchmarkSettings,
     load_data_fn: Callable[..., pd.DataFrame],
@@ -387,20 +399,10 @@ def _calculate_metrics(
     Returns:
         Dictionary with metric names as keys and metric values as values
     """
-    regression_metrics = [
-        root_mean_squared_error,
-        mean_squared_error,
-        r2_score,
-        mean_absolute_error,
-        max_error,
-        explained_variance_score,
-        kendall_tau_score,
-        spearman_rho_score,
-    ]
     results = {}
     pred_values = predictions[f"{target_column}_mean"].values
 
-    for metric_func in regression_metrics:
+    for metric_func in REGRESSION_METRICS:
         metric_value = metric_func(true_values, pred_values)
         results[metric_func.__name__] = metric_value
 
