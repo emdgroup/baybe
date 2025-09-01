@@ -27,14 +27,14 @@ converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alia
 """The default converter for (de-)serializing BayBE-related objects."""
 
 
-def _add_type_to_dict(dct: dict[str, Any], type: str, /) -> dict[str, Any]:
+def _add_type_to_dict(dct: dict[str, Any], type_: str, /) -> dict[str, Any]:
     """Safely add type information to an existing dictionary."""
     if _TYPE_FIELD in dct:
         raise ValueError(
             f"Cannot add type information to the dictionary since it already contains "
             f"a '{_TYPE_FIELD}' field."
         )
-    dct = {_TYPE_FIELD: type, **dct}
+    dct = {_TYPE_FIELD: type_, **dct}
     return dct
 
 
