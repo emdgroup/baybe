@@ -52,6 +52,71 @@ class Result(BenchmarkSerialization):
         installed_packages = importlib.metadata.distributions()
         return {dist.name: dist.version for dist in installed_packages}
 
+    def _get_pytorch_device_info(self) -> dict[str, str]:
+        """Get information about the PyTorch device in use."""
+        info: dict[str, str] = {}
+
+        used_module = torch.get_device_module()
+        module_name = getattr(used_module, "__name__", str(used_module))
+        info["pytorch_device_module"] = module_name
+
+        backend_key = module_name.rsplit(".", 1)[-1].lower()
+
+        if backend_key == "cuda":
+            backend = "ROCm" if getattr(torch.version, "hip", None) else "CUDA"
+            idx = torch.cuda.current_device()
+            props = torch.cuda.get_device_properties(idx)
+            name = torch.cuda.get_device_name(idx)
+            info.update(
+                {
+                    "gpu_backend": backend,
+                    "gpu_count": str(torch.cuda.device_count()),
+                    "gpu_index": str(idx),
+                    "gpu_name": str(name),
+                    "gpu_total_memory": f"{props.total_memory // (1024**2)} MB",
+                }
+            )
+            if backend == "CUDA":
+                info["gpu_compute_capability"] = f"{props.major}.{props.minor}"
+                if torch.version.cuda:
+                    info["cuda_version"] = str(torch.version.cuda)
+            else:
+                hip_ver = getattr(torch.version, "hip", None)
+                if hip_ver:
+                    info["hip_version"] = str(hip_ver)
+
+        elif backend_key == "mps":
+            is_avail = (
+                torch.backends.mps.is_available()
+                if hasattr(torch.backends, "mps")
+                else False
+            )
+            is_built = (
+                torch.backends.mps.is_built()
+                if hasattr(torch.backends, "mps")
+                else False
+            )
+            info.update(
+                {
+                    "gpu_backend": "MPS",
+                    "mps_is_available": str(is_avail),
+                    "mps_is_built": str(is_built),
+                    "gpu_count": "1" if is_avail else "0",
+                    "gpu_index": "0" if is_avail else "-1",
+                    "gpu_name": "Apple MPS",
+                }
+            )
+            if hasattr(torch.mps, "driver_allocated_memory"):
+                info["mps_driver_allocated_memory"] = (
+                    f"{torch.mps.driver_allocated_memory() // (1024**2)} MB"
+                )
+            if hasattr(torch.mps, "current_allocated_memory"):
+                info["mps_current_allocated_memory"] = (
+                    f"{torch.mps.current_allocated_memory() // (1024**2)} MB"
+                )
+
+        return info
+
     @benchmarking_system_details.default
     def _default_benchmarking_system_technical_details(self) -> dict[str, str]:
         """Get the technical details of the system where the benchmark was executed."""
@@ -68,18 +133,7 @@ class Result(BenchmarkSerialization):
                 "cpu_frequency_max": str(cpu_frequency.max) + " MHz",
             }
 
-        gpu_device_properties: dict[str, str] = {}
-        if torch.cuda.is_available():
-            gpu_name = torch.cuda.get_device_name()
-            gpu_info = torch.cuda.get_device_properties()
-            gpu_device_properties = {
-                "gpu_name": gpu_name,
-                "gpu_total_memory": str(gpu_info.total_memory // (1024**2)) + " MB",
-                "gpu_compute_capability": str(gpu_info.major)
-                + "."
-                + str(gpu_info.minor),
-            }
-
+        gpu_device_properties: dict[str, str] = self._get_pytorch_device_info()
         return (
             {
                 "platform": platform.platform(),
