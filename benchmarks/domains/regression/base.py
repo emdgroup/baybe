@@ -213,8 +213,6 @@ def _train_and_evaluate_model(
     searchspace: SearchSpace,
     objective: SingleTargetObjective,
     scenario_name: str,
-    task_column: str | None = None,
-    task_value: str | None = None,
 ) -> dict[str, Any]:
     """Train a single model and evaluate its performance.
 
@@ -225,28 +223,18 @@ def _train_and_evaluate_model(
         searchspace: Search space for the model
         objective: Optimization objective
         scenario_name: Name of the scenario for results
-        task_column: Name of task parameter column
-        task_value: Value to set for task parameter
 
     Returns:
         Dictionary with scenario name and evaluation metrics
     """
     target_column = objective._target.name
-
-    # Prepare training data
     train_data_prepared = train_data.copy()
-    if task_column and task_value:
-        train_data_prepared[task_column] = task_value
+    test_data_prepared = test_data.copy()
 
     # Train model
     model.fit(
         searchspace=searchspace, objective=objective, measurements=train_data_prepared
     )
-
-    # Prepare test data
-    test_data_prepared = test_data.copy()
-    if task_column and task_value:
-        test_data_prepared[task_column] = task_value
 
     # Evaluate model
     predictions = model.posterior_stats(test_data_prepared, stats=["mean"])
@@ -338,8 +326,6 @@ def _evaluate_naive_models(
             tl_searchspace,
             objective,
             "0_full_searchspace",
-            task_column,
-            task_value,
         )
     )
 
@@ -384,8 +370,6 @@ def _evaluate_transfer_learning_models(
                 tl_searchspace,
                 objective,
                 scenario_name,
-                task_column,
-                task_value,
             )
         )
 
