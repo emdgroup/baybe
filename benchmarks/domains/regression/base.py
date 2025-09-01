@@ -57,7 +57,7 @@ def run_tl_regression_benchmark(
     settings: TransferLearningRegressionBenchmarkSettings,
     load_data_fn: Callable[..., pd.DataFrame],
     make_searchspace_fn: Callable[[pd.DataFrame, bool], SearchSpace],
-    create_objective_fn: Callable[[], SingleTargetObjective],
+    create_objective_fn: Callable[..., SingleTargetObjective],
 ) -> pd.DataFrame:
     """Run a transfer learning regression benchmark.
 
