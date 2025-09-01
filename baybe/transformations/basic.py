@@ -142,10 +142,10 @@ class AffineTransformation(MonotonicTransformation):
         return AffinePosteriorTransform(self.factor, self.shift)
 
     @classmethod
-    def from_points_mapped_to_unit_interval_bounds(
+    def from_values_mapped_to_unit_interval(
         cls, mapped_to_zero: float, mapped_to_one: float
     ) -> AffineTransformation:
-        """Create an affine transform by specifying reference points mapped to 0/1.
+        """Create an affine transform by specifying reference values mapped to 0/1.
 
         Args:
             mapped_to_zero: The input value that will be mapped to zero.
@@ -158,10 +158,11 @@ class AffineTransformation(MonotonicTransformation):
         Example:
             >>> import torch
             >>> from baybe.transformations import AffineTransformation as AffineT
-            >>> transform = AffineT.from_points_mapped_to_unit_interval_bounds(3, 7)
-            >>> transform(torch.tensor([3, 7]))
+            >>> t1 = AffineT.from_values_mapped_to_unit_interval(3, 7)
+            >>> t2 = AffineT.from_values_mapped_to_unit_interval(7, 3)
+            >>> t1(torch.tensor([3, 7]))
             tensor([0., 1.])
-            >>> transform(torch.tensor([7, 3]))
+            >>> t2(torch.tensor([3, 7]))
             tensor([1., 0.])
         """
         return AffineTransformation(

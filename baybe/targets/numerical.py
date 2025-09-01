@@ -369,9 +369,9 @@ class NumericalTarget(Target, SerialMixin):
             bounds = bounds[::-1]
         return NumericalTarget(
             name,
-            AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *bounds
-            ).clamp(0, 1),
+            AffineTransformation.from_values_mapped_to_unit_interval(*bounds).clamp(
+                0, 1
+            ),
         )
 
     @classmethod
@@ -440,9 +440,7 @@ class NumericalTarget(Target, SerialMixin):
             raise IncompatibilityError("Only bounded targets can be normalized.")
 
         return self._append_transformation(
-            AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *bounds.to_tuple()
-            )
+            AffineTransformation.from_values_mapped_to_unit_interval(*bounds.to_tuple())
         )
 
     def abs(self) -> NumericalTarget:
