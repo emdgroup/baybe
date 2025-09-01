@@ -197,7 +197,7 @@ def run_tl_regression_benchmark(
     return results_df
 
 
-def _train_and_evaluate_model(
+def _evaluate_model(
     model: GaussianProcessSurrogate,
     train_data: pd.DataFrame,
     test_data: pd.DataFrame,
@@ -300,7 +300,7 @@ def _evaluate_naive_models(
 
     # Naive GP on reduced search space (no source data, no task parameter)
     results.append(
-        _train_and_evaluate_model(
+        _evaluate_model(
             GaussianProcessSurrogate(),
             target_train,
             target_test,
@@ -312,7 +312,7 @@ def _evaluate_naive_models(
 
     # Naive GP on full search space (no source data, with task parameter)
     results.append(
-        _train_and_evaluate_model(
+        _evaluate_model(
             GaussianProcessSurrogate(),
             target_train,
             target_test,
@@ -359,7 +359,7 @@ def _evaluate_transfer_learning_models(
         scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
         model = model_class()
         results.append(
-            _train_and_evaluate_model(
+            _evaluate_model(
                 model,
                 combined_data,
                 target_test,
