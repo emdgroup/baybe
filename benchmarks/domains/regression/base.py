@@ -80,11 +80,9 @@ def run_tl_regression_benchmark(
         DataFrame with benchmark results containing performance metrics for each
         model, training scenario, and Monte Carlo iteration.
     """
-    # Create target objective
     objective = create_objective_fn()
-
-    # Load data and create search spaces
     data = load_data_fn()
+
     # Create SearchSpace without task parameter
     vanilla_searchspace = make_searchspace_fn(data=data, use_task_parameter=False)
 
@@ -96,7 +94,9 @@ def run_tl_regression_benchmark(
         p for p in tl_searchspace.parameters if isinstance(p, TaskParameter)
     )
     name_task = task_param.name
-    target_task = task_param.active_values[0]  # Extract single target task
+
+    # Extract single target task
+    target_task = task_param.active_values[0]
     all_values = task_param.values
     source_tasks = [val for val in all_values if val != target_task]
 
@@ -188,7 +188,6 @@ def run_tl_regression_benchmark(
                     )
                     results.append(scenario_result)
 
-    # Convert results to DataFrame
     results_df = pd.DataFrame(results)
 
     return results_df
@@ -231,7 +230,6 @@ def _train_and_evaluate_model(
     train_data_prepared = train_data.copy()
     test_data_prepared = test_data.copy()
 
-    # Train model
     model.fit(
         searchspace=searchspace, objective=objective, measurements=train_data_prepared
     )
