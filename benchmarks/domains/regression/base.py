@@ -33,11 +33,11 @@ def kendall_tau_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Calculate Kendall's Tau correlation coefficient.
 
     Args:
-        y_true: True target values
-        y_pred: Predicted target values
+        y_true: True target values.
+        y_pred: Predicted target values.
 
     Returns:
-        Kendall's Tau correlation coefficient
+        Kendall's Tau correlation coefficient.
     """
     tau, _ = kendalltau(y_true, y_pred)
     return tau
@@ -47,11 +47,11 @@ def spearman_rho_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Calculate Spearman's Rho correlation coefficient.
 
     Args:
-        y_true: True target values
-        y_pred: Predicted target values
+        y_true: True target values.
+        y_pred: Predicted target values.
 
     Returns:
-        Spearman's Rho correlation coefficient
+        Spearman's Rho correlation coefficient.
     """
     rho, _ = spearmanr(y_true, y_pred)
     return rho
@@ -220,15 +220,15 @@ def _evaluate_model(
     """Train a single model and evaluate its performance.
 
     Args:
-        model: The surrogate model to train
-        train_data: Training data
-        test_data: Test data for evaluation
-        searchspace: Search space for the model
-        objective: Optimization objective
-        scenario_name: Name of the scenario for results
+        model: The surrogate model to train.
+        train_data: Training data.
+        test_data: Test data for evaluation.
+        searchspace: Search space for the model.
+        objective: Optimization objective.
+        scenario_name: Name of the scenario for results.
 
     Returns:
-        Dictionary with scenario name and evaluation metrics
+        Dictionary with scenario name and evaluation metrics.
     """
     target_column = objective._target.name
     train_data_prepared = train_data.copy()
@@ -261,14 +261,14 @@ def _sample_source_data(
     """Sample source data ensuring same fraction from each source task.
 
     Args:
-        source_data: DataFrame containing all source task data
-        source_tasks: List of source task identifiers
-        fraction_source: Fraction of data to sample from each source task
-        task_column: Name of column containing task identifiers
-        source_data_seed: Random seed for reproducible sampling
+        source_data: DataFrame containing all source task data.
+        source_tasks: List of source task identifiers.
+        fraction_source: Fraction of data to sample from each source task.
+        task_column: Name of column containing task identifiers.
+        source_data_seed: Random seed for reproducible sampling.
 
     Returns:
-        Combined DataFrame with sampled data from all source tasks
+        Combined DataFrame with sampled data from all source tasks.
     """
     # Collect sampled subsets from each source task
     source_subsets: list[pd.DataFrame] = []
@@ -296,16 +296,16 @@ def _evaluate_naive_models(
     """Evaluate both naive model baselines that do not use source data.
 
     Args:
-        target_train: Target task training data
-        target_test: Target task test data
-        vanilla_searchspace: Search space without task parameter
-        tl_searchspace: Search space with task parameter
-        objective: Optimization objective
-        task_column: Name of task parameter column
-        task_value: Value for task parameter
+        target_train: Target task training data.
+        target_test: Target task test data.
+        vanilla_searchspace: Search space without task parameter.
+        tl_searchspace: Search space with task parameter.
+        objective: Optimization objective.
+        task_column: Name of task parameter column.
+        task_value: Value for task parameter.
 
     Returns:
-        List of evaluation results for naive baselines
+        List of evaluation results for naive baselines.
     """
     # Collect evaluation results for models without source data
     results: list[dict[str, Any]] = []
@@ -350,17 +350,17 @@ def _evaluate_transfer_learning_models(
     """Evaluate all transfer learning models using source and target data.
 
     Args:
-        source_data: Source task data
-        target_train: Target task training data
-        target_test: Target task test data
-        tl_searchspace: Search space with task parameter
-        objective: Optimization objective
-        fraction_source: Fraction of source data used
-        task_column: Name of task parameter column
-        task_value: Value for task parameter
+        source_data: Source task data.
+        target_train: Target task training data.
+        target_test: Target task test data.
+        tl_searchspace: Search space with task parameter.
+        objective: Optimization objective.
+        fraction_source: Fraction of source data used.
+        task_column: Name of task parameter column.
+        task_value: Value for task parameter.
 
     Returns:
-        List of evaluation results for transfer learning models
+        List of evaluation results for transfer learning models.
     """
     # Collect evaluation results for transfer learning models
     results: list[dict[str, Any]] = []
@@ -392,12 +392,12 @@ def _calculate_metrics(
     """Calculate regression metrics for model predictions.
 
     Args:
-        true_values: True target values
-        predictions: Model predictions DataFrame with mean columns
-        target_column: Name of the target column
+        true_values: True target values.
+        predictions: Model predictions DataFrame with mean columns.
+        target_column: Name of the target column.
 
     Returns:
-        Dictionary with metric names as keys and metric values as values
+        Dictionary with metric names as keys and metric values as values.
     """
     results = {}
     pred_values = predictions[f"{target_column}_mean"].values
