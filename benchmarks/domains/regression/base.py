@@ -62,11 +62,11 @@ def run_tl_regression_benchmark(
     """Run a transfer learning regression benchmark.
 
     This function evaluates the performance of transfer learning models compared to
-    vanilla Gaussian Process models on regression tasks. It varies the fraction of
+    non transfer learning models on regression tasks. It varies the fraction of
     source data used for training and the number of training points in the target task.
 
-    For each combination, it trains both vanilla GP (target data only) and transfer
-    learning models (source + target data), then evaluates their predictive
+    For each combination, it trains a surrogate on target data only and transfer
+    learning models on source + target data, then evaluates their predictive
     performance on held-out target test data using the provided regression metrics.
 
     Args:
@@ -85,7 +85,7 @@ def run_tl_regression_benchmark(
 
     # Load data and create search spaces
     data = load_data_fn()
-    # Create SearchSpace without task parameter (vanilla GP)
+    # Create SearchSpace without task parameter
     vanilla_searchspace = make_searchspace_fn(data=data, use_task_parameter=False)
 
     # Create transfer learning search space (with task parameter)
@@ -198,7 +198,7 @@ def _create_tl_models() -> dict[str, GaussianProcessSurrogate]:
     """Create transfer learning model scenarios.
 
     Returns:
-        Dictionary mapping model suffix names to initialized GP surrogate models
+        Dictionary mapping model suffix names to initialized surrogate models
         for transfer learning evaluation.
     """
     return {
@@ -217,7 +217,7 @@ def _train_and_evaluate_model(
     """Train a single model and evaluate its performance.
 
     Args:
-        model: The Gaussian Process model to train
+        model: The surrogate model to train
         train_data: Training data
         test_data: Test data for evaluation
         searchspace: Search space for the model
@@ -305,7 +305,7 @@ def _evaluate_naive_models(
     """
     results = []
 
-    # Naive GP on reduced searchspace (no task parameter)
+    # Naive GP on reduced searchspace (no source data, no task parameter)
     results.append(
         _train_and_evaluate_model(
             GaussianProcessSurrogate(),
@@ -317,7 +317,7 @@ def _evaluate_naive_models(
         )
     )
 
-    # Naive GP on full searchspace (with task parameter)
+    # Naive GP on full searchspace (no source data, with task parameter)
     results.append(
         _train_and_evaluate_model(
             GaussianProcessSurrogate(),
