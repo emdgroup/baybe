@@ -1,3 +1,5 @@
+[polars]: https://pola.rs/
+
 # Constraints
 Experimental campaigns often have naturally arising constraints on the parameters and
 their combinations. Such constraints could for example be:
@@ -25,7 +27,8 @@ is exclusively discrete or continuous in most cases.
 
 ## Continuous Constraints
 
-```{warning}
+```{admonition} Surrogate Model Limitations
+:class: warning
 Not all surrogate models are able to treat continuous constraints. In such situations
 the constraints are currently silently ignored.
 ```   
@@ -55,7 +58,7 @@ from baybe.constraints import ContinuousLinearConstraint
 ContinuousLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],  # these parameters must exist in the search space
     operator="=",
-    coefficients=[1.0, 1.0, 1.0],
+    coefficients=(1.0, 1.0, 1.0),
     rhs=1.0,
 )
 ```
@@ -71,7 +74,7 @@ from baybe.constraints import ContinuousLinearConstraint
 ContinuousLinearConstraint(
     parameters=["x_1", "x_2", "x_3"],
     operator="<=",
-    coefficients=[1.0, 1.0, 1.0],
+    coefficients=(1.0, 1.0, 1.0),
     rhs=0.8,
 )
 ```
@@ -154,6 +157,20 @@ Discrete constraints currently do not affect the optimization process directly.
 Instead, they act as a filter on the search space.
 For instance, a search space created via [`from_product`](baybe.searchspace.core.SearchSpace.from_product) 
 might include invalid combinations, which can be removed again by applying constraints.
+
+```{admonition} Efficient Constraint Implementation via Polars
+:class: tip
+In the default implementation, BayBE first creates the full discrete searchspace and
+then applies filters to it to remove candidates not complying with discrete constraints.
+This requires that the entire unfiltered searchspace fits into memory, which is
+inefficient, given that the filtering might reduce the amount of relevant candidates by
+orders of magnitude. For many dicrete contraints, BayBE offers a more efficient
+implementation via [polars] that needs much less memory. This is automatically activated
+if [polars] is present in the Python environment, for instance if BayBE was installed
+with the optional dependency group via `pip install baybe[polars]`. In many cases, this
+is required to enable working with large discrete searchspaces, however, [polars] is not
+currently a main dependency of BayBE.
+```
 
 Discrete constraints have in common that they operate on one or more parameters,
 identified by the `parameters` member, which expects a list of parameter names as
@@ -348,7 +365,8 @@ hence the `SearchSpace` should effectively only contain one of them.
 | 5 | Substance_12 | Substance_43 | Substance_3  |
 | 6 | Substance_12 | Substance_3  | Substance_43 |
 
-```{note}
+```{admonition} Influence on Surrogate Models
+:class: note
 Complex properties such as permutation invariance not only affect the search space but
 should ideally also constrain the surrogate model. For instance, the kernels in a
 Gaussian process can be made permutation-invariant to reflect this constraint, which
@@ -454,7 +472,8 @@ DiscreteCustomConstraint(
 
 Find a detailed example [here](../../examples/Constraints_Discrete/custom_constraints).
 
-```{warning}
+```{admonition} (De-)Serializability Unsupported
+:class: warning
 Due to the arbitrary nature of code and dependencies that can be used in the
 `DiscreteCustomConstraint`, (de-)serializability cannot be guaranteed. As a consequence,
 using a `DiscreteCustomConstraint` results in an error if you attempt to serialize

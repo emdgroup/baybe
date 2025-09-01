@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - API diagram in user guide
+- `Metadata` and `MeasurableMetadata` classes providing optional information for BayBE
+  objects
+- `Objective` now has a `metadata` attribute as well as a `description` property
+- `Target` and `Parameter` now have a `metadata` attribute as well as `description` and
+  `unit` properties
+- `FPSRecommender` now optionally uses the fpsample library (if installed) with fallback
+  to internal implementation. The use of `fpsample` can be deactivated by setting the
+  environment variable `BAYBE_USE_FPSAMPLE`
+- `farthest_point_sampling` now also supports a collection of integers for 
+  `initialization`, using them for pre-selecting points 
 
 ### Changed
 - `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
@@ -14,8 +24,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `to_dict` and `to_json` now accept an optional Boolean `add_type` argument
 
 ### Fixed
-- `Campaign` no longer allows overlapping names between parameters and targets
+- It is no longer possible to use identical names between parameters and targets
+- Random seed context is correctly set within benchmarks
+- Measurement input validation now respects typical tolerances associated with floating
+  point representation inaccuracy
+- Exotic serialization issues with constraints and conditions arising from missing
+  converters for floats
 - `MetaRecommender`'s no longer expose their private attributes via the constructor
+
+### Removed
+- Telemetry
 
 ## [0.13.2] - 2025-07-09
 ### Changed
@@ -23,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The Python version specifier now also allows patch versions of Python 3.13
+
+### Expired Deprecations (from 0.10.*)
+- `SequentialGreedyRecommender` class
+- `SubspaceContinuous.samples_random` method
+- `SubspaceContinuous.samples_full_factorial` method
+- `data` argument to `transform` method of search space classes
+- Automatically setting `allow_extra=True` in `transform` methods of search space
+  classes when left unspecified
 
 ## [0.13.1] - 2025-06-06
 ### Added

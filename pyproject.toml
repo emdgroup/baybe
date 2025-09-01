@@ -41,12 +41,6 @@ dependencies = [
     "scipy>=1.10.1",
     "torch>=1.13.1,<3",
     "typing_extensions>=4.7.0",
-
-    # Telemetry:
-    "opentelemetry-sdk>=1.16.0,<2",
-    "opentelemetry-propagator-aws-xray>=1.0.0,<2",
-    "opentelemetry-exporter-otlp>=1.16.0,<2",
-    "opentelemetry-sdk-extension-aws>=2.0.0,<3",
 ]
 
 [project.urls]
@@ -71,6 +65,7 @@ extras = [
     "baybe[polars]",
     "baybe[simulation]",
     "ngboost>=0.3.12,<1",
+    "fpsample>=0.3.3; python_version < '3.13'",
 ]
 
 chem = [

@@ -18,6 +18,7 @@ from baybe.serialization import (
     SerialMixin,
 )
 from baybe.utils.basic import to_tuple
+from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 if TYPE_CHECKING:
     from baybe.searchspace.continuous import SubspaceContinuous
@@ -43,6 +44,13 @@ class Parameter(ABC, SerialMixin):
     # object variables
     name: str = field(validator=(instance_of(str), min_len(1)))
     """The name of the parameter"""
+
+    metadata: MeasurableMetadata = field(
+        factory=MeasurableMetadata,
+        converter=lambda x: to_metadata(x, MeasurableMetadata),
+        kw_only=True,
+    )
+    """Optional metadata containing description, unit, and other information."""
 
     @abstractmethod
     def is_in_range(self, item: Any) -> bool:
@@ -83,6 +91,16 @@ class Parameter(ABC, SerialMixin):
     @abstractmethod
     def summary(self) -> dict:
         """Return a custom summarization of the parameter."""
+
+    @property
+    def description(self) -> str | None:
+        """The description of the parameter."""
+        return self.metadata.description
+
+    @property
+    def unit(self) -> str | None:
+        """The unit of measurement for the parameter."""
+        return self.metadata.unit
 
 
 @define(frozen=True, slots=False)

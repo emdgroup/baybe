@@ -19,6 +19,10 @@ build
 # VSCode
 .vscode
 
+# Virtual environments
+.venv
+.env
+
 # Testing
 .tox
 .coverage
@@ -34,5 +38,6 @@ htmlcov
 
 # Folders that are temporarily created when building the documentation
 docs/_autosummary
+docs/_build
 docs/examples
 docs/sdk

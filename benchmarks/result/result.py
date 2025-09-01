@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import importlib.metadata
 import sys
 
-import importlib_metadata
 from attrs import define, field
 from attrs.validators import deep_mapping, instance_of
 from cattrs.gen import make_dict_unstructure_fn
@@ -40,7 +40,7 @@ class Result(BenchmarkSerialization):
 
     @python_env.default
     def _default_python_env(self) -> dict[str, str]:
-        installed_packages = importlib_metadata.distributions()
+        installed_packages = importlib.metadata.distributions()
         return {dist.name: dist.version for dist in installed_packages}
 
 

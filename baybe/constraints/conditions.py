@@ -12,7 +12,9 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pandas as pd
 from attrs import define, field
-from attrs.validators import in_, min_len
+from attrs.converters import optional as optional_c
+from attrs.validators import ge, in_, min_len
+from attrs.validators import optional as optional_v
 from numpy.typing import ArrayLike
 from typing_extensions import override
 
@@ -22,6 +24,7 @@ from baybe.serialization import (
 )
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     import polars as pl
@@ -123,13 +126,15 @@ class ThresholdCondition(Condition):
     """Class for modelling threshold-based conditions."""
 
     # object variables
-    threshold: float = field()
+    threshold: float = field(converter=float, validator=finite_float)
     """The threshold value used in the condition."""
 
     operator: str = field(validator=[in_(_threshold_operators)])
     """The operator used in the condition."""
 
-    tolerance: float | None = field()
+    tolerance: float | None = field(
+        converter=optional_c(float), validator=optional_v([finite_float, ge(0)])
+    )
     """A numerical tolerance. Set to a reasonable default tolerance."""
 
     @tolerance.default

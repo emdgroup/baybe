@@ -15,6 +15,7 @@ from baybe.recommenders.pure.base import PureRecommender
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace
 from baybe.serialization import SerialMixin
+from baybe.utils.validation import validate_object_names
 
 
 @define
@@ -98,6 +99,9 @@ class MetaRecommender(SerialMixin, RecommenderProtocol, ABC):
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         """See :meth:`baybe.recommenders.base.RecommenderProtocol.recommend`."""
+        if objective is not None:
+            validate_object_names(searchspace.parameters + objective.targets)
+
         recommender = self.select_recommender(
             batch_size=batch_size,
             searchspace=searchspace,

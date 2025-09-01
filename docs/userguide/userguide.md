@@ -1,5 +1,14 @@
 # User Guide
 
+```{admonition} Backwards Compatibility and Deprecations
+:class: info
+BayBE is in a constant state of development. As part of this, interfaces and objects
+might change in ways breaking existing code. We aspire to provide backwards **support
+for deprecated code of the last three minor versions**. After this time, old code will
+generally be removed. Both the moment of deprecation and full removal (deprecation
+expiration) will be noted in the [changelog](/misc/changelog_link).
+```
+
 The most commonly used interface BayBE provides is the central 
 [`Campaign`](baybe.campaign.Campaign) object,
 which suggests new measurements and administers the current state of 

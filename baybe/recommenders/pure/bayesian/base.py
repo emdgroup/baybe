@@ -29,7 +29,11 @@ from baybe.surrogates.base import (
     SurrogateProtocol,
 )
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_object_names,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -159,6 +163,8 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"Recommenders of type '{BayesianRecommender.__name__}' require "
                 f"that an objective is specified."
             )
+
+        validate_object_names(searchspace.parameters + objective.targets)
 
         # Experimental input validation
         if (measurements is None) or measurements.empty:

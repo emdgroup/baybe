@@ -94,10 +94,10 @@ class NumericalDiscreteParameter(DiscreteParameter):
 
     @override
     def is_in_range(self, item: float) -> bool:
-        differences_acceptable = [
-            np.abs(val - item) <= self.tolerance for val in self.values
-        ]
-        return any(differences_acceptable)
+        return any(
+            Interval(val - self.tolerance, val + self.tolerance).contains(item)
+            for val in self.values
+        )
 
 
 @define(frozen=True, slots=False)
@@ -167,7 +167,7 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
 
     @override
     def is_in_range(self, item: float) -> bool:
-        return item == self.value
+        return Interval(self.value, self.value).contains(item)
 
     @override
     @property

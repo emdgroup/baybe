@@ -177,3 +177,21 @@ def validate_parameter_input(
                     f"the flag 'numerical_measurements_must_be_within_tolerance' "
                     f"to 'False' to disable this behavior."
                 )
+
+
+def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
+    """Validate that the provided objects have unique names.
+
+    Args:
+        objects: An iterable containing a combination of parameters and targets.
+
+    Raises:
+        ValueError: If two or more objects have the same name.
+    """
+    names = [obj.name for obj in objects]
+    if len(names) != len(set(names)):
+        duplicates = {name for name in names if names.count(name) > 1}
+        raise ValueError(
+            f"All parameters and targets must have unique names. The following names "
+            f"appear multiple times: {duplicates}."
+        )

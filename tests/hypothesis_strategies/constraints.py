@@ -227,13 +227,7 @@ def continuous_linear_constraints(
         assert len(parameter_names) > 0
         assert len(parameter_names) == len(set(parameter_names))
 
-    coefficients = draw(
-        st.lists(
-            finite_floats(),
-            min_size=len(parameter_names),
-            max_size=len(parameter_names),
-        )
-    )
+    coefficients = draw(st.tuples(*([finite_floats()] * len(parameter_names))))
     rhs = draw(finite_floats())
 
     # Optionally add the operator

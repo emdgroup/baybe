@@ -21,7 +21,11 @@ from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
 from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_object_names,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -104,6 +108,9 @@ class PureRecommender(ABC, RecommenderProtocol):
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
         # Validation
+        if objective is not None:
+            validate_object_names(searchspace.parameters + objective.targets)
+
         if (
             measurements is not None
             and not isinstance(measurements, _ValidatedDataFrame)
