@@ -104,8 +104,8 @@ def run_tl_regression_benchmark(
     source_data = data[data[name_task].isin(source_tasks)]
     target_data = data[data[name_task] == target_task]
 
-    # Main benchmark loop
-    results = []
+    # Collect all benchmark results across MC iterations and scenarios
+    results: list[dict[str, Any]] = []
 
     # Create progress bar for Monte Carlo iterations
     mc_iter_bar = tqdm(
@@ -148,8 +148,8 @@ def run_tl_regression_benchmark(
                 target_train = target_data.iloc[train_indices].copy()
                 target_test = target_data.iloc[test_indices].copy()
 
-                # Evaluate all models
-                scenario_results = []
+                # Collect results for current training scenario
+                scenario_results: list[dict[str, Any]] = []
                 scenario_results.extend(
                     _evaluate_naive_models(
                         target_train,
@@ -266,7 +266,9 @@ def _sample_source_data(
     Returns:
         Combined DataFrame with sampled data from all source tasks
     """
-    source_subsets = []
+    # Collect sampled subsets from each source task
+    source_subsets: list[pd.DataFrame] = []
+
     for source_task in source_tasks:
         task_data = source_data[source_data[task_column] == source_task]
         if len(task_data) > 0:
@@ -301,7 +303,8 @@ def _evaluate_naive_models(
     Returns:
         List of evaluation results for naive baselines
     """
-    results = []
+    # Collect evaluation results for models without source data
+    results: list[dict[str, Any]] = []
 
     # Naive GP on reduced search space (no source data, no task parameter)
     results.append(
@@ -355,7 +358,8 @@ def _evaluate_transfer_learning_models(
     Returns:
         List of evaluation results for transfer learning models
     """
-    results = []
+    # Collect evaluation results for transfer learning models
+    results: list[dict[str, Any]] = []
     combined_data = pd.concat([source_data, target_train])
 
     for model_suffix, model in _create_tl_models().items():
