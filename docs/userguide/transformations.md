@@ -280,13 +280,13 @@ assert t_skew1 == t_skew2
 
 ## Composite Transformations
 
-Instead of applying [individual transformations](#pre-defined-transformations) directly,
-you can also use them as building blocks to enable more complex types of operations.
-This is enabled through the
+Instead of applying individual [basic](#basic-transformations) or
+[advanced](#advanced-transformations) transformations directly, you can also use them as
+building blocks to enable more complex types of operations. This is enabled through the
 {class}`~baybe.transformations.composite.ChainedTransformation`,
-{class}`~baybe.transformations.composite.AdditiveTransformation` and 
-{class}`~baybe.transformations.composite.MultiplicativeTransformation` classes,
-which allow you to combine multiple transformations into a single one.
+{class}`~baybe.transformations.composite.AdditiveTransformation` and
+{class}`~baybe.transformations.composite.MultiplicativeTransformation` classes, which
+allow you to combine multiple transformations into a single one.
 
 ### Chaining
 
@@ -475,9 +475,10 @@ assert torch.equal(t1(values), p1(values) * p2(values))
 
 ## Custom Transformations
 
-If none of the [pre-defined transformations](#pre-defined-transformations) fit your
-needs and [composing them](#composite-transformations) does also not bring you to the
-desired result, you can easily define your custom logic using the
+If none of the pre-defined [basic](#basic-transformations) or
+[advanced](#advanced-transformations) transformations fit your needs and [composing
+them](#composite-transformations) does also not bring you to the desired result, you can
+easily define your custom logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, which accepts any
 one-argument `torch` callable as transformation function:
 

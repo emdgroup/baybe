@@ -38,6 +38,7 @@ from baybe.transformations import (
 )
 from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
+from baybe.utils.metadata import MeasurableMetadata, to_metadata
 
 
 @define
@@ -53,6 +54,12 @@ class _LegacyInterface:
 
     transformation: TargetTransformation | None = field(
         converter=lambda x: None if x is None else TargetTransformation(x),
+    )
+
+    metadata: MeasurableMetadata = field(
+        factory=MeasurableMetadata,
+        converter=lambda x: to_metadata(x, MeasurableMetadata),
+        kw_only=True,
     )
 
     @transformation.default
@@ -133,10 +140,21 @@ class NumericalTarget(Target, SerialMixin):
         transformation, minimize = _translate_legacy_arguments(
             legacy.mode, legacy.bounds, legacy.transformation
         )
-        self.__attrs_init__(legacy.name, transformation, minimize=minimize)
+        metadata = legacy.metadata
+        self.__attrs_init__(
+            legacy.name, transformation, minimize=minimize, metadata=metadata
+        )
 
     def __add__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, NumericalTarget):
+            if self.name != other.name:
+                raise ValueError()
+            return evolve(
+                self, transformation=self.transformation + other.transformation
+            )
+        return NotImplemented
 
     def __sub__(self, other: Any) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=-other))
@@ -154,6 +172,7 @@ class NumericalTarget(Target, SerialMixin):
         transformation: Transformation | None = None,
         *,
         minimize: bool = False,
+        metadata: MeasurableMetadata | dict[str, Any] | None = None,
     ) -> NumericalTarget:
         """A deprecation helper for creating targets using the modern interface.
 
@@ -161,6 +180,8 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             transformation: An optional transformation.
             minimize: Boolean flag indicating if the target should be minimized.
+            metadata: Optional metadata containing description, unit, and other
+                information.
 
         Returns:
             The created target object.
@@ -177,7 +198,7 @@ class NumericalTarget(Target, SerialMixin):
         return (
             cls(name, minimize=minimize)
             if transformation is None
-            else cls(name, transformation, minimize=minimize)
+            else cls(name, transformation, minimize=minimize, metadata=metadata)
         )
 
     @classmethod
@@ -187,6 +208,8 @@ class NumericalTarget(Target, SerialMixin):
         mode: TargetMode,
         bounds: ConvertibleToInterval = None,
         transformation: TargetTransformation | None = None,
+        *,
+        metadata: MeasurableMetadata | dict[str, Any] | None = None,
     ) -> NumericalTarget:
         """A deprecation helper for creating targets using the legacy interface.
 
@@ -195,6 +218,8 @@ class NumericalTarget(Target, SerialMixin):
             mode: The target mode (MAX, MIN, MATCH).
             bounds: Optional target bounds.
             transformation: An optional target transformation.
+            metadata: Optional metadata containing description, unit, and other
+                information.
 
         Returns:
             The created target object.
@@ -212,7 +237,7 @@ class NumericalTarget(Target, SerialMixin):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)
-            return cls(name, mode, bounds, transformation)
+            return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
     def match_absolute(cls, name: str, match_value: float) -> NumericalTarget:
@@ -521,9 +546,16 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
-converter.register_structure_hook(NumericalTarget, select_constructor_hook)
-
 # >>> Deprecation >>> #
+
+
+@converter.register_structure_hook
+def _(dct, cls) -> NumericalTarget:
+    if "mode" in dct:
+        return NumericalTarget(*dct)
+    return select_constructor_hook(dct, cls)
+
+
 _hook = converter.get_structure_hook(NumericalTarget)
 
 
