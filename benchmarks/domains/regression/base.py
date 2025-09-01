@@ -83,7 +83,7 @@ def run_tl_regression_benchmark(
     objective = create_objective_fn()
     data = load_data_fn()
 
-    # Create SearchSpace without task parameter
+    # Create search space without task parameter
     vanilla_searchspace = make_searchspace_fn(data=data, use_task_parameter=False)
 
     # Create transfer learning search space (with task parameter)
@@ -303,7 +303,7 @@ def _evaluate_naive_models(
     """
     results = []
 
-    # Naive GP on reduced searchspace (no source data, no task parameter)
+    # Naive GP on reduced search space (no source data, no task parameter)
     results.append(
         _train_and_evaluate_model(
             GaussianProcessSurrogate(),
@@ -315,7 +315,7 @@ def _evaluate_naive_models(
         )
     )
 
-    # Naive GP on full searchspace (no source data, with task parameter)
+    # Naive GP on full search space (no source data, with task parameter)
     results.append(
         _train_and_evaluate_model(
             GaussianProcessSurrogate(),
