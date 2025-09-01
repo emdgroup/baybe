@@ -11,6 +11,7 @@ from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin, converter
+from baybe.serialization.core import _TYPE_FIELD
 from baybe.utils.basic import classproperty
 
 _TMetaData = TypeVar("_TMetaData", bound="Metadata")
@@ -104,6 +105,7 @@ def to_metadata(
 def _separate_metadata_fields(dct: dict[str, Any], cls: type[Metadata]) -> Metadata:
     """Separate known fields from miscellaneous metadata."""
     dct = dct.copy()
+    dct.pop(_TYPE_FIELD, None)
     explicit = {fld: dct.pop(fld, None) for fld in cls._explicit_fields}
     return cls(**explicit, misc=dct)
 

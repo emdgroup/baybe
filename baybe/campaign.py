@@ -845,7 +845,7 @@ unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
-    Campaign, converter, _cattrs_include_init_false=True, _cattrs_forbid_extra_keys=True
+    Campaign, converter, _cattrs_include_init_false=True
 )
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
