@@ -24,6 +24,10 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
 
+TL_MODELS = {
+    "index_kernel": GaussianProcessSurrogate,
+}
+
 
 def kendall_tau_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Calculate Kendall's Tau correlation coefficient.
@@ -193,18 +197,6 @@ def run_tl_regression_benchmark(
     return results_df
 
 
-def _create_tl_models() -> dict[str, GaussianProcessSurrogate]:
-    """Create transfer learning model scenarios.
-
-    Returns:
-        Dictionary mapping model suffix names to initialized surrogate models
-        for transfer learning evaluation.
-    """
-    return {
-        "index_kernel": GaussianProcessSurrogate(),
-    }
-
-
 def _train_and_evaluate_model(
     model: GaussianProcessSurrogate,
     train_data: pd.DataFrame,
@@ -360,10 +352,12 @@ def _evaluate_transfer_learning_models(
     """
     # Collect evaluation results for transfer learning models
     results: list[dict[str, Any]] = []
+
     combined_data = pd.concat([source_data, target_train])
 
-    for model_suffix, model in _create_tl_models().items():
+    for model_suffix, model_class in TL_MODELS.items():
         scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
+        model = model_class()
         results.append(
             _train_and_evaluate_model(
                 model,
