@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from baybe.transformations.base import Transformation
 
 if TYPE_CHECKING:
@@ -25,10 +27,15 @@ def combine_affine_transformations(t1, t2, /):
     """Combine two affine transformations into one."""
     from baybe.transformations.basic import AffineTransformation
 
-    return AffineTransformation(
-        factor=t2.factor * t1.factor,
-        shift=t2.factor * t1.shift + t2.shift,
-    )
+    factor = t2.factor * t1.factor
+    shift = t2.factor * t1.shift + t2.shift
+
+    if not np.all(np.isfinite([factor, shift])):
+        raise OverflowError(
+            "The combined affine transformation produces infinite values."
+        )
+
+    return AffineTransformation(factor=factor, shift=shift)
 
 
 def _flatten_transformations(
