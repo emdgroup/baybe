@@ -107,7 +107,7 @@ def main() -> None:
     )
     parser.add_argument(
         "-d",
-        "--dry",
+        "--dry-run",
         help=(
             "Run benchmarks without saving results. Note that this will "
             "cause all other storing-related flags to be ignored."
@@ -137,14 +137,12 @@ def main() -> None:
             if benchmark.name in set(args.benchmark_list)
         ]
 
-    SAVE_RESULTS = not args.dry
-
     run_benchmarks(
         benchmark_list=benchmark_list,
         runmode=args.runmode,
         name=args.name,
         outdir=args.outdir,
-        save=SAVE_RESULTS,
+        save=not args.dry_run,
     )
 
 
