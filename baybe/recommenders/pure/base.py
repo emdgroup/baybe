@@ -2,10 +2,13 @@
 
 import gc
 from abc import ABC
-from typing import ClassVar, NoReturn
+from collections.abc import Callable
+from typing import Any, ClassVar, NoReturn
 
+import cattrs
 import pandas as pd
 from attrs import define, field
+from cattrs.gen import make_dict_unstructure_fn
 from typing_extensions import override
 
 from baybe.exceptions import DeprecationError, NotEnoughPointsLeftError
@@ -15,6 +18,8 @@ from baybe.searchspace import SearchSpace
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
+from baybe.serialization.core import add_type, converter
+from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import (
     validate_object_names,
@@ -293,6 +298,27 @@ class PureRecommender(ABC, RecommenderProtocol):
 
         # Return recommendations
         return rec
+
+
+@converter.register_unstructure_hook_factory(lambda x: issubclass(x, PureRecommender))
+def _(cls: type[PureRecommender]) -> Callable[[PureRecommender], dict[str, Any]]:
+    """Deprecation mechanism for allow_* flags."""  # noqa: D401
+
+    def drop_deprecated_flags(obj: PureRecommender, /) -> dict[str, Any]:
+        fn = make_dict_unstructure_fn(
+            cls,
+            converter,
+            _deprecated_allow_repeated_recommendations=cattrs.override(omit=True),
+            _deprecated_allow_recommending_already_measured=cattrs.override(omit=True),
+            _deprecated_allow_recommending_pending_experiments=cattrs.override(
+                omit=True
+            ),
+        )
+        if is_abstract(cls):
+            fn = add_type(fn)
+        return fn(obj)
+
+    return drop_deprecated_flags
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

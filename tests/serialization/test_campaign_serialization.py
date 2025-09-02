@@ -1,23 +1,22 @@
-"""Test serialization of campaigns."""
+"""Campaign serialization tests."""
 
 import pytest
 from cattrs import ClassValidationError
 
 from baybe.campaign import Campaign
+from baybe.utils.dataframe import add_fake_measurements
+from tests.serialization.utils import assert_roundtrip_consistency
 
 
-def roundtrip(campaign: Campaign) -> Campaign:
-    string = campaign.to_json()
-    return Campaign.from_json(string)
+def test_roundtrip(campaign: Campaign):
+    """A serialization roundtrip yields an equivalent object."""
+    assert_roundtrip_consistency(campaign)
 
-
-def test_campaign_serialization(campaign):
-    campaign2 = roundtrip(campaign)
-    assert campaign == campaign2
-
-    campaign.recommend(batch_size=1)
-    campaign2 = roundtrip(campaign)
-    assert campaign == campaign2
+    # Let's also confirm consistency after completing one DOE iteration
+    recommendation = campaign.recommend(batch_size=1)
+    add_fake_measurements(recommendation, campaign.targets)
+    campaign.add_measurements(recommendation)
+    assert_roundtrip_consistency(campaign)
 
 
 def test_valid_product_config(config):

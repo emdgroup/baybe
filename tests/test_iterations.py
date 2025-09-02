@@ -54,8 +54,7 @@ from baybe.surrogates.gaussian_process.presets import (
 )
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
-
-from .conftest import run_iterations
+from tests.conftest import run_iterations
 
 ########################################################################################
 # Settings of the individual components to be tested

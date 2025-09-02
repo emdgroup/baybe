@@ -2,7 +2,7 @@
 
 import pytest
 
-from .conftest import run_iterations
+from tests.conftest import run_iterations
 
 
 @pytest.mark.parametrize("parameter_names", [["Custom_1", "Custom_2"]])

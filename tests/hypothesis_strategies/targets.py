@@ -6,9 +6,8 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS, NumericalTarget
 from baybe.utils.interval import Interval
-
-from .metadata import measurable_metadata
-from .utils import intervals as st_intervals
+from tests.hypothesis_strategies.metadata import measurable_metadata
+from tests.hypothesis_strategies.utils import intervals as st_intervals
 
 target_name = st.text(min_size=1)
 """A strategy that generates target names."""

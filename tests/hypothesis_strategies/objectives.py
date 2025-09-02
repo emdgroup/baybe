@@ -8,11 +8,10 @@ from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.targets import NumericalTarget, TargetMode
 from baybe.targets.numerical import _VALID_TRANSFORMATIONS
-
-from ..hypothesis_strategies.basic import finite_floats
-from ..hypothesis_strategies.metadata import measurable_metadata, metadata
-from ..hypothesis_strategies.targets import numerical_targets
-from ..hypothesis_strategies.utils import intervals as st_intervals
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.metadata import measurable_metadata, metadata
+from tests.hypothesis_strategies.targets import numerical_targets
+from tests.hypothesis_strategies.utils import intervals as st_intervals
 
 _intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
 
@@ -84,3 +83,11 @@ def pareto_objectives(draw: st.DrawFn):
     targets = draw(_pareto_target_lists)
     objective_metadata = draw(metadata())
     return ParetoObjective(targets, metadata=objective_metadata)
+
+
+objectives = st.one_of(
+    single_target_objectives(),
+    desirability_objectives(),
+    pareto_objectives(),
+)
+"""A strategy that generates objectives."""

@@ -63,13 +63,6 @@ def test_valid_deserialization(cls, dct):
             "type",
             id="missing-type",
         ),
-        param(
-            UpperConfidenceBound,
-            {"type": "wrong", "beta": 1337},
-            ValueError,
-            "'UpperConfidenceBound' .* does not match .* 'wrong'",
-            id="inconsistent-type",
-        ),
     ],
 )
 def test_invalid_deserialization(cls, dct, err, msg):

@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `farthest_point_sampling` now also supports a collection of integers for 
   `initialization`, using them for pre-selecting points 
 
+### Changed
+- `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
+  have been replaced with `unstructure_with_type` and `make_base_structure_hook`
+- `to_dict` and `to_json` now accept an optional Boolean `add_type` argument
+
 ### Fixed
 - It is no longer possible to use identical names between parameters and targets
 - Random seed context is correctly set within benchmarks
@@ -25,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   point representation inaccuracy
 - Exotic serialization issues with constraints and conditions arising from missing
   converters for floats
+- `MetaRecommender`'s no longer expose their private attributes via the constructor
 
 ### Removed
 - Telemetry
