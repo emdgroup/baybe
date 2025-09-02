@@ -31,8 +31,6 @@ class Metadata(SerialMixin):
         validator=deep_mapping(
             mapping_validator=instance_of(dict),
             key_validator=instance_of(str),
-            # FIXME: https://github.com/python-attrs/attrs/issues/1246
-            value_validator=lambda *x: None,
         ),
         kw_only=True,
     )
