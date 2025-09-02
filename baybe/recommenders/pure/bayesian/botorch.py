@@ -348,6 +348,14 @@ class BotorchRecommender(BayesianRecommender):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # When interpoint constraints are present, we must use batch optimization
+        # instead of sequential optimization, as interpoint constraints are not
+        # supported for sequential optimization in BoTorch
+        sequential = (
+            self.sequential_continuous
+            and not subspace_continuous.has_interpoint_constraints
+        )
+
         # NOTE: The explicit `or None` conversion is added as an additional safety net
         #   because it is unclear if the corresponding presence checks for these
         #   arguments is correctly implemented in all invoked BoTorch subroutines.
@@ -360,16 +368,16 @@ class BotorchRecommender(BayesianRecommender):
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
             equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_eq
             ]
             or None,
             inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters)
+                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,
-            sequential=self.sequential_continuous,
+            sequential=sequential,
         )
         return points, acqf_values
 
@@ -407,6 +415,13 @@ class BotorchRecommender(BayesianRecommender):
             The recommended points.
         """
         assert self._objective is not None
+
+        # TODO Defining interpoint constraints for hybrid spaces is probably not
+        # that hard, but should be investigated in a follow up PR.
+        if searchspace.continuous.has_interpoint_constraints:
+            raise NotImplementedError(
+                "Interpoint constraints are not available in hybrid spaces."
+            )
         if (
             batch_size > 1
             and not self._get_acquisition_function(self._objective).supports_batching
@@ -453,6 +468,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=len(candidates_comp.columns),
+                    batch_size=batch_size,
                 )
                 for c in searchspace.continuous.constraints_lin_eq
             ]
@@ -461,6 +477,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=num_comp_columns,
+                    batch_size=batch_size,
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
             ]

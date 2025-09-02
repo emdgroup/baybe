@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   environment variable `BAYBE_USE_FPSAMPLE`
 - `farthest_point_sampling` now also supports a collection of integers for 
   `initialization`, using them for pre-selecting points 
+- Interpoint constraints for continuous search spaces
 
 ### Changed
 - `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
