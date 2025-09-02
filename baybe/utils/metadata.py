@@ -40,7 +40,7 @@ class Metadata(SerialMixin):
 
     @misc.validator
     def _validate_misc(self, _, value: dict[str, Any]) -> None:
-        if inv := set(value).intersection(self._explicit_fields):
+        if inv := set(value).intersection(self._explicit_fields | {_TYPE_FIELD}):
             raise ValueError(
                 f"Miscellaneous metadata cannot contain the following fields: {inv}. "
                 f"Use the corresponding attributes instead."
