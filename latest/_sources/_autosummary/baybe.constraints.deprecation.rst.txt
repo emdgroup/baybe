@@ -16,7 +16,6 @@ baybe.constraints.deprecation
    
       ContinuousLinearEqualityConstraint
       ContinuousLinearInequalityConstraint
-      structure_constraints
    
    
 

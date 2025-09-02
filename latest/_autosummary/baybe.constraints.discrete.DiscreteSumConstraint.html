@@ -434,7 +434,6 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.constraints.deprecation.html">baybe.constraints.deprecation</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><div class="visually-hidden">Toggle navigation of baybe.constraints.deprecation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.deprecation.ContinuousLinearEqualityConstraint.html">baybe.constraints.deprecation.ContinuousLinearEqualityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.constraints.deprecation.ContinuousLinearInequalityConstraint.html">baybe.constraints.deprecation.ContinuousLinearInequalityConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.constraints.deprecation.structure_constraints.html">baybe.constraints.deprecation.structure_constraints</a></li>
 </ul>
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="baybe.constraints.discrete.html">baybe.constraints.discrete</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><div class="visually-hidden">Toggle navigation of baybe.constraints.discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
@@ -717,11 +716,12 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="baybe.serialization.html">baybe.serialization</a><input class="toctree-checkbox" id="toctree-checkbox-76" name="toctree-checkbox-76" role="switch" type="checkbox"/><label for="toctree-checkbox-76"><div class="visually-hidden">Toggle navigation of baybe.serialization</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.serialization.core.html">baybe.serialization.core</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.serialization.core</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.converter.html">baybe.serialization.core.converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.add_type.html">baybe.serialization.core.add_type</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.block_deserialization_hook.html">baybe.serialization.core.block_deserialization_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.block_serialization_hook.html">baybe.serialization.core.block_serialization_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.get_base_structure_hook.html">baybe.serialization.core.get_base_structure_hook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.make_base_structure_hook.html">baybe.serialization.core.make_base_structure_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.select_constructor_hook.html">baybe.serialization.core.select_constructor_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.unstructure_base.html">baybe.serialization.core.unstructure_base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.serialization.core.unstructure_with_type.html">baybe.serialization.core.unstructure_with_type</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.serialization.mixin.html">baybe.serialization.mixin</a><input class="toctree-checkbox" id="toctree-checkbox-78" name="toctree-checkbox-78" role="switch" type="checkbox"/><label for="toctree-checkbox-78"><div class="visually-hidden">Toggle navigation of baybe.serialization.mixin</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1135,7 +1135,7 @@
 <dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteSumConstraint.from_dict.params.dictionary"></span><strong>dictionary</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – The dictionary representation.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The reconstructed object.</p>
@@ -1152,7 +1152,7 @@
 <dd class="field-odd"><p><span class="target" id="baybe.constraints.discrete.DiscreteSumConstraint.from_json.params.string"></span><strong>string</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The JSON representation of the object.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The reconstructed object.</p>
@@ -1230,6 +1230,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The dictionary representation of the object.</p>
 </dd>
 </dl>
 </dd></dl>

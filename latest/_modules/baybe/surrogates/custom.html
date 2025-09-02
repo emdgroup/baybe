@@ -433,7 +433,6 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.html">baybe.constraints.deprecation</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><div class="visually-hidden">Toggle navigation of baybe.constraints.deprecation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearEqualityConstraint.html">baybe.constraints.deprecation.ContinuousLinearEqualityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearInequalityConstraint.html">baybe.constraints.deprecation.ContinuousLinearInequalityConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.structure_constraints.html">baybe.constraints.deprecation.structure_constraints</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><div class="visually-hidden">Toggle navigation of baybe.constraints.discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -716,11 +715,12 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.html">baybe.serialization</a><input class="toctree-checkbox" id="toctree-checkbox-76" name="toctree-checkbox-76" role="switch" type="checkbox"/><label for="toctree-checkbox-76"><div class="visually-hidden">Toggle navigation of baybe.serialization</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.html">baybe.serialization.core</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.serialization.core</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.converter.html">baybe.serialization.core.converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.add_type.html">baybe.serialization.core.add_type</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.block_deserialization_hook.html">baybe.serialization.core.block_deserialization_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.block_serialization_hook.html">baybe.serialization.core.block_serialization_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.get_base_structure_hook.html">baybe.serialization.core.get_base_structure_hook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.make_base_structure_hook.html">baybe.serialization.core.make_base_structure_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.select_constructor_hook.html">baybe.serialization.core.select_constructor_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.unstructure_base.html">baybe.serialization.core.unstructure_base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.unstructure_with_type.html">baybe.serialization.core.unstructure_with_type</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.mixin.html">baybe.serialization.mixin</a><input class="toctree-checkbox" id="toctree-checkbox-78" name="toctree-checkbox-78" role="switch" type="checkbox"/><label for="toctree-checkbox-78"><div class="visually-hidden">Toggle navigation of baybe.serialization.mixin</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1052,8 +1052,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">NoReturn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">NoReturn</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">cattrs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">validators</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
@@ -1067,6 +1068,7 @@
     <span class="n">TaskParameter</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">converter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">IndependentGaussianSurrogate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">batchify_mean_var_prediction</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
@@ -1074,6 +1076,19 @@
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<span class="n">_ONNX_ENCODING</span> <span class="o">=</span> <span class="s2">&quot;latin-1&quot;</span>
+<span class="sd">&quot;&quot;&quot;Constant signifying the encoding for onnx byte strings in pretrained models.</span>
+
+<span class="sd">NOTE: This encoding is selected by choice for ONNX byte strings.</span>
+<span class="sd">This is not a requirement from ONNX but simply for the JSON format.</span>
+<span class="sd">The byte string from ONNX `.SerializeToString()` method has unknown encoding,</span>
+<span class="sd">which results in UnicodeDecodeError when using `.decode(&#39;utf-8&#39;)`.</span>
+<span class="sd">The use of latin-1 ensures there are no loss from the conversion of</span>
+<span class="sd">bytes to string and back, since the specification is a bijection between</span>
+<span class="sd">0-255 and the character set.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 
 <div class="viewcode-block" id="register_custom_architecture">
@@ -1189,6 +1204,33 @@
         <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">to_string</span><span class="p">(</span><span class="s2">&quot;ONNX input name&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_input_name</span><span class="p">,</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">to_string</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__str__</span><span class="p">(),</span> <span class="o">*</span><span class="n">fields</span><span class="p">)</span></div>
 
+
+
+<span class="c1"># Register (un-)structure hooks</span>
+<span class="nd">@converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_decode_onnx_string</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">CustomONNXSurrogate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Unstructure ONNX surrogates by decoding the ONNX byte string.&quot;&quot;&quot;</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">make_dict_unstructure_fn</span><span class="p">(</span>
+        <span class="n">CustomONNXSurrogate</span><span class="p">,</span>
+        <span class="n">converter</span><span class="p">,</span>
+        <span class="n">onnx_str</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">unstruct_hook</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">_ONNX_ENCODING</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+
+<span class="nd">@converter</span><span class="o">.</span><span class="n">register_structure_hook</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_encode_onnx_string</span><span class="p">(</span><span class="n">dct</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">_</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CustomONNXSurrogate</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Structure ONNX surrogates by encoding the ONNX byte string.&quot;&quot;&quot;</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">make_dict_structure_fn</span><span class="p">(</span>
+        <span class="n">CustomONNXSurrogate</span><span class="p">,</span>
+        <span class="n">converter</span><span class="p">,</span>
+        <span class="n">onnx_str</span><span class="o">=</span><span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span>
+            <span class="n">struct_hook</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">_ONNX_ENCODING</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">x</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fn</span><span class="p">(</span><span class="n">dct</span><span class="p">)</span>
 
 
 <span class="c1"># Collect leftover original slotted classes processed by `attrs.define`</span>

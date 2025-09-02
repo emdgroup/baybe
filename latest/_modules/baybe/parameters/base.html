@@ -433,7 +433,6 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.html">baybe.constraints.deprecation</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><div class="visually-hidden">Toggle navigation of baybe.constraints.deprecation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearEqualityConstraint.html">baybe.constraints.deprecation.ContinuousLinearEqualityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.ContinuousLinearInequalityConstraint.html">baybe.constraints.deprecation.ContinuousLinearInequalityConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.constraints.deprecation.structure_constraints.html">baybe.constraints.deprecation.structure_constraints</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><div class="visually-hidden">Toggle navigation of baybe.constraints.discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -716,11 +715,12 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.html">baybe.serialization</a><input class="toctree-checkbox" id="toctree-checkbox-76" name="toctree-checkbox-76" role="switch" type="checkbox"/><label for="toctree-checkbox-76"><div class="visually-hidden">Toggle navigation of baybe.serialization</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.html">baybe.serialization.core</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.serialization.core</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.converter.html">baybe.serialization.core.converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.add_type.html">baybe.serialization.core.add_type</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.block_deserialization_hook.html">baybe.serialization.core.block_deserialization_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.block_serialization_hook.html">baybe.serialization.core.block_serialization_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.get_base_structure_hook.html">baybe.serialization.core.get_base_structure_hook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.make_base_structure_hook.html">baybe.serialization.core.make_base_structure_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.select_constructor_hook.html">baybe.serialization.core.select_constructor_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.unstructure_base.html">baybe.serialization.core.unstructure_base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.serialization.core.unstructure_with_type.html">baybe.serialization.core.unstructure_with_type</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.serialization.mixin.html">baybe.serialization.mixin</a><input class="toctree-checkbox" id="toctree-checkbox-78" name="toctree-checkbox-78" role="switch" type="checkbox"/><label for="toctree-checkbox-78"><div class="visually-hidden">Toggle navigation of baybe.serialization.mixin</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1045,10 +1045,9 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span><span class="p">,</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">cattrs</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">define</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">attrs.converters</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional</span> <span class="k">as</span> <span class="n">optional_c</span>
@@ -1058,9 +1057,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterEncoding</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SerialMixin</span><span class="p">,</span>
-    <span class="n">converter</span><span class="p">,</span>
-    <span class="n">get_base_structure_hook</span><span class="p">,</span>
-    <span class="n">unstructure_base</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_tuple</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeasurableMetadata</span><span class="p">,</span> <span class="n">to_metadata</span>
@@ -1328,20 +1324,6 @@
 </div>
 
 
-
-<span class="c1"># Register (un-)structure hooks</span>
-<span class="n">_overrides</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;_values&quot;</span><span class="p">:</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;values&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;_active_values&quot;</span><span class="p">:</span> <span class="n">cattrs</span><span class="o">.</span><span class="n">override</span><span class="p">(</span><span class="n">rename</span><span class="o">=</span><span class="s2">&quot;active_values&quot;</span><span class="p">),</span>
-<span class="p">}</span>
-<span class="c1"># FIXME[typing]: https://github.com/python/mypy/issues/4717</span>
-<span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook</span><span class="p">(</span>
-    <span class="n">Parameter</span><span class="p">,</span>
-    <span class="n">get_base_structure_hook</span><span class="p">(</span><span class="n">Parameter</span><span class="p">,</span> <span class="n">overrides</span><span class="o">=</span><span class="n">_overrides</span><span class="p">),</span>  <span class="c1"># type: ignore</span>
-<span class="p">)</span>
-<span class="n">converter</span><span class="o">.</span><span class="n">register_unstructure_hook</span><span class="p">(</span>
-    <span class="n">Parameter</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">unstructure_base</span><span class="p">,</span> <span class="n">overrides</span><span class="o">=</span><span class="n">_overrides</span><span class="p">)</span>
-<span class="p">)</span>
 
 <span class="c1"># Collect leftover original slotted classes processed by `attrs.define`</span>
 <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>

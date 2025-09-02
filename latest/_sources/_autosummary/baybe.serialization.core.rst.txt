@@ -22,11 +22,12 @@ baybe.serialization.core
    .. autosummary::
       :toctree:                                       
    
+      add_type
       block_deserialization_hook
       block_serialization_hook
-      get_base_structure_hook
+      make_base_structure_hook
       select_constructor_hook
-      unstructure_base
+      unstructure_with_type
    
    
 

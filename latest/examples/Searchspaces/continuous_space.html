@@ -434,7 +434,6 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.deprecation.html">baybe.constraints.deprecation</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><div class="visually-hidden">Toggle navigation of baybe.constraints.deprecation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.deprecation.ContinuousLinearEqualityConstraint.html">baybe.constraints.deprecation.ContinuousLinearEqualityConstraint</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.deprecation.ContinuousLinearInequalityConstraint.html">baybe.constraints.deprecation.ContinuousLinearInequalityConstraint</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.constraints.deprecation.structure_constraints.html">baybe.constraints.deprecation.structure_constraints</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.constraints.discrete.html">baybe.constraints.discrete</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><div class="visually-hidden">Toggle navigation of baybe.constraints.discrete</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -717,11 +716,12 @@
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../_autosummary/baybe.serialization.html">baybe.serialization</a><input class="toctree-checkbox" id="toctree-checkbox-76" name="toctree-checkbox-76" role="switch" type="checkbox"/><label for="toctree-checkbox-76"><div class="visually-hidden">Toggle navigation of baybe.serialization</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.html">baybe.serialization.core</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.serialization.core</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.converter.html">baybe.serialization.core.converter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.add_type.html">baybe.serialization.core.add_type</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.block_deserialization_hook.html">baybe.serialization.core.block_deserialization_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.block_serialization_hook.html">baybe.serialization.core.block_serialization_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.get_base_structure_hook.html">baybe.serialization.core.get_base_structure_hook</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.make_base_structure_hook.html">baybe.serialization.core.make_base_structure_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.select_constructor_hook.html">baybe.serialization.core.select_constructor_hook</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.unstructure_base.html">baybe.serialization.core.unstructure_base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.serialization.core.unstructure_with_type.html">baybe.serialization.core.unstructure_with_type</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.serialization.mixin.html">baybe.serialization.mixin</a><input class="toctree-checkbox" id="toctree-checkbox-78" name="toctree-checkbox-78" role="switch" type="checkbox"/><label for="toctree-checkbox-78"><div class="visually-hidden">Toggle navigation of baybe.serialization.mixin</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1080,16 +1080,16 @@ Let us draw some samples from it and verify that they are within the bounds:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        x_1       x_2       x_3       x_4
-0 -0.951420  0.119358  0.425153  0.260534
-1  0.686617  0.305785 -0.274219  0.460859
-2 -0.560138  0.723361  0.555517 -0.491318
-3 -0.640761 -0.198220 -0.359410  0.872433
-4 -0.916293 -0.629178 -0.445685  0.477956
-5 -0.137362  0.818669  0.092780  0.890817
-6  0.063537 -0.094866 -0.254847 -0.431306
-7  0.633907  0.573157  0.111954 -0.604002
-8 -0.623979  0.573885  0.842799  0.504384
-9 -0.877494  0.649692  0.809251 -0.071685
+0 -0.631191  0.468397  0.676674  0.243999
+1 -0.094753  0.265733  0.400507 -0.284416
+2 -0.796800  0.001139  0.345179 -0.984751
+3 -0.235242  0.776808  0.204618 -0.277525
+4  0.851681  0.907353  0.735701  0.172052
+5  0.007182 -0.482490 -0.212656 -0.208253
+6 -0.123553 -0.766411 -0.576892  0.396895
+7  0.155589 -0.232364  0.074773  0.854672
+8  0.118391 -0.997446  0.668334  0.993269
+9 -0.341680  0.756062 -0.593716 -0.632190
 </pre></div>
 </div>
 <p>There are several ways we can turn the above objects into a search space.
