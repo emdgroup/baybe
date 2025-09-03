@@ -46,7 +46,7 @@ from baybe.transformations import LogarithmicTransformation
 target = NumericalTarget(
     name="Yield",
     transformation=LogarithmicTransformation(),  # optional transformation
-    minimize=False  # this is the default
+    minimize=False,  # this is the default
 )
 ```
 
