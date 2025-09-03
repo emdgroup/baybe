@@ -3,9 +3,9 @@
 import json
 from typing import TypeVar
 
-from baybe.serialization.core import converter
+from baybe.serialization.core import _add_type_to_dict, converter
 
-_T = TypeVar("_T")
+_T = TypeVar("_T", bound="SerialMixin")
 
 
 class SerialMixin:
@@ -16,8 +16,13 @@ class SerialMixin:
     __slots__ = ()
 
     def to_dict(self) -> dict:
-        """Create an object's dictionary representation."""
-        return converter.unstructure(self)
+        """Create an object's dictionary representation.
+
+        Returns:
+            The dictionary representation of the object.
+        """
+        dct = converter.unstructure(self)
+        return _add_type_to_dict(dct, self.__class__.__name__)
 
     @classmethod
     def from_dict(cls: type[_T], dictionary: dict) -> _T:

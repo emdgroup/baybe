@@ -5,12 +5,11 @@ import hypothesis.strategies as st
 from baybe.targets import NumericalTarget
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import ClampingTransformation
-
-from ..hypothesis_strategies.transformations import (
+from tests.hypothesis_strategies.metadata import measurable_metadata
+from tests.hypothesis_strategies.transformations import (
     chained_transformations,
     single_transformations,
 )
-from .metadata import measurable_metadata
 
 target_names = st.text(min_size=1)
 """A strategy that generates target names."""

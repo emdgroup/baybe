@@ -11,11 +11,7 @@ from attrs import Factory, define, field
 from attrs.validators import gt, is_callable
 from typing_extensions import override
 
-from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
-)
+from baybe.serialization import converter
 from baybe.transformations.base import (
     MonotonicTransformation,
     Transformation,
@@ -501,24 +497,11 @@ class SigmoidTransformation(MonotonicTransformation):
         return 1 / (1 + torch.exp(self.steepness * (x - self.center)))
 
 
-# Register (un-)structure hooks
-# -----------------------------
-
-
-# >>>>> Workaround
-# # Becomes obsolete after https://github.com/emdgroup/baybe/pull/577
 @converter.register_structure_hook
 def _(dct, _) -> ClampingTransformation:
-    interval = Interval.from_dict(dct["bounds"])
-    return ClampingTransformation(*interval.to_tuple())
+    bounds = Interval(**dct["bounds"])
+    return ClampingTransformation(*bounds.to_tuple())
 
-
-# <<<<< Workaround
-
-converter.register_structure_hook(
-    Transformation, get_base_structure_hook(Transformation)
-)
-converter.register_unstructure_hook(Transformation, unstructure_base)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

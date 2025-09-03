@@ -6,10 +6,9 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
-
-from ..hypothesis_strategies.basic import finite_floats
-from ..hypothesis_strategies.metadata import metadata
-from ..hypothesis_strategies.targets import numerical_targets
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.metadata import metadata
+from tests.hypothesis_strategies.targets import numerical_targets
 
 _target_lists = st.lists(numerical_targets(), min_size=2, unique_by=lambda t: t.name)
 _normalized_target_lists = st.lists(
@@ -58,3 +57,11 @@ def pareto_objectives(draw: st.DrawFn):
     objective_metadata = draw(metadata())
     targets = draw(_target_lists)
     return ParetoObjective(targets, metadata=objective_metadata)
+
+
+objectives = st.one_of(
+    single_target_objectives(),
+    desirability_objectives(),
+    pareto_objectives(),
+)
+"""A strategy that generates objectives."""

@@ -3,6 +3,7 @@
 import hypothesis.strategies as st
 from hypothesis import assume
 
+from baybe.serialization.core import _TYPE_FIELD
 from baybe.utils.metadata import MeasurableMetadata, Metadata
 
 _descriptions = st.one_of(st.none(), st.text(min_size=0))
@@ -19,7 +20,7 @@ def _miscs(draw: st.DrawFn, cls: type[Metadata]):
             max_size=5,
         )
     )
-    assume(not cls._explicit_fields.intersection(misc))
+    assume(not set(misc).intersection(cls._explicit_fields | {_TYPE_FIELD}))
     return misc
 
 

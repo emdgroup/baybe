@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from functools import cached_property, partial
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import cattrs
 import pandas as pd
 from attrs import define, field
 from attrs.converters import optional as optional_c
@@ -17,9 +16,6 @@ from typing_extensions import override
 from baybe.parameters.enum import ParameterEncoding
 from baybe.serialization import (
     SerialMixin,
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
 )
 from baybe.utils.basic import to_tuple
 from baybe.utils.metadata import MeasurableMetadata, to_metadata
@@ -254,20 +250,6 @@ class ContinuousParameter(Parameter):
 
         return SubspaceContinuous.from_parameter(self)
 
-
-# Register (un-)structure hooks
-_overrides = {
-    "_values": cattrs.override(rename="values"),
-    "_active_values": cattrs.override(rename="active_values"),
-}
-# FIXME[typing]: https://github.com/python/mypy/issues/4717
-converter.register_structure_hook(
-    Parameter,
-    get_base_structure_hook(Parameter, overrides=_overrides),  # type: ignore
-)
-converter.register_unstructure_hook(
-    Parameter, partial(unstructure_base, overrides=_overrides)
-)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

@@ -1,4 +1,4 @@
-"""Test serialization of parameters."""
+"""Parameter serialization tests."""
 
 import hypothesis.strategies as st
 import pytest
@@ -6,9 +6,7 @@ from hypothesis import given
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
-from baybe.parameters.base import Parameter
-
-from ..hypothesis_strategies.parameters import (
+from tests.hypothesis_strategies.parameters import (
     categorical_parameters,
     custom_parameters,
     numerical_continuous_parameters,
@@ -16,10 +14,11 @@ from ..hypothesis_strategies.parameters import (
     substance_parameters,
     task_parameters,
 )
+from tests.serialization.utils import assert_roundtrip_consistency
 
 
 @pytest.mark.parametrize(
-    "parameter_strategy",
+    "strategy",
     [
         param(numerical_discrete_parameters(), id="NumericalDiscreteParameter"),
         param(numerical_continuous_parameters(), id="NumericalContinuousParameter"),
@@ -36,9 +35,7 @@ from ..hypothesis_strategies.parameters import (
     ],
 )
 @given(data=st.data())
-def test_parameter_roundtrip(parameter_strategy, data):
+def test_roundtrip(strategy: st.SearchStrategy, data: st.DataObject):
     """A serialization roundtrip yields an equivalent object."""
-    parameter = data.draw(parameter_strategy)
-    string = parameter.to_json()
-    parameter2 = Parameter.from_json(string)
-    assert parameter == parameter2, (parameter, parameter2)
+    parameter = data.draw(strategy)
+    assert_roundtrip_consistency(parameter)

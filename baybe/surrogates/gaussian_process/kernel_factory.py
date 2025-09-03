@@ -11,11 +11,6 @@ from typing_extensions import override
 
 from baybe.kernels.base import Kernel
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
-)
 from baybe.serialization.mixin import SerialMixin
 
 if TYPE_CHECKING:
@@ -30,11 +25,6 @@ class KernelFactory(Protocol):
     ) -> Kernel:
         """Create a :class:`baybe.kernels.base.Kernel` for the given DOE context."""
         ...
-
-
-# Register (un-)structure hooks
-converter.register_structure_hook(KernelFactory, get_base_structure_hook(KernelFactory))
-converter.register_unstructure_hook(KernelFactory, unstructure_base)
 
 
 @define(frozen=True)

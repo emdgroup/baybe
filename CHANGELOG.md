@@ -60,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Objective transformations (both tensor and dataframe based) now always use the Torch
   computation route, avoiding the need for duplicated transformation logic
 - Specifying bounds for `Interval` is now optional
+- `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
+  have been replaced with `unstructure_with_type` and `make_base_structure_hook`
 
 ### Fixed
 - It is no longer possible to use identical names between parameters and targets
@@ -68,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   point representation inaccuracy
 - Exotic serialization issues with constraints and conditions arising from missing
   converters for floats
+- `MetaRecommender`'s no longer expose their private attributes via the constructor
 
 ### Removed
 - Telemetry
