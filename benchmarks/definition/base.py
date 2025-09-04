@@ -137,7 +137,11 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
 
         Args:
             runmode: The run mode to use for the benchmark.
-                If not specified, the runmode previously set in the settings will be used.
+                If not specified, the runmode previously set in the
+                settings will be used.
+
+        Returns:
+            The result of the benchmark execution.
         """
         if runmode:
             self.settings.set_runmode(runmode)
