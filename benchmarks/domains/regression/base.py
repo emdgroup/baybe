@@ -29,31 +29,38 @@ TL_MODELS = {
 }
 
 
-def kendall_tau_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+def kendall_tau_score(x: np.ndarray, y: np.ndarray, /) -> float:
     """Calculate Kendall's Tau correlation coefficient.
 
+    Values close to 1 indicate strong positive correlation, values close to -1
+    indicate strong negative correlation, and values near 0 indicate no
+    correlation.
+
     Args:
-        y_true: True target values.
-        y_pred: Predicted target values.
+        x: First array of values.
+        y: Second array of values, same shape as x.
 
     Returns:
         Kendall's Tau correlation coefficient.
     """
-    tau, _ = kendalltau(y_true, y_pred)
+    tau, _ = kendalltau(x, y)
     return tau
 
 
-def spearman_rho_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     """Calculate Spearman's Rho correlation coefficient.
 
+    Values close to 1 indicate strong positive monotonic correlation,
+    values close to -1 indicate strong negative monotonic correlation.
+
     Args:
-        y_true: True target values.
-        y_pred: Predicted target values.
+        x: First array of values.
+        y: Second array of values, same shape as x.
 
     Returns:
         Spearman's Rho correlation coefficient.
     """
-    rho, _ = spearmanr(y_true, y_pred)
+    rho, _ = spearmanr(x, y)
     return rho
 
 
