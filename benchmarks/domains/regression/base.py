@@ -136,6 +136,12 @@ def run_tl_regression_benchmark(
     source_data = data[data[name_task].isin(source_tasks)]
     target_data = data[data[name_task] == target_task]
 
+    # Ensure sufficient target data for train/test splits
+    assert len(target_data) >= 2 * settings.max_n_train_points, (
+        f"Insufficient target data:"
+        f"{len(target_data)} < {2 * settings.max_n_train_points}"
+    )
+
     # Collect all benchmark results across MC iterations and scenarios
     results: list[dict[str, Any]] = []
 
