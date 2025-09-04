@@ -104,6 +104,10 @@ def to_metadata(
     return converter.structure(value, cls)
 
 
+ConvertibleToMeasurableMetadata = MeasurableMetadata | dict[str, Any] | None
+"""A type alias for objects that can be converted to :class:`MeasurableMetadata`."""
+
+
 @converter.register_structure_hook
 def _separate_metadata_fields(dct: dict[str, Any], cls: type[Metadata]) -> Metadata:
     """Separate known fields from miscellaneous metadata."""

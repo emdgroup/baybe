@@ -38,10 +38,11 @@ from baybe.transformations import (
 )
 from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
-from baybe.utils.metadata import MeasurableMetadata, to_metadata
-
-ConvertibleToMeasurableMetadata = MeasurableMetadata | dict[str, Any] | None
-"""A type alias for objects that can be converted to :class:`MeasurableMetadata`."""
+from baybe.utils.metadata import (
+    ConvertibleToMeasurableMetadata,
+    MeasurableMetadata,
+    to_metadata,
+)
 
 
 @define
