@@ -24,10 +24,6 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
 
-TL_MODELS = {
-    "index_kernel": GaussianProcessSurrogate,
-}
-
 
 class DataLoader(Protocol):
     """Protocol for data loading functions used in TL regression benchmarks."""
@@ -105,6 +101,11 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     """
     rho, _ = spearmanr(x, y)
     return rho
+
+
+TL_MODELS = {
+    "index_kernel": GaussianProcessSurrogate,
+}
 
 
 REGRESSION_METRICS = [
@@ -270,6 +271,39 @@ def run_tl_regression_benchmark(
     return results_df
 
 
+def _sample_source_data(
+    source_data: pd.DataFrame,
+    source_tasks: list[str],
+    fraction_source: float,
+    task_column: str,
+    source_data_seed: int,
+) -> pd.DataFrame:
+    """Sample source data ensuring same fraction from each source task.
+
+    Args:
+        source_data: DataFrame containing all source task data.
+        source_tasks: List of source task identifiers.
+        fraction_source: Fraction of data to sample from each source task.
+        task_column: Name of column containing task identifiers.
+        source_data_seed: Random seed for reproducible sampling.
+
+    Returns:
+        Combined DataFrame with sampled data from all source tasks.
+    """
+    # Collect sampled subsets from each source task
+    source_subsets: list[pd.DataFrame] = []
+
+    for source_task in source_tasks:
+        task_data = source_data[source_data[task_column] == source_task]
+        if len(task_data) > 0:
+            task_subset = task_data.sample(
+                frac=fraction_source,
+                random_state=source_data_seed,
+            )
+            source_subsets.append(task_subset)
+    return pd.concat(source_subsets, ignore_index=True)
+
+
 def _evaluate_model(
     model: GaussianProcessSurrogate,
     train_data: pd.DataFrame,
@@ -310,39 +344,6 @@ def _evaluate_model(
     result = {"scenario": scenario_name}
     result.update(metrics)
     return result
-
-
-def _sample_source_data(
-    source_data: pd.DataFrame,
-    source_tasks: list[str],
-    fraction_source: float,
-    task_column: str,
-    source_data_seed: int,
-) -> pd.DataFrame:
-    """Sample source data ensuring same fraction from each source task.
-
-    Args:
-        source_data: DataFrame containing all source task data.
-        source_tasks: List of source task identifiers.
-        fraction_source: Fraction of data to sample from each source task.
-        task_column: Name of column containing task identifiers.
-        source_data_seed: Random seed for reproducible sampling.
-
-    Returns:
-        Combined DataFrame with sampled data from all source tasks.
-    """
-    # Collect sampled subsets from each source task
-    source_subsets: list[pd.DataFrame] = []
-
-    for source_task in source_tasks:
-        task_data = source_data[source_data[task_column] == source_task]
-        if len(task_data) > 0:
-            task_subset = task_data.sample(
-                frac=fraction_source,
-                random_state=source_data_seed,
-            )
-            source_subsets.append(task_subset)
-    return pd.concat(source_subsets, ignore_index=True)
 
 
 def _evaluate_naive_models(
