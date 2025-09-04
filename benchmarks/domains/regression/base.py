@@ -139,16 +139,17 @@ def run_tl_regression_benchmark(
     # Collect all benchmark results across MC iterations and scenarios
     results: list[dict[str, Any]] = []
 
-    # Create progress bar for Monte Carlo iterations
-    mc_iter_bar = tqdm(
-        range(settings.n_mc_iterations),
-        desc="Monte Carlo iterations",
-        unit="iter",
-        position=0,
-        leave=True,
+    # Calculate total iterations for single progress bar
+    total_iterations = (
+        settings.n_mc_iterations
+        * len(settings.source_fractions)
+        * settings.max_n_train_points
     )
 
-    for mc_iter in mc_iter_bar:
+    # Single progress bar for all iterations
+    pbar = tqdm(total=total_iterations, desc="Running benchmark", unit="eval")
+
+    for mc_iter in range(settings.n_mc_iterations):
         # Create train/test split for target task
         target_indices = np.random.permutation(len(target_data))
 
@@ -162,17 +163,13 @@ def run_tl_regression_benchmark(
                 settings.random_seed + mc_iter,
             )
 
-            # Create progress bar for training points
-            train_pts_bar = tqdm(
-                range(1, settings.max_n_train_points + 1),
-                desc=f"MC {mc_iter + 1}/{settings.n_mc_iterations},"
-                f"Source frac {fraction_source:.1f}",
-                unit="pts",
-                position=1,
-                leave=False,
-            )
-
-            for n_train_pts in train_pts_bar:
+            for n_train_pts in range(1, settings.max_n_train_points + 1):
+                # Update progress bar description
+                pbar.set_description(
+                    f"MC {mc_iter + 1}/{settings.n_mc_iterations} | "
+                    f"Frac {fraction_source:.2f} | "
+                    f"Pts {n_train_pts}/{settings.max_n_train_points}"
+                )
                 train_indices = target_indices[:n_train_pts]
                 test_indices = target_indices[
                     n_train_pts : n_train_pts + settings.max_n_train_points
@@ -219,6 +216,10 @@ def run_tl_regression_benchmark(
                         }
                     )
                     results.append(scenario_result)
+
+                pbar.update(1)
+
+    pbar.close()
 
     results_df = pd.DataFrame(results)
 
