@@ -16,6 +16,7 @@ from sklearn.metrics import (
     r2_score,
     root_mean_squared_error,
 )
+from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
@@ -156,9 +157,6 @@ def run_tl_regression_benchmark(
     pbar = tqdm(total=total_iterations, desc="Running benchmark", unit="eval")
 
     for mc_iter in range(settings.n_mc_iterations):
-        # Create train/test split for target task
-        target_indices = np.random.permutation(len(target_data))
-
         for fraction_source in settings.source_fractions:
             # Sample source data ensuring same fraction from each source task
             source_subset = _sample_source_data(
@@ -176,12 +174,14 @@ def run_tl_regression_benchmark(
                     f"Frac {fraction_source:.2f} | "
                     f"Pts {n_train_pts}/{settings.max_n_train_points}"
                 )
-                train_indices = target_indices[:n_train_pts]
-                test_indices = target_indices[
-                    n_train_pts : n_train_pts + settings.max_n_train_points
-                ]
-                target_train = target_data.iloc[train_indices].copy()
-                target_test = target_data.iloc[test_indices].copy()
+
+                target_train, target_test = train_test_split(
+                    target_data,
+                    train_size=n_train_pts,
+                    test_size=settings.max_n_train_points,
+                    random_state=settings.random_seed + mc_iter,
+                    shuffle=True,
+                )
 
                 # Collect results for current training scenario
                 scenario_results: list[dict[str, Any]] = []
