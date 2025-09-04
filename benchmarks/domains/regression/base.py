@@ -192,8 +192,6 @@ def run_tl_regression_benchmark(
                         vanilla_searchspace,
                         tl_searchspace,
                         objective,
-                        name_task,
-                        target_task,
                     )
                 )
                 scenario_results.extend(
@@ -204,8 +202,6 @@ def run_tl_regression_benchmark(
                         tl_searchspace,
                         objective,
                         fraction_source,
-                        name_task,
-                        target_task,
                     )
                 )
 
@@ -313,8 +309,6 @@ def _evaluate_naive_models(
     vanilla_searchspace: SearchSpace,
     tl_searchspace: SearchSpace,
     objective: SingleTargetObjective,
-    task_column: str,
-    task_value: str,
 ) -> list[dict[str, Any]]:
     """Evaluate both naive model baselines that do not use source data.
 
@@ -324,8 +318,6 @@ def _evaluate_naive_models(
         vanilla_searchspace: Search space without task parameter.
         tl_searchspace: Search space with task parameter.
         objective: Optimization objective.
-        task_column: Name of task parameter column.
-        task_value: Value for task parameter.
 
     Returns:
         List of evaluation results for naive baselines.
@@ -367,8 +359,6 @@ def _evaluate_transfer_learning_models(
     tl_searchspace: SearchSpace,
     objective: SingleTargetObjective,
     fraction_source: float,
-    task_column: str,
-    task_value: str,
 ) -> list[dict[str, Any]]:
     """Evaluate all transfer learning models using source and target data.
 
@@ -379,8 +369,6 @@ def _evaluate_transfer_learning_models(
         tl_searchspace: Search space with task parameter.
         objective: Optimization objective.
         fraction_source: Fraction of source data used.
-        task_column: Name of task parameter column.
-        task_value: Value for task parameter.
 
     Returns:
         List of evaluation results for transfer learning models.
