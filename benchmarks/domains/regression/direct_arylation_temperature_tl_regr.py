@@ -36,9 +36,9 @@ def direct_arylation_temperature_tl_regr(
     """
     results_df = run_tl_regression_benchmark(
         settings=settings,
-        load_data_fn=load_data,
-        make_searchspace_fn=make_searchspace,
-        create_objective_fn=make_objective,
+        data_loader=load_data,
+        searchspace_factory=make_searchspace,
+        objective_factory=make_objective,
     )
     return results_df
 

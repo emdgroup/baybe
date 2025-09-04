@@ -78,9 +78,9 @@ REGRESSION_METRICS = [
 
 def run_tl_regression_benchmark(
     settings: TransferLearningRegressionBenchmarkSettings,
-    load_data_fn: Callable[..., pd.DataFrame],
-    make_searchspace_fn: Callable[[pd.DataFrame, bool], SearchSpace],
-    create_objective_fn: Callable[..., SingleTargetObjective],
+    data_loader: Callable[..., pd.DataFrame],
+    searchspace_factory: Callable[[pd.DataFrame, bool], SearchSpace],
+    objective_factory: Callable[..., SingleTargetObjective],
 ) -> pd.DataFrame:
     """Run a transfer learning regression benchmark.
 
@@ -94,23 +94,23 @@ def run_tl_regression_benchmark(
 
     Args:
         settings: The benchmark settings.
-        load_data_fn: Function that loads the dataset.
-        make_searchspace_fn: Function that creates search spaces for
+        data_loader: Callable that loads the dataset.
+        searchspace_factory: Callable that creates search spaces for
             non-TL and TL models.
-        create_objective_fn: Function that creates the objective function.
+        objective_factory: Callable that creates the objective function.
 
     Returns:
         DataFrame with benchmark results containing performance metrics for each
         model, training scenario, and Monte Carlo iteration.
     """
-    objective = create_objective_fn()
-    data = load_data_fn()
+    objective = objective_factory()
+    data = data_loader()
 
     # Create search space without task parameter
-    vanilla_searchspace = make_searchspace_fn(data=data, use_task_parameter=False)
+    vanilla_searchspace = searchspace_factory(data=data, use_task_parameter=False)
 
     # Create transfer learning search space (with task parameter)
-    tl_searchspace = make_searchspace_fn(data=data, use_task_parameter=True)
+    tl_searchspace = searchspace_factory(data=data, use_task_parameter=True)
 
     # Extract task parameter details
     task_param = next(
