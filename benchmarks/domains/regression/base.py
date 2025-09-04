@@ -101,7 +101,16 @@ def run_tl_regression_benchmark(
 
     Returns:
         DataFrame with benchmark results containing performance metrics for each
-        model, training scenario, and Monte Carlo iteration.
+        model, training scenario, and Monte Carlo iteration. Columns include:
+
+      - scenario: Model scenario identifier (e.g., "0_reduced_searchspace",
+        "5_index_kernel")
+      - Performance metrics: root_mean_squared_error, mean_squared_error, r2_score,
+        mean_absolute_error, max_error, explained_variance_score, kendall_tau_score,
+        spearman_rho_score
+      - Experimental metadata: mc_iter, n_train_pts, fraction_source, n_source_pts,
+        n_test_pts, source_data_seed
+
     """
     objective = objective_factory()
     data = data_loader()
