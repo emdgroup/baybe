@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol
 
 import numpy as np
 import pandas as pd
@@ -28,6 +27,49 @@ from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
 TL_MODELS = {
     "index_kernel": GaussianProcessSurrogate,
 }
+
+
+class DataLoader(Protocol):
+    """Protocol for data loading functions used in TL regression benchmarks."""
+
+    def __call__(self) -> pd.DataFrame:
+        """Load and return the dataset for regression benchmark evaluation.
+
+        Returns:
+            DataFrame containing the data with features and target values.
+        """
+        ...
+
+
+class SearchSpaceFactory(Protocol):
+    """Protocol for SearchSpace creation used in TL regression benchmarks."""
+
+    def __call__(self, data: pd.DataFrame, use_task_parameter: bool) -> SearchSpace:
+        """Create a SearchSpace for regression benchmark evaluation.
+
+        Args:
+            data: The dataset to create the search space from.
+            use_task_parameter: Whether to include task parameter for TL
+                scenarios. If True, creates search space with TaskParameter for
+                TL models. If False, creates vanilla search space without
+                task parameter.
+
+        Returns:
+            The TL and non-TL searchspaces for the benchmark.
+        """
+        ...
+
+
+class ObjectiveFactory(Protocol):
+    """Protocol for objective creation functions used in regression benchmarks."""
+
+    def __call__(self) -> SingleTargetObjective:
+        """Create and return the optimization objective for regression benchmarks.
+
+        Returns:
+            The objective of the benchmark.
+        """
+        ...
 
 
 def kendall_tau_score(x: np.ndarray, y: np.ndarray, /) -> float:
@@ -79,9 +121,9 @@ REGRESSION_METRICS = [
 
 def run_tl_regression_benchmark(
     settings: TransferLearningRegressionBenchmarkSettings,
-    data_loader: Callable[..., pd.DataFrame],
-    searchspace_factory: Callable[[pd.DataFrame, bool], SearchSpace],
-    objective_factory: Callable[..., SingleTargetObjective],
+    data_loader: DataLoader,
+    searchspace_factory: SearchSpaceFactory,
+    objective_factory: ObjectiveFactory,
 ) -> pd.DataFrame:
     """Run a transfer learning regression benchmark.
 
@@ -95,10 +137,10 @@ def run_tl_regression_benchmark(
 
     Args:
         settings: The benchmark settings.
-        data_loader: Callable that loads the dataset.
-        searchspace_factory: Callable that creates search spaces for
-            non-TL and TL models.
-        objective_factory: Callable that creates the objective function.
+        data_loader: Function that loads the dataset for regression evaluation.
+        searchspace_factory: Function that creates search spaces for both
+            non-TL and TL model scenarios.
+        objective_factory: Function that creates the optimization objective.
 
     Returns:
         DataFrame with benchmark results containing performance metrics for each
