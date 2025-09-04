@@ -33,7 +33,7 @@ def desirability_objectives(draw: st.DrawFn):
     ):
         targets = draw(_normalized_target_lists)
     else:
-        targets = draw(_normalized_target_lists)
+        targets = draw(_target_lists)
     weights = draw(
         st.lists(
             finite_floats(min_value=0.0, exclude_min=True),
