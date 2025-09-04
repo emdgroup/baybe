@@ -171,14 +171,14 @@ def run_tl_regression_benchmark(
     )
     name_task = task_param.name
 
-    # Extract single target task
-    target_task = task_param.active_values[0]
+    # Extract target tasks (can be multiple)
+    target_tasks = task_param.active_values
     all_values = task_param.values
-    source_tasks = [val for val in all_values if val != target_task]
+    source_tasks = [val for val in all_values if val not in target_tasks]
 
     # Split data into source and target
     source_data = data[data[name_task].isin(source_tasks)]
-    target_data = data[data[name_task] == target_task]
+    target_data = data[data[name_task].isin(target_tasks)]
 
     # Ensure sufficient target data for train/test splits
     assert len(target_data) >= 2 * settings.max_n_train_points, (
