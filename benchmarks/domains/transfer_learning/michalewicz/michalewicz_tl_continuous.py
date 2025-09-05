@@ -185,15 +185,15 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
 benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
-        RunMode.STANDARD: 2,
+        RunMode.DEFAULT: 2,
         RunMode.SMOKETEST: 2,
     },
     n_doe_iterations_settings={
-        RunMode.STANDARD: 30,
+        RunMode.DEFAULT: 30,
         RunMode.SMOKETEST: 2,
     },
     n_mc_iterations_settings={
-        RunMode.STANDARD: 30,
+        RunMode.DEFAULT: 30,
         RunMode.SMOKETEST: 2,
     },
 )
