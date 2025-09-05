@@ -13,7 +13,7 @@ from benchmarks.definition.base import (
 )
 
 
-@define(kw_only=True)
+@define(kw_only=True, frozen=True)
 class ConvergenceBenchmarkSettings(BenchmarkSettings):
     """Benchmark configuration for recommender convergence analyses."""
 
