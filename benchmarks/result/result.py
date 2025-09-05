@@ -45,7 +45,7 @@ class Result(BenchmarkSerialization):
         init=False,
         validator=deep_mapping(instance_of(str), instance_of(str), instance_of(dict)),
     )
-    """Technical details of the system where the benchmarking data was created."""
+    """Technical details of the system on which the benchmark was executed."""
 
     @python_env.default
     def _default_python_env(self) -> dict[str, str]:
