@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
+import attrs
 from attrs import Attribute, define, field
 from attrs.validators import deep_mapping, instance_of
 from cattrs import override
@@ -33,16 +34,16 @@ class RunMode(Enum):
     setting parameters for benchmarks. The purpose is to allow for different
     configurations or behaviors of benchmarks based on predefined modes which encode
     settings where for example more or less DoE-iterations are necessary.
-
-    ``STANDARD``: Default run mode for benchmarks with performance relevant settings.
-    ``SMOKETEST``: Minimal run mode for verifying that the benchmarks are executable.
     """
 
-    STANDARD = "standard"
-    SMOKETEST = "smoketest"
+    STANDARD = "STANDARD"
+    """Default run mode for benchmarks with performance relevant settings."""
+
+    SMOKETEST = "SMOKETEST"
+    """Minimal run mode for verifying that the benchmarks are executable."""
 
 
-@define(kw_only=True)
+@define(kw_only=True, frozen=True)
 class BenchmarkSettings(ABC, BenchmarkSerialization):
     """The basic benchmark configuration."""
 
@@ -50,22 +51,13 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     """The used random seed."""
 
     runmode: RunMode = field(
-        validator=instance_of(RunMode),
-        converter=RunMode,
         default=RunMode.STANDARD,
+        converter=RunMode,
+        validator=instance_of(RunMode),
     )
     """Mode to run benchmark in.
     Can be used to adjust the selection of setting parameters.
     """
-
-    def set_runmode(self, runmode: RunMode) -> None:
-        """Set the runmode for the benchmark settings."""
-        if runmode not in RunMode:
-            raise ValueError(
-                f"Invalid runmode: {runmode}. Available "
-                f"runmodes: {RunMode._member_names_}"
-            )
-        self.runmode = runmode
 
 
 MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.SMOKETEST})
@@ -73,9 +65,9 @@ MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.SMOKETEST})
 
 
 def make_runmode_attr_validator(
-    value_type: type,
+    value_type: type, /
 ) -> Callable[[BenchmarkSettings, Attribute, dict[RunMode, Any]], None]:
-    """Maker validator for attributes that depend on the runmode.
+    """Make validator for attributes that depend on the runmode.
 
     Make sure that all required runmodes are defined
     and that values are of the desired type.
@@ -92,12 +84,11 @@ def make_runmode_attr_validator(
         )
         VALID_DICT(instance, attribute, value)
 
-        missing_runmodes = [rm.value for rm in MANDATORY_RUNMODES if rm not in value]
+        missing_runmodes = {rm.value for rm in MANDATORY_RUNMODES if rm not in value}
 
-        if len(missing_runmodes) > 0:
+        if missing_runmodes:
             raise ValueError(
-                f"Runmode(s) {', '.join(missing_runmodes)} "
-                f"must be defined in {attribute.name}."
+                f"Runmode(s) {missing_runmodes} must be defined in {attribute.name}."
             )
 
     return runmode_attr_validator
@@ -144,7 +135,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             The result of the benchmark execution.
         """
         if runmode:
-            self.settings.set_runmode(runmode)
+            attrs.evolve(self.settings, runmode=runmode)
 
         start_datetime = datetime.now(timezone.utc)
 
