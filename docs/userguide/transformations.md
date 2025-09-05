@@ -307,6 +307,16 @@ mathematical operation $(h \circ g \circ f)(x) = h(g(f(x)))$, where the order in
 notation is reversed.
 ```
 
+```{admonition} Convenience Construction
+:class: tip
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.ChainedTransformation` 
+constructor to chain transformations, you can alternatively:
+* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
+* calling an existing transformation's
+{meth}`~baybe.transformations.base.Transformation.chain` method
+```
+
 ```python
 from baybe.transformations import (
     AffineTransformation,
@@ -351,16 +361,6 @@ assert torch.equal(t1(values), t4(values))  # they produce the same output
 assert t1 != t4  # but they are not "equal" objects
 ```
 ````
-
-```{admonition} Convenience Construction
-:class: tip
-Instead of explicitly calling the
-{class}`~baybe.transformations.composite.ChainedTransformation` 
-constructor to chain transformations, you can alternatively:
-* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
-* calling an existing transformation's
-{meth}`~baybe.transformations.base.Transformation.chain` method
-```
 
 ````{admonition} Compression
 :class: note
