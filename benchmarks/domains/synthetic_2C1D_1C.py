@@ -15,6 +15,7 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from benchmarks.definition.base import RunMode
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -107,9 +108,18 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=5,
-    n_doe_iterations=40,
-    n_mc_iterations=100,
+    batch_size_settings={
+        RunMode.DEFAULT: 5,
+        RunMode.SMOKETEST: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 40,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 100,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 synthetic_2C1D_1C_benchmark = ConvergenceBenchmark(
