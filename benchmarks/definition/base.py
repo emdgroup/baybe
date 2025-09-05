@@ -42,6 +42,14 @@ class RunMode(Enum):
     SMOKETEST = "SMOKETEST"
     """Minimal run mode for verifying that the benchmarks are executable."""
 
+    @classmethod
+    def from_string(cls, value: str):
+        """Convert a string to a RunMode, case-insensitively."""
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(f"Invalid run mode: {value}")
+
 
 @define(kw_only=True, frozen=True)
 class BenchmarkSettings(ABC, BenchmarkSerialization):
