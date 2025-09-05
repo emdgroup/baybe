@@ -161,3 +161,78 @@ jobs:
           tr -d '%' |
           sed '$d' |
           awk '{if ( $1<${{ env.COVERAGE_INDIVIDUAL_THRESH }} ) exit 1 }'
+      
+  add-gpu-machine:
+    needs: coretest
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: true
+      matrix:
+        py-version: [ {semantic: '3.10', tox: 'py310'},
+                      {semantic: '3.11', tox: 'py311'},
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: Github_Add_Runner
+          aws-region: eu-central-1
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Execute Lambda function
+        run: |
+          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "XS-GPU", "repository": "${{ github.repository }}" }'  response.json
+
+          if ! grep -q '"statusCode": 200' response.json; then
+            echo "Lambda function failed. statusCode is not 200."
+            exit 1
+          fi
+
+  gputest:
+    needs: [add-gpu-machine]
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.10', tox: 'py310'},
+                      {semantic: '3.11', tox: 'py311'},
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
+    name: GPU Tests ${{ matrix.py-version.semantic }}
+    runs-on: gpu
+    steps:
+      - name: System Information
+        run: |
+          echo "System Information:"
+          uname -a
+          lscpu
+          lsblk
+          free -h
+          df -h
+          if [ -x "$(command -v nvidia-smi)" ]; then
+            nvidia-smi
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - uses: actions/cache@v4
+        with:
+          path: .tox/gputest-${{ matrix.py-version.tox }}
+          key: gputest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
+      - name: Run GPU tests
+        run: |
+          pip install tox-uv
+          tox -e gputest-${{ matrix.py-version.tox }}
