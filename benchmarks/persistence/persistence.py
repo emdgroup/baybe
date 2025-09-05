@@ -73,10 +73,7 @@ class PathConstructor:
         return "".join([char if char in ALLOWED_CHARS else "-" for char in string])
 
     @classmethod
-    def from_result(
-        cls,
-        result: Result,
-    ) -> PathConstructor:
+    def from_result(cls, result: Result) -> PathConstructor:
         """Create a path constructor from result.
 
         Args:
