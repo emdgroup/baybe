@@ -24,7 +24,7 @@ def save_benchmark_data(
     result: Result,
     runmode: RunMode,
     outdir: Path,
-    name: str | None = None,
+    file_name_prefix: str | None = None,
 ) -> None:
     """Save the benchmark data to the object storage.
 
@@ -33,7 +33,8 @@ def save_benchmark_data(
         result: The result of the benchmark execution.
         runmode: The mode of benchmark settings used for the execution.
         outdir: The directory where the results should be saved.
-        name: Additional string that is added to the generated file name.
+        file_name_prefix: Additional string that is added to the
+                    generated file name.
     """
     path_constructor = PathConstructor.from_result(result)
     persist_dict = benchmark.to_dict() | result.to_dict()
@@ -42,7 +43,9 @@ def save_benchmark_data(
         S3ObjectStorage()
         if RUNS_IN_CI
         else LocalFileObjectStorage(
-            runmode=runmode, folder_path_prefix=outdir, name=name
+            runmode=runmode,
+            folder_path_prefix=outdir,
+            file_name_prefix=file_name_prefix,
         )
     )
     object_storage.write_json(persist_dict, path_constructor)
@@ -52,7 +55,7 @@ def run_benchmarks(
     benchmark_list: Collection[Benchmark],
     runmode: RunMode,
     outdir: Path,
-    name: str | None = None,
+    file_name_prefix: str | None = None,
     save: bool = True,
 ) -> None:
     """Run a subset based on the benchmark name.
@@ -61,14 +64,21 @@ def run_benchmarks(
         benchmark_list: The list of benchmarks to run.
         runmode: The run mode to use for the benchmarks which decide the used settings.
         outdir: The directory where the results should be saved.
-        name: Additional string that is added to the generated file name.
+        file_name_prefix: Additional string that is added to the
+                            generated file name.
         save: Whether to save the results to the object storage.
     """
     for benchmark in benchmark_list:
         result = benchmark(runmode=runmode)
 
         if save:
-            save_benchmark_data(benchmark, result, runmode, name=name, outdir=outdir)
+            save_benchmark_data(
+                benchmark,
+                result,
+                runmode,
+                file_name_prefix=file_name_prefix,
+                outdir=outdir,
+            )
 
 
 def main() -> None:
@@ -92,9 +102,12 @@ def main() -> None:
         choices=list(RunMode),
     )
     parser.add_argument(
-        "--name",
-        "-n",
-        help="Additional string that is added to the generated file name.",
+        "--file-name-prefix",
+        "-p",
+        help=(
+            "Additional string that is added as a prefix to the"
+            " generated file name inside of the folder."
+        ),
         default=None,
         type=str,
     )
@@ -119,8 +132,8 @@ def main() -> None:
     if args.outdir != Path(".") and RUNS_IN_CI:
         raise ValueError("Output directory cannot be set in CI mode.")
 
-    if args.name and RUNS_IN_CI:
-        raise ValueError("Name cannot be set in CI mode.")
+    if args.file_name_prefix and RUNS_IN_CI:
+        raise ValueError("File name prefix cannot be set in CI mode.")
 
     if not args.outdir.exists():
         raise FileNotFoundError(
@@ -140,7 +153,7 @@ def main() -> None:
     run_benchmarks(
         benchmark_list=benchmark_list,
         runmode=args.runmode,
-        name=args.name,
+        file_name_prefix=args.file_name_prefix,
         outdir=args.outdir,
         save=not args.dry_run,
     )
