@@ -148,8 +148,6 @@ class Result(BenchmarkSerialization):
                 "python_compiler": platform.python_compiler(),
                 "python_revision": platform.python_revision(),
                 "linkage_format": platform.architecture()[1],
-                "cpu_count": str(cpu_count),
-                "cpu_logical_count": str(logical_cpu_count),
                 "swap_memory_total": str(psutil.swap_memory().total // (1024**2))
                 + " MB",
                 "processor": cpu_info,
