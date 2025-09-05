@@ -62,28 +62,36 @@ via the [`require_normalization`](#require-normalization) flag.
 
 Besides the list of [`Target`](baybe.targets.base.Target)s to be scalarized, this
 objective type takes additional optional arguments that let us control its behavior:
-* `weights`: Specifies the relative importance of the targets in the form of a sequence
-  of positive numbers, one for each target considered.
-  Note that BayBE automatically normalizes the weights, so only their relative scales
-  matter.
-* `as_pre_transformation`: By default, the desirability is computed via posterior
-  transformations, enabling access to information even for the original targets 
-  (e.g. in [`SHAPInsight`](baybe.insights.shap.SHAPInsight) or
+
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.weights`:
+  Specifies the relative importance of the targets in the form of a sequence of positive
+  numbers, one for each target considered. Note that BayBE automatically normalizes the
+  weights, so only their relative scales matter.
+
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation`:
+  By default, the desirability is computed via posterior transformations, enabling
+  access to information even for the original targets (e.g. in
+  [`SHAPInsight`](baybe.insights.shap.SHAPInsight) or
   [`posterior_stats`](baybe.campaign.Campaign.posterior_stats)). However, this requires
   one model per target. With
   [`as_pre_transformation=True`](baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation)
   you can change this behavior, e.g. due to computational limitations. The objective
   will then apply the transformation directly and fits a single model on the resulting
   "Desirability".
-* `require_normalization`: A Boolean flag controlling the target normalization
-  requirement. 
-* `scalarizer`: Specifies the [scalarization function](baybe.objectives.enum.Scalarizer)
-  to be used for combining the normalized target values.
-(require-normalization)=
+ 
+  (require-normalization)=
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.require_normalization`:
+  A Boolean flag controlling the target normalization requirement.
 
-The definitions of the `scalarizer`s are as follows, where $\{t_i\}$ refer the
-**transformed** target measurements of a single experiment and $\{w_i\}$ are the
-corresponding target weights:
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.scalarizer`:
+  Specifies the [scalarization function](baybe.objectives.enum.Scalarizer) to be used
+  for combining the normalized target values.
+
+
+The definitions of the
+{attr}`~baybe.objectives.desirability.DesirabilityObjective.scalarizer`s are as follows,
+where $\{t_i\}$ refer the **transformed** target measurements of a single experiment and
+$\{w_i\}$ are the corresponding target weights:
 
 ```{math}
 \begin{align*}
