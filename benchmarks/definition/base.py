@@ -43,12 +43,12 @@ class RunMode(Enum):
     """Minimal run mode for verifying that the benchmarks are executable."""
 
     @classmethod
-    def from_string(cls, value: str):
+    def from_string(cls, value: str, /) -> "RunMode":
         """Convert a string to a RunMode, case-insensitively."""
         try:
             return cls[value.upper()]
-        except KeyError:
-            raise ValueError(f"Invalid run mode: {value}")
+        except KeyError as ex:
+            raise ValueError(f"Invalid run mode: {value}") from ex
 
 
 @define(kw_only=True, frozen=True)
