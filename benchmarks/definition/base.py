@@ -36,7 +36,7 @@ class RunMode(Enum):
     settings where for example more or less DoE-iterations are necessary.
     """
 
-    STANDARD = "STANDARD"
+    DEFAULT = "DEFAULT"
     """Default run mode for benchmarks with performance relevant settings."""
 
     SMOKETEST = "SMOKETEST"
@@ -59,7 +59,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     """The used random seed."""
 
     runmode: RunMode = field(
-        default=RunMode.STANDARD,
+        default=RunMode.DEFAULT,
         converter=RunMode,
         validator=instance_of(RunMode),
     )
@@ -68,7 +68,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     """
 
 
-MANDATORY_RUNMODES = frozenset({RunMode.STANDARD, RunMode.SMOKETEST})
+MANDATORY_RUNMODES = frozenset({RunMode.DEFAULT, RunMode.SMOKETEST})
 """Mandatory runmodes that must be defined in all benchmark settings."""
 
 
