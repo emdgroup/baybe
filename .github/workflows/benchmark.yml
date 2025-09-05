@@ -111,14 +111,27 @@ jobs:
       BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
       BAYBE_PARALLEL_SIMULATION_RUNS: false
     steps:
+      - name: System Information
+        run: |
+          echo "System Information:"
+          uname -a
+          lscpu
+          lsblk
+          free -h
+          df -h
+          if [ -x "$(command -v nvidia-smi)" ]; then
+            nvidia-smi
+          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        id: setup-python
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install the project
+        run: uv sync --locked --extra benchmarking
       - name: Benchmark
-        run: |
-          pip install '.[benchmarking]'
-          python -W ignore -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
+        run: uv run -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
