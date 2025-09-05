@@ -134,27 +134,28 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
         Returns:
             The result of the benchmark execution.
         """
-        if runmode:
-            attrs.evolve(self.settings, runmode=runmode)
+        used_settings = (
+            attrs.evolve(self.settings, runmode=runmode) if runmode else self.settings
+        )
 
         start_datetime = datetime.now(timezone.utc)
 
         logger.info(
             "=" * 80
             + f"\nRunning benchmark '{self.name}' with "
-            + f"random seed {self.settings.random_seed} "
-            + f"in runmode {self.settings.runmode}.\n"
+            + f"random seed {used_settings.random_seed} "
+            + f"in runmode {used_settings.runmode}.\n"
         )
 
         start_sec = time.perf_counter()
-        result = self.function(self.settings)
+        result = self.function(used_settings)
         stop_sec = time.perf_counter()
 
         duration = timedelta(seconds=stop_sec - start_sec)
 
         logger.info(
             f"\nFinished benchmark '{self.name}' after {duration} "
-            + f"with random seed {self.settings.random_seed}.\n"
+            + f"with random seed {used_settings.random_seed}.\n"
             + "=" * 80
         )
 
