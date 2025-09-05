@@ -199,8 +199,10 @@ class LocalFileObjectStorage(ObjectStorage):
     folder_path_prefix: Path = field(converter=Path, default=Path("."))
     """The prefix of the folder path where the results are stored."""
 
-    name: str | None = field(validator=optional(instance_of(str)), default=None)
-    """Custom name to add to the path."""
+    file_name_prefix: str | None = field(
+        validator=optional(instance_of(str)), default=None
+    )
+    """Custom prefix to add to the file name."""
 
     @folder_path_prefix.validator
     def _folder_path_prefix_validator(self, _, folder_path_prefix: Path) -> None:
@@ -225,8 +227,10 @@ class LocalFileObjectStorage(ObjectStorage):
         )
         path_object = path_object.with_name(f"{self.runmode.value}_{path_object.name}")
 
-        if self.name:
-            path_object = path_object.with_name(f"{self.name}_{path_object.name}")
+        if self.file_name_prefix:
+            path_object = path_object.with_name(
+                f"{self.file_name_prefix}_{path_object.name}"
+            )
 
         if path_object.exists():
             base_stem = path_object.stem
