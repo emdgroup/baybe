@@ -86,7 +86,7 @@ def main() -> None:
     parser.add_argument(
         "--runmode",
         "-r",
-        type=RunMode,
+        type=RunMode.from_string,
         help="Runmode setting to use.",
         default=RunMode.STANDARD,
         choices=list(RunMode),
