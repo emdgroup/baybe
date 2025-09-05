@@ -3,7 +3,7 @@
 Targets play a crucial role as the connection between observables measured in an
 experiment and the machine learning core behind BayBE.
 In general, it is expected that you create one [`Target`](baybe.targets.base.Target)
-object for each of your observables, to inform BayBE about their existence.
+object for each of your observables to inform BayBE about their existence.
 The way BayBE treats these targets is then controlled via the
 [`Objective`](../../userguide/objectives).
 
@@ -22,8 +22,8 @@ support**, meaning that you won't get type hints (e.g. for autocompletion or sta
 checks) for either of the two types of constructor calls.
 
 For this reason, we offer two additional constructors available **for the duration of
-the deprecation period** that offer full typing support, which are useful for code
-development: {meth}`~baybe.targets.numerical.NumericalTarget.from_legacy_interface` and
+the deprecation period** that offer full typing support:
+{meth}`~baybe.targets.numerical.NumericalTarget.from_legacy_interface` and
 {meth}`~baybe.targets.numerical.NumericalTarget.from_modern_interface`.
 ```
 
@@ -141,7 +141,7 @@ assert_frame_equal(
 # ... the targets themselves are not equal ...
 assert t1 != t2
 
-# ... and the derivative signals they specify differ!
+# ... and the transformed signals they specify differ!
 assert not t1.transform(s).equals(t2.transform(s))
 ```
 ````
@@ -292,7 +292,7 @@ assert t_power == t_quad
 #### Custom Transformation
 If none of the built-in constructors fit your needs because you need more fine-grained
 control over the matching behavior (e.g. when there are multiple acceptable set points),
-you always have the fallback option to create a custom
+you always have the fallback option to create a
 {class}`~baybe.transformations.basic.CustomTransformation` that implements the
 corresponding logic and pass it to the regular
 {class}`~baybe.targets.numerical.NumericalTarget` constructor.

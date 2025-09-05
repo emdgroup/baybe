@@ -191,9 +191,9 @@ t = SigmoidTransformation.from_anchors(
 
 ### BellTransformation
 
-The {class}`~baybe.transformations.basic.BellTransformation` pipes the input through a
-bell-shaped function (i.e. an **unnormalized** Gaussian), useful for steering the
-targets to a specific set point value.
+The {class}`~baybe.transformations.basic.BellTransformation` passes its input through a
+bell-shaped function (i.e. an **unnormalized** Gaussian). This is useful for steering
+target values to specific set points.
 
 `````{grid} 2
 
@@ -229,8 +229,8 @@ t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the ri
 ### TriangularTransformation
 
 The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise affine
-transformation with the shape of a triangle, useful for steering targets to a specific
-set point value with symmetric or asymmetric penalty.
+transformation with the shape of a triangle. This is useful for steering target values
+to specific set points with symmetric or asymmetric penalty.
 
 `````{grid} 2
 

@@ -109,9 +109,9 @@ of the other three by assigning it a higher weight:
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-t1 = NumericalTarget.normalized_ramp(name="t_1", cutoffs=(0, 100), descending=True)
+t1 = NumericalTarget.normalized_ramp(name="t1", cutoffs=(0, 100), descending=True)
 t2 = NumericalTarget.normalized_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
-t3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
+t3 = NumericalTarget.match_bell(name="t3", match_value=50, sigma=10)
 t4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
 objective = DesirabilityObjective(
     targets=[t1, t2, t3, t4],
@@ -172,7 +172,7 @@ from baybe.objectives import ParetoObjective
 target_1 = NumericalTarget(name="t_1")
 target_2 = NumericalTarget(name="t_2", minimize=True)
 target_3 = NumericalTarget.match_absolute(name="t_3", match_value=0)
-objective = ParetoObjective(targets=[target_1, target_2])
+objective = ParetoObjective(targets=[target_1, target_2, target_3])
 ```
 
 ```{admonition} Convenience Multi-Output Casting
