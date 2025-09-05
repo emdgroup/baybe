@@ -15,9 +15,8 @@ from baybe.kernels.basic import (
     RQKernel,
 )
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
-
-from ..hypothesis_strategies.basic import positive_finite_floats
-from ..hypothesis_strategies.priors import priors
+from tests.hypothesis_strategies.basic import positive_finite_floats
+from tests.hypothesis_strategies.priors import priors
 
 
 class KernelType(Enum):

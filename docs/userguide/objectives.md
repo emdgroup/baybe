@@ -62,28 +62,36 @@ via the [`require_normalization`](#require-normalization) flag.
 
 Besides the list of [`Target`](baybe.targets.base.Target)s to be scalarized, this
 objective type takes additional optional arguments that let us control its behavior:
-* `weights`: Specifies the relative importance of the targets in the form of a sequence
-  of positive numbers, one for each target considered.
-  Note that BayBE automatically normalizes the weights, so only their relative scales
-  matter.
-* `as_pre_transformation`: By default, the desirability is computed via posterior
-  transformations, enabling access to information even for the original targets 
-  (e.g. in [`SHAPInsight`](baybe.insights.shap.SHAPInsight) or
+
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.weights`:
+  Specifies the relative importance of the targets in the form of a sequence of positive
+  numbers, one for each target considered. Note that BayBE automatically normalizes the
+  weights, so only their relative scales matter.
+
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation`:
+  By default, the desirability is computed via posterior transformations, enabling
+  access to information even for the original targets (e.g. in
+  [`SHAPInsight`](baybe.insights.shap.SHAPInsight) or
   [`posterior_stats`](baybe.campaign.Campaign.posterior_stats)). However, this requires
   one model per target. With
   [`as_pre_transformation=True`](baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation)
   you can change this behavior, e.g. due to computational limitations. The objective
   will then apply the transformation directly and fits a single model on the resulting
   "Desirability".
-* `require_normalization`: A Boolean flag controlling the target normalization
-  requirement. 
-* `scalarizer`: Specifies the [scalarization function](baybe.objectives.enum.Scalarizer)
-  to be used for combining the normalized target values.
-(require-normalization)=
+ 
+  (require-normalization)=
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.require_normalization`:
+  A Boolean flag controlling the target normalization requirement.
 
-The definitions of the `scalarizer`s are as follows, where $\{t_i\}$ refer the
-**transformed** target measurements of a single experiment and $\{w_i\}$ are the
-corresponding target weights:
+* {attr}`~baybe.objectives.desirability.DesirabilityObjective.scalarizer`:
+  Specifies the [scalarization function](baybe.objectives.enum.Scalarizer) to be used
+  for combining the normalized target values.
+
+
+The definitions of the
+{attr}`~baybe.objectives.desirability.DesirabilityObjective.scalarizer`s are as follows,
+where $\{t_i\}$ refer the **transformed** target measurements of a single experiment and
+$\{w_i\}$ are the corresponding target weights:
 
 ```{math}
 \begin{align*}
@@ -101,12 +109,12 @@ of the other three by assigning it a higher weight:
 from baybe.targets import NumericalTarget
 from baybe.objectives import DesirabilityObjective
 
-target_1 = NumericalTarget.normalized_ramp(name="t_1", cutoffs=(0, 100), descending=True)
-target_2 = NumericalTarget.normalized_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
-target_3 = NumericalTarget.match_bell(name="t_3", match_value=50, sigma=10)
-target_4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
+t1 = NumericalTarget.normalized_ramp(name="t1", cutoffs=(0, 100), descending=True)
+t2 = NumericalTarget.normalized_sigmoid(name="t2", anchors=[(0, 0.1), (100, 0.9)])
+t3 = NumericalTarget.match_bell(name="t3", match_value=50, sigma=10)
+t4 = NumericalTarget(name="t4").exp().clamp(max=10).normalize()
 objective = DesirabilityObjective(
-    targets=[target_1, target_2, target_3, target_4],
+    targets=[t1, t2, t3, t4],
     weights=[2.0, 1.0, 1.0, 1.0],  # optional (by default, all weights are equal)
     scalarizer="GEOM_MEAN",  # optional
 )
@@ -164,7 +172,7 @@ from baybe.objectives import ParetoObjective
 target_1 = NumericalTarget(name="t_1")
 target_2 = NumericalTarget(name="t_2", minimize=True)
 target_3 = NumericalTarget.match_absolute(name="t_3", match_value=0)
-objective = ParetoObjective(targets=[target_1, target_2])
+objective = ParetoObjective(targets=[target_1, target_2, target_3])
 ```
 
 ```{admonition} Convenience Multi-Output Casting

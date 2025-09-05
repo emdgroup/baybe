@@ -1,4 +1,4 @@
-"""Test serialization of surrogates."""
+"""Surrogate serialization tests."""
 
 import pytest
 
@@ -10,10 +10,11 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.ngboost import NGBoostSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.utils.basic import get_subclasses
+from tests.serialization.utils import assert_roundtrip_consistency
 
 
 @pytest.mark.parametrize("surrogate_cls", get_subclasses(Surrogate))
-def test_surrogate_serialization(request, surrogate_cls):
+def test_surrogate_roundtrip(request, surrogate_cls: type[Surrogate]):
     """A serialization roundtrip yields an equivalent object."""
     if issubclass(surrogate_cls, CustomONNXSurrogate):
         if not ONNX_INSTALLED:
@@ -24,9 +25,7 @@ def test_surrogate_serialization(request, surrogate_cls):
     else:
         surrogate = surrogate_cls()
 
-    string = surrogate.to_json()
-    surrogate2 = Surrogate.from_json(string)
-    assert surrogate == surrogate2, (surrogate, surrogate2)
+    assert_roundtrip_consistency(surrogate)
 
 
 @pytest.mark.parametrize(
@@ -39,8 +38,6 @@ def test_surrogate_serialization(request, surrogate_cls):
     ],
     ids=["via_init", "via_template"],
 )
-def test_composite_surrogate_serialization(surrogate):
+def test_composite_surrogate_roundtrip(surrogate: CompositeSurrogate):
     """A serialization roundtrip yields an equivalent object."""
-    string = surrogate.to_json()
-    surrogate2 = CompositeSurrogate.from_json(string)
-    assert surrogate == surrogate2, (surrogate, surrogate2)
+    assert_roundtrip_consistency(surrogate)

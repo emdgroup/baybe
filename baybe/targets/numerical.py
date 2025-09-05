@@ -38,6 +38,11 @@ from baybe.transformations import (
 )
 from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
+from baybe.utils.metadata import (
+    ConvertibleToMeasurableMetadata,
+    MeasurableMetadata,
+    to_metadata,
+)
 
 
 @define
@@ -53,6 +58,12 @@ class _LegacyInterface:
 
     transformation: TargetTransformation | None = field(
         converter=lambda x: None if x is None else TargetTransformation(x),
+    )
+
+    metadata: MeasurableMetadata = field(
+        factory=MeasurableMetadata,
+        converter=lambda x: to_metadata(x, MeasurableMetadata),
+        kw_only=True,
     )
 
     @transformation.default
@@ -133,7 +144,10 @@ class NumericalTarget(Target, SerialMixin):
         transformation, minimize = _translate_legacy_arguments(
             legacy.mode, legacy.bounds, legacy.transformation
         )
-        self.__attrs_init__(legacy.name, transformation, minimize=minimize)
+        metadata = legacy.metadata
+        self.__attrs_init__(
+            legacy.name, transformation, minimize=minimize, metadata=metadata
+        )
 
     def __add__(self, other: Any) -> NumericalTarget:
         return self._append_transformation(AffineTransformation(shift=other))
@@ -154,6 +168,7 @@ class NumericalTarget(Target, SerialMixin):
         transformation: Transformation | None = None,
         *,
         minimize: bool = False,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """A deprecation helper for creating targets using the modern interface.
 
@@ -161,6 +176,8 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             transformation: An optional transformation.
             minimize: Boolean flag indicating if the target should be minimized.
+            metadata: Optional metadata containing description, unit, and other
+                information.
 
         Returns:
             The created target object.
@@ -177,7 +194,7 @@ class NumericalTarget(Target, SerialMixin):
         return (
             cls(name, minimize=minimize)
             if transformation is None
-            else cls(name, transformation, minimize=minimize)
+            else cls(name, transformation, minimize=minimize, metadata=metadata)
         )
 
     @classmethod
@@ -187,6 +204,8 @@ class NumericalTarget(Target, SerialMixin):
         mode: TargetMode,
         bounds: ConvertibleToInterval = None,
         transformation: TargetTransformation | None = None,
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """A deprecation helper for creating targets using the legacy interface.
 
@@ -195,6 +214,8 @@ class NumericalTarget(Target, SerialMixin):
             mode: The target mode (MAX, MIN, MATCH).
             bounds: Optional target bounds.
             transformation: An optional target transformation.
+            metadata: Optional metadata containing description, unit, and other
+                information.
 
         Returns:
             The created target object.
@@ -212,15 +233,22 @@ class NumericalTarget(Target, SerialMixin):
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)
-            return cls(name, mode, bounds, transformation)
+            return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
-    def match_absolute(cls, name: str, match_value: float) -> NumericalTarget:
+    def match_absolute(
+        cls,
+        name: str,
+        match_value: float,
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
+    ) -> NumericalTarget:
         """Create a target to match a given value using an absolute transformation.
 
         Args:
             name: The name of the target.
             match_value: The value to be matched.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied absolute matching transformation.
@@ -229,24 +257,39 @@ class NumericalTarget(Target, SerialMixin):
             name,
             AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=True,
+            metadata=metadata,
         )
 
     @classmethod
-    def match_quadratic(cls, name: str, match_value: float) -> NumericalTarget:
+    def match_quadratic(
+        cls,
+        name: str,
+        match_value: float,
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
+    ) -> NumericalTarget:
         """Create a target to match a given value using a quadratic transformation.
 
         Args:
             name: The name of the target.
             match_value: The value to be matched.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied quadratic matching transformation.
         """
-        return NumericalTarget.match_power(name, match_value, exponent=2)
+        return NumericalTarget.match_power(
+            name, match_value, exponent=2, metadata=metadata
+        )
 
     @classmethod
     def match_power(
-        cls, name: str, match_value: float, exponent: int
+        cls,
+        name: str,
+        match_value: float,
+        exponent: int,
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a power transformation.
 
@@ -254,6 +297,7 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             exponent: The exponent of applied the power transformation.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied power matching transformation.
@@ -264,6 +308,7 @@ class NumericalTarget(Target, SerialMixin):
             | AbsoluteTransformation()
             | PowerTransformation(exponent),
             minimize=True,
+            metadata=metadata,
         )
 
     @classmethod
@@ -275,6 +320,7 @@ class NumericalTarget(Target, SerialMixin):
         cutoffs: ConvertibleToInterval = None,
         width: float | None = None,
         margins: Sequence[float] | None = None,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a triangular transformation.
 
@@ -287,6 +333,7 @@ class NumericalTarget(Target, SerialMixin):
             width: The width of the (symmetric) triangular transformation.
             margins: The margins defining how far the triangle extends in both
                 directions.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Raises:
             ValueError: If more than one of ``cutoffs``, ``width``, or ``margins`` is
@@ -315,10 +362,17 @@ class NumericalTarget(Target, SerialMixin):
         elif margins is not None:
             transformation = TriangularTransformation.from_margins(match_value, margins)
 
-        return NumericalTarget(name, transformation)
+        return NumericalTarget(name, transformation, metadata=metadata)
 
     @classmethod
-    def match_bell(cls, name: str, match_value: float, sigma: float) -> NumericalTarget:
+    def match_bell(
+        cls,
+        name: str,
+        match_value: float,
+        sigma: float,
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
+    ) -> NumericalTarget:
         """Create a target to match a given value using a bell transformation.
 
         Args:
@@ -326,15 +380,23 @@ class NumericalTarget(Target, SerialMixin):
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
                 details, see :class:`baybe.transformations.basic.BellTransformation`.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied bell matching transformation.
         """
-        return NumericalTarget(name, BellTransformation(match_value, sigma))
+        return NumericalTarget(
+            name, BellTransformation(match_value, sigma), metadata=metadata
+        )
 
     @classmethod
     def normalized_ramp(
-        cls, name: str, cutoffs: ConvertibleToInterval, *, descending: bool = False
+        cls,
+        name: str,
+        cutoffs: ConvertibleToInterval,
+        *,
+        descending: bool = False,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
 
@@ -343,6 +405,7 @@ class NumericalTarget(Target, SerialMixin):
             cutoffs: The cutoff values defining the affine region.
             descending: Boolean flag indicating if the transformation is ascending
                 or descending in the affine region.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied clamped affine transformation.
@@ -352,25 +415,33 @@ class NumericalTarget(Target, SerialMixin):
             bounds = bounds[::-1]
         return NumericalTarget(
             name,
-            AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *bounds
-            ).clamp(0, 1),
+            AffineTransformation.from_values_mapped_to_unit_interval(*bounds).clamp(
+                0, 1
+            ),
+            metadata=metadata,
         )
 
     @classmethod
     def normalized_sigmoid(
-        cls, name: str, anchors: Sequence[Sequence[float]]
+        cls,
+        name: str,
+        anchors: Sequence[Sequence[float]],
+        *,
+        metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a sigmoid-transformed target.
 
         Args:
             name: The name of the target.
             anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.
+            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied sigmoid transformation.
         """
-        return NumericalTarget(name, SigmoidTransformation.from_anchors(anchors))
+        return NumericalTarget(
+            name, SigmoidTransformation.from_anchors(anchors), metadata=metadata
+        )
 
     @property
     def is_normalized(self) -> UncertainBool:
@@ -423,9 +494,7 @@ class NumericalTarget(Target, SerialMixin):
             raise IncompatibilityError("Only bounded targets can be normalized.")
 
         return self._append_transformation(
-            AffineTransformation.from_points_mapped_to_unit_interval_bounds(
-                *bounds.to_tuple()
-            )
+            AffineTransformation.from_values_mapped_to_unit_interval(*bounds.to_tuple())
         )
 
     def abs(self) -> NumericalTarget:
@@ -521,9 +590,16 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
-converter.register_structure_hook(NumericalTarget, select_constructor_hook)
-
 # >>> Deprecation >>> #
+
+
+@converter.register_structure_hook
+def _(dct, cls) -> NumericalTarget:
+    if "mode" in dct:
+        return NumericalTarget(*dct)
+    return select_constructor_hook(dct, cls)
+
+
 _hook = converter.get_structure_hook(NumericalTarget)
 
 

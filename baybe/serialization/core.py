@@ -1,90 +1,79 @@
 """Converter and hooks."""
 
+from __future__ import annotations
+
 import base64
 import pickle
-from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any, TypeVar, get_type_hints
+from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
 
 import attrs
 import cattrs
 import pandas as pd
-from cattrs.gen import make_dict_structure_fn, make_dict_unstructure_fn
 from cattrs.strategies import configure_union_passthrough
 
-from baybe.utils.basic import find_subclass, refers_to
+from baybe.utils.basic import find_subclass
 from baybe.utils.boolean import is_abstract
+
+if TYPE_CHECKING:
+    from cattrs.dispatch import UnstructureHook
 
 _T = TypeVar("_T")
 
-# TODO: This urgently needs the `forbid_extra_keys=True` flag, which requires us to
-#   switch to the cattrs built-in subclass recommender.
-# Using GenConverter for built-in overrides for sets, see
-# https://catt.rs/en/latest/indepth.html#customizing-collection-unstructuring
-converter = cattrs.Converter(unstruct_collection_overrides={set: list})
+_TYPE_FIELD = "type"
+"""The name of the field used to store the type information in serialized objects."""
+
+converter = cattrs.Converter(unstruct_collection_overrides={set: list}, use_alias=True)
 """The default converter for (de-)serializing BayBE-related objects."""
 
-configure_union_passthrough(bool | int | float | str, converter)
 
-
-def unstructure_base(base: Any, overrides: dict | None = None) -> dict:
-    """Unstructure an object into a dictionary and adds an entry for the class name.
-
-    Args:
-        base: The object that should be unstructured.
-        overrides: An optional dictionary of cattrs-overrides for certain attributes.
-
-    Returns:
-        The unstructured dict with the additional entry.
-    """
-    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
-
-    fun = make_dict_unstructure_fn(base.__class__, converter, **(overrides or {}))
-    attrs_dict = fun(base)
-    return {
-        "type": base.__class__.__name__,
-        **attrs_dict,
-    }
-
-
-def get_base_structure_hook(
-    base: type[_T],
-    overrides: dict | None = None,
-) -> Callable[[dict | str, type[_T]], _T]:
-    """Return a hook for structuring a specified subclass.
-
-    Provides the inverse operation to ``unstructure_base``.
-
-    Args:
-        base: The corresponding class.
-        overrides: An optional dictionary of cattrs-overrides for certain attributes.
-
-    Returns:
-        The hook.
-    """
-    # TODO: use include_subclasses (https://github.com/python-attrs/cattrs/issues/434)
-
-    def structure_base(val: dict | str, cls: type[_T]) -> _T:
-        # If the given class can be instantiated, only ensure there is no conflict with
-        # a potentially specified type field
-        if not is_abstract(cls):
-            if (type_ := val.pop("type", None)) and not refers_to(cls, type_):
-                raise ValueError(
-                    f"The class '{cls.__name__}' specified for deserialization "
-                    f"does not match with the given type information '{type_}'."
-                )
-            concrete_cls = cls
-
-        # Otherwise, extract the type information from the given input and find
-        # the corresponding class in the hierarchy
-        else:
-            type_ = val if isinstance(val, str) else val.pop("type")
-            concrete_cls = find_subclass(base, type_)
-
-        # Create the structuring function for the class and call it
-        fn = make_dict_structure_fn(
-            concrete_cls, converter, **(overrides or {}), _cattrs_forbid_extra_keys=True
+def _add_type_to_dict(dct: dict[str, Any], type_: str, /) -> dict[str, Any]:
+    """Safely add type information to an existing dictionary."""
+    if _TYPE_FIELD in dct:
+        raise ValueError(
+            f"Cannot add type information to the dictionary since it already contains "
+            f"a '{_TYPE_FIELD}' field."
         )
+    dct = {_TYPE_FIELD: type_, **dct}
+    return dct
+
+
+def add_type(hook: UnstructureHook) -> UnstructureHook:
+    """Wrap a given hook to add type information to the unstructured object."""
+
+    def wrapper(obj: Any, /) -> dict[str, Any]:
+        """Unstructure an object and add its type information."""
+        dct = hook(obj)
+        return _add_type_to_dict(dct, obj.__class__.__name__)
+
+    return wrapper
+
+
+def unstructure_with_type(x: Any, /) -> dict[str, Any]:
+    """Unstructure an object and add its type information."""
+    return add_type(converter.get_unstructure_hook(x.__class__))(x)
+
+
+def make_base_structure_hook(base: type[_T]):
+    """Create a hook for structuring subclasses using annotations of their base class.
+
+    Reads the ``type`` information from the given input to retrieve the correct
+    subclass and then calls the existing structure hook of the that class.
+    """
+    if not is_abstract(base):
+        raise ValueError(
+            f"Registering base class structuring is intended for abstract classes "
+            f"only. Given: '{base.__name__}' (which is not abstract).",
+        )
+
+    def structure_base(val: dict[str, Any] | str, cls: type[_T]) -> _T:
+        # Extract the type information from the given input and find
+        # the corresponding class in the hierarchy
+        type_ = val if isinstance(val, str) else val.pop(_TYPE_FIELD)
+        concrete_cls = find_subclass(base, type_)
+
+        # Call the structure hook of the concrete class
+        fn = converter.get_structure_hook(concrete_cls)
         return fn({} if isinstance(val, str) else val, concrete_cls)
 
     return structure_base
@@ -115,7 +104,7 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(pickled_df).decode("utf-8")
 
 
-def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
+def block_serialization_hook(obj: Any) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
     Raises:
@@ -126,7 +115,7 @@ def block_serialization_hook(obj: Any) -> None:  # noqa: DOC101, DOC103
     )
 
 
-def block_deserialization_hook(_: Any, cls: type) -> None:  # noqa: DOC101, DOC103
+def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent deserialization into a specific type.
 
     Raises:
@@ -162,6 +151,16 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 
 
 # Register custom (un-)structure hooks
+configure_union_passthrough(bool | int | float | str, converter)
+converter.register_unstructure_hook_func(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    unstructure_with_type,
+)
+
+converter.register_structure_hook_factory(
+    lambda cls: is_abstract(cls) and cls.__module__.startswith("baybe."),
+    make_base_structure_hook,
+)
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())

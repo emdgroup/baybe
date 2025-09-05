@@ -1,17 +1,13 @@
-"""Test serialization of objectives."""
-
-from itertools import chain
+"""Objective serialization tests."""
 
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
 from pytest import param
 
-from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.transformations import (
     ChainedTransformation,
-    ClampingTransformation,
     Transformation,
 )
 from tests.hypothesis_strategies.objectives import (
@@ -19,6 +15,7 @@ from tests.hypothesis_strategies.objectives import (
     pareto_objectives,
     single_target_objectives,
 )
+from tests.serialization.utils import assert_roundtrip_consistency
 
 
 def _get_involved_transformations(target: Target) -> list[Transformation]:
@@ -31,7 +28,7 @@ def _get_involved_transformations(target: Target) -> list[Transformation]:
 
 
 @pytest.mark.parametrize(
-    "objective_strategy",
+    "strategy",
     [
         param(single_target_objectives(), id="SingleTargetObjective"),
         param(desirability_objectives(), id="DesirabilityObjective"),
@@ -39,20 +36,7 @@ def _get_involved_transformations(target: Target) -> list[Transformation]:
     ],
 )
 @given(data=st.data())
-def test_objective_roundtrip(objective_strategy, data):
+def test_roundtrip(strategy: st.SearchStrategy, data: st.DataObject):
     """A serialization roundtrip yields an equivalent object."""
-    objective = data.draw(objective_strategy)
-    transformations = chain.from_iterable(
-        _get_involved_transformations(t) for t in objective.targets
-    )
-
-    if any(isinstance(t, ClampingTransformation) for t in transformations):
-        pytest.xfail(
-            reason=(
-                "Serialization of clamping transformations is not yet supported. "
-                "Needs https://github.com/emdgroup/baybe/pull/577"
-            )
-        )
-    string = objective.to_json()
-    objective2 = Objective.from_json(string)
-    assert objective == objective2, (objective, objective2)
+    objective = data.draw(strategy)
+    assert_roundtrip_consistency(objective)

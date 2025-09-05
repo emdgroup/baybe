@@ -11,8 +11,9 @@ It is planned to solve this issue in the future.
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar, NoReturn
+from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
+import cattrs
 from attrs import define, field, validators
 from typing_extensions import override
 
@@ -26,6 +27,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.searchspace import SearchSpace
+from baybe.serialization import converter
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.conversion import to_string
@@ -33,6 +35,19 @@ from baybe.utils.numerical import DTypeFloatONNX
 
 if TYPE_CHECKING:
     from torch import Tensor
+
+
+_ONNX_ENCODING = "latin-1"
+"""Constant signifying the encoding for onnx byte strings in pretrained models.
+
+NOTE: This encoding is selected by choice for ONNX byte strings.
+This is not a requirement from ONNX but simply for the JSON format.
+The byte string from ONNX `.SerializeToString()` method has unknown encoding,
+which results in UnicodeDecodeError when using `.decode('utf-8')`.
+The use of latin-1 ensures there are no loss from the conversion of
+bytes to string and back, since the specification is a bijection between
+0-255 and the character set.
+"""
 
 
 def register_custom_architecture(*args, **kwargs) -> NoReturn:
@@ -139,6 +154,33 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
     def __str__(self) -> str:
         fields = [to_string("ONNX input name", self.onnx_input_name, single_line=True)]
         return to_string(super().__str__(), *fields)
+
+
+# Register (un-)structure hooks
+@converter.register_unstructure_hook
+def _decode_onnx_string(obj: CustomONNXSurrogate) -> dict[str, Any]:
+    """Unstructure ONNX surrogates by decoding the ONNX byte string."""
+    fn = cattrs.gen.make_dict_unstructure_fn(
+        CustomONNXSurrogate,
+        converter,
+        onnx_str=cattrs.override(unstruct_hook=lambda x: x.decode(_ONNX_ENCODING)),
+    )
+    return fn(obj)
+
+
+@converter.register_structure_hook
+def _encode_onnx_string(dct: dict[str, Any], _) -> CustomONNXSurrogate:
+    """Structure ONNX surrogates by encoding the ONNX byte string."""
+    fn = cattrs.gen.make_dict_structure_fn(
+        CustomONNXSurrogate,
+        converter,
+        onnx_str=cattrs.override(
+            struct_hook=lambda x, _: x.encode(_ONNX_ENCODING)
+            if isinstance(x, str)
+            else x
+        ),
+    )
+    return fn(dct)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
