@@ -117,10 +117,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.outdir != Path(".") and RUNS_IN_CI:
-        raise AttributeError("Output directory cannot be set in CI mode.")
+        raise ValueError("Output directory cannot be set in CI mode.")
 
     if args.name and RUNS_IN_CI:
-        raise AttributeError("Name cannot be set in CI mode.")
+        raise ValueError("Name cannot be set in CI mode.")
 
     if not args.outdir.exists():
         raise FileNotFoundError(
