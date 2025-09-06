@@ -34,22 +34,3 @@ jobs:
             echo "Lambda function failed. statusCode is not 200."
             exit 1
           fi
-
-  benchmark-test:
-    needs: add-runner
-    runs-on: self-hosted
-    timeout-minutes: 1440
-    env:
-      BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        id: setup-python
-        with:
-          python-version: "3.10"
-      - name: Benchmark
-        run: |
-          pip install '.[benchmarking]'
-          python -m benchmarks
