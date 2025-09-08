@@ -36,8 +36,10 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
 
 # Imagine you're in a busy optics lab, preparing to tune a high-performance laser for a
 # critical experiment. Your goal is to align the laser's output wavelength to one of two
-# specific channels in a wavelength-division multiplexing system. Both channels
-# lead to the same detector, making them functionally equivalent for your measurements.
+# specific channels in a [wavelength-division
+# multiplexing](https://en.wikipedia.org/wiki/Wavelength-division_multiplexing) system.
+# Both channels lead to the same detector, making them functionally equivalent for your
+# measurements.
 
 # The laser's wavelength is controlled by the voltage applied to its tuning element;
 # however, this relationship is complex and nonlinear. It involves both linear drift
