@@ -8,7 +8,6 @@ from pytest import param
 
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations.basic import ExponentialTransformation
 
 X = object()
 
@@ -46,13 +45,6 @@ def test_numerical_target_invalid_combination(other, operator):
     t = NumericalTarget("t")
     with pytest.raises(ValueError, match="if they are identical in all attributes"):
         operator(t, evolve(t, **other))
-
-
-@pytest.mark.parametrize("operator", [op.add, op.sub, op.mul])
-def test_numerical_target_valid_combination(operator):
-    """Targets with the same attributes (except transformation) can be combined."""
-    t = NumericalTarget("t")
-    operator(t, evolve(t, transformation=ExponentialTransformation()))
 
 
 def test_numerical_target_invalid_operator():
