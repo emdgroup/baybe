@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Sequence
+from operator import add, mul, sub
 from typing import Any, cast
 
 import pandas as pd
@@ -21,6 +22,9 @@ from baybe.targets._deprecated import (
     TargetTransformation,
 )
 from baybe.targets.base import Target
+from baybe.targets.utils import (
+    combine_numerical_targets,
+)
 from baybe.transformations import (
     AbsoluteTransformation,
     AffineTransformation,
@@ -149,25 +153,34 @@ class NumericalTarget(Target, SerialMixin):
             legacy.name, transformation, minimize=minimize, metadata=metadata
         )
 
+    def __neg__(self) -> NumericalTarget:
+        return self.negate()
+
     def __add__(self, other: Any) -> NumericalTarget:
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(shift=other))
         if isinstance(other, NumericalTarget):
-            if self.name != other.name:
-                raise ValueError()
-            return evolve(
-                self, transformation=self.transformation + other.transformation
-            )
+            return combine_numerical_targets(self, other, operator=add)
         return NotImplemented
 
     def __sub__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(shift=-other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(shift=-other))
+        if isinstance(other, NumericalTarget):
+            return combine_numerical_targets(self, other, operator=sub)
+        return NotImplemented
 
     def __mul__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(factor=other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(factor=other))
+        if isinstance(other, NumericalTarget):
+            return combine_numerical_targets(self, other, operator=mul)
+        return NotImplemented
 
     def __truediv__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(factor=1 / other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(factor=1 / other))
+        return NotImplemented
 
     @classmethod
     def from_modern_interface(
