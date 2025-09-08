@@ -132,7 +132,14 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                 notebook_path,
             ]
             convert_execute.append("--execute")
-            to_markdown = ["jupyter", "nbconvert", "--to", "markdown", notebook_path]
+            to_markdown = [
+                "jupyter",
+                "nbconvert",
+                "--to",
+                "markdown",
+                "--ClearOutputPreprocessor.enabled=True",
+                notebook_path,
+            ]
             env = os.environ | {"PYTHONPATH": os.getcwd()}
             check_call(convert_execute, stdout=DEVNULL, stderr=STDOUT, env=env)
             check_call(to_markdown, stdout=DEVNULL, stderr=STDOUT, env=env)
