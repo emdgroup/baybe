@@ -41,7 +41,7 @@ def save_benchmark_data(
         S3ObjectStorage()
         if RUNS_IN_CI
         else LocalFileObjectStorage(
-            runmode=result.used_runmode,
+            runmode=result.runmode,
             folder_path_prefix=outdir,
             file_name_prefix=file_name_prefix,
         )

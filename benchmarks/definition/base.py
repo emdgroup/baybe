@@ -34,7 +34,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     random_seed: int = field(validator=instance_of(int), default=1337)
     """The used random seed."""
 
-    set_runmode: RunMode = field(
+    runmode: RunMode = field(
         default=RunMode.DEFAULT,
         converter=RunMode,
         validator=instance_of(RunMode),
@@ -119,9 +119,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             The result of the benchmark execution.
         """
         used_settings = (
-            attrs.evolve(self.settings, set_runmode=runmode)
-            if runmode
-            else self.settings
+            attrs.evolve(self.settings, runmode=runmode) if runmode else self.settings
         )
 
         start_datetime = datetime.now(timezone.utc)
@@ -130,7 +128,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             "=" * 80
             + f"\nRunning benchmark '{self.name}' with "
             + f"random seed {used_settings.random_seed} "
-            + f"in runmode {used_settings.set_runmode}.\n"
+            + f"in runmode {used_settings.runmode}.\n"
         )
 
         start_sec = time.perf_counter()
@@ -150,7 +148,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             duration=duration,
         )
 
-        return Result(self.name, result, metadata, used_settings.set_runmode)
+        return Result(self.name, result, metadata, used_settings.runmode)
 
 
 @converter.register_unstructure_hook

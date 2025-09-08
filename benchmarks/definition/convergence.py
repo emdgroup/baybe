@@ -35,35 +35,35 @@ class ConvergenceBenchmarkSettings(BenchmarkSettings):
     @property
     def batch_size(self) -> int:
         """The batch size for the current runmode."""
-        if self.set_runmode not in self.batch_size_settings:
+        if self.runmode not in self.batch_size_settings:
             raise ValueError(
                 "Current runmode not found in "
                 f"{fields(ConvergenceBenchmarkSettings).batch_size_settings.name}"
-                f": {self.set_runmode.value}"
+                f": {self.runmode.value}"
             )
-        return self.batch_size_settings[self.set_runmode]
+        return self.batch_size_settings[self.runmode]
 
     @property
     def n_doe_iterations(self) -> int:
         """The number of Design of Experiment iterations for the current runmode."""
-        if self.set_runmode not in self.n_doe_iterations_settings:
+        if self.runmode not in self.n_doe_iterations_settings:
             raise ValueError(
                 "Current runmode not found in "
                 f"{fields(ConvergenceBenchmarkSettings).n_doe_iterations_settings.name}"
-                f": {self.set_runmode.value}"
+                f": {self.runmode.value}"
             )
-        return self.n_doe_iterations_settings[self.set_runmode]
+        return self.n_doe_iterations_settings[self.runmode]
 
     @property
     def n_mc_iterations(self) -> int:
         """The number of Monte Carlo iterations for the current runmode."""
-        if self.set_runmode not in self.n_mc_iterations_settings:
+        if self.runmode not in self.n_mc_iterations_settings:
             raise ValueError(
                 "Current runmode not found in "
                 f"{fields(ConvergenceBenchmarkSettings).n_mc_iterations_settings.name}"
-                f": {self.set_runmode.value}"
+                f": {self.runmode.value}"
             )
-        return self.n_mc_iterations_settings[self.set_runmode]
+        return self.n_mc_iterations_settings[self.runmode]
 
 
 @define(frozen=True)

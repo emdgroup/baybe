@@ -31,7 +31,7 @@ class Result(BenchmarkSerialization):
     metadata: ResultMetadata = field(validator=instance_of(ResultMetadata))
     """The metadata associated with the benchmark result."""
 
-    used_runmode: RunMode = field(validator=instance_of(RunMode))
+    runmode: RunMode = field(validator=instance_of(RunMode))
     """The mode which governed the benchmark settings."""
 
     python_env: dict[str, str] = field(
