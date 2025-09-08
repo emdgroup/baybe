@@ -102,12 +102,10 @@ ContinuousLinearConstraint(
 )
 ```
 
-```{admonition} Experimental feature
+```{admonition} Limited scope
 :class: warning
-Interpoint constraints are currently considered an *experimental feature* and are still
-under active development. This means that there are some limitations, and that the
-usage as well as the implementation of interpoint constraints might change in the future.
-The currently know main limitatations are the following:
+There are some limitations regarding the use of interpoint constraints that you need
+to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
 - When using interpoint constraints, the optimization will not be done sequentially,
