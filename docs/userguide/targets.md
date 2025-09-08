@@ -67,8 +67,9 @@ of the underlying optimization problem:
 While the second rule may seem restrictive at first, it does not limit the
 expressiveness of the resulting models, thanks to the transformation step applied. In
 fact, all types of optimization problems (e.g., minimization, matching/avoiding one or
-several set point values, or pursuing any other custom objective) are just maximization
-problems in disguise, hidden behind an appropriate target transformation.
+[multiple set point values](../../examples/Transformations/laser_tuning), or pursuing
+any other custom objective) are just maximization problems in disguise, hidden behind an
+appropriate target transformation.
 
 
 For example:
@@ -82,7 +83,8 @@ For example:
   For more information, see [here](#set-point-matching).
 * In general, any (potentially nonlinear) **custom objective** can be expressed using a
   transformation that assigns higher values to more desirable outcomes and lower values
-  to less desirable outcomes.
+  to less desirable outcomes. Examples can be found 
+  [here](../../examples/Transformations/Transformations).
 
 Many cases – especially the first two described above – are so common that we offer
 convenient ways to directly create the corresponding target objects for many
