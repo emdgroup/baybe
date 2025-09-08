@@ -1,6 +1,15 @@
 name: GPU Tests
 on:
   workflow_dispatch:
+    inputs:
+      semantic:
+        required: true
+        type: string
+        default: "3.10"
+      tox:
+        required: true
+        type: string
+        default: "py310"
   workflow_call:
     secrets:
       APP_PRIVATE_KEY:
@@ -11,9 +20,11 @@ on:
       semantic:
         required: true
         type: string
+        default: "3.10"
       tox:
         required: true
         type: string
+        default: "py310"
 
 
 env:
