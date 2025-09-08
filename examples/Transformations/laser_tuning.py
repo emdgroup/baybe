@@ -131,6 +131,14 @@ axs[0].axhline(λ2, color="tab:red")
 λ2_peak = ((λ - λ2).power(2) / (2 * σ**2)).negate().exp()
 target = λ1_peak + λ2_peak
 
+# ```{admonition} Convenience Constructor
+# :class: tip
+# Note that you can also use the
+# {meth}`~baybe.targets.numerical.NumericalTarget.match_bell` convenience constructor to
+# create the individual peaks instead, yielding {ref}`mathematically equivalent
+# <userguide/transformations:Equality>` target objects.
+# ```
+
 # Let us overlay the relationship between observed wavelength and objective value in the
 # existing plot:
 
