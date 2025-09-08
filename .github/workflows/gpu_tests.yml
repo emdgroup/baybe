@@ -54,17 +54,6 @@ jobs:
     name: GPU Tests ${{ matrix.py-version.semantic }}
     runs-on: gpu
     steps:
-      - name: System Information
-        run: |
-          echo "System Information:"
-          uname -a
-          lscpu
-          lsblk
-          free -h
-          df -h
-          if [ -x "$(command -v nvidia-smi)" ]; then
-            nvidia-smi
-          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         id: setup-python

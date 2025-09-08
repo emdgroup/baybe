@@ -113,13 +113,18 @@ jobs:
     steps:
       - name: System Information
         run: |
-          echo "System Information:"
+          echo -e "\033[1;34m===== SYSTEM INFORMATION =====\033[0m"
           uname -a
+          echo -e "\n\n\n\033[1;34m===== CPU INFORMATION =====\033[0m"
           lscpu
+          echo -e "\n\n\n\033[1;34m===== BLOCK DEVICES =====\033[0m"
           lsblk
+          echo -e "\n\n\n\033[1;34m===== MEMORY INFORMATION =====\033[0m"
           free -h
+          echo -e "\n\n\n\033[1;34m===== DISK USAGE =====\033[0m"
           df -h
           if [ -x "$(command -v nvidia-smi)" ]; then
+            echo -e "\n\n\n\033[1;34m===== GPU INFORMATION =====\033[0m"
             nvidia-smi
           fi
       - uses: actions/checkout@v4
