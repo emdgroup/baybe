@@ -93,7 +93,7 @@ axs[0].plot(voltage_grid, induced_λ, color="tab:blue")
 
 λ1 = 1550.5  # unit: nm
 λ2 = 1551.5  # unit: nm
-σ = 0.05  # unit: nm
+σ = 0.1  # unit: nm
 
 # Let us also add them to the plot:
 
