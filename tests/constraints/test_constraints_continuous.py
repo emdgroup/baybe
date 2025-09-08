@@ -17,7 +17,6 @@ def test_equality1(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
 
@@ -29,7 +28,6 @@ def test_equality2(campaign, n_iterations, batch_size):
     """Test equality constraint with unequal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"], 0.3)
 
@@ -41,7 +39,6 @@ def test_inequality1(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
 
@@ -53,7 +50,6 @@ def test_inequality2(campaign, n_iterations, batch_size):
     """Test inequality constraint with unequal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
 
@@ -65,7 +61,6 @@ def test_inequality3(campaign, n_iterations, batch_size):
     """Test inequality constraint with unequal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).le(0.301).all()
 
@@ -76,7 +71,6 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
     """Test single parameter interpoint equality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = res_grouped["Conti_finite1"].sum()
@@ -89,7 +83,6 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
     """Test single parameter interpoint inequality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = 2 * res_grouped["Conti_finite1"].sum()
@@ -102,7 +95,6 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
     """Test interpoint equality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = (
@@ -119,7 +111,6 @@ def test_geq_interpoint_inequality_multiple_parameters(
     """Test geq-interpoint inequality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = (
@@ -137,7 +128,6 @@ def test_leq_interpoint_inequality_multiple_parameters(
     """Test leq-interpoint inequality constraint involving multiple parameters."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = (
@@ -154,7 +144,6 @@ def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
     """Test mixing interpoint and normal inequality constraints."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     interpoint_result = 2 * res.groupby("BatchNr")["Conti_finite1"].sum()
     assert interpoint_result.ge(0.3 - TOLERANCE).all()
@@ -176,7 +165,6 @@ def test_hybridspace_eq(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
 
@@ -192,7 +180,6 @@ def test_hybridspace_ineq(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
-    print(res)
 
     assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
 
