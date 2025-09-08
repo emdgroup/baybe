@@ -156,7 +156,8 @@ axs[0].tick_params(axis="y", labelcolor="tab:blue")
 
 # ## Simulating the Optimization Loop
 
-# Finally, we encapsulate both the search space and objective in a BayBE campaign:
+# Finally, we encapsulate both the search space and objective in a BayBE
+# {class}`~baybe.campaign.Campaign`:
 
 campaign = Campaign(
     searchspace=voltage.to_searchspace(),
@@ -174,9 +175,9 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 
-# Unsurprisingly, the optimization results show trajectories converging to two distinct
-# clusters, corresponding to the two target wavelengths. This bimodal convergence occurs
-# because both targets – by construction – yield equivalent objective values:
+# ## Results
+
+# Let us visualize the optimization process in the second subplot:
 
 sns.lineplot(
     data=results.rename(
@@ -188,8 +189,25 @@ sns.lineplot(
     x="# Experiments",
     y="Wavelength (nm)",
     hue="Monte_Carlo_Run",
+    marker="o",
     ax=axs[1],
     legend=False,
 )
 plt.tight_layout()
 plt.show()
+
+
+# The plot reveals trajectories converging to two distinct clusters,
+# corresponding to the two reference wavelengths $\lambda_1$ and $\lambda_2$. This
+# bimodal convergence occurs because both wavelengths – by construction – yield
+# identical objective values according to the applied transformation.
+
+# Each colored trajectory represents an independent Monte Carlo run of the optimization
+# process, showing how different random initializations converge to one of the two
+# equivalent optimal wavelengths without preferring one over the other. The early parts
+# of each trajectory show larger variation in wavelength values (exploration phase),
+# whereas the trajectories concentrate around the optimal wavelengths after several
+# experiments (exploitation phase). Notice how trajectories can still escape their
+# current basin of attraction in the hope of finding even better solutions in the
+# other basin, which demonstrates the algorithm's ability to find the global
+# optimum of the problem.
