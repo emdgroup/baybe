@@ -1,6 +1,7 @@
 name: GPU Tests
 on:
   workflow_dispatch:
+  workflow_call:
 
 env:
   COVERAGE_OVERALL_THRESH: 70      # threshold for overall coverage check
