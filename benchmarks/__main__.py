@@ -22,7 +22,6 @@ RUNS_IN_CI = "CI" in os.environ
 def save_benchmark_data(
     benchmark: Benchmark,
     result: Result,
-    runmode: RunMode,
     outdir: Path,
     file_name_prefix: str | None = None,
 ) -> None:
@@ -31,7 +30,6 @@ def save_benchmark_data(
     Args:
         benchmark: The benchmark instance that was executed.
         result: The result of the benchmark execution.
-        runmode: The mode of benchmark settings used for the execution.
         outdir: The directory where the results should be saved.
         file_name_prefix: Additional string that is added to the
                     generated file name.
@@ -43,7 +41,7 @@ def save_benchmark_data(
         S3ObjectStorage()
         if RUNS_IN_CI
         else LocalFileObjectStorage(
-            runmode=runmode,
+            runmode=result.used_runmode,
             folder_path_prefix=outdir,
             file_name_prefix=file_name_prefix,
         )
@@ -75,7 +73,6 @@ def run_benchmarks(
             save_benchmark_data(
                 benchmark,
                 result,
-                runmode,
                 file_name_prefix=file_name_prefix,
                 outdir=outdir,
             )

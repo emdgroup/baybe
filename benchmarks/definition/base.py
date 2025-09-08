@@ -6,7 +6,6 @@ import time
 from abc import ABC
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 from typing import Any, Generic, TypeVar
 
 import attrs
@@ -16,6 +15,7 @@ from cattrs import override
 from cattrs.gen import make_dict_unstructure_fn
 from pandas import DataFrame
 
+from benchmarks.definition.utils import RunMode
 from benchmarks.result import Result, ResultMetadata
 from benchmarks.serialization import BenchmarkSerialization, converter
 
@@ -27,30 +27,6 @@ logger.addHandler(stdout)
 logger.setLevel(logging.INFO)
 
 
-class RunMode(Enum):
-    """Enum for different run modes of benchmarks.
-
-    This collects the different run modes that can be used to adjust the selection of
-    setting parameters for benchmarks. The purpose is to allow for different
-    configurations or behaviors of benchmarks based on predefined modes which encode
-    settings where for example more or less DoE-iterations are necessary.
-    """
-
-    DEFAULT = "DEFAULT"
-    """Default run mode for benchmarks with performance relevant settings."""
-
-    SMOKETEST = "SMOKETEST"
-    """Minimal run mode for verifying that the benchmarks are executable."""
-
-    @classmethod
-    def from_string(cls, value: str, /) -> "RunMode":
-        """Convert a string to a RunMode, case-insensitively."""
-        try:
-            return cls[value.upper()]
-        except KeyError as ex:
-            raise ValueError(f"Invalid run mode: {value}") from ex
-
-
 @define(kw_only=True, frozen=True)
 class BenchmarkSettings(ABC, BenchmarkSerialization):
     """The basic benchmark configuration."""
@@ -58,7 +34,7 @@ class BenchmarkSettings(ABC, BenchmarkSerialization):
     random_seed: int = field(validator=instance_of(int), default=1337)
     """The used random seed."""
 
-    runmode: RunMode = field(
+    set_runmode: RunMode = field(
         default=RunMode.DEFAULT,
         converter=RunMode,
         validator=instance_of(RunMode),
@@ -143,7 +119,9 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             The result of the benchmark execution.
         """
         used_settings = (
-            attrs.evolve(self.settings, runmode=runmode) if runmode else self.settings
+            attrs.evolve(self.settings, set_runmode=runmode)
+            if runmode
+            else self.settings
         )
 
         start_datetime = datetime.now(timezone.utc)
@@ -152,7 +130,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             "=" * 80
             + f"\nRunning benchmark '{self.name}' with "
             + f"random seed {used_settings.random_seed} "
-            + f"in runmode {used_settings.runmode}.\n"
+            + f"in runmode {used_settings.set_runmode}.\n"
         )
 
         start_sec = time.perf_counter()
@@ -172,7 +150,7 @@ class Benchmark(Generic[BenchmarkSettingsType], BenchmarkSerialization):
             duration=duration,
         )
 
-        return Result(self.name, result, metadata)
+        return Result(self.name, result, metadata, used_settings.set_runmode)
 
 
 @converter.register_unstructure_hook

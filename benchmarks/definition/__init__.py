@@ -1,6 +1,6 @@
 """Benchmark definitions."""
 
-from benchmarks.definition.base import Benchmark, BenchmarkSettings, RunMode
+from benchmarks.definition.base import Benchmark, BenchmarkSettings
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -11,6 +11,7 @@ from benchmarks.definition.regression import (
     TransferLearningRegressionBenchmark,
     TransferLearningRegressionBenchmarkSettings,
 )
+from benchmarks.definition.utils import RunMode
 
 __all__ = [
     "Benchmark",
