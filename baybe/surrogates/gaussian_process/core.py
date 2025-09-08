@@ -26,6 +26,9 @@ from baybe.surrogates.gaussian_process.presets.default import (
 )
 from baybe.utils.conversion import to_string
 
+# Jordan MHS: check this should be imported here
+from botorch.models.gp_regression_fidelity import SingleTaskMultiFidelityGP
+
 if TYPE_CHECKING:
     from botorch.models.model import Model
     from botorch.models.transforms.input import InputTransform
@@ -47,6 +50,11 @@ class _ModelContext:
         return self.searchspace.task_idx
 
     @property
+    def fidelity_idx(self) -> int | None:
+        """The computational column index of the fidelity parameter, if available."""
+        return self.searchspace.fidelity_idx
+
+    @property
     def is_multitask(self) -> bool:
         """Indicates if model is to be operated in a multi-task context."""
         return self.n_task_dimensions > 0
@@ -61,7 +69,23 @@ class _ModelContext:
     def n_tasks(self) -> int:
         """The number of tasks."""
         return self.searchspace.n_tasks
+        
+    @property
+    def is_multi_fidelity(self) -> bool:
+        """Indicates if model is to be operated in a multi-task context."""
+        return self.n_fidelity_dimensions > 0
 
+    @property
+    def n_fidelity_dimensions(self) -> int:
+        """The number of task dimensions."""
+        # Possible TODO: Generalize to multiple fidelity dimensions
+        return 1 if self.fidelity_idx is not None else 0
+
+    @property
+    def n_fidelities(self) -> int:
+        """The number of tasks."""
+        return self.searchspace.n_fidelities
+    
     @property
     def parameter_bounds(self) -> Tensor:
         """Get the search space parameter bounds in BoTorch Format."""
@@ -175,14 +199,26 @@ class GaussianProcessSurrogate(Surrogate):
             batch_shape=batch_shape,
         )
 
+        # Jordan MHS, temporary assertion to check searchspace validator
+        assert not(context.is_multitask and context.is_multi_fidelity), "Multi-fidelity and multitask context passed to GP surrogate."
+
         # create GP covariance
-        if not context.is_multitask:
+        if not context.is_multitask and not context.is_multi_fidelity:
             covar_module = base_covar_module
-        else:
+        elif context.is_multitask:
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
                 rank=context.n_tasks,  # TODO: make controllable
+            )
+            covar_module = base_covar_module * task_covar_module
+        else:
+            # Jordan MHS, temporary update on control flow
+            print("Multi-fidelity GP set up. Possible TODO: get index kernel version working with qMFKG. May require additional fidelity attributes match with existing Botorch infrastructure")
+            task_covar_module = gpytorch.kernels.IndexKernel(
+                num_tasks=context.n_fidelities,
+                active_dims=context.fidelity_idx,
+                rank=context.n_fidelities,  # Possible TODO: make controllable
             )
             covar_module = base_covar_module * task_covar_module
 

@@ -16,7 +16,7 @@ from baybe.constraints import (
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
-from baybe.parameters import TaskParameter
+from baybe.parameters import TaskParameter, DiscreteFidelityParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
@@ -270,6 +270,19 @@ class SearchSpace(SerialMixin):
         return cast(int, self.discrete.comp_rep.columns.get_loc(task_param.name))
 
     @property
+    def fidelity_idx(self) -> int | None:
+        """The column index of the task parameter in computational representation."""
+        try:
+            # See TODO [16932] and TODO [11611]
+            fidelity_param = next(
+                p for p in self.parameters if isinstance(p, DiscreteFidelityParameter)
+            )
+        except StopIteration:
+            return None
+
+        return cast(int, self.discrete.comp_rep.columns.get_loc(fidelity_param.name))
+
+    @property
     def n_tasks(self) -> int:
         """The number of tasks encoded in the search space."""
         # TODO [16932]: This approach only works for a single task parameter. For
@@ -283,6 +296,20 @@ class SearchSpace(SerialMixin):
             return len(task_param.values)
 
         # When there are no task parameters, we effectively have a single task
+        except StopIteration:
+            return 1
+
+    @property
+    def n_fidelities(self) -> int:
+        """The number of tasks encoded in the search space."""
+        # See TODO [16932]
+        try:
+            fidelity_param = next(
+                p for p in self.parameters if isinstance(p, DiscreteFidelityParameter)
+            )
+            return len(fidelity_param.values)
+
+        # When there are no fidelity parameters, we effectively have a single fidelity
         except StopIteration:
             return 1
 

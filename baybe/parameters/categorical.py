@@ -87,6 +87,12 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
+@define(frozen=True, slots=False)
+class DiscreteFidelityParameter(CategoricalParameter):
+    """Parameter class for task parameters."""
+
+    encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
+    # See base class.
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

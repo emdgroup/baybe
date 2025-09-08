@@ -154,6 +154,24 @@ class qKnowledgeGradient(AcquisitionFunction):
     memory footprint and wall time."""
 
 
+@define(frozen=True)
+class qMultiFidelityKnowledgeGradient(AcquisitionFunction): 
+    """Monte Carlo based knowledge gradient.
+
+    This acquisition function currently only supports purely continuous spaces.
+    """
+
+    abbreviation: ClassVar[str] = "qMFKG"
+
+    # Jordan MHS: check whether this is correct choice in 
+    # Also check whether MFKG only supports continuous feature spaces
+    num_fantasies: int = field(validator=[instance_of(int), gt(0)], default=128)
+    """Number of fantasies to draw for approximating the knowledge gradient.
+
+    More samples result in a better approximation, at the expense of both increased
+    memory footprint and wall time."""
+
+
 ########################################################################################
 ### Posterior Statistics
 @define(frozen=True)

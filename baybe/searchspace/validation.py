@@ -7,7 +7,7 @@ from typing import TypeVar
 import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError
-from baybe.parameters import TaskParameter
+from baybe.parameters import TaskParameter, DiscreteFidelityParameter
 from baybe.parameters.base import Parameter
 from baybe.utils.dataframe import get_transform_objects
 
@@ -44,6 +44,18 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
             "Currently, at most one task parameter can be considered."
         )
 
+    # Potentially an extension to TODO [16932]
+    if len([p for p in parameters if isinstance(p, DiscreteFidelityParameter)]) > 1:
+        raise NotImplementedError(
+            "Currently, at most one fidelity parameter can be considered."
+        )
+
+    # Possibility of creating a TODO here. However, transfer learning combined with multi-fidelity is likely an underexplored area. 
+    if len([p for p in parameters if isinstance(p, TaskParameter)]) == 1 and len([p for p in parameters if isinstance(p, DiscreteFidelityParameter)]) == 1:
+        raise IncompatibilityError(
+            "Cannot specify both task and fidelity parameters. Joint multi-task and multi-fidelity optimization is not currently supported, and may never be."
+        )
+        
     # Assert: unique names
     validate_parameter_names(parameters)
 

@@ -13,6 +13,7 @@ from baybe.acquisition.acqfs import (
     qLogNoisyExpectedHypervolumeImprovement,
     qLogNoisyExpectedImprovement,
     qLogNParEGO,
+    qMultiFidelityKnowledgeGradient,
     qNegIntegratedPosteriorVariance,
     qNoisyExpectedHypervolumeImprovement,
     qNoisyExpectedImprovement,
@@ -32,6 +33,7 @@ qEI = qExpectedImprovement
 qKG = qKnowledgeGradient
 LogEI = LogExpectedImprovement
 qLogEI = qLogExpectedImprovement
+qMFKG = qMultiFidelityKnowledgeGradient
 qNEI = qNoisyExpectedImprovement
 qNIPV = qNegIntegratedPosteriorVariance
 qLogNEI = qLogNoisyExpectedImprovement
@@ -47,6 +49,7 @@ __all__ = [
     ######################### Acquisition functions
     # Knowledge Gradient
     "qKnowledgeGradient",
+    "qMultiFidelityKnowledgeGradient",
     # Posterior Statistics
     "PosteriorMean",
     "PosteriorStandardDeviation",

@@ -11,7 +11,7 @@ from typing_extensions import override
 
 from baybe.kernels.basic import MaternKernel
 from baybe.kernels.composite import ScaleKernel
-from baybe.parameters import TaskParameter
+from baybe.parameters import TaskParameter, DiscreteFidelityParameter
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.substance import SubstanceParameter
 from baybe.priors.basic import GammaPrior
@@ -57,9 +57,16 @@ class EDBOKernelFactory(KernelFactory):
     def __call__(
         self, searchspace: SearchSpace, train_x: Tensor, train_y: Tensor
     ) -> Kernel:
+        ''' JordanMHS Remove once sure we need to count DiscreteFidelityParameter here
         effective_dims = train_x.shape[-1] - len(
             [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        ) '''
+        effective_dims = train_x.shape[-1] - len(
+            [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+        ) - len(
+            [p for p in searchspace.parameters if isinstance(p, DiscreteFidelityParameter)]
         )
+
 
         switching_condition = _contains_encoding(
             searchspace.discrete, _EDBO_ENCODINGS
@@ -116,9 +123,16 @@ def _edbo_noise_factory(
         * https://doi.org/10.1038/s41586-021-03213-y
     """
     # TODO: Replace this function with a proper likelihood factory
+    ''' JordanMHS Remove once sure we need to count DiscreteFidelityParameter here
     effective_dims = train_x.shape[-1] - len(
         [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    ) '''
+    effective_dims = train_x.shape[-1] - len(
+        [p for p in searchspace.parameters if isinstance(p, TaskParameter)]
+    ) - len(
+        [p for p in searchspace.parameters if isinstance(p, DiscreteFidelityParameter)]
     )
+
 
     switching_condition = _contains_encoding(
         searchspace.discrete, _EDBO_ENCODINGS

@@ -12,7 +12,7 @@ from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
 
-from baybe.acquisition import qLogEI, qLogNEHVI
+from baybe.acquisition import qLogEI, qLogNEHVI, qMFKG
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
@@ -80,10 +80,24 @@ class BayesianRecommender(PureRecommender, ABC):
         )
         return self._surrogate_model
 
-    def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
+    def _get_acquisition_function(self, 
+                                  objective: Objective, 
+                                  searchspace: SearchSpace | None = None) -> AcquisitionFunction:
         """Select the appropriate default acquisition function for the given context."""
+        
         if self.acquisition_function is None:
+
+            if searchspace is not None:
+                if searchspace.n_fidelities > 1:
+                    
+                    if objective.is_multi_output:
+                        # Jordan MHS: check whether this is the right error class. 
+                        raise IncompatibilityError("Cannot define default acquisition function because no native ability to perform multi-objective and multi-fidelity optimization simultaneously in BayBE.")
+    
+                    return qMFKG()
+                
             return qLogNEHVI() if objective.is_multi_output else qLogEI()
+            
         return self.acquisition_function
 
     def get_surrogate(
@@ -112,7 +126,7 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> None:
         """Create the acquisition function for the current training data."""  # noqa: E501
         self._objective = objective
-        acqf = self._get_acquisition_function(objective)
+        acqf = self._get_acquisition_function(objective, searchspace)
 
         if objective.is_multi_output and not acqf.supports_multi_output:
             raise IncompatibleAcquisitionFunctionError(
@@ -236,7 +250,7 @@ class BayesianRecommender(PureRecommender, ABC):
             A series of individual acquisition values, one for each candidate.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(objective, searchspace)
         return acqf.evaluate(
             candidates,
             surrogate,
@@ -264,7 +278,7 @@ class BayesianRecommender(PureRecommender, ABC):
             The joint acquisition value of the batch.
         """
         surrogate = self.get_surrogate(searchspace, objective, measurements)
-        acqf = acquisition_function or self._get_acquisition_function(objective)
+        acqf = acquisition_function or self._get_acquisition_function(objective, searchspace)
         return acqf.evaluate(
             candidates,
             surrogate,

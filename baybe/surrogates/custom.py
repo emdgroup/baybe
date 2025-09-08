@@ -24,6 +24,7 @@ from baybe.parameters import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
     TaskParameter,
+    DiscreteFidelityParameter,
 )
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.base import IndependentGaussianSurrogate
@@ -118,6 +119,7 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
                     NumericalContinuousParameter,
                     NumericalDiscreteParameter,
                     TaskParameter,
+                    DiscreteFidelityParameter,
                 ),
             )
             or (isinstance(p, CustomDiscreteParameter) and not p.decorrelate)

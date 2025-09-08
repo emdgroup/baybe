@@ -1,6 +1,6 @@
 """BayBE parameters."""
 
-from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.parameters.categorical import CategoricalParameter, TaskParameter, DiscreteFidelityParameter
 from baybe.parameters.custom import CustomDiscreteParameter
 from baybe.parameters.enum import (
     CategoricalEncoding,
@@ -25,4 +25,5 @@ __all__ = [
     "SubstanceEncoding",
     "SubstanceParameter",
     "TaskParameter",
+    "DiscreteFidelityParameter",
 ]
