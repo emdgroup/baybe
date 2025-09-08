@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent               Base                        Ligand  \
-    293         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    243         DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
-    75   Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
+        Solvent                Base                        Ligand  Temperature  \
+    295    DMAc   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
+    251    DMAc     Cesium pivalate                 (t-Bu)PhCPhos        120.0   
+    298    DMAc  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
     
-         Temperature  Concentration  
-    293        105.0          0.153  
-    243         90.0          0.057  
-    75         105.0          0.057  
+         Concentration  
+    295          0.100  
+    251          0.153  
+    298          0.100  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent               Base                        Ligand  \
-    293         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
-    243         DMAc    Cesium pivalate                 (t-Bu)PhCPhos   
-    75   Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
+        Solvent                Base                        Ligand  Temperature  \
+    295    DMAc   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
+    251    DMAc     Cesium pivalate                 (t-Bu)PhCPhos        120.0   
+    298    DMAc  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
     
-         Temperature  Concentration      yield  
-    293        105.0          0.153  13.788058  
-    243         90.0          0.057  28.592005  
-    75         105.0          0.057   6.049017  
+         Concentration      yield  
+    295          0.100  11.058375  
+    251          0.153   0.493170  
+    298          0.100   1.138663  
 
 
 
