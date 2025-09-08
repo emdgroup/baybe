@@ -166,3 +166,16 @@ jobs:
     needs: coretest
     if: ${{ github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/gpu_tests.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        py-version: [ {semantic: '3.10', tox: 'py310'},
+                      {semantic: '3.11', tox: 'py311'},
+                      {semantic: '3.12', tox: 'py312'},
+                      {semantic: '3.13', tox: 'py313'} ]
+    with:
+      semantic: ${{ matrix.py-version.semantic }}
+      tox: ${{ matrix.py-version.tox }}

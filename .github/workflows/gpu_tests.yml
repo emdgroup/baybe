@@ -2,6 +2,19 @@ name: GPU Tests
 on:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      APP_PRIVATE_KEY:
+        required: true
+      AWS_ROLE_TO_ASSUME:
+        required: true
+    inputs:
+      semantic:
+        required: true
+        type: string
+      tox:
+        required: true
+        type: string
+
 
 env:
   COVERAGE_OVERALL_THRESH: 70      # threshold for overall coverage check
@@ -17,10 +30,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    strategy:
-      fail-fast: true
-      matrix:
-        py-version: [ {semantic: '3.10', tox: 'py310'} ]
     steps:
       - name: Generate a token
         id: generate-token
@@ -48,22 +57,19 @@ jobs:
 
   gputest:
     needs: [add-gpu-machine]
-    strategy:
-      matrix:
-        py-version: [ {semantic: '3.10', tox: 'py310'} ]
-    name: GPU Tests ${{ matrix.py-version.semantic }}
+    name: GPU Tests ${{  inputs.semantic }}
     runs-on: gpu
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: ${{ matrix.py-version.semantic }}
+          python-version: ${{ inputs.semantic }}
       - uses: actions/cache@v4
         with:
-          path: .tox/gputest-${{ matrix.py-version.tox }}
-          key: gputest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
+          path: .tox/gputest-${{ inputs.tox }}
+          key: gputest-${{ inputs.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
       - name: Run GPU tests
         run: |
           pip install tox-uv
-          tox -e gputest-${{ matrix.py-version.tox }}
+          tox -e gputest-${{ inputs.tox }}
