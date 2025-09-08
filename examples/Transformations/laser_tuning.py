@@ -90,8 +90,8 @@ induced_λ = lookup(pd.DataFrame({"Voltage": voltage_grid}))["Wavelength"]
 fig, axs = plt.subplots(2, 1, figsize=(8, 10))
 axs[0].plot(voltage_grid, induced_λ, color="tab:blue")
 
-# Our target wavelengths for the two multiplexing channels and the acceptable
-# tolerance around each target are defined as follows:
+# Our reference wavelengths for the two multiplexing channels and the acceptable
+# tolerance around each are defined as follows:
 
 λ1 = 1550.5  # unit: nm
 λ2 = 1551.5  # unit: nm
@@ -102,21 +102,37 @@ axs[0].plot(voltage_grid, induced_λ, color="tab:blue")
 axs[0].axhline(λ1, color="tab:red")
 axs[0].axhline(λ2, color="tab:red")
 
-# Next, we define a corresponding target value that allows us to reference our
-# observable quantity:
+# Our goal is to align the laser's output wavelength with either of the two reference
+# wavelengths, treating both wavelenght as equally desirable. We can express this
+# symmetric objective by creating "reward peaks" around each reference wavelength using
+# Gaussian-shaped functions. The tolerance parameter $\sigma$ controls the width of
+# these peaks, determining how precisely the laser must be tuned to achieve optimal
+# performance:
+
+# ```{math}
+# \begin{equation*}
+# \text{Objective}(\lambda) =
+#   \exp\left(-\frac{(\lambda - \lambda_1)^2}{2\sigma^2}\right)
+# + \exp\left(-\frac{(\lambda - \lambda_2)^2}{2\sigma^2}\right)
+# \end{equation*}
+# ```
+
+# We can easily implement this mathematical objective in code using BayBE's
+# transformation framework. To do so, we start by creating a target variable that
+# lets us reference our observable quantity (the laser's output wavelength):
 
 λ = NumericalTarget("Wavelength", metadata={"unit": "nm"})
 
-# With these specifications at hand, we can define an optimization objective
-# using BayBE's transformation mechanism, by creating Gaussian-shaped reward functions
-# centered on each target wavelength:
+# Using BayBE's ability to {ref}`compose transformations
+# <userguide/transformations:Composite Transformations>`, the optimization objective can
+# be imprinted onto the target using basic algebraic operations:
 
-λ1_bump = ((λ - λ1).power(2) / (2 * σ**2)).negate().exp()
-λ2_bump = ((λ - λ2).power(2) / (2 * σ**2)).negate().exp()
-target = λ1_bump + λ2_bump
+λ1_peak = ((λ - λ1).power(2) / (2 * σ**2)).negate().exp()
+λ2_peak = ((λ - λ2).power(2) / (2 * σ**2)).negate().exp()
+target = λ1_peak + λ2_peak
 
-# Let us also visualize the relationship between observed wavelength and objective
-# value:
+# Let us overlay the relationship between observed wavelength and objective value in the
+# existing plot:
 
 λ_grid = pd.Series(np.linspace(induced_λ.min(), induced_λ.max(), 1000))
 induced_target = target.transform(λ_grid)
