@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   environment variable `BAYBE_USE_FPSAMPLE`
 - `farthest_point_sampling` now also supports a collection of integers for 
   `initialization`, using them for pre-selecting points 
+- Benchmarks can now run in different modes, store detailed machine information, and
+  local usage got new file naming and execution options
 
 ### Changed
 - The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
