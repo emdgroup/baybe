@@ -176,7 +176,7 @@ jobs:
           sed '$d' |
           awk '{if ( $1<${{ env.COVERAGE_INDIVIDUAL_THRESH }} ) exit 1 }'
 
-  test-on-gpu-machine:
+  gputest:
     needs: coretest
     if: ${{ github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/gpu_tests.yml
