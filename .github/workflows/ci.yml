@@ -177,7 +177,7 @@ jobs:
           awk '{if ( $1<${{ env.COVERAGE_INDIVIDUAL_THRESH }} ) exit 1 }'
 
   gputest:
-    needs: coretest
+    needs: typecheck
     if: ${{ github.event_name == 'workflow_dispatch' }}
     uses: ./.github/workflows/gpu_tests.yml
     secrets: inherit
