@@ -132,16 +132,17 @@ wavelength = NumericalTarget("Wavelength", metadata={"unit": "nm"})
 # be imprinted onto the target using basic algebraic operations:
 
 wavelength1_peak = ((wavelength - wavelength1).power(2) / (2 * sigma**2)).negate().exp()
-wavelength2_peak = ((wavelength - wavelength2).power(2) / (2 * sigma**2)).negate().exp()
+wavelength2_peak = NumericalTarget.match_bell(
+    "Wavelength", wavelength2, sigma, metadata={"unit": "nm"}
+)
 target = wavelength1_peak + wavelength2_peak
 
-# ```{admonition} Convenience Constructor
-# :class: tip
-# Note that you can also use the
+# For demonstration purposes, we use the
 # {meth}`~baybe.targets.numerical.NumericalTarget.match_bell` convenience constructor to
-# create the individual peaks instead, yielding {ref}`mathematically equivalent
-# <userguide/transformations:Equality>` target objects.
-# ```
+# create the second peak, which yields a target object that is {ref}`mathematically
+# equivalent <userguide/transformations:Equality>` to that of the corresponding
+# algebraic construction. See our [transformation user
+# guide](/userguide/transformations) for more alternative construction routes.
 
 # Let us overlay the relationship between observed wavelength and objective value in the
 # existing plot:
