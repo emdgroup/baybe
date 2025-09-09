@@ -28,7 +28,7 @@ on:
 
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-GPUTest
   cancel-in-progress: true
 
 jobs:
