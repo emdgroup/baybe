@@ -55,8 +55,8 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
 
 # First, we define the physical constants that characterize our laser:
 
-y0 = 1550.00  # unit: nm
-α = 0.20  # unit: nm/V
+w0 = 1550.00  # unit: nm
+alpha = 0.20  # unit: nm/V
 A = 0.60  # unit: nm
 P = 2.5  # unit: V
 
@@ -71,7 +71,7 @@ def lookup(df: pd.DataFrame) -> pd.DataFrame:
     that are typical in real laser systems.
     """
     df["Wavelength"] = (
-        y0 + α * df["Voltage"] + A * np.sin(2 * np.pi * df["Voltage"] / P)
+        w0 + alpha * df["Voltage"] + A * np.sin(2 * np.pi * df["Voltage"] / P)
     )
     return df
 
@@ -85,25 +85,25 @@ voltage = NumericalContinuousParameter("Voltage", [0, 10], metadata={"unit": "V"
 # We can visualize how it affects the laser's output wavelength by querying the lookup:
 
 voltage_grid = np.linspace(*voltage.bounds.to_tuple(), 1000)
-induced_λ = lookup(pd.DataFrame({"Voltage": voltage_grid}))["Wavelength"]
+induced_wavelength = lookup(pd.DataFrame({"Voltage": voltage_grid}))["Wavelength"]
 
 # fmt: off
 fig, axs = plt.subplots(2, 1, figsize=(8, 10))
-axs[0].plot(voltage_grid, induced_λ, color="tab:blue");
+axs[0].plot(voltage_grid, induced_wavelength, color="tab:blue");
 # fmt: on
 
 # Our reference wavelengths for the two multiplexing channels and the acceptable
 # tolerance around each are defined as follows:
 
-λ1 = 1550.5  # unit: nm
-λ2 = 1551.5  # unit: nm
-σ = 0.1  # unit: nm
+wavelength1 = 1550.5  # unit: nm
+wavelength2 = 1551.5  # unit: nm
+sigma = 0.1  # unit: nm
 
 # Let us also add them to the plot:
 
 # fmt: off
-axs[0].axhline(λ1, color="tab:red");
-axs[0].axhline(λ2, color="tab:red");
+axs[0].axhline(wavelength1, color="tab:red");
+axs[0].axhline(wavelength2, color="tab:red");
 # fmt: on
 
 # Our goal is to align the laser's output wavelength with either of the two reference
@@ -125,15 +125,15 @@ axs[0].axhline(λ2, color="tab:red");
 # transformation framework. To do so, we start by creating a target variable that
 # lets us reference our observable quantity (the laser's output wavelength):
 
-λ = NumericalTarget("Wavelength", metadata={"unit": "nm"})
+wavelength = NumericalTarget("Wavelength", metadata={"unit": "nm"})
 
 # Using BayBE's ability to {ref}`compose transformations
 # <userguide/transformations:Composite Transformations>`, the optimization objective can
 # be imprinted onto the target using basic algebraic operations:
 
-λ1_peak = ((λ - λ1).power(2) / (2 * σ**2)).negate().exp()
-λ2_peak = ((λ - λ2).power(2) / (2 * σ**2)).negate().exp()
-target = λ1_peak + λ2_peak
+wavelength1_peak = ((wavelength - wavelength1).power(2) / (2 * sigma**2)).negate().exp()
+wavelength2_peak = ((wavelength - wavelength2).power(2) / (2 * sigma**2)).negate().exp()
+target = wavelength1_peak + wavelength2_peak
 
 # ```{admonition} Convenience Constructor
 # :class: tip
@@ -146,12 +146,14 @@ target = λ1_peak + λ2_peak
 # Let us overlay the relationship between observed wavelength and objective value in the
 # existing plot:
 
-λ_grid = pd.Series(np.linspace(induced_λ.min(), induced_λ.max(), 1000))
-induced_target = target.transform(λ_grid)
+wavelength_grid = pd.Series(
+    np.linspace(induced_wavelength.min(), induced_wavelength.max(), 1000)
+)
+induced_target = target.transform(wavelength_grid)
 
 # fmt: off
 ax2 = axs[0].twiny()
-ax2.plot(induced_target, λ_grid, color="tab:orange");
+ax2.plot(induced_target, wavelength_grid, color="tab:orange");
 ax2.set_xlabel("Objective Value", color="tab:orange");
 ax2.tick_params(axis="x", labelcolor="tab:orange");
 axs[0].set_xlabel(f"{voltage.name} ({voltage.metadata.unit})", color="tab:blue");
