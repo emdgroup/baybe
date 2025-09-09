@@ -108,7 +108,7 @@ axs[0].axhline(wavelength2, color="tab:red");
 # fmt: on
 
 # Our goal is to align the laser's output wavelength with either of the two reference
-# wavelengths, treating both wavelenght as equally desirable. We can express this
+# wavelengths, treating both wavelengths as equally desirable. We can express this
 # symmetric objective by creating "reward peaks" around each reference wavelength using
 # Gaussian-shaped functions. The tolerance parameter $\sigma$ controls the width of
 # these peaks, determining how precisely the laser must be tuned to achieve optimal
