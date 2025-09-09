@@ -99,7 +99,8 @@ wavelength1 = 1550.5  # unit: nm
 wavelength2 = 1551.5  # unit: nm
 sigma = 0.1  # unit: nm
 
-# Let us also add them to the plot:
+# Let us also add them to the plot so that we can easily see the optimal parameter
+# settings, that is, the voltages that generate these wavelengths:
 
 # fmt: off
 axs[0].axhline(wavelength1, color="tab:red");
