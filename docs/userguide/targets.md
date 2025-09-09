@@ -158,22 +158,13 @@ how we can match a single set point using built-in constructors:
 
 
 #### Absolute Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/absolute.svg)
-````
-
-````{grid-item}
-:columns: 6
 
 The potentially simplest way to match a set point value is by minimizing the absolute
 distance to it, since it requires no configuration other than specifying the set point
 value itself. The {meth}`~baybe.targets.numerical.NumericalTarget.match_absolute`
 constructor allows you to do exactly that in a single line of code.
-````
-`````
 
 **Example**
 ```python
@@ -188,21 +179,13 @@ t_abs = NumericalTarget.match_absolute(name="Size", match_value=42)
 ```
 
 #### Triangular Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/triangular.svg)
-````
 
-````{grid-item}
-:columns: 4
 In some cases, we want to penalize [absolute distance](#absolute-transformation) to the set point but only
 up to a certain threshold, above which any further deviation does not matter. For this purpose,
 the {meth}`~baybe.targets.numerical.NumericalTarget.match_triangular` constructor can be used,
 which allows us to specify these thresholds in various ways.
-````
-`````
 
 **Example**
 ```python
@@ -223,23 +206,14 @@ optimization if the thresholds are chosen too tight
 ```
 
 #### Bell Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/bell.svg)
-````
 
-````{grid-item}
-:columns: 6
 Bell-transformed targets created via the
 {meth}`~baybe.targets.numerical.NumericalTarget.match_bell` constructor can be
 considered relaxed versions of their [triangular](#triangular-transformation)
 counterparts. Unlike the latter, they have no strict cutoff points, resulting in a smooth
 change in the output with non-zero gradient on the entire domain.
-````
-`````
-
 
 **Example**
 ```python
@@ -256,22 +230,14 @@ t_bell = NumericalTarget.match_bell(name="Size", match_value=42, sigma=5)
 ```
 
 #### Power Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/power.svg)
-````
 
-````{grid-item}
-:columns: 6
 If you need more precise control over how strongly deviations from the set point are
 penalized, you can use the {meth}`~baybe.targets.numerical.NumericalTarget.match_power`
 constructor, which applies a power transformation to the [absolute distance](#absolute-transformation).
 For the common case of squared penalties, we also provide a separate
 {meth}`~baybe.targets.numerical.NumericalTarget.match_quadratic` constructor.
-````
-`````
 
 **Example**
 ```python
@@ -306,21 +272,13 @@ where this can be required is when combining the targets using a
 provide convenience constructors with the `normalized_` prefix:
 
 #### Ramp Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/ramp.svg)
-````
 
-````{grid-item}
-:columns: 6
 The {meth}`~baybe.targets.numerical.NumericalTarget.normalized_ramp` constructor offers
 the simplest way to create a normalized target. It does so by linearly mapping the
 target values to the range [0, 1] inside a specified interval and clamping the output
 outside.
-````
-`````
 
 **Example**
 ```python
@@ -336,21 +294,13 @@ optimization if the thresholds are chosen too tight
 ```
 
 #### Sigmoid Transformation
-`````{grid} 2
-````{grid-item}
-:columns: auto
 
 ![Transforms](../_static/targets/sigmoid.svg)
-````
 
-````{grid-item}
-:columns: 6
 The {meth}`~baybe.targets.numerical.NumericalTarget.normalized_sigmoid` constructor
 can be considered a softened version of the [ramp transformation](#ramp-transformation).
 Instead of using hard cutoffs, it smoothly interpolates the target values between 
 0 and 1 using a sigmoid function. 
-````
-`````
 
 **Example**
 ```python

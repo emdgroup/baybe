@@ -37,16 +37,7 @@ that allow for more customization:
 The {class}`~baybe.transformations.basic.ClampingTransformation` is used to limit the
 range of the input values to a specified interval.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/clamping.svg)
-````
-
-````{grid-item}
-:columns: auto
 
 **Transformation rule**
 
@@ -59,8 +50,6 @@ f(x) =
 \end{cases}
 ```
 where $c_\text{min}$ and $c_\text{max}$ are the bounds specified for the transformation.
-````
-`````
 
 **Example**
 
@@ -77,16 +66,7 @@ t_both = ClampingTransformation(min=10, max=20)  # clamps to [10, 20]
 The {class}`~baybe.transformations.basic.AffineTransformation` applies an affine
 transformation to the given input, i.e., it scales and shifts the incoming values.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/affine.svg)
-````
-
-````{grid-item}
-:columns: auto
 
 **Transformation rule**
 
@@ -97,8 +77,6 @@ f(x) = \begin{cases}
 \end{cases}
 ```
 where $a$ is the scaling factor and $b$ is the shift value of the transformation.
-````
-`````
 
 **Example**
 
@@ -116,16 +94,7 @@ t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts, *then* 
 The {class}`~baybe.transformations.basic.TwoSidedAffineTransformation` is a piecewise
 transformation with two affine segments that meet at a midpoint.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/twosidedaffine.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -139,8 +108,6 @@ f(x) =
 where $c_\text{left}$ and $c_\text{right}$ are the slopes of the left and right affine
 segments, respectively, and $c_\text{mid}$ specifies the midpoint where the two
 segments meet.
-````
-`````
 
 **Example**
 
@@ -155,16 +122,7 @@ t = TwoSidedAffineTransformation(slope_left=-1, slope_right=0, midpoint=1)  # hi
 The {class}`~baybe.transformations.basic.SigmoidTransformation` normalizes its input
 to the range $[0, 1]$ using a sigmoid function.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/sigmoid.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -174,8 +132,6 @@ f(x) = \frac{1}{1 + e^{-a(x - c)}}
 where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
 parameter controlling the steepness. Note that the transformation can also be specified
 using anchors points instead, as demonstrated below.
-````
-`````
 
 **Example**
 
@@ -195,16 +151,7 @@ The {class}`~baybe.transformations.basic.BellTransformation` passes its input th
 bell-shaped function (i.e. an **unnormalized** Gaussian). This is useful for steering
 target values to specific set points.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/bell.svg)
-````
-
-````{grid-item}
-:columns: 6
 
 **Transformation rule**
 
@@ -214,8 +161,6 @@ f(x) = e^{-\frac{(x - c)^2}{2\sigma^2}}
 where $c$ is the center of the bell curve and $\sigma$ is a parameter controlling its
 width. The latter has the same interpretation as the standard deviation of a Gaussian
 distribution except that it does not affect the magnitude of the curve.
-````
-`````
 
 **Example**
 
@@ -232,16 +177,7 @@ The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewis
 transformation with the shape of a triangle. This is useful for steering target values
 to specific set points with symmetric or asymmetric penalty.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/triangular.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -258,8 +194,6 @@ where $c_\text{min}$ and $c_\text{max}$ are the cutoff values of the triangle,
 respectively, and $c_\text{peak}$ is its peak location. Note that there also exist
 convenience constructors that allow for alternative parameterizations of the
 transformation, as exemplified below.
-````
-`````
 
 **Example**
 
