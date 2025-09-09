@@ -87,8 +87,10 @@ voltage = NumericalContinuousParameter("Voltage", [0, 10], metadata={"unit": "V"
 voltage_grid = np.linspace(*voltage.bounds.to_tuple(), 1000)
 induced_λ = lookup(pd.DataFrame({"Voltage": voltage_grid}))["Wavelength"]
 
+# fmt: off
 fig, axs = plt.subplots(2, 1, figsize=(8, 10))
-axs[0].plot(voltage_grid, induced_λ, color="tab:blue")
+axs[0].plot(voltage_grid, induced_λ, color="tab:blue");
+# fmt: on
 
 # Our reference wavelengths for the two multiplexing channels and the acceptable
 # tolerance around each are defined as follows:
@@ -99,8 +101,10 @@ axs[0].plot(voltage_grid, induced_λ, color="tab:blue")
 
 # Let us also add them to the plot:
 
-axs[0].axhline(λ1, color="tab:red")
-axs[0].axhline(λ2, color="tab:red")
+# fmt: off
+axs[0].axhline(λ1, color="tab:red");
+axs[0].axhline(λ2, color="tab:red");
+# fmt: on
 
 # Our goal is to align the laser's output wavelength with either of the two reference
 # wavelengths, treating both wavelenght as equally desirable. We can express this
@@ -145,14 +149,16 @@ target = λ1_peak + λ2_peak
 λ_grid = pd.Series(np.linspace(induced_λ.min(), induced_λ.max(), 1000))
 induced_target = target.transform(λ_grid)
 
+# fmt: off
 ax2 = axs[0].twiny()
-ax2.plot(induced_target, λ_grid, color="tab:orange")
-ax2.set_xlabel("Objective Value", color="tab:orange")
-ax2.tick_params(axis="x", labelcolor="tab:orange")
-axs[0].set_xlabel(f"{voltage.name} ({voltage.metadata.unit})", color="tab:blue")
-axs[0].set_ylabel(f"{target.name} ({target.metadata.unit})", color="tab:blue")
-axs[0].tick_params(axis="x", labelcolor="tab:blue")
-axs[0].tick_params(axis="y", labelcolor="tab:blue")
+ax2.plot(induced_target, λ_grid, color="tab:orange");
+ax2.set_xlabel("Objective Value", color="tab:orange");
+ax2.tick_params(axis="x", labelcolor="tab:orange");
+axs[0].set_xlabel(f"{voltage.name} ({voltage.metadata.unit})", color="tab:blue");
+axs[0].set_ylabel(f"{target.name} ({target.metadata.unit})", color="tab:blue");
+axs[0].tick_params(axis="x", labelcolor="tab:blue");
+axs[0].tick_params(axis="y", labelcolor="tab:blue");
+# fmt: on
 
 # ## Simulating the Optimization Loop
 

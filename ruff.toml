@@ -11,7 +11,7 @@ line-length = 88 # Maximum line length
         # In the documentation, imperative mood can be a bit too restrictive
         "D401",
         # We allow non-ASCII characters in the examples
-        "PLC2401"
+        "PLC2401",
 ]
 "baybe/utils/__init__.py" = ["F401","F403"]
 "baybe/strategies/__init__.py" = ["F401"]
@@ -39,6 +39,7 @@ extend-ignore = [
     "PLR0915", # Too many statements
     "PLR2004", # Magic value used in comparison
     "PLC0415", # import-outside-toplevel
+    "E703", # Allow trailing semicolons
 ]
 # Here, we explicitly choose the rules that ruff should verify.
 # For a full list of available rules, see https://docs.astral.sh/ruff/rules/
