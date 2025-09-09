@@ -27,10 +27,6 @@ on:
         default: "py310"
 
 
-env:
-  COVERAGE_OVERALL_THRESH: 70      # threshold for overall coverage check
-  COVERAGE_INDIVIDUAL_THRESH: 45   # threshold for individual coverage check
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
