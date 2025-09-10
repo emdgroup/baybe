@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional as optional_c
 from attrs.validators import ge, gt, instance_of
 from typing_extensions import override
@@ -353,9 +353,9 @@ class BotorchRecommender(BayesianRecommender):
             and subspace_continuous.has_interpoint_constraints
         ):
             raise IncompatibilityError(
-                "The ``sequential_continuous`` flag is set to ``True``, but "
-                "interpoint constraints are present in the continuous subspace. This is"
-                " not supported. Please set ``sequential_continuous`` to ``False``."
+                f"The '{fields(BotorchRecommender).sequential_continuous}' flag is set "
+                f"to ``True``, but interpoint constraints are present in the continuous"
+                f" subspace. This is not supported. Please set it to ``False``."
             )
 
         # NOTE: The explicit `or None` conversion is added as an additional safety net
