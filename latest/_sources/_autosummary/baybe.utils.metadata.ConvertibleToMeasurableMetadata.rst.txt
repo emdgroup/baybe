@@ -1,0 +1,7 @@
+baybe.utils.metadata.ConvertibleToMeasurableMetadata
+====================================================
+
+.. currentmodule:: baybe.utils.metadata
+
+
+.. autodata:: ConvertibleToMeasurableMetadata

@@ -1,0 +1,39 @@
+qLogExpectedHypervolumeImprovement
+==================================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qLogExpectedHypervolumeImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qLogExpectedHypervolumeImprovement.__init__
+      ~qLogExpectedHypervolumeImprovement.compute_ref_point
+      ~qLogExpectedHypervolumeImprovement.evaluate
+      ~qLogExpectedHypervolumeImprovement.from_dict
+      ~qLogExpectedHypervolumeImprovement.from_json
+      ~qLogExpectedHypervolumeImprovement.to_botorch
+      ~qLogExpectedHypervolumeImprovement.to_dict
+      ~qLogExpectedHypervolumeImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qLogExpectedHypervolumeImprovement.alpha
+      ~qLogExpectedHypervolumeImprovement.abbreviation
+      ~qLogExpectedHypervolumeImprovement.reference_point
+      ~qLogExpectedHypervolumeImprovement.supports_multi_output
+   
+   

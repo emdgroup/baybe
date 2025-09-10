@@ -31,8 +31,8 @@ qNoisyExpectedHypervolumeImprovement
 
    .. autosummary::
    
-      ~qNoisyExpectedHypervolumeImprovement.abbreviation
       ~qNoisyExpectedHypervolumeImprovement.prune_baseline
+      ~qNoisyExpectedHypervolumeImprovement.abbreviation
       ~qNoisyExpectedHypervolumeImprovement.reference_point
       ~qNoisyExpectedHypervolumeImprovement.supports_multi_output
    

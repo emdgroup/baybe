@@ -12,6 +12,7 @@ Serialization<Serialization/Serialization>
 Custom Surrogates<Custom_Surrogates/Custom_Surrogates>
 Multi Armed Bandit<Multi_Armed_Bandit/Multi_Armed_Bandit>
 Backtesting<Backtesting/Backtesting>
+Transformations<Transformations/Transformations>
 Transfer Learning<Transfer_Learning/Transfer_Learning>
 Mixtures<Mixtures/Mixtures>
 Custom Hooks<Custom_Hooks/Custom_Hooks>

@@ -137,7 +137,7 @@ Substance encoding 'RDKIT' is deprecated and will be disabled in a future versio
 
 
 ```python
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 ```
 
 ## Creating and printing the campaign
@@ -200,10 +200,8 @@ None           NaN
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type   Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  yield  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type   Name   Transformation  Minimize
+             0  NumericalTarget  yield  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              RandomRecommender

@@ -1,0 +1,82 @@
+AffinePosteriorTransform
+========================
+
+.. currentmodule:: baybe.targets.botorch
+
+.. autoclass:: AffinePosteriorTransform
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AffinePosteriorTransform.__init__
+      ~AffinePosteriorTransform.add_module
+      ~AffinePosteriorTransform.apply
+      ~AffinePosteriorTransform.bfloat16
+      ~AffinePosteriorTransform.buffers
+      ~AffinePosteriorTransform.children
+      ~AffinePosteriorTransform.compile
+      ~AffinePosteriorTransform.cpu
+      ~AffinePosteriorTransform.cuda
+      ~AffinePosteriorTransform.double
+      ~AffinePosteriorTransform.eval
+      ~AffinePosteriorTransform.evaluate
+      ~AffinePosteriorTransform.extra_repr
+      ~AffinePosteriorTransform.float
+      ~AffinePosteriorTransform.forward
+      ~AffinePosteriorTransform.get_buffer
+      ~AffinePosteriorTransform.get_extra_state
+      ~AffinePosteriorTransform.get_parameter
+      ~AffinePosteriorTransform.get_submodule
+      ~AffinePosteriorTransform.half
+      ~AffinePosteriorTransform.ipu
+      ~AffinePosteriorTransform.modules
+      ~AffinePosteriorTransform.mtia
+      ~AffinePosteriorTransform.named_buffers
+      ~AffinePosteriorTransform.named_children
+      ~AffinePosteriorTransform.named_modules
+      ~AffinePosteriorTransform.named_parameters
+      ~AffinePosteriorTransform.parameters
+      ~AffinePosteriorTransform.register_backward_hook
+      ~AffinePosteriorTransform.register_buffer
+      ~AffinePosteriorTransform.register_forward_hook
+      ~AffinePosteriorTransform.register_forward_pre_hook
+      ~AffinePosteriorTransform.register_full_backward_hook
+      ~AffinePosteriorTransform.register_full_backward_pre_hook
+      ~AffinePosteriorTransform.register_load_state_dict_post_hook
+      ~AffinePosteriorTransform.register_load_state_dict_pre_hook
+      ~AffinePosteriorTransform.register_module
+      ~AffinePosteriorTransform.register_parameter
+      ~AffinePosteriorTransform.register_state_dict_post_hook
+      ~AffinePosteriorTransform.register_state_dict_pre_hook
+      ~AffinePosteriorTransform.requires_grad_
+      ~AffinePosteriorTransform.set_extra_state
+      ~AffinePosteriorTransform.set_submodule
+      ~AffinePosteriorTransform.share_memory
+      ~AffinePosteriorTransform.state_dict
+      ~AffinePosteriorTransform.to
+      ~AffinePosteriorTransform.to_empty
+      ~AffinePosteriorTransform.train
+      ~AffinePosteriorTransform.type
+      ~AffinePosteriorTransform.xpu
+      ~AffinePosteriorTransform.zero_grad
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AffinePosteriorTransform.T_destination
+      ~AffinePosteriorTransform.call_super_init
+      ~AffinePosteriorTransform.dump_patches
+      ~AffinePosteriorTransform.training
+   
+   

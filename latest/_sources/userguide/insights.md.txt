@@ -130,7 +130,7 @@ insight.plot("bar")
 
 In addition to SHAP-based explainers, we also support 
 [LIME](https://arxiv.org/abs/1602.04938) and 
-[MAPLE](https://papers.nips.cc/paper_files/paper/2018/hash/b495ce63ede0f4efc9eec62cb947c162-Abstract.html) 
+[MAPLE](https://arxiv.org/abs/1807.02910) 
 variants. For example:
 ~~~python
 insight = SHAPInsight.from_campaign(
@@ -148,7 +148,11 @@ both methods involve linear local approximations.
 In case you are using a surrogate model with multiple outputs,
 e.g. a [`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate) 
 for a [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective), 
-there are multiple models to be analyzed.
+there are multiple models to be analyzed. By default, for a
+[`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective), you
+will also be able to analyze the individual targets. However, if
+[`DesirabilityObjective.as_pre_transformation=True`](baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation),
+then the SHAP analysis can only be performed based on the overall "Desirability". 
 
 [`SHAPInsight`](baybe.insights.shap.SHAPInsight) calculates a separate explanation for
 each model. When requesting a plot, you must select for which target the assessment

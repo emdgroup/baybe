@@ -17,6 +17,7 @@ SingleTargetObjective
       ~SingleTargetObjective.__init__
       ~SingleTargetObjective.from_dict
       ~SingleTargetObjective.from_json
+      ~SingleTargetObjective.to_botorch
       ~SingleTargetObjective.to_dict
       ~SingleTargetObjective.to_json
       ~SingleTargetObjective.transform
@@ -32,6 +33,8 @@ SingleTargetObjective
       ~SingleTargetObjective.description
       ~SingleTargetObjective.is_multi_output
       ~SingleTargetObjective.n_outputs
+      ~SingleTargetObjective.output_names
+      ~SingleTargetObjective.supports_partial_measurements
       ~SingleTargetObjective.targets
       ~SingleTargetObjective.metadata
    

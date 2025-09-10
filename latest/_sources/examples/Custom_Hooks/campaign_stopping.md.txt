@@ -114,7 +114,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 ```python
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 ```
 
 

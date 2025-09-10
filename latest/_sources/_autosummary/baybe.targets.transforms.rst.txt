@@ -9,15 +9,6 @@ baybe.targets.transforms
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      bell_transform
-      linear_transform
-      triangular_transform
-   
    
 
    

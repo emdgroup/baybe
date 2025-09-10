@@ -15,6 +15,7 @@ Interval
    .. autosummary::
    
       ~Interval.__init__
+      ~Interval.clamp
       ~Interval.contains
       ~Interval.create
       ~Interval.from_dict

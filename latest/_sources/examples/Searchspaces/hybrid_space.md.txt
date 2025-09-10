@@ -139,7 +139,7 @@ disc_parameters = [
 
 ```python
 searchspace = SearchSpace.from_product(parameters=disc_parameters + cont_parameters)
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 ```
 
@@ -203,8 +203,8 @@ print(measurements)
     
     
     Recommended experiments with measured values: 
-         x_1   x_2   x_3       x_4       x_5       x_6      Target
-    20  5.12 -5.12  5.12 -1.547356 -3.139195 -1.777915  133.586464
-    24  5.12  5.12 -5.12  1.659379 -1.120002  4.327978  142.320889
-    4  -5.12  0.00  0.00 -4.406805  1.696480 -0.587318  101.733742
+        x_1   x_2   x_3       x_4       x_5       x_6      Target
+    7 -5.12  5.12  0.00  4.006174  1.519638  1.740030  109.793378
+    3 -5.12  0.00 -5.12  2.726276 -5.073510 -0.890666  106.616971
+    6 -5.12  5.12 -5.12 -0.281978  3.146281  0.437319  132.108862
 

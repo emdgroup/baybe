@@ -58,7 +58,7 @@ parameters = [
 ```python
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
         initial_recommender=FPSRecommender(),
@@ -136,10 +136,8 @@ Temperature[degr
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type   Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  Yield  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type   Name   Transformation  Minimize
+             0  NumericalTarget  Yield  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              FPSRecommender
@@ -241,10 +239,8 @@ Temperature[degr
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type   Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  Yield  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type   Name   Transformation  Minimize
+             0  NumericalTarget  Yield  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              FPSRecommender
@@ -309,6 +305,6 @@ print(recommendation_recreate)
 
     Recommendation from recreated object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    72      medium            5.0             122.222222
-    59        fine           10.0             200.000000
+    81      medium           10.0             111.111111
+    39        fine            1.0             200.000000
 

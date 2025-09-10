@@ -92,7 +92,7 @@ searchspace = SearchSpace.from_product(parameters=parameters, constraints=[const
 
 
 ```python
-objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1"))
 ```
 
 ## Creating and printing the campaign
@@ -159,10 +159,8 @@ NaN
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type      Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  Target_1  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type      Name   Transformation  Minimize
+             0  NumericalTarget  Target_1  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              RandomRecommender

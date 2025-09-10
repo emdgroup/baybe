@@ -9,13 +9,6 @@ baybe.objectives.desirability
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-      :toctree:                                       
-   
-      scalarize
-   
    
 
    

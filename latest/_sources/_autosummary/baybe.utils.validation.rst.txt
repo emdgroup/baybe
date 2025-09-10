@@ -29,6 +29,7 @@ baybe.utils.validation
       non_nan_float
       validate_not_nan
       validate_object_names
+      validate_objective_input
       validate_parameter_input
       validate_target_input
    

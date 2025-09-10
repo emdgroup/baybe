@@ -1,6 +1,0 @@
-baybe.utils.interval.convert\_bounds
-====================================
-
-.. currentmodule:: baybe.utils.interval
-
-.. autofunction:: convert_bounds

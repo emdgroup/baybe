@@ -17,6 +17,7 @@ ParetoObjective
       ~ParetoObjective.__init__
       ~ParetoObjective.from_dict
       ~ParetoObjective.from_json
+      ~ParetoObjective.to_botorch
       ~ParetoObjective.to_dict
       ~ParetoObjective.to_json
       ~ParetoObjective.transform
@@ -32,6 +33,8 @@ ParetoObjective
       ~ParetoObjective.description
       ~ParetoObjective.is_multi_output
       ~ParetoObjective.n_outputs
+      ~ParetoObjective.output_names
+      ~ParetoObjective.supports_partial_measurements
       ~ParetoObjective.targets
       ~ParetoObjective.metadata
    

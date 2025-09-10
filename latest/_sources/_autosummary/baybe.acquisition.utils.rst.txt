@@ -15,6 +15,7 @@ baybe.acquisition.utils
       :toctree:                                       
    
       convert_acqf
+      make_partitioning
       str_to_acqf
    
    

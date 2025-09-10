@@ -26,7 +26,6 @@ baybe.utils.numerical
    
       closer_element
       closest_element
-      geom_mean
    
    
 

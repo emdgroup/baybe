@@ -217,7 +217,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 ```python
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 ```
 
 ## Creating the campaign
@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-        Solvent                Base                        Ligand  Temperature  \
-    295    DMAc   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-    251    DMAc     Cesium pivalate                 (t-Bu)PhCPhos        120.0   
-    298    DMAc  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
+             Solvent               Base                        Ligand  \
+    257         DMAc    Cesium pivalate                     BrettPhos   
+    74   Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
+    294         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
     
-         Concentration  
-    295          0.100  
-    251          0.153  
-    298          0.100  
+         Temperature  Concentration  
+    257        105.0          0.153  
+    74          90.0          0.153  
+    294        120.0          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-        Solvent                Base                        Ligand  Temperature  \
-    295    DMAc   Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-    251    DMAc     Cesium pivalate                 (t-Bu)PhCPhos        120.0   
-    298    DMAc  Potassium pivalate                 (t-Bu)PhCPhos         90.0   
+             Solvent               Base                        Ligand  \
+    257         DMAc    Cesium pivalate                     BrettPhos   
+    74   Butyl Ester  Potassium acetate  Di-tert-butylphenylphosphine   
+    294         DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
     
-         Concentration      yield  
-    295          0.100  11.058375  
-    251          0.153   0.493170  
-    298          0.100   1.138663  
+         Temperature  Concentration      yield  
+    257        105.0          0.153  94.053360  
+    74          90.0          0.153 -76.112455  
+    294        120.0          0.057 -16.519907  
 
 
 

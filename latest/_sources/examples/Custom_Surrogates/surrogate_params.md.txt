@@ -103,7 +103,7 @@ except TypeError as e:
 ```python
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(surrogate_model=surrogate_model),
         initial_recommender=FPSRecommender(),
@@ -141,7 +141,7 @@ print(recommendation)
 
     Recommendation from campaign:
         Granularity  Pressure[bar]  Temperature[degree_C]    Solvent
-    168        fine            5.0             122.222222  Solvent A
+    133        fine            1.0             133.333333  Solvent B
 
 
 

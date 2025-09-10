@@ -22,6 +22,8 @@ baybe.utils.basic
    .. autosummary::
       :toctree:                                       
    
+      compose
+      compose_two
       convert_to_float
       find_subclass
       get_baseclasses
@@ -45,6 +47,7 @@ baybe.utils.basic
       :template: custom-class-template.rst              
    
       Dummy
+      UncertainBool
       UnspecifiedType
       classproperty
    

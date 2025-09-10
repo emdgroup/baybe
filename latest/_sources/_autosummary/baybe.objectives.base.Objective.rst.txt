@@ -17,6 +17,7 @@ Objective
       ~Objective.__init__
       ~Objective.from_dict
       ~Objective.from_json
+      ~Objective.to_botorch
       ~Objective.to_dict
       ~Objective.to_json
       ~Objective.transform
@@ -31,6 +32,8 @@ Objective
    
       ~Objective.description
       ~Objective.n_outputs
+      ~Objective.output_names
+      ~Objective.supports_partial_measurements
       ~Objective.targets
       ~Objective.is_multi_output
       ~Objective.metadata

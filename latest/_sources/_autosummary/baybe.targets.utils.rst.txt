@@ -1,0 +1,30 @@
+baybe.targets.utils
+===================
+
+.. automodule:: baybe.targets.utils
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      combine_numerical_targets
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

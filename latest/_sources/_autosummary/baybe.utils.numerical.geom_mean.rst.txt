@@ -1,6 +1,0 @@
-baybe.utils.numerical.geom\_mean
-================================
-
-.. currentmodule:: baybe.utils.numerical
-
-.. autofunction:: geom_mean

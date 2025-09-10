@@ -1,0 +1,42 @@
+SigmoidTransformation
+=====================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: SigmoidTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SigmoidTransformation.__init__
+      ~SigmoidTransformation.abs
+      ~SigmoidTransformation.chain
+      ~SigmoidTransformation.clamp
+      ~SigmoidTransformation.from_anchors
+      ~SigmoidTransformation.from_dict
+      ~SigmoidTransformation.from_json
+      ~SigmoidTransformation.get_codomain
+      ~SigmoidTransformation.get_image
+      ~SigmoidTransformation.negate
+      ~SigmoidTransformation.to_botorch_objective
+      ~SigmoidTransformation.to_dict
+      ~SigmoidTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SigmoidTransformation.center
+      ~SigmoidTransformation.steepness
+   
+   

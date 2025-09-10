@@ -5,6 +5,14 @@ baybe.utils.interval
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ConvertibleToInterval
+   
    
 
    
@@ -14,7 +22,6 @@ baybe.utils.interval
    .. autosummary::
       :toctree:                                       
    
-      convert_bounds
       use_fallback_constructor_hook
    
    

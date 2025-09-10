@@ -5,6 +5,14 @@ baybe.utils.metadata
   
    
    
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ConvertibleToMeasurableMetadata
+   
    
 
    

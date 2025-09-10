@@ -1,6 +1,0 @@
-baybe.objectives.desirability.scalarize
-=======================================
-
-.. currentmodule:: baybe.objectives.desirability
-
-.. autofunction:: scalarize

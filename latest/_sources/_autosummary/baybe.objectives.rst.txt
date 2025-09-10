@@ -31,6 +31,8 @@ baybe.objectives
 
    base
 
+   botorch
+
    desirability
 
    enum
