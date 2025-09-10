@@ -147,11 +147,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        # NOTE: The interpoint constraint case requires indices to be a 2-d tensor.
-        # This requires some adjustments to the indices.
-        # See https://botorch.readthedocs.io/en/latest/optim.html, in particular the
-        # docstring of ``optimize_acqf`` for details.
-
         if batch_size is None and self.is_interpoint:
             raise RuntimeError(
                 "No ``batch_size`` set but using interpoint constraints."
@@ -164,7 +159,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             )
 
         param_names = [p.name for p in parameters]
-        param_indices: list[int] | list[tuple[int, int]]  # for intrapoint | interpoint
+        # Interpoint and intrapoint require different index formats. For more
+        # information, we refer to the botorch documentation:
+        # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
+        param_indices: list[int] | list[tuple[int, int]]
         coefficients: list[float]
         if not self.is_interpoint:
             param_indices = [
