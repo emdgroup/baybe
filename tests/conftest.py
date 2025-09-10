@@ -714,6 +714,19 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
     )
 
 
+@pytest.fixture(name="non_sequential_recommender")
+def fixture_non_sequential_recommender(initial_recommender, surrogate_model, acqf):
+    """A recommender for non-sequential optimization."""
+    return TwoPhaseMetaRecommender(
+        initial_recommender=initial_recommender,
+        recommender=BotorchRecommender(
+            surrogate_model=surrogate_model,
+            acquisition_function=acqf,
+            sequential_continuous=False,
+        ),
+    )
+
+
 @pytest.fixture(name="meta_recommender")
 def fixture_meta_recommender(
     request,
