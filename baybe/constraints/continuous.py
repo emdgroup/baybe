@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 import math
 from collections.abc import Collection, Iterator, Sequence
-from itertools import chain, combinations, repeat
+from itertools import combinations
 from math import comb
 from typing import TYPE_CHECKING, Any
 
@@ -164,33 +164,33 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             )
 
         param_names = [p.name for p in parameters]
+        param_indices: list[int] | list[tuple[int, int]]  # for intrapoint | interpoint
         coefficients: list[float]
-        torch_indices: Tensor
         if not self.is_interpoint:
             param_indices = [
                 param_names.index(p) + idx_offset
                 for p in self.parameters
                 if p in param_names
             ]
-            coefficients = self.coefficients
-            torch_indices = torch.tensor(param_indices)
+            coefficients = list(self.coefficients)
         else:
+            # mypy does not realize that batch_size is not None here due to the
+            # checks above.
+            assert batch_size is not None
             param_index_dict = {
                 name: param_names.index(name) for name in self.parameters
             }
-            param_indices_interpoint = [
+            param_indices = [
                 (batch, param_index_dict[name] + idx_offset)
                 for name in self.parameters
                 for batch in range(batch_size)
             ]
-            # Collect the coefficients such that there they have the form
-            # [coef_0,...,coef_0, coef_1,...,coef_1,...,coef_n,...,coef_n]
-            # where each coefficient is repeated ``batch_size`` times.
-            coefficients = list(chain(*zip(*repeat(self.coefficients, batch_size))))
-            torch_indices = torch.tensor(param_indices_interpoint)
+            coefficients = (
+                torch.tensor(self.coefficients).repeat_interleave(batch_size).tolist()
+            )
 
         return (
-            torch_indices,
+            torch.tensor(param_indices),
             torch.tensor(
                 [self._multiplier * c for c in coefficients], dtype=DTypeFloatTorch
             ),
