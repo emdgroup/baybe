@@ -45,6 +45,7 @@ Serialization <serialization>
 Simulation <simulation>
 Surrogates <surrogates>
 Targets <targets>
+Transformations <transformations>
 Transfer Learning <transfer_learning>
 Utilities <utils>
 ```

@@ -6,6 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `transformations` subpackage 
+- New `NumericalTarget` interface, including advanced machinery for defining and
+  manipulating target transformations based on the new `Transformation` class hierarchy
+- `match_bell` and `match_triangular` convenience constructors to `NumericalTarget`
+  for reproducing the legacy `MATCH` modes
+- `normalized_ramp` convenience constructor to `NumericalTarget` for reproducing the
+  legacy behavior when imposing bounds on `MIN`/`MAX` targets
+- `normalized_sigmoid`, `match_absolute`, `match_quadratic` and `match_power`
+  convenience constructors to `NumericalTarget` enabling additional matching/normalizing
+  behaviors 
+- Full support for accessing posterior information of `NumericalTarget`, i.e. now
+  including settings considered `MATCH` mode in the legacy interface, as well as targets
+  used in `DesirabilityObjective`
+- `as_pre_transformation` flag to `DesirabilityObjective` for controlling whether the 
+  desirability transformation is applied before or after model fitting
+- `supports_partial_measurements` property to `Objective`
+- `is_normalized` property to `NumericalTarget`
+- `negate`, `normalize`, `abs`, `clamp`, `log`, `exp` and `power` methods to
+  `NumericalTarget` for easy creation of transformed targets from existing ones
+- Addition and multiplication dunder methods (for scalar values) to `NumericalTarget`
+- `get_image` method to `NumericalTarget` for computing the images of transformed
+  target value ranges
+- Support for non-normalized targets in `DesirabilityObjective`
+- `Objective.to_botorch` method for converting objectives to BoTorch
+- `qEHVI` and `qLogEHVI` acquisition functions (in addition to their noisy variants)
+- Tests for migrating to new `NumericalTarget` interface
 - API diagram in user guide
 - `Metadata` and `MeasurableMetadata` classes providing optional information for BayBE
   objects
@@ -21,9 +47,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   local usage got new file naming and execution options
 
 ### Changed
+- The behavior of `NumericalTarget` is no longer defined via a `mode` (i.e. `MIN`,
+  `MAX`, `MATCH` in legacy interface) but controlled using a minimization flag and
+  corresponding target transformations. This allows for more flexible target
+  definitions, makes invalid target configurations unrepresentable, and is in line with
+  the definition of mathematical optimization problems. Also, it avoids the need to
+  explicitly specify an irrelevant optimization direction in the context of active
+  learning.
+- By default, `DesirabilityObjective` now fits separate models for each target, rather
+  than modeling only the scalarized desirability value (see new
+  `DesirabilityObjective.as_pre_transformation` flag). As a result, posterior
+  evaluations now return information for each target individually, instead of just for
+  the desirability value.
+- Objective transformations (both tensor and dataframe based) now always use the Torch
+  computation route, avoiding the need for duplicated transformation logic
+- Specifying bounds for `Interval` is now optional
 - `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
   have been replaced with `unstructure_with_type` and `make_base_structure_hook`
-- `to_dict` and `to_json` now accept an optional Boolean `add_type` argument
 
 ### Fixed
 - It is no longer possible to use identical names between parameters and targets
@@ -36,13 +76,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Telemetry
+- Option to specify reference values for `add_fake_measurements`
+- `convert_bounds` utility (since now equivalent to `Interval.create`)
+- `geom_mean` utility 
 
-## [0.13.2] - 2025-07-09
-### Changed
-- Lockfiles are now generated using `uv lock` and consumed using `uv sync`
-
-### Fixed
-- The Python version specifier now also allows patch versions of Python 3.13
+### Deprecations
+- Creating `NumericalTarget`s using a `mode` argument
+- `TargetMode` and `TargetTransformation` enums
+- `linear_transform`, `triangular_transform` and `bell_transform` functions
 
 ### Expired Deprecations (from 0.10.*)
 - `SequentialGreedyRecommender` class
@@ -52,8 +93,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatically setting `allow_extra=True` in `transform` methods of search space
   classes when left unspecified
 
+## [0.13.2] - 2025-07-09
+### Changed
+- Lockfiles are now generated using `uv lock` and consumed using `uv sync`
+
+### Fixed
+- The Python version specifier now also allows patch versions of Python 3.13
+
 ## [0.13.1] - 2025-06-06
-### Added
 - Support for Python 3.13
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
   random or deterministic sampling for equidistant cases

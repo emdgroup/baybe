@@ -53,7 +53,7 @@ In this example, `subspace` has a total of 27 different parameter configuration.
 ### Constructing from a Dataframe
 
 [`SubspaceDiscrete.from_dataframe`](baybe.searchspace.discrete.SubspaceDiscrete.from_dataframe) constructs a discrete subspace from a given dataframe.
-By default, this method tries to infer the data column as as a [`NumericalDiscreteParameter`](baybe.parameters.numerical.NumericalDiscreteParameter) and uses [`CategoricalParameter`](baybe.parameters.categorical.CategoricalParameter) as fallback.
+By default, this method tries to infer the data column as a [`NumericalDiscreteParameter`](baybe.parameters.numerical.NumericalDiscreteParameter) and uses [`CategoricalParameter`](baybe.parameters.categorical.CategoricalParameter) as fallback.
 However, it is possible to change this behavior by using the optional `parameters` keyword.
 This list informs `from_dataframe` about the parameters and the types of parameters that should be used.
 In particular, it is necessary to provide such a list if there are non-numerical parameters that should not be interpreted as categorical parameters.

@@ -31,6 +31,7 @@ from baybe.surrogates.base import (
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import (
     validate_object_names,
+    validate_objective_input,
     validate_parameter_input,
     validate_target_input,
 )
@@ -100,7 +101,7 @@ class BayesianRecommender(PureRecommender, ABC):
         # This fit applies internal caching and does not necessarily involve computation
         surrogate = (
             _autoreplicate(self._surrogate_model)
-            if objective.is_multi_output
+            if objective._is_multi_model
             else self._surrogate_model
         )
         surrogate.fit(searchspace, objective, measurements)
@@ -174,6 +175,7 @@ class BayesianRecommender(PureRecommender, ABC):
             )
         if not isinstance(measurements, _ValidatedDataFrame):
             validate_target_input(measurements, objective.targets)
+            validate_objective_input(measurements, objective)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
                 measurements, searchspace.parameters + objective.targets

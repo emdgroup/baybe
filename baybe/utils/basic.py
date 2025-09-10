@@ -40,6 +40,30 @@ UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
 
 
+class UncertainBool(enum.Enum):
+    """Enum for representing uncertain Boolean values."""
+
+    TRUE = "TRUE"
+    FALSE = "FALSE"
+    UNKNOWN = "UNKNOWN"
+
+    def __bool__(self):
+        if self is UncertainBool.TRUE:
+            return True
+        elif self is UncertainBool.FALSE:
+            return False
+        else:
+            raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
+
+    @classmethod
+    def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
+        """Create an uncertain Boolean from a potentially erroneous Boolean call."""
+        try:
+            return cls.TRUE if callable_() else cls.FALSE
+        except Exception:
+            return cls.UNKNOWN
+
+
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """Placeholder element for array-like data types.
@@ -53,7 +77,9 @@ class Dummy:
         return "<dummy>"
 
 
-def is_all_instance(x: Collection[Any], t: type[_T], /) -> TypeGuard[Collection[_T]]:
+def is_all_instance(
+    x: Collection[Any], t: type[_T] | tuple[type[_T], ...], /
+) -> TypeGuard[Collection[_T]]:
     """Typeguard to check if all elements in a collection are of a certain type."""
     # IMPROVE: Ideally, the collection type should itself be abstracted away using a
     #   generic container type, but unclear how to achieve this with the typing system.
@@ -144,8 +170,8 @@ def group_duplicate_values(dictionary: dict[_T, _U]) -> dict[_U, list[_T]]:
     return {k: v for k, v in group.items() if len(v) > 1}
 
 
-def to_tuple(x: Sequence) -> tuple:
-    """Convert any sequence into a tuple.
+def to_tuple(x: Iterable) -> tuple:
+    """Convert any (finite-length) iterable into a tuple.
 
     This wrapper is only used to avoid mypy warnings for attrs converters:
     * https://github.com/python/mypy/issues/8417
@@ -353,3 +379,13 @@ def convert_to_float(
     if isinstance(x, Iterable):
         return cattrs.structure(x, tuple[float, ...])
     return float(x)
+
+
+def compose_two(f: Callable, g: Callable, /) -> Callable:
+    """Compose two given functions (first function is applied first)."""
+    return lambda *a, **kw: g(f(*a, **kw))
+
+
+def compose(*fs: Callable) -> Callable:
+    """Compose an arbitrary number of functions (first function is applied first)."""
+    return functools.reduce(compose_two, fs)

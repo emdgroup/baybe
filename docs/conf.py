@@ -88,6 +88,7 @@ extensions = [
 bibtex_bibfiles = ["references.bib"]
 myst_enable_extensions = ["dollarmath"]  # Enables Latex-like math in markdown files
 autosectionlabel_prefix_document = True  # Make sure autosectionlabels are unique
+myst_heading_anchors = 4
 
 
 # Tell sphinx where to find the templates
@@ -131,7 +132,9 @@ nitpick_ignore_regex = [
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
+    (r"py:obj", "baybe.acquisition.acqfs.*.is_analytic"),
     (r"py:obj", "baybe.acquisition.base.*.supports_multi_output"),
+    (r"py:obj", "baybe.acquisition.base.*.is_analytic"),
     # KMedoids
     (r"py:.*", r".*clustering_algorithms.*KMedoids.*"),
     (r"ref:.*", r".*clustering_algorithms.*KMedoids.*"),
@@ -139,8 +142,13 @@ nitpick_ignore_regex = [
     ("ref", "k_medoids"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
+    (r"py:obj", "baybe.utils.basic.UncertainBool.*"),
+    ("py:obj", "baybe.targets.botorch.*"),
+    ("py:obj", "baybe.objectives.botorch.*"),
     ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
     ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
+    # Deprecation
+    ("py:.*", "baybe.targets._deprecated.*"),
 ]
 
 # Ignore the following links when checking inks for viability
@@ -314,5 +322,11 @@ def autodoc_process_docstring(app, what, name, obj, options, lines):
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     """Skip the docstring for the acqf classproperties."""
-    if name in ["supports_batching", "supports_pending_experiments"]:
+    # Skip class properties that cause issues with abstract classes
+    if name in [
+        "supports_batching",
+        "supports_pending_experiments",
+        "is_analytic",
+        "load_state_dict",
+    ]:
         return True

@@ -9,7 +9,7 @@ from baybe.exceptions import OptionalImportError
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace.core import SearchSpace
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 
 nonpredictive_recommenders = [
@@ -17,7 +17,7 @@ nonpredictive_recommenders = [
 ]
 
 p1 = NumericalDiscreteParameter("p1", [1, 2])
-t1 = NumericalTarget("t1", "MAX")
+t1 = NumericalTarget("t1")
 objective = t1.to_objective()
 measurements = pd.DataFrame(
     {p1.name: p1.values, t1.name: np.random.random(len(p1.values))}

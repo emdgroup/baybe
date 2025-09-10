@@ -6,15 +6,15 @@ import pytest
 from cattrs import IterableValidationError
 from pytest import param
 
-from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
 
-t1 = NumericalTarget("t1", mode="MAX", bounds=(0, 1))
-t2 = NumericalTarget("t2", mode="MAX", bounds=(0, 1))
-t3 = NumericalTarget("unnormalized", mode="MAX")
+t1 = NumericalTarget.normalized_ramp("t1", cutoffs=(0, 1))
+t2 = NumericalTarget.normalized_ramp("t2", cutoffs=(0, 1))
+t3 = NumericalTarget("unnormalized").clamp(min=0)
+t4 = NumericalTarget("negative")
 t_mock = Mock(spec=Target)
 
 
@@ -32,20 +32,31 @@ def test_invalid_target(target):
 
 
 @pytest.mark.parametrize(
-    ("targets", "error"),
+    ("targets", "error", "match"),
     [
-        param(None, TypeError, id="none"),
-        param([t1, "t2"], TypeError, id="wrong_type"),
-        param([t1], ValueError, id="too_short"),
-        param([t1, t1], ValueError, id="duplicate_names"),
-        param([t1, t3], ValueError, id="unnormalized"),
-        param([t1, t_mock], TypeError, id="unsupported_subclass"),
+        param(None, TypeError, "is not iterable", id="none"),
+        param(
+            [t1, "t2"],
+            TypeError,
+            "baybe.targets.numerical.NumericalTarget",
+            id="wrong_type",
+        ),
+        param([t1], ValueError, "must be >= 2: 1", id="too_short"),
+        param([t1, t1], ValueError, "unique names", id="duplicate_names"),
+        param([t1, t3], ValueError, "are either not normalized", id="unnormalized"),
+        param([t1, t4], ValueError, "non-negative range", id="negative"),
+        param(
+            [t1, t_mock],
+            TypeError,
+            "baybe.targets.numerical.NumericalTarget",
+            id="unsupported_subclass",
+        ),
     ],
 )
-def test_invalid_targets(targets, error):
+def test_invalid_targets(targets, error, match):
     """Providing invalid target objects raises an exception."""
-    with pytest.raises(error):
-        DesirabilityObjective(targets)
+    with pytest.raises(error, match=match):
+        DesirabilityObjective(targets, scalarizer="GEOM_MEAN")
 
 
 @pytest.mark.parametrize(
@@ -77,16 +88,3 @@ def test_invalid_scalarizer(scalarizer):
     """Providing an invalid scalarizer raises an exception."""
     with pytest.raises(ValueError):
         DesirabilityObjective([t1, t2], scalarizer=scalarizer)
-
-
-@pytest.mark.parametrize(
-    "target",
-    [
-        param(NumericalTarget("t2", mode="MAX", bounds=(0, 1)), id="max_bounded"),
-        param(NumericalTarget("t2", mode="MIN", bounds=(0, 1)), id="min_bounded"),
-    ],
-)
-def test_pareto_transformed_targets(target):
-    """Providing a bounded/transformed MIX/MAX target raises an exception."""
-    with pytest.raises(ValueError, match="does not support transforms for"):
-        ParetoObjective([NumericalTarget("t1", mode="MAX"), target])

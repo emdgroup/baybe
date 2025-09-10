@@ -24,7 +24,7 @@ from baybe.searchspace import SearchSpace
 from baybe.surrogates import CustomONNXSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
 
@@ -163,8 +163,7 @@ def main():
         ),
     )
     searchspace = SearchSpace.from_product(parameters=[parameter])
-    target_mode = "MIN" if st_minimize else "MAX"
-    objective = NumericalTarget(name="y", mode=target_mode).to_objective()
+    objective = NumericalTarget(name="y", minimize=st_minimize).to_objective()
 
     # Create the surrogate model, acquisition function, and the recommender
     surrogate_model = surrogate_model_classes[st_surrogate_name]()

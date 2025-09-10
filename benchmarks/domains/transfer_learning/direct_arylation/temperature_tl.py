@@ -69,7 +69,7 @@ def make_searchspace(
 
 def make_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
-    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
+    return SingleTargetObjective(NumericalTarget(name="yield"))
 
 
 def make_lookup(data: pd.DataFrame) -> pd.DataFrame:

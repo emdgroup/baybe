@@ -1,5 +1,7 @@
 """Available acquisition functions."""
 
+from __future__ import annotations
+
 import gc
 import math
 from abc import ABC
@@ -10,7 +12,7 @@ import numpy.typing as npt
 import pandas as pd
 from attr.converters import optional as optional_c
 from attr.validators import optional as optional_v
-from attrs import define, field, fields
+from attrs import AttrsInstance, define, field, fields
 from attrs.validators import gt, instance_of, le
 from typing_extensions import override
 
@@ -71,8 +73,8 @@ class qNegIntegratedPosteriorVariance(AcquisitionFunction):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
-        flds = fields(qNegIntegratedPosteriorVariance)
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        flds = fields(cls)
         return (
             flds.sampling_n_points.name,
             flds.sampling_method.name,
@@ -311,8 +313,8 @@ class qThompsonSampling(qSimpleRegret):
 
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
-        flds = fields(qThompsonSampling)
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        flds = fields(cls)
         return (flds.n_mc_samples.name,)
 
     @override
@@ -355,21 +357,18 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
       the coordinates of the reference point.
     """
 
-    prune_baseline: bool = field(default=True, validator=instance_of(bool))
-    """Auto-prune candidates that are unlikely to be the best."""
-
     @override
     @classproperty
-    def _non_botorch_attrs(cls) -> tuple[str, ...]:
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
         # While BoTorch's acquisition function also expects a `ref_point` argument,
         # the attribute defined here is more general and can hence not be directly
         # matched. Thus, we bypass the auto-matching mechanism and handle it manually.
-        flds = fields(qLogNoisyExpectedHypervolumeImprovement)
+        flds = fields(cls)
         return (flds.reference_point.name,)
 
     @staticmethod
     def compute_ref_point(
-        array: npt.ArrayLike, maximize: npt.ArrayLike, factor: float = 0.1
+        array: npt.ArrayLike, maximize: npt.ArrayLike | None = None, factor: float = 0.1
     ) -> np.ndarray:
         """Compute a reference point for a given set of target configurations.
 
@@ -393,7 +392,8 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
         Args:
             array: A 2-D array-like where each row represents a target configuration.
-            maximize: A 1-D boolean array indicating which targets are to be maximized.
+            maximize: An optional 1-D Boolean array indicating which targets are to be
+                maximized.
             factor: A numeric value controlling the location of the reference point.
 
         Raises:
@@ -407,13 +407,15 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
             raise ValueError(
                 "The specified data array must have exactly two dimensions."
             )
-        if np.ndim(maximize) != 1:
+        if (maximize is not None) and (np.ndim(maximize) != 1):
             raise ValueError(
                 "The specified Boolean array must have exactly one dimension."
             )
 
-        # Convert arrays
+        # Convert arrays and set default optimization direction
         array = np.asarray(array)
+        if maximize is None:
+            maximize = [True for _ in range(array.shape[1])]
         maximize = np.where(maximize, 1.0, -1.0)
 
         # Compute bounds
@@ -425,10 +427,51 @@ class _ExpectedHypervolumeImprovement(AcquisitionFunction, ABC):
 
 
 @define(frozen=True)
+class qExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Monte Carlo based expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qEHVI"
+
+    alpha: float | None = field(default=None, converter=optional_c(float))
+    """An optional threshold parameter controlling the shape of the partitioning."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        # BoTorch's acquisition functions do not directly expect an `alpha` argument
+        # but a partitioning object derived from it, which we create on the fly.
+        # Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(cls)
+        return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
+
+
+@define(frozen=True)
+class qLogExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
+    """Logarithmic Monte Carlo based expected hypervolume improvement."""
+
+    abbreviation: ClassVar[str] = "qLogEHVI"
+
+    alpha: float | None = field(default=None, converter=optional_c(float))
+    """An optional threshold parameter controlling the shape of the partitioning."""
+
+    @override
+    @classproperty
+    def _non_botorch_attrs(cls: type[AttrsInstance]) -> tuple[str, ...]:
+        # BoTorch's acquisition functions do not directly expect an `alpha` argument
+        # but a partitioning object derived from it, which we create on the fly.
+        # Thus, we bypass the auto-matching mechanism and handle it manually.
+        flds = fields(cls)
+        return _ExpectedHypervolumeImprovement._non_botorch_attrs + (flds.alpha.name,)
+
+
+@define(frozen=True)
 class qNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 @define(frozen=True)
@@ -436,6 +479,9 @@ class qLogNoisyExpectedHypervolumeImprovement(_ExpectedHypervolumeImprovement):
     """Logarithmic Monte Carlo based noisy expected hypervolume improvement."""
 
     abbreviation: ClassVar[str] = "qLogNEHVI"
+
+    prune_baseline: bool = field(default=True, validator=instance_of(bool))
+    """Auto-prune candidates that are unlikely to be the best."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

@@ -1,8 +1,9 @@
 """Functionality for single-target objectives."""
 
+from __future__ import annotations
+
 import gc
-import warnings
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 from attrs import define, field
@@ -11,10 +12,14 @@ from typing_extensions import override
 
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
-from baybe.targets.enum import TargetMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import pretty_print_df, transform_target_columns
+from baybe.utils.dataframe import (
+    pretty_print_df,
+)
+
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
 
 
 @define(frozen=True, slots=False)
@@ -46,61 +51,24 @@ class SingleTargetObjective(Objective):
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def output_names(self) -> tuple[str, ...]:
+        return (self._target.name,)
 
     @override
-    def transform(
-        self,
-        df: pd.DataFrame | None = None,
-        /,
-        *,
-        allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
-    ) -> pd.DataFrame:
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the dataframe to be transformed as first positional argument."
-            )
+    @property
+    def supports_partial_measurements(self) -> bool:
+        return False
 
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
+    @override
+    def to_botorch(self) -> MCAcquisitionObjective:
+        from botorch.acquisition.objective import IdentityMCObjective
 
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
+        from baybe.objectives.botorch import ChainedMCObjective
 
-        if allow_extra is None:
-            allow_extra = True
-            if set(df.columns) - {p.name for p in self.targets}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
+        if isinstance(self._target, NumericalTarget):
+            return ChainedMCObjective(super().to_botorch(), IdentityMCObjective())
 
-        out = transform_target_columns(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
-        )
-
-        # TODO: Remove hotfix (https://github.com/emdgroup/baybe/issues/460)
-        if (
-            isinstance(t := self._target, NumericalTarget)
-            and t.mode is TargetMode.MIN
-            and t.bounds.is_bounded
-        ):
-            out = -out
-        return out
+        return IdentityMCObjective()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

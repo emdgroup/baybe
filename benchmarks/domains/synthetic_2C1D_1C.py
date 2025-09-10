@@ -80,7 +80,7 @@ def synthetic_2C1D_1C(settings: ConvergenceBenchmarkSettings) -> DataFrame:
         NumericalDiscreteParameter("z", (1, 2, 3, 4)),
     ]
 
-    target = NumericalTarget(name="target", mode="MAX")
+    target = NumericalTarget(name="target")
     searchspace = SearchSpace.from_product(parameters=parameters)
     objective = target.to_objective()
 

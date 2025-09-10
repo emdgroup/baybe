@@ -1,41 +1,57 @@
 """Validation tests for targets."""
 
+import operator as op
+
 import pytest
+from attrs import evolve
 from pytest import param
 
 from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 
-
-@pytest.mark.parametrize(
-    ("mode", "bounds"),
-    [
-        param("MATCH", None, id="non_closed_match_mode"),
-        param("MAX", (0, None), id="half_open"),
-        param("MAX", (0, 0), id="degenerate"),
-    ],
-)
-def test_numerical_target_invalid_bounds_mode(mode, bounds):
-    """Providing invalid bounds raises an exception."""
-    with pytest.raises(ValueError):
-        NumericalTarget(name="invalid_bounds", mode=mode, bounds=bounds)
+X = object()
 
 
 @pytest.mark.parametrize(
-    ("mode", "bounds", "transformation"),
+    ("name", "transformation", "minimize", "match"),
     [
-        param("MIN", None, "BELL", id="bell_for_min"),
-        param("MATCH", (0, 1), "LINEAR", id="linear_for_match"),
+        param(None, X, X, "must be <class 'str'>", id="name_none"),
+        param(0, X, X, "must be <class 'str'>", id="name_int"),
+        param(X, 0, X, "must be callable", id="transformation_int"),
+        param(X, X, None, "must be <class 'bool'>", id="minimize_none"),
+        param(X, X, 0, "must be <class 'bool'>", id="minimize_int"),
     ],
 )
-def test_numerical_target_incompatible_transform_mode(mode, bounds, transformation):
-    with pytest.raises(ValueError):
-        NumericalTarget(
-            name="incompatible_transform",
-            mode=mode,
-            bounds=bounds,
-            transformation=transformation,
-        )
+def test_numerical_target_invalid_arguments(name, transformation, minimize, match):
+    """Providing invalid argument types raises an error."""
+    name = "t" if name is X else name
+    transformation = None if transformation is X else transformation
+    minimize = False if minimize is X else minimize
+    with pytest.raises(TypeError, match=match):
+        NumericalTarget.from_modern_interface(name, transformation, minimize=minimize)
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        param({"name": "t2"}, id="name"),
+        param({"minimize": True}, id="minimize"),
+        param({"metadata": {"unit": "g"}}, id="metadata"),
+    ],
+)
+@pytest.mark.parametrize("operator", [op.add, op.sub, op.mul])
+def test_numerical_target_invalid_combination(other, operator):
+    """Targets with different attributes (except transformation) cannot be combined."""
+    t = NumericalTarget("t")
+    with pytest.raises(ValueError, match="if they are identical in all attributes"):
+        operator(t, evolve(t, **other))
+
+
+def test_numerical_target_invalid_operator():
+    """Target division is not supported."""
+    t = NumericalTarget("t")
+    with pytest.raises(TypeError, match="unsupported operand"):
+        t / t
 
 
 @pytest.mark.parametrize(
@@ -52,16 +68,4 @@ def test_binary_target_invalid_values(choices, error, match):
             name="invalid_value",
             success_value=choices[0],
             failure_value=choices[1],
-        )
-
-
-@pytest.mark.parametrize(
-    "mode",
-    ["MIN", "MAX"],
-)
-def test_providing_transformation_without_bounds(mode):
-    """Providing a transformation without bounds raises an error."""
-    with pytest.raises(ValueError, match="but did not specify any bounds."):
-        NumericalTarget(
-            name="transformation_without_bounds", mode=mode, transformation="LINEAR"
         )

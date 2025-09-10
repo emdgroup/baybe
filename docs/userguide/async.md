@@ -141,15 +141,27 @@ measurements
 Internally, the incomplete rows are dropped when fitting a surrogate model for each
 target. If you use an unsupported surrogate model, an error will be thrown at runtime.
 
-```{admonition} Limitations
+````{admonition} Limitations
 :class: important
-The described method only works if the surrogate model uses a separate data basis
-for each target. This is e.g. the case if you use the
-[`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate)
-to enable multi-output modeling required by the 
-[`ParetoObjective`](baybe.objectives.pareto.ParetoObjective). For details, see 
-[multi-output modeling](multi_output_modeling).
+The described workflow is only possible if the underlying mechanism of the used
+{class}`~baybe.objectives.base.Objective` can handle missing values, as indicated
+by its {attr}`~baybe.objectives.base.Objective.supports_partial_measurements` property.
 
-The [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective) does 
-not currently utilize multi-output models and hence does not support partial results.  
+For example, the
+[`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective)
+rejects partial measurement results when its
+{attr}`~baybe.objectives.desirability.DesirabilityObjective.as_pre_transformation` flag
+is set to `True`:
+```python
+from baybe.objectives import DesirabilityObjective
+from baybe.targets import NumericalTarget
+
+t1 = NumericalTarget.normalized_ramp("t1", cutoffs=(0, 1))
+t2 = NumericalTarget.normalized_sigmoid("t2", anchors=[(0.0, 0.1), (1.0, 0.9)])
+
+obj = DesirabilityObjective(targets=[t1, t2])
+obj_pre = DesirabilityObjective(targets=[t1, t2], as_pre_transformation=True)
+assert obj.supports_partial_measurements
+assert not obj_pre.supports_partial_measurements
 ```
+````

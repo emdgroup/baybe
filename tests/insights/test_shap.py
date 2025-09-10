@@ -118,27 +118,33 @@ def _test_shap_insight(campaign, explainer_cls, use_comp_rep, is_shap):
         if use_comp_rep:
             df = campaign.searchspace.transform(df)
         shap_explanations = shap_insight.explain(df)
+        assert len(shap_explanations) == campaign.objective._n_models
         assert isinstance(shap_explanations, tuple)
         assert is_all_instance(shap_explanations, shap.Explanation)
+
+
+_desirabilty_targets = [
+    NumericalTarget.normalized_ramp("t1", cutoffs=(0, 100)),
+    NumericalTarget.normalized_ramp("t2", cutoffs=(0, 100), descending=True),
+]
 
 
 @mark.slow
 @mark.parametrize(
     "objective",
     [
-        param(SingleTargetObjective(NumericalTarget("t1", "MAX")), id="single"),
+        param(SingleTargetObjective(NumericalTarget("t1")), id="single"),
         param(
-            DesirabilityObjective(
-                (
-                    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
-                    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
-                )
-            ),
-            id="desirability",
+            DesirabilityObjective(_desirabilty_targets, as_pre_transformation=False),
+            id="desirability_post",
+        ),
+        param(
+            DesirabilityObjective(_desirabilty_targets, as_pre_transformation=True),
+            id="desirability_pre",
         ),
         param(
             ParetoObjective(
-                (NumericalTarget("t1", mode="MAX"), NumericalTarget("t2", mode="MIN"))
+                (NumericalTarget("t1"), NumericalTarget("t2", minimize=True))
             ),
             id="pareto",
         ),

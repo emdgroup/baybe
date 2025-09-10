@@ -139,26 +139,27 @@ providing a few specific example may help to convey the concept:
 * Since {class}`Intervals <baybe.utils.interval.Interval>` can be created _implicitly_,
     it is enough the specify their bound values directly:
     ```python
-    from baybe.targets import NumericalTarget
+    from baybe.parameters import NumericalContinuousParameter
     from baybe.utils.interval import Interval
 
-    t1 = NumericalTarget(name="T", mode="MAX", bounds=Interval(0, 1))
-    t2 = NumericalTarget(name="T", mode="MAX", bounds=(0, 1))
-    t3 = NumericalTarget.from_json('{"name": "T", "mode": "MAX", "bounds": [0, 1]}')
+    p1 = NumericalContinuousParameter(name="P", bounds=Interval(0, 1))
+    p2 = NumericalContinuousParameter(name="P", bounds=(0, 1))
+    p3 = NumericalContinuousParameter.from_json('{"name": "P",  "bounds": [0, 1]}')
 
-    assert t1 == t2 == t3
+    assert p1 == p2 == p3
     ```
 
 * Conversion to enums happens automatically whenever needed;
     therefore, providing a raw string instead is sufficient:
     ```python
-    from baybe.targets import NumericalTarget, TargetMode
+    from baybe.parameters import SubstanceEncoding, SubstanceParameter
 
-    t1 = NumericalTarget(name="T", mode=TargetMode.MAX)
-    t2 = NumericalTarget(name="T", mode="MAX")
-    t3 = NumericalTarget.from_json('{"name": "T", "mode": "MAX"}')
+    data = {"methane": "C", "ethane": "CC"}
+    p1 = SubstanceParameter(name="P", data=data, encoding=SubstanceEncoding.MORSE)
+    p2 = SubstanceParameter(name="P", data=data, encoding="MORSE")
+    p3 = SubstanceParameter.from_dict({"name": "P", "data": data, "encoding": "MORSE"})
 
-    assert t1 == t2 == t3
+    assert p1 == p2 == p3
     ```
 
 ### The type field
@@ -262,31 +263,37 @@ from baybe.targets import NumericalTarget
 
 objective = DesirabilityObjective(
     targets=[
-        NumericalTarget(name="T1", mode="MAX", bounds=(-1, 1)),
-        NumericalTarget(name="T2", mode="MIN", bounds=(0, 1)),
+        NumericalTarget(name="T_max"),
+        NumericalTarget(name="T_min", minimize=True),
+        NumericalTarget.match_absolute(name="T_match", match_value=0),
     ],
-    weights=[0.1, 0.9],
+    weights=[1, 5, 2],
     scalarizer="MEAN",
+    require_normalization=False,
 )
 
 objective_json = """
-{   
+{
     "targets": [
         {
             "type": "NumericalTarget",
-            "name": "T1",
-            "mode": "MAX",
-            "bounds": [-1.0, 1.0]
-        }, 
+            "name": "T_max"
+        },
         {
             "type": "NumericalTarget",
-            "name": "T2",
-            "mode": "MIN",
-            "bounds": [0.0, 1.0]
+            "name": "T_min",
+            "minimize": true
+        },
+        {
+            "type": "NumericalTarget",
+            "constructor": "match_absolute",
+            "name": "T_match",
+            "match_value": 0
         }
     ],
-    "weights": [0.1, 0.9],
-    "scalarizer": "MEAN"
+    "weights": [1, 5, 2],
+    "scalarizer": "MEAN",
+    "require_normalization": false
 }
 """
 

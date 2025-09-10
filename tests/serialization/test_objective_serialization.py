@@ -5,12 +5,26 @@ import pytest
 from hypothesis import given
 from pytest import param
 
+from baybe.targets.base import Target
+from baybe.transformations import (
+    ChainedTransformation,
+    Transformation,
+)
 from tests.hypothesis_strategies.objectives import (
     desirability_objectives,
     pareto_objectives,
     single_target_objectives,
 )
 from tests.serialization.utils import assert_roundtrip_consistency
+
+
+def _get_involved_transformations(target: Target) -> list[Transformation]:
+    """Get all transformations involved in a target."""
+    match t := target.transformation:
+        case ChainedTransformation():
+            return t.transformations
+        case _:
+            return [t]
 
 
 @pytest.mark.parametrize(

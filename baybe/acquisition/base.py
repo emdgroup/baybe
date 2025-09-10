@@ -36,6 +36,11 @@ class AcquisitionFunction(ABC, SerialMixin):
     """Whether this acquisition function can handle models with multiple outputs."""
 
     @classproperty
+    def is_analytic(cls) -> bool:
+        """Flag indicating whether the acquisition function is analytic."""
+        return not cls.abbreviation.startswith("q")
+
+    @classproperty
     def supports_batching(cls) -> bool:
         """Flag indicating whether batch recommendation is supported."""
         return cls.abbreviation.startswith("q")

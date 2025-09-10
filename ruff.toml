@@ -37,6 +37,7 @@ extend-ignore = [
     "PLR0915", # Too many statements
     "PLR2004", # Magic value used in comparison
     "PLC0415", # import-outside-toplevel
+    "E703", # Allow trailing semicolons
 ]
 # Here, we explicitly choose the rules that ruff should verify.
 # For a full list of available rules, see https://docs.astral.sh/ruff/rules/

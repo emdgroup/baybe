@@ -73,7 +73,7 @@ class MeasurableMetadata(Metadata):
 
 
 def to_metadata(
-    value: dict[str, Any] | _TMetaData, cls: type[_TMetaData], /
+    value: dict[str, Any] | _TMetaData | None, cls: type[_TMetaData], /
 ) -> _TMetaData:
     """Convert a dictionary to :class:`Metadata` (with :class:`Metadata` passthrough).
 
@@ -88,6 +88,9 @@ def to_metadata(
         TypeError: If the input is not a dictionary or of the specified
             :class:`Metadata` type.
     """
+    if value is None:
+        return cls()
+
     if isinstance(value, cls):
         return value
 
@@ -99,6 +102,10 @@ def to_metadata(
 
     # Separate known fields from unknown ones
     return converter.structure(value, cls)
+
+
+ConvertibleToMeasurableMetadata = MeasurableMetadata | dict[str, Any] | None
+"""A type alias for objects that can be converted to :class:`MeasurableMetadata`."""
 
 
 @converter.register_structure_hook

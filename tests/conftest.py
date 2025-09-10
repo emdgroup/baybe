@@ -158,16 +158,6 @@ def fixture_n_grid_points(request):
     return request.param
 
 
-@pytest.fixture(name="good_reference_values")
-def fixture_good_reference_values():
-    """Define some good reference values.
-
-    These are used by the utility function to
-    generate fake good results. These only make sense for discrete parameters.
-    """
-    return {"Categorical_1": ["B"], "Categorical_2": ["OK"]}
-
-
 @pytest.fixture(name="mock_substances")
 def fixture_mock_substances():
     """A set of test substances."""
@@ -395,35 +385,28 @@ def fixture_targets(target_names: list[str]):
     valid_targets = [
         NumericalTarget(
             name="Target_max",
-            mode="MAX",
         ),
         NumericalTarget(
             name="Target_min",
-            mode="MIN",
+            minimize=True,
         ),
-        NumericalTarget(
+        NumericalTarget.normalized_ramp(
             name="Target_max_bounded",
-            mode="MAX",
-            bounds=(0, 100),
-            transformation="LINEAR",
+            cutoffs=(0, 100),
         ),
-        NumericalTarget(
+        NumericalTarget.normalized_ramp(
             name="Target_min_bounded",
-            mode="MIN",
-            bounds=(0, 100),
-            transformation="LINEAR",
+            cutoffs=(0, 100),
+            descending=True,
         ),
-        NumericalTarget(
+        NumericalTarget.match_bell(
             name="Target_match_bell",
-            mode="MATCH",
-            bounds=(0, 100),
-            transformation="BELL",
+            match_value=50,
+            sigma=50,
         ),
-        NumericalTarget(
+        NumericalTarget.match_triangular(
             name="Target_match_triangular",
-            mode="MATCH",
-            bounds=(0, 100),
-            transformation="TRIANGULAR",
+            cutoffs=(0, 100),
         ),
         BinaryTarget(name="Target_binary"),
     ]
@@ -766,8 +749,7 @@ def fixture_default_config():
             "type": "SingleTargetObjective",
             "target": {
                 "type": "NumericalTarget",
-                "name": "Yield",
-                "mode": "MAX"
+                "name": "Yield"
             }
         },
         "recommender": {
@@ -838,8 +820,7 @@ def fixture_default_simplex_config():
           "type": "SingleTargetObjective",
           "target": {
               "type": "NumericalTarget",
-              "name": "Yield",
-              "mode": "MAX"
+              "name": "Yield"
             }
         }
     }"""

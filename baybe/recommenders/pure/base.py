@@ -23,6 +23,7 @@ from baybe.utils.boolean import is_abstract
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import (
     validate_object_names,
+    validate_objective_input,
     validate_parameter_input,
     validate_target_input,
 )
@@ -119,6 +120,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             and searchspace is not None
         ):
             validate_target_input(measurements, objective.targets)
+            validate_objective_input(measurements, objective)
             validate_parameter_input(measurements, searchspace.parameters)
             measurements = normalize_input_dtypes(
                 measurements, searchspace.parameters + objective.targets

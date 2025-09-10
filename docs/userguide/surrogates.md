@@ -117,16 +117,6 @@ shap_values = explainer(data)
 shap.plots.bar(shap_values)
 ~~~
 
-```{admonition} Current Scalarization Limitations
-:class: note
-Currently, ``get_surrogate`` always returns the surrogate model with respect to the
-transformed target(s) / objective. This means that if you are using a
-``SingleTargetObjective`` with a transformed target or a ``DesirabilityObjective``, the
-model's output will correspond to the transformed quantities and not the original
-untransformed target(s). If you are using the model for subsequent analysis this should
-be kept in mind.
-```
-
 ## Using Custom Models
 
 BayBE goes one step further by allowing you to incorporate custom models based on the

@@ -1,63 +1,68 @@
 """Functionality for desirability objectives."""
 
+from __future__ import annotations
+
 import gc
-import warnings
-from collections.abc import Callable
-from functools import cached_property, partial
-from typing import ClassVar
+from functools import cached_property
+from typing import TYPE_CHECKING, ClassVar
 
 import cattrs
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
+from baybe.exceptions import IncompatibilityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
+from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
-from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance, to_tuple
+from baybe.targets.numerical import UncertainBool
+from baybe.utils.basic import to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import pretty_print_df, transform_target_columns
-from baybe.utils.numerical import geom_mean
+from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
+if TYPE_CHECKING:
+    from botorch.acquisition.objective import MCAcquisitionObjective
+    from torch import Tensor
 
-def scalarize(
-    values: npt.ArrayLike, scalarizer: Scalarizer, weights: npt.ArrayLike
-) -> np.ndarray:
-    """Scalarize the rows of a 2-D array, producing a 1-D array.
+_OUTPUT_NAME = "Desirability"
+"""The name of the output column produced by the desirability transform."""
+
+
+def _geometric_mean(x: Tensor, /, weights: Tensor, dim: int = -1) -> Tensor:
+    """Calculate the geometric mean of an array along a given dimension.
 
     Args:
-        values: The 2-D array whose rows are to be scalarized.
-        scalarizer: The scalarization mechanism to be used.
-        weights: Weights for the columns of the input array.
-
-    Raises:
-        ValueError: If the provided array is not two-dimensional.
-        NotImplementedError: If the requested scalarizer is not implemented.
+        x: A tensor containing the values for the mean computation.
+        weights: A tensor of weights whose shape must be broadcastable to the shape
+            of the input tensor.
+        dim: The dimension along which to compute the geometric mean.
 
     Returns:
-        np.ndarray: A 1-D array containing the scalarized values.
+        A tensor containing the weighted geometric means.
     """
-    if np.ndim(values) != 2:
-        raise ValueError("The provided array must be two-dimensional.")
+    import torch
 
-    func: Callable
+    # Ensure x is a floating-point tensor
+    if not torch.is_floating_point(x):
+        x = x.float()
 
-    if scalarizer is Scalarizer.GEOM_MEAN:
-        func = geom_mean
-    elif scalarizer is Scalarizer.MEAN:
-        func = partial(np.average, axis=1)
-    else:
-        raise NotImplementedError(
-            f"No scalarization mechanism defined for '{scalarizer.name}'."
-        )
+    # Normalize weights
+    normalized_weights = weights / torch.sum(weights)
 
-    return func(values, weights=weights)  # type: ignore[return-value]
+    # Add epsilon to avoid log(0)
+    eps = torch.finfo(x.dtype).eps
+    log_tensor = torch.log(x + eps)
+
+    # Compute the weighted log sum
+    weighted_log_sum = torch.sum(log_tensor * normalized_weights.unsqueeze(0), dim=dim)
+
+    # Convert back from log domain
+    return torch.exp(weighted_log_sum)
 
 
 @define(frozen=True, slots=False)
@@ -67,11 +72,11 @@ class DesirabilityObjective(Objective):
     is_multi_output: ClassVar[bool] = False
     # See base class.
 
-    _targets: tuple[Target, ...] = field(
+    _targets: tuple[NumericalTarget, ...] = field(
         converter=to_tuple,
         validator=[
             min_len(2),
-            deep_iterable(member_validator=instance_of(Target)),
+            deep_iterable(member_validator=instance_of(NumericalTarget)),
             validate_target_names,
         ],
         alias="targets",
@@ -88,6 +93,16 @@ class DesirabilityObjective(Objective):
     scalarizer: Scalarizer = field(default=Scalarizer.GEOM_MEAN, converter=Scalarizer)
     """The mechanism to scalarize the weighted desirability values of all targets."""
 
+    require_normalization: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the targets must be normalized."""
+
+    as_pre_transformation: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True
+    )
+    """Controls if the desirability computation is applied as a pre-transformation."""
+
     @weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
@@ -95,18 +110,34 @@ class DesirabilityObjective(Objective):
 
     @_targets.validator
     def _validate_targets(self, _, targets) -> None:  # noqa: DOC101, DOC103
-        if not is_all_instance(targets, NumericalTarget):
-            raise TypeError(
-                f"'{self.__class__.__name__}' currently only supports targets "
-                f"of type '{NumericalTarget.__name__}'."
-            )
-        if len({t.name for t in targets}) != len(targets):
-            raise ValueError("All target names must be unique.")
-        if not all(target._is_transform_normalized for target in targets):
+        # Validate non-negativity when using geometric mean
+        if self.scalarizer is Scalarizer.GEOM_MEAN and (
+            negative := {t.name for t in targets if t.get_codomain().lower < 0}
+        ):
             raise ValueError(
-                "All targets must have normalized computational representations to "
-                "enable the computation of desirability values. This requires having "
-                "appropriate target bounds and transformations in place."
+                f"Using '{Scalarizer.GEOM_MEAN}' for '{self.__class__.__name__}' "
+                f"requires that all targets are transformed to a non-negative range. "
+                f"However, the images of the following targets cover negative values: "
+                f"{negative}."
+            )
+
+        # Validate normalization
+        if self.require_normalization and (
+            unnormalized := {
+                t.name for t in targets if t.is_normalized is not UncertainBool.TRUE
+            }
+        ):
+            raise ValueError(
+                f"By default, '{self.__class__.__name__}' only accepts normalized "
+                f"targets but the following targets are either not normalized or their "
+                f"normalization status is unclear because the image "
+                f"of the underlying transformation is unknown: {unnormalized}. "
+                f"Either normalize your targets (e.g. using their "
+                f"'{NumericalTarget.normalize.__name__}' method / by specifying "
+                f"a suitable target transformation) or explicitly set "
+                f"'{DesirabilityObjective.__name__}."
+                f"{fields(DesirabilityObjective).require_normalization.name}' to "
+                f"'True' to allow unnormalized targets."
             )
 
     @weights.validator
@@ -119,13 +150,27 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def targets(self) -> tuple[Target, ...]:
+    def targets(self) -> tuple[NumericalTarget, ...]:
         return self._targets
 
     @override
     @property
-    def n_outputs(self) -> int:
-        return 1
+    def _modeled_quantity_names(self) -> tuple[str, ...]:
+        return (
+            self.output_names
+            if self.as_pre_transformation
+            else tuple(t.name for t in self.targets)
+        )
+
+    @override
+    @property
+    def output_names(self) -> tuple[str, ...]:
+        return (_OUTPUT_NAME,)
+
+    @override
+    @property
+    def supports_partial_measurements(self) -> bool:
+        return not self.as_pre_transformation
 
     @cached_property
     def _normalized_weights(self) -> np.ndarray:
@@ -147,57 +192,90 @@ class DesirabilityObjective(Objective):
         return to_string("Objective", *fields)
 
     @override
-    def transform(
+    @property
+    def _oriented_targets(self) -> tuple[Target, ...]:
+        # For desirability, we do not only negate but also shift by 1 so that
+        # normalized minimization targets are still mapped to [0, 1] instead of [-1, 0]
+        # to enable geometric averaging.
+        return tuple(
+            t.negate() + 1 if isinstance(t, NumericalTarget) and t.minimize else t
+            for t in self.targets
+        )
+
+    @override
+    @property
+    def _full_transformation(self) -> MCAcquisitionObjective:
+        return self._to_botorch_full()
+
+    @override
+    def to_botorch(self) -> MCAcquisitionObjective:
+        if self.as_pre_transformation:
+            return NumericalTarget(_OUTPUT_NAME).to_objective().to_botorch()
+        else:
+            return self._to_botorch_full()
+
+    def _to_botorch_full(self) -> MCAcquisitionObjective:
+        """Create a BoTorch objective conducting the full desirability transform.
+
+        Full transformation means:
+            1. Starting from the raw target values
+            2. Applying the individual target transformations
+            3. Scalarizing the transformed values into a desirability score
+
+        This differs from the regular :meth:`to_botorch` in that the entire
+        transformation step is represented end-to-end by the returned objective, whereas
+        the former only captures the part of the transformation starting from the point
+        where the surrogate model(s) are applied (i.e. which may or may not include the
+        desirability scalarization step, depending on the  chosen`as_pre_transformation`
+        setting).
+        """
+        import torch
+        from botorch.acquisition.objective import GenericMCObjective, LinearMCObjective
+
+        from baybe.objectives.botorch import ChainedMCObjective
+
+        if self.scalarizer is Scalarizer.MEAN:
+            outer = LinearMCObjective(torch.tensor(self._normalized_weights))
+
+        elif self.scalarizer is Scalarizer.GEOM_MEAN:
+            outer = GenericMCObjective(
+                lambda samples, X: _geometric_mean(
+                    samples, torch.tensor(self._normalized_weights)
+                )
+            )
+
+        else:
+            raise NotImplementedError(
+                f"No scalarization mechanism defined for '{self.scalarizer.name}'."
+            )
+
+        inner = super().to_botorch()
+        return ChainedMCObjective(inner, outer)
+
+    @override
+    def _pre_transform(
         self,
-        df: pd.DataFrame | None = None,
+        df: pd.DataFrame,
         /,
         *,
         allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
+        allow_extra: bool = False,
     ) -> pd.DataFrame:
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the dataframe to be transformed as first positional argument."
+        if not self.as_pre_transformation:
+            return super()._pre_transform(
+                df, allow_missing=allow_missing, allow_extra=allow_extra
             )
 
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
+        if allow_missing:
+            raise IncompatibilityError(
+                f"Setting 'allow_missing=True' is not supported for "
+                f"'{self.__class__.__name__}.{self._pre_transform.__name__}' when "
+                f"'{fields(self.__class__).as_pre_transformation.name}=True' since "
+                f"the involved desirability computation requires all target columns "
+                f"to be present."
             )
 
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df.columns) - {p.name for p in self.targets}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
-
-        # Transform all targets individually
-        transformed = transform_target_columns(
-            df, self.targets, allow_missing=allow_missing, allow_extra=allow_extra
-        )
-
-        # Scalarize the transformed targets into desirability values
-        vals = scalarize(transformed.values, self.scalarizer, self._normalized_weights)
-
-        # Store the total desirability in a dataframe column
-        transformed = pd.DataFrame({"Desirability": vals}, index=transformed.index)
-
-        return transformed
+        return self.transform(df, allow_missing=False, allow_extra=allow_extra)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

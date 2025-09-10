@@ -73,7 +73,7 @@ parameters = [
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters)
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 
 ### Constructing the campaign and performing a recommendation

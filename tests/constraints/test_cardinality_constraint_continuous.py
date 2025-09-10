@@ -20,7 +20,7 @@ from baybe.recommenders import BotorchRecommender
 from baybe.recommenders.pure.bayesian.base import BayesianRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace, SubspaceContinuous
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 
 
 def _validate_cardinality_constrained_batch(
@@ -206,7 +206,7 @@ def test_min_cardinality_warning():
     ]
 
     searchspace = SearchSpace.from_product(parameters, constraints)
-    objective = NumericalTarget("t", "MAX").to_objective()
+    objective = NumericalTarget("t").to_objective()
 
     # Create a scenario in which
     # - The optimum of the target function is at the origin
@@ -289,7 +289,7 @@ def test_cardinality_constraint(recommender):
     searchspace = SearchSpace.from_product(parameters, constraints)
 
     if isinstance(recommender, BayesianRecommender):
-        objective = NumericalTarget("t", "MAX").to_objective()
+        objective = NumericalTarget("t").to_objective()
         measurements = pd.DataFrame(searchspace.continuous.sample_uniform(2))
         measurements["t"] = np.random.random(len(measurements))
     else:
