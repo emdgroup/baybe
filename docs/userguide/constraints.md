@@ -108,8 +108,8 @@ There are some limitations regarding the use of interpoint constraints that you 
 to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
-- When using interpoint constraints, the candidate generation cannot be done sequentially,
-potentially increasing the runtime.
+- When using interpoint constraints, the candidate generation has be done sequentially,
+and an error is raised if attempting to use them for joint optimization.
 - Interpoint constraints are only supported in purely continuous spaces and are not
 available in hybrid spaces.
 ```
