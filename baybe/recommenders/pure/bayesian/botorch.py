@@ -355,7 +355,7 @@ class BotorchRecommender(BayesianRecommender):
             raise IncompatibilityError(
                 "The ``sequential_continuous`` flag is set to ``False``, but "
                 "interpoint constraints are present in the continuous subspace. This is"
-                " not supported. Please set 'sequential_continuous' to True."
+                " not supported. Please set ``sequential_continuous`` to ``True``."
             )
 
         # NOTE: The explicit `or None` conversion is added as an additional safety net
@@ -421,7 +421,7 @@ class BotorchRecommender(BayesianRecommender):
         # TODO Defining interpoint constraints for hybrid spaces is probably not
         # that hard, but should be investigated in a follow up PR.
         if searchspace.continuous.has_interpoint_constraints:
-            raise NotImplementedError(
+            raise IncompatibilityError(
                 "Interpoint constraints are not available in hybrid spaces."
             )
         if (
