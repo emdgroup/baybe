@@ -140,7 +140,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         Raises:
             RuntimeError: When the constraint is an interpoint constraint but
-                ``batch_size`` is ``None``.
+                ``batch_size`` is ``None`` or when providing a value for ``batch_size``
+                while the constraint is not an interpoint constraint.
         """
         import torch
 
@@ -150,6 +151,17 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         # This requires some adjustments to the indices.
         # See https://botorch.readthedocs.io/en/latest/optim.html, in particular the
         # docstring of ``optimize_acqf`` for details.
+
+        if batch_size is None and self.is_interpoint:
+            raise RuntimeError(
+                "No ``batch_size`` set but using interpoint constraints."
+                "This should not happen and means that there is a bug in the code."
+            )
+        if batch_size is not None and not self.is_interpoint:
+            raise RuntimeError(
+                "A ``batch_size`` was set but the constraint is not interpoint."
+                "This should not happen and means that there is a bug in the code."
+            )
 
         param_names = [p.name for p in parameters]
         coefficients: list[float]
@@ -162,11 +174,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             ]
             coefficients = self.coefficients
             torch_indices = torch.tensor(param_indices)
-        elif batch_size is None:
-            raise RuntimeError(
-                "No ``batch_size`` set but using interpoint constraints."
-                "This should not happen and means that there is a bug in the code."
-            )
         else:
             param_index_dict = {
                 name: param_names.index(name) for name in self.parameters
