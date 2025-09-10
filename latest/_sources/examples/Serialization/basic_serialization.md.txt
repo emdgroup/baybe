@@ -293,8 +293,8 @@ print(recommendation_orig)
 
     Recommendation from original object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    79      medium            5.0                  200.0
-    50        fine           10.0                  100.0
+    46        fine            5.0             166.666667
+    80      medium           10.0             100.000000
 
 
 
@@ -305,6 +305,6 @@ print(recommendation_recreate)
 
     Recommendation from recreated object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    81      medium           10.0             111.111111
-    39        fine            1.0             200.000000
+    24      coarse           10.0             144.444444
+    69      medium            1.0             200.000000
 

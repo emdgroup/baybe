@@ -1185,13 +1185,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent                Base         Ligand  Temperature  \
-416     p-Xylene  Potassium pivalate      BrettPhos         90.0   
-29   Butyl Ester     Cesium pivalate  (t-Bu)PhCPhos         90.0   
+         Solvent                Base                        Ligand  \
+88   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+350     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
 
-     Concentration  
-416          0.153  
-29           0.153  
+     Temperature  Concentration  
+88         120.0          0.100  
+350        120.0          0.153  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1204,13 +1204,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base         Ligand  Temperature  \
-416     p-Xylene  Potassium pivalate      BrettPhos         90.0   
-29   Butyl Ester     Cesium pivalate  (t-Bu)PhCPhos         90.0   
+         Solvent                Base                        Ligand  \
+88   Butyl Ester  Potassium pivalate                 (t-Bu)PhCPhos   
+350     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
 
-     Concentration      yield  
-416          0.153  -2.727050  
-29           0.153  96.497972  
+     Temperature  Concentration      yield  
+88         120.0          0.100  89.838418  
+350        120.0          0.153 -61.692665  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
