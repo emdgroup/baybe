@@ -209,7 +209,7 @@ class SearchSpace(SerialMixin):
 
     @property
     def is_constrained(self) -> bool:
-        """Return whether this search space has any constraints."""
+        """Boolean indicating if the search space has any constraints."""
         return self.discrete.is_constrained or self.continuous.is_constrained
 
     @property
