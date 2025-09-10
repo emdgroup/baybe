@@ -512,7 +512,7 @@ class SubspaceDiscrete(SerialMixin):
 
     @property
     def is_constrained(self) -> bool:
-        """Return whether this subspace has any constraints."""
+        """Boolean indicating if the subspace has any constraints."""
         return len(self.constraints) > 0
 
     @property
