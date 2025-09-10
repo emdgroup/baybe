@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 from pytest import param
 
+from baybe.campaign import Campaign
 from baybe.constraints import ContinuousLinearConstraint
+from baybe.searchspace import SearchSpace
 from tests.conftest import run_iterations
 
 TOLERANCE = 0.01
@@ -67,7 +69,21 @@ def test_inequality3(campaign, n_iterations, batch_size):
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
-def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size):
+def test_interpoint_equality_single_parameter(
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
+):
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     """Test single parameter interpoint equality constraint."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
@@ -79,8 +95,22 @@ def test_interpoint_equality_single_parameter(campaign, n_iterations, batch_size
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
-def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_size):
+def test_interpoint_inequality_single_parameter(
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
+):
     """Test single parameter interpoint inequality constraint."""
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
@@ -91,8 +121,22 @@ def test_interpoint_inequality_single_parameter(campaign, n_iterations, batch_si
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
-def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_size):
+def test_interpoint_equality_multiple_parameters(
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
+):
     """Test interpoint equality constraint involving multiple parameters."""
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
@@ -106,9 +150,21 @@ def test_interpoint_equality_multiple_parameters(campaign, n_iterations, batch_s
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
 def test_geq_interpoint_inequality_multiple_parameters(
-    campaign, n_iterations, batch_size
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
 ):
     """Test geq-interpoint inequality constraint involving multiple parameters."""
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
@@ -123,9 +179,21 @@ def test_geq_interpoint_inequality_multiple_parameters(
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize("constraint_names", [["InterConstraint_5"]])
 def test_leq_interpoint_inequality_multiple_parameters(
-    campaign, n_iterations, batch_size
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
 ):
     """Test leq-interpoint inequality constraint involving multiple parameters."""
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
@@ -140,8 +208,22 @@ def test_leq_interpoint_inequality_multiple_parameters(
 @pytest.mark.parametrize(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
-def test_interpoint_normal_mix(campaign, n_iterations, batch_size):
+def test_interpoint_normal_mix(
+    non_sequential_recommender,
+    parameters,
+    constraints,
+    objective,
+    n_iterations,
+    batch_size,
+):
     """Test mixing interpoint and normal inequality constraints."""
+    campaign = Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
