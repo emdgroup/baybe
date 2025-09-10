@@ -170,8 +170,8 @@ valid_meta_recommenders = get_subclasses(MetaRecommender)
 
 valid_priors = [
     GammaPrior(3, 1),
-    HalfCauchyPrior(2),
-    HalfNormalPrior(2),
+    HalfCauchyPrior(0.5),
+    HalfNormalPrior(0.5),
     LogNormalPrior(1, 2),
     NormalPrior(1, 2),
     SmoothedBoxPrior(0, 3, 0.1),
