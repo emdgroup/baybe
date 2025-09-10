@@ -1,6 +1,0 @@
-baybe.targets.transforms.bell\_transform
-========================================
-
-.. currentmodule:: baybe.targets.transforms
-
-.. autofunction:: bell_transform

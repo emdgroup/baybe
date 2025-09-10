@@ -217,7 +217,7 @@ searchspace = SearchSpace.from_product(parameters=parameters)
 
 
 ```python
-objective = SingleTargetObjective(target=NumericalTarget(name="yield", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="yield"))
 ```
 
 ## Creating the campaign
@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    142  Butyornitrile     Cesium pivalate                 (t-Bu)PhCPhos   
-    203  Butyornitrile  Potassium pivalate                     BrettPhos   
-    46     Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    100  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    58   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    406     p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration  
-    142        120.0          0.100  
-    203        105.0          0.153  
-    46          90.0          0.100  
+    100         90.0            0.1  
+    58         105.0            0.1  
+    406         90.0            0.1  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    142  Butyornitrile     Cesium pivalate                 (t-Bu)PhCPhos   
-    203  Butyornitrile  Potassium pivalate                     BrettPhos   
-    46     Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
+             Solvent                Base                        Ligand  \
+    100  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+    58   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
+    406     p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration      yield  
-    142        120.0          0.100   4.794312  
-    203        105.0          0.153  22.224207  
-    46          90.0          0.100  17.649312  
+    100         90.0            0.1 -85.250748  
+    58         105.0            0.1  65.941286  
+    406         90.0            0.1  60.336896  
 
 
 

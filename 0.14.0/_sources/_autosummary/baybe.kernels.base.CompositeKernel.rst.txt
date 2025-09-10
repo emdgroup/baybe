@@ -1,0 +1,29 @@
+CompositeKernel
+===============
+
+.. currentmodule:: baybe.kernels.base
+
+.. autoclass:: CompositeKernel
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CompositeKernel.__init__
+      ~CompositeKernel.from_dict
+      ~CompositeKernel.from_json
+      ~CompositeKernel.to_dict
+      ~CompositeKernel.to_factory
+      ~CompositeKernel.to_gpytorch
+      ~CompositeKernel.to_json
+   
+   
+
+   
+   
+   

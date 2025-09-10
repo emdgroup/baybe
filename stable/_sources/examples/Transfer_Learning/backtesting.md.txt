@@ -57,7 +57,7 @@ is created as follows:
 
 
 ```python
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 ```
 
@@ -180,8 +180,6 @@ results = simulate_transfer_learning(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 ```
-
-    
 
     
 

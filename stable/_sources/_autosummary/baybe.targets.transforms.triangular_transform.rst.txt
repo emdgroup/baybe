@@ -1,6 +1,0 @@
-baybe.targets.transforms.triangular\_transform
-==============================================
-
-.. currentmodule:: baybe.targets.transforms
-
-.. autofunction:: triangular_transform

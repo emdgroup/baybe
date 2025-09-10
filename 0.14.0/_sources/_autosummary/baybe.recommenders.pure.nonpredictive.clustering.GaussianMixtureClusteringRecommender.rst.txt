@@ -1,0 +1,35 @@
+GaussianMixtureClusteringRecommender
+====================================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.clustering
+
+.. autoclass:: GaussianMixtureClusteringRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~GaussianMixtureClusteringRecommender.__init__
+      ~GaussianMixtureClusteringRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~GaussianMixtureClusteringRecommender.allow_recommending_already_measured
+      ~GaussianMixtureClusteringRecommender.allow_recommending_pending_experiments
+      ~GaussianMixtureClusteringRecommender.allow_repeated_recommendations
+      ~GaussianMixtureClusteringRecommender.compatibility
+      ~GaussianMixtureClusteringRecommender.model_cluster_num_parameter_name
+      ~GaussianMixtureClusteringRecommender.model_params
+   
+   

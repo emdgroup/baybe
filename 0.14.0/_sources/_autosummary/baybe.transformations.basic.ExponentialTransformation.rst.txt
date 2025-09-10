@@ -1,0 +1,34 @@
+ExponentialTransformation
+=========================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: ExponentialTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ExponentialTransformation.__init__
+      ~ExponentialTransformation.abs
+      ~ExponentialTransformation.chain
+      ~ExponentialTransformation.clamp
+      ~ExponentialTransformation.from_dict
+      ~ExponentialTransformation.from_json
+      ~ExponentialTransformation.get_codomain
+      ~ExponentialTransformation.get_image
+      ~ExponentialTransformation.negate
+      ~ExponentialTransformation.to_botorch_objective
+      ~ExponentialTransformation.to_dict
+      ~ExponentialTransformation.to_json
+   
+   
+
+   
+   
+   

@@ -1,0 +1,6 @@
+baybe.serialization.utils.serialize\_dataframe
+==============================================
+
+.. currentmodule:: baybe.serialization.utils
+
+.. autofunction:: serialize_dataframe

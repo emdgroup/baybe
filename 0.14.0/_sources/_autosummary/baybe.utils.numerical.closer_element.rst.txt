@@ -1,0 +1,6 @@
+baybe.utils.numerical.closer\_element
+=====================================
+
+.. currentmodule:: baybe.utils.numerical
+
+.. autofunction:: closer_element

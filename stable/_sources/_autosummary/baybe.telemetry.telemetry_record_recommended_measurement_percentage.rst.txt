@@ -1,6 +1,0 @@
-baybe.telemetry.telemetry\_record\_recommended\_measurement\_percentage
-=======================================================================
-
-.. currentmodule:: baybe.telemetry
-
-.. autofunction:: telemetry_record_recommended_measurement_percentage

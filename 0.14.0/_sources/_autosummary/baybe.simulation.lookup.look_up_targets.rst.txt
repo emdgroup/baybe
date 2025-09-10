@@ -1,0 +1,6 @@
+baybe.simulation.lookup.look\_up\_targets
+=========================================
+
+.. currentmodule:: baybe.simulation.lookup
+
+.. autofunction:: look_up_targets

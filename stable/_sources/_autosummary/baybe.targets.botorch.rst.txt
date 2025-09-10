@@ -1,0 +1,31 @@
+baybe.targets.botorch
+=====================
+
+.. automodule:: baybe.targets.botorch
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      AffinePosteriorTransform
+   
+   
+
+   
+   
+   
+
+
+

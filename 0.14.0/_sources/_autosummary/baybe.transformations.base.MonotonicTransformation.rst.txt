@@ -1,0 +1,34 @@
+MonotonicTransformation
+=======================
+
+.. currentmodule:: baybe.transformations.base
+
+.. autoclass:: MonotonicTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MonotonicTransformation.__init__
+      ~MonotonicTransformation.abs
+      ~MonotonicTransformation.chain
+      ~MonotonicTransformation.clamp
+      ~MonotonicTransformation.from_dict
+      ~MonotonicTransformation.from_json
+      ~MonotonicTransformation.get_codomain
+      ~MonotonicTransformation.get_image
+      ~MonotonicTransformation.negate
+      ~MonotonicTransformation.to_botorch_objective
+      ~MonotonicTransformation.to_dict
+      ~MonotonicTransformation.to_json
+   
+   
+
+   
+   
+   

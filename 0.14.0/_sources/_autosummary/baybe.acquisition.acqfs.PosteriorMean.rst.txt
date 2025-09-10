@@ -1,0 +1,36 @@
+PosteriorMean
+=============
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: PosteriorMean
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PosteriorMean.__init__
+      ~PosteriorMean.evaluate
+      ~PosteriorMean.from_dict
+      ~PosteriorMean.from_json
+      ~PosteriorMean.to_botorch
+      ~PosteriorMean.to_dict
+      ~PosteriorMean.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PosteriorMean.abbreviation
+      ~PosteriorMean.supports_multi_output
+   
+   

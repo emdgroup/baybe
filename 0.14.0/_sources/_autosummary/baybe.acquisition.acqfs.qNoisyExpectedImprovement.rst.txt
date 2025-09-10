@@ -1,0 +1,37 @@
+qNoisyExpectedImprovement
+=========================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qNoisyExpectedImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qNoisyExpectedImprovement.__init__
+      ~qNoisyExpectedImprovement.evaluate
+      ~qNoisyExpectedImprovement.from_dict
+      ~qNoisyExpectedImprovement.from_json
+      ~qNoisyExpectedImprovement.to_botorch
+      ~qNoisyExpectedImprovement.to_dict
+      ~qNoisyExpectedImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qNoisyExpectedImprovement.prune_baseline
+      ~qNoisyExpectedImprovement.abbreviation
+      ~qNoisyExpectedImprovement.supports_multi_output
+   
+   

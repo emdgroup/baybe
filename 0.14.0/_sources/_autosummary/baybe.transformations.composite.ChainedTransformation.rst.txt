@@ -1,0 +1,40 @@
+ChainedTransformation
+=====================
+
+.. currentmodule:: baybe.transformations.composite
+
+.. autoclass:: ChainedTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ChainedTransformation.__init__
+      ~ChainedTransformation.abs
+      ~ChainedTransformation.chain
+      ~ChainedTransformation.clamp
+      ~ChainedTransformation.from_dict
+      ~ChainedTransformation.from_json
+      ~ChainedTransformation.get_codomain
+      ~ChainedTransformation.get_image
+      ~ChainedTransformation.negate
+      ~ChainedTransformation.to_botorch_objective
+      ~ChainedTransformation.to_dict
+      ~ChainedTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ChainedTransformation.transformations
+   
+   

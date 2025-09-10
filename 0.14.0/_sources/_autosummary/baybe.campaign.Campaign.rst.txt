@@ -1,0 +1,55 @@
+Campaign
+========
+
+.. currentmodule:: baybe.campaign
+
+.. autoclass:: Campaign
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Campaign.__init__
+      ~Campaign.acquisition_values
+      ~Campaign.add_measurements
+      ~Campaign.from_config
+      ~Campaign.from_dict
+      ~Campaign.from_json
+      ~Campaign.get_acquisition_function
+      ~Campaign.get_surrogate
+      ~Campaign.joint_acquisition_value
+      ~Campaign.posterior
+      ~Campaign.posterior_stats
+      ~Campaign.recommend
+      ~Campaign.to_dict
+      ~Campaign.to_json
+      ~Campaign.toggle_discrete_candidates
+      ~Campaign.update_measurements
+      ~Campaign.validate_config
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Campaign.searchspace
+      ~Campaign.objective
+      ~Campaign.recommender
+      ~Campaign.allow_recommending_already_measured
+      ~Campaign.allow_recommending_already_recommended
+      ~Campaign.allow_recommending_pending_experiments
+      ~Campaign.n_batches_done
+      ~Campaign.n_fits_done
+      ~Campaign.measurements
+      ~Campaign.parameters
+      ~Campaign.targets
+   
+   

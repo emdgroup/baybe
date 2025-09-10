@@ -1,6 +1,0 @@
-baybe.constraints.deprecation.structure\_constraints
-====================================================
-
-.. currentmodule:: baybe.constraints.deprecation
-
-.. autofunction:: structure_constraints

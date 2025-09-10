@@ -1,0 +1,42 @@
+TwoSidedAffineTransformation
+============================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: TwoSidedAffineTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~TwoSidedAffineTransformation.__init__
+      ~TwoSidedAffineTransformation.abs
+      ~TwoSidedAffineTransformation.chain
+      ~TwoSidedAffineTransformation.clamp
+      ~TwoSidedAffineTransformation.from_dict
+      ~TwoSidedAffineTransformation.from_json
+      ~TwoSidedAffineTransformation.get_codomain
+      ~TwoSidedAffineTransformation.get_image
+      ~TwoSidedAffineTransformation.negate
+      ~TwoSidedAffineTransformation.to_botorch_objective
+      ~TwoSidedAffineTransformation.to_dict
+      ~TwoSidedAffineTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TwoSidedAffineTransformation.slope_left
+      ~TwoSidedAffineTransformation.slope_right
+      ~TwoSidedAffineTransformation.midpoint
+   
+   

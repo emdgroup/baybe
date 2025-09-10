@@ -58,7 +58,7 @@ parameters = [
 ```python
 campaign = Campaign(
     searchspace=SearchSpace.from_product(parameters=parameters, constraints=None),
-    objective=SingleTargetObjective(target=NumericalTarget(name="Yield", mode="MAX")),
+    objective=SingleTargetObjective(target=NumericalTarget(name="Yield")),
     recommender=TwoPhaseMetaRecommender(
         recommender=BotorchRecommender(),
         initial_recommender=FPSRecommender(),
@@ -136,10 +136,8 @@ Temperature[degr
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type   Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  Yield  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type   Name   Transformation  Minimize
+             0  NumericalTarget  Yield  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              FPSRecommender
@@ -241,10 +239,8 @@ Temperature[degr
        Objective
           Type: SingleTargetObjective
           Targets
-                           Type   Name  ... Upper_Bound  Transformation
-             0  NumericalTarget  Yield  ...         inf            None
-             
-             [1 rows x 6 columns]
+                           Type   Name   Transformation  Minimize
+             0  NumericalTarget  Yield  IdentityTran...     False
        TwoPhaseMetaRecommender
           Initial recommender
              FPSRecommender
@@ -297,8 +293,8 @@ print(recommendation_orig)
 
     Recommendation from original object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    0       coarse            1.0                  100.0
-    59        fine           10.0                  200.0
+    78      medium            5.0             188.888889
+    50        fine           10.0             100.000000
 
 
 
@@ -309,6 +305,6 @@ print(recommendation_recreate)
 
     Recommendation from recreated object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    0       coarse            1.0                  100.0
-    59        fine           10.0                  200.0
+    40        fine            5.0                  100.0
+    89      medium           10.0                  200.0
 

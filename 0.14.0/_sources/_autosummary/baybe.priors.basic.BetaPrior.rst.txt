@@ -1,0 +1,35 @@
+BetaPrior
+=========
+
+.. currentmodule:: baybe.priors.basic
+
+.. autoclass:: BetaPrior
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BetaPrior.__init__
+      ~BetaPrior.from_dict
+      ~BetaPrior.from_json
+      ~BetaPrior.to_dict
+      ~BetaPrior.to_gpytorch
+      ~BetaPrior.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BetaPrior.alpha
+      ~BetaPrior.beta
+   
+   

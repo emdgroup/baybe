@@ -1,6 +1,0 @@
-baybe.telemetry.is\_enabled
-===========================
-
-.. currentmodule:: baybe.telemetry
-
-.. autofunction:: is_enabled

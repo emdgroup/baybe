@@ -1,0 +1,34 @@
+AbsoluteTransformation
+======================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: AbsoluteTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AbsoluteTransformation.__init__
+      ~AbsoluteTransformation.abs
+      ~AbsoluteTransformation.chain
+      ~AbsoluteTransformation.clamp
+      ~AbsoluteTransformation.from_dict
+      ~AbsoluteTransformation.from_json
+      ~AbsoluteTransformation.get_codomain
+      ~AbsoluteTransformation.get_image
+      ~AbsoluteTransformation.negate
+      ~AbsoluteTransformation.to_botorch_objective
+      ~AbsoluteTransformation.to_dict
+      ~AbsoluteTransformation.to_json
+   
+   
+
+   
+   
+   

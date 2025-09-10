@@ -98,7 +98,7 @@ parameters = [
 
 ```python
 searchspace = SearchSpace.from_product(parameters=parameters)
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 ```
 
@@ -146,8 +146,8 @@ print(measurements)
     
     
     Recommended experiments with measured values: 
-              x_1       x_2       x_3       x_4      Target
-    95  -1.706667 -1.706667  5.120000  5.120000   89.053246
-    201  5.120000 -5.120000  1.706667 -1.706667   89.053246
-    32  -5.120000  1.706667 -5.120000 -5.120000  102.376050
+              x_1       x_2       x_3   x_4     Target
+    135  1.706667 -5.120000 -1.706667  5.12  89.053246
+    156  1.706667 -1.706667  5.120000 -5.12  89.053246
+    108 -1.706667  1.706667  5.120000 -5.12  89.053246
 
