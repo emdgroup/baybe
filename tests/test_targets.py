@@ -1,15 +1,20 @@
 """Target tests."""
 
-import operator
+import operator as op
 
 import pandas as pd
 import pytest
+from attrs import evolve
 from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe.exceptions import IncompatibilityError
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations.basic import AffineTransformation, ClampingTransformation
+from baybe.transformations.basic import (
+    AffineTransformation,
+    ClampingTransformation,
+    ExponentialTransformation,
+)
 from baybe.utils.interval import Interval
 
 
@@ -87,11 +92,18 @@ def test_match_constructors(target, transformed_value):
     # On the target level, "worse" can mean "larger" or "smaller",
     # depending on the minimization flag
     t1 = target.transform(series)
-    op = operator.gt if target.minimize else operator.lt
+    operator = op.gt if target.minimize else op.lt
     assert t1[0] == transformed_value
-    assert op(t1.diff().dropna(), 0).all()
+    assert operator(t1.diff().dropna(), 0).all()
 
     # Objectives, on the other hand, are always to be maximized.
     # Hence, "worse" means "smaller".
     t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
     assert (t2.diff().dropna() < 0).all()
+
+
+@pytest.mark.parametrize("operator", [op.add, op.sub, op.mul])
+def test_valid_combination(operator):
+    """Targets with the same attributes (except transformation) can be combined."""
+    t = NumericalTarget("t")
+    operator(t, evolve(t, transformation=ExponentialTransformation()))

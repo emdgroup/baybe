@@ -101,6 +101,9 @@ class Transformation(SerialMixin, ABC):
 
         return self | AbsoluteTransformation()
 
+    def __neg__(self) -> Transformation:
+        return self.negate()
+
     def __add__(self, other: Any) -> Transformation:
         """Add a constant or the output of another transformation."""
         if isinstance(other, Transformation):
@@ -115,6 +118,10 @@ class Transformation(SerialMixin, ABC):
 
     def __sub__(self, other: Any) -> Transformation:
         """Subtract a constant from the output of the transformation."""
+        if isinstance(other, Transformation):
+            from baybe.transformations import AdditiveTransformation
+
+            return AdditiveTransformation([self, -other])
         if isinstance(other, (int, float)):
             from baybe.transformations import AffineTransformation
 

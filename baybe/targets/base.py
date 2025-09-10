@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.serialization import (
@@ -26,7 +27,7 @@ class Target(ABC, SerialMixin):
     Stores information about the range, transformations, etc.
     """
 
-    name: str = field()
+    name: str = field(validator=instance_of(str))
     """The name of the target."""
 
     metadata: MeasurableMetadata = field(

@@ -267,35 +267,13 @@ shift = AffineTransformation(shift=1)
 # 1) First, we cut the left side by multiplying by zero
 # 2) Then, we apply the quadratic transformation
 # 3) Finally, we shift to the right
-t1 = ChainedTransformation([twosided, power, shift])  # explicit construction
-t2 = twosided | power | shift  # using overloaded pipe operator
-t3 = twosided.chain(power).chain(shift)  # via method chaining
-assert t1 == t2 == t3
+chain1 = ChainedTransformation([twosided, power, shift])  # explicit construction
+chain2 = twosided | power | shift  # using overloaded pipe operator
+chain3 = twosided.chain(power).chain(shift)  # via method chaining
+assert chain1 == chain2 == chain3
 ```
 
-(transformation-equality)=
-````{admonition} Equality
-:class: caution
-While several transformations can produce the same output, the corresponding objects
-are not necessarily equal because they might rely on different construction logic:
-
-```python
-import torch
-
-# Logically, we can achieve the same result as above by exchanging the first two steps:
-# 1) Here, we apply the quadratic transformation first
-# 2) Then, we cut as a second step
-# 3) Finally, we shift
-t4 = power | twosided | shift  # different order of operations
-
-# While these two constructions are mathematically equivalent, they are not "equal" from
-# an object perspective, because they rely on different transformation steps:
-values = torch.linspace(0, 2, steps=100)
-assert torch.equal(t1(values), t4(values))  # they produce the same output
-assert t1 != t4  # but they are not "equal" objects
-```
-````
-
+(TRANSFORMATION_COMPRESSION)=
 ````{admonition} Compression
 :class: note
 
@@ -471,5 +449,33 @@ Due to the arbitrary logic that can be involved, (de-)serialization
 of custom transformations not supported.
 ```
 
+## Equality
+
+An important aspect to notice is that there are often many ways to represent one and the
+same mathematical transformation, by following different construction paths.
+
+While these construction paths lead to the identical input-output behavior, the
+corresponding {class}`~baybe.transformations.base.Transformation` objects representing
+these mappings are not necessarily equal because they rely on different building blocks
+internally. While BayBE automatically [unifies](TRANSFORMATION_COMPRESSION) these
+representations for trivial cases behind the scenes, it is not always possible to do so.
+
+To demonstrate this effect, let us recreate the input-output mapping from the
+[chaining](#chaining) section using a slightly different construction path:
+```python
+import torch
+
+# Logically, we can achieve the same result by interchanging the first two steps:
+# 1) Here, we apply the quadratic transformation first
+# 2) Then, we cut as a second step
+# 3) Finally, we shift
+chain4 = power | twosided | shift  # different order of operations
+
+# While these two constructions are mathematically equivalent, they are not "equal" from
+# an object perspective, because they rely on different transformation steps:
+values = torch.linspace(0, 2, steps=100)
+assert torch.equal(chain1(values), chain4(values))  # they produce the same output
+assert chain1 != chain4  # but they are not "equal" objects
+```
 
 

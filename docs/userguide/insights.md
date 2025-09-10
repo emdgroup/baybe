@@ -130,7 +130,7 @@ insight.plot("bar")
 
 In addition to SHAP-based explainers, we also support 
 [LIME](https://arxiv.org/abs/1602.04938) and 
-[MAPLE](https://papers.nips.cc/paper_files/paper/2018/hash/b495ce63ede0f4efc9eec62cb947c162-Abstract.html) 
+[MAPLE](https://arxiv.org/abs/1807.02910) 
 variants. For example:
 ~~~python
 insight = SHAPInsight.from_campaign(

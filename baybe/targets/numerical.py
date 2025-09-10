@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Sequence
+from operator import add, mul, sub
 from typing import Any, cast
 
 import pandas as pd
@@ -21,6 +22,9 @@ from baybe.targets._deprecated import (
     TargetTransformation,
 )
 from baybe.targets.base import Target
+from baybe.targets.utils import (
+    combine_numerical_targets,
+)
 from baybe.transformations import (
     AbsoluteTransformation,
     AffineTransformation,
@@ -118,15 +122,16 @@ class NumericalTarget(Target, SerialMixin):
     """Boolean flag indicating if the target is to be minimized."""
 
     def __init__(  # noqa: DOC301
-        self, name: str, *args, **kwargs
+        self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
     ):
         """Translate legacy target specifications."""
         # Check if legacy or modern interface is used
         try:
             self.__attrs_init__(name, *args, **kwargs)
             return
-        except TypeError:
-            pass
+        except TypeError as ex:
+            if _enforce_modern_interface:
+                raise ex
 
         # Now we know that the legacy interface is used
         legacy = _LegacyInterface(name, *args, **kwargs)
@@ -149,17 +154,34 @@ class NumericalTarget(Target, SerialMixin):
             legacy.name, transformation, minimize=minimize, metadata=metadata
         )
 
+    def __neg__(self) -> NumericalTarget:
+        return self.negate()
+
     def __add__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(shift=other))
+        if isinstance(other, NumericalTarget):
+            return combine_numerical_targets(self, other, operator=add)
+        return NotImplemented
 
     def __sub__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(shift=-other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(shift=-other))
+        if isinstance(other, NumericalTarget):
+            return combine_numerical_targets(self, other, operator=sub)
+        return NotImplemented
 
     def __mul__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(factor=other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(factor=other))
+        if isinstance(other, NumericalTarget):
+            return combine_numerical_targets(self, other, operator=mul)
+        return NotImplemented
 
     def __truediv__(self, other: Any) -> NumericalTarget:
-        return self._append_transformation(AffineTransformation(factor=1 / other))
+        if isinstance(other, (int, float)):
+            return self._append_transformation(AffineTransformation(factor=1 / other))
+        return NotImplemented
 
     @classmethod
     def from_modern_interface(
@@ -192,9 +214,15 @@ class NumericalTarget(Target, SerialMixin):
         )
 
         return (
-            cls(name, minimize=minimize)
+            cls(name, minimize=minimize, _enforce_modern_interface=True)
             if transformation is None
-            else cls(name, transformation, minimize=minimize, metadata=metadata)
+            else cls(
+                name,
+                transformation,
+                minimize=minimize,
+                metadata=metadata,
+                _enforce_modern_interface=True,
+            )
         )
 
     @classmethod
