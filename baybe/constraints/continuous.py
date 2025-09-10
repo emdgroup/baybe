@@ -59,8 +59,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     While intrapoint constraints impose conditions on each individual point of a batch,
     interpoint constraints do so **across** the points of the batch. That is, an
-    interpoint constraint of the form ``x + y <= 1`` technically encodes
-    ``sum(x_i) + sum(y_i) <= 1`` for all points ``i`` in the batch.
+    interpoint constraint of the form ``x <= 100`` encodes that the sum of the values
+    of the parameter ``x`` across all points in the batch must be less than or equal to
+    ``100``.
     """
 
     @coefficients.validator
