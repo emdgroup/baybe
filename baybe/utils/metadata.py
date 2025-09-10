@@ -11,6 +11,7 @@ from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.serialization import SerialMixin, converter
+from baybe.serialization.core import _TYPE_FIELD
 from baybe.utils.basic import classproperty
 
 _TMetaData = TypeVar("_TMetaData", bound="Metadata")
@@ -39,7 +40,7 @@ class Metadata(SerialMixin):
 
     @misc.validator
     def _validate_misc(self, _, value: dict[str, Any]) -> None:
-        if inv := set(value).intersection(self._explicit_fields):
+        if inv := set(value).intersection(self._explicit_fields | {_TYPE_FIELD}):
             raise ValueError(
                 f"Miscellaneous metadata cannot contain the following fields: {inv}. "
                 f"Use the corresponding attributes instead."
@@ -72,7 +73,7 @@ class MeasurableMetadata(Metadata):
 
 
 def to_metadata(
-    value: dict[str, Any] | _TMetaData, cls: type[_TMetaData], /
+    value: dict[str, Any] | _TMetaData | None, cls: type[_TMetaData], /
 ) -> _TMetaData:
     """Convert a dictionary to :class:`Metadata` (with :class:`Metadata` passthrough).
 
@@ -87,6 +88,9 @@ def to_metadata(
         TypeError: If the input is not a dictionary or of the specified
             :class:`Metadata` type.
     """
+    if value is None:
+        return cls()
+
     if isinstance(value, cls):
         return value
 
@@ -100,10 +104,15 @@ def to_metadata(
     return converter.structure(value, cls)
 
 
+ConvertibleToMeasurableMetadata = MeasurableMetadata | dict[str, Any] | None
+"""A type alias for objects that can be converted to :class:`MeasurableMetadata`."""
+
+
 @converter.register_structure_hook
 def _separate_metadata_fields(dct: dict[str, Any], cls: type[Metadata]) -> Metadata:
     """Separate known fields from miscellaneous metadata."""
     dct = dct.copy()
+    dct.pop(_TYPE_FIELD, None)
     explicit = {fld: dct.pop(fld, None) for fld in cls._explicit_fields}
     return cls(**explicit, misc=dct)
 

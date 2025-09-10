@@ -14,6 +14,7 @@ from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.base import RunMode
 from benchmarks.domains.transfer_learning.aryl_halides.base import (
     aryl_halide_tl_substance_benchmark,
 )
@@ -56,9 +57,18 @@ def aryl_halide_CT_I_BM_tl(
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=2,
-    n_doe_iterations=25,
-    n_mc_iterations=50,
+    batch_size_settings={
+        RunMode.DEFAULT: 2,
+        RunMode.SMOKETEST: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 25,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 50,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 aryl_halide_CT_I_BM_tl_benchmark = ConvergenceBenchmark(

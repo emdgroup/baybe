@@ -1,4 +1,4 @@
-"""Test for the serialization of naive hybrid recommenders."""
+"""Naive hybrid recommender serialization tests."""
 
 import pytest
 
@@ -12,6 +12,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.utils.basic import get_subclasses
+from tests.serialization.utils import assert_roundtrip_consistency
 
 valid_discrete_non_predictive_recommenders = [
     cls()
@@ -45,8 +46,6 @@ valid_naive_hybrid_recommenders = [
     "parameter_names",
     [["Categorical_1", "Some_Setting", "Num_disc_1", "Conti_finite1", "Conti_finite2"]],
 )
-def test_serialization_without_recommendation(campaign):
-    """Serialize all possible hybrid recommender objects and test for equality."""
-    campaign_orig_string = campaign.to_json()
-    campaign_recreate = Campaign.from_json(campaign_orig_string)
-    assert campaign == campaign_recreate
+def test_roundtrip(campaign: Campaign):
+    """A serialization roundtrip yields an equivalent object."""
+    assert_roundtrip_consistency(campaign)

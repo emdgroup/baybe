@@ -20,6 +20,7 @@ from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.base import RunMode
 
 
 def direct_arylation_single_batch(
@@ -107,9 +108,18 @@ def direct_arylation_single_batch(
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=1,
-    n_doe_iterations=30,
-    n_mc_iterations=100,
+    batch_size_settings={
+        RunMode.DEFAULT: 1,
+        RunMode.SMOKETEST: 1,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 30,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 100,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 direct_arylation_single_batch_benchmark = ConvergenceBenchmark(

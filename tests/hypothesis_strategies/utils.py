@@ -6,8 +6,7 @@ import hypothesis.extra.numpy as hnp
 import hypothesis.strategies as st
 
 from baybe.utils.interval import Interval
-
-from .basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats
 
 
 class IntervalType(Enum):

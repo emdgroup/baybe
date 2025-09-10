@@ -11,11 +11,7 @@ from attrs import Factory, define, field
 from attrs.validators import gt, is_callable
 from typing_extensions import override
 
-from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
-)
+from baybe.serialization import converter
 from baybe.transformations.base import (
     MonotonicTransformation,
     Transformation,
@@ -79,19 +75,19 @@ class IdentityTransformation(MonotonicTransformation):
 
 @define(frozen=True, init=False)
 class ClampingTransformation(MonotonicTransformation):
-    """A transformation clamping values between specified bounds."""
+    """A transformation clamping values between specified cutoffs."""
 
-    bounds: Interval = field(converter=Interval.create)  # type: ignore[misc]
+    cutoffs: Interval = field(converter=Interval.create)  # type: ignore[misc]
     """The range to which input values are clamped."""
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
         if min is None and max is None:
-            raise ValueError("At least one bound must be specified.")
-        self.__attrs_init__(bounds=Interval(min, max))
+            raise ValueError("At least one cutoff value must be specified.")
+        self.__attrs_init__(cutoffs=Interval(min, max))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return x.clamp(*self.bounds.to_tuple())
+        return x.clamp(*self.cutoffs.to_tuple())
 
 
 @define(frozen=True, init=False)
@@ -142,10 +138,10 @@ class AffineTransformation(MonotonicTransformation):
         return AffinePosteriorTransform(self.factor, self.shift)
 
     @classmethod
-    def from_points_mapped_to_unit_interval_bounds(
+    def from_values_mapped_to_unit_interval(
         cls, mapped_to_zero: float, mapped_to_one: float
     ) -> AffineTransformation:
-        """Create an affine transform by specifying reference points mapped to 0/1.
+        """Create an affine transform by specifying reference values mapped to 0/1.
 
         Args:
             mapped_to_zero: The input value that will be mapped to zero.
@@ -158,10 +154,11 @@ class AffineTransformation(MonotonicTransformation):
         Example:
             >>> import torch
             >>> from baybe.transformations import AffineTransformation as AffineT
-            >>> transform = AffineT.from_points_mapped_to_unit_interval_bounds(3, 7)
-            >>> transform(torch.tensor([3, 7]))
+            >>> t1 = AffineT.from_values_mapped_to_unit_interval(3, 7)
+            >>> t2 = AffineT.from_values_mapped_to_unit_interval(7, 3)
+            >>> t1(torch.tensor([3, 7]))
             tensor([0., 1.])
-            >>> transform(torch.tensor([7, 3]))
+            >>> t2(torch.tensor([3, 7]))
             tensor([1., 0.])
         """
         return AffineTransformation(
@@ -380,6 +377,7 @@ class TriangularTransformation(Transformation):
         return self._transformation(x)
 
 
+@_image_equals_codomain
 @define(frozen=True)
 class LogarithmicTransformation(MonotonicTransformation):
     """A logarithmic transformation."""
@@ -387,6 +385,12 @@ class LogarithmicTransformation(MonotonicTransformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return x.log()
+
+    @override
+    def get_codomain(self, interval: Interval | None = None, /) -> Interval:
+        # Everything smaller than zero does not extend the codomain but gives NaN
+        interval = Interval.create(interval)
+        return super().get_codomain(interval.clamp(min=0.0))
 
 
 @define(frozen=True)
@@ -493,11 +497,11 @@ class SigmoidTransformation(MonotonicTransformation):
         return 1 / (1 + torch.exp(self.steepness * (x - self.center)))
 
 
-# Register (un-)structure hooks
-converter.register_structure_hook(
-    Transformation, get_base_structure_hook(Transformation)
-)
-converter.register_unstructure_hook(Transformation, unstructure_base)
+@converter.register_structure_hook
+def _(dct, _) -> ClampingTransformation:
+    cutoffs = Interval(**dct["cutoffs"])
+    return ClampingTransformation(*cutoffs.to_tuple())
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

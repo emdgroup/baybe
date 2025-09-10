@@ -9,7 +9,6 @@ from collections.abc import Callable
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
-import cattrs
 import numpy as np
 import pandas as pd
 from attrs import define, field
@@ -22,9 +21,6 @@ from typing_extensions import override
 from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
 )
 from baybe.utils.basic import to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -229,19 +225,6 @@ class SubSelectionCondition(Condition):
     def to_polars(self, expr: pl.Expr, /) -> pl.Expr:
         return expr.is_in(self.selection)
 
-
-# Register (un-)structure hooks
-_overrides = {
-    "_selection": cattrs.override(rename="selection"),
-}
-# FIXME[typing]: https://github.com/python/mypy/issues/4717
-converter.register_structure_hook(
-    Condition,
-    get_base_structure_hook(Condition, overrides=_overrides),  # type: ignore
-)
-converter.register_unstructure_hook(
-    Condition, partial(unstructure_base, overrides=_overrides)
-)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

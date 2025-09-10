@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 import gc
 from collections.abc import Iterable
 from copy import deepcopy
@@ -121,6 +122,13 @@ class Interval(SerialMixin):
     def _(cls, bounds: Iterable):
         """Overloaded implementation for creating an interval from an iterable."""
         return Interval(*bounds)
+
+    def clamp(self, min: float = float("-inf"), max: float = float("inf")) -> Interval:
+        """Clamp the interval to a specified range."""
+        return Interval(
+            lower=builtins.max(self.lower, min),
+            upper=builtins.min(self.upper, max),
+        )
 
     def to_tuple(self) -> tuple[float, float]:
         """Transform the interval to a tuple."""

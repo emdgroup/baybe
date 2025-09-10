@@ -37,16 +37,7 @@ that allow for more customization:
 The {class}`~baybe.transformations.basic.ClampingTransformation` is used to limit the
 range of the input values to a specified interval.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/clamping.svg)
-````
-
-````{grid-item}
-:columns: auto
 
 **Transformation rule**
 
@@ -59,8 +50,6 @@ f(x) =
 \end{cases}
 ```
 where $c_\text{min}$ and $c_\text{max}$ are the bounds specified for the transformation.
-````
-`````
 
 **Example**
 
@@ -77,16 +66,7 @@ t_both = ClampingTransformation(min=10, max=20)  # clamps to [10, 20]
 The {class}`~baybe.transformations.basic.AffineTransformation` applies an affine
 transformation to the given input, i.e., it scales and shifts the incoming values.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/affine.svg)
-````
-
-````{grid-item}
-:columns: auto
 
 **Transformation rule**
 
@@ -97,8 +77,6 @@ f(x) = \begin{cases}
 \end{cases}
 ```
 where $a$ is the scaling factor and $b$ is the shift value of the transformation.
-````
-`````
 
 **Example**
 
@@ -116,16 +94,7 @@ t = AffineTransformation(factor=2, shift=3, shift_first=True)  # shifts, *then* 
 The {class}`~baybe.transformations.basic.TwoSidedAffineTransformation` is a piecewise
 transformation with two affine segments that meet at a midpoint.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/twosidedaffine.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -139,8 +108,6 @@ f(x) =
 where $c_\text{left}$ and $c_\text{right}$ are the slopes of the left and right affine
 segments, respectively, and $c_\text{mid}$ specifies the midpoint where the two
 segments meet.
-````
-`````
 
 **Example**
 
@@ -155,16 +122,7 @@ t = TwoSidedAffineTransformation(slope_left=-1, slope_right=0, midpoint=1)  # hi
 The {class}`~baybe.transformations.basic.SigmoidTransformation` normalizes its input
 to the range $[0, 1]$ using a sigmoid function.
 
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
-
 ![Transforms](../_static/transformations/sigmoid.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -174,8 +132,6 @@ f(x) = \frac{1}{1 + e^{-a(x - c)}}
 where $c$ is the center point where the curve crosses the value 0.5 and $a$ is a
 parameter controlling the steepness. Note that the transformation can also be specified
 using anchors points instead, as demonstrated below.
-````
-`````
 
 **Example**
 
@@ -191,20 +147,11 @@ t = SigmoidTransformation.from_anchors(
 
 ### BellTransformation
 
-The {class}`~baybe.transformations.basic.BellTransformation` pipes the input through a
-bell-shaped function (i.e. an **unnormalized** Gaussian), useful for steering the
-targets to a specific set point value.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
+The {class}`~baybe.transformations.basic.BellTransformation` passes its input through a
+bell-shaped function (i.e. an **unnormalized** Gaussian). This is useful for steering
+target values to specific set points.
 
 ![Transforms](../_static/transformations/bell.svg)
-````
-
-````{grid-item}
-:columns: 6
 
 **Transformation rule**
 
@@ -214,8 +161,6 @@ f(x) = e^{-\frac{(x - c)^2}{2\sigma^2}}
 where $c$ is the center of the bell curve and $\sigma$ is a parameter controlling its
 width. The latter has the same interpretation as the standard deviation of a Gaussian
 distribution except that it does not affect the magnitude of the curve.
-````
-`````
 
 **Example**
 
@@ -229,19 +174,10 @@ t = BellTransformation(center=5, sigma=2)  # twice as wide and shifted to the ri
 ### TriangularTransformation
 
 The {class}`~baybe.transformations.basic.TriangularTransformation` is a piecewise affine
-transformation with the shape of a triangle, useful for steering targets to a specific
-set point value with symmetric or asymmetric penalty.
-
-`````{grid} 2
-
-````{grid-item}
-:columns: auto
+transformation with the shape of a triangle. This is useful for steering target values
+to specific set points with symmetric or asymmetric penalty.
 
 ![Transforms](../_static/transformations/triangular.svg)
-````
-
-````{grid-item}
-:columns: 5
 
 **Transformation rule**
 
@@ -258,8 +194,6 @@ where $c_\text{min}$ and $c_\text{max}$ are the cutoff values of the triangle,
 respectively, and $c_\text{peak}$ is its peak location. Note that there also exist
 convenience constructors that allow for alternative parameterizations of the
 transformation, as exemplified below.
-````
-`````
 
 **Example**
 
@@ -280,13 +214,13 @@ assert t_skew1 == t_skew2
 
 ## Composite Transformations
 
-Instead of applying [individual transformations](#pre-defined-transformations) directly,
-you can also use them as building blocks to enable more complex types of operations.
-This is enabled through the
+Instead of applying individual [basic](#basic-transformations) or
+[advanced](#advanced-transformations) transformations directly, you can also use them as
+building blocks to enable more complex types of operations. This is enabled through the
 {class}`~baybe.transformations.composite.ChainedTransformation`,
-{class}`~baybe.transformations.composite.AdditiveTransformation` and 
-{class}`~baybe.transformations.composite.MultiplicativeTransformation` classes,
-which allow you to combine multiple transformations into a single one.
+{class}`~baybe.transformations.composite.AdditiveTransformation` and
+{class}`~baybe.transformations.composite.MultiplicativeTransformation` classes, which
+allow you to combine multiple transformations into a single one.
 
 ### Chaining
 
@@ -305,6 +239,16 @@ specified matters! More specifically, the first transformation passed to
 the second, and so on. Therefore, `ChainedTransformation([f, g, h])` represent the
 mathematical operation $(h \circ g \circ f)(x) = h(g(f(x)))$, where the order in the
 notation is reversed.
+```
+
+```{admonition} Convenience Construction
+:class: tip
+Instead of explicitly calling the
+{class}`~baybe.transformations.composite.ChainedTransformation` 
+constructor to chain transformations, you can alternatively:
+* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
+* calling an existing transformation's
+{meth}`~baybe.transformations.base.Transformation.chain` method
 ```
 
 ```python
@@ -351,16 +295,6 @@ assert torch.equal(t1(values), t4(values))  # they produce the same output
 assert t1 != t4  # but they are not "equal" objects
 ```
 ````
-
-```{admonition} Convenience Construction
-:class: tip
-Instead of explicitly calling the
-{class}`~baybe.transformations.composite.ChainedTransformation` 
-constructor to chain transformations, you can alternatively:
-* use the overloaded pipe operator `|`  (inspired by the Unix ["pipe"](https://en.wikipedia.org/wiki/Pipeline_(Unix)) for chaining processes)
-* calling an existing transformation's
-{meth}`~baybe.transformations.base.Transformation.chain` method
-```
 
 ````{admonition} Compression
 :class: note
@@ -475,9 +409,10 @@ assert torch.equal(t1(values), p1(values) * p2(values))
 
 ## Custom Transformations
 
-If none of the [pre-defined transformations](#pre-defined-transformations) fit your
-needs and [composing them](#composite-transformations) does also not bring you to the
-desired result, you can easily define your custom logic using the
+If none of the pre-defined [basic](#basic-transformations) or
+[advanced](#advanced-transformations) transformations fit your needs and [composing
+them](#composite-transformations) does also not bring you to the desired result, you can
+easily define your custom logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, which accepts any
 one-argument `torch` callable as transformation function:
 

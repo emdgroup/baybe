@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10, <3.14"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -197,6 +197,7 @@ benchmarking = [
     { name = "pillow" },
     { name = "plotly" },
     { name = "polars", extra = ["pyarrow"] },
+    { name = "psutil" },
     { name = "scikit-fingerprints" },
     { name = "seaborn" },
     { name = "shap", extra = ["others"] },
@@ -230,6 +231,7 @@ dev = [
     { name = "plotly" },
     { name = "polars", extra = ["pyarrow"] },
     { name = "pre-commit" },
+    { name = "psutil" },
     { name = "pydoclint" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -253,6 +255,7 @@ dev = [
     { name = "tornado" },
     { name = "tox-uv" },
     { name = "tqdm" },
+    { name = "types-psutil" },
     { name = "types-seaborn" },
     { name = "uv" },
     { name = "xyzpy" },
@@ -330,6 +333,7 @@ lint = [
 mypy = [
     { name = "mypy" },
     { name = "pandas-stubs" },
+    { name = "types-psutil" },
     { name = "types-seaborn" },
 ]
 onnx = [
@@ -372,7 +376,7 @@ requires-dist = [
     { name = "baybe", extras = ["test"], marker = "extra == 'dev'" },
     { name = "boto3", marker = "extra == 'benchmarking'", specifier = ">=1.0.0,<2" },
     { name = "botorch", specifier = ">=0.13.0,<1" },
-    { name = "cattrs", specifier = ">=24.1.0" },
+    { name = "cattrs", specifier = ">=25.2.0" },
     { name = "exceptiongroup" },
     { name = "flake8", marker = "extra == 'lint'", specifier = "==7.3.0" },
     { name = "fpsample", marker = "python_full_version < '3.13' and extra == 'extras'", specifier = ">=0.3.3" },
@@ -398,6 +402,7 @@ requires-dist = [
     { name = "plotly", marker = "extra == 'examples'", specifier = ">=5.10.0" },
     { name = "polars", extras = ["pyarrow"], marker = "extra == 'polars'", specifier = ">=0.19.19,<2" },
     { name = "pre-commit", marker = "extra == 'lint'", specifier = "==4.2.0" },
+    { name = "psutil", marker = "extra == 'benchmarking'", specifier = ">=7.0.0" },
     { name = "pydoclint", marker = "extra == 'lint'", specifier = "==0.5.5" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=7.2.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1.0" },
@@ -422,6 +427,7 @@ requires-dist = [
     { name = "tornado", marker = "extra == 'examples'", specifier = ">=6.3.3" },
     { name = "tox-uv", marker = "extra == 'dev'", specifier = ">=1.7.0" },
     { name = "tqdm", marker = "extra == 'docs'" },
+    { name = "types-psutil", marker = "extra == 'mypy'", specifier = ">=7.0.0.20250801" },
     { name = "types-seaborn", marker = "extra == 'mypy'", specifier = ">=0.13.2.20240618" },
     { name = "typing-extensions", specifier = ">=4.7.0" },
     { name = "uv", marker = "extra == 'dev'", specifier = ">=0.7.0" },
@@ -555,16 +561,16 @@ wheels = [
 
 [[package]]
 name = "cattrs"
-version = "25.1.1"
+version = "25.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/57/2b/561d78f488dcc303da4639e02021311728fb7fda8006dd2835550cddd9ed/cattrs-25.1.1.tar.gz", hash = "sha256:c914b734e0f2d59e5b720d145ee010f1fd9a13ee93900922a2f3f9d593b8382c", size = 435016, upload-time = "2025-06-04T20:27:15.44Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/42/988b3a667967e9d2d32346e7ed7edee540ef1cee829b53ef80aa8d4a0222/cattrs-25.2.0.tar.gz", hash = "sha256:f46c918e955db0177be6aa559068390f71988e877c603ae2e56c71827165cc06", size = 506531, upload-time = "2025-08-31T20:41:59.301Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/b0/215274ef0d835bbc1056392a367646648b6084e39d489099959aefcca2af/cattrs-25.1.1-py3-none-any.whl", hash = "sha256:1b40b2d3402af7be79a7e7e097a9b4cd16d4c06e6d526644b0b26a063a1cc064", size = 69386, upload-time = "2025-06-04T20:27:13.969Z" },
+    { url = "https://files.pythonhosted.org/packages/20/a5/b3771ac30b590026b9d721187110194ade05bfbea3d98b423a9cafd80959/cattrs-25.2.0-py3-none-any.whl", hash = "sha256:539d7eedee7d2f0706e4e109182ad096d608ba84633c32c75ef3458f1d11e8f1", size = 70040, upload-time = "2025-08-31T20:41:57.543Z" },
 ]
 
 [[package]]
@@ -5082,6 +5088,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/24/5f/950fb373bf9c01ad4eb5a8cd5eaf32cdf9e238c02f9293557a2129b9c4ac/triton-3.3.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9999e83aba21e1a78c1f36f21bce621b77bcaa530277a50484a7cb4a822f6e43", size = 155669138, upload-time = "2025-05-29T23:39:51.771Z" },
     { url = "https://files.pythonhosted.org/packages/74/1f/dfb531f90a2d367d914adfee771babbd3f1a5b26c3f5fbc458dee21daa78/triton-3.3.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b89d846b5a4198317fec27a5d3a609ea96b6d557ff44b56c23176546023c4240", size = 155673035, upload-time = "2025-05-29T23:40:02.468Z" },
     { url = "https://files.pythonhosted.org/packages/28/71/bd20ffcb7a64c753dc2463489a61bf69d531f308e390ad06390268c4ea04/triton-3.3.1-cp313-cp313t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a3198adb9d78b77818a5388bff89fa72ff36f9da0bc689db2f0a651a67ce6a42", size = 155735832, upload-time = "2025-05-29T23:40:10.522Z" },
+]
+
+[[package]]
+name = "types-psutil"
+version = "7.0.0.20250801"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/5d/32fe570f7e22bf638a49c881c5e2142beeda9dad6b21a15805af66571cd8/types_psutil-7.0.0.20250801.tar.gz", hash = "sha256:0230b56234252cc6f59c361dccbaaa08f3088ea3569367abe6900485d388c97d", size = 20238, upload-time = "2025-08-01T03:47:39.309Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/84/d18c8d2b53ba2024d110494483b7bdcc9741b7285cd396307b2941353b4d/types_psutil-7.0.0.20250801-py3-none-any.whl", hash = "sha256:751842baf9e0efa31b3a7722a38a3f9afeb5a7132b146a1960cd472db362faa0", size = 23058, upload-time = "2025-08-01T03:47:38.151Z" },
 ]
 
 [[package]]

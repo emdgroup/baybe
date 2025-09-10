@@ -10,11 +10,15 @@ import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, instance_of, min_len
 
-from baybe.constraints.deprecation import structure_constraints
+from baybe.constraints.deprecation import (
+    ContinuousLinearEqualityConstraint,
+    ContinuousLinearInequalityConstraint,
+)
 from baybe.serialization import (
     SerialMixin,
+)
+from baybe.serialization.core import (
     converter,
-    unstructure_base,
 )
 
 if TYPE_CHECKING:
@@ -211,12 +215,26 @@ class ContinuousNonlinearConstraint(ContinuousConstraint, ABC):
     """Abstract base class for continuous nonlinear constraints."""
 
 
-# Register (un-)structure hooks
-converter.register_unstructure_hook(Constraint, unstructure_base)
+# >>>>> Deprecation handling
+_hook = converter.get_structure_hook(Constraint)
 
-# Currently affected by a deprecation
-# converter.register_structure_hook(Constraint, get_base_structure_hook(Constraint))
-converter.register_structure_hook(Constraint, structure_constraints)
+
+def _deprecate_legacy_classes(dct: dict[str, Any], _) -> Constraint:
+    """Enable constraint configs using legacy class names."""
+    if dct["type"] == "ContinuousLinearEqualityConstraint":
+        dct.pop("type")
+        return ContinuousLinearEqualityConstraint(**dct)
+    elif dct["type"] == "ContinuousLinearInequalityConstraint":
+        dct.pop("type")
+        return ContinuousLinearInequalityConstraint(**dct)
+    return _hook(dct, _)
+
+
+converter.register_structure_hook_func(
+    lambda c: c is Constraint, _deprecate_legacy_classes
+)
+# <<<<< Deprecation handling
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
