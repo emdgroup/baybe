@@ -183,7 +183,6 @@ valid_base_kernels: list[Kernel] = [
     for cls, arg_dict in [
         (MaternKernel, {"lengthscale_prior": prior}),
         (LinearKernel, {"variance_prior": prior}),
-        (PeriodicKernel, {"period_length_prior": prior}),
         (PeriodicKernel, {"lengthscale_prior": prior}),
         (PiecewisePolynomialKernel, {"lengthscale_prior": prior}),
         (PolynomialKernel, {"offset_prior": prior, "power": 2}),
