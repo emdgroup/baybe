@@ -75,19 +75,19 @@ class IdentityTransformation(MonotonicTransformation):
 
 @define(frozen=True, init=False)
 class ClampingTransformation(MonotonicTransformation):
-    """A transformation clamping values between specified bounds."""
+    """A transformation clamping values between specified cutoffs."""
 
-    bounds: Interval = field(converter=Interval.create)  # type: ignore[misc]
+    cutoffs: Interval = field(converter=Interval.create)  # type: ignore[misc]
     """The range to which input values are clamped."""
 
     def __init__(self, min: float | None = None, max: float | None = None) -> None:
         if min is None and max is None:
-            raise ValueError("At least one bound must be specified.")
-        self.__attrs_init__(bounds=Interval(min, max))
+            raise ValueError("At least one cutoff value must be specified.")
+        self.__attrs_init__(cutoffs=Interval(min, max))
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
-        return x.clamp(*self.bounds.to_tuple())
+        return x.clamp(*self.cutoffs.to_tuple())
 
 
 @define(frozen=True, init=False)
@@ -499,8 +499,8 @@ class SigmoidTransformation(MonotonicTransformation):
 
 @converter.register_structure_hook
 def _(dct, _) -> ClampingTransformation:
-    bounds = Interval(**dct["bounds"])
-    return ClampingTransformation(*bounds.to_tuple())
+    cutoffs = Interval(**dct["cutoffs"])
+    return ClampingTransformation(*cutoffs.to_tuple())
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
