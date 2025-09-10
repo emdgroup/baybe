@@ -370,12 +370,18 @@ class BotorchRecommender(BayesianRecommender):
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
             equality_constraints=[
-                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                c.to_botorch(
+                    subspace_continuous.parameters,
+                    batch_size=batch_size if c.is_interpoint else None,
+                )
                 for c in subspace_continuous.constraints_lin_eq
             ]
             or None,
             inequality_constraints=[
-                c.to_botorch(subspace_continuous.parameters, batch_size=batch_size)
+                c.to_botorch(
+                    subspace_continuous.parameters,
+                    batch_size=batch_size if c.is_interpoint else None,
+                )
                 for c in subspace_continuous.constraints_lin_ineq
             ]
             or None,
@@ -470,7 +476,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=len(candidates_comp.columns),
-                    batch_size=batch_size,
+                    batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_eq
             ]
@@ -479,7 +485,7 @@ class BotorchRecommender(BayesianRecommender):
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=num_comp_columns,
-                    batch_size=batch_size,
+                    batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
             ]
