@@ -78,7 +78,7 @@ A more detailed example can be found
 
 ### Continuous Interpoint Constraints
 
-The constraints discussed in the previous paragraph belong to the class of so called
+The constraints discussed in the previous paragraph belong to the class of so-called
 "intrapoint constraints". That is, they impose conditions on each individual point of a batch.
 In contrast to this, interpoint constraints do so **across** the points of the batch.
 That is, an interpoint constraint of the form ``x + y <= 1`` technically encodes
@@ -88,7 +88,7 @@ $$
 A possible relevant constraint might be that only 100ml of a given solvent are available for 
 a full batch.
 
-They can be defined by using the `interpoint` keyword of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+They can be defined by using the `interpoint` argument of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 class. 
 ```python
 from baybe.constraints import ContinuousLinearConstraint
@@ -108,7 +108,7 @@ There are some limitations regarding the use of interpoint constraints that you 
 to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
-- When using interpoint constraints, the optimization will not be done sequentially,
+- When using interpoint constraints, the candidate generation cannot be done sequentially,
 potentially increasing the runtime.
 - Interpoint constraints are only supported in purely continuous spaces and are not
 available in hybrid spaces.
