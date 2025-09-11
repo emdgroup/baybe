@@ -34,6 +34,7 @@ concurrency:
 jobs:
   add-gpu-machine:
     runs-on: ubuntu-latest
+    name: Add Runner ${{ inputs.semantic }}
     permissions:
       contents: read
       id-token: write
