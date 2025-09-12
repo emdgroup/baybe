@@ -18,6 +18,9 @@ class RunMode(Enum):
     SMOKETEST = "SMOKETEST"
     """Minimal run mode for verifying that the benchmarks are executable."""
 
+    REPRODUCIBILITY = "REPRODUCIBILITY"
+    """Run mode for testing reproducibility of benchmark results."""
+
     @classmethod
     def from_string(cls, value: str, /) -> "RunMode":
         """Convert a string to a RunMode, case-insensitively."""
