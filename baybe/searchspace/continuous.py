@@ -560,14 +560,8 @@ class SubspaceContinuous(SerialMixin):
                 equality_constraints=eq_constraints,
                 inequality_constraints=ineq_constraints,
             )
-            # Ensure the total number of points is divisible by batch_size
-            total_points = points.shape[-1]
-            if total_points % batch_size != 0:
-                raise ValueError(
-                    f"Total number of points ({total_points}) is not divisible by "
-                    f"batch_size ({batch_size}). This indicates an internal error."
-                )
-            points_per_batch = int(total_points / batch_size)
+            points_per_batch, remainder = divmod(points.shape[-1], batch_size)
+            assert remainder == 0, "Dimensions mismatch."
             points = points.reshape(batch_size, points_per_batch)
         return pd.DataFrame(points, columns=self.parameter_names)
 
