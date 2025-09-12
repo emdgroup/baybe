@@ -137,24 +137,18 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         Returns:
             The tuple required by botorch.
-
-        Raises:
-            RuntimeError: When the constraint is an interpoint constraint but
-                ``batch_size`` is ``None`` or when providing a value for ``batch_size``
-                while the constraint is not an interpoint constraint.
         """
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        if batch_size is None and self.is_interpoint:
-            raise RuntimeError(
-                "No ``batch_size`` set but using interpoint constraints."
-            )
-        if batch_size is not None and not self.is_interpoint:
-            raise RuntimeError(
-                "A ``batch_size`` was set but the constraint is not interpoint."
-            )
+        assert not (batch_size is None and self.is_interpoint), (
+            "No ``batch_size`` set but using interpoint constraints."
+        )
+
+        assert not (batch_size is not None and not self.is_interpoint), (
+            "A ``batch_size`` was set but the constraint is not interpoint."
+        )
 
         param_names = [p.name for p in parameters]
         # Interpoint and intrapoint require different index formats. For more
