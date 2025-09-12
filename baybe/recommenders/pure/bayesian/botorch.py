@@ -353,9 +353,10 @@ class BotorchRecommender(BayesianRecommender):
             and subspace_continuous.has_interpoint_constraints
         ):
             raise IncompatibilityError(
-                f"The '{fields(BotorchRecommender).sequential_continuous}' flag is set "
-                f"to ``True``, but interpoint constraints are present in the continuous"
-                f" subspace. This is not supported. Please set it to ``False``."
+                f"The '{fields(BotorchRecommender).sequential_continuous.name}' flag "
+                f"is set to ``True``, but interpoint constraints are present in the "
+                f"continuous subspace. This is not supported. "
+                f"Please set it to ``False``."
             )
 
         # NOTE: The explicit `or None` conversion is added as an additional safety net
