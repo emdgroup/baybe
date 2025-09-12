@@ -2,19 +2,30 @@
 
 # In this example, we demonstrate the use of **interpoint constraints** in a chemical
 # optimization scenario. We optimize reaction conditions for a batch of chemical
-# experiments where exactly 60 mL of solvent must be used across the entire batch.
+# experiments where exactly 60 mL of solvent must be used across the entire batch,
+# while not using more than 30 mol% of catalyst across the batch.
 
-# This scenario illustrates a common challenge in laboratory settings where:
-# * **Solvent requirement**: Exactly 60 mL must be used across the entire batch
-# * **Reagent ratios** must maintain specific stoichiometric relationships
-# * **Catalyst loading** needs to be balanced across experiments for cost efficiency
+# This scenario illustrates a common challenge in laboratory settings.
+# First, it demonstrates how to enforce a **solvent requirement**:
+# Exactly 60 mL of the solvent must be used across the entire batch
+# since the solvent is supplied in a fixed volume container and cannot be used later.
+# Second, it shows how to also include a **Catalyst loading** constraint for balancing
+# the catalyst loading across experiments for cost efficiency.
 
-# Interpoint constraints are particularly valuable here because they allow us to:
+# This example demonstrates how to use interpoint constraints and intrapoint constraints.
+# An intrapoint constraint, often simply referred to as a constraint, applies to each individual
+# experiment, ensuring that certain conditions are met within that single point.
+# In contrast, an interpoint constraint applies across a batch of experiments,
+# enforcing conditions that relate to the collective set of points rather than
+# individual ones. These constraints are particularly useful when resources or conditions must be
+# managed at a batch level and they allow us to:
 # * Ensure total resource consumption meets exact requirements
 # * Maintain chemical balances across multiple experiments
 # * Optimize the collective use of expensive materials
+# For more details on interpoint constraints, see the {ref}`user guide on constraints
+# <userguide/constraints>`.
 
-# ## Imports
+# ## Imports and Settings
 
 import os
 
@@ -30,12 +41,6 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.random import set_random_seed
 
-# ## Settings
-
-# We configure the optimization with a small batch size and limited iterations to keep
-# the example concise while demonstrating the key concepts. The tolerance parameter
-# is used for constraint validation to account for numerical precision.
-
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 BATCH_SIZE = 3
 N_ITERATIONS = 4 if SMOKE_TEST else 15
@@ -48,16 +53,17 @@ set_random_seed(42)
 
 # We'll optimize a synthetic chemical reaction with the following experimental parameters:
 # - **Solvent Volume** (10-30 mL per experiment): The amount of solvent used
-# - **Reactant A Concentration** (0.1-2.0 M): Primary reactant concentration
+# - **Reactant A Concentration** (0.1-2.0 g/L): Primary reactant concentration
 # - **Catalyst Loading** (1-10 mol%): Catalyst amount as percentage of limiting reagent
 # - **Temperature** (60-120 °C): Reaction temperature
+# Note that these ranges are chosen arbitrary and do not represent a specific real-world reaction.
 
 parameters = [
     NumericalContinuousParameter(
         name="Solvent_Volume", bounds=(10.0, 30.0), metadata={"unit": "mL"}
     ),
     NumericalContinuousParameter(
-        name="Reactant_A_Conc", bounds=(0.1, 2.0), metadata={"unit": "M"}
+        name="Reactant_A_Conc", bounds=(0.1, 2.0), metadata={"unit": "g/L"}
     ),
     NumericalContinuousParameter(
         name="Catalyst_Loading", bounds=(1.0, 10.0), metadata={"unit": "mol%"}
@@ -111,7 +117,7 @@ all_constraints = intrapoint_constraints + interpoint_constraints
 # ## Campaign Setup
 
 # We construct the search space by combining parameters with constraints, then create
-# a campaign targeting maximum reaction yield. The BotorchRecommender with
+# a campaign targeting maximum reaction yield. The {class}`~baybe.recommenders.BotorchRecommender` with
 # `sequential_continuous=False` is required for interpoint constraints as they
 # operate on batches rather than individual experiments.
 
@@ -126,7 +132,7 @@ objective = target.to_objective()
 
 # We create a synthetic model that represents a realistic chemical reaction with
 # trade-offs and optimal operating ranges rather than simply maximizing all parameters:
-# - Concentration has an optimum around 1.0 M (Gaussian peak)
+# - Concentration has an optimum around 1.0 g/L (Gaussian peak)
 # - Catalyst shows diminishing returns and eventual inhibition
 # - Temperature has an optimum around 90°C (too high causes decomposition)
 # - Solvent volume has trade-offs (dissolution vs dilution effects)
@@ -180,39 +186,32 @@ campaign.add_measurements(initial_measurements)
 
 results_log = []
 
-for iteration in range(N_ITERATIONS):
+for it in range(N_ITERATIONS):
     recommendations = campaign.recommend(batch_size=BATCH_SIZE)
 
     reaction_results = lookup(recommendations)
     measurements = pd.concat([recommendations, reaction_results], axis=1)
-
     campaign.add_measurements(measurements)
-
-    total_solvent = recommendations["Solvent_Volume"].sum()
-    total_catalyst = recommendations["Catalyst_Loading"].sum()
-
-    solvent_ok = abs(total_solvent - 60.0) < TOLERANCE
-    catalyst_ok = total_catalyst <= (30.0 + TOLERANCE)
+    total_sol = recommendations["Solvent_Volume"].sum()
+    total_cat = recommendations["Catalyst_Loading"].sum()
+    solvent_ok = abs(total_sol - 60.0) < TOLERANCE
+    catalyst_ok = total_cat <= (30.0 + TOLERANCE)
 
     assert solvent_ok, (
-        f"Solvent constraint violated: {total_solvent:.1f} mL (expected 60.0 mL)"
+        f"Solvent constraint violated: {total_sol:.1f} mL (expected 60.0 mL)"
     )
     assert catalyst_ok, (
-        f"Catalyst constraint violated: {total_catalyst:.1f} mol% (max 30.0 mol%)"
+        f"Catalyst constraint violated: {total_cat:.1f} mol% (max 30.0 mol%)"
     )
 
     results_log.append(
         {
-            "iteration": iteration + 1,
-            "total_solvent_mL": total_solvent,
-            "total_catalyst_mol%": total_catalyst,
+            "iteration": it + 1,
+            "total_solvent_mL": total_sol,
+            "total_catalyst_mol%": total_cat,
             "individual_solvent_mL": recommendations["Solvent_Volume"].tolist(),
             "individual_catalyst_mol%": recommendations["Catalyst_Loading"].tolist(),
         }
-    )
-
-    print(
-        f"Batch {iteration + 1}: Solvent={total_solvent:.1f}mL, Catalyst={total_catalyst:.1f}mol%"
     )
 
 # ## Visualization
@@ -224,13 +223,14 @@ for iteration in range(N_ITERATIONS):
 
 results_df = pd.DataFrame(results_log)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+fig, axs = plt.subplots(1, 2, figsize=(10, 4))
 
+plt.sca(axs[0])
 for exp_idx in range(BATCH_SIZE):
     individual_values = [
         batch[exp_idx] for batch in results_df["individual_solvent_mL"]
     ]
-    ax1.plot(
+    plt.plot(
         results_df["iteration"],
         individual_values,
         "o-",
@@ -238,7 +238,7 @@ for exp_idx in range(BATCH_SIZE):
         label=f"Exp {exp_idx + 1}",
     )
 
-ax1.plot(
+plt.plot(
     results_df["iteration"],
     results_df["total_solvent_mL"],
     "s-",
@@ -246,15 +246,16 @@ ax1.plot(
     linewidth=2,
     label="Total",
 )
-ax1.axhline(y=60, color="red", linestyle="--", label="Required")
-ax1.set_title("Solvent: Individual + Total")
-ax1.legend()
+plt.axhline(y=60, color="red", linestyle="--", label="Required")
+plt.title("Solvent: Individual + Total")
+plt.legend()
 
+plt.sca(axs[1])
 for exp_idx in range(BATCH_SIZE):
     individual_values = [
         batch[exp_idx] for batch in results_df["individual_catalyst_mol%"]
     ]
-    ax2.plot(
+    plt.plot(
         results_df["iteration"],
         individual_values,
         "o-",
@@ -262,7 +263,7 @@ for exp_idx in range(BATCH_SIZE):
         label=f"Exp {exp_idx + 1}",
     )
 
-ax2.plot(
+plt.plot(
     results_df["iteration"],
     results_df["total_catalyst_mol%"],
     "s-",
@@ -270,10 +271,10 @@ ax2.plot(
     linewidth=2,
     label="Total",
 )
-ax2.axhline(y=30, color="red", linestyle="--", label="Limit")
-ax2.set_title("Catalyst: Individual + Total")
-ax2.legend()
+plt.axhline(y=30, color="red", linestyle="--", label="Limit")
+plt.title("Catalyst: Individual + Total")
+plt.legend()
 
 plt.tight_layout()
 if not SMOKE_TEST:
-    plt.savefig("interpoint_constraints.svg")
+    plt.savefig("interpoint.svg")
