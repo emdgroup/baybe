@@ -1301,15 +1301,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent                Base                        Ligand  \
-100  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-58   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-406     p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
+           Solvent               Base                        Ligand  \
+256           DMAc    Cesium pivalate                     BrettPhos   
+172  Butyornitrile  Potassium acetate                     BrettPhos   
+293           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration  
-100         90.0            0.1  
-58         105.0            0.1  
-406         90.0            0.1  
+256        105.0          0.100  
+172         90.0          0.100  
+293        105.0          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1318,15 +1318,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-100  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-58   Butyl Ester   Potassium acetate                 (t-Bu)PhCPhos   
-406     p-Xylene  Potassium pivalate                 (t-Bu)PhCPhos   
+           Solvent               Base                        Ligand  \
+256           DMAc    Cesium pivalate                     BrettPhos   
+172  Butyornitrile  Potassium acetate                     BrettPhos   
+293           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration      yield  
-100         90.0            0.1 -85.250748  
-58         105.0            0.1  65.941286  
-406         90.0            0.1  60.336896  
+256        105.0          0.100 -35.107840  
+172         90.0          0.100  -0.763739  
+293        105.0          0.153   3.451911  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
