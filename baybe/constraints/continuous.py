@@ -161,14 +161,14 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         # information, we refer to the botorch documentation:
         # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
         param_indices: list[int] | list[tuple[int, int]]
-        coefficients: list[float]
+        coefficients: torch.Tensor
         if not self.is_interpoint:
             param_indices = [
                 param_names.index(p) + idx_offset
                 for p in self.parameters
                 if p in param_names
             ]
-            coefficients = list(self.coefficients)
+            coefficients = torch.tensor(self.coefficients, dtype=DTypeFloatTorch)
         else:
             assert batch_size is not None
             param_index_dict = {
@@ -179,15 +179,12 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 for name in self.parameters
                 for batch in range(batch_size)
             ]
-            coefficients = (
-                torch.tensor(self.coefficients).repeat_interleave(batch_size).tolist()
-            )
-
+            coefficients = torch.tensor(
+                self.coefficients, dtype=DTypeFloatTorch
+            ).repeat_interleave(batch_size)
         return (
             torch.tensor(param_indices),
-            torch.tensor(
-                [self._multiplier * c for c in coefficients], dtype=DTypeFloatTorch
-            ),
+            self._multiplier * coefficients,
             np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
         )
 
