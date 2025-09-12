@@ -111,14 +111,17 @@ benchmark_config = ConvergenceBenchmarkSettings(
     batch_size_settings={
         RunMode.DEFAULT: 5,
         RunMode.SMOKETEST: 2,
+        RunMode.REPRODUCIBILITY: 5,
     },
     n_doe_iterations_settings={
         RunMode.DEFAULT: 40,
         RunMode.SMOKETEST: 2,
+        RunMode.REPRODUCIBILITY: 5,
     },
     n_mc_iterations_settings={
         RunMode.DEFAULT: 100,
         RunMode.SMOKETEST: 2,
+        RunMode.REPRODUCIBILITY: 1,
     },
 )
 
