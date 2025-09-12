@@ -150,12 +150,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         if batch_size is None and self.is_interpoint:
             raise RuntimeError(
                 "No ``batch_size`` set but using interpoint constraints."
-                "This should not happen and means that there is a bug in the code."
             )
         if batch_size is not None and not self.is_interpoint:
             raise RuntimeError(
                 "A ``batch_size`` was set but the constraint is not interpoint."
-                "This should not happen and means that there is a bug in the code."
             )
 
         param_names = [p.name for p in parameters]
