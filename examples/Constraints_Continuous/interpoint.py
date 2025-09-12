@@ -1,106 +1,279 @@
-## Example for linear interpoint constraints in a continuous searchspace
+# # Chemical Reaction Optimization with Solvent Constraints
 
-# Example for optimizing a synthetic test functions in a continuous space with linear
-# interpoint constraints.
-# While intrapoint constraints impose conditions on each individual point of a batch,
-# interpoint constraints do so **across** the points of the batch.
+# In this example, we demonstrate the use of **interpoint constraints** in a chemical
+# optimization scenario. We optimize reaction conditions for a batch of chemical
+# experiments where exactly 60 mL of solvent must be used across the entire batch.
 
-# This example is a variant of the example for linear constraints, and we thus refer
-# to [`linear_constraints`](./linear_constraints.md) for more details and explanations.
+# This scenario illustrates a common challenge in laboratory settings where:
+# * **Solvent requirement**: Exactly 60 mL must be used across the entire batch
+# * **Reagent ratios** must maintain specific stoichiometric relationships
+# * **Catalyst loading** needs to be balanced across experiments for cost efficiency
 
-### Necessary imports for this example
+# Interpoint constraints are particularly valuable here because they allow us to:
+# * Ensure total resource consumption meets exact requirements
+# * Maintain chemical balances across multiple experiments
+# * Optimize the collective use of expensive materials
 
+# ## Imports
 
+import os
+
+import numpy as np
 import pandas as pd
-from botorch.test_functions import Rastrigin
+from matplotlib import pyplot as plt
 
 from baybe import Campaign
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import arrays_to_dataframes
+from baybe.utils.random import set_random_seed
 
-### Defining the test function
+# ## Settings
 
-DIMENSION = 4
-test_function = Rastrigin(dim=DIMENSION)
-BOUNDS = test_function.bounds
+# We configure the optimization with a small batch size and limited iterations to keep
+# the example concise while demonstrating the key concepts. The tolerance parameter
+# is used for constraint validation to account for numerical precision.
 
-### Creating the searchspace and the objective
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+BATCH_SIZE = 3
+N_ITERATIONS = 4 if SMOKE_TEST else 15
+TOLERANCE = 0.01
+
+
+set_random_seed(42)
+
+# ## Defining the Chemical Optimization Problem
+
+# We'll optimize a synthetic chemical reaction with the following experimental parameters:
+# - **Solvent Volume** (10-30 mL per experiment): The amount of solvent used
+# - **Reactant A Concentration** (0.1-2.0 M): Primary reactant concentration
+# - **Catalyst Loading** (1-10 mol%): Catalyst amount as percentage of limiting reagent
+# - **Temperature** (60-120 °C): Reaction temperature
 
 parameters = [
     NumericalContinuousParameter(
-        name=f"x_{k + 1}",
-        bounds=(BOUNDS[0, k], BOUNDS[1, k]),
-    )
-    for k in range(DIMENSION)
+        name="Solvent_Volume", bounds=(10.0, 30.0), metadata={"unit": "mL"}
+    ),
+    NumericalContinuousParameter(
+        name="Reactant_A_Conc", bounds=(0.1, 2.0), metadata={"unit": "M"}
+    ),
+    NumericalContinuousParameter(
+        name="Catalyst_Loading", bounds=(1.0, 10.0), metadata={"unit": "mol%"}
+    ),
+    NumericalContinuousParameter(
+        name="Temperature", bounds=(60.0, 120.0), metadata={"unit": "°C"}
+    ),
 ]
 
-### Defining interpoint constraints
+# ## Constraint Definition
 
-# This example models the following interpoint constraints:
-# 1. The sum of `x_1` across all batches needs to be >= 2.5.
-# 2. The sum of `x_2` across all batches needs to be exactly 5.
-# 3. The sum of `2*x_3` minus the sum of `x_4` across all batches needs to be >= 2.5.
+# We define both intrapoint and interpoint constraints to demonstrate the difference:
+#
+# **Intrapoint constraint** (applied to each individual experiment):
+# - Reagent efficiency: For each experiment, solvent volume must be at least 5 times
+#   the reactant concentration (to ensure proper dilution)
+#
+# **Interpoint constraints** (applied across the entire batch):
+# 1. **Solvent constraint**: Total solvent across all experiments must equal exactly 60 mL
+# 2. **Catalyst budget**: Total catalyst loading across batch should be ≤ 30 mol%
 
-
-inter_constraints = [
+intrapoint_constraints = [
     ContinuousLinearConstraint(
-        parameters=["x_1"], operator=">=", coefficients=[1], rhs=2.5, interpoint=True
-    ),
-    ContinuousLinearConstraint(
-        parameters=["x_2"], operator="=", coefficients=[1], rhs=5, interpoint=True
-    ),
-    ContinuousLinearConstraint(
-        parameters=["x_3", "x_4"],
+        parameters=["Solvent_Volume", "Reactant_A_Conc"],
         operator=">=",
-        coefficients=[2, -1],
-        rhs=2.5,
+        coefficients=[1, -5],
+        rhs=0.0,
+        interpoint=False,
+    ),
+]
+
+interpoint_constraints = [
+    ContinuousLinearConstraint(
+        parameters=["Solvent_Volume"],
+        operator="=",
+        coefficients=[1],
+        rhs=60.0,
+        interpoint=True,
+    ),
+    ContinuousLinearConstraint(
+        parameters=["Catalyst_Loading"],
+        operator="<=",
+        coefficients=[1],
+        rhs=30.0,
         interpoint=True,
     ),
 ]
 
-### Construct search space without the previous constraints
+all_constraints = intrapoint_constraints + interpoint_constraints
+
+# ## Campaign Setup
+
+# We construct the search space by combining parameters with constraints, then create
+# a campaign targeting maximum reaction yield. The BotorchRecommender with
+# `sequential_continuous=False` is required for interpoint constraints as they
+# operate on batches rather than individual experiments.
 
 searchspace = SearchSpace.from_product(
-    parameters=parameters, constraints=inter_constraints
+    parameters=parameters, constraints=all_constraints
 )
-target = NumericalTarget(name="Target", mode="MIN")
+
+target = NumericalTarget(name="Reaction_Yield")
 objective = target.to_objective()
 
-### Wrap the test function as a dataframe-based lookup callable
+# ## Chemical Reaction Model
 
-lookup = arrays_to_dataframes(
-    [p.name for p in parameters], [target.name], use_torch=True
-)(test_function)
+# We create a synthetic model that represents a realistic chemical reaction with
+# trade-offs and optimal operating ranges rather than simply maximizing all parameters:
+# - Concentration has an optimum around 1.0 M (Gaussian peak)
+# - Catalyst shows diminishing returns and eventual inhibition
+# - Temperature has an optimum around 90°C (too high causes decomposition)
+# - Solvent volume has trade-offs (dissolution vs dilution effects)
+
+
+def chemical_reaction_model(df: pd.DataFrame) -> pd.DataFrame:
+    """Simulate chemical reaction yield with realistic trade-offs and optimal ranges."""
+    solvent = df["Solvent_Volume"].values
+    conc = df["Reactant_A_Conc"].values
+    catalyst = df["Catalyst_Loading"].values
+    temp = df["Temperature"].values
+
+    conc_effect = 30 * np.exp(-0.5 * ((conc - 1.0) / 0.6) ** 2)
+    catalyst_effect = 10 * catalyst / (1 + 0.1 * catalyst**2)
+    temp_effect = 15 * np.exp(-0.5 * ((temp - 90) / 25) ** 2)
+    solvent_effect = 5 * solvent / (1 + 0.01 * solvent**2)
+
+    base_yield = conc_effect + catalyst_effect + temp_effect + solvent_effect
+
+    noise = np.random.normal(0, 3, len(df))
+    yield_values = base_yield + noise
+
+    return pd.DataFrame({"Reaction_Yield": yield_values})
+
+
+lookup = chemical_reaction_model
+
+recommender = BotorchRecommender(sequential_continuous=False)
 
 campaign = Campaign(
     searchspace=searchspace,
     objective=objective,
+    recommender=recommender,
 )
 
-BATCH_SIZE = 5
-N_ITERATIONS = 3
-TOLERANCE = 0.01
+# ## Initial Training Data
 
-for k in range(N_ITERATIONS):
-    rec = campaign.recommend(batch_size=BATCH_SIZE)
-    lookup_values = lookup(rec)
-    measurements = pd.concat([rec, lookup_values], axis=1)
+# We generate 5 random experiments from the search space to simulate existing data.
+
+initial_data = searchspace.continuous.sample_uniform(5)
+initial_results = lookup(initial_data)
+initial_measurements = pd.concat([initial_data, initial_results], axis=1)
+campaign.add_measurements(initial_measurements)
+
+# ## Optimization Loop with Constraint Validation
+
+# We run several optimization iterations, where each iteration recommends a batch
+# of experiments that satisfy both intrapoint and interpoint constraints. After
+# evaluating each batch, we validate that the interpoint constraints are satisfied
+# and use assertions to ensure the optimization respects our resource limitations.
+
+results_log = []
+
+for iteration in range(N_ITERATIONS):
+    recommendations = campaign.recommend(batch_size=BATCH_SIZE)
+
+    reaction_results = lookup(recommendations)
+    measurements = pd.concat([recommendations, reaction_results], axis=1)
+
     campaign.add_measurements(measurements)
 
-    # Check interpoint constraints
+    total_solvent = recommendations["Solvent_Volume"].sum()
+    total_catalyst = recommendations["Catalyst_Loading"].sum()
+
+    solvent_ok = abs(total_solvent - 60.0) < TOLERANCE
+    catalyst_ok = total_catalyst <= (30.0 + TOLERANCE)
+
+    assert solvent_ok, (
+        f"Solvent constraint violated: {total_solvent:.1f} mL (expected 60.0 mL)"
+    )
+    assert catalyst_ok, (
+        f"Catalyst constraint violated: {total_catalyst:.1f} mol% (max 30.0 mol%)"
+    )
+
+    results_log.append(
+        {
+            "iteration": iteration + 1,
+            "total_solvent_mL": total_solvent,
+            "total_catalyst_mol%": total_catalyst,
+            "individual_solvent_mL": recommendations["Solvent_Volume"].tolist(),
+            "individual_catalyst_mol%": recommendations["Catalyst_Loading"].tolist(),
+        }
+    )
 
     print(
-        "The sum of `x_1` across all batches is at least >= 2.5",
-        rec["x_1"].sum() >= 2.5 - TOLERANCE,
+        f"Batch {iteration + 1}: Solvent={total_solvent:.1f}mL, Catalyst={total_catalyst:.1f}mol%"
     )
-    print(
-        "The sum of `x_2` across all batches is exactly 5",
-        abs(rec["x_2"].sum() - 5) < TOLERANCE,
+
+# ## Visualization
+
+# We create plots showing both individual experiment values and their totals to
+# illustrate how interpoint constraints work. The individual lines show how the
+# optimizer distributes resources across experiments within each batch, while the
+# bold total lines demonstrate that the batch-level constraints are satisfied.
+
+results_df = pd.DataFrame(results_log)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+for exp_idx in range(BATCH_SIZE):
+    individual_values = [
+        batch[exp_idx] for batch in results_df["individual_solvent_mL"]
+    ]
+    ax1.plot(
+        results_df["iteration"],
+        individual_values,
+        "o-",
+        alpha=0.6,
+        label=f"Exp {exp_idx + 1}",
     )
-    print(
-        "The sum of `2*x_3` minus the sum of `x_4` across all batches is at least >= 2.5",
-        2 * rec["x_3"].sum() - rec["x_4"].sum() >= 2.5 - TOLERANCE,
+
+ax1.plot(
+    results_df["iteration"],
+    results_df["total_solvent_mL"],
+    "s-",
+    color="blue",
+    linewidth=2,
+    label="Total",
+)
+ax1.axhline(y=60, color="red", linestyle="--", label="Required")
+ax1.set_title("Solvent: Individual + Total")
+ax1.legend()
+
+for exp_idx in range(BATCH_SIZE):
+    individual_values = [
+        batch[exp_idx] for batch in results_df["individual_catalyst_mol%"]
+    ]
+    ax2.plot(
+        results_df["iteration"],
+        individual_values,
+        "o-",
+        alpha=0.6,
+        label=f"Exp {exp_idx + 1}",
     )
+
+ax2.plot(
+    results_df["iteration"],
+    results_df["total_catalyst_mol%"],
+    "s-",
+    color="orange",
+    linewidth=2,
+    label="Total",
+)
+ax2.axhline(y=30, color="red", linestyle="--", label="Limit")
+ax2.set_title("Catalyst: Individual + Total")
+ax2.legend()
+
+plt.tight_layout()
+if not SMOKE_TEST:
+    plt.savefig("interpoint_constraints.svg")
