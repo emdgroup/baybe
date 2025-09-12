@@ -82,6 +82,44 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
+### Continuous Interpoint Constraints
+
+The constraints discussed in the previous paragraph belong to the class of so-called
+"intrapoint constraints". That is, they impose conditions on each individual point of a batch.
+In contrast to this, interpoint constraints do so **across** the points of the batch.
+That is, an interpoint constraint of the form ``x + y <= 1`` technically encodes
+$$
+\sum_{i\text{ in batch}}x_i + \sum_{i\text{ in batch}}y_i <= 1
+$$
+A possible relevant constraint might be that only 100ml of a given solvent are available for 
+a full batch.
+
+They can be defined by using the `interpoint` argument of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+class. 
+```python
+from baybe.constraints import ContinuousLinearConstraint
+
+ContinuousLinearConstraint(
+    parameters=["SolventAmount[ml]"],
+    operator="<=",
+    coefficients=[1.0],
+    rhs=100,
+    interpoint=True,
+)
+```
+
+```{admonition} Limited scope
+:class: warning
+There are some limitations regarding the use of interpoint constraints that you need
+to be aware of:
+- BayBE does not support to use both interpoint and cardinality constraints
+within the same search space.
+- When using interpoint constraints, the candidate generation has be done sequentially,
+and an error is raised if attempting to use them for joint optimization.
+- Interpoint constraints are only supported in purely continuous spaces and are not
+available in hybrid spaces.
+```
+
 ### ContinuousCardinalityConstraint
 The {class}`~baybe.constraints.continuous.ContinuousCardinalityConstraint` gives you a
 tool to control the number of active factors (i.e. parameters that take a non-zero

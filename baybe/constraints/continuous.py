@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import cattrs
 import numpy as np
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, in_, lt
+from attrs.validators import deep_iterable, gt, in_, instance_of, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -51,6 +51,18 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
+
+    is_interpoint: bool = field(
+        alias="interpoint", default=False, validator=instance_of(bool)
+    )
+    """Flag for defining an interpoint constraint.
+
+    While intrapoint constraints impose conditions on each individual point of a batch,
+    interpoint constraints do so **across** the points of the batch. That is, an
+    interpoint constraint of the form ``x <= 100`` encodes that the sum of the values
+    of the parameter ``x`` across all points in the batch must be less than or equal to
+    ``100``.
+    """
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -105,7 +117,11 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         )
 
     def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
+        self,
+        parameters: Sequence[NumericalContinuousParameter],
+        idx_offset: int = 0,
+        *,
+        batch_size: int | None = None,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -115,6 +131,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         Args:
             parameters: The parameter objects of the continuous space.
             idx_offset: Offset to the provided parameter indices.
+            batch_size: The batch size used for the recommendation. Necessary
+                for interpoint constraints as indices need to be adjusted.
+                Ignored by all other constraints.
 
         Returns:
             The tuple required by botorch.
@@ -123,18 +142,43 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        param_names = [p.name for p in parameters]
-        param_indices = [
-            param_names.index(p) + idx_offset
-            for p in self.parameters
-            if p in param_names
-        ]
+        assert not (batch_size is None and self.is_interpoint), (
+            "No ``batch_size`` set but using interpoint constraints."
+        )
 
+        assert not (batch_size is not None and not self.is_interpoint), (
+            "A ``batch_size`` was set but the constraint is not interpoint."
+        )
+
+        param_names = [p.name for p in parameters]
+        # Interpoint and intrapoint require different index formats. For more
+        # information, we refer to the botorch documentation:
+        # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
+        param_indices: list[int] | list[tuple[int, int]]
+        coefficients: torch.Tensor
+        if not self.is_interpoint:
+            param_indices = [
+                param_names.index(p) + idx_offset
+                for p in self.parameters
+                if p in param_names
+            ]
+            coefficients = torch.tensor(self.coefficients, dtype=DTypeFloatTorch)
+        else:
+            assert batch_size is not None
+            param_index_dict = {
+                name: param_names.index(name) for name in self.parameters
+            }
+            param_indices = [
+                (batch, param_index_dict[name] + idx_offset)
+                for name in self.parameters
+                for batch in range(batch_size)
+            ]
+            coefficients = torch.tensor(
+                self.coefficients, dtype=DTypeFloatTorch
+            ).repeat_interleave(batch_size)
         return (
             torch.tensor(param_indices),
-            torch.tensor(
-                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
-            ),
+            self._multiplier * coefficients,
             np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
         )
 
