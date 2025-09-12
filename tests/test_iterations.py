@@ -170,8 +170,8 @@ valid_meta_recommenders = get_subclasses(MetaRecommender)
 
 valid_priors = [
     GammaPrior(3, 1),
-    HalfCauchyPrior(2),
-    HalfNormalPrior(2),
+    HalfCauchyPrior(0.5),
+    HalfNormalPrior(0.5),
     LogNormalPrior(1, 2),
     NormalPrior(1, 2),
     SmoothedBoxPrior(0, 3, 0.1),
@@ -183,7 +183,6 @@ valid_base_kernels: list[Kernel] = [
     for cls, arg_dict in [
         (MaternKernel, {"lengthscale_prior": prior}),
         (LinearKernel, {"variance_prior": prior}),
-        (PeriodicKernel, {"period_length_prior": prior}),
         (PeriodicKernel, {"lengthscale_prior": prior}),
         (PiecewisePolynomialKernel, {"lengthscale_prior": prior}),
         (PolynomialKernel, {"offset_prior": prior, "power": 2}),
