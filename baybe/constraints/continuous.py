@@ -170,8 +170,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             ]
             coefficients = list(self.coefficients)
         else:
-            # mypy does not realize that batch_size is not None here due to the
-            # checks above.
             assert batch_size is not None
             param_index_dict = {
                 name: param_names.index(name) for name in self.parameters
