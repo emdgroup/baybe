@@ -68,41 +68,10 @@ jobs:
             exit 1
           fi
 
-  add-runner:
-    needs: prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
-    steps:
-      - name: Generate a token
-        id: generate-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: Github_Add_Runner
-          aws-region: eu-central-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Execute Lambda function
-        run: |
-          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "M", "repository": "${{ github.repository }}" }'  response.json
-
-          if ! grep -q '"statusCode": 200' response.json; then
-            echo "Lambda function failed. statusCode is not 200."
-            exit 1
-          fi
-
   benchmark-test:
     name: run
-    needs: [prepare, add-runner]
-    runs-on: self-hosted
+    needs: [prepare]
+    runs-on: M
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}

@@ -177,16 +177,24 @@ jobs:
           awk '{if ( $1<${{ env.COVERAGE_INDIVIDUAL_THRESH }} ) exit 1 }'
 
   gputest:
-    needs: typecheck
+    needs: [typecheck]
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    uses: ./.github/workflows/gpu_tests.yml
-    secrets: inherit
-    permissions:
-      contents: read
-      id-token: write
     strategy:
       matrix:
         py-version: [ {semantic: '3.10', tox: 'py310'} ]
-    with:
-      semantic: ${{ matrix.py-version.semantic }}
-      tox: ${{ matrix.py-version.tox }} 
+    name: GPU Tests ${{ matrix.py-version.semantic }}
+    runs-on: XS-GPU
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: ${{ matrix.py-version.semantic }}
+      - uses: actions/cache@v4
+        with:
+          path: .tox/gputest-${{ matrix.py-version.tox }}
+          key: gputest-${{ matrix.py-version.tox }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}
+      - name: Run GPU tests
+        run: |
+          pip install tox-uv
+          tox -e gputest-${{ matrix.py-version.tox }}
