@@ -180,40 +180,35 @@ campaign.add_measurements(initial_measurements)
 
 results_log = []
 
-for iteration in range(N_ITERATIONS):
+for it in range(N_ITERATIONS):
     recommendations = campaign.recommend(batch_size=BATCH_SIZE)
 
     reaction_results = lookup(recommendations)
     measurements = pd.concat([recommendations, reaction_results], axis=1)
-
     campaign.add_measurements(measurements)
-
-    total_solvent = recommendations["Solvent_Volume"].sum()
-    total_catalyst = recommendations["Catalyst_Loading"].sum()
-
-    solvent_ok = abs(total_solvent - 60.0) < TOLERANCE
-    catalyst_ok = total_catalyst <= (30.0 + TOLERANCE)
+    total_sol = recommendations["Solvent_Volume"].sum()
+    total_cat = recommendations["Catalyst_Loading"].sum()
+    solvent_ok = abs(total_sol - 60.0) < TOLERANCE
+    catalyst_ok = total_cat <= (30.0 + TOLERANCE)
 
     assert solvent_ok, (
-        f"Solvent constraint violated: {total_solvent:.1f} mL (expected 60.0 mL)"
+        f"Solvent constraint violated: {total_sol:.1f} mL (expected 60.0 mL)"
     )
     assert catalyst_ok, (
-        f"Catalyst constraint violated: {total_catalyst:.1f} mol% (max 30.0 mol%)"
+        f"Catalyst constraint violated: {total_cat:.1f} mol% (max 30.0 mol%)"
     )
 
     results_log.append(
         {
-            "iteration": iteration + 1,
-            "total_solvent_mL": total_solvent,
-            "total_catalyst_mol%": total_catalyst,
+            "iteration": it + 1,
+            "total_solvent_mL": total_sol,
+            "total_catalyst_mol%": total_cat,
             "individual_solvent_mL": recommendations["Solvent_Volume"].tolist(),
             "individual_catalyst_mol%": recommendations["Catalyst_Loading"].tolist(),
         }
     )
 
-    print(
-        f"Batch {iteration + 1}: Solvent={total_solvent:.1f}mL, Catalyst={total_catalyst:.1f}mol%"
-    )
+    print(f"Batch {it + 1}: Solvent={total_sol:.1f}mL, Catalyst={total_cat:.1f}mol%")
 
 # ## Visualization
 
@@ -224,13 +219,14 @@ for iteration in range(N_ITERATIONS):
 
 results_df = pd.DataFrame(results_log)
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+fig, axs = plt.subplots(1, 2, figsize=(10, 4))
 
+plt.sca(axs[0])
 for exp_idx in range(BATCH_SIZE):
     individual_values = [
         batch[exp_idx] for batch in results_df["individual_solvent_mL"]
     ]
-    ax1.plot(
+    plt.plot(
         results_df["iteration"],
         individual_values,
         "o-",
@@ -238,7 +234,7 @@ for exp_idx in range(BATCH_SIZE):
         label=f"Exp {exp_idx + 1}",
     )
 
-ax1.plot(
+plt.plot(
     results_df["iteration"],
     results_df["total_solvent_mL"],
     "s-",
@@ -246,15 +242,16 @@ ax1.plot(
     linewidth=2,
     label="Total",
 )
-ax1.axhline(y=60, color="red", linestyle="--", label="Required")
-ax1.set_title("Solvent: Individual + Total")
-ax1.legend()
+plt.axhline(y=60, color="red", linestyle="--", label="Required")
+plt.title("Solvent: Individual + Total")
+plt.legend()
 
+plt.sca(axs[1])
 for exp_idx in range(BATCH_SIZE):
     individual_values = [
         batch[exp_idx] for batch in results_df["individual_catalyst_mol%"]
     ]
-    ax2.plot(
+    plt.plot(
         results_df["iteration"],
         individual_values,
         "o-",
@@ -262,7 +259,7 @@ for exp_idx in range(BATCH_SIZE):
         label=f"Exp {exp_idx + 1}",
     )
 
-ax2.plot(
+plt.plot(
     results_df["iteration"],
     results_df["total_catalyst_mol%"],
     "s-",
@@ -270,10 +267,10 @@ ax2.plot(
     linewidth=2,
     label="Total",
 )
-ax2.axhline(y=30, color="red", linestyle="--", label="Limit")
-ax2.set_title("Catalyst: Individual + Total")
-ax2.legend()
+plt.axhline(y=30, color="red", linestyle="--", label="Limit")
+plt.title("Catalyst: Individual + Total")
+plt.legend()
 
 plt.tight_layout()
 if not SMOKE_TEST:
-    plt.savefig("interpoint_constraints.svg")
+    plt.savefig("interpoint.svg")
