@@ -432,8 +432,8 @@ def test_sample_from_polytope_with_interpoint_constraints_equality(
 
     assert subspace.has_interpoint_constraints
 
-    # Test some batch sizes > 1 to trigger the interpoint logic
-    for batch_size in [2, 3, 5, 10, 42]:
+    # Test batch size of 1 as well as one small and one large batch size
+    for batch_size in [1, 2, 42]:
         bounds = subspace.comp_rep_bounds.values
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
@@ -456,8 +456,8 @@ def test_sample_from_polytope_with_interpoint_constraints_inequality(
 
     assert subspace.has_interpoint_constraints
 
-    # Test some batch sizes > 1 to trigger the interpoint logic
-    for batch_size in [2, 3, 5, 10, 42]:
+    # Test batch size of 1 as well as one small and one large batch size
+    for batch_size in [1, 2, 42]:
         bounds = subspace.comp_rep_bounds.values
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
@@ -498,8 +498,8 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
 
     assert subspace.has_interpoint_constraints
 
-    # Test sampling with batch size > 1
-    for batch_size in [2, 3, 5, 10, 42]:
+    # Test batch size of 1 as well as one small and one large batch size
+    for batch_size in [1, 2, 42]:
         bounds = subspace.comp_rep_bounds.values
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
