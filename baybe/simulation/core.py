@@ -215,14 +215,14 @@ def simulate_experiment(
             # Compute the instantaneous best
             iterbest_idx = transformed.apply(np.argmax)
             iterbest_transformed = transformed.apply(np.max)
-            results[iterbest_col] = np.take_along_axis(
+            iterative_best = np.take_along_axis(
                 raw, iterbest_idx.values[:, None], axis=1
             )
+            results[iterbest_col] = iterative_best
 
             # Compute the cumulative best
             cumargmax = _cumargmax(iterbest_transformed.values)
-            results[cumbest_col] = np.take_along_axis(raw, cumargmax[:, None], axis=0)
-
+            results[cumbest_col] = iterative_best[cumargmax]
         return results
 
 
