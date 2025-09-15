@@ -103,6 +103,7 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     return rho
 
 
+# Dictionary mapping transfer learning model names to their surrogate classes.
 TL_MODELS = {
     "index_kernel": GaussianProcessSurrogate,
 }
