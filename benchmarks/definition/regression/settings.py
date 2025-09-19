@@ -95,9 +95,7 @@ class RegressionBenchmark(Benchmark[RegressionBenchmarkSettings]):
 
 
 @define(frozen=True)
-class TransferLearningRegressionBenchmark(
-    Benchmark[TransferLearningRegressionBenchmarkSettings]
-):
+class TransferLearningRegressionBenchmark(RegressionBenchmark):
     """Benchmark for comparing regression performance of non-TL vs TL models.
 
     Evaluates the predictive performance of transfer learning models compared
@@ -105,3 +103,5 @@ class TransferLearningRegressionBenchmark(
     with varying amounts of source and target data, evaluates their performance
     on held-out target data.
     """
+
+    settings: TransferLearningRegressionBenchmarkSettings
