@@ -52,7 +52,7 @@ benchmark_config = TransferLearningRegressionBenchmarkSettings(
     },
     max_n_train_points_settings={
         RunMode.DEFAULT: 10,
-        RunMode.SMOKETEST: 5,
+        RunMode.SMOKETEST: 2,
     },
     source_fractions_settings={
         RunMode.DEFAULT: (0.01, 0.05, 0.1, 0.2),
