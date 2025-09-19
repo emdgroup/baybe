@@ -402,7 +402,7 @@ def fixture_targets(target_names: list[str]):
         NumericalTarget.match_bell(
             name="Target_match_bell",
             match_value=50,
-            sigma=50,
+            sigma=5,
         ),
         NumericalTarget.match_triangular(
             name="Target_match_triangular",
