@@ -88,7 +88,6 @@ def test_simulate_scenarios_structure(campaign, batch_size):
         mc_data = result[result["Monte_Carlo_Run"] == mc_run]
 
         for t in campaign.targets:
-            print("Name: ", t.name)
             aggregator = _aggregators[t.name]
             assert np.isclose(
                 mc_data[f"{t.name}_IterBest"].values,
@@ -104,8 +103,5 @@ def test_simulate_scenarios_structure(campaign, batch_size):
             expected_cum_best = [
                 aggregator(all_measurements[:cum_len]) for cum_len in cum_lens
             ]
-            print("A ", cum_lens)
-            print("B ", all_measurements)
-            print("C ", expected_cum_best)
 
             assert list(mc_data[f"{t.name}_CumBest"]) == expected_cum_best
