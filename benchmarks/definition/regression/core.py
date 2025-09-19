@@ -201,17 +201,47 @@ def run_tl_regression_benchmark(
     pbar = tqdm(total=total_iterations, desc="Running benchmark", unit="eval")
 
     for mc_iter in range(settings.n_mc_iterations):
-        for fraction_source in settings.source_fractions:
-            # Sample source data ensuring same fraction from each source task
-            source_subset = _sample_source_data(
-                source_data,
-                source_tasks,
-                fraction_source,
-                name_task,
-                settings.random_seed + mc_iter,
+        for n_train_pts in range(1, settings.max_n_train_points + 1):
+            target_train, target_test = train_test_split(
+                target_data,
+                train_size=n_train_pts,
+                test_size=settings.max_n_train_points,
+                random_state=settings.random_seed + mc_iter,
+                shuffle=True,
             )
 
-            for n_train_pts in range(1, settings.max_n_train_points + 1):
+            # Add noise to target training data
+            if settings.noise_std > 0:
+                target_train = target_train.copy()
+                target_train[objective._target.name] += np.random.normal(
+                    0, settings.noise_std, len(target_train)
+                )
+
+            # Evaluate naive models once per (mc_iter, n_train_pts)
+            naive_results = _evaluate_naive_models(
+                target_train,
+                target_test,
+                vanilla_searchspace,
+                tl_searchspace,
+                objective,
+            )
+
+            # Add metadata for naive models (fraction_source = 0 for consistency)
+            for naive_result in naive_results:
+                naive_result.update(
+                    {
+                        "mc_iter": mc_iter,
+                        "n_train_pts": n_train_pts,
+                        "fraction_source": 0.0,  # Naive models don't use source data
+                        "n_source_pts": 0,
+                        "n_test_pts": len(target_test),
+                        "source_data_seed": settings.random_seed + mc_iter,
+                    }
+                )
+                results.append(naive_result)
+
+            # Evaluate transfer learning models for each source fraction
+            for fraction_source in settings.source_fractions:
                 # Update progress bar description
                 pbar.set_description(
                     f"MC {mc_iter + 1}/{settings.n_mc_iterations} | "
@@ -219,46 +249,27 @@ def run_tl_regression_benchmark(
                     f"Pts {n_train_pts}/{settings.max_n_train_points}"
                 )
 
-                target_train, target_test = train_test_split(
-                    target_data,
-                    train_size=n_train_pts,
-                    test_size=settings.max_n_train_points,
-                    random_state=settings.random_seed + mc_iter,
-                    shuffle=True,
+                # Sample source data ensuring same fraction from each source task
+                source_subset = _sample_source_data(
+                    source_data,
+                    source_tasks,
+                    fraction_source,
+                    name_task,
+                    settings.random_seed + mc_iter,
                 )
 
-                # Add noise to target training data
-                if settings.noise_std > 0:
-                    target_train = target_train.copy()
-                    target_train[objective._target.name] += np.random.normal(
-                        0, settings.noise_std, len(target_train)
-                    )
-
-                # Collect results for current training scenario
-                scenario_results: list[dict[str, Any]] = []
-                scenario_results.extend(
-                    _evaluate_naive_models(
-                        target_train,
-                        target_test,
-                        vanilla_searchspace,
-                        tl_searchspace,
-                        objective,
-                    )
-                )
-                scenario_results.extend(
-                    _evaluate_transfer_learning_models(
-                        source_subset,
-                        target_train,
-                        target_test,
-                        tl_searchspace,
-                        objective,
-                        fraction_source,
-                    )
+                tl_results = _evaluate_transfer_learning_models(
+                    source_subset,
+                    target_train,
+                    target_test,
+                    tl_searchspace,
+                    objective,
+                    fraction_source,
                 )
 
-                # Add metadata to each scenario result
-                for scenario_result in scenario_results:
-                    scenario_result.update(
+                # Add metadata for transfer learning models
+                for tl_result in tl_results:
+                    tl_result.update(
                         {
                             "mc_iter": mc_iter,
                             "n_train_pts": n_train_pts,
@@ -268,7 +279,7 @@ def run_tl_regression_benchmark(
                             "source_data_seed": settings.random_seed + mc_iter,
                         }
                     )
-                    results.append(scenario_result)
+                    results.append(tl_result)
 
                 pbar.update(1)
 
