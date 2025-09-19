@@ -227,6 +227,13 @@ def run_tl_regression_benchmark(
                     shuffle=True,
                 )
 
+                # Add noise to target training data
+                if settings.noise_std > 0:
+                    target_train = target_train.copy()
+                    target_train[objective._target.name] += np.random.normal(
+                        0, settings.noise_std, len(target_train)
+                    )
+
                 # Collect results for current training scenario
                 scenario_results: list[dict[str, Any]] = []
                 scenario_results.extend(

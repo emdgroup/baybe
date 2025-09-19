@@ -27,7 +27,7 @@ class RegressionBenchmarkSettings(BenchmarkSettings):
     noise_std_settings: dict[RunMode, float] = field(
         validator=make_runmode_attr_validator(float)
     )
-    """The settings for standard deviation of noise to add to the data."""
+    """The settings for standard deviation of noise on the target training data."""
 
     @property
     def n_mc_iterations(self) -> int:
