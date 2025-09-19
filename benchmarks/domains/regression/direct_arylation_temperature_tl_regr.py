@@ -56,7 +56,7 @@ benchmark_config = TransferLearningRegressionBenchmarkSettings(
     },
     source_fractions_settings={
         RunMode.DEFAULT: (0.01, 0.05, 0.1, 0.2),
-        RunMode.SMOKETEST: (0.1,),
+        RunMode.SMOKETEST: (0.01,),
     },
     noise_std_settings={
         RunMode.DEFAULT: 0.0,
