@@ -3,7 +3,7 @@
 from typing import Any
 
 import pytest
-from attrs import Attribute, evolve, fields
+from attrs import Attribute, evolve
 
 from baybe import Settings, settings
 
@@ -41,7 +41,7 @@ def test_direct_setting_unknown_attribute():
         settings.unknown_setting = True
 
 
-@pytest.mark.parametrize("attribute", fields(Settings), ids=lambda a: a.name)
+@pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to apply an invalid settings value raises an error."""
     with pytest.raises(TypeError):
@@ -67,4 +67,23 @@ def test_setting_via_instantiation():
     for fld in attributes:
         assert getattr(s, fld.name) == overwrites[fld.name]
         assert getattr(s2, fld.name) == original_values[fld.name]
+        assert getattr(settings, fld.name) == original_values[fld.name]
+
+
+def test_setting_via_context_manager():
+    """Settings are rolled back after exiting a settings context."""
+    attributes = Settings.attributes
+
+    # Collect original and new settings values
+    original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
+    overwrites = {key: toggle(value) for key, value in original_values.items()}
+
+    # The new settings are applied within the context
+    with Settings(**overwrites) as s:
+        for fld in attributes:
+            assert getattr(s, fld.name) == overwrites[fld.name]
+            assert getattr(settings, fld.name) == overwrites[fld.name]
+
+    # After exiting the context, the original settings are restored
+    for fld in attributes:
         assert getattr(settings, fld.name) == original_values[fld.name]
