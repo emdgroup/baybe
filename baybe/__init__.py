@@ -2,6 +2,7 @@
 
 import warnings
 
+from baybe._settings import Settings, settings
 from baybe.campaign import Campaign
 
 # Show deprecation warnings
@@ -55,6 +56,8 @@ __version__ = infer_version()
 __all__ = [
     "__version__",
     "Campaign",
+    "Settings",
+    "settings",
 ]
 
 del infer_version
