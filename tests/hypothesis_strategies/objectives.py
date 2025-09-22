@@ -6,18 +6,13 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.targets import NumericalTarget, TargetMode
-from baybe.targets.numerical import _VALID_TRANSFORMATIONS
+from tests.hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.metadata import metadata
+from tests.hypothesis_strategies.targets import numerical_targets
 
-from ..hypothesis_strategies.basic import finite_floats
-from ..hypothesis_strategies.metadata import measurable_metadata, metadata
-from ..hypothesis_strategies.targets import numerical_targets
-from ..hypothesis_strategies.utils import intervals as st_intervals
-
-_intervals = st_intervals(exclude_fully_unbounded=True, exclude_half_bounded=True)
-
-_target_lists = st.lists(
-    numerical_targets(_intervals), min_size=2, unique_by=lambda t: t.name
+_target_lists = st.lists(numerical_targets(), min_size=2, unique_by=lambda t: t.name)
+_normalized_target_lists = st.lists(
+    numerical_targets(normalized=True), min_size=2, unique_by=lambda t: t.name
 )
 
 
@@ -32,7 +27,13 @@ def single_target_objectives(draw: st.DrawFn):
 @st.composite
 def desirability_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.desirability.DesirabilityObjective`."""
-    targets = draw(_target_lists)
+    scalarizer = draw(st.sampled_from(Scalarizer))
+    if require_normalization := (
+        draw(st.booleans()) or scalarizer is Scalarizer.GEOM_MEAN
+    ):
+        targets = draw(_normalized_target_lists)
+    else:
+        targets = draw(_target_lists)
     weights = draw(
         st.lists(
             finite_floats(min_value=0.0, exclude_min=True),
@@ -40,47 +41,27 @@ def desirability_objectives(draw: st.DrawFn):
             max_size=len(targets),
         )
     )
-    scalarizer = draw(st.sampled_from(Scalarizer))
     objective_metadata = draw(metadata())
     return DesirabilityObjective(
-        targets, weights, scalarizer, metadata=objective_metadata
+        targets,
+        weights,
+        scalarizer,
+        require_normalization=require_normalization,
+        metadata=objective_metadata,
     )
-
-
-@st.composite
-def _pareto_targets(draw: st.DrawFn):
-    """Generate :class:`baybe.targets.numerical.NumericalTarget`."""
-    name = draw(st.text(min_size=1))
-    mode = draw(st.sampled_from(TargetMode))
-
-    if mode is TargetMode.MATCH:
-        transformation = draw(st.sampled_from(_VALID_TRANSFORMATIONS[mode]))
-        bounds = draw(
-            st_intervals(exclude_half_bounded=True, exclude_fully_unbounded=True)
-        )
-    else:
-        transformation = None
-        bounds = None
-
-    target_metadata = draw(measurable_metadata())
-
-    return NumericalTarget(
-        name=name,
-        mode=mode,
-        bounds=bounds,
-        transformation=transformation,
-        metadata=target_metadata,
-    )
-
-
-_pareto_target_lists = st.lists(
-    _pareto_targets(), min_size=2, unique_by=lambda t: t.name
-)
 
 
 @st.composite
 def pareto_objectives(draw: st.DrawFn):
     """Generate :class:`baybe.objectives.pareto.ParetoObjective`."""
-    targets = draw(_pareto_target_lists)
     objective_metadata = draw(metadata())
+    targets = draw(_target_lists)
     return ParetoObjective(targets, metadata=objective_metadata)
+
+
+objectives = st.one_of(
+    single_target_objectives(),
+    desirability_objectives(),
+    pareto_objectives(),
+)
+"""A strategy that generates objectives."""

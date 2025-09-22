@@ -9,9 +9,10 @@ from itertools import combinations
 from math import comb
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 import numpy as np
-from attr.validators import gt, in_, lt
 from attrs import define, field
+from attrs.validators import deep_iterable, gt, in_, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -42,7 +43,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
     """Defines the operator used in the equation. Internally this will negate rhs and
     coefficients for `<=`."""
 
-    coefficients: list[float] = field()
+    coefficients: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=deep_iterable(member_validator=finite_float),
+    )
     """In-/equality coefficient for each entry in ``parameters``."""
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
@@ -50,7 +54,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
-        self, _: Any, coefficients: list[float]
+        self, _: Any, coefficients: Sequence[float]
     ) -> None:
         """Validate the coefficients.
 
@@ -65,9 +69,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             )
 
     @coefficients.default
-    def _default_coefficients(self):
+    def _default_coefficients(self) -> tuple[float, ...]:
         """Return equal weight coefficients as default."""
-        return [1.0] * len(self.parameters)
+        return (1.0,) * len(self.parameters)
 
     @property
     def _multiplier(self) -> float:
@@ -91,11 +95,11 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             The reduced constraint.
         """
         parameters = [p for p in self.parameters if p not in parameter_names]
-        coefficients = [
+        coefficients = tuple(
             c
-            for p, c in zip(self.parameters, self.coefficients)
+            for p, c in zip(self.parameters, self.coefficients, strict=True)
             if p not in parameter_names
-        ]
+        )
         return ContinuousLinearConstraint(
             parameters, self.operator, coefficients, self.rhs
         )

@@ -8,7 +8,7 @@ the method is called **active learning**.
 Active learning can be seen as a special case of Bayesian optimization: If we have the
 above-mentioned criterion and set up a Bayesian optimization campaign to recommend
 points with the highest uncertainty, we achieve active learning via Bayesian
-optimization. In practice, this is procedure is implemented by setting up a
+optimization. In practice, this procedure is implemented by setting up a
 probabilistic model of our measurement process that allows us to quantify uncertainty
 in the form of a posterior distribution, from which we can then construct an
 uncertainty-based acquisition function to guide the exploration process.

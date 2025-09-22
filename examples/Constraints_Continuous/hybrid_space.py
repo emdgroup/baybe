@@ -83,12 +83,12 @@ constraints = [
         ),
     ),
     ContinuousLinearConstraint(
-        parameters=["x_3", "x_4"], operator="=", coefficients=[1.0, -1.0], rhs=2.0
+        parameters=["x_3", "x_4"], operator="=", coefficients=(1.0, -1.0), rhs=2.0
     ),
 ]
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
-target = NumericalTarget(name="Target", mode="MIN")
+target = NumericalTarget(name="Target", minimize=True)
 objective = target.to_objective()
 
 ### Wrap the test function as a dataframe-based lookup callable

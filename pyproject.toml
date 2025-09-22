@@ -31,7 +31,7 @@ dynamic = ['version']
 dependencies = [
     "attrs>=24.1.0",
     "botorch>=0.13.0,<1",
-    "cattrs>=24.1.0",
+    "cattrs>=25.2.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",
     "joblib>1.4.0,<2",
@@ -132,7 +132,8 @@ lint = [
 mypy = [
     "mypy>=1.10.1",
     "pandas-stubs>=2.2.2.240603",
-    "types-seaborn>=0.13.2.20240618"
+    "types-seaborn>=0.13.2.20240618",
+    "types-psutil>=7.0.0.20250801"
 ]
 
 polars = [
@@ -150,6 +151,7 @@ benchmarking = [
     "baybe[examples]", # Due to matplotlib
     "boto3>=1.0.0,<2",
     "GitPython>=3.0.6,<4", # GitPython<3.0.6 is necessary since older versions rely on a specific version of GitDB: https://github.com/gitpython-developers/GitPython/issues/983
+    "psutil>=7.0.0",
 ]
 
 test = [

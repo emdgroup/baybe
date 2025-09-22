@@ -62,8 +62,7 @@ CONFIG = str(
         "target":
             {
                 "type": "NumericalTarget",
-                "name": "Yield",
-                "mode": "MAX"
+                "name": "Yield"
             }
     },
     "recommender": {
@@ -132,8 +131,7 @@ INVALID_CONFIG = str(
         "target":
             {
                 "type": "NumericalTarget",
-                "name": "Yield",
-                "mode": "MAX"
+                "name": "Yield"
             }
     },
     "recommender": {

@@ -25,8 +25,7 @@ from baybe.constraints.discrete import (
 )
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.numerical import NumericalDiscreteParameter
-
-from ..hypothesis_strategies.basic import finite_floats
+from tests.hypothesis_strategies.basic import finite_floats
 
 
 def sub_selection_conditions(superset: list[Any] | None = None):
@@ -228,13 +227,7 @@ def continuous_linear_constraints(
         assert len(parameter_names) > 0
         assert len(parameter_names) == len(set(parameter_names))
 
-    coefficients = draw(
-        st.lists(
-            finite_floats(),
-            min_size=len(parameter_names),
-            max_size=len(parameter_names),
-        )
-    )
+    coefficients = draw(st.tuples(*([finite_floats()] * len(parameter_names))))
     rhs = draw(finite_floats())
 
     # Optionally add the operator
@@ -253,3 +246,18 @@ continuous_linear_inequality_constraints = partial(
     continuous_linear_constraints, operators=[">=", "<="]
 )
 """Generate linear inequality constraints."""
+
+constraints = st.one_of(
+    [
+        discrete_excludes_constraints(),
+        discrete_dependencies_constraints(),
+        discrete_permutation_invariance_constraints(),
+        discrete_sum_constraints(),
+        discrete_product_constraints(),
+        discrete_no_label_duplicates_constraints(),
+        discrete_linked_parameters_constraints(),
+        continuous_linear_equality_constraints(),
+        continuous_linear_inequality_constraints(),
+    ]
+)
+"""A strategy that generates constraints."""

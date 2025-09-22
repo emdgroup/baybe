@@ -23,6 +23,7 @@ from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.random import temporary_seed
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
+from benchmarks.definition.base import RunMode
 
 
 def make_searchspace(use_task_parameter: bool) -> SearchSpace:
@@ -48,7 +49,7 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
 
 def make_objective() -> SingleTargetObjective:
     """Create the objective for the benchmark."""
-    return SingleTargetObjective(target=NumericalTarget(name="Target", mode="MAX"))
+    return SingleTargetObjective(target=NumericalTarget(name="Target"))
 
 
 def wrap_function(
@@ -183,9 +184,18 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=2,
-    n_doe_iterations=30,
-    n_mc_iterations=30,
+    batch_size_settings={
+        RunMode.DEFAULT: 2,
+        RunMode.SMOKETEST: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 30,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 30,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 michalewicz_tl_continuous_benchmark = ConvergenceBenchmark(

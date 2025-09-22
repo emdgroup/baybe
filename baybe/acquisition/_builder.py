@@ -4,39 +4,44 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import Any
+from typing import Any, cast
 
-import botorch.acquisition as bo_acqf
 import pandas as pd
 import torch
-from attrs import asdict, define, field, fields
+from attrs import Attribute, asdict, define, field, fields
 from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
-from botorch.acquisition.monte_carlo import MCAcquisitionObjective as BoObjective
-from botorch.acquisition.multi_objective import WeightedMCMultiOutputObjective
-from botorch.acquisition.objective import LinearMCObjective
+from botorch.acquisition.monte_carlo import MCAcquisitionObjective
+from botorch.acquisition.objective import PosteriorTransform
 from botorch.models.model import Model
+from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
+    BoxDecomposition,
+)
 from torch import Tensor
 
 from baybe.acquisition.acqfs import (
-    PosteriorStandardDeviation,
     _ExpectedHypervolumeImprovement,
+    qExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
     qNegIntegratedPosteriorVariance,
-    qPosteriorStandardDeviation,
     qThompsonSampling,
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
-from baybe.exceptions import IncompleteMeasurementsError
+from baybe.acquisition.utils import make_partitioning
+from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
-from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
-from baybe.targets.enum import TargetMode
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance, match_attributes
+from baybe.transformations import AffineTransformation, IdentityTransformation
+from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
+
+_OPT_FIELD: None = object()  # type: ignore[assignment]
+"""Sentinel value indicating optional acquisition function attributes."""
 
 
 def opt_v(x: Any, /) -> Callable:
@@ -44,7 +49,19 @@ def opt_v(x: Any, /) -> Callable:
     return optional(instance_of(x))
 
 
-@define(kw_only=True)
+def _make_optional_fields(_, fields: list[Attribute]) -> list[Attribute]:
+    """Automatically set default values and validators for optional fields."""
+
+    def set_default_and_validator(fld: Attribute) -> Attribute:
+        """Set default value and validator for the given optional field."""
+        if fld.default is not _OPT_FIELD:
+            return fld
+        return fld.evolve(default=None, validator=instance_of(fld.type))  # type: ignore[arg-type]
+
+    return [set_default_and_validator(fld) for fld in fields]
+
+
+@define(kw_only=True, field_transformer=_make_optional_fields)
 class BotorchAcquisitionArgs:
     """The collection of (possible) arguments for BoTorch acquisition functions."""
 
@@ -52,16 +69,18 @@ class BotorchAcquisitionArgs:
     model: Model = field(validator=instance_of(Model))
 
     # Optional, depending on the specific acquisition function being used
-    best_f: float | None = field(default=None, validator=opt_v(float))
-    beta: float | None = field(default=None, validator=opt_v(float))
-    maximize: bool | None = field(default=None, validator=opt_v(bool))
-    mc_points: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    num_fantasies: int | None = field(default=None, validator=opt_v(int))
-    objective: BoObjective | None = field(default=None, validator=opt_v(BoObjective))
-    prune_baseline: bool | None = field(default=None, validator=opt_v(bool))
-    ref_point: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_baseline: Tensor | None = field(default=None, validator=opt_v(Tensor))
-    X_pending: Tensor | None = field(default=None, validator=opt_v(Tensor))
+    best_f: float | None = _OPT_FIELD
+    beta: float | None = _OPT_FIELD
+    maximize: bool | None = _OPT_FIELD
+    mc_points: Tensor | None = _OPT_FIELD
+    num_fantasies: int | None = _OPT_FIELD
+    objective: MCAcquisitionObjective | None = _OPT_FIELD
+    partitioning: BoxDecomposition | None = _OPT_FIELD
+    posterior_transform: PosteriorTransform | None = _OPT_FIELD
+    prune_baseline: bool | None = _OPT_FIELD
+    ref_point: Tensor | None = _OPT_FIELD
+    X_baseline: Tensor | None = _OPT_FIELD
+    X_pending: Tensor | None = _OPT_FIELD
 
     def collect(self) -> dict[str, Any]:
         """Collect the assigned arguments into a dictionary."""
@@ -90,7 +109,6 @@ class BotorchAcquisitionFunctionBuilder:
     _args: BotorchAcquisitionArgs = field(init=False)
     _botorch_acqf_cls: BoAcquisitionFunction = field(init=False)
     _signature: MappingProxyType = field(init=False)
-    _set_best_f_called: bool = field(init=False, default=False)
 
     def __attrs_post_init__(self) -> None:
         """Initialize the building process."""
@@ -111,21 +129,18 @@ class BotorchAcquisitionFunctionBuilder:
         """The botorch surrogate object."""
         return self.surrogate.to_botorch()
 
-    @property
-    def _maximize_flags(self) -> list[bool]:
-        """Booleans indicating which target is to be minimized/maximized."""
-        assert is_all_instance(self.objective.targets, NumericalTarget)
-        return [t.mode is not TargetMode.MIN for t in self.objective.targets]
-
-    @property
-    def _multiplier(self) -> list[float]:
-        """Signs indicating which target is to be minimized/maximized."""
-        return [1.0 if m else -1.0 for m in self._maximize_flags]
-
     @cached_property
     def _train_x(self) -> pd.DataFrame:
         """The training parameter values."""
         return self.searchspace.transform(self.measurements, allow_extra=True)
+
+    @cached_property
+    def _posterior_mean_comp(self) -> Tensor:
+        """The posterior mean of the (transformed) targets of the training data."""
+        # TODO: Currently, this is the "transformed posterior mean of the targets"
+        #   rather than the "posterior mean of the transformed targets".
+        posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
+        return self.objective.to_botorch()(posterior.mean)
 
     @cached_property
     def _target_configurations(self) -> pd.DataFrame:
@@ -157,73 +172,96 @@ class BotorchAcquisitionFunctionBuilder:
                 f"argument of '{self.acqf.__class__.__name__}' explicitly."
             )
 
-        return self.objective.transform(configurations)
+        return configurations
 
     def build(self) -> BoAcquisitionFunction:
         """Build the BoTorch acquisition function object."""
         # Set context-specific parameters
         self._set_best_f()
-        self._invert_optimization_direction()
+        self._set_target_transformation()
         self._set_X_baseline()
         self._set_X_pending()
         self._set_mc_points()
         self._set_ref_point()
+        self._set_partitioning()
 
         botorch_acqf = self._botorch_acqf_cls(**self._args.collect())
         self.set_default_sample_shape(botorch_acqf)
 
         return botorch_acqf
 
-    def _invert_optimization_direction(self) -> None:
-        """Invert optimization direction for minimization targets."""
-        # ``best_f`` must have been already set (for the inversion below to work)
-        assert self._set_best_f_called
+    def _set_target_transformation(self) -> None:
+        """Apply potential target transformations."""
+        # NOTE: BoTorch offers two distinct pathways for implementing target
+        #   transformations, with partly overlapping functionality: posterior transforms
+        #   and objectives (https://github.com/pytorch/botorch/discussions/2164).
+        #   We use the former for affine transformations and the latter to handle
+        #   all other cases.
 
-        if issubclass(
-            type(self.acqf),
-            (
-                qNegIntegratedPosteriorVariance,
-                PosteriorStandardDeviation,
-                qPosteriorStandardDeviation,
-            ),
-        ):
-            # No action needed for the active learning acquisition functions:
-            # - PSTD: Minimization happens by setting `maximize=False`, which is
-            #   already take care of by auto-matching attributes
-            # - qPSTD and qNIPV do not support minimization yet
-            # In both cases, the setting is independent of the target mode.
-            return
-
-        match self.objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                if issubclass(self._botorch_acqf_cls, bo_acqf.MCAcquisitionFunction):
-                    if self._args.best_f is not None:
-                        self._args.best_f *= -1.0
-                    self._args.objective = LinearMCObjective(torch.tensor([-1.0]))
-                elif issubclass(
-                    self._botorch_acqf_cls, bo_acqf.AnalyticAcquisitionFunction
-                ):
-                    self._args.maximize = False
-
-            case ParetoObjective():
-                self._args.objective = WeightedMCMultiOutputObjective(
-                    torch.tensor(self._multiplier)
+        if self.acqf.is_analytic:
+            if not isinstance(self.objective, SingleTargetObjective):
+                targets = self.objective.targets
+                raise IncompatibilityError(
+                    f"The selected analytic acquisition "
+                    f"'{self.acqf.__class__.__name__}' can handle one target only but "
+                    f"the specified objective comprises {len(targets)} targets: "
+                    f"{[t.name for t in targets]}"
                 )
+
+            match target := self.objective._target:
+                case NumericalTarget():
+                    pass
+                case BinaryTarget():
+                    return
+                case _:
+                    raise NotImplementedError("No transformation handling implemented.")
+
+            match t := target.transformation:
+                case IdentityTransformation() | AffineTransformation():
+                    # The identity/affine type narrowing is lost due to the `negate`
+                    # call, but we know that the result will be an AffineTransformation
+                    # in this specific context
+                    oriented = cast(
+                        AffineTransformation, t.negate() if target.minimize else t
+                    )
+                    self._args.posterior_transform = (
+                        oriented.to_botorch_posterior_transform()
+                    )
+                case _:
+                    raise NotImplementedError(
+                        f"The selected analytic acquisition "
+                        f"'{self.acqf.__class__.__name__}' supports only affine "
+                        f"target transformations. "
+                    )
+        else:
+            # TODO: Enable once clarified:
+            # https://github.com/pytorch/botorch/discussions/2849
+            if isinstance(self.acqf, qNegIntegratedPosteriorVariance):
+                # Type narrowing: qNIPV implies a single target
+                assert isinstance(self.objective, SingleTargetObjective)
+
+                if isinstance(
+                    (target := self.objective._target), NumericalTarget
+                ) and not isinstance(target.transformation, IdentityTransformation):
+                    raise IncompatibilityError(
+                        f"'{qNegIntegratedPosteriorVariance.__name__}' currently "
+                        f"does not support any target transformations."
+                    )
+                else:
+                    return
+
+            self._args.objective = self.objective.to_botorch()
 
     def _set_best_f(self) -> None:
         """Set BoTorch's ``best_f`` argument."""
-        self._set_best_f_called = True
-
         if flds.best_f.name not in self._signature:
             return
 
-        post_mean = self._botorch_surrogate.posterior(to_tensor(self._train_x)).mean
-
         match self.objective:
-            case SingleTargetObjective(NumericalTarget(mode=TargetMode.MIN)):
-                self._args.best_f = post_mean.min().item()
             case SingleTargetObjective() | DesirabilityObjective():
-                self._args.best_f = post_mean.max().item()
+                self._args.best_f = self._posterior_mean_comp.max().item()
+            case _:
+                raise NotImplementedError("This line should be impossible to reach.")
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
@@ -243,6 +281,21 @@ class BotorchAcquisitionFunctionBuilder:
             self.acqf.get_integration_points(self.searchspace)
         )
 
+    def _set_partitioning(self) -> None:
+        """Set BoTorch's ``partitioning`` argument."""
+        if flds.partitioning.name not in self._signature:
+            return
+
+        assert isinstance(
+            self.acqf,
+            (qExpectedHypervolumeImprovement, qLogExpectedHypervolumeImprovement),
+        )
+        assert self._args.ref_point is not None
+
+        self._args.partitioning = make_partitioning(
+            self._posterior_mean_comp, self._args.ref_point, self.acqf.alpha
+        )
+
     def _set_ref_point(self) -> None:
         """Set BoTorch's ``ref_point`` argument."""
         if flds.ref_point.name not in self._signature:
@@ -251,18 +304,14 @@ class BotorchAcquisitionFunctionBuilder:
         assert isinstance(self.acqf, _ExpectedHypervolumeImprovement)
 
         if isinstance(ref_point := self.acqf.reference_point, Iterable):
-            self._args.ref_point = torch.tensor(
-                [p * m for p, m in zip(ref_point, self._multiplier, strict=True)]
-            )
+            self._args.ref_point = torch.tensor(ref_point)
         else:
             kwargs = {} if ref_point is None else {"factor": ref_point}
-            self._args.ref_point = torch.tensor(
+            self._args.ref_point = to_tensor(
                 self.acqf.compute_ref_point(
-                    self._target_configurations.to_numpy(),
-                    self._maximize_flags,
+                    self.objective.to_botorch()(to_tensor(self._target_configurations)),
                     **kwargs,
                 )
-                * self._multiplier
             )
 
     def _set_X_baseline(self) -> None:

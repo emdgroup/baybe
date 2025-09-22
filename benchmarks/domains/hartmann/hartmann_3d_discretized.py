@@ -13,6 +13,7 @@ from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
+from benchmarks.definition.base import RunMode
 from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -45,7 +46,7 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
         NumericalDiscreteParameter("x3", np.linspace(0, 1, 25)),
     ]
 
-    target = NumericalTarget(name="target", mode="MIN")
+    target = NumericalTarget(name="target", minimmize=True)
     searchspace = SearchSpace.from_product(parameters=parameters)
     objective = target.to_objective()
 
@@ -79,9 +80,18 @@ def hartmann_3d_discretized(settings: ConvergenceBenchmarkSettings) -> DataFrame
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=5,
-    n_doe_iterations=30,
-    n_mc_iterations=100,
+    batch_size_settings={
+        RunMode.DEFAULT: 5,
+        RunMode.SMOKETEST: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 30,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 100,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 hartmann_3d_discretized_benchmark = ConvergenceBenchmark(

@@ -1,10 +1,13 @@
 """Deprecation tests."""
 
 import warnings
+from itertools import pairwise
 from unittest.mock import patch
 
+import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
@@ -19,63 +22,25 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.parameters.numerical import (
-    NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.bayesian import (
     BotorchRecommender,
-    SequentialGreedyRecommender,
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.targets import NumericalTarget
+from baybe.targets import NumericalTarget as ModernTarget
+from baybe.targets._deprecated import (
+    LegacyTarget,
+    bell_transform,
+    linear_transform,
+    triangular_transform,
+)
 from baybe.targets.binary import BinaryTarget
-from baybe.targets.numerical import NumericalTarget
-
-
-def test_sequentialgreedyrecommender_class():
-    """Using the deprecated `SequentialGreedyRecommender` class raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        SequentialGreedyRecommender()
-
-
-def test_samples_random():
-    """Using the deprecated `samples_random` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_random(n_points=1)
-
-
-def test_samples_full_factorial():
-    """Using the deprecated `samples_full_factorial` method raises a warning."""
-    with pytest.warns(DeprecationWarning):
-        parameters = [NumericalContinuousParameter("x", (0, 1))]
-        SubspaceContinuous(parameters).samples_full_factorial(n_points=1)
-
-
-def test_subspace_transform_interface(searchspace):
-    """Using the deprecated transform interface raises a warning."""
-    # Not providing `allow_extra` when there are additional columns
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            pd.DataFrame(columns=["additional", *searchspace.discrete.exp_rep.columns]),
-        )
-
-    # Passing dataframe via `data`
-    with pytest.warns(DeprecationWarning):
-        searchspace.discrete.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
-    with pytest.warns(DeprecationWarning):
-        searchspace.continuous.transform(
-            data=searchspace.discrete.exp_rep, allow_extra=True
-        )
+from baybe.transformations.basic import AffineTransformation
 
 
 def test_surrogate_registration():
@@ -140,11 +105,11 @@ def test_constraint_config_deserialization(type_, op):
 
 def test_objective_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    single = SingleTargetObjective(NumericalTarget("A", "MAX"))
+    single = SingleTargetObjective(NumericalTarget("A"))
     desirability = DesirabilityObjective(
         [
-            NumericalTarget("A", "MAX", (0, 1)),
-            NumericalTarget("B", "MIN", (-1, 1)),
+            NumericalTarget.normalized_ramp("A", cutoffs=(0, 1)),
+            NumericalTarget.normalized_ramp("B", cutoffs=(-1, 1), descending=True),
         ]
     )
 
@@ -175,7 +140,7 @@ def test_deprecated_get_transform_parameters():
 
 def test_target_transform_interface():
     """Using the deprecated transform interface raises a warning."""
-    numerical = NumericalTarget("num", "MAX")
+    numerical = NumericalTarget("num")
     binary = BinaryTarget("bin")
 
     # Passing dataframe via `data`
@@ -249,3 +214,263 @@ def test_migrated_allow_flags(flag, recommender_cls):
 
     with pytest.raises(DeprecationError, match=f"The attribute '{flag}' is no longer"):
         getattr(recommender_cls(), flag)
+
+
+def test_legacy_target_construction():
+    """Constructing a target using legacy arguments raises a warning."""
+    with pytest.warns(
+        DeprecationWarning,
+        match="Creating numerical targets by specifying MAX/MIN/MATCH modes",
+    ):
+        NumericalTarget("t", "MAX")
+
+
+def test_target_deprecation_helpers():
+    """Calling the target deprecation helper constructors raises a warning."""
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_legacy_interface'"
+    ):
+        NumericalTarget.from_legacy_interface("t", "MIN")
+    with pytest.warns(
+        DeprecationWarning, match="The helper constructor 'from_modern_interface'"
+    ):
+        NumericalTarget.from_modern_interface("t", minimize=True)
+
+
+def test_target_legacy_deserialization():
+    """Deserialization also works from legacy arguments."""
+    actual = NumericalTarget.from_dict({"name": "t", "mode": "MATCH", "bounds": (1, 2)})
+    expected = NumericalTarget("t", "MATCH", (1, 2))
+    assert actual == expected
+
+
+def sample_input() -> pd.Series:
+    return pd.Series(np.linspace(-10, 10, 20))
+
+
+@pytest.fixture
+def series() -> pd.Series:
+    return sample_input()
+
+
+@pytest.mark.parametrize("mode", ["MAX", "MIN"])
+def test_constructor_equivalence_min_max(mode):
+    """
+    Calling the new target class with legacy arguments yields an object equivalent
+    to the legacy object.
+    """  # noqa
+    groups = [
+        (
+            # ------------
+            # Legacy style
+            ModernTarget("t", mode),
+            ModernTarget("t", mode=mode),
+            ModernTarget(name="t", mode=mode),
+            # ------------
+            # Modern style
+            ModernTarget("t", minimize=mode == "MIN"),
+        ),
+        (
+            # ------------
+            # Legacy style
+            ModernTarget("t", mode, (1, 2)),
+            ModernTarget("t", mode, bounds=(1, 2)),
+            ModernTarget("t", mode=mode, bounds=(1, 2)),
+            ModernTarget(name="t", mode=mode, bounds=(1, 2)),
+            ModernTarget("t", mode, (1, 2), "LINEAR"),
+            ModernTarget("t", mode, (1, 2), transformation="LINEAR"),
+            ModernTarget("t", mode, bounds=(1, 2), transformation="LINEAR"),
+            ModernTarget("t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+            ModernTarget(name="t", mode=mode, bounds=(1, 2), transformation="LINEAR"),
+            # ------------
+            # Modern style
+            ModernTarget.normalized_ramp(
+                name="t", cutoffs=(1, 2), descending=mode == "MIN"
+            ),
+        ),
+    ]
+    for targets in groups:
+        for t1, t2 in pairwise(targets):
+            assert t1 == t2
+
+
+@pytest.mark.parametrize("transformation", ["TRIANGULAR", "BELL"])
+def test_constructor_equivalence_match(transformation):
+    """
+    Calling the new target class with legacy arguments yields an object equivalent
+    to the legacy object.
+    """  # noqa
+    # ------------
+    # Legacy style
+    targets = (
+        ModernTarget("t", "MATCH", (1, 2), transformation),
+        ModernTarget("t", "MATCH", (1, 2), transformation=transformation),
+        ModernTarget("t", "MATCH", bounds=(1, 2), transformation=transformation),
+        ModernTarget("t", mode="MATCH", bounds=(1, 2), transformation=transformation),
+        ModernTarget(
+            name="t", mode="MATCH", bounds=(1, 2), transformation=transformation
+        ),
+    )
+    if transformation == "TRIANGULAR":
+        targets += (
+            ModernTarget("t", "MATCH", (1, 2)),
+            ModernTarget("t", "MATCH", bounds=(1, 2)),
+            ModernTarget("t", mode="MATCH", bounds=(1, 2)),
+            ModernTarget(name="t", mode="MATCH", bounds=(1, 2)),
+        )
+
+    # ------------
+    # Modern style
+    if transformation == "BELL":
+        targets += (ModernTarget.match_bell("t", match_value=1.5, sigma=0.5),)
+    else:
+        targets += (
+            ModernTarget.match_triangular("t", cutoffs=(1, 2)),
+            ModernTarget.match_triangular("t", match_value=1.5, width=1),
+            ModernTarget.match_triangular("t", match_value=1.5, margins=(0.5, 0.5)),
+        )
+
+    for t1, t2 in pairwise(targets):
+        assert t1 == t2
+
+
+@pytest.mark.parametrize(
+    ("legacy", "deprecation", "modern", "expected"),
+    [
+        param(
+            LegacyTarget("t", "MAX"),
+            ModernTarget("t", "MAX"),
+            ModernTarget("t"),
+            sample_input(),
+            id="max",
+        ),
+        param(
+            LegacyTarget("t", "MAX", (0, 1), "LINEAR"),
+            ModernTarget("t", "MAX", (0, 1), "LINEAR"),
+            ModernTarget("t").clamp(0, 1),
+            linear_transform(sample_input(), 0, 1, descending=False),
+            id="max_clamped",
+        ),
+        param(
+            LegacyTarget("t", "MAX", (2, 5), "LINEAR"),
+            ModernTarget("t", "MAX", (2, 5), "LINEAR"),
+            ModernTarget.normalized_ramp("t", (2, 5)),
+            linear_transform(sample_input(), 2, 5, descending=False),
+            id="max_shifted_clamped",
+        ),
+        param(
+            # NOTE: Minimization transformation without bounds is not possible with
+            #   legacy interface."
+            None,
+            None,
+            ModernTarget("t", AffineTransformation(factor=-1)),
+            -sample_input(),
+            id="min_no_bounds",
+        ),
+        param(
+            # NOTE: Minimization transformation without bounds is not possible with
+            #   legacy interface."
+            None,
+            None,
+            ModernTarget("t", minimize=True),
+            sample_input(),
+            id="min_no_bounds_with_flag",
+        ),
+        param(
+            # NOTE: Minimization without bounds had no effect on the transformation
+            #   of the legacy target since minimization was handled in the construction
+            #   of the acquisition function:
+            #   * https://github.com/emdgroup/baybe/pull/462
+            #   * https://github.com/emdgroup/baybe/issues/460
+            None,  # should be `LegacyTarget("t", "MIN")` but see explanation above
+            ModernTarget("t", "MIN"),
+            ModernTarget("t", minimize=True),
+            sample_input(),
+            id="min",
+        ),
+        param(
+            LegacyTarget("t", "MIN", (0, 1), "LINEAR"),
+            ModernTarget("t", "MIN", (0, 1), "LINEAR"),
+            ModernTarget.normalized_ramp("t", (0, 1), descending=True),
+            linear_transform(sample_input(), 0, 1, descending=True),
+            id="min_clamped",
+        ),
+        param(
+            LegacyTarget("t", "MIN", (2, 5), "LINEAR"),
+            ModernTarget("t", "MIN", (2, 5), "LINEAR"),
+            ModernTarget.normalized_ramp("t", (2, 5), descending=True),
+            linear_transform(sample_input(), 2, 5, descending=True),
+            id="min_shifted_clamped",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (-1, 1), "BELL"),
+            ModernTarget("t", "MATCH", (-1, 1), "BELL"),
+            ModernTarget.match_bell("t", match_value=0, sigma=1),
+            bell_transform(sample_input(), -1, 1),
+            id="match_bell_unit_centered",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (1, 3), "BELL"),
+            ModernTarget("t", "MATCH", (1, 3), "BELL"),
+            ModernTarget.match_bell("t", match_value=2, sigma=1),
+            bell_transform(sample_input(), 1, 3),
+            id="match_bell_unit_shifted",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (-5, 5), "BELL"),
+            ModernTarget("t", "MATCH", (-5, 5), "BELL"),
+            ModernTarget.match_bell("t", match_value=0, sigma=5),
+            bell_transform(sample_input(), -5, 5),
+            id="match_bell_scaled_centered",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (2, 6), "BELL"),
+            ModernTarget("t", "MATCH", (2, 6), "BELL"),
+            ModernTarget.match_bell("t", match_value=4, sigma=2),
+            bell_transform(sample_input(), 2, 6),
+            id="match_bell_scaled_shifted",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (-1, 1), "TRIANGULAR"),
+            ModernTarget.match_triangular("t", cutoffs=(-1, 1)),
+            triangular_transform(sample_input(), -1, 1),
+            id="match_triangular_unit_centered",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (1, 3), "TRIANGULAR"),
+            ModernTarget.match_triangular("t", cutoffs=(1, 3)),
+            triangular_transform(sample_input(), 1, 3),
+            id="match_triangular_unit_shifted",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (-5, 5), "TRIANGULAR"),
+            ModernTarget.match_triangular("t", cutoffs=(-5, 5)),
+            triangular_transform(sample_input(), -5, 5),
+            id="match_triangular_scaled_centered",
+        ),
+        param(
+            LegacyTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
+            ModernTarget("t", "MATCH", (2, 6), "TRIANGULAR"),
+            ModernTarget.match_triangular("t", cutoffs=(2, 6)),
+            triangular_transform(sample_input(), 2, 6),
+            id="match_triangular_scaled_shifted",
+        ),
+    ],
+)
+def test_target_transformation(
+    series,
+    legacy: LegacyTarget,
+    deprecation: ModernTarget,
+    modern: ModernTarget,
+    expected,
+):
+    """The legacy and modern target variants transform equally."""
+    expected = pd.Series(expected)
+    if legacy is not None:
+        assert_series_equal(legacy.transform(series), expected)
+    if deprecation is not None:
+        assert_series_equal(deprecation.transform(series), expected)
+    assert_series_equal(modern.transform(series), expected)

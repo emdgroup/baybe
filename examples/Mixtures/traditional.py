@@ -60,7 +60,7 @@ p_g3_amounts = [
 c_total_sum = ContinuousLinearConstraint(
     parameters=g1 + g2 + g3,
     operator="=",
-    coefficients=[1] * len(g1 + g2 + g3),
+    coefficients=(1,) * len(g1 + g2 + g3),
     rhs=100,
 )
 
@@ -69,7 +69,7 @@ c_total_sum = ContinuousLinearConstraint(
 c_g2_min = ContinuousLinearConstraint(
     parameters=g2,
     operator=">=",
-    coefficients=[1] * len(g2),
+    coefficients=(1,) * len(g2),
     rhs=10,
 )
 
@@ -78,7 +78,7 @@ c_g2_min = ContinuousLinearConstraint(
 c_g3_max = ContinuousLinearConstraint(
     parameters=g3,
     operator="<=",
-    coefficients=[1] * len(g3),
+    coefficients=(1,) * len(g3),
     rhs=5,
 )
 

@@ -64,7 +64,7 @@ constraint = DiscreteDependenciesConstraint(
 
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=[constraint])
 
-objective = SingleTargetObjective(target=NumericalTarget(name="Target_1", mode="MAX"))
+objective = SingleTargetObjective(target=NumericalTarget(name="Target_1"))
 
 ### Creating and printing the campaign
 

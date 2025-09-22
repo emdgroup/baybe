@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import warnings
 from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
@@ -406,20 +405,17 @@ class SearchSpace(SerialMixin):
 
     def transform(
         self,
-        df: pd.DataFrame | None = None,
+        df: pd.DataFrame,
         /,
         *,
         allow_missing: bool = False,
-        allow_extra: bool | None = None,
-        data: pd.DataFrame | None = None,
+        allow_extra: bool = False,
     ) -> pd.DataFrame:
         """Transform parameters from experimental to computational representation.
 
         Args:
             df: The dataframe to be transformed. The allowed columns of the dataframe
                 are dictated by the ``allow_missing`` and ``allow_extra`` flags.
-                The ``None`` default value is for temporary backward compatibility only
-                and will be removed in a future version.
             allow_missing: If ``False``, each parameter of the space must have
                 exactly one corresponding column in the given dataframe. If ``True``,
                 the dataframe may contain only a subset of parameter columns.
@@ -427,58 +423,31 @@ class SearchSpace(SerialMixin):
                 correspond to exactly one parameter of the space. If ``True``, the
                 dataframe may contain additional non-parameter-related columns, which
                 will be ignored.
-                The ``None`` default value is for temporary backward compatibility only
-                and will be removed in a future version.
-            data: Ignore! For backward compatibility only.
-
-        Raises:
-            ValueError: If dataframes are passed to both ``df`` and ``data``.
 
         Returns:
             A corresponding dataframe with parameters in computational representation.
         """
-        # TODO: Remove deprecation-related explanation of `None` default values
-        #   from docstring once deprecation expires
-        # >>>>>>>>>> Deprecation
-        if not ((df is None) ^ (data is None)):
-            raise ValueError(
-                "Provide the data to be transformed as first positional argument."
-            )
-
-        if data is not None:
-            df = data
-            warnings.warn(
-                "Providing the dataframe via the `data` argument is deprecated and "
-                "will be removed in a future version. Please pass your dataframe "
-                "as positional argument instead.",
-                DeprecationWarning,
-            )
-
-        # Mypy does not infer from the above that `df` must be a dataframe here
-        assert isinstance(df, pd.DataFrame)
-
-        if allow_extra is None:
-            allow_extra = True
-            if set(df) - {p.name for p in self.parameters}:
-                warnings.warn(
-                    "For backward compatibility, the new `allow_extra` flag is set "
-                    "to `True` when left unspecified. However, this behavior will be "
-                    "changed in a future version. If you want to invoke the old "
-                    "behavior, please explicitly set `allow_extra=True`.",
-                    DeprecationWarning,
-                )
-        # <<<<<<<<<< Deprecation
+        # Potentially existing columns of the respective other subspace would trivially
+        # be "extra" columns, so we drop them first. However, in this step, we can
+        # ignore if columns are not complete since a proper error will be raised in the
+        # corresponding transformation step of each space below.
+        df_disc_in = df.drop(
+            columns=list(self.continuous.parameter_names), errors="ignore"
+        )
+        df_cont_in = df.drop(
+            columns=list(self.discrete.parameter_names), errors="ignore"
+        )
 
         # Transform subspaces separately
-        df_discrete = self.discrete.transform(
-            df, allow_missing=allow_missing, allow_extra=allow_extra
+        df_disc_out = self.discrete.transform(
+            df_disc_in, allow_missing=allow_missing, allow_extra=allow_extra
         )
-        df_continuous = self.continuous.transform(
-            df, allow_missing=allow_missing, allow_extra=allow_extra
+        df_cont_out = self.continuous.transform(
+            df_cont_in, allow_missing=allow_missing, allow_extra=allow_extra
         )
 
         # Combine Subspaces
-        comp_rep = pd.concat([df_discrete, df_continuous], axis=1)
+        comp_rep = pd.concat([df_disc_out, df_cont_out], axis=1)
 
         return comp_rep
 

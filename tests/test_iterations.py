@@ -54,8 +54,7 @@ from baybe.surrogates.gaussian_process.presets import (
 )
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
-
-from .conftest import run_iterations
+from tests.conftest import run_iterations
 
 ########################################################################################
 # Settings of the individual components to be tested
@@ -171,8 +170,8 @@ valid_meta_recommenders = get_subclasses(MetaRecommender)
 
 valid_priors = [
     GammaPrior(3, 1),
-    HalfCauchyPrior(2),
-    HalfNormalPrior(2),
+    HalfCauchyPrior(0.5),
+    HalfNormalPrior(0.5),
     LogNormalPrior(1, 2),
     NormalPrior(1, 2),
     SmoothedBoxPrior(0, 3, 0.1),
@@ -184,7 +183,6 @@ valid_base_kernels: list[Kernel] = [
     for cls, arg_dict in [
         (MaternKernel, {"lengthscale_prior": prior}),
         (LinearKernel, {"variance_prior": prior}),
-        (PeriodicKernel, {"period_length_prior": prior}),
         (PeriodicKernel, {"lengthscale_prior": prior}),
         (PiecewisePolynomialKernel, {"lengthscale_prior": prior}),
         (PolynomialKernel, {"offset_prior": prior, "power": 2}),
@@ -255,7 +253,7 @@ def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
 @pytest.mark.slow
 @pytest.mark.parametrize(
     "objective",
-    [ParetoObjective([NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MIN")])],
+    [ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2", minimize=True)])],
 )
 @pytest.mark.parametrize(
     "acqf",

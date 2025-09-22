@@ -8,30 +8,16 @@ from collections.abc import Sequence
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
-import cattrs
 import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of
-from cattrs.dispatch import (
-    StructuredValue,
-    StructureHook,
-    TargetType,
-    UnstructuredValue,
-    UnstructureHook,
-)
 from joblib.hashing import hash
 from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError, ModelNotTrainedError
-from baybe.objectives import DesirabilityObjective
 from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
-from baybe.serialization.core import (
-    converter,
-    get_base_structure_hook,
-    unstructure_base,
-)
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
@@ -48,18 +34,6 @@ if TYPE_CHECKING:
 
 PosteriorStatistic: TypeAlias = float | Literal["mean", "std", "var", "mode"]
 """Type alias for requestable statistics (a float yields the corresponding quantile)."""
-
-_ONNX_ENCODING = "latin-1"
-"""Constant signifying the encoding for onnx byte strings in pretrained models.
-
-NOTE: This encoding is selected by choice for ONNX byte strings.
-This is not a requirement from ONNX but simply for the JSON format.
-The byte string from ONNX `.SerializeToString()` method has unknown encoding,
-which results in UnicodeDecodeError when using `.decode('utf-8')`.
-The use of latin-1 ensures there are no loss from the conversion of
-bytes to string and back, since the specification is a bijection between
-0-255 and the character set.
-"""
 
 
 class _NoTransform(Enum):
@@ -218,14 +192,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             return _IDENTITY_TRANSFORM
 
         if objective.n_outputs != 1:
-            # There is execution path yet that could lead to this situation
+            # There is no execution path yet that could lead to this situation
             raise NotImplementedError(
                 "Output scalers for multi-output models are not available."
             )
         scaler = factory(1)
 
         # TODO: Consider taking into account target boundaries when available
-        scaler(to_tensor(objective.transform(measurements, allow_extra=True)))
+        scaler(to_tensor(objective._pre_transform(measurements, allow_extra=True)))
         scaler.eval()
 
         return scaler
@@ -355,46 +329,44 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 )
         posterior = self.posterior(candidates)
 
-        match self._objective:
-            case DesirabilityObjective():
-                # TODO: Once desirability also supports posterior transforms this check
-                #  here will have to depend on the configuration of the objective and
-                #  whether it uses the transforms or not.
-                targets = ["Desirability"]
-            case _:
-                targets = [t.name for t in self._objective.targets]
-
         import torch
 
         result = pd.DataFrame(index=candidates.index)
         with torch.no_grad():
-            for k, target_name in enumerate(targets):
-                for stat in stats:
-                    try:
-                        if isinstance(stat, float):  # Calculate quantile statistic
-                            stat_name = f"Q_{stat}"
-                            vals = posterior.quantile(torch.tensor(stat))
-                        else:  # Calculate non-quantile statistic
-                            stat_name = stat
-                            vals = getattr(
-                                posterior,
-                                stat if stat not in ["std", "var"] else "variance",
-                            )
-                    except (AttributeError, NotImplementedError) as e:
-                        # We could arrive here because an invalid statistics string has
-                        # been requested or because a quantile point has been requested,
-                        # but the posterior type does not implement quantiles.
-                        raise TypeError(
-                            f"The utilized posterior of type "
-                            f"'{posterior.__class__.__name__}' does not support the "
-                            f"statistic associated with the requested input '{stat}'."
-                        ) from e
+            for stat in stats:
+                try:
+                    if isinstance(stat, float):  # Calculate quantile statistic
+                        stat_name = f"Q_{stat}"
+                        vals = posterior.quantile(torch.tensor(stat))
+                    else:  # Calculate non-quantile statistic
+                        stat_name = stat
+                        vals = getattr(
+                            posterior,
+                            stat if stat not in ["std", "var"] else "variance",
+                        )
+                except (AttributeError, NotImplementedError) as e:
+                    # We could arrive here because an invalid statistics string has
+                    # been requested or because a quantile point has been requested,
+                    # but the posterior type does not implement quantiles.
+                    raise TypeError(
+                        f"The utilized posterior of type "
+                        f"'{posterior.__class__.__name__}' does not support the "
+                        f"statistic associated with the requested input '{stat}'."
+                    ) from e
 
-                    if stat == "std":
-                        vals = torch.sqrt(vals)
+                if stat == "std":
+                    vals = torch.sqrt(vals)
 
-                    numpyvals = vals.cpu().numpy().reshape((len(result), len(targets)))
-                    result[f"{target_name}_{stat_name}"] = numpyvals[:, k]
+                # Enforce a consistent shape
+                # https://github.com/pytorch/botorch/issues/2958
+                vals = vals.reshape((len(candidates), 1))
+
+                result[
+                    [
+                        f"{name}_{stat_name}"
+                        for name in self._objective._modeled_quantity_names
+                    ]
+                ] = vals.cpu().numpy()
 
         return result
 
@@ -465,16 +437,23 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         self._output_scaler = self._make_output_scaler(objective, measurements)
 
         # Transform and fit
-        train_x_comp_rep, train_y_comp_rep = to_tensor(
-            searchspace.transform(measurements, allow_extra=True),
-            objective.transform(measurements, allow_extra=True),
+        # Note: The targets are only pre-transformed here. The remaining transformations
+        #  are applied in form of BoTorch objectives. This has the consequence that:
+        #  * The trained surrogate model can be called with pre-transformed target
+        #    values, enabling predictions with input from the pre-transformed domain
+        #   (this allows us to control precisely on which level the model is placed)
+        #  * The main transformation is part of the computational backpropagation graph
+        pre_transformed = objective._pre_transform(measurements, allow_extra=True)
+        train_x_comp_rep, train_y_tensor = to_tensor(
+            searchspace.transform(measurements, allow_extra=True), pre_transformed
         )
         train_x = self._input_scaler.transform(train_x_comp_rep)
         train_y = (
-            train_y_comp_rep
+            train_y_tensor
             if self._output_scaler is _IDENTITY_TRANSFORM
-            else self._output_scaler(train_y_comp_rep)[0]
+            else self._output_scaler(train_y_tensor)[0]
         )
+
         self._fit(train_x, train_y)
 
     @abstractmethod
@@ -514,78 +493,6 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
     ) -> tuple[Tensor, Tensor]:
         """Estimate first and second moments of the Gaussian posterior."""
 
-
-def _make_hook_decode_onnx_str(
-    raw_unstructure_hook: UnstructureHook,
-) -> UnstructureHook:
-    """Wrap an unstructuring hook to let it also decode the contained ONNX string."""
-
-    def wrapper(obj: StructuredValue) -> UnstructuredValue:
-        dct = raw_unstructure_hook(obj)
-        if "onnx_str" in dct:
-            dct["onnx_str"] = dct["onnx_str"].decode(_ONNX_ENCODING)
-
-        return dct
-
-    return wrapper
-
-
-def _make_hook_encode_onnx_str(raw_structure_hook: StructureHook) -> StructureHook:
-    """Wrap a structuring hook to let it also encode the contained ONNX string."""
-
-    def wrapper(dct: UnstructuredValue, _: TargetType) -> StructuredValue:
-        if (onnx_str := dct.get("onnx_str")) and isinstance(onnx_str, str):
-            dct["onnx_str"] = onnx_str.encode(_ONNX_ENCODING)
-        obj = raw_structure_hook(dct, _)
-
-        return obj
-
-    return wrapper
-
-
-def _block_serialize_custom_architecture(
-    raw_unstructure_hook: UnstructureHook,
-) -> UnstructureHook:
-    """Raise error if attempt to serialize a custom architecture surrogate."""
-    # TODO: Ideally, this hook should be removed and unstructuring the Surrogate
-    #   base class should automatically invoke the blocking hook that is already
-    #   registered for the "CustomArchitectureSurrogate" subclass. However, it's
-    #   not clear how the base unstructuring hook needs to be modified to accomplish
-    #   this, and furthermore the problem will most likely become obsolete in the future
-    #   because the role of the subclass will probably be replaced with a surrogate
-    #   protocol.
-
-    def wrapper(obj: StructuredValue) -> UnstructuredValue:
-        if obj.__class__.__name__ == "CustomArchitectureSurrogate":
-            raise NotImplementedError(
-                "Serializing objects of type 'CustomArchitectureSurrogate' "
-                "is not supported."
-            )
-
-        return raw_unstructure_hook(obj)
-
-    return wrapper
-
-
-# Register (un-)structure hooks
-# IMPROVE: Ideally, the ONNX-specific hooks should simply be registered with the ONNX
-#   class, which would avoid the nested wrapping below. However, this requires
-#   adjusting the base class (un-)structure hooks such that they consistently apply
-#   existing hooks of the concrete subclasses.
-_unstructure_hook = _make_hook_decode_onnx_str(
-    _block_serialize_custom_architecture(
-        lambda x: unstructure_base(x, overrides={"_model": cattrs.override(omit=True)})
-    )
-)
-converter.register_unstructure_hook(Surrogate, _unstructure_hook)
-converter.register_structure_hook(
-    Surrogate, _make_hook_encode_onnx_str(get_base_structure_hook(Surrogate))
-)
-converter.register_unstructure_hook(SurrogateProtocol, _unstructure_hook)
-converter.register_structure_hook(
-    SurrogateProtocol,
-    _make_hook_encode_onnx_str(get_base_structure_hook(SurrogateProtocol)),
-)
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

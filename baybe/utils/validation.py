@@ -10,7 +10,10 @@ import numpy as np
 import pandas as pd
 from attrs import Attribute
 
+from baybe.exceptions import IncompleteMeasurementsError
+
 if TYPE_CHECKING:
+    from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
     from baybe.targets.base import Target
 
@@ -117,6 +120,28 @@ def validate_target_input(data: pd.DataFrame, targets: Iterable[Target]) -> None
                 )
 
 
+def validate_objective_input(data: pd.DataFrame, objective: Objective) -> None:
+    """Validate the input dataframe for the given objective.
+
+    Args:
+        data: The input dataframe to be validated.
+        objective: The objective to validate against.
+
+    Raises:
+        IncompleteMeasurementsError: If the objective requires complete measurements
+            but the input dataframe contains missing target values.
+    """
+    data = data[[t.name for t in objective.targets]]
+    if not objective.supports_partial_measurements and (
+        cols := data.columns[data.isna().any()].tolist()
+    ):
+        raise IncompleteMeasurementsError(
+            f"The used objective requires complete measurements of all "
+            f"involved targets but the provided dataframe contains missing "
+            f"values for the following targets: {cols}"
+        )
+
+
 def validate_parameter_input(
     data: pd.DataFrame,
     parameters: Iterable[Parameter],
@@ -177,3 +202,21 @@ def validate_parameter_input(
                     f"the flag 'numerical_measurements_must_be_within_tolerance' "
                     f"to 'False' to disable this behavior."
                 )
+
+
+def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
+    """Validate that the provided objects have unique names.
+
+    Args:
+        objects: An iterable containing a combination of parameters and targets.
+
+    Raises:
+        ValueError: If two or more objects have the same name.
+    """
+    names = [obj.name for obj in objects]
+    if len(names) != len(set(names)):
+        duplicates = {name for name in names if names.count(name) > 1}
+        raise ValueError(
+            f"All parameters and targets must have unique names. The following names "
+            f"appear multiple times: {duplicates}."
+        )

@@ -19,6 +19,7 @@ from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
+from benchmarks.definition.base import RunMode
 
 
 def easom(x: np.ndarray, noise_std: float = 0.0, negate: bool = False):
@@ -95,7 +96,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
     searchspace_tl = SearchSpace.from_product(parameters=params_tl)
 
     objective = SingleTargetObjective(
-        target=NumericalTarget(name="Target", mode="MAX" if negate else "MIN")
+        target=NumericalTarget(name="Target", minimize=not negate)
     )
     tl_campaign = Campaign(
         searchspace=searchspace_tl,
@@ -162,9 +163,18 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
 
 benchmark_config = ConvergenceBenchmarkSettings(
-    batch_size=2,
-    n_doe_iterations=30,
-    n_mc_iterations=100,
+    batch_size_settings={
+        RunMode.DEFAULT: 2,
+        RunMode.SMOKETEST: 2,
+    },
+    n_doe_iterations_settings={
+        RunMode.DEFAULT: 30,
+        RunMode.SMOKETEST: 2,
+    },
+    n_mc_iterations_settings={
+        RunMode.DEFAULT: 100,
+        RunMode.SMOKETEST: 2,
+    },
 )
 
 easom_tl_47_negate_noise5_benchmark = ConvergenceBenchmark(

@@ -153,6 +153,9 @@ def build_examples(destination_directory: Path, dummy: bool, remove_dir: bool):
                     "s/it",
                 )
                 for line in content.splitlines():
+                    # Skip formatter control lines so they don't appear in docs
+                    if "fmt: off" in line or "fmt: on" in line:
+                        continue
                     if any(substring in line for substring in ignored_substrings):
                         continue
                     if len(line) > 88 and "](" not in line:

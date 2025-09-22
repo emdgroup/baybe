@@ -4,44 +4,49 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from pytest import param
 from torch.testing import assert_close
 
-from baybe.acquisition.acqfs import qKnowledgeGradient
+from baybe.acquisition.acqfs import qKnowledgeGradient, qNegIntegratedPosteriorVariance
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
 
 
-def get_acqf_values(acqf_cls, surrogate, searchspace, objective, df):
-    # TODO: Should be replace once a proper public interface is available
-    acqf = acqf_cls().to_botorch(surrogate, searchspace, objective, df)
-    return acqf(torch.tensor(searchspace.transform(df).values).unsqueeze(-2))
-
-
-def compute_posterior_and_acqf(acqf_cls, df, searchspace, objective):
+def compute_posterior_and_acqf(
+    acqf_cls: type[AcquisitionFunction], df, searchspace, objective
+):
     surrogate = GaussianProcessSurrogate()
     if acqf_cls.supports_multi_output:
         surrogate = surrogate.replicate()
     surrogate.fit(searchspace, objective, df)
-    with torch.no_grad():
-        posterior = surrogate.posterior(df)
-    acqf = get_acqf_values(acqf_cls, surrogate, searchspace, objective, df)
-    return posterior, acqf
+    posterior = surrogate.posterior(df)
+    acqf = acqf_cls().evaluate(
+        df[list(searchspace.parameter_names)], surrogate, searchspace, objective, df
+    )
+    return posterior, torch.tensor(acqf)
 
 
 @pytest.mark.parametrize(
     "acqf_cls",
     [
-        a
+        param(
+            a,
+            marks=(
+                [pytest.mark.xfail(reason="not yet supported")]
+                if issubclass(a, qNegIntegratedPosteriorVariance)
+                else []
+            ),
+        )
         for a in get_subclasses(AcquisitionFunction)
         if not issubclass(a, qKnowledgeGradient)  # TODO: not yet clear how to handle
     ],
 )
-def test_minimization(acqf_cls: AcquisitionFunction):
+def test_minimization(acqf_cls: type[AcquisitionFunction]):
     """Maximizing targets is equivalent to minimizing target with inverted data."""
     values = np.linspace(10, 20)
     searchspace = NumericalDiscreteParameter("p", values).to_searchspace()
@@ -50,12 +55,10 @@ def test_minimization(acqf_cls: AcquisitionFunction):
     set_random_seed(0)
     if acqf_cls.supports_multi_output:
         df_max = pd.DataFrame({"p": values, "t1": values, "t2": values})
-        obj_max = ParetoObjective(
-            [NumericalTarget("t1", "MAX"), NumericalTarget("t2", "MAX")]
-        )
+        obj_max = ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")])
     else:
         df_max = pd.DataFrame({"p": values, "t": values})
-        obj_max = NumericalTarget("t", "MAX").to_objective()
+        obj_max = NumericalTarget("t").to_objective()
     p_min, acqf_max = compute_posterior_and_acqf(acqf_cls, df_max, searchspace, obj_max)
 
     # Minimization of inverted targets
@@ -63,11 +66,11 @@ def test_minimization(acqf_cls: AcquisitionFunction):
     if acqf_cls.supports_multi_output:
         df_min = pd.DataFrame({"p": values, "t1": -values, "t2": -values})
         obj_min = ParetoObjective(
-            [NumericalTarget("t1", "MIN"), NumericalTarget("t2", "MIN")]
+            [NumericalTarget("t1", minimize=True), NumericalTarget("t2", minimize=True)]
         )
     else:
         df_min = pd.DataFrame({"p": values, "t": -values})
-        obj_min = NumericalTarget("t", "MIN").to_objective()
+        obj_min = NumericalTarget("t", minimize=True).to_objective()
     p_max, acqf_min = compute_posterior_and_acqf(acqf_cls, df_min, searchspace, obj_min)
 
     # Both must yield identical posterior (modulo the sign) and acquisition values

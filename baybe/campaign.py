@@ -48,7 +48,12 @@ from baybe.utils.dataframe import (
     fuzzy_row_match,
     normalize_input_dtypes,
 )
-from baybe.utils.validation import validate_parameter_input, validate_target_input
+from baybe.utils.validation import (
+    validate_object_names,
+    validate_objective_input,
+    validate_parameter_input,
+    validate_target_input,
+)
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction
@@ -129,13 +134,7 @@ class Campaign(SerialMixin):
         if value is None:
             return
 
-        p_names = {p.name for p in self.searchspace.parameters}
-        t_names = {t.name for t in value.targets}
-        if overlap := p_names.intersection(t_names):
-            raise ValueError(
-                f"Parameters and targets cannot have overlapping names. "
-                f"The following names appear in both collections: {overlap}."
-            )
+        validate_object_names(self.searchspace.parameters + value.targets)
 
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
@@ -301,6 +300,8 @@ class Campaign(SerialMixin):
 
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
+        if self.objective is not None:
+            validate_objective_input(data, self.objective)
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
@@ -347,6 +348,8 @@ class Campaign(SerialMixin):
         """
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
+        if self.objective is not None:
+            validate_objective_input(data, self.objective)
         validate_parameter_input(
             data, self.parameters, numerical_measurements_must_be_within_tolerance
         )
@@ -847,7 +850,7 @@ unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
     Campaign, converter, _cattrs_include_init_false=True
 )
 structure_hook = cattrs.gen.make_dict_structure_fn(
-    Campaign, converter, _cattrs_include_init_false=True, _cattrs_forbid_extra_keys=True
+    Campaign, converter, _cattrs_include_init_false=True
 )
 converter.register_unstructure_hook(
     Campaign, lambda x: _add_version(unstructure_hook(x))
