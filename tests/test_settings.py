@@ -24,6 +24,15 @@ def invalidate(value: Any, /) -> Any:
     raise ValueError(f"Undefined invalidation operation for type '{type(value)}'.")
 
 
+def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
+    """Assert that the attributes of an object match the expected values."""
+    for key, expected in attributes.items():
+        actual = getattr(obj, key)
+        assert actual == expected, (
+            f"Attribute '{key}' expected to be '{expected}' but got '{actual}'."
+        )
+
+
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
@@ -58,16 +67,14 @@ def test_setting_via_instantiation():
 
     # A collection of settings can be applied immediately
     s = Settings(**overwrites, apply_immediately=True)
-    for fld in attributes:
-        assert getattr(s, fld.name) == overwrites[fld.name]
-        assert getattr(settings, fld.name) == overwrites[fld.name]
+    assert_attribute_values(s, overwrites)
+    assert_attribute_values(settings, overwrites)
 
     # The same applies for evolving a settings object (here, we roll back the changes)
     s2 = evolve(s, **original_values, apply_immediately=True)
-    for fld in attributes:
-        assert getattr(s, fld.name) == overwrites[fld.name]
-        assert getattr(s2, fld.name) == original_values[fld.name]
-        assert getattr(settings, fld.name) == original_values[fld.name]
+    assert_attribute_values(s, overwrites)
+    assert_attribute_values(s2, original_values)
+    assert_attribute_values(settings, original_values)
 
 
 @pytest.mark.parametrize("immediately", [True, False])
@@ -81,21 +88,18 @@ def test_setting_via_context(immediately: bool):
 
     # The settings of a new object are only applied immediately if specified
     s = Settings(apply_immediately=immediately, **overwrites)
-    for fld in attributes:
-        assert getattr(s, fld.name) == overwrites[fld.name]
-        reference = overwrites if immediately else original_values
-        assert getattr(settings, fld.name) == reference[fld.name]
+    reference = overwrites if immediately else original_values
+    assert_attribute_values(s, overwrites)
+    assert_attribute_values(settings, reference)
 
     # The new settings are applied within the context
     with s:
-        for fld in attributes:
-            assert getattr(s, fld.name) == overwrites[fld.name]
-            assert getattr(settings, fld.name) == overwrites[fld.name]
+        assert_attribute_values(s, overwrites)
+        assert_attribute_values(settings, overwrites)
 
     # After exiting the context, the original settings are restored
-    for fld in attributes:
-        reference = overwrites if immediately else original_values
-        assert getattr(settings, fld.name) == reference[fld.name]
+    assert_attribute_values(s, overwrites)
+    assert_attribute_values(settings, reference)
 
 
 def test_nested_contexts():
@@ -142,12 +146,10 @@ def test_setting_via_decorator():
 
     @Settings(**overwrites)
     def func():
-        for fld in attributes:
-            assert getattr(settings, fld.name) == overwrites[fld.name]
+        assert_attribute_values(settings, overwrites)
 
     # The new settings are applied within the function
     func()
 
     # After exiting the function, the original settings are restored
-    for fld in attributes:
-        assert getattr(settings, fld.name) == original_values[fld.name]
+    assert_attribute_values(settings, original_values)
