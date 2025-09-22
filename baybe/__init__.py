@@ -2,8 +2,8 @@
 
 import warnings
 
-from baybe._settings import Settings, active_settings
 from baybe.campaign import Campaign
+from baybe.settings import Settings, active_settings
 
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
