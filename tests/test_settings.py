@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from attrs import Attribute, evolve
 
-from baybe import Settings, settings
+from baybe import Settings, active_settings
 
 
 def toggle(value: Any, /) -> Any:
@@ -37,21 +37,22 @@ def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
 @pytest.fixture()
 def original_values():
     """The original settings values."""
-    return {fld.name: getattr(settings, fld.name) for fld in Settings.attributes}
+    return {fld.name: getattr(active_settings, fld.name) for fld in Settings.attributes}
 
 
 @pytest.fixture()
 def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
-        fld.name: toggle(getattr(settings, fld.name)) for fld in Settings.attributes
+        fld.name: toggle(getattr(active_settings, fld.name))
+        for fld in Settings.attributes
     }
 
 
 def test_setting_unknown_attribute():
     """Attempting to apply an unknown setting raises an error."""
     with pytest.raises(AttributeError):
-        settings.unknown_setting = True
+        active_settings.unknown_setting = True
     with pytest.raises(TypeError):
         Settings(unknown_setting=True)
 
@@ -59,9 +60,9 @@ def test_setting_unknown_attribute():
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to apply an invalid settings value raises an error."""
-    original_value = getattr(settings, attribute.name)
+    original_value = getattr(active_settings, attribute.name)
     with pytest.raises(ValueError):
-        setattr(settings, attribute.name, invalidate(original_value))
+        setattr(active_settings, attribute.name, invalidate(original_value))
     with pytest.raises(ValueError):
         Settings(**{attribute.name: invalidate(original_value)})
 
@@ -69,11 +70,11 @@ def test_invalid_setting(attribute: Attribute):
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
-    original_value = getattr(settings, attribute.name)
+    original_value = getattr(active_settings, attribute.name)
     new_value = toggle(original_value)
     assert original_value != new_value
-    setattr(settings, attribute.name, new_value)
-    assert getattr(settings, attribute.name) == new_value
+    setattr(active_settings, attribute.name, new_value)
+    assert getattr(active_settings, attribute.name) == new_value
 
 
 def test_setting_via_instantiation(original_values, toggled_values):
@@ -81,13 +82,13 @@ def test_setting_via_instantiation(original_values, toggled_values):
     # A collection of settings can be applied immediately
     s = Settings(**toggled_values, apply_immediately=True)
     assert_attribute_values(s, toggled_values)
-    assert_attribute_values(settings, toggled_values)
+    assert_attribute_values(active_settings, toggled_values)
 
     # The same applies for evolving a settings object (here, we roll back the changes)
     s2 = evolve(s, **original_values, apply_immediately=True)
     assert_attribute_values(s, toggled_values)
     assert_attribute_values(s2, original_values)
-    assert_attribute_values(settings, original_values)
+    assert_attribute_values(active_settings, original_values)
 
 
 def test_sequential_setting_via_instantiation(original_values):
@@ -108,7 +109,7 @@ def test_sequential_setting_via_instantiation(original_values):
 
         # The new object carries the currently modified attribute and all previous ones
         assert_attribute_values(s, original_values | modified)
-        assert_attribute_values(settings, original_values | modified)
+        assert_attribute_values(active_settings, original_values | modified)
 
 
 @pytest.mark.parametrize("immediately", [True, False])
@@ -118,38 +119,38 @@ def test_setting_via_context(immediately: bool, original_values, toggled_values)
     s = Settings(apply_immediately=immediately, **toggled_values)
     reference = toggled_values if immediately else original_values
     assert_attribute_values(s, toggled_values)
-    assert_attribute_values(settings, reference)
+    assert_attribute_values(active_settings, reference)
 
     # The new settings are applied within the context
     with s:
         assert_attribute_values(s, toggled_values)
-        assert_attribute_values(settings, toggled_values)
+        assert_attribute_values(active_settings, toggled_values)
 
     # After exiting the context, the original settings are restored
     assert_attribute_values(s, toggled_values)
-    assert_attribute_values(settings, reference)
+    assert_attribute_values(active_settings, reference)
 
 
 def test_nested_contexts():
     """Settings can be nested and properly restored in LIFO order."""
-    original_value = settings.dataframe_validation
+    original_value = active_settings.dataframe_validation
 
     with Settings(dataframe_validation=True):
-        assert settings.dataframe_validation
+        assert active_settings.dataframe_validation
 
         with Settings(dataframe_validation=False):
-            assert not settings.dataframe_validation
+            assert not active_settings.dataframe_validation
 
         # After exiting inner context, outer setting should be restored
-        assert settings.dataframe_validation
+        assert active_settings.dataframe_validation
 
     # After exiting outer context, original setting should be restored
-    assert settings.dataframe_validation == original_value
+    assert active_settings.dataframe_validation == original_value
 
 
 def test_exception_during_context_settings():
     """Exceptions raised inside a context are propagated and settings are restored."""
-    original_value = settings.dataframe_validation
+    original_value = active_settings.dataframe_validation
 
     class CustomError(Exception):
         """A custom exception for testing purposes."""
@@ -157,11 +158,11 @@ def test_exception_during_context_settings():
     # The custom exception is properly propagated
     with pytest.raises(CustomError, match="Test exception"):
         with Settings(dataframe_validation=not original_value):
-            assert settings.dataframe_validation == (not original_value)
+            assert active_settings.dataframe_validation == (not original_value)
             raise CustomError("Test exception")
 
     # Settings are restored despite the exception
-    assert settings.dataframe_validation == original_value
+    assert active_settings.dataframe_validation == original_value
 
 
 def test_setting_via_decorator(original_values, toggled_values):
@@ -169,13 +170,13 @@ def test_setting_via_decorator(original_values, toggled_values):
 
     @Settings(**toggled_values)
     def func():
-        assert_attribute_values(settings, toggled_values)
+        assert_attribute_values(active_settings, toggled_values)
 
     # The new settings are applied within the function
     func()
 
     # After exiting the function, the original settings are restored
-    assert_attribute_values(settings, original_values)
+    assert_attribute_values(active_settings, original_values)
 
 
 def test_unknown_environment_variable(monkeypatch):
@@ -202,4 +203,4 @@ def test_creation_from_environment(
     assert_attribute_values(s, reference)
 
     # The global settings are not affected
-    assert_attribute_values(settings, original_values)
+    assert_attribute_values(active_settings, original_values)

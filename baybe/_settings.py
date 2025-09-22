@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
-settings: Settings = None  # type: ignore[assignment]
+active_settings: Settings = None  # type: ignore[assignment]
 """The global settings instance controlling execution behavior."""
 
 
@@ -66,7 +66,7 @@ def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attri
                 # The current global settings value is used as default, to enable
                 # updating settings one attribute at a time (the fallback to the default
                 # happens when the global settings object is itself being created)
-                default = getattr(settings, fld.name, fld.default)
+                default = getattr(active_settings, fld.name, fld.default)
 
                 if self._use_environment:
                     # If enabled, the environment values take precedence for the default
@@ -107,7 +107,7 @@ class Settings(_SlottedContextDecorator):
             raise RuntimeError(f"Unknown environment variables: {unknown}")
 
     def __attrs_post_init__(self) -> None:
-        if settings is None:
+        if active_settings is None:
             # If we arrive here, we are in the initialization of the global object
             # --> Nothing to do
             return
@@ -134,13 +134,13 @@ class Settings(_SlottedContextDecorator):
 
     def apply(self) -> None:
         """Apply the settings globally."""
-        self._previous_settings = deepcopy(settings)
-        self.overwrite(settings)
+        self._previous_settings = deepcopy(active_settings)
+        self.overwrite(active_settings)
 
     def _restore_previous(self) -> None:
         """Restore the previous settings."""
         assert self._previous_settings is not None
-        self._previous_settings.overwrite(settings)
+        self._previous_settings.overwrite(active_settings)
         self._previous_settings = None
 
     def overwrite(self, target: Settings) -> None:
@@ -149,4 +149,4 @@ class Settings(_SlottedContextDecorator):
             setattr(target, fld.name, getattr(self, fld.name))
 
 
-settings = Settings()
+active_settings = Settings()
