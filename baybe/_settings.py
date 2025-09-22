@@ -113,10 +113,10 @@ class Settings(_SlottedContextDecorator):
             return
 
         if self._apply_immediately:
-            self._apply()
+            self.apply()
 
     def __enter__(self) -> Settings:
-        self._apply()
+        self.apply()
         return self
 
     def __exit__(
@@ -132,7 +132,7 @@ class Settings(_SlottedContextDecorator):
         """The available settings."""  # noqa: D401
         return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
 
-    def _apply(self) -> None:
+    def apply(self) -> None:
         """Apply the settings globally."""
         self._previous_settings = deepcopy(settings)
         self.overwrite(settings)
