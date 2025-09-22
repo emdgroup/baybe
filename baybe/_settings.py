@@ -47,6 +47,9 @@ class Settings(_SlottedContextDecorator):
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously applied settings (used for context management)."""
 
+    _apply_immediately: bool = field(default=True, validator=instance_of(bool))
+    """Controls if settings are applied immediately upon instantiation."""
+
     dataframe_validation: bool = field(default=True, validator=instance_of(bool))
     """Controls if dataframe content is validated against the recommendation context."""
 
@@ -56,13 +59,11 @@ class Settings(_SlottedContextDecorator):
             # --> Nothing to do
             return
 
-        # Store the global settings at the time of instantiation for later rollback
-        self._previous_settings = deepcopy(settings)
-
-        # Each new instance immediately applies its settings globally
-        self.overwrite(settings)
+        if self._apply_immediately:
+            self._apply()
 
     def __enter__(self) -> Settings:
+        self._apply()
         return self
 
     def __exit__(
@@ -71,13 +72,23 @@ class Settings(_SlottedContextDecorator):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        assert self._previous_settings is not None
-        self._previous_settings.overwrite(settings)
+        self._restore_previous()
 
     @classproperty
     def attributes(cls) -> tuple[Attribute, ...]:
         """The available settings."""  # noqa: D401
         return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
+
+    def _apply(self) -> None:
+        """Apply the settings globally."""
+        self._previous_settings = deepcopy(settings)
+        self.overwrite(settings)
+
+    def _restore_previous(self) -> None:
+        """Restore the previous settings."""
+        assert self._previous_settings is not None
+        self._previous_settings.overwrite(settings)
+        self._previous_settings = None
 
     def overwrite(self, target: Settings) -> None:
         """Overwrite the settings of another :class:`Settings` object."""

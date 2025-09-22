@@ -70,7 +70,8 @@ def test_setting_via_instantiation():
         assert getattr(settings, fld.name) == original_values[fld.name]
 
 
-def test_setting_via_context_manager():
+@pytest.mark.parametrize("immediately", [True, False])
+def test_setting_via_context_manager(immediately: bool):
     """Settings are rolled back after exiting a settings context."""
     attributes = Settings.attributes
 
@@ -78,15 +79,23 @@ def test_setting_via_context_manager():
     original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
     overwrites = {key: toggle(value) for key, value in original_values.items()}
 
+    # The settings of a new object are only applied immediately if specified
+    s = Settings(apply_immediately=immediately, **overwrites)
+    for fld in attributes:
+        assert getattr(s, fld.name) == overwrites[fld.name]
+        reference = overwrites if immediately else original_values
+        assert getattr(settings, fld.name) == reference[fld.name]
+
     # The new settings are applied within the context
-    with Settings(**overwrites) as s:
+    with s:
         for fld in attributes:
             assert getattr(s, fld.name) == overwrites[fld.name]
             assert getattr(settings, fld.name) == overwrites[fld.name]
 
     # After exiting the context, the original settings are restored
     for fld in attributes:
-        assert getattr(settings, fld.name) == original_values[fld.name]
+        reference = overwrites if immediately else original_values
+        assert getattr(settings, fld.name) == reference[fld.name]
 
 
 def test_setting_via_decorator():
@@ -97,7 +106,7 @@ def test_setting_via_decorator():
     original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
     overwrites = {key: toggle(value) for key, value in original_values.items()}
 
-    @Settings(**overwrites)
+    @Settings(**overwrites, apply_immediately=False)
     def func():
         for fld in attributes:
             assert getattr(settings, fld.name) == overwrites[fld.name]
