@@ -90,6 +90,27 @@ def test_setting_via_instantiation(original_values, toggled_values):
     assert_attribute_values(settings, original_values)
 
 
+def test_sequential_setting_via_instantiation(original_values):
+    """New settings have previous settings as their default.
+
+    Settings can be applied sequentially, one attribute at a time. That is, instead of
+    using the attribute defaults for unspecified attributes, the values of the current
+    settings are used.
+    """
+    # The growing collection of all modified attributes
+    modified: dict[str, Any] = {}
+
+    for attr in Settings.attributes:
+        # Modify one attribute at a time
+        change = {attr.name: toggle(original_values[attr.name])}
+        modified.update(change)
+        s = Settings(**change, apply_immediately=True)
+
+        # The new object carries the currently modified attribute and all previous ones
+        assert_attribute_values(s, original_values | modified)
+        assert_attribute_values(settings, original_values | modified)
+
+
 @pytest.mark.parametrize("immediately", [True, False])
 def test_setting_via_context(immediately: bool, original_values, toggled_values):
     """Settings are rolled back after exiting a settings context."""
