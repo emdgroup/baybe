@@ -82,6 +82,12 @@ def simulate_experiment(
           respective iteration
         * for each target a column ``{targetname}_Measurements``:
           The individual measurements obtained for the respective target and iteration
+
+        Important: The calculation of "best" targets is done independently per target.
+        For multi-target scenarios with batch_size > 1 this means that the "best" values
+        do not necessarily belong to the same point. In practice, however, one wants to
+        find a point that is "generally" the best and should thus look at the best
+        target values that can be found while belonging to the very same point.
     """
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
