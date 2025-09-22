@@ -33,6 +33,20 @@ def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
         )
 
 
+@pytest.fixture()
+def original_values():
+    """The original settings values."""
+    return {fld.name: getattr(settings, fld.name) for fld in Settings.attributes}
+
+
+@pytest.fixture()
+def toggled_values():
+    """Toggled settings values (i.e. differing from the original values)."""
+    return {
+        fld.name: toggle(getattr(settings, fld.name)) for fld in Settings.attributes
+    }
+
+
 def test_setting_unknown_attribute():
     """Attempting to apply an unknown setting raises an error."""
     with pytest.raises(AttributeError):
@@ -61,48 +75,36 @@ def test_direct_setting(attribute: Attribute):
     assert getattr(settings, attribute.name) == new_value
 
 
-def test_setting_via_instantiation():
+def test_setting_via_instantiation(original_values, toggled_values):
     """Applying joint settings can be done via settings instantiation."""
-    attributes = Settings.attributes
-
-    # Collect original and new settings values
-    original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
-    overwrites = {key: toggle(value) for key, value in original_values.items()}
-
     # A collection of settings can be applied immediately
-    s = Settings(**overwrites, apply_immediately=True)
-    assert_attribute_values(s, overwrites)
-    assert_attribute_values(settings, overwrites)
+    s = Settings(**toggled_values, apply_immediately=True)
+    assert_attribute_values(s, toggled_values)
+    assert_attribute_values(settings, toggled_values)
 
     # The same applies for evolving a settings object (here, we roll back the changes)
     s2 = evolve(s, **original_values, apply_immediately=True)
-    assert_attribute_values(s, overwrites)
+    assert_attribute_values(s, toggled_values)
     assert_attribute_values(s2, original_values)
     assert_attribute_values(settings, original_values)
 
 
 @pytest.mark.parametrize("immediately", [True, False])
-def test_setting_via_context(immediately: bool):
+def test_setting_via_context(immediately: bool, original_values, toggled_values):
     """Settings are rolled back after exiting a settings context."""
-    attributes = Settings.attributes
-
-    # Collect original and new settings values
-    original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
-    overwrites = {key: toggle(value) for key, value in original_values.items()}
-
     # The settings of a new object are only applied immediately if specified
-    s = Settings(apply_immediately=immediately, **overwrites)
-    reference = overwrites if immediately else original_values
-    assert_attribute_values(s, overwrites)
+    s = Settings(apply_immediately=immediately, **toggled_values)
+    reference = toggled_values if immediately else original_values
+    assert_attribute_values(s, toggled_values)
     assert_attribute_values(settings, reference)
 
     # The new settings are applied within the context
     with s:
-        assert_attribute_values(s, overwrites)
-        assert_attribute_values(settings, overwrites)
+        assert_attribute_values(s, toggled_values)
+        assert_attribute_values(settings, toggled_values)
 
     # After exiting the context, the original settings are restored
-    assert_attribute_values(s, overwrites)
+    assert_attribute_values(s, toggled_values)
     assert_attribute_values(settings, reference)
 
 
@@ -140,17 +142,12 @@ def test_exception_during_context_settings():
     assert settings.dataframe_validation == original_value
 
 
-def test_setting_via_decorator():
+def test_setting_via_decorator(original_values, toggled_values):
     """Settings can be enabled by decorating callables."""
-    attributes = Settings.attributes
 
-    # Collect original and new settings values
-    original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
-    overwrites = {key: toggle(value) for key, value in original_values.items()}
-
-    @Settings(**overwrites)
+    @Settings(**toggled_values)
     def func():
-        assert_attribute_values(settings, overwrites)
+        assert_attribute_values(settings, toggled_values)
 
     # The new settings are applied within the function
     func()
