@@ -1,5 +1,6 @@
 """Tests for settings management."""
 
+import os
 from typing import Any
 
 import pytest
@@ -58,19 +59,19 @@ def test_setting_unknown_attribute():
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to apply an invalid settings value raises an error."""
-    with pytest.raises(TypeError):
-        setattr(settings, attribute.name, invalidate(attribute.default))
-    with pytest.raises(TypeError):
-        Settings(**{attribute.name: invalidate(attribute.default)})
+    original_value = getattr(settings, attribute.name)
+    with pytest.raises(ValueError):
+        setattr(settings, attribute.name, invalidate(original_value))
+    with pytest.raises(ValueError):
+        Settings(**{attribute.name: invalidate(original_value)})
 
 
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
     original_value = getattr(settings, attribute.name)
-    assert original_value == attribute.default
-
-    new_value = toggle(attribute.default)
+    new_value = toggle(original_value)
+    assert original_value != new_value
     setattr(settings, attribute.name, new_value)
     assert getattr(settings, attribute.name) == new_value
 
@@ -153,4 +154,24 @@ def test_setting_via_decorator(original_values, toggled_values):
     func()
 
     # After exiting the function, the original settings are restored
+    assert_attribute_values(settings, original_values)
+
+
+@pytest.mark.parametrize("use_environment", [True, False])
+def test_creation_from_environment(
+    monkeypatch, original_values, toggled_values, use_environment: bool
+):
+    """Settings use environment variables, if enabled."""
+    # Set toggled values in the environment
+    for key, value in toggled_values.items():
+        env_key = f"BAYBE_{key.upper()}"
+        assert env_key not in os.environ
+        monkeypatch.setenv(env_key, str(value))
+
+    # The environment state is captured in the settings, if requested
+    s = Settings(use_environment=use_environment)
+    reference = toggled_values if use_environment else original_values
+    assert_attribute_values(s, reference)
+
+    # The global settings are not affected
     assert_attribute_values(settings, original_values)
