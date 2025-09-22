@@ -87,3 +87,24 @@ def test_setting_via_context_manager():
     # After exiting the context, the original settings are restored
     for fld in attributes:
         assert getattr(settings, fld.name) == original_values[fld.name]
+
+
+def test_setting_via_decorator():
+    """Settings can be enabled by decorating callables."""
+    attributes = Settings.attributes
+
+    # Collect original and new settings values
+    original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
+    overwrites = {key: toggle(value) for key, value in original_values.items()}
+
+    @Settings(**overwrites)
+    def func():
+        for fld in attributes:
+            assert getattr(settings, fld.name) == overwrites[fld.name]
+
+    # The new settings are applied within the function
+    func()
+
+    # After exiting the function, the original settings are restored
+    for fld in attributes:
+        assert getattr(settings, fld.name) == original_values[fld.name]

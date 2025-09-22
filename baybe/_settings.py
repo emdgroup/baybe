@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import wraps
 from typing import TYPE_CHECKING
 
 from attrs import Attribute, define, field, fields
@@ -19,8 +20,28 @@ settings: Settings = None  # type: ignore[assignment]
 """The global settings instance controlling execution behavior."""
 
 
+class _SlottedContextDecorator:
+    """Like :class:`contextlib.ContextDecorator` but with `__slots__`.
+
+    The code has been copied from the Python standard library.
+    """
+
+    __slots__ = ()
+
+    def _recreate_cm(self):
+        return self
+
+    def __call__(self, func):
+        @wraps(func)
+        def inner(*args, **kwds):
+            with self._recreate_cm():
+                return func(*args, **kwds)
+
+        return inner
+
+
 @define(kw_only=True)
-class Settings:
+class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
