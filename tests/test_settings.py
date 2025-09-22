@@ -33,6 +33,23 @@ def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
         )
 
 
+def test_setting_unknown_attribute():
+    """Attempting to apply an unknown setting raises an error."""
+    with pytest.raises(AttributeError):
+        settings.unknown_setting = True
+    with pytest.raises(TypeError):
+        Settings(unknown_setting=True)
+
+
+@pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
+def test_invalid_setting(attribute: Attribute):
+    """Attempting to apply an invalid settings value raises an error."""
+    with pytest.raises(TypeError):
+        setattr(settings, attribute.name, invalidate(attribute.default))
+    with pytest.raises(TypeError):
+        Settings(**{attribute.name: invalidate(attribute.default)})
+
+
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
@@ -42,19 +59,6 @@ def test_direct_setting(attribute: Attribute):
     new_value = toggle(attribute.default)
     setattr(settings, attribute.name, new_value)
     assert getattr(settings, attribute.name) == new_value
-
-
-def test_direct_setting_unknown_attribute():
-    """Attempting to apply an unknown setting raises an error."""
-    with pytest.raises(AttributeError):
-        settings.unknown_setting = True
-
-
-@pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
-def test_invalid_setting(attribute: Attribute):
-    """Attempting to apply an invalid settings value raises an error."""
-    with pytest.raises(TypeError):
-        setattr(settings, attribute.name, invalidate(attribute.default))
 
 
 def test_setting_via_instantiation():
