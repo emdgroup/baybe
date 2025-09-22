@@ -63,10 +63,17 @@ def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attri
         # at instantiation time, not at class definition time
         def make_default_factory(fld: Attribute) -> Any:
             def _(self: Settings) -> Any:
+                # The current global settings value is used as default, to enable
+                # updating settings one attribute at a time (the fallback to the default
+                # happens when the global settings object is itself being created)
+                default = getattr(settings, fld.name, fld.default)
+
                 if self._use_environment:
+                    # If enabled, the environment values take precedence for the default
                     env_name = f"BAYBE_{fld.name.upper()}"
-                    return os.getenv(env_name, fld.default)
-                return fld.default
+                    return os.getenv(env_name, default)
+
+                return default
 
             return Factory(_, takes_self=True)
 
@@ -89,6 +96,9 @@ class Settings(_SlottedContextDecorator):
 
     dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
+
+    use_polars: bool = field(default=False, converter=_to_bool)
+    """Controls if polars acceleration is to be used, if available."""
 
     def __attrs_pre_init__(self) -> None:
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
