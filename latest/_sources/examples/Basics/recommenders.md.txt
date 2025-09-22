@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent               Base                        Ligand  \
-    256           DMAc    Cesium pivalate                     BrettPhos   
-    172  Butyornitrile  Potassium acetate                     BrettPhos   
-    293           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
+    375       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+    190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration  
-    256        105.0          0.100  
-    172         90.0          0.100  
-    293        105.0          0.153  
+    352         90.0          0.100  
+    375        120.0          0.057  
+    190         90.0          0.100  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent               Base                        Ligand  \
-    256           DMAc    Cesium pivalate                     BrettPhos   
-    172  Butyornitrile  Potassium acetate                     BrettPhos   
-    293           DMAc  Potassium acetate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
+    375       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
+    190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
     
          Temperature  Concentration      yield  
-    256        105.0          0.100 -35.107840  
-    172         90.0          0.100  -0.763739  
-    293        105.0          0.153   3.451911  
+    352         90.0          0.100 -66.466888  
+    375        120.0          0.057 -77.784291  
+    190         90.0          0.100 -11.359017  
 
 
 

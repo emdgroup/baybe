@@ -1174,6 +1174,12 @@
 <span class="sd">          respective iteration</span>
 <span class="sd">        * for each target a column ``{targetname}_Measurements``:</span>
 <span class="sd">          The individual measurements obtained for the respective target and iteration</span>
+
+<span class="sd">        Important: The calculation of &quot;best&quot; targets is done independently per target.</span>
+<span class="sd">        For multi-target scenarios with batch_size &gt; 1 this means that the &quot;best&quot; values</span>
+<span class="sd">        do not necessarily belong to the same point. In practice, however, one wants to</span>
+<span class="sd">        find a point that is &quot;generally&quot; the best and should thus look at the best</span>
+<span class="sd">        target values that can be found while belonging to the very same point.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># TODO: Use a `will_terminate` campaign property to decide if the campaign will</span>
     <span class="c1">#   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.</span>
@@ -1296,24 +1302,29 @@
             <span class="n">cumbest_col</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_CumBest&quot;</span>
 
             <span class="c1"># Collect raw and transformed measurements</span>
+            <span class="c1"># We treat the target as a single-target objective to utilize its</span>
+            <span class="c1"># transformation incorporating the optimization direction such that we only</span>
+            <span class="c1"># have to look for the largest transformed values to find the best</span>
+            <span class="c1"># untransformed values</span>
+            <span class="c1"># TODO: This takes the best values for the targets per batch independent of</span>
+            <span class="c1">#  whether they belong to the same point or not. This is not necessarily</span>
+            <span class="c1">#  reasonable, as experimentally one is usually interested in the best</span>
+            <span class="c1">#  overall point</span>
             <span class="n">raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="n">measurement_col</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
             <span class="n">objective</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">to_objective</span><span class="p">()</span>
-            <span class="n">transformed</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">measurement_col</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">objective</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
-                <span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
-                <span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-            <span class="p">)</span>
+            <span class="n">transformed</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
             <span class="c1"># Compute the instantaneous best</span>
-            <span class="n">iterbest_idx</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">)</span>
-            <span class="n">iterbest_transformed</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">iterbest_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span>
-                <span class="n">raw</span><span class="p">,</span> <span class="n">iterbest_idx</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-            <span class="p">)</span>
+            <span class="n">iterbest_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">transformed</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">iterbest_transformed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">transformed</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">iterbest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">iterbest_idx</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">iterbest_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">iterbest</span>
 
             <span class="c1"># Compute the cumulative best</span>
-            <span class="n">cumargmax</span> <span class="o">=</span> <span class="n">_cumargmax</span><span class="p">(</span><span class="n">iterbest_transformed</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-            <span class="n">results</span><span class="p">[</span><span class="n">cumbest_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">cumargmax</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">cumargmax</span> <span class="o">=</span> <span class="n">_cumargmax</span><span class="p">(</span><span class="n">iterbest_transformed</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">cumbest_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">iterbest</span><span class="p">[</span><span class="n">cumargmax</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">results</span></div>
 
