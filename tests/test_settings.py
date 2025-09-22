@@ -50,7 +50,7 @@ def toggled_values():
 
 
 def test_setting_unknown_attribute():
-    """Attempting to apply an unknown setting raises an error."""
+    """Attempting to activate an unknown setting raises an error."""
     with pytest.raises(AttributeError):
         active_settings.unknown_setting = True
     with pytest.raises(TypeError):
@@ -59,7 +59,7 @@ def test_setting_unknown_attribute():
 
 @pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
-    """Attempting to apply an invalid settings value raises an error."""
+    """Attempting to activate an invalid settings value raises an error."""
     original_value = getattr(active_settings, attribute.name)
     with pytest.raises(ValueError):
         setattr(active_settings, attribute.name, invalidate(original_value))
@@ -78,14 +78,14 @@ def test_direct_setting(attribute: Attribute):
 
 
 def test_setting_via_instantiation(original_values, toggled_values):
-    """Applying joint settings can be done via settings instantiation."""
-    # A collection of settings can be applied immediately
-    s = Settings(**toggled_values, apply_immediately=True)
+    """Activating settings jointly can be done via settings instantiation."""
+    # A collection of settings can be activated immediately
+    s = Settings(**toggled_values, activate_immediately=True)
     assert_attribute_values(s, toggled_values)
     assert_attribute_values(active_settings, toggled_values)
 
     # The same applies for evolving a settings object (here, we roll back the changes)
-    s2 = evolve(s, **original_values, apply_immediately=True)
+    s2 = evolve(s, **original_values, activate_immediately=True)
     assert_attribute_values(s, toggled_values)
     assert_attribute_values(s2, original_values)
     assert_attribute_values(active_settings, original_values)
@@ -94,7 +94,7 @@ def test_setting_via_instantiation(original_values, toggled_values):
 def test_sequential_setting_via_instantiation(original_values):
     """New settings have previous settings as their default.
 
-    Settings can be applied sequentially, one attribute at a time. That is, instead of
+    Settings can be activated sequentially, one attribute at a time. That is, instead of
     using the attribute defaults for unspecified attributes, the values of the current
     settings are used.
     """
@@ -105,7 +105,7 @@ def test_sequential_setting_via_instantiation(original_values):
         # Modify one attribute at a time
         change = {attr.name: toggle(original_values[attr.name])}
         modified.update(change)
-        s = Settings(**change, apply_immediately=True)
+        s = Settings(**change, activate_immediately=True)
 
         # The new object carries the currently modified attribute and all previous ones
         assert_attribute_values(s, original_values | modified)
@@ -115,13 +115,13 @@ def test_sequential_setting_via_instantiation(original_values):
 @pytest.mark.parametrize("immediately", [True, False])
 def test_setting_via_context(immediately: bool, original_values, toggled_values):
     """Settings are rolled back after exiting a settings context."""
-    # The settings of a new object are only applied immediately if specified
-    s = Settings(apply_immediately=immediately, **toggled_values)
+    # The settings of a new object are only activated immediately if specified
+    s = Settings(activate_immediately=immediately, **toggled_values)
     reference = toggled_values if immediately else original_values
     assert_attribute_values(s, toggled_values)
     assert_attribute_values(active_settings, reference)
 
-    # The new settings are applied within the context
+    # The new settings are activated within the context
     with s:
         assert_attribute_values(s, toggled_values)
         assert_attribute_values(active_settings, toggled_values)
@@ -172,7 +172,7 @@ def test_setting_via_decorator(original_values, toggled_values):
     def func():
         assert_attribute_values(active_settings, toggled_values)
 
-    # The new settings are applied within the function
+    # The new settings are active during the function call
     func()
 
     # After exiting the function, the original settings are restored
