@@ -71,7 +71,7 @@ def test_setting_via_instantiation():
 
 
 @pytest.mark.parametrize("immediately", [True, False])
-def test_setting_via_context_manager(immediately: bool):
+def test_setting_via_context(immediately: bool):
     """Settings are rolled back after exiting a settings context."""
     attributes = Settings.attributes
 
@@ -96,6 +96,40 @@ def test_setting_via_context_manager(immediately: bool):
     for fld in attributes:
         reference = overwrites if immediately else original_values
         assert getattr(settings, fld.name) == reference[fld.name]
+
+
+def test_nested_contexts():
+    """Settings can be nested and properly restored in LIFO order."""
+    original_value = settings.dataframe_validation
+
+    with Settings(dataframe_validation=True):
+        assert settings.dataframe_validation
+
+        with Settings(dataframe_validation=False):
+            assert not settings.dataframe_validation
+
+        # After exiting inner context, outer setting should be restored
+        assert settings.dataframe_validation
+
+    # After exiting outer context, original setting should be restored
+    assert settings.dataframe_validation == original_value
+
+
+def test_exception_during_context_settings():
+    """Exceptions raised inside a context are propagated and settings are restored."""
+    original_value = settings.dataframe_validation
+
+    class CustomError(Exception):
+        """A custom exception for testing purposes."""
+
+    # The custom exception is properly propagated
+    with pytest.raises(CustomError, match="Test exception"):
+        with Settings(dataframe_validation=not original_value):
+            assert settings.dataframe_validation == (not original_value)
+            raise CustomError("Test exception")
+
+    # Settings are restored despite the exception
+    assert settings.dataframe_validation == original_value
 
 
 def test_setting_via_decorator():
