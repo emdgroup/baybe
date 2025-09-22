@@ -56,14 +56,14 @@ def test_setting_via_instantiation():
     original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
     overwrites = {key: toggle(value) for key, value in original_values.items()}
 
-    # Instantiating a new settings object immediately applies its settings globally
-    s = Settings(**overwrites)
+    # A collection of settings can be applied immediately
+    s = Settings(**overwrites, apply_immediately=True)
     for fld in attributes:
         assert getattr(s, fld.name) == overwrites[fld.name]
         assert getattr(settings, fld.name) == overwrites[fld.name]
 
     # The same applies for evolving a settings object (here, we roll back the changes)
-    s2 = evolve(s, **original_values)
+    s2 = evolve(s, **original_values, apply_immediately=True)
     for fld in attributes:
         assert getattr(s, fld.name) == overwrites[fld.name]
         assert getattr(s2, fld.name) == original_values[fld.name]
@@ -106,7 +106,7 @@ def test_setting_via_decorator():
     original_values = {fld.name: getattr(settings, fld.name) for fld in attributes}
     overwrites = {key: toggle(value) for key, value in original_values.items()}
 
-    @Settings(**overwrites, apply_immediately=False)
+    @Settings(**overwrites)
     def func():
         for fld in attributes:
             assert getattr(settings, fld.name) == overwrites[fld.name]
