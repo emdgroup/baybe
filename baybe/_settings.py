@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import os
 from copy import deepcopy
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from attrs import Attribute, define, field, fields
+from attrs import Attribute, Factory, define, field, fields
 from attrs.validators import instance_of
 
 from baybe.utils.basic import classproperty
+from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -40,17 +42,49 @@ class _SlottedContextDecorator:
         return inner
 
 
-@define(kw_only=True)
+def _to_bool(value: Any) -> bool:
+    """Convert Booleans and strings representing Booleans to actual Booleans."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return strtobool(value)
+    raise TypeError(f"Cannot convert value of type '{type(value)}' to Boolean.")
+
+
+def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
+    """Replace default values with environment variable lookups, if enabled."""
+    results = []
+    for fld in fields:
+        if fld.name.startswith("_"):
+            results.append(fld)
+            continue
+
+        # We use a factory here because the environment variables should be lookup up
+        # at instantiation time, not at class definition time
+        def _default(self: Settings) -> Any:
+            if self._use_environment:
+                env_name = f"BAYBE_{fld.name.upper()}"
+                return os.getenv(env_name, fld.default)
+            return fld.default
+
+        results.append(fld.evolve(default=Factory(_default, takes_self=True)))
+    return results
+
+
+@define(kw_only=True, field_transformer=load_environment)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously applied settings (used for context management)."""
 
+    _use_environment: bool = field(default=True, validator=instance_of(bool))
+    """Controls if environment variables shall be used to initialize settings."""
+
     _apply_immediately: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings are applied immediately upon instantiation."""
 
-    dataframe_validation: bool = field(default=True, validator=instance_of(bool))
+    dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
 
     def __attrs_post_init__(self):
