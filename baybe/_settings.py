@@ -61,13 +61,16 @@ def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attri
 
         # We use a factory here because the environment variables should be lookup up
         # at instantiation time, not at class definition time
-        def _default(self: Settings) -> Any:
-            if self._use_environment:
-                env_name = f"BAYBE_{fld.name.upper()}"
-                return os.getenv(env_name, fld.default)
-            return fld.default
+        def make_default_factory(fld: Attribute) -> Any:
+            def _(self: Settings) -> Any:
+                if self._use_environment:
+                    env_name = f"BAYBE_{fld.name.upper()}"
+                    return os.getenv(env_name, fld.default)
+                return fld.default
 
-        results.append(fld.evolve(default=Factory(_default, takes_self=True)))
+            return Factory(_, takes_self=True)
+
+        results.append(fld.evolve(default=make_default_factory(fld)))
     return results
 
 
