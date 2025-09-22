@@ -157,6 +157,13 @@ def test_setting_via_decorator(original_values, toggled_values):
     assert_attribute_values(settings, original_values)
 
 
+def test_unknown_environment_variable(monkeypatch):
+    """Unknown environment variables raise an error upon settings instantiation."""
+    monkeypatch.setenv("BAYBE_UNKNOWN_SETTING", "True")
+    with pytest.raises(RuntimeError, match="BAYBE_UNKNOWN_SETTING"):
+        Settings()
+
+
 @pytest.mark.parametrize("use_environment", [True, False])
 def test_creation_from_environment(
     monkeypatch, original_values, toggled_values, use_environment: bool
