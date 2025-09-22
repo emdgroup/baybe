@@ -87,7 +87,13 @@ class Settings(_SlottedContextDecorator):
     dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
 
-    def __attrs_post_init__(self):
+    def __attrs_pre_init__(self) -> None:
+        env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
+        unknown = env_vars - {f"BAYBE_{attr.name.upper()}" for attr in self.attributes}
+        if unknown:
+            raise RuntimeError(f"Unknown environment variables: {unknown}")
+
+    def __attrs_post_init__(self) -> None:
         if settings is None:
             # If we arrive here, we are in the initialization of the global object
             # --> Nothing to do
