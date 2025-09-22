@@ -28,7 +28,10 @@ def test_example(example: str):
     monkeypatching in some examples affecting other tests if they were executed in the
     same environment.
     """
-    env = os.environ | {"PYTHONPATH": os.getcwd()}
+    env = os.environ | {
+        "PYTHONPATH": os.getcwd(),
+        "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
+    }
     subprocess.run(["python", example], check=True, env=env)
 
 
