@@ -236,7 +236,6 @@ test_targets = [
     ids=[a.abbreviation for a in acqfs_single_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
     context = nullcontext()
     if campaign.searchspace.type not in [
@@ -261,7 +260,6 @@ def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
     ids=[a.abbreviation for a in acqfs_multi_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_multi_output_batching_acqfs(campaign, n_iterations, batch_size):
     run_iterations(campaign, n_iterations, batch_size)
 

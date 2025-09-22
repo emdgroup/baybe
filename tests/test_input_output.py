@@ -29,7 +29,6 @@ from baybe.utils.dataframe import add_fake_measurements
         param(1337, ["Task"], id="task_param_num"),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
     """Test attempting to read in an invalid parameter value."""
     # Add an invalid value
@@ -46,7 +45,6 @@ def test_bad_parameter_input_value(campaign, bad_val, fake_measurements):
         param("asd", ["Target_binary"], id="binary_target_str"),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_bad_target_input_value(campaign, bad_val):
     """Test attempting to read in an invalid target value."""
     rec = campaign.recommend(batch_size=3)

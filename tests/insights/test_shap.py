@@ -41,11 +41,6 @@ from tests.conftest import run_iterations
 
 
 @pytest.fixture
-def n_grid_points():
-    return 5
-
-
-@pytest.fixture
 def n_iterations():
     return 2
 

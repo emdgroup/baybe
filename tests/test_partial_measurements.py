@@ -30,7 +30,6 @@ desirability_targets = [
         ),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_invalid_partial_measurements(campaign):
     """Objectives that require complete measurements raise an error when encountering
     incomplete measurements.
@@ -63,7 +62,6 @@ def test_invalid_partial_measurements(campaign):
 )
 @pytest.mark.parametrize("n_iterations", [2], ids=["i2"])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_partial_measurements(ongoing_campaign):
     """Objectives that can handle partial measurements do not complain when
     encountering incomplete measurements.
@@ -98,7 +96,6 @@ def test_partial_measurements(ongoing_campaign):
         ),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 def test_pareto_ref_point_from_incomplete_measurements(campaign):
     measurements = create_fake_input(
         campaign.parameters, campaign.targets, 2
