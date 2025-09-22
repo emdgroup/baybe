@@ -86,13 +86,13 @@ class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
-    """The previously applied settings (used for context management)."""
+    """The previously active settings (used for context management)."""
 
     _use_environment: bool = field(default=True, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
 
-    _apply_immediately: bool = field(default=False, validator=instance_of(bool))
-    """Controls if settings are applied immediately upon instantiation."""
+    _activate_immediately: bool = field(default=False, validator=instance_of(bool))
+    """Controls if settings are activated immediately upon instantiation."""
 
     dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
@@ -112,11 +112,11 @@ class Settings(_SlottedContextDecorator):
             # --> Nothing to do
             return
 
-        if self._apply_immediately:
-            self.apply()
+        if self._activate_immediately:
+            self.activate()
 
     def __enter__(self) -> Settings:
-        self.apply()
+        self.activate()
         return self
 
     def __exit__(
@@ -132,8 +132,8 @@ class Settings(_SlottedContextDecorator):
         """The available settings."""  # noqa: D401
         return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
 
-    def apply(self) -> None:
-        """Apply the settings globally."""
+    def activate(self) -> None:
+        """Activate the settings globally."""
         self._previous_settings = deepcopy(active_settings)
         self.overwrite(active_settings)
 
