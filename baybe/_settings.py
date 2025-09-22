@@ -47,7 +47,7 @@ class Settings(_SlottedContextDecorator):
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously applied settings (used for context management)."""
 
-    _apply_immediately: bool = field(default=True, validator=instance_of(bool))
+    _apply_immediately: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings are applied immediately upon instantiation."""
 
     dataframe_validation: bool = field(default=True, validator=instance_of(bool))
