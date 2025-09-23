@@ -1,6 +1,7 @@
 """Tests for settings management."""
 
 import os
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -186,21 +187,48 @@ def test_unknown_environment_variable(monkeypatch):
         Settings()
 
 
-@pytest.mark.parametrize("use_environment", [True, False])
-def test_creation_from_environment(
-    monkeypatch, original_values, toggled_values, use_environment: bool
+@pytest.mark.parametrize("use_environment", [True, False], ids=["env", "no_env"])
+@pytest.mark.parametrize(
+    "restore_defaults", [True, False], ids=["restore", "no_restore"]
+)
+@pytest.mark.parametrize(
+    "pass_explicit", [True, False], ids=["explicit", "no_explicit"]
+)
+def test_settings_initialization(
+    monkeypatch,
+    use_environment: bool,
+    restore_defaults: bool,
+    pass_explicit: bool,
 ):
-    """Settings use environment variables, if enabled."""
-    # Set toggled values in the environment
-    for key, value in toggled_values.items():
-        env_key = f"BAYBE_{key.upper()}"
-        assert env_key not in os.environ
-        monkeypatch.setenv(env_key, str(value))
+    """The settings initialization can be configured via control flags."""
+    # The different sources for the cache_directory setting
+    cache_directory_original = active_settings.cache_directory
+    cache_directory_env = Path("env")
+    cache_directory_previous = Path("previous")
+    cache_directory_explicit = Path("explicit")
 
-    # The environment state is captured in the settings, if requested
-    s = Settings(use_environment=use_environment)
-    reference = toggled_values if use_environment else original_values
-    assert_attribute_values(s, reference)
+    # Prepare environment
+    env_key = "BAYBE_CACHE_DIRECTORY"
+    assert env_key not in os.environ
+    monkeypatch.setenv(env_key, str(cache_directory_env))
 
-    # The global settings are not affected
-    assert_attribute_values(active_settings, original_values)
+    # Prepare "previous" settings
+    active_settings.cache_directory = cache_directory_previous
+
+    # Create the "next" settings
+    s = Settings(
+        use_environment=use_environment,
+        restore_defaults=restore_defaults,
+        **{"cache_directory": cache_directory_explicit} if pass_explicit else {},
+    )
+
+    # The source used to initialize the setting value is controlled by the flags
+    if pass_explicit:
+        expected = cache_directory_explicit
+    elif use_environment:
+        expected = cache_directory_env
+    elif restore_defaults:
+        expected = cache_directory_original
+    else:
+        expected = cache_directory_previous
+    assert_attribute_values(s, {"cache_directory": expected})

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from copy import deepcopy
 from functools import wraps
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from attrs import Attribute, Factory, define, field, fields
@@ -51,8 +53,8 @@ def _to_bool(value: Any) -> bool:
     raise TypeError(f"Cannot convert value of type '{type(value)}' to Boolean.")
 
 
-def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
-    """Replace default values with environment variable lookups, if enabled."""
+def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
+    """Replace default values with the appropriate source, controlled via flags."""
     results = []
     for fld in fields:
         if fld.name.startswith("_"):
@@ -63,10 +65,14 @@ def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attri
         # at instantiation time, not at class definition time
         def make_default_factory(fld: Attribute) -> Any:
             def _(self: Settings) -> Any:
-                # The current global settings value is used as default, to enable
-                # updating settings one attribute at a time (the fallback to the default
-                # happens when the global settings object is itself being created)
-                default = getattr(active_settings, fld.name, fld.default)
+                if self._restore_defaults:
+                    default = fld.default
+                else:
+                    # Here, the current global settings value is used as default, to
+                    # enable updating settings one attribute at a time (the fallback to
+                    # the default happens when the global settings object is itself
+                    # being created)
+                    default = getattr(active_settings, fld.name, fld.default)
 
                 if self._use_environment:
                     # If enabled, the environment values take precedence for the default
@@ -81,12 +87,15 @@ def load_environment(cls: type[Settings], fields: list[Attribute]) -> list[Attri
     return results
 
 
-@define(kw_only=True, field_transformer=load_environment)
+@define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
+
+    _restore_defaults: bool = field(default=False, validator=instance_of(bool))
+    """Controls if settings shall be restored to their default values."""
 
     _use_environment: bool = field(default=True, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
@@ -99,6 +108,11 @@ class Settings(_SlottedContextDecorator):
 
     use_polars: bool = field(default=False, converter=_to_bool)
     """Controls if polars acceleration is to be used, if available."""
+
+    cache_directory: Path = field(
+        converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
+    )
+    """Controls which directory is used for caching."""
 
     def __attrs_pre_init__(self) -> None:
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
