@@ -74,7 +74,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     # being created)
                     default = getattr(active_settings, fld.name, fld.default)
 
-                if self._use_environment:
+                if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
                     env_name = f"BAYBE_{fld.name.upper()}"
                     return os.getenv(env_name, default)
@@ -97,7 +97,7 @@ class Settings(_SlottedContextDecorator):
     _restore_defaults: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings shall be restored to their default values."""
 
-    _use_environment: bool = field(default=True, validator=instance_of(bool))
+    _restore_environment: bool = field(default=False, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
 
     _activate_immediately: bool = field(default=False, validator=instance_of(bool))
@@ -163,4 +163,4 @@ class Settings(_SlottedContextDecorator):
             setattr(target, fld.name, getattr(self, fld.name))
 
 
-active_settings = Settings()
+active_settings = Settings(restore_environment=True)
