@@ -1,6 +1,9 @@
 """Tests for settings management."""
 
 import os
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -187,7 +190,7 @@ def test_unknown_environment_variable(monkeypatch):
         Settings()
 
 
-@pytest.mark.parametrize("use_environment", [True, False], ids=["env", "no_env"])
+@pytest.mark.parametrize("restore_environment", [True, False], ids=["env", "no_env"])
 @pytest.mark.parametrize(
     "restore_defaults", [True, False], ids=["restore", "no_restore"]
 )
@@ -196,7 +199,7 @@ def test_unknown_environment_variable(monkeypatch):
 )
 def test_settings_initialization(
     monkeypatch,
-    use_environment: bool,
+    restore_environment: bool,
     restore_defaults: bool,
     pass_explicit: bool,
 ):
@@ -217,7 +220,7 @@ def test_settings_initialization(
 
     # Create the "next" settings
     s = Settings(
-        use_environment=use_environment,
+        restore_environment=restore_environment,
         restore_defaults=restore_defaults,
         **{"cache_directory": cache_directory_explicit} if pass_explicit else {},
     )
@@ -225,10 +228,35 @@ def test_settings_initialization(
     # The source used to initialize the setting value is controlled by the flags
     if pass_explicit:
         expected = cache_directory_explicit
-    elif use_environment:
+    elif restore_environment:
         expected = cache_directory_env
     elif restore_defaults:
         expected = cache_directory_original
     else:
         expected = cache_directory_previous
     assert_attribute_values(s, {"cache_directory": expected})
+
+
+@pytest.mark.parametrize("inject_env", [True, False], ids=["with_env", "without_env"])
+def test_initial_environment_reading(inject_env: bool):
+    """When initializing the global settings, environment variables are ingested."""
+    # Note: This test runs in a subprocess because the global settings object is
+    # initialized directly at package import time, which makes it difficult to modify
+    # the environment variables via fixtures beforehand
+
+    env = {"BAYBE_DATAFRAME_VALIDATION": "false"} if inject_env else {}
+    expected = not inject_env
+    script = textwrap.dedent(f"""
+        from baybe import active_settings
+        value = active_settings.dataframe_validation
+        assert value == {expected}, f"Expected '{expected}', got '{{value}}'"
+    """)
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    if result.stderr:
+        raise AssertionError(f"Subprocess failed: {result.stderr}")
