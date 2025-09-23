@@ -23,7 +23,7 @@
 # * Maintain chemical balances across multiple experiments
 # * Optimize the collective use of expensive materials
 # For more details on interpoint constraints, see the {ref}`user guide on constraints
-# <userguide/constraints>`.
+# <userguide/constraints:ContinuousLinearConstraint>`.
 
 # ## Imports and Settings
 
@@ -117,7 +117,8 @@ all_constraints = intrapoint_constraints + interpoint_constraints
 # ## Campaign Setup
 
 # We construct the search space by combining parameters with constraints, then create
-# a campaign targeting maximum reaction yield. The {class}`~baybe.recommenders.BotorchRecommender` with
+# a campaign targeting maximum reaction yield. The
+# {class}`~baybe.recommenders.pure.bayesian.botorch.BotorchRecommender` with
 # `sequential_continuous=False` is required for interpoint constraints as they
 # operate on batches rather than individual experiments.
 
