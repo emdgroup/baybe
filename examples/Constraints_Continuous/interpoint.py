@@ -224,7 +224,9 @@ for it in range(N_ITERATIONS):
 
 results_df = pd.DataFrame(results_log)
 
-fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+# fmt: off
+fig, axs = plt.subplots(1, 2, figsize=(10, 4));
+# fmt: on
 
 plt.sca(axs[0])
 for exp_idx in range(BATCH_SIZE):
@@ -249,7 +251,9 @@ plt.plot(
 )
 plt.axhline(y=60, color="red", linestyle="--", label="Required")
 plt.title("Solvent: Individual + Total")
-plt.legend()
+# fmt: off
+plt.legend();
+# fmt: on
 
 plt.sca(axs[1])
 for exp_idx in range(BATCH_SIZE):
@@ -274,8 +278,9 @@ plt.plot(
 )
 plt.axhline(y=30, color="red", linestyle="--", label="Limit")
 plt.title("Catalyst: Individual + Total")
-plt.legend()
+# fmt: off
+plt.legend();
+# fmt: on
 
 plt.tight_layout()
-if not SMOKE_TEST:
-    plt.savefig("interpoint.svg")
+plt.show()
