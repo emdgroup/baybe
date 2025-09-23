@@ -29,7 +29,20 @@ is exclusively discrete or continuous in most cases.
 
 (CLC)=
 ### ContinuousLinearConstraint
+
 The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+is used to model linear relationship between between continuous parameters.
+BayBE support two different kinds of continuous linear constraints:
+1. **Intrapoint constraints:** These constraints model the relationship between the parameters
+within (*intra-*) individual experiments (*-points*) and are what people typically think of when
+simply speaking about "constraints". For that reason, a `ContinuousLinearConstraint` is
+interpreted as an intrapoint constraint if not explicitly declared otherwise.
+2. **Interpoint constraints:** These constraints model the relationship of different experiments
+across the whole batch (*inter-*) of exeriments (*-points*).
+
+#### Intrapoint constraints
+When not explicitly declaring it an interpoint constraint, the
+[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 asserts that the following kind of equations are true (up to numerical rounding errors):
 
 $$
@@ -76,20 +89,23 @@ ContinuousLinearConstraint(
 A more detailed example can be found
 [here](../../examples/Constraints_Continuous/linear_constraints).
 
-### Continuous Interpoint Constraints
+#### Interpoint constraints
 
-The constraints discussed in the previous paragraph belong to the class of so-called
-"intrapoint constraints". That is, they impose conditions on each individual point of a batch.
-In contrast to this, interpoint constraints do so **across** the points of the batch.
-That is, an interpoint constraint of the form ``x + y <= 1`` technically encodes
+In contrast to the intrapoint constrains discussed in the previous paragraph,
+interpoint constraints models constraints **across** the points of the batch.
+That is, an interpoint constraint of the form $x + y <= 1$ encodes
 $$
 \sum_{i\text{ in batch}}x_i + \sum_{i\text{ in batch}}y_i <= 1
 $$
+
+They can be defined by using the `interpoint` argument of the
+[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+class.
+
 A possible relevant constraint might be that only 100ml of a given solvent are available for 
 a full batch.
 
-They can be defined by using the `interpoint` argument of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
-class. 
+
 ```python
 from baybe.constraints import ContinuousLinearConstraint
 
