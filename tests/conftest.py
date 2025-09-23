@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import warnings
+from copy import deepcopy
 from itertools import chain
 from unittest.mock import Mock
 
@@ -23,6 +24,7 @@ from tenacity import (
 )
 from torch._C import _LinAlgError
 
+from baybe import active_settings
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.campaign import Campaign
@@ -110,6 +112,14 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture(autouse=True)
+def reset_settings():
+    """Reset the settings object to its original state before each test."""
+    original_settings = deepcopy(active_settings)
+    yield
+    original_settings.overwrite(active_settings)
 
 
 @pytest.fixture(params=[2], name="n_iterations", ids=["i2"])
