@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING, Any
 from attrs import Attribute, Factory, define, field, fields
 from attrs.validators import instance_of
 
-from baybe._optional.info import POLARS_INSTALLED
+from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
+from baybe.exceptions import OptionalImportError
 from baybe.utils.basic import AutoBool, classproperty
 from baybe.utils.boolean import strtobool
 
@@ -88,6 +89,13 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     return results
 
 
+_MISSING_PACKAGE_ERROR_MESSAGE = (
+    "The setting 'use_{package_name}' cannot be set to 'True' because '{package_name}' "
+    "is not installed. Either install 'polars' or set 'use_{package_name}' "
+    "to 'False'/'Auto'."
+)
+
+
 @define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
@@ -111,6 +119,11 @@ class Settings(_SlottedContextDecorator):
         default=AutoBool.AUTO, converter=AutoBool.from_unstructured
     )
     """Controls if polars acceleration is to be used, if available."""
+
+    use_fpsample: AutoBool = field(
+        default=AutoBool.AUTO, converter=AutoBool.from_unstructured
+    )
+    """Controls if fpsample acceleration is to be used, if available."""
 
     cache_directory: Path = field(
         converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
@@ -147,17 +160,26 @@ class Settings(_SlottedContextDecorator):
     @use_polars.validator
     def _validate_use_polars(self, _, value: AutoBool) -> None:
         if value is AutoBool.TRUE and not POLARS_INSTALLED:
-            field_name = fields(Settings).use_polars.name
-            raise ValueError(
-                f"The '{field_name}' setting cannot be set to 'True' because polars "
-                f"is not installed. Either install polars or set '{field_name}' "
-                f"to 'False'/'Auto'. "
+            raise OptionalImportError(
+                _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="polars")
+            )
+
+    @use_fpsample.validator
+    def _validate_use_fpsample(self, _, value: AutoBool) -> None:
+        if value is AutoBool.TRUE and not FPSAMPLE_INSTALLED:
+            raise OptionalImportError(
+                _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="fpsample")
             )
 
     @property
     def is_polars_enabled(self) -> bool:
         """Indicates if polars is enabled (i.e., installed and set to be used)."""
         return self.use_polars.evaluate(lambda: POLARS_INSTALLED)
+
+    @property
+    def is_fpsample_enabled(self) -> bool:
+        """Indicates if fpsample is enabled (i.e., installed and set to be used)."""
+        return self.use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
 
     @classproperty
     def attributes(cls) -> tuple[Attribute, ...]:
