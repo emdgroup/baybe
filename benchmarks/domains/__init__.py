@@ -1,42 +1,37 @@
 """Benchmark domains."""
 
 from benchmarks.definition.base import Benchmark
-from benchmarks.domains.direct_arylation.direct_arylation_multi_batch import (
-    direct_arylation_multi_batch_benchmark,
-)
-from benchmarks.domains.direct_arylation.direct_arylation_single_batch import (
-    direct_arylation_single_batch_benchmark,
-)
-from benchmarks.domains.hartmann.hartmann_3d import hartmann_3d_benchmark
-from benchmarks.domains.hartmann.hartmann_3d_discretized import (
-    hartmann_3d_discretized_benchmark,
-)
-from benchmarks.domains.hartmann.hartmann_6d import hartmann_6d_benchmark
-from benchmarks.domains.regression.direct_arylation_temperature_tl_regr import (
-    direct_arylation_temperature_tl_regr_benchmark,
-)
-from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
-from benchmarks.domains.transfer_learning.aryl_halides.sou_CT_I_tar_BM import (
+from benchmarks.domains.aryl_halides.convergence_tl import (
     aryl_halide_CT_I_BM_tl_benchmark,
-)
-from benchmarks.domains.transfer_learning.aryl_halides.sou_CT_tar_IM import (
     aryl_halide_CT_IM_tl_benchmark,
-)
-from benchmarks.domains.transfer_learning.aryl_halides.sout_IP_tar_CP import (
     aryl_halide_IP_CP_tl_benchmark,
 )
-from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import (
+from benchmarks.domains.direct_arylation.convergence import (
+    direct_arylation_multi_batch_benchmark,
+    direct_arylation_single_batch_benchmark,
+)
+from benchmarks.domains.direct_arylation.convergence_tl import (
     direct_arylation_tl_temperature_benchmark,
 )
-from benchmarks.domains.transfer_learning.easom.easom_tl_47_negate_noise5 import (
+from benchmarks.domains.easom.convergence_tl import (
     easom_tl_47_negate_noise5_benchmark,
 )
-from benchmarks.domains.transfer_learning.hartmann.hartmann_tl_3_20_15 import (
+from benchmarks.domains.hartmann.convergence import (
+    hartmann_3d_benchmark,
+    hartmann_3d_discretized_benchmark,
+    hartmann_6d_benchmark,
+)
+from benchmarks.domains.hartmann.convergence_tl import (
     hartmann_tl_3_20_15_benchmark,
 )
-from benchmarks.domains.transfer_learning.michalewicz.michalewicz_tl_continuous import (
+from benchmarks.domains.michalewicz.convergence_tl import (
     michalewicz_tl_continuous_benchmark,
 )
+
+# from benchmarks.domains.regression.direct_arylation_temperature_tl_regr import (
+#     direct_arylation_temperature_tl_regr_benchmark,
+# )
+from benchmarks.domains.synthetic_2C1D_1C import synthetic_2C1D_1C_benchmark
 
 BENCHMARKS: list[Benchmark] = [
     # Convergence Benchmarks
@@ -55,7 +50,7 @@ BENCHMARKS: list[Benchmark] = [
     hartmann_tl_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
     # Transfer-Learning Regression Benchmarks
-    direct_arylation_temperature_tl_regr_benchmark,
+    # direct_arylation_temperature_tl_regr_benchmark,
 ]
 
 
