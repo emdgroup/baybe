@@ -36,7 +36,6 @@ from baybe.utils.dataframe import (
     pretty_print_df,
 )
 from baybe.utils.memory import bytes_to_human_readable
-from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     import polars as pl
@@ -550,7 +549,9 @@ class SubspaceDiscrete(SerialMixin):
         # elements in the comp rep. The latter is the total number of parameter
         # configurations (= number of rows) times the total number of columns.
         comp_rep_bytes = (
-            np.array([0.0], dtype=DTypeFloatNumpy).itemsize * n_rows * n_cols_comp
+            np.array([0.0], dtype=active_settings.DTypeFloatNumpy).itemsize
+            * n_rows
+            * n_cols_comp
         )
 
         # Exp rep space is estimated as the size of the per-parameter exp rep dataframe

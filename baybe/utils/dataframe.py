@@ -12,7 +12,7 @@ import pandas as pd
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.parameters.base import Parameter
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -51,16 +51,14 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
     #  even though this seems like double casting here.
     import torch
 
-    from baybe.utils.torch import DTypeFloatTorch
-
     out = tuple(
-        torch.tensor(xi, dtype=DTypeFloatTorch)
+        torch.tensor(xi, dtype=active_settings.DTypeFloatTorch)
         if isinstance(xi, (int, float))
         else torch.from_numpy(
             (xi.values if isinstance(xi, (pd.Series, pd.DataFrame)) else xi).astype(
-                DTypeFloatNumpy
+                active_settings.DTypeFloatNumpy
             )
-        ).to(DTypeFloatTorch)
+        ).to(active_settings.DTypeFloatTorch)
         for xi in x
     )
     if len(x) == 1:
@@ -753,5 +751,5 @@ def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.Dat
     )
     df = df.copy()
     for col in wrong_cols:
-        df[col] = df[col].astype(DTypeFloatNumpy)
+        df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df

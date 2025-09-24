@@ -17,7 +17,7 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.parameters.substance import SubstanceEncoding, SubstanceParameter
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 from tests.hypothesis_strategies.basic import finite_floats
 from tests.hypothesis_strategies.metadata import measurable_metadata
 from tests.hypothesis_strategies.utils import intervals
@@ -73,7 +73,7 @@ def custom_descriptors(draw: st.DrawFn):
         names_or_number=10,
         elements=finite_floats(),
         unique=True,
-        dtype=DTypeFloatNumpy,
+        dtype=active_settings.DTypeFloatNumpy,
     )
     return draw(data_frames(index=index, columns=cols))
 
@@ -104,7 +104,9 @@ def numerical_discrete_parameters(
         )
     )
     max_tolerance = np.diff(np.sort(values)).min() / 2
-    if (max_tolerance == 0.0) or (max_tolerance != DTypeFloatNumpy(max_tolerance)):
+    if (max_tolerance == 0.0) or (
+        max_tolerance != active_settings.DTypeFloatNumpy(max_tolerance)
+    ):
         tolerance = 0.0
     else:
         tolerance = draw(
