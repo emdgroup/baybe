@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -29,10 +30,10 @@ def test_example(example: str):
     same environment.
     """
     env = os.environ | {
-        "PYTHONPATH": os.getcwd(),
+        "PYTHONPATH": os.getcwd(),  # to ensure examples are found
         "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
     }
-    subprocess.run(["python", example], check=True, env=env)
+    subprocess.run([sys.executable, example], check=True, env=env)
 
 
 if _SMOKE_TEST_CACHE is not None:
