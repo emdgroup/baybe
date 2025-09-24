@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
-from pytest import param
 from torch.testing import assert_close
 
-from baybe.acquisition.acqfs import qKnowledgeGradient, qNegIntegratedPosteriorVariance
+from baybe.acquisition.acqfs import qKnowledgeGradient
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
@@ -34,14 +33,7 @@ def compute_posterior_and_acqf(
 @pytest.mark.parametrize(
     "acqf_cls",
     [
-        param(
-            a,
-            marks=(
-                [pytest.mark.xfail(reason="not yet supported")]
-                if issubclass(a, qNegIntegratedPosteriorVariance)
-                else []
-            ),
-        )
+        a
         for a in get_subclasses(AcquisitionFunction)
         if not issubclass(a, qKnowledgeGradient)  # TODO: not yet clear how to handle
     ],
