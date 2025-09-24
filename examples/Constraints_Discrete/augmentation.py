@@ -36,32 +36,34 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
 # ## The Scenario
 
 # We will explore a 2 dimensional function which is permutation-invariant. This means
-# $f(x,y) = f(y,x)$. The function was crafted to exhibit no mirror symmetry (a common
-# way of also resulting in permutation invariance) and have multiple minima. In
-# practice, permutation invariance can arise e.g. for
+# $f(x,y) = f(y,x)$. The function was crafted to exhibit no additional mirror symmetry
+# (a common way of also resulting in permutation invariance) and have multiple minima.
+# In practice, permutation invariance can arise e.g. for
 # [mixtures when modeled with a slot-based approach](/examples/Mixtures/slot_based).
 # There are other kinds of invariance as well, e.g. expressed by a
 # {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint` (not part of this
 # example).
 
 # There are several ways to handle such symmetries. The simplest one is
-# to augment your data. In the case of permutation-invariance, whenever you have a
-# measurement for (x,y) you also add a measurement where you just switch the
+# to augment your data. In the case of permutation-invariance, augmentation means for
+# each measurement (x,y) you also add a measurement where you just switch the
 # numbers: (y,x). This has the advantage that it is fully model-agnostic, but might
-# come at the expense of training time and efficiency due to the larger amount of
-# effective training points. Other methods, such as using adjusted kernels for a GP,
+# come at the expense of increased training time and efficiency due to the larger amount
+# of effective training points. Other methods, such as using special kernels for a GP,
 # will not be discussed in this example.
 
-# BayBE can automatically perform this augmentation if configure to do so.
+# BayBE can automatically perform this augmentation if configured to do so.
 # Specifically, surrogate models and some constraints offer the argument
-# `consider_data_augmentation` when initialized. If a surrogate for which this is
+# {attr}`~baybe.constraints.base.Constraint.consider_data_augmentation` /
+# {attr}`~baybe.surrogates.base.Surrogate.consider_data_augmentation`
+# respectively when initialized. If a surrogate for which this is
 # enabled encounters one or more constraints for which this is enabled, BayBE will
 # automatically augment measurements internally before performing the model fit.
 
 # ## The Function
 
-LBOUND = -2
-UBOUND = 2
+LBOUND = -2.0
+UBOUND = 2.0
 
 
 def lookup(df: pd.DataFrame, a=1.0, b=1.0, c=1.0, d=1.0, phi=0.5) -> pd.DataFrame:
@@ -88,7 +90,7 @@ df_plot = lookup(pd.DataFrame({"x": xx.ravel(), "y": yy.ravel()}))
 zz = df_plot["f"].values.reshape(xx.shape)
 line_vals = np.linspace(LBOUND, UBOUND, 2)
 
-# Plot the contour and the minima points
+# Plot the contour and diagonal
 # fmt: off
 fig, axs = plt.subplots(1, 2, figsize=(15, 6))
 contour = axs[0].contourf(xx, yy, zz, levels=50, cmap="viridis")
@@ -96,7 +98,7 @@ fig.colorbar(contour, ax=axs[0])
 axs[0].plot(line_vals, line_vals, "r--", alpha=0.5, linewidth=2)
 axs[0].set_title("Ground Truth: $f(x, y)$ = $f(y, x)$ (Permutation Invariant)")
 axs[0].set_xlabel("x")
-axs[0].set_ylabel("y")
+axs[0].set_ylabel("y");
 # fmt: on
 
 # The first subplot shows the function we want to minimize. The dashed red line
@@ -129,10 +131,6 @@ p1 = NumericalDiscreteParameter("x", np.linspace(LBOUND, UBOUND, 51))
 p2 = NumericalDiscreteParameter("y", np.linspace(LBOUND, UBOUND, 51))
 objective = NumericalTarget("f", minimize=True).to_objective()
 
-# We set up a few variants of constraints to examine the optimization performance with
-# and without augmentation. We will also look at a campaign not having the permutation
-# constraint at all.
-
 recommender = TwoPhaseMetaRecommender(
     recommender=BotorchRecommender(
         surrogate_model=NGBoostSurrogate(
@@ -141,6 +139,10 @@ recommender = TwoPhaseMetaRecommender(
     )
 )
 
+# We set up a few variants of constraints to examine the optimization performance with
+# and without augmentation. We will also look at a campaign not having the permutation
+# constraint at all.
+
 constraint_aug = DiscretePermutationInvarianceConstraint(
     ["x", "y"],
     consider_data_augmentation=True,  # this is the default
@@ -148,13 +150,27 @@ constraint_aug = DiscretePermutationInvarianceConstraint(
 constraint_noaug = DiscretePermutationInvarianceConstraint(
     ["x", "y"], consider_data_augmentation=False
 )
-campaign_noinv = Campaign(SearchSpace.from_product([p1, p2]), objective, recommender)
-campaign_inv_aug = Campaign(
-    SearchSpace.from_product([p1, p2], [constraint_aug]), objective, recommender
+searchspace_noinv = SearchSpace.from_product([p1, p2])
+searchspace_inv_aug = SearchSpace.from_product([p1, p2], [constraint_aug])
+searchspace_inv_noaug = SearchSpace.from_product([p1, p2], [constraint_noaug])
+
+print("Number of Points in the Searchspace")
+print(f"{'Without Constraint:':<35} {len(searchspace_noinv.discrete.exp_rep)}")
+print(f"{'With Constraint:':<35} {len(searchspace_inv_noaug.discrete.exp_rep)}")
+print(
+    f"{'With Constraint and Augmentation:':<35} {len(searchspace_inv_aug.discrete.exp_rep)}"
 )
-campaign_inv_noaug = Campaign(
-    SearchSpace.from_product([p1, p2], [constraint_noaug]), objective, recommender
-)
+
+# We can see that the searchspace without the constraint has more points than the other
+# two. This is the effect of the utilized
+# {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint`,
+# filtering entries that are degenerate due to the permutation symmetry. As a result,
+# the optimization will only be performed within the lower triangle of the first
+# subplot.
+
+campaign_noinv = Campaign(searchspace_noinv, objective, recommender)
+campaign_inv_aug = Campaign(searchspace_inv_aug, objective, recommender)
+campaign_inv_noaug = Campaign(searchspace_inv_noaug, objective, recommender)
 
 # ## Simulating the Optimization Loop
 
@@ -202,5 +218,5 @@ plt.show()
 # Furthermore, there is a strong impact on whether data augmentation is used or not,
 # the effect we expected for a tree-based surrogate model. Indeed, the campaign with
 # constraint but without augmentation is barely better than the campaign not utilizing
-# the constraint. Conversely, the data-augmented campaign has a clearly superior
+# the constraint at all. Conversely, the data-augmented campaign has a clearly superior
 # performance.
