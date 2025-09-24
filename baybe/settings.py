@@ -12,7 +12,8 @@ from typing import TYPE_CHECKING, Any
 from attrs import Attribute, Factory, define, field, fields
 from attrs.validators import instance_of
 
-from baybe.utils.basic import classproperty
+from baybe._optional.info import POLARS_INSTALLED
+from baybe.utils.basic import AutoBool, classproperty
 from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
@@ -106,7 +107,9 @@ class Settings(_SlottedContextDecorator):
     dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
 
-    use_polars: bool = field(default=False, converter=_to_bool)
+    use_polars: AutoBool = field(
+        default=AutoBool.AUTO, converter=AutoBool.from_unstructured
+    )
     """Controls if polars acceleration is to be used, if available."""
 
     cache_directory: Path = field(
@@ -140,6 +143,21 @@ class Settings(_SlottedContextDecorator):
         exc_tb: TracebackType | None,
     ) -> None:
         self._restore_previous()
+
+    @use_polars.validator
+    def _validate_use_polars(self, _, value: AutoBool) -> None:
+        if value is AutoBool.TRUE and not POLARS_INSTALLED:
+            field_name = fields(Settings).use_polars.name
+            raise ValueError(
+                f"The '{field_name}' setting cannot be set to 'True' because polars "
+                f"is not installed. Either install polars or set '{field_name}' "
+                f"to 'False'/'Auto'. "
+            )
+
+    @property
+    def is_polars_enabled(self) -> bool:
+        """Indicates if polars is enabled (i.e., installed and set to be used)."""
+        return self.use_polars.evaluate(lambda: POLARS_INSTALLED)
 
     @classproperty
     def attributes(cls) -> tuple[Attribute, ...]:

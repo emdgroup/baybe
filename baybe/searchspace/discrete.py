@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-import os
 from collections.abc import Collection, Sequence
 from itertools import compress
 from math import prod
@@ -17,7 +16,7 @@ from typing_extensions import override
 
 from baybe.constraints import DISCRETE_CONSTRAINTS_FILTERING_ORDER, validate_constraints
 from baybe.constraints.base import DiscreteConstraint
-from baybe.exceptions import DeprecationError, OptionalImportError
+from baybe.exceptions import DeprecationError
 from baybe.parameters import (
     CategoricalEncoding,
     CategoricalParameter,
@@ -27,8 +26,9 @@ from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.utils import get_parameters_from_dataframe, sort_parameters
 from baybe.searchspace.validation import validate_parameter_names, validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.boolean import eq_dataframe, strtobool
+from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import (
     get_transform_objects,
@@ -189,22 +189,14 @@ class SubspaceDiscrete(SerialMixin):
             key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
         )
 
-        try:
-            # Check for manual deactivation of polars
-            if not strtobool(os.environ.get("BAYBE_DEACTIVATE_POLARS", "False")):
-                raise OptionalImportError(
-                    "Polars was deactivated manually via environment variable."
-                )
-
-            # Apply polars product and filtering
+        if active_settings.is_polars_enabled:
             lazy_df = parameter_cartesian_prod_polars(parameters)
             lazy_df, mask_missing = _apply_constraint_filter_polars(
                 lazy_df, constraints
             )
             df_records = lazy_df.collect().to_dicts()
             df = pd.DataFrame.from_records(df_records)
-        except OptionalImportError:
-            # Apply pandas product
+        else:
             df = parameter_cartesian_prod_pandas(parameters)
             mask_missing = [True] * len(constraints)
 
