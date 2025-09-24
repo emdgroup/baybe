@@ -134,6 +134,9 @@ class Settings(_SlottedContextDecorator):
     use_torch_single_precision: bool = field(default=False, validator=instance_of(bool))
     """Controls if torch tensors are created with single or double precision."""
 
+    parallelize_simulations: bool = field(default=True, validator=instance_of(bool))
+    """Controls if simulation runs are parallelized in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_."""
+
     cache_directory: Path = field(
         converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
     )
