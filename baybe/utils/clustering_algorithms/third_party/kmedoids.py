@@ -50,6 +50,7 @@ from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 
 
 def _compute_inertia(distances):
@@ -219,7 +220,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state_ = check_random_state(self.random_state)
 
         self._check_init_args()
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=active_settings.DTypeFloatNumpy
+        )
         self.n_features_in_ = X.shape[1]
         if self.n_clusters > X.shape[0]:
             raise ValueError(
@@ -355,7 +358,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_query, n_clusters)
             X transformed in the new space of distances to cluster centers.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=active_settings.DTypeFloatNumpy
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")
@@ -383,7 +388,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             labels : array, shape = (n_query,)
                 Index of the cluster each sample belongs to.
         """
-        X = check_array(X, accept_sparse=["csr", "csc"], dtype=DTypeFloatNumpy)
+        X = check_array(
+            X, accept_sparse=["csr", "csc"], dtype=active_settings.DTypeFloatNumpy
+        )
 
         if self.metric == "precomputed":
             check_is_fitted(self, "medoid_indices_")

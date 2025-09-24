@@ -21,7 +21,7 @@ from baybe._optional.chem import (
     fingerprints,
 )
 from baybe.parameters.enum import SubstanceEncoding
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 
 # Caching
 _cachedir = os.environ.get(
@@ -156,7 +156,9 @@ def smiles_to_fingerprint_features(
         for f in feature_names_out
     ]
     col_names = [prefix + name + suffix for suffix in suffixes]
-    df = pd.DataFrame(features, columns=col_names, dtype=DTypeFloatNumpy)
+    df = pd.DataFrame(
+        features, columns=col_names, dtype=active_settings.DTypeFloatNumpy
+    )
 
     return df
 

@@ -9,6 +9,7 @@ from functools import wraps
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 from attrs import Attribute, Factory, define, field, fields
 from attrs.validators import instance_of
 
@@ -19,6 +20,8 @@ from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
     from types import TracebackType
+
+    import torch
 
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
@@ -125,6 +128,12 @@ class Settings(_SlottedContextDecorator):
     )
     """Controls if fpsample acceleration is to be used, if available."""
 
+    use_numpy_single_precision: bool = field(default=False, validator=instance_of(bool))
+    """Controls if numpy arrays are created with single or double precision."""
+
+    use_torch_single_precision: bool = field(default=False, validator=instance_of(bool))
+    """Controls if torch tensors are created with single or double precision."""
+
     cache_directory: Path = field(
         converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
     )
@@ -180,6 +189,18 @@ class Settings(_SlottedContextDecorator):
     def is_fpsample_enabled(self) -> bool:
         """Indicates if fpsample is enabled (i.e., installed and set to be used)."""
         return self.use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
+
+    @property
+    def DTypeFloatNumpy(self) -> type[np.floating]:
+        """The floating point data type used for numpy arrays."""
+        return np.float32 if self.use_numpy_single_precision else np.float64
+
+    @property
+    def DTypeFloatTorch(self) -> torch.dtype:
+        """The floating point data type used for torch tensors."""
+        import torch
+
+        return torch.float32 if self.use_torch_single_precision else torch.float64
 
     @classproperty
     def attributes(cls) -> tuple[Attribute, ...]:

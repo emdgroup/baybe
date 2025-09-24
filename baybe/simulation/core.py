@@ -13,9 +13,9 @@ import pandas as pd
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
+from baybe.settings import active_settings
 from baybe.simulation.lookup import look_up_targets
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.random import temporary_seed
 
 
@@ -115,7 +115,9 @@ def simulate_experiment(
         if isinstance(lookup, pd.DataFrame):
             lookup = lookup.copy()
             float_cols = lookup.select_dtypes(include=["float"]).columns
-            lookup[float_cols] = lookup[float_cols].astype(DTypeFloatNumpy)
+            lookup[float_cols] = lookup[float_cols].astype(
+                active_settings.DTypeFloatNumpy
+            )
 
         # Clone the campaign to avoid mutating the original object
         # TODO: Reconsider if deepcopies are required once [16605] is resolved

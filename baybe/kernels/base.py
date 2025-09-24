@@ -11,6 +11,7 @@ from attrs import define
 from baybe.exceptions import UnmatchedAttributeError
 from baybe.priors.base import Prior
 from baybe.serialization.mixin import SerialMixin
+from baybe.settings import active_settings
 from baybe.utils.basic import get_baseclasses, match_attributes
 
 if TYPE_CHECKING:
@@ -95,8 +96,6 @@ class Kernel(ABC, SerialMixin):
         if kernel_cls.has_lengthscale:
             import torch
 
-            from baybe.utils.torch import DTypeFloatTorch
-
             # We can ignore mypy here and simply assume that the corresponding BayBE
             # kernel class has the necessary lengthscale attribute defined. This is
             # safer than using a `hasattr` check in the above if-condition since for
@@ -104,7 +103,7 @@ class Kernel(ABC, SerialMixin):
             # attribute to a new kernel class / misspelling it.
             if (initial_value := self.lengthscale_initial_value) is not None:  # type: ignore[attr-defined]
                 gpytorch_kernel.lengthscale = torch.tensor(
-                    initial_value, dtype=DTypeFloatTorch
+                    initial_value, dtype=active_settings.DTypeFloatTorch
                 )
 
         return gpytorch_kernel

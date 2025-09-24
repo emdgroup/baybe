@@ -22,8 +22,8 @@ from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import (
     SerialMixin,
 )
+from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
-from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -213,7 +213,9 @@ class SubSelectionCondition(Condition):
     def selection(self) -> tuple:
         """The list of items which are considered valid."""
         return tuple(
-            DTypeFloatNumpy(itm) if isinstance(itm, (float, int, bool)) else itm
+            active_settings.DTypeFloatNumpy(itm)
+            if isinstance(itm, (float, int, bool))
+            else itm
             for itm in self._selection
         )
 

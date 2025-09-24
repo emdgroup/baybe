@@ -12,6 +12,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import CompositeKernel, Kernel
 from baybe.priors.base import Prior
+from baybe.settings import active_settings
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
 
@@ -39,12 +40,10 @@ class ScaleKernel(CompositeKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if (initial_value := self.outputscale_initial_value) is not None:
             gpytorch_kernel.outputscale = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=active_settings.DTypeFloatTorch
             )
         return gpytorch_kernel
 
