@@ -352,7 +352,6 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Transfer Learning</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/backtesting.html">Backtesting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/basic_transfer_learning.html">Basic Transfer Learning</a></li>
 </ul>
 </li>
@@ -1301,15 +1300,10 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent                Base                        Ligand  \
-352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
-375       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
-
-     Temperature  Concentration  
-352         90.0          0.100  
-375        120.0          0.057  
-190         90.0          0.100  
+           Solvent             Base         Ligand  Temperature  Concentration
+151  Butyornitrile  Cesium pivalate      BrettPhos        120.0          0.100
+30     Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos        105.0          0.057
+136  Butyornitrile  Cesium pivalate  (t-Bu)PhCPhos         90.0          0.100
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1318,15 +1312,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent                Base                        Ligand  \
-352       p-Xylene     Cesium pivalate                 (t-Bu)PhCPhos   
-375       p-Xylene     Cesium pivalate  Di-tert-butylphenylphosphine   
-190  Butyornitrile  Potassium pivalate                 (t-Bu)PhCPhos   
+           Solvent             Base         Ligand  Temperature  \
+151  Butyornitrile  Cesium pivalate      BrettPhos        120.0   
+30     Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos        105.0   
+136  Butyornitrile  Cesium pivalate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration      yield  
-352         90.0          0.100 -66.466888  
-375        120.0          0.057 -77.784291  
-190         90.0          0.100 -11.359017  
+     Concentration      yield  
+151          0.100 -53.245002  
+30           0.057 -40.929439  
+136          0.100  29.842371  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

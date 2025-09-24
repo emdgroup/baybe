@@ -352,7 +352,6 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Transfer Learning</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/backtesting.html">Backtesting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../Transfer_Learning/basic_transfer_learning.html">Basic Transfer Learning</a></li>
 </ul>
 </li>
@@ -1185,9 +1184,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-      Solvent               Base         Ligand  Temperature  Concentration
-272      DMAc  Potassium acetate  (t-Bu)PhCPhos         90.0          0.153
-332  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        120.0          0.153
+      Solvent            Base                        Ligand  Temperature  \
+336  p-Xylene  Cesium acetate                     BrettPhos        105.0   
+346  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine        105.0   
+
+     Concentration  
+336          0.057  
+346          0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1200,13 +1203,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-      Solvent               Base         Ligand  Temperature  Concentration  \
-272      DMAc  Potassium acetate  (t-Bu)PhCPhos         90.0          0.153   
-332  p-Xylene     Cesium acetate  (t-Bu)PhCPhos        120.0          0.153   
+      Solvent            Base                        Ligand  Temperature  \
+336  p-Xylene  Cesium acetate                     BrettPhos        105.0   
+346  p-Xylene  Cesium acetate  Di-tert-butylphenylphosphine        105.0   
 
-         yield  
-272 -12.963345  
-332 -15.470237  
+     Concentration      yield  
+336          0.057  16.978736  
+346          0.100  17.408680  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

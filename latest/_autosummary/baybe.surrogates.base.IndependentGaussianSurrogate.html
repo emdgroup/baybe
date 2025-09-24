@@ -352,7 +352,6 @@
 </ul>
 </li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../examples/Transfer_Learning/Transfer_Learning.html">Transfer Learning</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Transfer Learning</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../examples/Transfer_Learning/backtesting.html">Backtesting</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../examples/Transfer_Learning/basic_transfer_learning.html">Basic Transfer Learning</a></li>
 </ul>
 </li>
@@ -1236,7 +1235,7 @@ the user-facing entry point for accessing model predictions.</p>
 <dd class="field-even"><p><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError" title="baybe.exceptions.ModelNotTrainedError"><strong>ModelNotTrainedError</strong></a> – When called before the model has been trained.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.15.2.dev33+g51429f21a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.15.2.dev35+ge1afc9ac2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.Posterior</span></code> object representing the posterior
@@ -1300,13 +1299,13 @@ it as a single-target surrogate and applying the same replication mechanism.</p>
 <dt class="sig sig-object py" id="baybe.surrogates.base.IndependentGaussianSurrogate.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.surrogates.base.IndependentGaussianSurrogate.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Create the botorch-ready representation of the fitted model.</p>
-<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.15.2.dev33+g51429f21a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
+<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.15.2.dev35+ge1afc9ac2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
 configured such that it can be called with candidate points in <strong>computational
 representation</strong>, that is, input of the form as obtained via
 <a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.transform" title="baybe.searchspace.core.SearchSpace.transform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.searchspace.core.SearchSpace.transform()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.15.2.dev33+g51429f21a)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.15.2.dev35+ge1afc9ac2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
