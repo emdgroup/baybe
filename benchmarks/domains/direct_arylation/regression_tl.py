@@ -10,7 +10,7 @@ from benchmarks.definition import (
 )
 from benchmarks.definition.base import RunMode
 from benchmarks.definition.regression.core import run_tl_regression_benchmark
-from benchmarks.domains.transfer_learning.direct_arylation.temperature_tl import (
+from benchmarks.domains.direct_arylation.convergence_tl import (
     load_data,
     make_objective,
     make_searchspace,
