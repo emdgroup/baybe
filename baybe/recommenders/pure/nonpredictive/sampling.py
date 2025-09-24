@@ -1,6 +1,5 @@
 """Recommenders based on sampling."""
 
-import os
 from enum import Enum
 from typing import ClassVar
 
@@ -10,14 +9,11 @@ from attrs import define, field, fields
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpace, SearchSpaceType, SubspaceDiscrete
-from baybe.utils.boolean import strtobool
+from baybe.settings import Settings, active_settings
 from baybe.utils.conversion import to_string
 from baybe.utils.sampling_algorithms import farthest_point_sampling
-
-FPSAMPLE_USED = strtobool(os.environ.get("BAYBE_USE_FPSAMPLE", str(FPSAMPLE_INSTALLED)))
 
 
 class RandomRecommender(NonPredictiveRecommender):
@@ -73,10 +69,10 @@ class FPSInitialization(Enum):
 class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling.
 
-    If the optional package `fpsample` is installed, its implementation will be used,
-    otherwise a custom fallback implementation is used. The use of a specific
-    implementation can be enforced by setting the environment variable
-    'BAYBE_USE_FPSAMPLE'.
+    If the optional `fpsample <https://github.com/leonardodalinky/fpsample>`_ package is
+    installed, a more efficient implementation is available that can be in-/activated
+    via the :attr:`~baybe.settings.Settings.use_fpsample` [setting]. Otherwise, a custom
+    fallback implementation is used.
     """
 
     # Class variables
@@ -101,13 +97,17 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @initialization.validator
     def _validate_initialization(self, _, value):
-        if FPSAMPLE_USED and value is not FPSInitialization.FARTHEST:
+        if (
+            active_settings.is_fpsample_enabled
+            and value is not FPSInitialization.FARTHEST
+        ):
             raise ValueError(
-                f"{self.__class__.__name__} is using the optional 'fpsample' "
-                f"package, which does not support '{self.initialization}'. "
-                f"Please choose a supported initialization method or bypass `fpsample` "
-                f"usage by setting the environment variable "
-                f"BAYBE_USE_FPSAMPLE."
+                f"'{self.__class__.__name__}' is currently using the optional "
+                f"'fpsample' package, which does not support the "
+                f"'{self.initialization}' mode. "
+                f"Please choose a supported initialization mode or deactivate "
+                f"`fpsample` usage via the '{fields(Settings).use_fpsample.name}' "
+                f"option in BayBE's settings."
             )
 
     @random_tie_break.default
@@ -116,14 +116,14 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.validator
     def _validate_random_tie_break(self, _, value):
-        if FPSAMPLE_USED and value:
+        if active_settings.is_fpsample_enabled and value:
             raise ValueError(
-                f"'{self.__class__.__name__}' is using the optional 'fpsample' "
-                f"package, which does not support random tie-breaking. "
-                f"To disable the mechanism, set "
-                f"'{fields(self.__class__).random_tie_break.name}=False' or bypass "
-                f"`fpsample` usage by setting the environment variable "
-                f"BAYBE_USE_FPSAMPLE."
+                f"'{self.__class__.__name__}' is currently using the optional "
+                f"'fpsample' package, which does not support random tie-breaking. "
+                f"Either disable the mechanism by passing "
+                f"'{fields(self.__class__).random_tie_break.name}=False' or deactivate "
+                f"`fpsample` usage via the '{fields(Settings).use_fpsample.name}' "
+                f"option in BayBE's settings."
             )
 
     @override
@@ -144,7 +144,7 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        if FPSAMPLE_USED:
+        if active_settings.is_fpsample_enabled:
             from baybe._optional.fpsample import fps_sampling
 
             ilocs = fps_sampling(
@@ -152,7 +152,6 @@ class FPSRecommender(NonPredictiveRecommender):
                 n_samples=batch_size,
             )
         else:
-            # Custom implementation as fallback
             ilocs = farthest_point_sampling(
                 candidates_scaled,
                 batch_size,
