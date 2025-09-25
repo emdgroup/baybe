@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 from baybe import Campaign
-from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
@@ -24,7 +23,7 @@ def test_recommendation(
     # Setup test data
     source = "B"
     target = "A"
-    objective = SingleTargetObjective(target=NumericalTarget(name="y", mode="MAX"))
+    objective = NumericalTarget(name="y").to_objective()
     parameters = [
         NumericalContinuousParameter(name="x", bounds=Interval(0, 10)),
         TaskParameter(name="task", values=(target, source), active_values=(target,)),
@@ -59,7 +58,7 @@ def test_multiple_active_tasks():
     # Setup test data
     source = "B"
     target = "A"
-    objective = NumericalTarget(name="y", mode="MIN").to_objective()
+    objective = NumericalTarget(name="y").to_objective()
     parameters = [
         NumericalContinuousParameter(name="x", bounds=Interval(0, 10)),
         TaskParameter(
@@ -69,6 +68,7 @@ def test_multiple_active_tasks():
     searchspace = SearchSpace.from_product(parameters=parameters)
     lookup = pd.DataFrame(
         {
+            # This dataframe was set so that both tasks are recommended
             "x": [1.0, 2.0, 3.0, 4.0],
             "y": [1.0, 2.0, 1.0, 2.0],
             "task": [target] * 2 + [source] * 2,
@@ -83,4 +83,5 @@ def test_multiple_active_tasks():
 
     campaign.add_measurements(lookup)
 
-    campaign.recommend(batch_size=10)
+    recommended = campaign.recommend(batch_size=10)
+    assert set(recommended["task"]) == {target, source}
