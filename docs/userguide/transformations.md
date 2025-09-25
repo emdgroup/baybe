@@ -259,17 +259,17 @@ from baybe.transformations import (
     TwoSidedAffineTransformation,
 )
 
+shift = AffineTransformation(shift=-1)
 twosided = TwoSidedAffineTransformation(slope_left=0, slope_right=1)
 power = PowerTransformation(exponent=2)
-shift = AffineTransformation(shift=1)
 
 # Create a transformation representing a shifted one-sided quadratic function:
-# 1) First, we cut the left side by multiplying by zero
-# 2) Then, we apply the quadratic transformation
-# 3) Finally, we shift to the right
-chain1 = ChainedTransformation([twosided, power, shift])  # explicit construction
-chain2 = twosided | power | shift  # using overloaded pipe operator
-chain3 = twosided.chain(power).chain(shift)  # via method chaining
+# 1) First, we shift to the right
+# 2) Then, we cut the left side by multiplying by zero
+# 3) Finally, we apply the quadratic transformation
+chain1 = ChainedTransformation([shift, twosided, power])  # explicit construction
+chain2 = shift | twosided | power  # using overloaded pipe operator
+chain3 = shift.chain(twosided).chain(power)  # via method chaining
 assert chain1 == chain2 == chain3
 ```
 
