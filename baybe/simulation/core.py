@@ -82,6 +82,12 @@ def simulate_experiment(
           respective iteration
         * for each target a column ``{targetname}_Measurements``:
           The individual measurements obtained for the respective target and iteration
+
+        Important: The calculation of "best" targets is done independently per target.
+        For multi-target scenarios with batch_size > 1 this means that the "best" values
+        do not necessarily belong to the same point. In practice, however, one wants to
+        find a point that is "generally" the best and should thus look at the best
+        target values that can be found while belonging to the very same point.
     """
     # TODO: Use a `will_terminate` campaign property to decide if the campaign will
     #   run indefinitely or not, and allow omitting `n_doe_iterations` for the latter.
@@ -204,24 +210,29 @@ def simulate_experiment(
             cumbest_col = f"{target.name}_CumBest"
 
             # Collect raw and transformed measurements
+            # We treat the target as a single-target objective to utilize its
+            # transformation incorporating the optimization direction such that we only
+            # have to look for the largest transformed values to find the best
+            # untransformed values
+            # TODO: This takes the best values for the targets per batch independent of
+            #  whether they belong to the same point or not. This is not necessarily
+            #  reasonable, as experimentally one is usually interested in the best
+            #  overall point
             raw = np.array(results[measurement_col].tolist())
             objective = target.to_objective()
-            transformed = results[measurement_col].apply(
-                lambda x: objective.transform(pd.Series(x).to_frame(target.name))
-                .iloc[:, 0]
-                .tolist()
-            )
+            transformed = objective.transform(
+                pd.DataFrame(raw.flatten(), columns=[target.name])
+            ).values.reshape(raw.shape)
 
             # Compute the instantaneous best
-            iterbest_idx = transformed.apply(np.argmax)
-            iterbest_transformed = transformed.apply(np.max)
-            results[iterbest_col] = np.take_along_axis(
-                raw, iterbest_idx.values[:, None], axis=1
-            )
+            iterbest_idx = np.argmax(transformed, axis=1)
+            iterbest_transformed = np.max(transformed, axis=1)
+            iterbest = np.take_along_axis(raw, iterbest_idx[:, None], axis=1)
+            results[iterbest_col] = iterbest
 
             # Compute the cumulative best
-            cumargmax = _cumargmax(iterbest_transformed.values)
-            results[cumbest_col] = np.take_along_axis(raw, cumargmax[:, None], axis=0)
+            cumargmax = _cumargmax(iterbest_transformed)
+            results[cumbest_col] = iterbest[cumargmax]
 
         return results
 
