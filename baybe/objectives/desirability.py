@@ -137,7 +137,7 @@ class DesirabilityObjective(Objective):
                 f"a suitable target transformation) or explicitly set "
                 f"'{DesirabilityObjective.__name__}."
                 f"{fields(DesirabilityObjective).require_normalization.name}' to "
-                f"'True' to allow unnormalized targets."
+                f"'False' to allow unnormalized targets."
             )
 
     @weights.validator
