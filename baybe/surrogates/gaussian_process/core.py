@@ -206,18 +206,13 @@ class GaussianProcessSurrogate(Surrogate):
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
             )
-            # The below code assumes there is a single active value
-            if len(task_param.active_values) > 1:
-                raise NotImplementedError(
-                    "Does not support multiple active task values."
-                )
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": [
-                    # Assumption (checked above): single active value
                     # Assumption (as implemented in TaskParameter class):
                     # comp_df is always 1-dimensional (DF with single numerical column)
-                    task_param.comp_df.squeeze(axis=1).at[task_param.active_values[0]]
+                    task_param.comp_df.squeeze(axis=1).at[active_value]
+                    for active_value in task_param.active_values
                 ],
                 "rank": context.n_tasks,
                 "all_tasks": task_param.comp_df.squeeze(axis=1).to_list(),
