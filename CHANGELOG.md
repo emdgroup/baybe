@@ -5,8 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `Surrogate.consider_data_augmentation` flag to control whether data augmentation is
+  applied during model fitting
+- `DiscretePermutationInvarianceConstraint.consider_data_augmentation` and 
+  `DiscreteDependenciesConstraint.consider_data_augmentation` flags to control whether
+  data augmentation in accordance with the constraint symmetry is applied
+- `SearchSpace.augment_measurements` method for applying data augmentation to a
+  dataframe of measurements
+
 ### Changed
 - `add_fake_measurements` now generates values inside each target's image / codomain
+- `build_examples.py` now ignores the `__pycache__` folder which might be present in
+  the examples folder if any example ran locally
 
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
