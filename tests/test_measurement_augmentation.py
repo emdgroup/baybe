@@ -1,7 +1,5 @@
 """Tests for augmentation of measurements."""
 
-import inspect
-from unittest import mock
 from unittest.mock import patch
 
 import pytest
@@ -13,12 +11,6 @@ from baybe.acquisition import qLogEI
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.utils.dataframe import create_fake_input
-
-
-def spy_mock(instance):
-    members = inspect.getmembers(instance, inspect.ismethod)
-    attrs = {"%s.side_effect" % k: v for k, v in members}
-    return mock.Mock(**attrs)
 
 
 @pytest.mark.parametrize("surrogate_considers", [True, False])
