@@ -52,3 +52,35 @@ def test_recommendation(
         campaign.add_measurements(lookup)
 
     campaign.recommend(batch_size=1)
+
+
+def test_multiple_active_tasks():
+    """Transfer learning recommendation works with multiple active task values."""
+    # Setup test data
+    source = "B"
+    target = "A"
+    objective = NumericalTarget(name="y", mode="MIN").to_objective()
+    parameters = [
+        NumericalContinuousParameter(name="x", bounds=Interval(0, 10)),
+        TaskParameter(
+            name="task", values=(target, source), active_values=(target, source)
+        ),
+    ]
+    searchspace = SearchSpace.from_product(parameters=parameters)
+    lookup = pd.DataFrame(
+        {
+            "x": [1.0, 2.0, 3.0, 4.0],
+            "y": [1.0, 2.0, 1.0, 2.0],
+            "task": [target] * 2 + [source] * 2,
+        }
+    )
+
+    # Run test
+    campaign = Campaign(
+        searchspace=searchspace,
+        objective=objective,
+    )
+
+    campaign.add_measurements(lookup)
+
+    campaign.recommend(batch_size=10)
