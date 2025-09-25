@@ -206,16 +206,19 @@ class GaussianProcessSurrogate(Surrogate):
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
             )
+            task_comp_rep = task_param.comp_df.iloc[
+                :, 0
+            ]  # using iloc instead of squeeze to avoid mypy errors
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": [
                     # Assumption (as implemented in TaskParameter class):
                     # comp_df is always 1-dimensional (DF with single numerical column)
-                    task_param.comp_df.squeeze(axis=1).at[active_value]
+                    task_comp_rep.at[active_value]
                     for active_value in task_param.active_values
                 ],
                 "rank": context.n_tasks,
-                "all_tasks": task_param.comp_df.squeeze(axis=1).to_list(),
+                "all_tasks": task_comp_rep.to_list(),
             }
 
         # construct and fit the Gaussian process
