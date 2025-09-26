@@ -67,7 +67,7 @@ parameters = [
         name="Reactant_A_Conc", bounds=(0.1, 2.0), metadata={"unit": "g/L"}
     ),
     NumericalContinuousParameter(
-        name="Catalyst_Loading", bounds=(1.0, 10.0), metadata={"unit": "mol%"}
+        name="Catalyst_Loading", bounds=(1.0, 20.0), metadata={"unit": "mol%"}
     ),
     NumericalContinuousParameter(
         name="Temperature", bounds=(60.0, 120.0), metadata={"unit": "°C"}
