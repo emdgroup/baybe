@@ -30,7 +30,6 @@
 
 import os
 
-import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -40,6 +39,7 @@ from baybe.parameters import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import add_fake_measurements
 from baybe.utils.random import set_random_seed
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
@@ -130,37 +130,12 @@ searchspace = SearchSpace.from_product(
 target = NumericalTarget(name="Reaction_Yield")
 objective = target.to_objective()
 
-# ## Chemical Reaction Model
+# ## Measurement Simulation
 
-# We create a synthetic model that represents a realistic chemical reaction with
-# trade-offs and optimal operating ranges rather than simply maximizing all parameters:
-# - Concentration has an optimum around 1.0 g/L (Gaussian peak)
-# - Catalyst shows diminishing returns and eventual inhibition
-# - Temperature has an optimum around 90°C (too high causes decomposition)
-# - Solvent volume has trade-offs (dissolution vs dilution effects)
-
-
-def chemical_reaction_model(df: pd.DataFrame) -> pd.DataFrame:
-    """Simulate chemical reaction yield with realistic trade-offs and optimal ranges."""
-    solvent = df["Solvent_Volume"].values
-    conc = df["Reactant_A_Conc"].values
-    catalyst = df["Catalyst_Loading"].values
-    temp = df["Temperature"].values
-
-    conc_effect = 30 * np.exp(-0.5 * ((conc - 1.0) / 0.6) ** 2)
-    catalyst_effect = 10 * catalyst / (1 + 0.1 * catalyst**2)
-    temp_effect = 15 * np.exp(-0.5 * ((temp - 90) / 25) ** 2)
-    solvent_effect = 5 * solvent / (1 + 0.01 * solvent**2)
-
-    base_yield = conc_effect + catalyst_effect + temp_effect + solvent_effect
-
-    noise = np.random.normal(0, 3, len(df))
-    yield_values = base_yield + noise
-
-    return pd.DataFrame({"Reaction_Yield": yield_values})
-
-
-lookup = chemical_reaction_model
+# For this example, we use the `add_fake_measurements` utility to generate
+# synthetic target values. This utility creates random measurements within
+# the target's expected range, which is useful for testing and demonstration
+# purposes without requiring a complex reaction model.
 
 recommender = BotorchRecommender(sequential_continuous=False)
 
@@ -175,9 +150,8 @@ campaign = Campaign(
 # We generate 5 random experiments from the search space to simulate existing data.
 
 initial_data = searchspace.continuous.sample_uniform(5)
-initial_results = lookup(initial_data)
-initial_measurements = pd.concat([initial_data, initial_results], axis=1)
-campaign.add_measurements(initial_measurements)
+add_fake_measurements(initial_data, campaign.targets)
+campaign.add_measurements(initial_data)
 
 # ## Optimization Loop with Constraint Validation
 
@@ -191,9 +165,8 @@ results_log = []
 for it in range(N_ITERATIONS):
     recommendations = campaign.recommend(batch_size=BATCH_SIZE)
 
-    reaction_results = lookup(recommendations)
-    measurements = pd.concat([recommendations, reaction_results], axis=1)
-    campaign.add_measurements(measurements)
+    add_fake_measurements(recommendations, campaign.targets)
+    campaign.add_measurements(recommendations)
     total_sol = recommendations["Solvent_Volume"].sum()
     total_cat = recommendations["Catalyst_Loading"].sum()
     solvent_ok = abs(total_sol - 60.0) < TOLERANCE
