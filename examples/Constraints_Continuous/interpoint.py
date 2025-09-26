@@ -1,16 +1,16 @@
-# # Chemical Reaction Optimization with Solvent Constraints
+# # Chemical Reaction Optimization with Catalyst Constraints
 
 # In this example, we demonstrate the use of **interpoint constraints** in a chemical
 # optimization scenario. We optimize reaction conditions for a batch of chemical
-# experiments where exactly 60 mL of solvent must be used across the entire batch,
-# while not using more than 30 mol% of catalyst across the batch.
+# experiments where exactly 30 mol% of catalyst must be used across the entire batch,
+# while not using more than 60 mL of solvent across the batch.
 
 # This scenario illustrates a common challenge in laboratory settings.
-# First, it demonstrates how to enforce a **solvent requirement**:
-# Exactly 60 mL of the solvent must be used across the entire batch
-# since the solvent is supplied in a fixed volume container and cannot be used later.
-# Second, it shows how to also include a **Catalyst loading** constraint for balancing
-# the catalyst loading across experiments for cost efficiency.
+# First, it demonstrates how to enforce a **catalyst requirement**:
+# Exactly 30 mol% of the catalyst must be used across the entire batch
+# since the catalyst is supplied in a sealed, sensitive package that cannot be reused once opened.
+# Second, it shows how to also include a **solvent budget** constraint for controlling
+# the total solvent consumption across experiments for cost efficiency.
 
 # This example demonstrates how to use interpoint constraints and intrapoint constraints.
 # An intrapoint constraint, often simply referred to as a constraint, applies to each individual
@@ -83,8 +83,8 @@ parameters = [
 #   the reactant concentration (to ensure proper dilution)
 #
 # **Interpoint constraints** (applied across the entire batch):
-# 1. **Solvent constraint**: Total solvent across all experiments must equal exactly 60 mL
-# 2. **Catalyst budget**: Total catalyst loading across batch should be ≤ 30 mol%
+# 1. **Catalyst constraint**: Total catalyst loading across all experiments must equal exactly 30 mol%
+# 2. **Solvent budget**: Total solvent across batch should be ≤ 60 mL
 
 intrapoint_constraints = [
     ContinuousLinearConstraint(
@@ -98,17 +98,17 @@ intrapoint_constraints = [
 
 interpoint_constraints = [
     ContinuousLinearConstraint(
-        parameters=["Solvent_Volume"],
+        parameters=["Catalyst_Loading"],
         operator="=",
         coefficients=[1],
-        rhs=60.0,
+        rhs=30.0,
         interpoint=True,
     ),
     ContinuousLinearConstraint(
-        parameters=["Catalyst_Loading"],
+        parameters=["Solvent_Volume"],
         operator="<=",
         coefficients=[1],
-        rhs=30.0,
+        rhs=60.0,
         interpoint=True,
     ),
 ]
@@ -168,14 +168,12 @@ for it in range(N_ITERATIONS):
     campaign.add_measurements(recommendations)
     total_sol = recommendations["Solvent_Volume"].sum()
     total_cat = recommendations["Catalyst_Loading"].sum()
-    solvent_ok = abs(total_sol - 60.0) < TOLERANCE
-    catalyst_ok = total_cat <= (30.0 + TOLERANCE)
+    solvent_ok = total_sol <= (60.0 + TOLERANCE)
+    catalyst_ok = abs(total_cat - 30.0) < TOLERANCE
 
-    assert solvent_ok, (
-        f"Solvent constraint violated: {total_sol:.1f} mL (expected 60.0 mL)"
-    )
+    assert solvent_ok, f"Solvent constraint violated: {total_sol:.1f} mL (max 60.0 mL)"
     assert catalyst_ok, (
-        f"Catalyst constraint violated: {total_cat:.1f} mol% (max 30.0 mol%)"
+        f"Catalyst constraint violated: {total_cat:.1f} mol% (expected 30.0 mol%)"
     )
 
     results_log.append(
@@ -222,7 +220,7 @@ plt.plot(
     linewidth=2,
     label="Total",
 )
-plt.axhline(y=60, color="red", linestyle="--", label="Required")
+plt.axhline(y=60, color="red", linestyle="--", label="Budget")
 plt.title("Solvent: Individual + Total")
 # fmt: off
 plt.legend();
@@ -249,7 +247,7 @@ plt.plot(
     linewidth=2,
     label="Total",
 )
-plt.axhline(y=30, color="red", linestyle="--", label="Limit")
+plt.axhline(y=30, color="red", linestyle="--", label="Required")
 plt.title("Catalyst: Individual + Total")
 # fmt: off
 plt.legend();
