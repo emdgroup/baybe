@@ -1,10 +1,11 @@
 """Tests features of the Campaign object."""
 
 from contextlib import nullcontext
-from unittest.mock import patch
+from unittest.mock import Mock
 
 import pandas as pd
 import pytest
+from attrs import evolve
 from pandas.testing import assert_index_equal
 from pytest import param
 
@@ -18,7 +19,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates import (
@@ -33,16 +34,17 @@ from tests.conftest import run_iterations
 
 @pytest.fixture
 def campaign_for_flag_test(request) -> Campaign:
-    """A simple campaign for testing the allow_* flags."""
+    """A mocked campaign for testing the allow_* flags."""
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
-    recommender = RandomRecommender()
+    objective = NumericalTarget("t").to_objective()
     flags = {
         "allow_recommending_already_measured": True,
         "allow_recommending_already_recommended": True,
         "allow_recommending_pending_experiments": True,
         **request.param,
     }
-    return Campaign(searchspace, recommender=recommender, **flags)
+    campaign = Campaign(searchspace, objective, **flags)
+    return evolve(campaign, recommender=Mock(wraps=TwoPhaseMetaRecommender()))
 
 
 @pytest.mark.parametrize(
@@ -147,25 +149,20 @@ def test_setting_allow_flags(flag, space_type, value):
     indirect=True,
 )
 def test_allow_measured_flag(campaign_for_flag_test: Campaign):
+    """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_already_measured
+    mock_recommend = campaign.recommender.recommend
 
-    with patch.object(
-        campaign.recommender,
-        "recommend",
-        wraps=campaign.recommender.recommend,
-    ) as mock_recommend:
-        mock_recommend.__name__ = mock_recommend._mock_wraps.__name__
+    assert campaign._cached_recommendation is None
 
-        for i in range(3):
-            with (
-                nullcontext()
-                if i < 2 or flag
-                else pytest.raises(NotEnoughPointsLeftError)
-            ):
-                # Because the data context is different in each loop iteration,
-                # the recommender must be called instead of using the cache
-                rec = campaign.recommend(1)
+    for i in range(3):
+        with (
+            nullcontext() if i < 2 or flag else pytest.raises(NotEnoughPointsLeftError)
+        ):
+            # Because the data context is different in each loop iteration,
+            # the recommender must be called instead of using the cache
+            rec = campaign.recommend(1)
             assert mock_recommend.call_count == i + 1
 
             # A follow-up call should use the cache
@@ -183,26 +180,24 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
     indirect=True,
 )
 def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
+    """The flag controls the candidate set and properly interacts with the cache."""
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_already_recommended
+    mock_recommend = campaign.recommender.recommend
 
-    campaign.recommend(1)
+    # Pre-populate the cache
+    assert campaign._cached_recommendation is None
+    rec = campaign.recommend(1)
+    mock_recommend.reset_mock()
+    assert campaign._cached_recommendation.equals(rec)
 
-    with patch.object(
-        campaign.recommender,
-        "recommend",
-        wraps=campaign.recommender.recommend,
-    ) as mock_recommend:
-        mock_recommend.__name__ = mock_recommend._mock_wraps.__name__
-
-        for i in range(2):
-            with (
-                nullcontext()
-                if i < 1 or flag
-                else pytest.raises(NotEnoughPointsLeftError)
-            ):
-                campaign.recommend(1)
-                assert mock_recommend.call_count == 0 if flag else i + 1
+    for i in range(2):
+        with (
+            nullcontext() if i < 1 or flag else pytest.raises(NotEnoughPointsLeftError)
+        ):
+            # Depending on the flag, we always reuse the cache or always recompute
+            campaign.recommend(1)
+            assert mock_recommend.call_count == 0 if flag else i + 1
 
 
 @pytest.mark.parametrize(
@@ -214,18 +209,34 @@ def test_allow_recommended_flag(campaign_for_flag_test: Campaign):
 def test_allow_pending_flag(campaign_for_flag_test: Campaign):
     campaign = campaign_for_flag_test
     flag = campaign.allow_recommending_pending_experiments
-    campaign.recommend(1)  # <-- populates the cache for the next iteration
+    mock_recommend = campaign.recommender.recommend
+    pending = pd.DataFrame({"p": [0]})
 
-    with patch.object(
-        campaign.recommender,
-        "recommend",
-        wraps=campaign.recommender.recommend,
-    ) as mock_recommend:
-        mock_recommend.__name__ = mock_recommend._mock_wraps.__name__
+    # We add some data so that we are in the model-based regime
+    campaign.add_measurements(pd.DataFrame({"p": [0], "t": [0]}))
 
-        with nullcontext() if flag else pytest.raises(NotEnoughPointsLeftError):
-            campaign.recommend(1, pending_experiments=pd.DataFrame({"p": [0, 1]}))
-            mock_recommend.assert_called_once()
+    # Pre-populate the cache
+    assert campaign._cached_recommendation is None
+    rec = campaign.recommend(1)
+    mock_recommend.reset_mock()
+    assert campaign._cached_recommendation.equals(rec)
+
+    # Recommending without pending experiments uses the cache
+    campaign.recommend(1)
+    mock_recommend.assert_not_called()
+
+    # With pending experiments, the recommender is called again
+    campaign.recommend(1, pending_experiments=pending)
+    mock_recommend.assert_called_once()
+
+    # Changing the pending context once again, retriggers computation once more
+    campaign.recommend(1)
+    assert mock_recommend.call_count == 2
+
+    # Depending on the flag, we can run out of candidates
+    with nullcontext() if flag else pytest.raises(NotEnoughPointsLeftError):
+        campaign.recommend(1, pending_experiments=pd.DataFrame({"p": [0, 1]}))
+        assert mock_recommend.call_count == 3
 
 
 @pytest.mark.parametrize(
