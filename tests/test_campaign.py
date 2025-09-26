@@ -166,14 +166,14 @@ def test_allow_measured_flag(campaign_for_flag_test: Campaign):
                 # Because the data context is different in each loop iteration,
                 # the recommender must be called instead of using the cache
                 rec = campaign.recommend(1)
-                assert mock_recommend.call_count == i + 1
+            assert mock_recommend.call_count == i + 1
 
-                # A follow-up call should use the cache
-                campaign.recommend(1)
-                assert mock_recommend.call_count == i + 1
+            # A follow-up call should use the cache
+            campaign.recommend(1)
+            assert mock_recommend.call_count == i + 1
 
-            add_fake_measurements(rec, campaign.targets)
-            campaign.add_measurements(rec)
+        add_fake_measurements(rec, campaign.targets)
+        campaign.add_measurements(rec)
 
 
 @pytest.mark.parametrize(
@@ -249,7 +249,7 @@ def test_update_measurements(ongoing_campaign):
     assert meas.iloc[0, updated.columns.get_loc(p_name)] == 1337
     assert meas.iloc[0, updated.columns.get_loc(t_name)] == 1337
     assert meas.iloc[[0], updated.columns.get_loc("FitNr")].isna().all()
-    assert ongoing_campaign._cached_recommendation.empty
+    assert ongoing_campaign._cached_recommendation is None
 
 
 @pytest.mark.parametrize(

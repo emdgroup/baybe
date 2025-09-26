@@ -188,8 +188,8 @@ class Campaign(SerialMixin):
     )
     """The experimental representation of the conducted experiments."""
 
-    _cached_recommendation: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    _cached_recommendation: pd.DataFrame | None = field(
+        default=None, init=False, eq=False
     )
     """The cached recommendations."""
 
@@ -275,6 +275,14 @@ class Campaign(SerialMixin):
         config = json.loads(config_json)
         _validation_converter.structure(config, Campaign)
 
+    def _cache_recommendation(self, df: pd.DataFrame, /) -> None:
+        """Cache the given recommendation."""
+        self._cached_recommendation = df.copy()
+
+    def clear_cache(self) -> None:
+        """Clear the internal recommendation cache."""
+        self._cached_recommendation = None
+
     def add_measurements(
         self,
         data: pd.DataFrame,
@@ -295,8 +303,8 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
         """
-        # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self._cached_recommendation = pd.DataFrame()
+        # With new measurements, the recommendations must always be recomputed
+        self.clear_cache()
 
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
@@ -346,6 +354,9 @@ class Campaign(SerialMixin):
             ValueError: If the given data contains indices not present in existing
                 measurements.
         """
+        # With new measurements, the recommendations must always be recomputed
+        self.clear_cache()
+
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
         if self.objective is not None:
@@ -378,7 +389,6 @@ class Campaign(SerialMixin):
 
         # Reset fit number and cached recommendations
         self._measurements_exp.loc[data.index, "FitNr"] = np.nan
-        self._cached_recommendation = pd.DataFrame()
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -408,8 +418,14 @@ class Campaign(SerialMixin):
             A new dataframe containing the  discrete candidate set passing through the
             specified filter.
         """
-        # Clear cache
-        self._cached_recommendation = pd.DataFrame()
+        # IMPROVE: The cache invalidation could be made more fine-grained:
+        #   * When including points, the cache only needs to be cleared if the active
+        #    search space gets *actually* larger (i.e. including already included
+        #    points does not change the situation).
+        #  * When excluding points, the cache only needs to be cleared if the excluded
+        #    points were part of the cached recommendations.
+        #  * Additional shortcuts might be possible.
+        self.clear_cache()
 
         df = self.searchspace.discrete.exp_rep
 
@@ -460,25 +476,40 @@ class Campaign(SerialMixin):
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
         """
+        # IMPROVE: The cache handling needs improvement:
+        #   * Currently, we simply invalidate the cache whenever pending experiments are
+        #     provided, because in order to use it, we need to check if the previous
+        #     call was done with the same pending experiments.
+        #   * Ideally, once the previous pending experiments are stored,
+        #     we could do a smart check if the cache can be reused even when the
+        #     new pending experiments differ. For example, the cache is still valid
+        #     if a previous call was done without pending experiments and the new
+        #     pending experiments have no intersection with the cached recommendations.
+        #     Additional shortcuts might be possible.
+
         if batch_size < 1:
             raise ValueError(
                 f"You must at least request one recommendation per batch, but provided "
                 f"{batch_size=}."
             )
 
-        # Invalidate cached recommendation if pending experiments are provided
-        if (pending_experiments is not None) and not pending_experiments.empty:
-            self._cached_recommendation = pd.DataFrame()
+        if pending_experiments is not None:
+            self.clear_cache()  # see IMPROVE comment above
+
             validate_parameter_input(pending_experiments, self.parameters)
             pending_experiments = normalize_input_dtypes(
                 pending_experiments, self.parameters
             )
             pending_experiments.__class__ = _ValidatedDataFrame
 
-        # If there are cached recommendations and the batch size of those is equal to
-        # the previously requested one, we just return those
-        if len(self._cached_recommendation) == batch_size:
-            return self._cached_recommendation
+        # This condition may be improved in the future (see IMPROVE comment above)
+        if (
+            pending_experiments is None
+            and (cache := self._cached_recommendation) is not None
+            and self.allow_recommending_already_recommended
+            and len(cache) == batch_size
+        ):
+            return cache
 
         # Update recommendation meta data
         if len(self._measurements_exp) > 0:
@@ -568,8 +599,8 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
-        # Cache the recommendations
-        self._cached_recommendation = rec.copy()
+        if pending_experiments is None:  # see IMPROVE comment above
+            self._cache_recommendation(rec)
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
