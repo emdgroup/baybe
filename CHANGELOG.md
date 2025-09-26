@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Crash in `simulate_experiment` when calculating cumulative best values for
   `batch_size>1`
 - Crash with minimized targets constructed via the legacy interface
+- `Campaign.allow_*` flags now properly take into account recommendation caching
 
 ## [0.14.0] - 2025-09-10
 ### Added
