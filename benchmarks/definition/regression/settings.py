@@ -72,9 +72,14 @@ class TransferLearningRegressionBenchmarkSettings(RegressionBenchmarkSettings):
     )
     """The settings for fractions of source data to use."""
 
+    stratified_source_sampling_settings: dict[RunMode, bool] = field(
+        validator=make_runmode_attr_validator(bool)
+    )
+    """The settings for whether to use stratified sampling across source tasks."""
+
     @property
     def source_fractions(self) -> tuple[float, ...]:
-        """The fractions of source data to use for the current runmode."""
+        """The fractions of source data to use."""
         if self.runmode not in self.source_fractions_settings:
             raise ValueError(
                 "Current runmode not found in "
@@ -82,6 +87,17 @@ class TransferLearningRegressionBenchmarkSettings(RegressionBenchmarkSettings):
                 f": {self.runmode.value}"
             )
         return self.source_fractions_settings[self.runmode]
+
+    @property
+    def stratified_source_sampling(self) -> bool:
+        """Whether to use stratified sampling across source tasks."""
+        if self.runmode not in self.stratified_source_sampling_settings:
+            raise ValueError(
+                "Current runmode not found in "
+                f"{fields(TransferLearningRegressionBenchmarkSettings).stratified_source_sampling_settings.name}"
+                f": {self.runmode.value}"
+            )
+        return self.stratified_source_sampling_settings[self.runmode]
 
 
 @define(frozen=True)
