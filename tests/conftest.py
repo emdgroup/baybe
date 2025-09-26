@@ -381,14 +381,13 @@ def fixture_targets(target_names: list[str]):
             name="Target_min",
             minimize=True,
         ),
-        NumericalTarget.normalized_ramp(
+        NumericalTarget.normalized_sigmoid(
             name="Target_max_bounded",
-            cutoffs=(0, 100),
+            anchors=[(0, 0.05), (100, 0.95)],
         ),
-        NumericalTarget.normalized_ramp(
+        NumericalTarget.normalized_sigmoid(
             name="Target_min_bounded",
-            cutoffs=(0, 100),
-            descending=True,
+            anchors=[(0, 0.95), (100, 0.05)],
         ),
         NumericalTarget.match_bell(
             name="Target_match_bell",
