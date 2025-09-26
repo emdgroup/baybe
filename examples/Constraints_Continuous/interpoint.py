@@ -48,7 +48,7 @@ N_ITERATIONS = 4 if SMOKE_TEST else 15
 TOLERANCE = 0.01
 
 
-set_random_seed(42)
+set_random_seed(1337)
 
 # ## Defining the Chemical Optimization Problem
 
@@ -221,9 +221,11 @@ plt.plot(
     label="Total",
 )
 plt.axhline(y=60, color="red", linestyle="--", label="Budget")
-plt.title("Solvent: Individual + Total")
+plt.title("Solvent (Constrained)")
+plt.xlabel("Batch")
+plt.ylabel("Solvent Volume (mL)")
 # fmt: off
-plt.legend();
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5));
 # fmt: on
 
 plt.sca(axs[1])
@@ -248,10 +250,13 @@ plt.plot(
     label="Total",
 )
 plt.axhline(y=30, color="red", linestyle="--", label="Required")
-plt.title("Catalyst: Individual + Total")
+plt.title("Catalyst (Constrained)")
+plt.xlabel("Batch")
+plt.ylabel("Catalyst Loading (mol%)")
 # fmt: off
-plt.legend();
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5));
 # fmt: on
 
 plt.tight_layout()
-plt.show()
+if not SMOKE_TEST:
+    plt.savefig("interpoint.svg")
