@@ -73,33 +73,40 @@ def test_target_normalization(monkeypatch, minimize):
     assert t.normalize().get_codomain() != Interval(0, 1)
 
 
+@pytest.mark.parametrize("mismatch_instead", [False, True], ids=["match", "mismatch"])
 @pytest.mark.parametrize(
-    ("target", "transformed_value"),
+    ("constructor", "kwargs", "transformed_value"),
     [
-        param(NumericalTarget.match_bell("t", 2, 1), 1, id="bell"),
-        param(NumericalTarget.match_power("t", 2, 2), 0, id="power"),
-        param(NumericalTarget.match_quadratic("t", 2), 0, id="quadratic"),
-        param(NumericalTarget.match_absolute("t", 2), 0, id="absolute"),
-        param(NumericalTarget.match_triangular("t", 2, width=40), 1, id="triangular"),
+        param("match_bell", {"sigma": 1}, 1, id="bell"),
+        param("match_power", {"exponent": 3}, 0, id="power"),
+        param("match_quadratic", {}, 0, id="quadratic"),
+        param("match_absolute", {}, 0, id="absolute"),
+        param("match_triangular", {"width": 40}, 1, id="triangular"),
     ],
 )
-def test_match_constructors(target, transformed_value):
-    """Larger distance to match values yields "worse" transformed values."""
-    delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
+def test_match_constructors(constructor, kwargs, transformed_value, mismatch_instead):
+    """Distance to match values yields expected transformed values."""
     match_value = 2
+    kwargs |= {"mismatch_instead": mismatch_instead}
+    target = getattr(NumericalTarget, constructor)("t", match_value, **kwargs)
+    delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     series = pd.Series(delta) + match_value
 
     # On the target level, "worse" can mean "larger" or "smaller",
-    # depending on the minimization flag
+    # depending on the minimization flag and the mismatch flag
     t1 = target.transform(series)
-    operator = op.gt if target.minimize else op.lt
+    operator = op.gt if (target.minimize ^ mismatch_instead) else op.lt
     assert t1[0] == transformed_value
     assert operator(t1.diff().dropna(), 0).all()
 
     # Objectives, on the other hand, are always to be maximized.
     # Hence, "worse" means "smaller".
     t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
-    assert (t2.diff().dropna() < 0).all()
+    diffs_correct = t2.diff().dropna() < 0
+    if mismatch_instead:
+        diffs_correct = ~diffs_correct
+
+    assert diffs_correct.all(), t2.diff()
 
 
 @pytest.mark.parametrize("operator", [op.add, op.sub, op.mul])
