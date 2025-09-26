@@ -20,6 +20,7 @@ from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
 )
+from baybe.recommenders.base import RecommenderProtocol
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
 from baybe.recommenders.pure.nonpredictive.sampling import (
     FPSRecommender,
@@ -49,7 +50,10 @@ def campaign_for_flag_test(request) -> Campaign:
         **request.param,
     }
     campaign = Campaign(searchspace, objective, **flags)
-    return evolve(campaign, recommender=Mock(wraps=TwoPhaseMetaRecommender()))
+    return evolve(
+        campaign,
+        recommender=Mock(wraps=TwoPhaseMetaRecommender(), spec=RecommenderProtocol),
+    )
 
 
 @pytest.mark.parametrize(
