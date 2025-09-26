@@ -24,7 +24,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
-from benchmarks.domains.aryl_halides.base import (
+from benchmarks.domains.aryl_halides.core import (
     aryl_halide_tl_substance_benchmark,
 )
 
