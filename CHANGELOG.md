@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `batch_size>1`
 - Crash with minimized targets constructed via the legacy interface
 - `Campaign.allow_*` flags now properly take into account recommendation caching
+- The campaign recommendation cache is now properly invalidated during context changes
 
 ## [0.14.0] - 2025-09-10
 ### Added

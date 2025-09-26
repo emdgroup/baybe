@@ -6,7 +6,7 @@ import gc
 import json
 from collections.abc import Callable, Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import cattrs
 import numpy as np
@@ -59,6 +59,8 @@ if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction
     from botorch.posteriors import Posterior
 
+    _T = TypeVar("_T")
+
 # Metadata columns
 _RECOMMENDED = "recommended"
 _MEASURED = "measured"
@@ -78,6 +80,12 @@ def _make_allow_flag_default_factory(
         return UNSPECIFIED
 
     return default_allow_flag
+
+
+def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
+    """Attrs-compatible hook to clear the cache when setting an attribute."""
+    instance.clear_cache()
+    return value
 
 
 def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -> None:
@@ -139,6 +147,7 @@ class Campaign(SerialMixin):
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
         validator=instance_of(RecommenderProtocol),
+        on_setattr=_set_with_cache_cleared,
     )
     """The employed recommender"""
 
@@ -147,6 +156,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=True), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow to recommend experiments that were already measured earlier.
@@ -157,6 +167,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow to recommend experiments that were already recommended earlier.
@@ -167,6 +178,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow pending experiments to be part of the recommendations.

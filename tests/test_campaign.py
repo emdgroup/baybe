@@ -1,6 +1,7 @@
 """Tests features of the Campaign object."""
 
 from contextlib import nullcontext
+from typing import Any
 from unittest.mock import Mock
 
 import pandas as pd
@@ -20,6 +21,7 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates import (
@@ -400,3 +402,21 @@ def test_acquisition_value_computation(ongoing_campaign: Campaign):
     assert_index_equal(acqfs.index, df.index)
     joint_acqf = ongoing_campaign.joint_acquisition_value(df, qUCB())
     assert isinstance(joint_acqf, float)
+
+
+@pytest.mark.parametrize(
+    ("attribute", "value"),
+    [
+        ("recommender", RandomRecommender()),
+        ("allow_recommending_already_measured", True),
+        ("allow_recommending_already_recommended", False),
+        ("allow_recommending_pending_experiments", False),
+    ],
+)
+def test_cache_invalidation(campaign: Campaign, attribute: str, value: Any):
+    """Setting mutable public attributes invalidates the cache."""
+    campaign._cache_recommendation(pd.DataFrame())
+    assert campaign._cached_recommendation is not None
+    setattr(campaign, attribute, value)
+    assert getattr(campaign, attribute) is value
+    assert campaign._cached_recommendation is None
