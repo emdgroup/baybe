@@ -83,8 +83,9 @@ def _make_allow_flag_default_factory(
 
 
 def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
-    """Attrs-compatible hook to clear the cache when setting an attribute."""
-    instance.clear_cache()
+    """Attrs-compatible hook to clear the cache when changing an attribute."""
+    if value != getattr(instance, attribute.name):
+        instance.clear_cache()
     return value
 
 

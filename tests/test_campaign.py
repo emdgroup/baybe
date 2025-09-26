@@ -21,7 +21,10 @@ from baybe.parameters.numerical import (
     NumericalDiscreteParameter,
 )
 from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.recommenders.pure.nonpredictive.sampling import (
+    FPSRecommender,
+    RandomRecommender,
+)
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.surrogates import (
@@ -407,16 +410,30 @@ def test_acquisition_value_computation(ongoing_campaign: Campaign):
 @pytest.mark.parametrize(
     ("attribute", "value"),
     [
-        ("recommender", RandomRecommender()),
-        ("allow_recommending_already_measured", True),
-        ("allow_recommending_already_recommended", False),
-        ("allow_recommending_pending_experiments", False),
+        param("recommender", RandomRecommender(), id="recommender"),
+        param("allow_recommending_already_measured", True, id="measured"),
+        param("allow_recommending_already_recommended", False, id="recommended"),
+        param("allow_recommending_pending_experiments", False, id="pending"),
     ],
 )
-def test_cache_invalidation(campaign: Campaign, attribute: str, value: Any):
-    """Setting mutable public attributes invalidates the cache."""
+@pytest.mark.parametrize("change", [True, False], ids=["change", "no_change"])
+def test_cache_invalidation(
+    campaign: Campaign, attribute: str, value: Any, change: bool
+):
+    """Altering mutable public attributes invalidates the cache."""
+    if isinstance(value, bool):
+        new_value = not value if change else value
+    else:
+        # Important: Even if we do not change, we use a new instance of the same class
+        #   to test that equality is a sufficient condition for not clearing the cache
+        new_value = FPSRecommender() if change else RandomRecommender()
+
+    setattr(campaign, attribute, value)
     campaign._cache_recommendation(pd.DataFrame())
     assert campaign._cached_recommendation is not None
-    setattr(campaign, attribute, value)
-    assert getattr(campaign, attribute) is value
-    assert campaign._cached_recommendation is None
+    setattr(campaign, attribute, new_value)
+    assert getattr(campaign, attribute) is new_value
+    if change:
+        assert campaign._cached_recommendation is None
+    else:
+        assert campaign._cached_recommendation is not None
