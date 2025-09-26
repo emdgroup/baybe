@@ -113,8 +113,6 @@ interpoint_constraints = [
     ),
 ]
 
-all_constraints = intrapoint_constraints + interpoint_constraints
-
 # ## Campaign Setup
 
 # We construct the search space by combining parameters with constraints, then create
@@ -124,7 +122,8 @@ all_constraints = intrapoint_constraints + interpoint_constraints
 # operate on batches rather than individual experiments.
 
 searchspace = SearchSpace.from_product(
-    parameters=parameters, constraints=all_constraints
+    parameters=parameters,
+    constraints=intrapoint_constraints + interpoint_constraints,
 )
 
 target = NumericalTarget(name="Reaction_Yield")
