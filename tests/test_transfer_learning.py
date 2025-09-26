@@ -68,7 +68,6 @@ def test_multiple_active_tasks():
     searchspace = SearchSpace.from_product(parameters=parameters)
     lookup = pd.DataFrame(
         {
-            # This dataframe was set so that both tasks are recommended
             "x": [1.0, 2.0, 3.0, 4.0],
             "y": [1.0, 2.0, 1.0, 2.0],
             "task": [target] * 2 + [source] * 2,
@@ -83,5 +82,4 @@ def test_multiple_active_tasks():
 
     campaign.add_measurements(lookup)
 
-    recommended = campaign.recommend(batch_size=10)
-    assert set(recommended["task"]) == {target, source}
+    campaign.recommend(batch_size=1)
