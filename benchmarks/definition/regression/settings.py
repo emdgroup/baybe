@@ -93,6 +93,8 @@ class RegressionBenchmark(Benchmark[RegressionBenchmarkSettings]):
     metric calculation.
     """
 
+    settings: RegressionBenchmarkSettings
+
 
 @define(frozen=True)
 class TransferLearningRegressionBenchmark(RegressionBenchmark):
