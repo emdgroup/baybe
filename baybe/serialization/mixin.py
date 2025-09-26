@@ -49,9 +49,14 @@ class SerialMixin:
         """Create an object from its JSON representation.
 
         Args:
-            string: The JSON representation of the object.
+            string: The string representation of the json object or a path to a json
+                file.
 
         Returns:
             The reconstructed object.
         """
+        if string.lower().endswith(".json"):
+            with open(string) as f:
+                string = f.read()
+
         return cls.from_dict(json.loads(string))
