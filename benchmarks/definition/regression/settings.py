@@ -10,6 +10,11 @@ from benchmarks.definition.base import (
 )
 
 
+def _default_stratified_source_sampling_settings() -> dict[RunMode, bool]:
+    """Define default stratified source sampling settings."""
+    return {RunMode.DEFAULT: True, RunMode.SMOKETEST: True}
+
+
 @define(frozen=True, kw_only=True)
 class RegressionBenchmarkSettings(BenchmarkSettings):
     """Base settings for regression benchmarks."""
@@ -73,7 +78,8 @@ class TransferLearningRegressionBenchmarkSettings(RegressionBenchmarkSettings):
     """The settings for fractions of source data to use."""
 
     stratified_source_sampling_settings: dict[RunMode, bool] = field(
-        validator=make_runmode_attr_validator(bool)
+        validator=make_runmode_attr_validator(bool),
+        factory=_default_stratified_source_sampling_settings,
     )
     """The settings for whether to use stratified sampling across source tasks."""
 
