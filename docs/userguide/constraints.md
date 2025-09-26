@@ -32,7 +32,7 @@ is exclusively discrete or continuous in most cases.
 
 The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 is used to model linear relationship between between continuous parameters.
-BayBE support two different kinds of continuous linear constraints:
+BayBE supports two different kinds of continuous linear constraints:
 1. **Intrapoint constraints:** These constraints model the relationship between the parameters
 within (*intra-*) individual experiments (*-points*) and are what people typically think of when
 simply speaking about "constraints". For that reason, a `ContinuousLinearConstraint` is
@@ -40,7 +40,7 @@ interpreted as an intrapoint constraint if not explicitly declared otherwise.
 2. **Interpoint constraints:** These constraints model the relationship of different experiments
 across the whole batch (*inter-*) of exeriments (*-points*).
 
-#### Intrapoint constraints
+#### Intrapoint Constraints
 When not explicitly declaring it an interpoint constraint, the
 [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 asserts that the following kind of equations are true (up to numerical rounding errors):
@@ -101,7 +101,6 @@ $$
 They can be defined by using the `interpoint` argument of the
 [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 class.
-
 A possible relevant constraint might be that only 100ml of a given solvent are available for 
 a full batch.
 
@@ -118,7 +117,7 @@ ContinuousLinearConstraint(
 )
 ```
 
-```{admonition} Limited scope
+```{admonition} Limited Scope
 :class: warning
 There are some limitations regarding the use of interpoint constraints that you need
 to be aware of:
