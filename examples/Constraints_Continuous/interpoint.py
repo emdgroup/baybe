@@ -22,6 +22,7 @@
 # * Ensure total resource consumption meets exact requirements
 # * Maintain chemical balances across multiple experiments
 # * Optimize the collective use of expensive materials
+
 # For more details on interpoint constraints, see the {ref}`user guide on constraints
 # <userguide/constraints:ContinuousLinearConstraint>`.
 
