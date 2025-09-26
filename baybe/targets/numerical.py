@@ -269,6 +269,7 @@ class NumericalTarget(Target, SerialMixin):
         name: str,
         match_value: float,
         *,
+        mismatch_instead: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using an absolute transformation.
@@ -276,6 +277,8 @@ class NumericalTarget(Target, SerialMixin):
         Args:
             name: The name of the target.
             match_value: The value to be matched.
+            mismatch_instead: If ``True``, the target will instead seek maximize the
+                distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -284,7 +287,7 @@ class NumericalTarget(Target, SerialMixin):
         return NumericalTarget(
             name,
             AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
-            minimize=True,
+            minimize=not mismatch_instead,
             metadata=metadata,
         )
 
@@ -294,6 +297,7 @@ class NumericalTarget(Target, SerialMixin):
         name: str,
         match_value: float,
         *,
+        mismatch_instead: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a quadratic transformation.
@@ -301,13 +305,19 @@ class NumericalTarget(Target, SerialMixin):
         Args:
             name: The name of the target.
             match_value: The value to be matched.
+            mismatch_instead: If ``True``, the target will instead seek maximize the
+                distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied quadratic matching transformation.
         """
         return NumericalTarget.match_power(
-            name, match_value, exponent=2, metadata=metadata
+            name,
+            match_value,
+            exponent=2,
+            mismatch_instead=mismatch_instead,
+            metadata=metadata,
         )
 
     @classmethod
@@ -317,6 +327,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         exponent: int,
         *,
+        mismatch_instead: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a power transformation.
@@ -325,6 +336,8 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             exponent: The exponent of applied the power transformation.
+            mismatch_instead: If ``True``, the target will instead seek maximize the
+                distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -335,7 +348,7 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation(shift=-match_value)
             | AbsoluteTransformation()
             | PowerTransformation(exponent),
-            minimize=True,
+            minimize=not mismatch_instead,
             metadata=metadata,
         )
 
@@ -348,6 +361,7 @@ class NumericalTarget(Target, SerialMixin):
         cutoffs: ConvertibleToInterval = None,
         width: float | None = None,
         margins: Sequence[float] | None = None,
+        mismatch_instead: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a triangular transformation.
@@ -361,6 +375,8 @@ class NumericalTarget(Target, SerialMixin):
             width: The width of the (symmetric) triangular transformation.
             margins: The margins defining how far the triangle extends in both
                 directions.
+            mismatch_instead: If ``True``, the target will instead seek maximize the
+                distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Raises:
@@ -390,7 +406,9 @@ class NumericalTarget(Target, SerialMixin):
         elif margins is not None:
             transformation = TriangularTransformation.from_margins(match_value, margins)
 
-        return NumericalTarget(name, transformation, metadata=metadata)
+        return NumericalTarget(
+            name, transformation, minimize=mismatch_instead, metadata=metadata
+        )
 
     @classmethod
     def match_bell(
@@ -399,6 +417,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         sigma: float,
         *,
+        mismatch_instead: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a bell transformation.
@@ -408,13 +427,18 @@ class NumericalTarget(Target, SerialMixin):
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
                 details, see :class:`baybe.transformations.basic.BellTransformation`.
+            mismatch_instead: If ``True``, the target will instead seek maximize the
+                distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied bell matching transformation.
         """
         return NumericalTarget(
-            name, BellTransformation(match_value, sigma), metadata=metadata
+            name,
+            BellTransformation(match_value, sigma),
+            minimize=mismatch_instead,
+            metadata=metadata,
         )
 
     @classmethod
