@@ -426,7 +426,7 @@ def test_cache_invalidation(
 ):
     """Altering mutable public attributes invalidates the cache."""
     if isinstance(value, bool):
-        new_value = not value if change else value
+        new_value = value ^ change
     else:
         # Important: Even if we do not change, we use a new instance of the same class
         #   to test that equality is a sufficient condition for not clearing the cache
