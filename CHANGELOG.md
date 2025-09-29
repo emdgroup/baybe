@@ -5,9 +5,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- `add_fake_measurements` now generates values inside each target's image / codomain
-
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
   `batch_size>1`
