@@ -48,6 +48,7 @@ class SerialMixin:
         /,
         *,
         overwrite: bool = False,
+        **kwargs
     ) -> str:
         """Create an object's JSON representation.
 
@@ -61,6 +62,7 @@ class SerialMixin:
 
             overwrite: Boolean flag indicating if to overwrite the file if it already
                 exists. Only relevant if ``sink`` is a file path or ``Path`` object.
+            **kwargs: Additional keyword arguments to pass to :func:`json.dumps`.
 
         Raises:
             FileExistsError: If ``sink`` points to an already existing file but
@@ -69,7 +71,7 @@ class SerialMixin:
         Returns:
             The JSON representation as a string.
         """
-        string = json.dumps(self.to_dict())
+        string = json.dumps(self.to_dict(), **kwargs)
 
         if isinstance(sink, str):
             sink = Path(sink)
