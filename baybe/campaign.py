@@ -316,9 +316,6 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
         """
-        # With new measurements, the recommendations must always be recomputed
-        self.clear_cache()
-
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
         if self.objective is not None:
@@ -328,6 +325,9 @@ class Campaign(SerialMixin):
         )
         data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
+
+        # With new measurements, the recommendations must always be recomputed
+        self.clear_cache()
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -367,9 +367,6 @@ class Campaign(SerialMixin):
             ValueError: If the given data contains indices not present in existing
                 measurements.
         """
-        # With changed measurements, the recommendations must always be recomputed
-        self.clear_cache()
-
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
         if self.objective is not None:
@@ -379,6 +376,9 @@ class Campaign(SerialMixin):
         )
         data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
+
+        # With changed measurements, the recommendations must always be recomputed
+        self.clear_cache()
 
         # Block duplicate input indices
         if data.index.has_duplicates:
