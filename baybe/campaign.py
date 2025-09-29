@@ -495,16 +495,9 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
-        # IMPROVE: The cache handling needs improvement:
-        #   * Currently, we simply invalidate the cache whenever pending experiments are
-        #     provided, because in order to use it, we need to check if the previous
-        #     call was done with the same pending experiments.
-        #   * Ideally, once the previous pending experiments are stored,
-        #     we could do a smart check if the cache can be reused even when the
-        #     new pending experiments differ. For example, the cache is still valid
-        #     if a previous call was done without pending experiments and the new
-        #     pending experiments have no intersection with the cached recommendations.
-        #     Additional shortcuts might be possible.
+        # IMPROVE: Currently, we simply invalidate the cache whenever pending
+        #     experiments are provided, because in order to use it, we need to check if
+        #     the previous call was done with the same pending experiments.
 
         if pending_experiments is not None:
             self.clear_cache()
