@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from baybe.serialization.core import _add_type_to_dict, converter
 
@@ -48,7 +48,7 @@ class SerialMixin:
         /,
         *,
         overwrite: bool = False,
-        **kwargs
+        **kwargs: Any,
     ) -> str:
         """Create an object's JSON representation.
 
