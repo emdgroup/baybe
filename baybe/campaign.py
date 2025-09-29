@@ -525,7 +525,7 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
+            mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
             if not self.allow_recommending_already_recommended:
                 mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
             if not self.allow_recommending_already_measured:
