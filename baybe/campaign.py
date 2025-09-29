@@ -367,7 +367,7 @@ class Campaign(SerialMixin):
             ValueError: If the given data contains indices not present in existing
                 measurements.
         """
-        # With new measurements, the recommendations must always be recomputed
+        # With changed measurements, the recommendations must always be recomputed
         self.clear_cache()
 
         # Validate target and parameter input values
