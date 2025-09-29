@@ -489,6 +489,12 @@ class Campaign(SerialMixin):
         Raises:
             ValueError: If ``batch_size`` is smaller than 1.
         """
+        if batch_size < 1:
+            raise ValueError(
+                f"You must at least request one recommendation per batch, but provided "
+                f"{batch_size=}."
+            )
+
         # IMPROVE: The cache handling needs improvement:
         #   * Currently, we simply invalidate the cache whenever pending experiments are
         #     provided, because in order to use it, we need to check if the previous
@@ -500,14 +506,8 @@ class Campaign(SerialMixin):
         #     pending experiments have no intersection with the cached recommendations.
         #     Additional shortcuts might be possible.
 
-        if batch_size < 1:
-            raise ValueError(
-                f"You must at least request one recommendation per batch, but provided "
-                f"{batch_size=}."
-            )
-
         if pending_experiments is not None:
-            self.clear_cache()  # see IMPROVE comment above
+            self.clear_cache()
 
             validate_parameter_input(pending_experiments, self.parameters)
             pending_experiments = normalize_input_dtypes(
@@ -515,7 +515,6 @@ class Campaign(SerialMixin):
             )
             pending_experiments.__class__ = _ValidatedDataFrame
 
-        # This condition may be improved in the future (see IMPROVE comment above)
         if (
             pending_experiments is None
             and (cache := self._cached_recommendation) is not None
