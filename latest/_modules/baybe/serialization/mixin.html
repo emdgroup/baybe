@@ -1093,7 +1093,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">_add_type_to_dict</span><span class="p">,</span> <span class="n">converter</span>
 
@@ -1147,6 +1147,7 @@
         <span class="o">/</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object&#39;s JSON representation.</span>
 
@@ -1160,6 +1161,7 @@
 
 <span class="sd">            overwrite: Boolean flag indicating if to overwrite the file if it already</span>
 <span class="sd">                exists. Only relevant if ``sink`` is a file path or ``Path`` object.</span>
+<span class="sd">            **kwargs: Additional keyword arguments to pass to :func:`json.dumps`.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            FileExistsError: If ``sink`` points to an already existing file but</span>
@@ -1168,7 +1170,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            The JSON representation as a string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">sink</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">sink</span><span class="p">)</span>

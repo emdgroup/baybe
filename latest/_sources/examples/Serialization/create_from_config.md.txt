@@ -112,7 +112,7 @@ print(recommendation)
 ```
 
        Granularity  Pressure[bar]    Solvent
-    7       coarse            5.0  Solvent D
-    33  ultra-fine           10.0  Solvent B
-    20        fine           10.0  Solvent A
+    28  ultra-fine            5.0  Solvent A
+    21        fine           10.0  Solvent B
+    3       coarse            1.0  Solvent D
 
