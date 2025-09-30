@@ -85,7 +85,6 @@ WHITELISTS = {
         "baybe._optional.chem",
         "baybe._optional.insights",
         "baybe._optional.ngboost",
-        "baybe._optional.simulation",
         "baybe.acquisition._builder",
         "baybe.acquisition.partial",
         "baybe.insights",
@@ -97,7 +96,8 @@ WHITELISTS = {
         "baybe.utils.clustering_algorithms",
         "baybe.utils.clustering_algorithms.third_party",
         "baybe.utils.clustering_algorithms.third_party.kmedoids",
-    ],
+    ]
+    + (["baybe._optional.simulation"] if sys.version_info >= (3, 13) else []),
     "sklearn": [
         "baybe._optional.chem",
         "baybe._optional.insights",
