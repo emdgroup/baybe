@@ -12,11 +12,13 @@ from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import (
+    DiscreteDependenciesConstraint,
+    DiscretePermutationInvarianceConstraint,
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -25,6 +27,10 @@ from baybe.searchspace.discrete import (
 )
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.utils.augmentation import (
+    df_apply_dependency_augmentation,
+    df_apply_permutation_augmentation,
+)
 from baybe.utils.conversion import to_string
 
 
@@ -81,6 +87,78 @@ class SearchSpace(SerialMixin):
         """Perform validation."""
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
+
+    def augment_measurements(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Apply data augmentation to measurements.
+
+        Args:
+            data: A dataframe with measurements.
+
+        Returns:
+            A dataframe with the augmented measurements, also containing the original
+            ones.
+        """
+        for c in self.constraints:
+            match c:
+                case DiscretePermutationInvarianceConstraint(
+                    consider_data_augmentation=True
+                ):
+                    # Associated parameters can come from dependencies and need to be
+                    # co-permuted in the same manner as the parameters of this
+                    # constraint.
+                    associated_parameters = (
+                        c.dependencies.parameters if c.dependencies else []
+                    )
+
+                    # This creates groups like (("p1", "a1"), ("p2", "a2"), ...) if the
+                    # parameters "p_k" have associated parameters "a_k". It results in
+                    # just (("p1",), ("p2",), ...) if there are no associated
+                    # parameters.
+                    groups = tuple(
+                        zip(c.parameters, associated_parameters, strict=True)
+                        if associated_parameters
+                        else zip(c.parameters)
+                    )
+                    data = df_apply_permutation_augmentation(data, groups)
+
+                case DiscreteDependenciesConstraint(consider_data_augmentation=True):
+                    for param_name, cond, affected_param_names in zip(
+                        c.parameters, c.conditions, c.affected_parameters
+                    ):
+                        # The 'causing' entry describes the parameters and the value
+                        # for which one or more affected parameters become degenerate.
+                        # 'cond' specifies for which values the affected parameter
+                        # values are active, i.e. not degenerate. Hence, here we get the
+                        # values that are not active, as rows containing them should be
+                        # augmented.
+                        param = self.get_parameters_by_name(param_name)[0]
+                        assert isinstance(param, DiscreteParameter)  # for mypy
+
+                        causing_values = [
+                            x
+                            for x, flag in zip(
+                                param.values,
+                                ~cond.evaluate(pd.Series(param.values)),
+                                strict=True,
+                            )
+                            if flag
+                        ]
+                        causing = (param.name, causing_values)
+
+                        # The 'affected' entry describes the affected parameters and the
+                        # values they are allowed to take, which are all degenerate if
+                        # the corresponding condition for the causing parameter is met.
+                        affected = [
+                            (
+                                (ap := self.get_parameters_by_name(pn)[0]).name,
+                                ap.values,  # type: ignore[attr-defined]
+                            )
+                            for pn in affected_param_names
+                        ]
+
+                        data = df_apply_dependency_augmentation(data, causing, affected)
+
+        return data
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:
@@ -376,7 +454,7 @@ class SearchSpace(SerialMixin):
     @property
     def constraints_augmentable(self) -> tuple[Constraint, ...]:
         """The searchspace constraints that can be considered during augmentation."""
-        return tuple(c for c in self.constraints if c.eval_during_augmentation)
+        return tuple(c for c in self.constraints if c.consider_data_augmentation)
 
     def get_parameters_by_name(self, names: Sequence[str]) -> tuple[Parameter, ...]:
         """Return parameters with the specified names.

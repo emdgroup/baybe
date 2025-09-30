@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import instance_of
 from joblib.hashing import hash
 from typing_extensions import override
 
@@ -88,6 +89,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding whether or not the surrogate is multi-output
     compatible."""
+
+    consider_data_augmentation: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Flag indicating whether the surrogate would use data augmentation for
+    constraints that support this."""
 
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
