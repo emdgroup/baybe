@@ -283,8 +283,6 @@ for kIter in range(N_ITERATIONS):
     Number of entries with water, temp > 120 and concentration > 5:       0
     Number of entries with C2, temp > 180 and concentration > 3:          0
     Number of entries with C3, temp > 150 and concentration > 3:          0
-
-
     
     
     #### ITERATION 2 ####

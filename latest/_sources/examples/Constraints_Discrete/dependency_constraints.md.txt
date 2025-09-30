@@ -237,8 +237,6 @@ for kIter in range(N_ITERATIONS):
     Number entries with Switch1 off (expected 4):        4
     Number entries with Switch2 off (expected 6):       6
     Number entries with both switches off (expected 1):  1
-
-
     
     #### ITERATION 2 ####
     ## ASSERTS ##

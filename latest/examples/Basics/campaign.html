@@ -1184,13 +1184,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent               Base                        Ligand  \
-175  Butyornitrile  Potassium acetate                     BrettPhos   
-53     Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent               Base                        Ligand  \
+279         DMAc  Potassium acetate                     BrettPhos   
+49   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration  
-175        105.0          0.100  
-53         120.0          0.153  
+279         90.0          0.057  
+49         105.0          0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1203,13 +1203,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base                        Ligand  \
-175  Butyornitrile  Potassium acetate                     BrettPhos   
-53     Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
+         Solvent               Base                        Ligand  \
+279         DMAc  Potassium acetate                     BrettPhos   
+49   Butyl Ester    Cesium pivalate  Di-tert-butylphenylphosphine   
 
      Temperature  Concentration      yield  
-175        105.0          0.100  16.750390  
-53         120.0          0.153 -61.819167  
+279         90.0          0.057 -15.449380  
+49         105.0          0.100  99.577406  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

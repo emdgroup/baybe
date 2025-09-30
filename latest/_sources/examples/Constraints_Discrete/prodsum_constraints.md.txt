@@ -279,8 +279,6 @@ for kIter in range(N_ITERATIONS):
     Number of entries with 1,2-sum above 150:       0
     Number of entries with 3,4-product under 30:    0
     Number of entries with 5,6-sum unequal to 100:  0
-
-
     
     
     #### ITERATION 2 ####

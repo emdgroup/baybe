@@ -1319,7 +1319,6 @@ constructor to chain transformations, you can alternatively:</p>
 </ul>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AffineTransformation</span><span class="p">,</span>
     <span class="n">ChainedTransformation</span><span class="p">,</span>
     <span class="n">PowerTransformation</span><span class="p">,</span>
     <span class="n">TwoSidedAffineTransformation</span><span class="p">,</span>
@@ -1327,15 +1326,13 @@ constructor to chain transformations, you can alternatively:</p>
 
 <span class="n">twosided</span> <span class="o">=</span> <span class="n">TwoSidedAffineTransformation</span><span class="p">(</span><span class="n">slope_left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">slope_right</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">power</span> <span class="o">=</span> <span class="n">PowerTransformation</span><span class="p">(</span><span class="n">exponent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">shift</span> <span class="o">=</span> <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">shift</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># Create a transformation representing a shifted one-sided quadratic function:</span>
+<span class="c1"># Create a transformation representing a one-sided quadratic function:</span>
 <span class="c1"># 1) First, we cut the left side by multiplying by zero</span>
 <span class="c1"># 2) Then, we apply the quadratic transformation</span>
-<span class="c1"># 3) Finally, we shift to the right</span>
-<span class="n">chain1</span> <span class="o">=</span> <span class="n">ChainedTransformation</span><span class="p">([</span><span class="n">twosided</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">shift</span><span class="p">])</span>  <span class="c1"># explicit construction</span>
-<span class="n">chain2</span> <span class="o">=</span> <span class="n">twosided</span> <span class="o">|</span> <span class="n">power</span> <span class="o">|</span> <span class="n">shift</span>  <span class="c1"># using overloaded pipe operator</span>
-<span class="n">chain3</span> <span class="o">=</span> <span class="n">twosided</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">power</span><span class="p">)</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">shift</span><span class="p">)</span>  <span class="c1"># via method chaining</span>
+<span class="n">chain1</span> <span class="o">=</span> <span class="n">ChainedTransformation</span><span class="p">([</span><span class="n">twosided</span><span class="p">,</span> <span class="n">power</span><span class="p">])</span>  <span class="c1"># explicit construction</span>
+<span class="n">chain2</span> <span class="o">=</span> <span class="n">twosided</span> <span class="o">|</span> <span class="n">power</span>  <span class="c1"># using overloaded pipe operator</span>
+<span class="n">chain3</span> <span class="o">=</span> <span class="n">twosided</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">power</span><span class="p">)</span>  <span class="c1"># via method chaining</span>
 <span class="k">assert</span> <span class="n">chain1</span> <span class="o">==</span> <span class="n">chain2</span> <span class="o">==</span> <span class="n">chain3</span>
 </pre></div>
 </div>
@@ -1510,11 +1507,10 @@ representations for trivial cases behind the scenes, it is not always possible t
 <a class="reference internal" href="#chaining">chaining</a> section using a slightly different construction path:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-<span class="c1"># Logically, we can achieve the same result by interchanging the first two steps:</span>
+<span class="c1"># Logically, we can achieve the same result by interchanging the construction steps:</span>
 <span class="c1"># 1) Here, we apply the quadratic transformation first</span>
 <span class="c1"># 2) Then, we cut as a second step</span>
-<span class="c1"># 3) Finally, we shift</span>
-<span class="n">chain4</span> <span class="o">=</span> <span class="n">power</span> <span class="o">|</span> <span class="n">twosided</span> <span class="o">|</span> <span class="n">shift</span>  <span class="c1"># different order of operations</span>
+<span class="n">chain4</span> <span class="o">=</span> <span class="n">power</span> <span class="o">|</span> <span class="n">twosided</span>  <span class="c1"># different order of operations</span>
 
 <span class="c1"># While these two constructions are mathematically equivalent, they are not &quot;equal&quot; from</span>
 <span class="c1"># an object perspective, because they rely on different transformation steps:</span>

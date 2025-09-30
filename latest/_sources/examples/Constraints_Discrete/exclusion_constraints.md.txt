@@ -270,8 +270,6 @@ for kIter in range(N_ITERATIONS):
     Number of entries with either Solvents C2 or C4 and a temperature above 151:  0
     Number of entries with either Solvents C5 or C6 and a pressure above 5:       0
     Number of entries with pressure below 3 and temperature above 120:            0
-
-
     
     
     #### ITERATION 2 ####
