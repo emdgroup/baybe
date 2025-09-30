@@ -116,7 +116,7 @@ def test_pending_points(campaign, batch_size, fake_measurements):
     # some recommenders which could also trivially avoid overlap
     with temporary_seed(1337):
         rec1 = campaign.recommend(batch_size)
-    campaign._cached_recommendation = pd.DataFrame()  # ensure no recommendation cache
+    campaign.clear_cache()
     with temporary_seed(1337):
         rec2 = campaign.recommend(batch_size=batch_size, pending_experiments=rec1)
 

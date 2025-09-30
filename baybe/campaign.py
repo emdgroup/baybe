@@ -6,7 +6,7 @@ import gc
 import json
 from collections.abc import Callable, Collection, Sequence
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import cattrs
 import numpy as np
@@ -59,6 +59,8 @@ if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction
     from botorch.posteriors import Posterior
 
+    _T = TypeVar("_T")
+
 # Metadata columns
 _RECOMMENDED = "recommended"
 _MEASURED = "measured"
@@ -78,6 +80,13 @@ def _make_allow_flag_default_factory(
         return UNSPECIFIED
 
     return default_allow_flag
+
+
+def _set_with_cache_cleared(instance: Campaign, attribute: Attribute, value: _T) -> _T:
+    """Attrs-compatible hook to clear the cache when changing an attribute."""
+    if value != getattr(instance, attribute.name):
+        instance.clear_cache()
+    return value
 
 
 def _validate_allow_flag(campaign: Campaign, attribute: Attribute, value: Any) -> None:
@@ -139,6 +148,7 @@ class Campaign(SerialMixin):
     recommender: RecommenderProtocol = field(
         factory=TwoPhaseMetaRecommender,
         validator=instance_of(RecommenderProtocol),
+        on_setattr=_set_with_cache_cleared,
     )
     """The employed recommender"""
 
@@ -147,6 +157,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=True), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow to recommend experiments that were already measured earlier.
@@ -157,6 +168,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow to recommend experiments that were already recommended earlier.
@@ -167,6 +179,7 @@ class Campaign(SerialMixin):
             _make_allow_flag_default_factory(default=False), takes_self=True
         ),
         validator=_validate_allow_flag,
+        on_setattr=_set_with_cache_cleared,
         kw_only=True,
     )
     """Allow pending experiments to be part of the recommendations.
@@ -188,8 +201,8 @@ class Campaign(SerialMixin):
     )
     """The experimental representation of the conducted experiments."""
 
-    _cached_recommendation: pd.DataFrame = field(
-        factory=pd.DataFrame, eq=eq_dataframe, init=False
+    _cached_recommendation: pd.DataFrame | None = field(
+        default=None, init=False, eq=False
     )
     """The cached recommendations."""
 
@@ -275,6 +288,14 @@ class Campaign(SerialMixin):
         config = json.loads(config_json)
         _validation_converter.structure(config, Campaign)
 
+    def _cache_recommendation(self, df: pd.DataFrame, /) -> None:
+        """Cache the given recommendation."""
+        self._cached_recommendation = df.copy()
+
+    def clear_cache(self) -> None:
+        """Clear the internal recommendation cache."""
+        self._cached_recommendation = None
+
     def add_measurements(
         self,
         data: pd.DataFrame,
@@ -295,9 +316,6 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
         """
-        # Invalidate recommendation cache first (in case of uncaught exceptions below)
-        self._cached_recommendation = pd.DataFrame()
-
         # Validate target and parameter input values
         validate_target_input(data, self.targets)
         if self.objective is not None:
@@ -307,6 +325,9 @@ class Campaign(SerialMixin):
         )
         data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
+
+        # With new measurements, the recommendations must always be recomputed
+        self.clear_cache()
 
         # Read in measurements and add them to the database
         self.n_batches_done += 1
@@ -356,6 +377,9 @@ class Campaign(SerialMixin):
         data = normalize_input_dtypes(data, self.parameters + self.targets)
         data.__class__ = _ValidatedDataFrame
 
+        # With changed measurements, the recommendations must always be recomputed
+        self.clear_cache()
+
         # Block duplicate input indices
         if data.index.has_duplicates:
             raise ValueError(
@@ -376,9 +400,8 @@ class Campaign(SerialMixin):
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
         self._measurements_exp.loc[data.index, cols] = data[cols]
 
-        # Reset fit number and cached recommendations
+        # Reset fit number
         self._measurements_exp.loc[data.index, "FitNr"] = np.nan
-        self._cached_recommendation = pd.DataFrame()
 
     def toggle_discrete_candidates(  # noqa: DOC501
         self,
@@ -408,8 +431,14 @@ class Campaign(SerialMixin):
             A new dataframe containing the  discrete candidate set passing through the
             specified filter.
         """
-        # Clear cache
-        self._cached_recommendation = pd.DataFrame()
+        # IMPROVE: The cache invalidation could be made more fine-grained:
+        #   * When including points, the cache only needs to be cleared if the active
+        #    search space gets *actually* larger (i.e. including already included
+        #    points does not change the situation).
+        #  * When excluding points, the cache only needs to be cleared if the excluded
+        #    points were part of the cached recommendations.
+        #  * Additional shortcuts might be possible.
+        self.clear_cache()
 
         df = self.searchspace.discrete.exp_rep
 
@@ -466,19 +495,26 @@ class Campaign(SerialMixin):
                 f"{batch_size=}."
             )
 
-        # Invalidate cached recommendation if pending experiments are provided
-        if (pending_experiments is not None) and not pending_experiments.empty:
-            self._cached_recommendation = pd.DataFrame()
+        # IMPROVE: Currently, we simply invalidate the cache whenever pending
+        #     experiments are provided, because in order to use it, we need to check if
+        #     the previous call was done with the same pending experiments.
+
+        if pending_experiments is not None:
+            self.clear_cache()
+
             validate_parameter_input(pending_experiments, self.parameters)
             pending_experiments = normalize_input_dtypes(
                 pending_experiments, self.parameters
             )
             pending_experiments.__class__ = _ValidatedDataFrame
 
-        # If there are cached recommendations and the batch size of those is equal to
-        # the previously requested one, we just return those
-        if len(self._cached_recommendation) == batch_size:
-            return self._cached_recommendation
+        if (
+            pending_experiments is None
+            and (cache := self._cached_recommendation) is not None
+            and self.allow_recommending_already_recommended
+            and len(cache) == batch_size
+        ):
+            return cache
 
         # Update recommendation meta data
         if len(self._measurements_exp) > 0:
@@ -489,7 +525,7 @@ class Campaign(SerialMixin):
         if self.searchspace.type is SearchSpaceType.DISCRETE:
             # TODO: This implementation should at some point be hidden behind an
             #   appropriate public interface, like `SubspaceDiscrete.filter()`
-            mask_todrop = self._searchspace_metadata[_EXCLUDED].copy()
+            mask_todrop = self._searchspace_metadata[_EXCLUDED].astype(bool)
             if not self.allow_recommending_already_recommended:
                 mask_todrop |= self._searchspace_metadata[_RECOMMENDED]
             if not self.allow_recommending_already_measured:
@@ -568,8 +604,8 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
-        # Cache the recommendations
-        self._cached_recommendation = rec.copy()
+        if pending_experiments is None:  # see IMPROVE comment above
+            self._cache_recommendation(rec)
 
         # Update metadata
         if self.searchspace.type in (SearchSpaceType.DISCRETE, SearchSpaceType.HYBRID):
