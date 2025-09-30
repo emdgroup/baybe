@@ -47,8 +47,8 @@ asserts that the following kind of equations are true (up to numerical rounding 
 
 $$
 \sum_{i} x_i \cdot c_i = \text{rhs} \\
-\sum_{i} x_i \cdot c_i >= \text{rhs} \\
-\sum_{i} x_i \cdot c_i <= \text{rhs}
+\sum_{i} x_i \cdot c_i \geq \text{rhs} \\
+\sum_{i} x_i \cdot c_i \leq \text{rhs}
 $$
 
 where $x_i$ is the value of the $i$'th parameter affected by the constraint,
@@ -93,9 +93,10 @@ A more detailed example can be found
 
 In contrast to the intrapoint constrains discussed in the previous paragraph,
 interpoint constraints models constraints **across** the points of the batch.
-That is, an interpoint constraint of the form $x + y <= 1$ encodes
+That is, an interpoint constraint of the form $x + y \leq 1$ encodes
+
 $$
-\sum_{i\text{ in batch}}x_i + \sum_{i\text{ in batch}}y_i <= 1
+\sum_{b\text{ in batch}}x_b + \sum_{b\text{ in batch}}y_b \leq 1
 $$
 
 They can be defined by using the `interpoint` argument of the
