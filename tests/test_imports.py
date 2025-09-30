@@ -85,6 +85,7 @@ WHITELISTS = {
         "baybe._optional.chem",
         "baybe._optional.insights",
         "baybe._optional.ngboost",
+        "baybe._optional.simulation",
         "baybe.acquisition._builder",
         "baybe.acquisition.partial",
         "baybe.insights",
