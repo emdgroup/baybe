@@ -17,6 +17,7 @@ Campaign
       ~Campaign.__init__
       ~Campaign.acquisition_values
       ~Campaign.add_measurements
+      ~Campaign.clear_cache
       ~Campaign.from_config
       ~Campaign.from_dict
       ~Campaign.from_json
