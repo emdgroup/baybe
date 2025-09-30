@@ -1,0 +1,50 @@
+NumericalDiscreteParameter
+==========================
+
+.. currentmodule:: baybe.parameters.numerical
+
+.. autoclass:: NumericalDiscreteParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NumericalDiscreteParameter.__init__
+      ~NumericalDiscreteParameter.from_dict
+      ~NumericalDiscreteParameter.from_json
+      ~NumericalDiscreteParameter.is_in_range
+      ~NumericalDiscreteParameter.summary
+      ~NumericalDiscreteParameter.to_dict
+      ~NumericalDiscreteParameter.to_json
+      ~NumericalDiscreteParameter.to_searchspace
+      ~NumericalDiscreteParameter.to_subspace
+      ~NumericalDiscreteParameter.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NumericalDiscreteParameter.active_values
+      ~NumericalDiscreteParameter.comp_df
+      ~NumericalDiscreteParameter.comp_rep_columns
+      ~NumericalDiscreteParameter.description
+      ~NumericalDiscreteParameter.is_continuous
+      ~NumericalDiscreteParameter.is_discrete
+      ~NumericalDiscreteParameter.is_numerical
+      ~NumericalDiscreteParameter.unit
+      ~NumericalDiscreteParameter.values
+      ~NumericalDiscreteParameter.tolerance
+      ~NumericalDiscreteParameter.encoding
+      ~NumericalDiscreteParameter.name
+      ~NumericalDiscreteParameter.metadata
+   
+   

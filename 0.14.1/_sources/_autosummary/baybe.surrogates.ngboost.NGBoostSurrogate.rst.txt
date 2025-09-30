@@ -1,0 +1,40 @@
+NGBoostSurrogate
+================
+
+.. currentmodule:: baybe.surrogates.ngboost
+
+.. autoclass:: NGBoostSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NGBoostSurrogate.__init__
+      ~NGBoostSurrogate.fit
+      ~NGBoostSurrogate.from_dict
+      ~NGBoostSurrogate.from_json
+      ~NGBoostSurrogate.posterior
+      ~NGBoostSurrogate.posterior_stats
+      ~NGBoostSurrogate.replicate
+      ~NGBoostSurrogate.to_botorch
+      ~NGBoostSurrogate.to_dict
+      ~NGBoostSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NGBoostSurrogate.model_params
+      ~NGBoostSurrogate.supports_multi_output
+      ~NGBoostSurrogate.supports_transfer_learning
+   
+   

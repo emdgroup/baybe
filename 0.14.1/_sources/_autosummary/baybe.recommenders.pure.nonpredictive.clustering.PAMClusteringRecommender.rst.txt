@@ -1,0 +1,35 @@
+PAMClusteringRecommender
+========================
+
+.. currentmodule:: baybe.recommenders.pure.nonpredictive.clustering
+
+.. autoclass:: PAMClusteringRecommender
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~PAMClusteringRecommender.__init__
+      ~PAMClusteringRecommender.recommend
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~PAMClusteringRecommender.allow_recommending_already_measured
+      ~PAMClusteringRecommender.allow_recommending_pending_experiments
+      ~PAMClusteringRecommender.allow_repeated_recommendations
+      ~PAMClusteringRecommender.compatibility
+      ~PAMClusteringRecommender.model_cluster_num_parameter_name
+      ~PAMClusteringRecommender.model_params
+   
+   

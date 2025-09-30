@@ -1,0 +1,43 @@
+baybe.serialization.core
+========================
+
+.. automodule:: baybe.serialization.core
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      converter
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      add_type
+      block_deserialization_hook
+      block_serialization_hook
+      make_base_structure_hook
+      select_constructor_hook
+      unstructure_with_type
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

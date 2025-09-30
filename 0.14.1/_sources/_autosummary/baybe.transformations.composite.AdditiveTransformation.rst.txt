@@ -1,0 +1,40 @@
+AdditiveTransformation
+======================
+
+.. currentmodule:: baybe.transformations.composite
+
+.. autoclass:: AdditiveTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AdditiveTransformation.__init__
+      ~AdditiveTransformation.abs
+      ~AdditiveTransformation.chain
+      ~AdditiveTransformation.clamp
+      ~AdditiveTransformation.from_dict
+      ~AdditiveTransformation.from_json
+      ~AdditiveTransformation.get_codomain
+      ~AdditiveTransformation.get_image
+      ~AdditiveTransformation.negate
+      ~AdditiveTransformation.to_botorch_objective
+      ~AdditiveTransformation.to_dict
+      ~AdditiveTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AdditiveTransformation.transformations
+   
+   

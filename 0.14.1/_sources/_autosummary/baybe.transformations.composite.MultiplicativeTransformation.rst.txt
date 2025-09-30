@@ -1,0 +1,40 @@
+MultiplicativeTransformation
+============================
+
+.. currentmodule:: baybe.transformations.composite
+
+.. autoclass:: MultiplicativeTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~MultiplicativeTransformation.__init__
+      ~MultiplicativeTransformation.abs
+      ~MultiplicativeTransformation.chain
+      ~MultiplicativeTransformation.clamp
+      ~MultiplicativeTransformation.from_dict
+      ~MultiplicativeTransformation.from_json
+      ~MultiplicativeTransformation.get_codomain
+      ~MultiplicativeTransformation.get_image
+      ~MultiplicativeTransformation.negate
+      ~MultiplicativeTransformation.to_botorch_objective
+      ~MultiplicativeTransformation.to_dict
+      ~MultiplicativeTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~MultiplicativeTransformation.transformations
+   
+   

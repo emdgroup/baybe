@@ -1,0 +1,47 @@
+baybe.utils.metadata
+====================
+
+.. automodule:: baybe.utils.metadata
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      ConvertibleToMeasurableMetadata
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      to_metadata
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      MeasurableMetadata
+      Metadata
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,47 @@
+Interval
+========
+
+.. currentmodule:: baybe.utils.interval
+
+.. autoclass:: Interval
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Interval.__init__
+      ~Interval.clamp
+      ~Interval.contains
+      ~Interval.create
+      ~Interval.from_dict
+      ~Interval.from_json
+      ~Interval.to_dict
+      ~Interval.to_json
+      ~Interval.to_ndarray
+      ~Interval.to_tensor
+      ~Interval.to_tuple
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Interval.lower
+      ~Interval.upper
+      ~Interval.center
+      ~Interval.is_bounded
+      ~Interval.is_degenerate
+      ~Interval.is_fully_unbounded
+      ~Interval.is_half_bounded
+      ~Interval.is_left_bounded
+      ~Interval.is_right_bounded
+   
+   

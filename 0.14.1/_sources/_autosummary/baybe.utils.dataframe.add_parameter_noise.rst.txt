@@ -1,0 +1,6 @@
+baybe.utils.dataframe.add\_parameter\_noise
+===========================================
+
+.. currentmodule:: baybe.utils.dataframe
+
+.. autofunction:: add_parameter_noise

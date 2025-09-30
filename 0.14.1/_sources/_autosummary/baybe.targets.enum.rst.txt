@@ -1,0 +1,23 @@
+baybe.targets.enum
+==================
+
+.. automodule:: baybe.targets.enum
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

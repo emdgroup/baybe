@@ -1,0 +1,44 @@
+TriangularTransformation
+========================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: TriangularTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~TriangularTransformation.__init__
+      ~TriangularTransformation.abs
+      ~TriangularTransformation.chain
+      ~TriangularTransformation.clamp
+      ~TriangularTransformation.from_dict
+      ~TriangularTransformation.from_json
+      ~TriangularTransformation.from_margins
+      ~TriangularTransformation.from_width
+      ~TriangularTransformation.get_codomain
+      ~TriangularTransformation.get_image
+      ~TriangularTransformation.negate
+      ~TriangularTransformation.to_botorch_objective
+      ~TriangularTransformation.to_dict
+      ~TriangularTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TriangularTransformation.cutoffs
+      ~TriangularTransformation.peak
+      ~TriangularTransformation.margins
+   
+   

@@ -1,0 +1,6 @@
+baybe.simulation.transfer\_learning.simulate\_transfer\_learning
+================================================================
+
+.. currentmodule:: baybe.simulation.transfer_learning
+
+.. autofunction:: simulate_transfer_learning

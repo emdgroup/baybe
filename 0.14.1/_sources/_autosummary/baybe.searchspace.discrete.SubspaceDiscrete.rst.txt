@@ -1,0 +1,53 @@
+SubspaceDiscrete
+================
+
+.. currentmodule:: baybe.searchspace.discrete
+
+.. autoclass:: SubspaceDiscrete
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SubspaceDiscrete.__init__
+      ~SubspaceDiscrete.empty
+      ~SubspaceDiscrete.estimate_product_space_size
+      ~SubspaceDiscrete.from_dataframe
+      ~SubspaceDiscrete.from_dict
+      ~SubspaceDiscrete.from_json
+      ~SubspaceDiscrete.from_parameter
+      ~SubspaceDiscrete.from_product
+      ~SubspaceDiscrete.from_simplex
+      ~SubspaceDiscrete.get_candidates
+      ~SubspaceDiscrete.get_parameters_by_name
+      ~SubspaceDiscrete.to_dict
+      ~SubspaceDiscrete.to_json
+      ~SubspaceDiscrete.to_searchspace
+      ~SubspaceDiscrete.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubspaceDiscrete.parameters
+      ~SubspaceDiscrete.exp_rep
+      ~SubspaceDiscrete.empty_encoding
+      ~SubspaceDiscrete.constraints
+      ~SubspaceDiscrete.comp_rep
+      ~SubspaceDiscrete.comp_rep_bounds
+      ~SubspaceDiscrete.comp_rep_columns
+      ~SubspaceDiscrete.is_empty
+      ~SubspaceDiscrete.metadata
+      ~SubspaceDiscrete.parameter_names
+      ~SubspaceDiscrete.scaling_bounds
+   
+   

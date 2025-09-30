@@ -1,0 +1,34 @@
+LogarithmicTransformation
+=========================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: LogarithmicTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~LogarithmicTransformation.__init__
+      ~LogarithmicTransformation.abs
+      ~LogarithmicTransformation.chain
+      ~LogarithmicTransformation.clamp
+      ~LogarithmicTransformation.from_dict
+      ~LogarithmicTransformation.from_json
+      ~LogarithmicTransformation.get_codomain
+      ~LogarithmicTransformation.get_image
+      ~LogarithmicTransformation.negate
+      ~LogarithmicTransformation.to_botorch_objective
+      ~LogarithmicTransformation.to_dict
+      ~LogarithmicTransformation.to_json
+   
+   
+
+   
+   
+   

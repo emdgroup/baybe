@@ -1,0 +1,40 @@
+RandomForestSurrogate
+=====================
+
+.. currentmodule:: baybe.surrogates.random_forest
+
+.. autoclass:: RandomForestSurrogate
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~RandomForestSurrogate.__init__
+      ~RandomForestSurrogate.fit
+      ~RandomForestSurrogate.from_dict
+      ~RandomForestSurrogate.from_json
+      ~RandomForestSurrogate.posterior
+      ~RandomForestSurrogate.posterior_stats
+      ~RandomForestSurrogate.replicate
+      ~RandomForestSurrogate.to_botorch
+      ~RandomForestSurrogate.to_dict
+      ~RandomForestSurrogate.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~RandomForestSurrogate.model_params
+      ~RandomForestSurrogate.supports_multi_output
+      ~RandomForestSurrogate.supports_transfer_learning
+   
+   

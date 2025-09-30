@@ -1,0 +1,37 @@
+UpperConfidenceBound
+====================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: UpperConfidenceBound
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~UpperConfidenceBound.__init__
+      ~UpperConfidenceBound.evaluate
+      ~UpperConfidenceBound.from_dict
+      ~UpperConfidenceBound.from_json
+      ~UpperConfidenceBound.to_botorch
+      ~UpperConfidenceBound.to_dict
+      ~UpperConfidenceBound.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~UpperConfidenceBound.beta
+      ~UpperConfidenceBound.abbreviation
+      ~UpperConfidenceBound.supports_multi_output
+   
+   

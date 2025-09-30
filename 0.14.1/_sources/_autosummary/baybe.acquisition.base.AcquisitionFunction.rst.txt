@@ -1,0 +1,36 @@
+AcquisitionFunction
+===================
+
+.. currentmodule:: baybe.acquisition.base
+
+.. autoclass:: AcquisitionFunction
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AcquisitionFunction.__init__
+      ~AcquisitionFunction.evaluate
+      ~AcquisitionFunction.from_dict
+      ~AcquisitionFunction.from_json
+      ~AcquisitionFunction.to_botorch
+      ~AcquisitionFunction.to_dict
+      ~AcquisitionFunction.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AcquisitionFunction.supports_multi_output
+      ~AcquisitionFunction.abbreviation
+   
+   

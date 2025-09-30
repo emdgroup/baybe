@@ -1,0 +1,40 @@
+Constraint
+==========
+
+.. currentmodule:: baybe.constraints.base
+
+.. autoclass:: Constraint
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~Constraint.__init__
+      ~Constraint.from_dict
+      ~Constraint.from_json
+      ~Constraint.summary
+      ~Constraint.to_dict
+      ~Constraint.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~Constraint.parameters
+      ~Constraint.eval_during_augmentation
+      ~Constraint.is_continuous
+      ~Constraint.is_discrete
+      ~Constraint.numerical_only
+      ~Constraint.eval_during_creation
+      ~Constraint.eval_during_modeling
+   
+   

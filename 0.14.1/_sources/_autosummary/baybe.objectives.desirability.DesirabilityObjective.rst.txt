@@ -1,0 +1,45 @@
+DesirabilityObjective
+=====================
+
+.. currentmodule:: baybe.objectives.desirability
+
+.. autoclass:: DesirabilityObjective
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~DesirabilityObjective.__init__
+      ~DesirabilityObjective.from_dict
+      ~DesirabilityObjective.from_json
+      ~DesirabilityObjective.to_botorch
+      ~DesirabilityObjective.to_dict
+      ~DesirabilityObjective.to_json
+      ~DesirabilityObjective.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~DesirabilityObjective.description
+      ~DesirabilityObjective.is_multi_output
+      ~DesirabilityObjective.n_outputs
+      ~DesirabilityObjective.output_names
+      ~DesirabilityObjective.supports_partial_measurements
+      ~DesirabilityObjective.targets
+      ~DesirabilityObjective.weights
+      ~DesirabilityObjective.scalarizer
+      ~DesirabilityObjective.require_normalization
+      ~DesirabilityObjective.as_pre_transformation
+      ~DesirabilityObjective.metadata
+   
+   

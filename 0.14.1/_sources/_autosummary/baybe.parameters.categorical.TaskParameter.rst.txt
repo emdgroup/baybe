@@ -1,0 +1,49 @@
+TaskParameter
+=============
+
+.. currentmodule:: baybe.parameters.categorical
+
+.. autoclass:: TaskParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~TaskParameter.__init__
+      ~TaskParameter.from_dict
+      ~TaskParameter.from_json
+      ~TaskParameter.is_in_range
+      ~TaskParameter.summary
+      ~TaskParameter.to_dict
+      ~TaskParameter.to_json
+      ~TaskParameter.to_searchspace
+      ~TaskParameter.to_subspace
+      ~TaskParameter.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~TaskParameter.active_values
+      ~TaskParameter.comp_df
+      ~TaskParameter.comp_rep_columns
+      ~TaskParameter.description
+      ~TaskParameter.is_continuous
+      ~TaskParameter.is_discrete
+      ~TaskParameter.is_numerical
+      ~TaskParameter.unit
+      ~TaskParameter.values
+      ~TaskParameter.encoding
+      ~TaskParameter.name
+      ~TaskParameter.metadata
+   
+   

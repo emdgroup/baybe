@@ -1,0 +1,6 @@
+baybe.utils.sampling\_algorithms.farthest\_point\_sampling
+==========================================================
+
+.. currentmodule:: baybe.utils.sampling_algorithms
+
+.. autofunction:: farthest_point_sampling

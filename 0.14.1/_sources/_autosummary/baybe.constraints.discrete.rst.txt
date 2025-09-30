@@ -1,0 +1,39 @@
+baybe.constraints.discrete
+==========================
+
+.. automodule:: baybe.constraints.discrete
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      DiscreteCardinalityConstraint
+      DiscreteCustomConstraint
+      DiscreteDependenciesConstraint
+      DiscreteExcludeConstraint
+      DiscreteLinkedParametersConstraint
+      DiscreteNoLabelDuplicatesConstraint
+      DiscretePermutationInvarianceConstraint
+      DiscreteProductConstraint
+      DiscreteSumConstraint
+   
+   
+
+   
+   
+   
+
+
+

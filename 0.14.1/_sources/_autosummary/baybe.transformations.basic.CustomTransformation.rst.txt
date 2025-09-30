@@ -1,0 +1,40 @@
+CustomTransformation
+====================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: CustomTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~CustomTransformation.__init__
+      ~CustomTransformation.abs
+      ~CustomTransformation.chain
+      ~CustomTransformation.clamp
+      ~CustomTransformation.from_dict
+      ~CustomTransformation.from_json
+      ~CustomTransformation.get_codomain
+      ~CustomTransformation.get_image
+      ~CustomTransformation.negate
+      ~CustomTransformation.to_botorch_objective
+      ~CustomTransformation.to_dict
+      ~CustomTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~CustomTransformation.function
+   
+   

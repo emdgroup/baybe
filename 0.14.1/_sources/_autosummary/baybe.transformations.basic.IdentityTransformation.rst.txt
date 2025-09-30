@@ -1,0 +1,35 @@
+IdentityTransformation
+======================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: IdentityTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~IdentityTransformation.__init__
+      ~IdentityTransformation.abs
+      ~IdentityTransformation.chain
+      ~IdentityTransformation.clamp
+      ~IdentityTransformation.from_dict
+      ~IdentityTransformation.from_json
+      ~IdentityTransformation.get_codomain
+      ~IdentityTransformation.get_image
+      ~IdentityTransformation.negate
+      ~IdentityTransformation.to_botorch_objective
+      ~IdentityTransformation.to_botorch_posterior_transform
+      ~IdentityTransformation.to_dict
+      ~IdentityTransformation.to_json
+   
+   
+
+   
+   
+   

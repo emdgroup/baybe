@@ -1,0 +1,53 @@
+baybe.surrogates
+================
+
+.. automodule:: baybe.surrogates
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   bandit
+
+   base
+
+   composite
+
+   custom
+
+   gaussian_process
+
+   linear
+
+   naive
+
+   ngboost
+
+   random_forest
+
+   utils
+
+   validation
+

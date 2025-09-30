@@ -1,0 +1,60 @@
+NumericalTarget
+===============
+
+.. currentmodule:: baybe.targets.numerical
+
+.. autoclass:: NumericalTarget
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~NumericalTarget.__init__
+      ~NumericalTarget.abs
+      ~NumericalTarget.clamp
+      ~NumericalTarget.exp
+      ~NumericalTarget.from_dict
+      ~NumericalTarget.from_json
+      ~NumericalTarget.from_legacy_interface
+      ~NumericalTarget.from_modern_interface
+      ~NumericalTarget.get_codomain
+      ~NumericalTarget.get_image
+      ~NumericalTarget.log
+      ~NumericalTarget.match_absolute
+      ~NumericalTarget.match_bell
+      ~NumericalTarget.match_power
+      ~NumericalTarget.match_quadratic
+      ~NumericalTarget.match_triangular
+      ~NumericalTarget.negate
+      ~NumericalTarget.normalize
+      ~NumericalTarget.normalized_ramp
+      ~NumericalTarget.normalized_sigmoid
+      ~NumericalTarget.power
+      ~NumericalTarget.summary
+      ~NumericalTarget.to_dict
+      ~NumericalTarget.to_json
+      ~NumericalTarget.to_objective
+      ~NumericalTarget.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~NumericalTarget.transformation
+      ~NumericalTarget.minimize
+      ~NumericalTarget.description
+      ~NumericalTarget.is_normalized
+      ~NumericalTarget.metadata
+      ~NumericalTarget.name
+      ~NumericalTarget.unit
+   
+   

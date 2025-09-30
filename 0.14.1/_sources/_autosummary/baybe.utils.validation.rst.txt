@@ -1,0 +1,47 @@
+baybe.utils.validation
+======================
+
+.. automodule:: baybe.utils.validation
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      finite_float
+      non_nan_float
+      non_inf_float
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      finite_float
+      non_inf_float
+      non_nan_float
+      validate_not_nan
+      validate_object_names
+      validate_objective_input
+      validate_parameter_input
+      validate_target_input
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

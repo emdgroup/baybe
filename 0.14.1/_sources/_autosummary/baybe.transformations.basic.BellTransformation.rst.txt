@@ -1,0 +1,41 @@
+BellTransformation
+==================
+
+.. currentmodule:: baybe.transformations.basic
+
+.. autoclass:: BellTransformation
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~BellTransformation.__init__
+      ~BellTransformation.abs
+      ~BellTransformation.chain
+      ~BellTransformation.clamp
+      ~BellTransformation.from_dict
+      ~BellTransformation.from_json
+      ~BellTransformation.get_codomain
+      ~BellTransformation.get_image
+      ~BellTransformation.negate
+      ~BellTransformation.to_botorch_objective
+      ~BellTransformation.to_dict
+      ~BellTransformation.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~BellTransformation.center
+      ~BellTransformation.sigma
+   
+   
