@@ -1113,7 +1113,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.from_dict" title="baybe.acquisition.acqfs.qExpectedImprovement.from_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_dict</span></code></a>(dictionary)</p></td>
 <td><p>Create an object from its dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.from_json" title="baybe.acquisition.acqfs.qExpectedImprovement.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(string)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.from_json" title="baybe.acquisition.acqfs.qExpectedImprovement.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(source, /)</p></td>
 <td><p>Create an object from its JSON representation.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_botorch" title="baybe.acquisition.acqfs.qExpectedImprovement.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>(surrogate, searchspace, ...[, ...])</p></td>
@@ -1122,7 +1122,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_dict" title="baybe.acquisition.acqfs.qExpectedImprovement.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_json" title="baybe.acquisition.acqfs.qExpectedImprovement.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_json" title="baybe.acquisition.acqfs.qExpectedImprovement.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
 </tbody>
@@ -1202,17 +1202,26 @@ series of individual acquisition values.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.acquisition.acqfs.qExpectedImprovement.from_json">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.acqfs.qExpectedImprovement.from_json" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsRead</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.acqfs.qExpectedImprovement.from_json" title="Link to this definition">¶</a></dt>
 <dd><p>Create an object from its JSON representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.acquisition.acqfs.qExpectedImprovement.from_json.params.string"></span><strong>string</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – The JSON representation of the object.</p>
+<dd class="field-odd"><p><span class="target" id="baybe.acquisition.acqfs.qExpectedImprovement.from_json.params.source"></span><strong>source</strong> (<span class="sphinx_autodoc_typehints-type">str | Path | SupportsRead[str]</span>) – <p>The JSON source. Can be:</p>
+<ul class="simple">
+<li><p>A string containing JSON content.</p></li>
+<li><p>A file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object pointing to a JSON file.</p></li>
+<li><p>A file-like object with a <code class="docutils literal notranslate"><span class="pre">read()</span></code> method.</p></li>
+</ul>
+</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">source</span></code> is not one of the allowed types.</p>
 </dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The reconstructed object.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">_T</span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reconstructed object.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1246,11 +1255,29 @@ series of individual acquisition values.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.acquisition.acqfs.qExpectedImprovement.to_json">
-<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_json" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sink</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsWrite</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.acqfs.qExpectedImprovement.to_json" title="Link to this definition">¶</a></dt>
 <dd><p>Create an object’s JSON representation.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.acquisition.acqfs.qExpectedImprovement.to_json.params.sink"></span><strong>sink</strong> (<span class="sphinx_autodoc_typehints-type">str | Path | SupportsWrite[str] | None</span>) – <p>The JSON sink. Can be:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">None</span></code> (only returns the JSON string).</p></li>
+<li><p>A file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object pointing to a location where to write
+the JSON content.</p></li>
+<li><p>A file-like object with a <code class="docutils literal notranslate"><span class="pre">write()</span></code> method.</p></li>
+</ul>
+</p></li>
+<li><p><span class="target" id="baybe.acquisition.acqfs.qExpectedImprovement.to_json.params.overwrite"></span><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type">bool</span>) – Boolean flag indicating if to overwrite the file if it already
+exists. Only relevant if <code class="docutils literal notranslate"><span class="pre">sink</span></code> is a file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.13)"><strong>FileExistsError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">sink</span></code> points to an already existing file but
+    <code class="docutils literal notranslate"><span class="pre">overwrite</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">str</span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The JSON representation as a string.</p>

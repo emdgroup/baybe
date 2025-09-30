@@ -1300,15 +1300,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-           Solvent               Base         Ligand  Temperature  \
-278           DMAc  Potassium acetate  (t-Bu)PhCPhos        120.0   
-172  Butyornitrile  Potassium acetate      BrettPhos         90.0   
-233           DMAc     Cesium acetate      BrettPhos        120.0   
+         Solvent                Base                        Ligand  \
+77   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+265         DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
+103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration  
-278          0.153  
-172          0.100  
-233          0.153  
+     Temperature  Concentration  
+77         105.0          0.153  
+265        105.0          0.100  
+103        105.0          0.100  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1317,15 +1317,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent               Base         Ligand  Temperature  \
-278           DMAc  Potassium acetate  (t-Bu)PhCPhos        120.0   
-172  Butyornitrile  Potassium acetate      BrettPhos         90.0   
-233           DMAc     Cesium acetate      BrettPhos        120.0   
+         Solvent                Base                        Ligand  \
+77   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+265         DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
+103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration      yield  
-278          0.153  65.445457  
-172          0.100  98.351339  
-233          0.153  33.939297  
+     Temperature  Concentration      yield  
+77         105.0          0.153   9.255661  
+265        105.0          0.100  94.319378  
+103        105.0          0.100  85.413672  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

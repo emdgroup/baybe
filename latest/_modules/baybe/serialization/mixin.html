@@ -1089,12 +1089,18 @@
           <h1>Source code for baybe.serialization.mixin</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Serialization mixin class.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">_add_type_to_dict</span><span class="p">,</span> <span class="n">converter</span>
 
 <span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;SerialMixin&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">_typeshed</span><span class="w"> </span><span class="kn">import</span> <span class="n">SupportsRead</span><span class="p">,</span> <span class="n">SupportsWrite</span>
 
 
 <div class="viewcode-block" id="SerialMixin">
@@ -1135,27 +1141,89 @@
 
 <div class="viewcode-block" id="SerialMixin.to_json">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.to_json">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sink</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">SupportsWrite</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">/</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object&#39;s JSON representation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sink: The JSON sink. Can be:</span>
+
+<span class="sd">                - ``None`` (only returns the JSON string).</span>
+<span class="sd">                - A file path or ``Path`` object pointing to a location where to write</span>
+<span class="sd">                  the JSON content.</span>
+<span class="sd">                - A file-like object with a ``write()`` method.</span>
+
+<span class="sd">            overwrite: Boolean flag indicating if to overwrite the file if it already</span>
+<span class="sd">                exists. Only relevant if ``sink`` is a file path or ``Path`` object.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            FileExistsError: If ``sink`` points to an already existing file but</span>
+<span class="sd">                ``overwrite`` is ``False``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The JSON representation as a string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span></div>
+        <span class="n">string</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">sink</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">sink</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sink</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">sink</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The file &#39;</span><span class="si">{</span><span class="n">sink</span><span class="si">}</span><span class="s2">&#39; already exists. If you want to overwrite it, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;explicitly set the &#39;overwrite&#39; flag to &#39;True&#39;.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">sink</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">sink</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sink</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">string</span></div>
 
 
 <div class="viewcode-block" id="SerialMixin.from_json">
 <a class="viewcode-back" href="../../../_autosummary/baybe.serialization.mixin.SerialMixin.html#baybe.serialization.mixin.SerialMixin.from_json">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">_T</span><span class="p">],</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="n">SupportsRead</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an object from its JSON representation.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            string: The JSON representation of the object.</span>
+<span class="sd">            source: The JSON source. Can be:</span>
+
+<span class="sd">                - A string containing JSON content.</span>
+<span class="sd">                - A file path or ``Path`` object pointing to a JSON file.</span>
+<span class="sd">                - A file-like object with a ``read()`` method.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ``source`` is not one of the allowed types.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The reconstructed object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="n">source</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">string</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;The method argument must be a string containing valid JSON, &quot;</span>
+                    <span class="s2">&quot;a string holding a file path to a JSON file / a corresponding &quot;</span>
+                    <span class="s2">&quot;&#39;Path&#39; object, or a file-like object with a &#39;read()&#39; method.&quot;</span>
+                <span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
 </div>
 
