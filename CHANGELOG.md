@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
   `batch_size>1`
-- Crash with minimized targets constructed via the legacy interface
 - `Campaign.allow_*` flags now properly take into account recommendation caching
 - The campaign recommendation cache is now properly invalidated during context changes
 
