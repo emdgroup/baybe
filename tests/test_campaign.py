@@ -318,7 +318,6 @@ def test_update_measurements(ongoing_campaign):
         ),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
     """Posterior statistics have expected shape, index and columns."""
@@ -381,7 +380,6 @@ def test_posterior_stats(ongoing_campaign, n_iterations, batch_size):
         ),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b3"])
 def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
@@ -390,7 +388,6 @@ def test_posterior_stats_invalid_input(ongoing_campaign, stats, error, match):
         ongoing_campaign.posterior_stats(ongoing_campaign.measurements, stats)
 
 
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("n_iterations", [1], ids=["i1"])
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_acquisition_value_computation(ongoing_campaign: Campaign):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
@@ -115,3 +116,7 @@ class MultiplicativeTransformation(Transformation):
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
         return self.transformations[0](x) * self.transformations[1](x)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
