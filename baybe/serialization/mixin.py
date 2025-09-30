@@ -55,12 +55,12 @@ class SerialMixin:
             sink: The JSON sink. Can be:
 
                 - ``None`` (only returns the JSON string).
-                - A file path or Path object pointing to a location where to write the
-                  JSON content.
+                - A file path or ``Path`` object pointing to a location where to write
+                  the JSON content.
                 - A file-like object with a ``write()`` method.
 
             overwrite: Boolean flag indicating if to overwrite the file if it already
-                exists. Only relevant if ``sink`` is a file path or Path object.
+                exists. Only relevant if ``sink`` is a file path or ``Path`` object.
 
         Raises:
             FileExistsError: If ``sink`` points to an already existing file but
@@ -96,7 +96,7 @@ class SerialMixin:
             source: The JSON source. Can be:
 
                 - A string containing JSON content.
-                - A file path or Path object pointing to a JSON file.
+                - A file path or ``Path`` object pointing to a JSON file.
                 - A file-like object with a ``read()`` method.
 
         Raises:
@@ -107,13 +107,11 @@ class SerialMixin:
         """
         if isinstance(source, Path):
             string = source.read_text()
-
         elif isinstance(source, str):
             if (path := Path(source)).is_file():
                 string = path.read_text()
             else:
                 string = source
-
         else:
             try:
                 string = source.read()
@@ -121,7 +119,7 @@ class SerialMixin:
                 raise ValueError(
                     "The method argument must be a string containing valid JSON, "
                     "a string holding a file path to a JSON file / a corresponding "
-                    "Path object, or a file-like object with a read() method."
+                    "'Path' object, or a file-like object with a 'read()' method."
                 )
 
         return cls.from_dict(json.loads(string))
