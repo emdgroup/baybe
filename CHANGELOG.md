@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - `add_fake_measurements` now generates values inside each target's image / codomain
+- Interpoint constraints for continuous search spaces
 
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
