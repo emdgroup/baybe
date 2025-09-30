@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Instead of requiring already read string representations of json files, `.from_json`
   now also supports file paths as argument and will read the file itself
 - `from_json` now strictly expects the source as a positional argument
+- `to_json` now accepts `kwargs` and passes them to `json.dumps`
 
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
