@@ -400,7 +400,7 @@ class Campaign(SerialMixin):
         cols = [p.name for p in self.parameters] + [t.name for t in self.targets]
         self._measurements_exp.loc[data.index, cols] = data[cols]
 
-        # Reset fit number and cached recommendations
+        # Reset fit number
         self._measurements_exp.loc[data.index, "FitNr"] = np.nan
 
     def toggle_discrete_candidates(  # noqa: DOC501
