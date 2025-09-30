@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import in_, instance_of, min_len
+from attrs.validators import in_, min_len
 from typing_extensions import override
 
 from baybe.constraints.base import CardinalityConstraint, DiscreteConstraint
@@ -202,12 +202,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     affected_parameters: list[list[str]] = field()
     """The parameters affected by the individual conditions."""
 
-    consider_data_augmentation: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
-    """Flag indicating whether the constraint would use data augmentation with
-    surrogates that support this."""
-
     # for internal use only
     permutation_invariant: bool = field(default=False, init=False)
     """Flag that indicates whether the affected parameters are permutation invariant.
@@ -291,12 +285,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
     """Dependencies connected with the invariant parameters."""
-
-    consider_data_augmentation: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
-    """Flag indicating whether the constraint would use data augmentation with
-    surrogates that support this."""
 
     @override
     def get_invalid(self, data: pd.DataFrame) -> pd.Index:
