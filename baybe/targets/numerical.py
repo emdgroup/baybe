@@ -277,8 +277,8 @@ class NumericalTarget(Target, SerialMixin):
         Args:
             name: The name of the target.
             match_value: The value to be matched.
-            mismatch_instead: If ``True``, the target will instead seek maximize the
-                distance to the given ``match_value``.
+            mismatch_instead: If ``True``, the target will instead seek to maximize
+                the distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -305,8 +305,8 @@ class NumericalTarget(Target, SerialMixin):
         Args:
             name: The name of the target.
             match_value: The value to be matched.
-            mismatch_instead: If ``True``, the target will instead seek maximize the
-                distance to the given ``match_value``.
+            mismatch_instead: If ``True``, the target will instead seek to maximize
+                the distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -336,8 +336,8 @@ class NumericalTarget(Target, SerialMixin):
             name: The name of the target.
             match_value: The value to be matched.
             exponent: The exponent of applied the power transformation.
-            mismatch_instead: If ``True``, the target will instead seek maximize the
-                distance to the given ``match_value``.
+            mismatch_instead: If ``True``, the target will instead seek to maximize
+                the distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -375,8 +375,8 @@ class NumericalTarget(Target, SerialMixin):
             width: The width of the (symmetric) triangular transformation.
             margins: The margins defining how far the triangle extends in both
                 directions.
-            mismatch_instead: If ``True``, the target will instead seek maximize the
-                distance to the given ``match_value``.
+            mismatch_instead: If ``True``, the target will instead seek to maximize
+                the distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Raises:
@@ -427,8 +427,8 @@ class NumericalTarget(Target, SerialMixin):
             match_value: The value to be matched.
             sigma: The scale parameter controlling the width of the bell curve. For more
                 details, see :class:`baybe.transformations.basic.BellTransformation`.
-            mismatch_instead: If ``True``, the target will instead seek maximize the
-                distance to the given ``match_value``.
+            mismatch_instead: If ``True``, the target will instead seek to maximize
+                the distance to the given ``match_value``.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
