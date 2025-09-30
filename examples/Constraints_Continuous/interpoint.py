@@ -220,7 +220,8 @@ plt.plot(
     linewidth=2,
     label="Total",
 )
-plt.axhline(y=60, color="red", linestyle="--", label="Budget")
+plt.axhline(y=60, color="red", linestyle="--", label="Budget", zorder=0)
+plt.ylim(bottom=0)
 plt.title("Solvent (Constrained)")
 plt.xlabel("Batch")
 plt.ylabel("Solvent Volume (mL)")
@@ -249,7 +250,8 @@ plt.plot(
     linewidth=2,
     label="Total",
 )
-plt.axhline(y=30, color="red", linestyle="--", label="Required")
+plt.axhline(y=30, color="red", linestyle="--", label="Required", zorder=0)
+plt.ylim(bottom=0)
 plt.title("Catalyst (Constrained)")
 plt.xlabel("Batch")
 plt.ylabel("Catalyst Loading (mol%)")
