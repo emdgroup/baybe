@@ -108,9 +108,9 @@ class SerialMixin:
         if isinstance(source, Path):
             string = source.read_text()
         elif isinstance(source, str):
-            if (path := Path(source)).is_file():
-                string = path.read_text()
-            else:
+            try:
+                string = Path(source).read_text()
+            except OSError:
                 string = source
         else:
             try:
