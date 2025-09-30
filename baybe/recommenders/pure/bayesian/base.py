@@ -126,15 +126,12 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         # Perform data augmentation if configured
-        constraints_considered = searchspace.constraints_augmentable
         surrogate_considers = (
             # hasattrs needed because the surrogate protocol doesn't enforce this flag
             hasattr(self._surrogate_model, "consider_data_augmentation")
             and self._surrogate_model.consider_data_augmentation
         )
-
-        # Augment measurements if desired
-        if surrogate_considers and constraints_considered:
+        if surrogate_considers:
             measurements = searchspace.augment_measurements(measurements)
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)

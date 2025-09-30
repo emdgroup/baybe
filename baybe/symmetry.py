@@ -3,14 +3,24 @@
 from __future__ import annotations
 
 import gc
-from abc import ABC
-from typing import Any
+from abc import ABC, abstractmethod
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any
 
+import pandas as pd
 from attrs import define, field
 from attrs.validators import instance_of, min_len
+from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
 from baybe.serialization import SerialMixin
+from baybe.utils.augmentation import (
+    df_apply_dependency_augmentation,
+    df_apply_permutation_augmentation,
+)
+
+if TYPE_CHECKING:
+    from baybe.parameters.base import Parameter
 
 
 @define(frozen=True)
@@ -53,6 +63,16 @@ class Symmetry(SerialMixin, ABC):
         )
         return symmetry_dict
 
+    @abstractmethod
+    def augment_measurements(self, df: pd.DataFrame, parameters: Iterable[Parameter]):
+        """Augment the given measurements according to the symmetry.
+
+        Args:
+            df: The dataframe containing the measurements to be augmented.
+            parameters: Parameter objects carrying additional information (might not be
+                needed by all augmentation implementations).
+        """
+
 
 @define(frozen=True)
 class PermutationSymmetry(Symmetry):
@@ -63,6 +83,33 @@ class PermutationSymmetry(Symmetry):
     $f(x,y) = f(y,x)$.
     """
 
+    # Object variables
+    copermuted_parameters: list[str] = field(factory=list)
+    """The list of parameters used for the constraint."""
+
+    @override
+    def augment_measurements(
+        self, df: pd.DataFrame, _: Iterable[Parameter]
+    ) -> pd.DataFrame:
+        # See base class.
+
+        # Associated parameters can come from dependencies and need to be
+        # co-permuted in the same manner as the parameters of this
+        # constraint.
+
+        # This creates groups like (("p1", "a1"), ("p2", "a2"), ...) if the
+        # parameters "p_k" have associated parameters "a_k". It results in
+        # just (("p1",), ("p2",), ...) if there are no associated
+        # parameters.
+        groups = tuple(
+            zip(self.parameters, self.copermuted_parameters, strict=True)
+            if self.copermuted_parameters
+            else zip(self.parameters)
+        )
+        df = df_apply_permutation_augmentation(df, groups)
+
+        return df
+
 
 @define(frozen=True)
 class MirrorSymmetry(Symmetry):
@@ -72,6 +119,16 @@ class MirrorSymmetry(Symmetry):
     affecting the outcome of the model. For instance, this is the case if
     $f(x,y) = f(-x,y)$.
     """
+
+    @override
+    def augment_measurements(
+        self, df: pd.DataFrame, _: Iterable[Parameter]
+    ) -> pd.DataFrame:
+        # See base class.
+
+        raise NotImplementedError(
+            "Augmentation for mirror symmetry is not yet implemented."
+        )
 
 
 @define(frozen=True)
@@ -106,6 +163,49 @@ class DependencySymmetry(Symmetry):
                 f"affected_parameters list you must provide exactly one condition in "
                 f"the conditions list."
             )
+
+    @override
+    def augment_measurements(
+        self, df: pd.DataFrame, parameters: Iterable[Parameter]
+    ) -> pd.DataFrame:
+        # See base class.
+
+        for param_name, cond, affected_param_names in zip(
+            self.parameters, self.conditions, self.affected_parameters
+        ):
+            # The 'causing' entry describes the parameters and the value
+            # for which one or more affected parameters become degenerate.
+            # 'cond' specifies for which values the affected parameter
+            # values are active, i.e. not degenerate. Hence, here we get the
+            # values that are not active, as rows containing them should be
+            # augmented.
+            param = next(p for p in parameters if p.name == param_name)
+
+            causing_values = [
+                x
+                for x, flag in zip(
+                    param.values,
+                    ~cond.evaluate(pd.Series(param.values)),
+                    strict=True,
+                )
+                if flag
+            ]
+            causing = (param.name, causing_values)
+
+            # The 'affected' entry describes the affected parameters and the
+            # values they are allowed to take, which are all degenerate if
+            # the corresponding condition for the causing parameter is met.
+            affected = [
+                (
+                    (ap := next(p for p in parameters if p.name == pn)).name,
+                    ap.values,  # type: ignore[attr-defined]
+                )
+                for pn in affected_param_names
+            ]
+
+            df = df_apply_dependency_augmentation(df, causing, affected)
+
+        return df
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
