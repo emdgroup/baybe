@@ -257,6 +257,7 @@ dev = [
     { name = "tqdm" },
     { name = "types-psutil" },
     { name = "types-seaborn" },
+    { name = "types-tqdm" },
     { name = "uv" },
     { name = "xyzpy" },
 ]
@@ -335,6 +336,7 @@ mypy = [
     { name = "pandas-stubs" },
     { name = "types-psutil" },
     { name = "types-seaborn" },
+    { name = "types-tqdm" },
 ]
 onnx = [
     { name = "onnx" },
@@ -429,6 +431,7 @@ requires-dist = [
     { name = "tqdm", marker = "extra == 'docs'" },
     { name = "types-psutil", marker = "extra == 'mypy'", specifier = ">=7.0.0.20250801" },
     { name = "types-seaborn", marker = "extra == 'mypy'", specifier = ">=0.13.2.20240618" },
+    { name = "types-tqdm", marker = "extra == 'mypy'" },
     { name = "typing-extensions", specifier = ">=4.7.0" },
     { name = "uv", marker = "extra == 'dev'", specifier = ">=0.7.0" },
     { name = "xyzpy", marker = "extra == 'simulation'", specifier = ">=1.2.1" },
@@ -5118,6 +5121,18 @@ wheels = [
 ]
 
 [[package]]
+name = "types-requests"
+version = "2.32.4.20250913"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/36/27/489922f4505975b11de2b5ad07b4fe1dca0bca9be81a703f26c5f3acfce5/types_requests-2.32.4.20250913.tar.gz", hash = "sha256:abd6d4f9ce3a9383f269775a9835a4c24e5cd6b9f647d64f88aa4613c33def5d", size = 23113, upload-time = "2025-09-13T02:40:02.309Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/20/9a227ea57c1285986c4cf78400d0a91615d25b24e257fd9e2969606bdfae/types_requests-2.32.4.20250913-py3-none-any.whl", hash = "sha256:78c9c1fffebbe0fa487a418e0fa5252017e9c60d1a2da394077f1780f655d7e1", size = 20658, upload-time = "2025-09-13T02:40:01.115Z" },
+]
+
+[[package]]
 name = "types-seaborn"
 version = "0.13.2.20250516"
 source = { registry = "https://pypi.org/simple" }
@@ -5129,6 +5144,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5b/95/473165d54e3a0113b09cdeb3d545ddbe6956857556cd42f8c170a68d1f36/types_seaborn-0.13.2.20250516.tar.gz", hash = "sha256:7cf406534f058d1832460b4e5ab0b1a0c26ca67ce4f18ad4817723a35beee93a", size = 29153, upload-time = "2025-05-16T03:08:53.141Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/19/c1/ae7fe4851789de4efa7fa0a73c4f1b2ac1501129b1fd9e961f1ffcabca1a/types_seaborn-0.13.2.20250516-py3-none-any.whl", hash = "sha256:3d90124d587aac36874c23d7fc4b11fa47164cba25e3344dc19922cbec9ab5d0", size = 40813, upload-time = "2025-05-16T03:08:52.241Z" },
+]
+
+[[package]]
+name = "types-tqdm"
+version = "4.67.0.20250809"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "types-requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fb/d0/cf498fc630d9fdaf2428b93e60b0e67b08008fec22b78716b8323cf644dc/types_tqdm-4.67.0.20250809.tar.gz", hash = "sha256:02bf7ab91256080b9c4c63f9f11b519c27baaf52718e5fdab9e9606da168d500", size = 17200, upload-time = "2025-08-09T03:17:43.489Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3f/13/3ff0781445d7c12730befce0fddbbc7a76e56eb0e7029446f2853238360a/types_tqdm-4.67.0.20250809-py3-none-any.whl", hash = "sha256:1a73053b31fcabf3c1f3e2a9d5ecdba0f301bde47a418cd0e0bdf774827c5c57", size = 24020, upload-time = "2025-08-09T03:17:42.453Z" },
 ]
 
 [[package]]
