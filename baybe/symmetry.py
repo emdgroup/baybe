@@ -5,7 +5,7 @@ from __future__ import annotations
 import gc
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
 from attrs import define, field
@@ -20,7 +20,7 @@ from baybe.utils.augmentation import (
 )
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
+    from baybe.parameters.base import DiscreteParameter, Parameter
 
 
 @define(frozen=True)
@@ -179,7 +179,9 @@ class DependencySymmetry(Symmetry):
             # values are active, i.e. not degenerate. Hence, here we get the
             # values that are not active, as rows containing them should be
             # augmented.
-            param = next(p for p in parameters if p.name == param_name)
+            param = next(
+                cast(DiscreteParameter, p) for p in parameters if p.name == param_name
+            )
 
             causing_values = [
                 x

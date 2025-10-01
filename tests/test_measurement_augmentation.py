@@ -5,27 +5,23 @@ from unittest.mock import patch
 import pytest
 from attrs import evolve
 from pandas.testing import assert_frame_equal
-from pytest import param
 
 from baybe.acquisition import qLogEI
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
+from baybe.symmetry import DependencySymmetry, PermutationSymmetry
 from baybe.utils.dataframe import create_fake_input
 
 
-@pytest.mark.parametrize("surrogate_considers", [True, False])
 @pytest.mark.parametrize(
-    "constraints_consider",
-    [
-        param([True, False], id="dep"),
-        param([False, True], id="perm"),
-        param([True, True], id="dep+perm"),
-        param([False, False], id="none"),
-    ],
+    "perm_augmentation", [True, False], ids=["perm_aug", "perm_noaug"]
+)
+@pytest.mark.parametrize(
+    "dep_augmentation", [True, False], ids=["dep_aug", "dep_noaug"]
 )
 @pytest.mark.parametrize(
     "constraint_names", [["Constraint_2", "Constraint_11"]], ids=["c"]
-)
+)  # constraints are not strictly needed for this test but reduce runtime
 @pytest.mark.parametrize(
     "parameter_names",
     [
@@ -43,28 +39,34 @@ from baybe.utils.dataframe import create_fake_input
 )
 def test_measurement_augmentation(
     parameters,
-    constraints,
     surrogate_model,
     objective,
-    constraints_consider,
-    surrogate_considers,
+    constraints,
+    dep_augmentation,
+    perm_augmentation,
 ):
     """Measurement augmentation is performed if configured."""
     original_to_botorch = qLogEI.to_botorch
     called_args_list = []
 
-    def spy_side_effect(self, *args, **kwargs):
+    def spy(self, *args, **kwargs):
         called_args_list.append((args, kwargs))
         return original_to_botorch(self, *args, **kwargs)
 
-    with patch.object(qLogEI, "to_botorch", side_effect=spy_side_effect, autospec=True):
+    with patch.object(qLogEI, "to_botorch", side_effect=spy, autospec=True):
         # Basic setup
-        c1 = evolve(constraints[0], consider_data_augmentation=constraints_consider[0])
-        c2 = evolve(constraints[1], consider_data_augmentation=constraints_consider[1])
-        searchspace = SearchSpace.from_product(parameters, [c1, c2])
-        surrogate = evolve(
-            surrogate_model, consider_data_augmentation=surrogate_considers
+        s1 = DependencySymmetry(
+            parameters=constraints[0].parameters,
+            conditions=constraints[0].conditions,
+            affected_parameters=constraints[0].affected_parameters,
+            consider_data_augmentation=dep_augmentation,
         )
+        s2 = PermutationSymmetry(
+            parameters=constraints[1].parameters,
+            consider_data_augmentation=perm_augmentation,
+        )
+        searchspace = SearchSpace.from_product(parameters, constraints)
+        surrogate = evolve(surrogate_model, symmetries=[s1, s2])
         acqf = qLogEI()
         recommender = BotorchRecommender(
             surrogate_model=surrogate, acquisition_function=acqf
@@ -80,12 +82,12 @@ def test_measurement_augmentation(
         measurements_passed = called_args_list[0][0][3]  # take 4th arg from first call
 
         # Check expectation
-        # If the surrogate considers augmentation and any of the constraints consider
-        # augmentation, the measurements passed to `to_botorch` should be larger than
-        # the original measurements - otherwise, they should be identical
+        # If any of the symmetries consider augmentation, the measurements passed to
+        # `to_botorch` should be larger than the original measurements - otherwise,
+        # they should be identical
         len1 = len(measurements)
         len2 = len(measurements_passed)
-        if any(constraints_consider) and surrogate_considers:
+        if any([dep_augmentation, perm_augmentation]):
             assert len1 < len2, (len1, len2)
         else:
             assert_frame_equal(measurements, measurements_passed)

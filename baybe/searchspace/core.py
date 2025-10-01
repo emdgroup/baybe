@@ -8,7 +8,6 @@ from enum import Enum
 from typing import cast
 
 import pandas as pd
-from attr.validators import deep_iterable, instance_of
 from attrs import define, field
 from typing_extensions import override
 
@@ -26,7 +25,6 @@ from baybe.searchspace.discrete import (
 )
 from baybe.searchspace.validation import validate_parameters
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.symmetry import Symmetry
 from baybe.utils.conversion import to_string
 
 
@@ -68,12 +66,6 @@ class SearchSpace(SerialMixin):
     continuous: SubspaceContinuous = field(factory=SubspaceContinuous.empty)
     """The (potentially empty) continuous subspace of the overall search space."""
 
-    symmetries: tuple[Symmetry, ...] = field(
-        factory=tuple,
-        converter=tuple,
-        validator=deep_iterable(member_validator=instance_of(Symmetry)),
-    )
-
     @override
     def __str__(self) -> str:
         fields = [
@@ -89,22 +81,6 @@ class SearchSpace(SerialMixin):
         """Perform validation."""
         validate_parameters(self.parameters)
         validate_constraints(self.constraints, self.parameters)
-
-    def augment_measurements(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Apply data augmentation to measurements.
-
-        Args:
-            data: A dataframe with measurements.
-
-        Returns:
-            A dataframe with the augmented measurements, also containing the original
-            ones.
-        """
-        for s in self.symmetries:
-            if s.consider_data_augmentation:
-                data = s.augment_measurements(data, self.parameters)
-
-        return data
 
     @classmethod
     def from_parameter(cls, parameter: Parameter) -> SearchSpace:

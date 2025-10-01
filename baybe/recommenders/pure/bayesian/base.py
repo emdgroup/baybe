@@ -126,13 +126,8 @@ class BayesianRecommender(PureRecommender, ABC):
             )
 
         # Perform data augmentation if configured
-        surrogate_considers = (
-            # hasattrs needed because the surrogate protocol doesn't enforce this flag
-            hasattr(self._surrogate_model, "consider_data_augmentation")
-            and self._surrogate_model.consider_data_augmentation
-        )
-        if surrogate_considers:
-            measurements = searchspace.augment_measurements(measurements)
+        if hasattr(s := self._surrogate_model, "augment_measurements"):
+            measurements = s.augment_measurements(measurements, searchspace.parameters)
 
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
