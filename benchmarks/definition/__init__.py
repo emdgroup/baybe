@@ -5,7 +5,7 @@ from benchmarks.definition.convergence import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
 )
-from benchmarks.definition.regression import (
+from benchmarks.definition.regression.settings import (
     RegressionBenchmark,
     RegressionBenchmarkSettings,
     TransferLearningRegressionBenchmark,
