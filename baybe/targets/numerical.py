@@ -160,7 +160,7 @@ def _translate_legacy_arguments(
             width = (bounds.upper - bounds.lower) / 2
             modern_transformation = BellTransformation(bounds.center, width)
         else:
-            # Use transformation from what would have been the appropriate call
+            # Use transformation from what would have been the appropriate callss
             modern_transformation = cast(
                 Transformation,
                 NumericalTarget.match_triangular(
@@ -463,8 +463,7 @@ class NumericalTarget(Target, SerialMixin):
                 raise ValueError(
                     "If no 'match_value' is provided, 'cutoffs' must be specified."
                 )
-            cutoffs = Interval.create(cutoffs)
-            match_value = cutoffs.center
+            match_value = Interval.create(cutoffs).center
 
         if sum(x is not None for x in (cutoffs, width, margins)) != 1:
             raise ValueError(
@@ -472,7 +471,8 @@ class NumericalTarget(Target, SerialMixin):
             )
 
         if cutoffs is not None:
-            transformation = TriangularTransformation(cutoffs, 0.0)
+            cutoffs = Interval.create(cutoffs)
+            transformation = TriangularTransformation(cutoffs - match_value, 0.0)
         elif width is not None:
             transformation = TriangularTransformation.from_width(0.0, width)
         elif margins is not None:
