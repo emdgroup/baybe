@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -28,8 +29,11 @@ def test_example(example: str):
     monkeypatching in some examples affecting other tests if they were executed in the
     same environment.
     """
-    env = os.environ | {"PYTHONPATH": os.getcwd()}
-    subprocess.run(["python", example], check=True, env=env)
+    env = os.environ | {
+        "PYTHONPATH": os.getcwd(),  # to ensure examples are found
+        "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
+    }
+    subprocess.run([sys.executable, example], check=True, env=env)
 
 
 if _SMOKE_TEST_CACHE is not None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -203,3 +204,7 @@ class MonotonicTransformation(Transformation, ABC):
                 ]
             )
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

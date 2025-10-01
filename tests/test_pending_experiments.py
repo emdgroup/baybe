@@ -97,7 +97,6 @@ _hybrid_params = ["Categorical_1", "Num_disc_1", "Conti_finite1", "Conti_finite2
         ),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [8], ids=["grid8"])
 def test_pending_points(campaign, batch_size, fake_measurements):
     """Test there is no recommendation overlap if pending experiments are specified."""
     warnings.filterwarnings("ignore", category=UnusedObjectWarning)
@@ -116,7 +115,7 @@ def test_pending_points(campaign, batch_size, fake_measurements):
     # some recommenders which could also trivially avoid overlap
     with temporary_seed(1337):
         rec1 = campaign.recommend(batch_size)
-    campaign._cached_recommendation = pd.DataFrame()  # ensure no recommendation cache
+    campaign.clear_cache()
     with temporary_seed(1337):
         rec2 = campaign.recommend(batch_size=batch_size, pending_experiments=rec1)
 
@@ -146,7 +145,6 @@ acqfs_non_pending = [
         param(_hybrid_params, id="hybrid"),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
 def test_invalid_acqf(searchspace, objective, batch_size, acqf, fake_measurements):
     """Test exception raised for acqfs that don't support pending experiments."""
@@ -184,7 +182,6 @@ def test_invalid_acqf(searchspace, objective, batch_size, acqf, fake_measurement
         param(["Task", "Num_disc_1"], np.nan, id="task_param_nan"),
     ],
 )
-@pytest.mark.parametrize("n_grid_points", [5], ids=["g5"])
 @pytest.mark.parametrize("batch_size", [3], ids=["b3"])
 def test_invalid_input(
     searchspace,

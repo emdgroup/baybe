@@ -253,7 +253,6 @@ constructor to chain transformations, you can alternatively:
 
 ```python
 from baybe.transformations import (
-    AffineTransformation,
     ChainedTransformation,
     PowerTransformation,
     TwoSidedAffineTransformation,
@@ -261,15 +260,13 @@ from baybe.transformations import (
 
 twosided = TwoSidedAffineTransformation(slope_left=0, slope_right=1)
 power = PowerTransformation(exponent=2)
-shift = AffineTransformation(shift=1)
 
-# Create a transformation representing a shifted one-sided quadratic function:
+# Create a transformation representing a one-sided quadratic function:
 # 1) First, we cut the left side by multiplying by zero
 # 2) Then, we apply the quadratic transformation
-# 3) Finally, we shift to the right
-chain1 = ChainedTransformation([twosided, power, shift])  # explicit construction
-chain2 = twosided | power | shift  # using overloaded pipe operator
-chain3 = twosided.chain(power).chain(shift)  # via method chaining
+chain1 = ChainedTransformation([twosided, power])  # explicit construction
+chain2 = twosided | power  # using overloaded pipe operator
+chain3 = twosided.chain(power)  # via method chaining
 assert chain1 == chain2 == chain3
 ```
 
@@ -465,11 +462,10 @@ To demonstrate this effect, let us recreate the input-output mapping from the
 ```python
 import torch
 
-# Logically, we can achieve the same result by interchanging the first two steps:
+# Logically, we can achieve the same result by interchanging the construction steps:
 # 1) Here, we apply the quadratic transformation first
 # 2) Then, we cut as a second step
-# 3) Finally, we shift
-chain4 = power | twosided | shift  # different order of operations
+chain4 = power | twosided  # different order of operations
 
 # While these two constructions are mathematically equivalent, they are not "equal" from
 # an object perspective, because they rely on different transformation steps:
