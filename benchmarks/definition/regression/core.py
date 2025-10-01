@@ -367,7 +367,7 @@ def _evaluate_model(
     # Evaluate model
     predictions = model.posterior_stats(test_data_prepared, stats=["mean"])
     metrics = _calculate_metrics(
-        true_values=test_data[target_column].values,
+        true_values=np.asarray(test_data[target_column].values),
         predictions=predictions,
         target_column=target_column,
     )
