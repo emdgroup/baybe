@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Transfer Learning Regression Benchmarks infrastructure for evaluating TL model performance
+  - `TransferLearningRegressionBenchmarkSettings` class with configurable source data fractions and sampling strategies
+  - `TransferLearningRegressionBenchmark` class for comparing non-TL vs TL model performance
+  - Core benchmarking functions in `benchmarks/definition/regression/core.py`
+  - Domain-specific TL regression benchmarks for direct arylation temperature optimization
+- Support for evaluating models with and without transfer learning on regression tasks
+
+
 ## [0.14.1] - 2025-10-01
 ### Added
 - `to_json` and `from_json` methods now also natively support (de)serialization to/from
