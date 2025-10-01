@@ -372,7 +372,7 @@ def _evaluate_model(
         target_column=target_column,
     )
 
-    result = {"scenario": scenario_name}
+    result: dict[str, str | float] = {"scenario": scenario_name}
     result.update(metrics)
     return result
 
