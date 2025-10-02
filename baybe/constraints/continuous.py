@@ -135,20 +135,23 @@ class ContinuousLinearConstraint(ContinuousConstraint):
                 for interpoint constraints as indices need to be adjusted.
                 Ignored by all other constraints.
 
+        Raises:
+            ValueError: When the constraint is an interpoint constraint but
+                no batch size is given or when providing a batch size while the
+                constraint is an intrapoint constraint.
+
         Returns:
             The tuple required by botorch.
         """
+        if (batch_size is not None) ^ (self.is_interpoint):
+            raise ValueError(
+                "A batch size must be set if and only if the constraint is "
+                "an interpoint constraint."
+            )
+
         import torch
 
         from baybe.utils.torch import DTypeFloatTorch
-
-        assert not (batch_size is None and self.is_interpoint), (
-            "No ``batch_size`` set but using interpoint constraints."
-        )
-
-        assert not (batch_size is not None and not self.is_interpoint), (
-            "A ``batch_size`` was set but the constraint is not interpoint."
-        )
 
         # Interpoint and intrapoint constraints require different index formats.
         # For more information, we refer to the BoTorch documentation:
