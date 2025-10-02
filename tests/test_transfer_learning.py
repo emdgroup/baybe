@@ -81,5 +81,4 @@ def test_multiple_active_tasks():
     )
 
     campaign.add_measurements(lookup)
-
     campaign.recommend(batch_size=1)
