@@ -152,34 +152,27 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        # Interpoint and intrapoint constraints require different index formats.
-        # For more information, we refer to the BoTorch documentation:
-        # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
-        param_indices: list[int] | list[tuple[int, int]]
-        param_names = [p.name for p in parameters]
-        coefficients: torch.Tensor
-        if not self.is_interpoint:
-            param_indices = [
-                param_names.index(p) + idx_offset
-                for p in self.parameters
-                if p in param_names
-            ]
-            coefficients = torch.tensor(self.coefficients, dtype=DTypeFloatTorch)
-        else:
+        coefficients = torch.tensor(self.coefficients, dtype=DTypeFloatTorch)
+
+        # Locate where the parameters referenced by the constraint will later be found
+        # in the input tensor provided to BoTorch
+        # NOTE: We assume here that all referenced parameters actually exist in the
+        #       provided ``parameters`` list, which is pre-validated when creating the
+        #       search space. If this assumption is violated for whatever reason, an
+        #       exception would still be thrown by the lookup attempt below.
+        names = [p.name for p in parameters]
+        idxs = torch.tensor([names.index(p) + idx_offset for p in self.parameters])
+
+        if self.is_interpoint:
+            # For interpoint constraints, the coefficients and indices need to be
+            # adjusted to account for the batch size:
+            # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
             assert batch_size is not None
-            param_index_dict = {
-                name: param_names.index(name) for name in self.parameters
-            }
-            param_indices = [
-                (batch, param_index_dict[name] + idx_offset)
-                for name in self.parameters
-                for batch in range(batch_size)
-            ]
-            coefficients = torch.tensor(
-                self.coefficients, dtype=DTypeFloatTorch
-            ).repeat_interleave(batch_size)
+            coefficients = coefficients.repeat_interleave(batch_size)
+            idxs = torch.cartesian_prod(idxs, torch.arange(batch_size)).flip(1)
+
         return (
-            torch.tensor(param_indices),
+            idxs,
             self._multiplier * coefficients,
             torch.tensor(self._multiplier * self.rhs, dtype=DTypeFloatTorch).item(),
         )
