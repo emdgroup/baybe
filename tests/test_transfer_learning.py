@@ -47,10 +47,15 @@ def test_recommendation(
         objective=objective,
     )
 
+    # Make sure that data is added only if there is any
     if lookup.shape[0] > 0:
         campaign.add_measurements(lookup)
 
+    # Tests that the first recommendation can be made
     campaign.recommend(batch_size=1)
+    # Make sure bayesian recommendation was used
+    if observed_target_data or observed_source_data:
+        assert campaign.recommender._has_switched
 
 
 def test_multiple_active_tasks():
@@ -82,3 +87,5 @@ def test_multiple_active_tasks():
 
     campaign.add_measurements(lookup)
     campaign.recommend(batch_size=1)
+    # Make sure bayesian recommendation was used
+    assert campaign.recommender._has_switched
