@@ -199,14 +199,30 @@ class BotorchAcquisitionFunctionBuilder:
         #   all other cases.
 
         if self.acqf.is_analytic:
-            if not isinstance(self.objective, SingleTargetObjective):
-                targets = self.objective.targets
+            if (obj := self.objective)._n_models != 1:
+                names = obj._modeled_quantity_names
+
+                if isinstance(obj, DesirabilityObjective):
+                    assert not obj.as_pre_transformation
+                    addendum = (
+                        f". Since you are using a '{type(obj).__name__}', "
+                        f"consider setting "
+                        f"'{fields(DesirabilityObjective).as_pre_transformation.name}' "
+                        f" to 'True'."
+                    )
+                else:
+                    addendum = ""
+
                 raise IncompatibilityError(
                     f"The selected analytic acquisition "
-                    f"'{self.acqf.__class__.__name__}' can handle one target only but "
-                    f"the specified objective comprises {len(targets)} targets: "
-                    f"{[t.name for t in targets]}"
+                    f"'{self.acqf.__class__.__name__}' can handle one-dimensional "
+                    f"models only but the specified objective results in {len(names)} "
+                    f"modeled quantities: {names}{addendum}"
                 )
+
+            if isinstance(obj, DesirabilityObjective):
+                assert obj.as_pre_transformation
+                return
 
             match target := self.objective._target:
                 case NumericalTarget():
