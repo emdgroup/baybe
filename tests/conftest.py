@@ -574,7 +574,7 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
         "InterConstraint_3": ContinuousLinearConstraint(
             parameters=["Conti_finite1", "Conti_finite2"],
             operator="=",
-            coefficients=[1, 1],
+            coefficients=[1, 2],
             rhs=0.3,
             interpoint=True,
         ),

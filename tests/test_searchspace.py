@@ -438,7 +438,7 @@ def test_sample_from_polytope_with_interpoint_constraints_equality(
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
         constraint_result = (
-            samples["Conti_finite1"].sum() + samples["Conti_finite2"].sum()
+            samples["Conti_finite1"].sum() + 2 * samples["Conti_finite2"].sum()
         )
         assert np.isclose(constraint_result, 0.3, atol=1e-6)
 
