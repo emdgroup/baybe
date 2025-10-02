@@ -206,9 +206,8 @@ class GaussianProcessSurrogate(Surrogate):
                 for p in context.searchspace.discrete.parameters
                 if isinstance(p, TaskParameter)
             )
-            task_comp_rep = task_param.comp_df.iloc[
-                :, 0
-            ]  # using iloc instead of squeeze to avoid mypy errors
+            # Using iloc instead of squeeze to avoid mypy errors
+            task_comp_rep = task_param.comp_df.iloc[:, 0]
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": [
