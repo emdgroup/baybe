@@ -290,12 +290,12 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def is_empty(self) -> bool:
-        """Return whether this subspace is empty."""
+        """Boolean indicating if the subspace is empty."""
         return len(self.parameters) == 0
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        """Return tuple of parameter names."""
+        """The names of the parameters spanning the subspace."""
         return tuple(p.name for p in self.parameters)
 
     @property
@@ -348,7 +348,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def is_constrained(self) -> bool:
-        """Return whether the subspace is constrained in any way."""
+        """Boolean indicating if the subspace is constrained in any way."""
         return any(
             (
                 self.constraints_lin_eq,
@@ -359,7 +359,7 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def has_interpoint_constraints(self) -> bool:
-        """Return whether the space has any interpoint constraints."""
+        """Boolean indicating if the subspace has any interpoint constraints."""
         return any(
             c.is_interpoint for c in self.constraints_lin_eq + self.constraints_lin_ineq
         )
