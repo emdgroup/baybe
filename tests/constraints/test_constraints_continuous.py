@@ -142,7 +142,7 @@ def test_interpoint_equality_multiple_parameters(
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = (
-        res_grouped["Conti_finite1"].sum() + res_grouped["Conti_finite2"].sum()
+        res_grouped["Conti_finite1"].sum() + 2 * res_grouped["Conti_finite2"].sum()
     )
     assert np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
 
