@@ -150,11 +150,11 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             "A ``batch_size`` was set but the constraint is not interpoint."
         )
 
-        param_names = [p.name for p in parameters]
-        # Interpoint and intrapoint require different index formats. For more
-        # information, we refer to the botorch documentation:
+        # Interpoint and intrapoint constraints require different index formats.
+        # For more information, we refer to the BoTorch documentation:
         # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
         param_indices: list[int] | list[tuple[int, int]]
+        param_names = [p.name for p in parameters]
         coefficients: torch.Tensor
         if not self.is_interpoint:
             param_indices = [
