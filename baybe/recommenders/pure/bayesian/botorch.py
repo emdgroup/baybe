@@ -348,15 +348,17 @@ class BotorchRecommender(BayesianRecommender):
             if isinstance(p, _FixedNumericalContinuousParameter)
         }
 
+        # TODO: Add option for automatic choice once the "settings" PR is merged,
+        #   which ships the necessary machinery
         if (
             self.sequential_continuous
             and subspace_continuous.has_interpoint_constraints
         ):
             raise IncompatibilityError(
-                f"The '{fields(BotorchRecommender).sequential_continuous.name}' flag "
-                f"is set to ``True``, but interpoint constraints are present in the "
-                f"continuous subspace. This is not supported. "
-                f"Please set it to ``False``."
+                f"Setting the "
+                f"'{fields(BotorchRecommender).sequential_continuous.name}' "
+                f"flag to ``True`` while interpoint constraints are present in the "
+                f"continuous subspace is not supported. "
             )
 
         # NOTE: The explicit `or None` conversion is added as an additional safety net
