@@ -68,41 +68,10 @@ jobs:
             exit 1
           fi
 
-  add-runner:
-    needs: prepare
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
-    steps:
-      - name: Generate a token
-        id: generate-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: Github_Add_Runner
-          aws-region: eu-central-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Execute Lambda function
-        run: |
-          aws lambda invoke --function-name jit_runner_register_and_create_runner_container  --cli-binary-format raw-in-base64-out --payload '{"github_api_secret": "${{ steps.generate-token.outputs.token }}", "count_container":  1, "container_compute": "M", "repository": "${{ github.repository }}" }'  response.json
-
-          if ! grep -q '"statusCode": 200' response.json; then
-            echo "Lambda function failed. statusCode is not 200."
-            exit 1
-          fi
-
   benchmark-test:
     name: run
-    needs: [prepare, add-runner]
-    runs-on: self-hosted
+    needs: [prepare]
+    runs-on: M
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.benchmarks_to_execute) }}
@@ -111,14 +80,32 @@ jobs:
       BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
       BAYBE_PARALLEL_SIMULATION_RUNS: false
     steps:
+      - name: System Information
+        run: |
+          echo -e "\033[1;34m===== SYSTEM INFORMATION =====\033[0m"
+          uname -a
+          echo -e "\n\n\n\033[1;34m===== CPU INFORMATION =====\033[0m"
+          lscpu
+          echo -e "\n\n\n\033[1;34m===== BLOCK DEVICES =====\033[0m"
+          lsblk
+          echo -e "\n\n\n\033[1;34m===== MEMORY INFORMATION =====\033[0m"
+          free -h
+          echo -e "\n\n\n\033[1;34m===== DISK USAGE =====\033[0m"
+          df -h
+          if [ -x "$(command -v nvidia-smi)" ]; then
+            echo -e "\n\n\n\033[1;34m===== GPU INFORMATION =====\033[0m"
+            nvidia-smi
+          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        id: setup-python
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install the project
+        run: uv sync --locked --extra benchmarking
       - name: Benchmark
-        run: |
-          pip install '.[benchmarking]'
-          python -W ignore -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
+        run: uv run -m benchmarks --benchmark-list "${{ matrix.benchmark_list }}"
