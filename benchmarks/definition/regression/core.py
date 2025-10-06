@@ -366,10 +366,10 @@ def _evaluate_model(
 
     # Evaluate model
     predictions = model.posterior_stats(test_data_prepared, stats=["mean"])
+    pred_values = predictions[f"{target_column}_mean"].values
     metrics = _calculate_metrics(
         true_values=np.asarray(test_data[target_column].values),
-        predictions=predictions,
-        target_column=target_column,
+        pred_values=pred_values,
     )
 
     result: dict[str, str | float] = {"scenario": scenario_name}
@@ -471,21 +471,18 @@ def _evaluate_transfer_learning_models(
 
 def _calculate_metrics(
     true_values: np.ndarray,
-    predictions: pd.DataFrame,
-    target_column: str,
+    pred_values: np.ndarray,
 ) -> dict[str, float]:
     """Calculate regression metrics for model predictions.
 
     Args:
         true_values: True target values.
-        predictions: Model predictions DataFrame with mean columns.
-        target_column: Name of the target column.
+        pred_values: Model predictions..
 
     Returns:
         Dictionary with metric names as keys and metric values as values.
     """
     results = {}
-    pred_values = predictions[f"{target_column}_mean"].values
 
     for metric_func in REGRESSION_METRICS:
         metric_value = metric_func(true_values, pred_values)
