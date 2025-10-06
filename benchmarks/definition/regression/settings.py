@@ -125,7 +125,7 @@ class TransferLearningRegressionBenchmark(
     """Benchmark for comparing regression performance of non-TL vs TL models.
 
     Evaluates the predictive performance of transfer learning models compared
-    to GP models. It generates data for source and target tasks, trains models
+    to non-TL models. It generates data for source and target tasks, trains models
     with varying amounts of source and target data, evaluates their performance
     on held-out target data.
     """
