@@ -9,7 +9,6 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
@@ -84,7 +83,7 @@ class GaussianProcessSurrogate(Surrogate):
     # Note [Scaling Workaround]
     # -------------------------
     # For GPs, we deactivate the base class scaling and instead let the botorch
-    # model internally handle input/output scaling. The reasons is that we need to
+    # model internally handle input/output scaling. The reason is that we need to
     # make `to_botorch` expose the actual botorch GP object, instead of going
     # via the `AdapterModel`, because certain acquisition functions (like qNIPV)
     # require the capability to `fantasize`, which the `AdapterModel` does not support.
@@ -147,72 +146,51 @@ class GaussianProcessSurrogate(Surrogate):
         import gpytorch
         import torch
 
-        # FIXME[typing]: It seems there is currently no better way to inform the type
-        #   checker that the attribute is available at the time of the function call
-        assert self._searchspace is not None
-
+        assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
+        batch_shape = train_x.shape[:-2]
 
-        numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
-
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        # Input/output scaling
+        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
-            indices=list(numerical_idxs),
+            indices=list(context.get_numerical_indices(train_x.shape[-1])),
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # extract the batch shape of the training data
-        batch_shape = train_x.shape[:-2]
-
-        # create GP mean
+        # Mean function
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # define the covariance module for the numeric dimensions
-        covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
+        # Covariance function
+        kernel = self.kernel_factory(context.searchspace, train_x, train_y)
+        covar_module = kernel.to_gpytorch(
             ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
             batch_shape=batch_shape,
         )
 
-        # create GP likelihood
+        # Likelihood model
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
-        # Whether to use multi- or single-task model
-        if not context.is_multitask:
+        # Model selection
+        if (task_param := context.searchspace._task_parameter) is None:
             model_cls = botorch.models.SingleTaskGP
             model_kwargs = {}
         else:
             model_cls = botorch.models.MultiTaskGP
-            #  It is required that there is only one task parameter
-            #  The below code implicitly assumes there is a single task parameter,
-            #  which is already checked in the SearchSpace.
-            task_param = next(
-                p
-                for p in context.searchspace.discrete.parameters
-                if isinstance(p, TaskParameter)
-            )
-            # Using iloc instead of squeeze to avoid mypy errors
             task_comp_rep = task_param.comp_df.iloc[:, 0]
             model_kwargs = {
                 "task_feature": context.task_idx,
-                "output_tasks": [
-                    # Assumption (as implemented in TaskParameter class):
-                    # comp_df is always 1-dimensional (DF with single numerical column)
-                    task_comp_rep.at[active_value]
-                    for active_value in task_param.active_values
-                ],
+                "output_tasks": task_comp_rep[list(task_param.active_values)],  # type: ignore[index]
                 "rank": context.n_tasks,
                 "all_tasks": task_comp_rep.to_list(),
             }
 
-        # construct and fit the Gaussian process
+        # Model construction and fitting
         self._model = model_cls(
             train_x,
             train_y,
