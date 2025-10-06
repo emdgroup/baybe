@@ -110,7 +110,7 @@ TL_MODELS = {
 
 
 # List of regression metrics to evaluate model performance
-REGRESSION_METRICS = [
+REGRESSION_METRICS = {
     root_mean_squared_error,
     mean_squared_error,
     r2_score,
@@ -119,7 +119,7 @@ REGRESSION_METRICS = [
     explained_variance_score,
     kendall_tau_score,
     spearman_rho_score,
-]
+}
 
 
 def run_tl_regression_benchmark(
