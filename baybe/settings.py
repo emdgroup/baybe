@@ -31,6 +31,17 @@ if TYPE_CHECKING:
 active_settings: Settings = None  # type: ignore[assignment]
 """The global settings instance controlling execution behavior."""
 
+_MISSING_PACKAGE_ERROR_MESSAGE = (
+    "The setting 'use_{package_name}' cannot be set to 'True' because '{package_name}' "
+    "is not installed. Either install 'polars' or set 'use_{package_name}' "
+    "to 'False'/'Auto'."
+)
+
+_ENV_VARS_WHITELIST = {
+    "BAYBE_TEST_ENV",  # defines testing scope
+}
+"""The collection of whitelisted **additional** environment variables allowed."""
+
 
 class _SlottedContextDecorator:
     """Like :class:`contextlib.ContextDecorator` but with `__slots__`.
@@ -93,13 +104,6 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
         results.append(fld.evolve(default=make_default_factory(fld)))
     return results
-
-
-_MISSING_PACKAGE_ERROR_MESSAGE = (
-    "The setting 'use_{package_name}' cannot be set to 'True' because '{package_name}' "
-    "is not installed. Either install 'polars' or set 'use_{package_name}' "
-    "to 'False'/'Auto'."
-)
 
 
 @define(frozen=True)
@@ -217,7 +221,10 @@ class Settings(_SlottedContextDecorator):
 
     def __attrs_pre_init__(self) -> None:
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
-        unknown = env_vars - {f"BAYBE_{attr.name.upper()}" for attr in self.attributes}
+        unknown = env_vars - (
+            {f"BAYBE_{attr.name.upper()}" for attr in self.attributes}
+            | _ENV_VARS_WHITELIST
+        )
         if unknown:
             raise RuntimeError(f"Unknown environment variables: {unknown}")
 
