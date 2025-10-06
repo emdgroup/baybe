@@ -41,6 +41,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
+from baybe.utils.random import set_random_seed, temporary_seed
 
 
 def test_surrogate_registration():
@@ -474,3 +475,11 @@ def test_target_transformation(
     if deprecation is not None:
         assert_series_equal(deprecation.transform(series), expected)
     assert_series_equal(modern.transform(series), expected)
+
+
+def test_deprecated_random_seed_control():
+    """Using the deprecated random seed helpers raises warnings."""
+    with pytest.warns(DeprecationWarning):
+        set_random_seed(42)
+    with pytest.warns(DeprecationWarning):
+        temporary_seed(42)
