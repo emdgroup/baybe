@@ -1,34 +1,33 @@
-"""Tests for transfer-learning."""
+"""Tests for transfer learning."""
+
+from typing import Literal
 
 import pandas as pd
 import pytest
 
 from baybe import Campaign
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
+from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
-from baybe.utils.interval import Interval
 
 
-@pytest.mark.parametrize("observed_target_data", [True, False])
-@pytest.mark.parametrize("observed_source_data", [True, False])
-def test_recommendation(
-    observed_target_data: bool,
-    observed_source_data: bool,
-):
-    """Transfer learning recommendation works in different training data settings.
-
-    Regardless of whether source/target tasks are missing/present in the training data.
-    """
-    # Setup test data
+@pytest.fixture(params=[False, True], ids=["source_active", "both_active"])
+def campaign(training_data: Literal["source", "target", "both"], request) -> Campaign:
+    """A transfer-learning campaign with various active tasks and training data."""
     source = "B"
     target = "A"
-    objective = NumericalTarget(name="y").to_objective()
     parameters = [
-        NumericalContinuousParameter(name="x", bounds=Interval(0, 10)),
-        TaskParameter(name="task", values=(target, source), active_values=(target,)),
+        NumericalContinuousParameter("x", (0, 5)),
+        TaskParameter(
+            "task",
+            values=(target, source),
+            active_values=(target,) if not request.param else (target, source),
+        ),
     ]
     searchspace = SearchSpace.from_product(parameters=parameters)
+    objective = NumericalTarget(name="y").to_objective()
+    recommender = BotorchRecommender()
     lookup = pd.DataFrame(
         {
             "x": [1.0, 2.0, 3.0, 4.0],
@@ -36,56 +35,26 @@ def test_recommendation(
             "task": [target] * 2 + [source] * 2,
         }
     )
-    if not observed_target_data:
-        lookup = lookup.query("task!=@target")
-    if not observed_source_data:
-        lookup = lookup.query("task!=@source")
 
-    # Run test
+    assert training_data in ["source", "target", "both"]
+    if training_data == "source":
+        lookup = lookup[lookup["task"] == source]
+    elif training_data == "target":
+        lookup = lookup[lookup["task"] == target]
+
     campaign = Campaign(
         searchspace=searchspace,
         objective=objective,
+        recommender=recommender,
     )
-
-    # Make sure that data is added only if there is any
-    if lookup.shape[0] > 0:
-        campaign.add_measurements(lookup)
-
-    # Tests that the first recommendation can be made
-    campaign.recommend(batch_size=1)
-    # Make sure bayesian recommendation was used
-    if observed_target_data or observed_source_data:
-        assert campaign.recommender._has_switched
-
-
-def test_multiple_active_tasks():
-    """Transfer learning recommendation works with multiple active task values."""
-    # Setup test data
-    source = "B"
-    target = "A"
-    objective = NumericalTarget(name="y").to_objective()
-    parameters = [
-        NumericalContinuousParameter(name="x", bounds=Interval(0, 10)),
-        TaskParameter(
-            name="task", values=(target, source), active_values=(target, source)
-        ),
-    ]
-    searchspace = SearchSpace.from_product(parameters=parameters)
-    lookup = pd.DataFrame(
-        {
-            "x": [1.0, 2.0, 3.0, 4.0],
-            "y": [1.0, 2.0, 1.0, 2.0],
-            "task": [target] * 2 + [source] * 2,
-        }
-    )
-
-    # Run test
-    campaign = Campaign(
-        searchspace=searchspace,
-        objective=objective,
-    )
-
     campaign.add_measurements(lookup)
-    campaign.recommend(batch_size=1)
-    # Make sure bayesian recommendation was used
-    assert campaign.recommender._has_switched
+
+    return campaign
+
+
+@pytest.mark.parametrize("training_data", ["source", "target", "both"])
+def test_recommendation(campaign: Campaign):
+    """Transfer learning recommendation works regardless of which task are
+    present in the training data and which tasks are active.
+    """  # noqa: D205
+    campaign.recommend(1)
