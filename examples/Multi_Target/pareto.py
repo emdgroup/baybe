@@ -17,13 +17,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from baybe.campaign import Campaign
+from baybe import Campaign, active_settings
 from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import arrays_to_dataframes
-from baybe.utils.random import set_random_seed
 
 ### Settings
 
@@ -39,7 +38,7 @@ CENTER_Y1 = (0.5, 0.5)
 
 # Also, we fix the random seed for reproducibility:
 
-set_random_seed(42)
+active_settings.random_seed = 42
 
 
 ### Defining the Optimization Problem

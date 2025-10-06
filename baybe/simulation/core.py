@@ -13,10 +13,9 @@ import pandas as pd
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
-from baybe.settings import active_settings
+from baybe.settings import Settings, active_settings
 from baybe.simulation.lookup import look_up_targets
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.random import temporary_seed
 
 
 def simulate_experiment(
@@ -97,8 +96,9 @@ def simulate_experiment(
             "to be tracked."
         )
 
-    context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
-    with context:
+    with (
+        Settings(random_seed=random_seed) if random_seed is not None else nullcontext()
+    ):
         #   Validate the lookup mechanism
         if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
             raise TypeError(
