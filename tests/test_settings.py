@@ -1,13 +1,16 @@
 """Tests for settings management."""
 
 import os
+import random
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
+import torch
 from attrs import Attribute, evolve
 
 from baybe import Settings, active_settings
@@ -36,6 +39,15 @@ def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
         assert actual == expected, (
             f"Attribute '{key}' expected to be '{expected}' but got '{actual}'."
         )
+
+
+def draw_random_numbers() -> tuple[float, ...]:
+    """Draw some random number from all relevant numeric libraries."""
+    return (
+        tuple(random.random() for _ in range(5))
+        + tuple(np.random.rand(5).tolist())
+        + tuple(torch.rand(5).tolist())
+    )
 
 
 @pytest.fixture()
@@ -260,3 +272,33 @@ def test_initial_environment_reading(inject_env: bool):
     )
     if result.stderr:
         raise AssertionError(f"Subprocess failed: {result.stderr}")
+
+
+def test_random_seed_control():
+    """Random seeds are respected regardless if set directly or via context."""
+    # Subsequent generation yields different results
+    x0 = draw_random_numbers()
+    active_settings.random_seed = 1337
+    x_1337 = draw_random_numbers()
+    assert x0 != x_1337
+
+    # Setting the seed to `None` restores the previously set state
+    active_settings.random_seed = 1337
+    active_settings.random_seed = 1338
+    x_1338 = draw_random_numbers()
+
+    active_settings.random_seed = None
+    x_restored = draw_random_numbers()
+    assert x_restored == x_1337
+
+    # Set state to be recovered after context
+    active_settings.random_seed = 1337
+
+    # Within the context, the seed is temporarily overwritten
+    for _ in range(2):
+        with Settings(random_seed=1338):
+            assert draw_random_numbers() == x_1338
+            assert draw_random_numbers() != x_1338
+
+    # After exiting the context, the previous state is restored
+    assert draw_random_numbers() == x_1337

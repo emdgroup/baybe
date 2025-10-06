@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import random
 import tempfile
 from copy import deepcopy
 from functools import wraps
@@ -12,6 +13,8 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
 from attrs.validators import instance_of
+from attrs.validators import optional as optional_v
+from typing_extensions import Self
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import OptionalImportError
@@ -99,6 +102,66 @@ _MISSING_PACKAGE_ERROR_MESSAGE = (
 )
 
 
+@define(frozen=True)
+class _RandomState:
+    """Container for the random states of all managed numeric libraries."""
+
+    state_builtin = field(factory=random.getstate)
+    """The state of the built-in random number generator."""
+
+    state_numpy = field(factory=np.random.get_state)
+    """The state of the Numpy random number generator."""
+
+    state_torch = field()  # set by default method below (for lazy torch loading)
+    """The state of the Torch random number generator."""
+
+    @state_torch.default
+    def _default_state_torch(self) -> Any:
+        """Get the current Torch random state using a lazy import."""
+        import torch
+
+        return torch.get_rng_state()
+
+    @classmethod
+    def from_seed(cls, seed: int) -> Self:
+        """Get the random state corresponding to a given seed value."""
+        import torch
+
+        # Remember the current state
+        previous_state = cls()
+
+        # Set the requested seed and extract the corresponding state
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        new_state = cls()
+
+        # Restore the previous state
+        previous_state.activate()
+
+        return new_state
+
+    def activate(self) -> None:
+        """Activate the random state."""
+        import torch
+
+        random.setstate(self.state_builtin)
+        np.random.set_state(self.state_numpy)
+        torch.set_rng_state(self.state_torch)
+
+
+def _activate_random_seed(
+    self: Settings, attribute: Attribute, value: int | None
+) -> None:
+    """Activate the random seed, remembering the previous state."""
+    if value is None:
+        if self._previous_random_state is not None:
+            self._previous_random_state.activate()
+        return
+    self._previous_random_state = _RandomState()
+    _RandomState.from_seed(value).activate()
+
+
 @define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
@@ -115,8 +178,18 @@ class Settings(_SlottedContextDecorator):
     _activate_immediately: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings are activated immediately upon instantiation."""
 
+    _previous_random_state: _RandomState | None = field(init=False, default=None)
+    """The previously set random state."""
+
     dataframe_validation: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated against the recommendation context."""
+
+    random_seed: int | None = field(
+        default=None,
+        validator=optional_v(instance_of(int)),
+        on_setattr=_activate_random_seed,
+    )
+    """The used random seed."""
 
     use_polars: AutoBool = field(
         default=AutoBool.AUTO, converter=AutoBool.from_unstructured
