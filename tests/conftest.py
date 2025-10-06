@@ -69,6 +69,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
@@ -80,7 +81,6 @@ from baybe.utils.dataframe import (
     add_parameter_noise,
     create_fake_input,
 )
-from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -888,7 +888,7 @@ def run_iterations(
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
-    with temporary_seed(int(time.time())):
+    with Settings(random_seed=int(time.time())):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
 
