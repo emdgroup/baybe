@@ -6,12 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Transfer Learning Regression Benchmarks infrastructure for evaluating TL model performance
-  - `TransferLearningRegressionBenchmarkSettings` class with configurable source data fractions and sampling strategies
-  - `TransferLearningRegressionBenchmark` class for comparing non-TL vs TL model performance
-  - Core benchmarking functions in `benchmarks/definition/regression/core.py`
-  - Domain-specific TL regression benchmarks for direct arylation temperature optimization
-- Support for evaluating models with and without transfer learning on regression tasks
+- Transfer learning regression benchmarks infrastructure for evaluating TL model
+  performance
+- `TransferLearningRegressionBenchmarkSettings` class with configurable source data
+  fractions and sampling strategies
+- `TransferLearningRegressionBenchmark` class for comparing non-TL vs TL model
+  performance
+- Core benchmarking functions in `benchmarks/definition/regression/core.py`
+- Domain-specific TL regression benchmarks for direct arylation temperature
+  optimization
+- Support for evaluating models with and without transfer learning on regression
+  tasks
 
 
 ## [0.14.1] - 2025-10-01
