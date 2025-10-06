@@ -17,14 +17,8 @@ from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
-    import sys
-
     from _typeshed import ConvertibleToFloat
 
-    if sys.version_info >= (3, 11):
-        from typing import Self
-    else:
-        from typing_extensions import Self
 
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
@@ -113,7 +107,7 @@ class AutoBool(enum.Enum):
         raise ValueError(f"Unknown value: '{self}'")
 
     @classmethod
-    def from_unstructured(cls, value: AutoBool | bool | str | None, /) -> Self:
+    def from_unstructured(cls, value: AutoBool | bool | str | None, /) -> AutoBool:
         """Create the enum member from unstructured input.
 
         For string inputs, see :func:`~baybe.utils.boolean.strtobool`.
@@ -155,7 +149,7 @@ class AutoBool(enum.Enum):
             >>> AutoBool.from_unstructured("auto")
             <AutoBool.AUTO: 'AUTO'>
         """
-        if isinstance(value, cls):
+        if isinstance(value, AutoBool):
             return value
 
         if isinstance(value, bool):

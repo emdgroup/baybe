@@ -196,12 +196,14 @@ class Settings(_SlottedContextDecorator):
     """The used random seed."""
 
     use_polars: AutoBool = field(
-        default=AutoBool.AUTO, converter=AutoBool.from_unstructured
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
     """Controls if polars acceleration is to be used, if available."""
 
     use_fpsample: AutoBool = field(
-        default=AutoBool.AUTO, converter=AutoBool.from_unstructured
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
     """Controls if fpsample acceleration is to be used, if available."""
 
