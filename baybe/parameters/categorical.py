@@ -90,16 +90,9 @@ class TaskParameter(CategoricalParameter):
     @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        if self.encoding is CategoricalEncoding.OHE:
-            cols = [f"{self.name}_{val}" for val in self.values]
-            comp_df = pd.DataFrame(np.eye(len(self.values), dtype=int), columns=cols)
-        elif self.encoding is CategoricalEncoding.INT:
-            comp_df = pd.DataFrame(
-                range(len(self.values)), dtype=int, columns=[self.name]
-            )
-        comp_df.index = pd.Index(self.values)
-
-        return comp_df
+        # Task parameters do not enter the regular kernel computation (which operates
+        # on floats) but are used for indexing purposes and are thus treated as integers
+        return super().comp_df.astype(int)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
