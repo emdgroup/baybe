@@ -21,10 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
   reproducibility of downstream operations
+- Transfer learning now uses BoTorch's `MultiTaskGP` instead of a custom construction
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
- 
+
 ## [0.14.1] - 2025-10-01
 ### Added
 - `to_json` and `from_json` methods now also natively support (de)serialization to/from
