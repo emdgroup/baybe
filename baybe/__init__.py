@@ -2,11 +2,11 @@
 
 import warnings
 
-from baybe.campaign import Campaign
-from baybe.settings import Settings, active_settings
-
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
+
+from baybe.campaign import Campaign  # noqa: E402
+from baybe.settings import Settings, active_settings  # noqa: E402
 
 
 def infer_version() -> str:  # pragma: no cover
