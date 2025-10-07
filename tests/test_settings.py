@@ -53,7 +53,10 @@ def draw_random_numbers() -> tuple[float, ...]:
 @pytest.fixture()
 def original_values():
     """The original settings values."""
-    return {fld.name: getattr(active_settings, fld.name) for fld in Settings.attributes}
+    return {
+        fld.name: getattr(active_settings, fld.name)
+        for fld in Settings.available_settings
+    }
 
 
 @pytest.fixture()
@@ -61,7 +64,7 @@ def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
         fld.name: toggle(getattr(active_settings, fld.name))
-        for fld in Settings.attributes
+        for fld in Settings.available_settings
     }
 
 
@@ -73,7 +76,7 @@ def test_setting_unknown_attribute():
         Settings(unknown_setting=True)
 
 
-@pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
+@pytest.mark.parametrize("attribute", Settings.available_settings, ids=lambda a: a.name)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
     original_value = getattr(active_settings, attribute.name)
@@ -83,7 +86,7 @@ def test_invalid_setting(attribute: Attribute):
         Settings(**{attribute.name: invalidate(original_value)})
 
 
-@pytest.mark.parametrize("attribute", Settings.attributes, ids=lambda a: a.name)
+@pytest.mark.parametrize("attribute", Settings.available_settings, ids=lambda a: a.name)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
     original_value = getattr(active_settings, attribute.name)
@@ -117,7 +120,7 @@ def test_sequential_setting_via_instantiation(original_values):
     # The growing collection of all modified attributes
     modified: dict[str, Any] = {}
 
-    for attr in Settings.attributes:
+    for attr in Settings.available_settings:
         # Modify one attribute at a time
         change = {attr.name: toggle(original_values[attr.name])}
         modified.update(change)
