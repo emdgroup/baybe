@@ -44,7 +44,7 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
         converter=lambda x: dict(sorted(x.items())),
         validator=deep_mapping(
             mapping_validator=min_len(2),
-            key_validator=[instance_of(str), min_len(1)],
+            key_validator=(instance_of(str), min_len(1)),
         ),
     )
     """A mapping that provides the SMILES strings for all available parameter values."""

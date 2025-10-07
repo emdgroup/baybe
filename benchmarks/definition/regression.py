@@ -1,7 +1,7 @@
 """Regression benchmark configuration."""
 
 from attrs import define, field
-from attrs.validators import and_, deep_iterable, ge, instance_of, le
+from attrs.validators import deep_iterable, ge, instance_of, le
 
 from baybe.utils.validation import finite_float
 from benchmarks.definition.base import Benchmark, BenchmarkSettings
@@ -17,7 +17,7 @@ class RegressionBenchmarkSettings(BenchmarkSettings):
     max_n_train_points: int = field(validator=instance_of(int))
     """Maximum number of training points to consider."""
 
-    noise_std: float = field(converter=float, validator=and_(finite_float, ge(0.0)))
+    noise_std: float = field(converter=float, validator=[finite_float, ge(0.0)])
     """Standard deviation of noise to add to the data."""
 
 
@@ -27,7 +27,7 @@ class TransferLearningRegressionBenchmarkSettings(RegressionBenchmarkSettings):
 
     source_fractions: tuple[float, ...] = field(
         validator=deep_iterable(
-            member_validator=and_(ge(0.0), le(1.0)),
+            member_validator=(ge(0.0), le(1.0)),
             iterable_validator=instance_of(tuple),
         )
     )
