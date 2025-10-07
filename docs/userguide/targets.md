@@ -156,8 +156,8 @@ suitable transformation computing some form of "proximity" to the set point valu
 
 ```{admonition} *Mis*matching
 :class: note
-Instead of seeking to match a certain value, you might want to avoid that value instead.
-The `match_` constructors have the `mismatch_instead` argument for this purpose. If
+Instead of seeking to match a certain value, you might want to avoid that value.
+The `match_*` constructors have the `mismatch_instead` argument for this purpose. If
 set to `True`, the resulting target will seek to avoid the specified `match_value`.
 ```
 

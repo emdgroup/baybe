@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `NumericalTarget.match_` constructors now have the `mismatch_instead` argument. If 
-  set to `True`, targets seek to avoid the `match_value` instead of matching it
+- `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
+  set to `True`, targets seek to avoid the given `match_value` instead of matching it.
 
 ## [0.14.1] - 2025-10-01
 ### Added
