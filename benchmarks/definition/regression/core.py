@@ -345,7 +345,7 @@ def _evaluate_model(
     pred_values = predictions[f"{target_column}_mean"].values
     metrics = _calculate_metrics(
         true_values=np.asarray(test_data[target_column].values),
-        pred_values=pred_values,
+        pred_values=np.asarray(pred_values),
     )
 
     return metrics
