@@ -341,8 +341,7 @@ def _evaluate_model(
     test_data: pd.DataFrame,
     searchspace: SearchSpace,
     objective: SingleTargetObjective,
-    scenario_name: str,
-) -> dict[str, Any]:
+) -> dict[str, float]:
     """Train a single model and evaluate its performance.
 
     Args:
@@ -351,10 +350,9 @@ def _evaluate_model(
         test_data: Test data for evaluation.
         searchspace: Search space for the model.
         objective: Optimization objective.
-        scenario_name: Name of the scenario for results.
 
     Returns:
-        Dictionary with scenario name and evaluation metrics.
+        Dictionary with evaluation metrics.
     """
     target_column = objective._target.name
     train_data_prepared = train_data.copy()
@@ -372,9 +370,7 @@ def _evaluate_model(
         pred_values=pred_values,
     )
 
-    result: dict[str, str | float] = {"scenario": scenario_name}
-    result.update(metrics)
-    return result
+    return metrics
 
 
 def _evaluate_naive_models(
@@ -400,28 +396,28 @@ def _evaluate_naive_models(
     results: list[dict[str, Any]] = []
 
     # Naive GP on reduced search space (no source data, no task parameter)
-    results.append(
-        _evaluate_model(
-            GaussianProcessSurrogate(),
-            target_train,
-            target_test,
-            vanilla_searchspace,
-            objective,
-            "0_reduced_searchspace",
-        )
+    scenario = {"scenario": "0_reduced_searchspace"}
+    metrics = _evaluate_model(
+        GaussianProcessSurrogate(),
+        target_train,
+        target_test,
+        vanilla_searchspace,
+        objective,
     )
+    scenario.update(metrics)
+    results.append(scenario)
 
     # Naive GP on full search space (no source data, with task parameter)
-    results.append(
-        _evaluate_model(
-            GaussianProcessSurrogate(),
-            target_train,
-            target_test,
-            tl_searchspace,
-            objective,
-            "0_full_searchspace",
-        )
+    scenario = {"scenario": "0_full_searchspace"}
+    metrics = _evaluate_model(
+        GaussianProcessSurrogate(),
+        target_train,
+        target_test,
+        tl_searchspace,
+        objective,
     )
+    scenario.update(metrics)
+    results.append(scenario)
 
     return results
 
@@ -455,16 +451,16 @@ def _evaluate_transfer_learning_models(
     for model_suffix, model_class in TL_MODELS.items():
         scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
         model = model_class()
-        results.append(
-            _evaluate_model(
-                model,
-                combined_data,
-                target_test,
-                tl_searchspace,
-                objective,
-                scenario_name,
-            )
+        scenario = {"scenario": scenario_name}
+        metrics = _evaluate_model(
+            model,
+            combined_data,
+            target_test,
+            tl_searchspace,
+            objective,
         )
+        scenario.update(metrics)
+        results.append(scenario)
 
     return results
 
