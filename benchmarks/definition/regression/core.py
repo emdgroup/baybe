@@ -34,7 +34,6 @@ class DataLoader(Protocol):
         Returns:
             DataFrame containing the data with parameters and target values.
         """
-        ...
 
 
 class SearchSpaceFactory(Protocol):
@@ -53,7 +52,6 @@ class SearchSpaceFactory(Protocol):
         Returns:
             The TL and non-TL searchspaces for the benchmark.
         """
-        ...
 
 
 class ObjectiveFactory(Protocol):
@@ -65,7 +63,6 @@ class ObjectiveFactory(Protocol):
         Returns:
             The objective of the benchmark.
         """
-        ...
 
 
 def kendall_tau_score(x: np.ndarray, y: np.ndarray, /) -> float:
