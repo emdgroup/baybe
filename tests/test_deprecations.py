@@ -7,6 +7,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
@@ -31,6 +32,7 @@ from baybe.recommenders.pure.bayesian import (
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 from baybe.targets import NumericalTarget as ModernTarget
 from baybe.targets._deprecated import (
@@ -483,3 +485,16 @@ def test_deprecated_random_seed_control():
         set_random_seed(42)
     with pytest.warns(DeprecationWarning):
         temporary_seed(42)
+
+
+@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("library", ["Numpy", "Torch"])
+def test_deprecated_floating_point_environment_variables(
+    monkeypatch, library: str, value: bool
+):
+    """Using the deprecated precision environment variables raises warnings."""
+    monkeypatch.setenv(f"BAYBE_{library.upper()}_USE_SINGLE_PRECISION", str(value))
+    with pytest.warns(DeprecationWarning):
+        attr = getattr(Settings(restore_environment=True), f"DTypeFloat{library}")
+    namespace = np if library == "Numpy" else torch
+    assert attr is namespace.float32 if value else namespace.float64

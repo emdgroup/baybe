@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import random
 import tempfile
+import warnings
 from copy import deepcopy
 from functools import wraps
 from pathlib import Path
@@ -12,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
-from attrs.validators import instance_of
+from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
 from typing_extensions import Self
 
@@ -207,11 +208,15 @@ class Settings(_SlottedContextDecorator):
     )
     """Controls if fpsample acceleration is to be used, if available."""
 
-    use_numpy_single_precision: bool = field(default=False, validator=instance_of(bool))
-    """Controls if numpy arrays are created with single or double precision."""
+    float_precision_numpy: int = field(
+        default=64, converter=int, validator=in_((16, 32, 64))
+    )
+    """Controls the floating point precision used for numpy arrays."""
 
-    use_torch_single_precision: bool = field(default=False, validator=instance_of(bool))
-    """Controls if torch tensors are created with single or double precision."""
+    float_precision_torch: int = field(
+        default=64, converter=int, validator=in_((16, 32, 64))
+    )
+    """Controls the floating point precision used for torch tensors."""
 
     parallelize_simulations: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs are parallelized in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_."""
@@ -222,6 +227,24 @@ class Settings(_SlottedContextDecorator):
     """Controls which directory is used for caching."""
 
     def __attrs_pre_init__(self) -> None:
+        # >>>>> Deprecation
+        flds = fields(Settings)
+        for fld, env_var in zip(
+            [flds.float_precision_numpy, flds.float_precision_torch],
+            ["BAYBE_NUMPY_USE_SINGLE_PRECISION", "BAYBE_TORCH_USE_SINGLE_PRECISION"],
+        ):
+            if (val := os.environ.pop(env_var, None)) is not None:
+                warnings.warn(
+                    f"The environment variable '{env_var}' has "
+                    f"been deprecated and support will be dropped in a future version. "
+                    f"Please use 'BAYBE_{fld.name.upper()}' instead. "
+                    f"For now, we've automatically handled the translation for you.",
+                    DeprecationWarning,
+                )
+                if _to_bool(val):
+                    os.environ[f"BAYBE_{fld.name.upper()}"] = "32"
+        # <<<<< Deprecation
+
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
         unknown = env_vars - (
             {f"BAYBE_{attr.name.upper()}" for attr in self.attributes}
@@ -278,14 +301,14 @@ class Settings(_SlottedContextDecorator):
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
         """The floating point data type used for numpy arrays."""
-        return np.float32 if self.use_numpy_single_precision else np.float64
+        return getattr(np, f"float{self.float_precision_numpy}")
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:
         """The floating point data type used for torch tensors."""
         import torch
 
-        return torch.float32 if self.use_torch_single_precision else torch.float64
+        return getattr(torch, f"float{self.float_precision_torch}")
 
     @classproperty
     def attributes(cls) -> tuple[Attribute, ...]:
