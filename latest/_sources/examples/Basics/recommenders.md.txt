@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    391       p-Xylene   Potassium acetate                     BrettPhos   
-    37     Butyl Ester     Cesium pivalate                     BrettPhos   
+          Solvent                Base                        Ligand  Temperature  \
+    315      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine         90.0   
+    428  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+    429  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        120.0   
     
-         Temperature  Concentration  
-    212        105.0          0.153  
-    391        105.0          0.100  
-    37          90.0          0.100  
+         Concentration  
+    315          0.057  
+    428          0.153  
+    429          0.057  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    212  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    391       p-Xylene   Potassium acetate                     BrettPhos   
-    37     Butyl Ester     Cesium pivalate                     BrettPhos   
+          Solvent                Base                        Ligand  Temperature  \
+    315      DMAc  Potassium pivalate  Di-tert-butylphenylphosphine         90.0   
+    428  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+    429  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        120.0   
     
-         Temperature  Concentration      yield  
-    212        105.0          0.153 -98.250018  
-    391        105.0          0.100  59.124170  
-    37          90.0          0.100 -70.150579  
+         Concentration      yield  
+    315          0.057 -73.484040  
+    428          0.153  -4.300199  
+    429          0.057  -2.228143  
 
 
 

@@ -150,8 +150,6 @@ results_uninterrupted = simulate_scenarios(
 
     
 
-    
-
 
 ## Defining the Campaign-Stopping Hook
 

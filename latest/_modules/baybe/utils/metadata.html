@@ -1122,8 +1122,6 @@
         <span class="n">validator</span><span class="o">=</span><span class="n">deep_mapping</span><span class="p">(</span>
             <span class="n">mapping_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">dict</span><span class="p">),</span>
             <span class="n">key_validator</span><span class="o">=</span><span class="n">instance_of</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span>
-            <span class="c1"># FIXME: https://github.com/python-attrs/attrs/issues/1246</span>
-            <span class="n">value_validator</span><span class="o">=</span><span class="k">lambda</span> <span class="o">*</span><span class="n">x</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
