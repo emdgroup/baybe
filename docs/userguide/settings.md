@@ -18,13 +18,13 @@ different ways, adapted to your specific needs and use cases.
 ### Direct Assignment
 You can change any specific setting by directly assigning a new value to the
 corresponding attribute of the {data}`~baybe.settings.active_settings` object. For
-example, to set a value for {attr}`~baybe.settings.Settings.dataframe_validation`,
+example, to set a value for {attr}`~baybe.settings.Settings.preprocess_dataframes`,
 simply run:
 
 ```python
 from baybe import active_settings
 
-active_settings.dataframe_validation = False
+active_settings.preprocess_dataframes = False
 ```
 
 ````{admonition} Validation
@@ -41,7 +41,7 @@ with pytest.raises(AttributeError):
     baybe.settings.non_existent_setting = 1337  # <-- error!
 
 with pytest.raises(ValueError):
-    baybe.settings.dataframe_validation = "not_representing_a_boolean"  # <-- error!
+    baybe.settings.preprocess_dataframes = "not_representing_a_boolean"  # <-- error!
 ```
 ````
 
@@ -55,12 +55,12 @@ immediately, set the `activate_immediately` argument to
 ```python
 from baybe import Settings, active_settings
 
-assert active_settings.dataframe_validation is False
+assert active_settings.preprocess_dataframes is False
 assert active_settings.use_polars is False
 
-Settings(activate_immediately=True, dataframe_validation=True, use_polars=True)
+Settings(activate_immediately=True, preprocess_dataframes=True, use_polars=True)
 
-assert active_settings.dataframe_validation is True
+assert active_settings.preprocess_dataframes is True
 assert active_settings.use_polars is True
 ```
 
@@ -73,8 +73,8 @@ configurations in your code. For example:
 ```python
 from baybe import Settings
 
-slow_and_pedantic = Settings(dataframe_validation=True, use_polars=False)
-fast_and_furious = Settings(dataframe_validation=False, use_polars=True)
+slow_and_pedantic = Settings(preprocess_dataframes=True, use_polars=False)
+fast_and_furious = Settings(preprocess_dataframes=False, use_polars=True)
 ```
 
 You can then active these configurations in various places and in different ways:
@@ -84,23 +84,23 @@ To *manually* activate a particular settings configuration, use its
 {meth}`~baybe.settings.Settings.activate` method:
 
 ```python
-assert baybe.settings.dataframe_validation is True
+assert baybe.settings.preprocess_dataframes is True
 fast_and_furious.activate()
-assert baybe.settings.dataframe_validation is False
+assert baybe.settings.preprocess_dataframes is False
 ```
 
 #### Context Activation
 A settings configuration can be also activated *temporarily*, using a context:
 
 ```python
-assert baybe.settings.dataframe_validation is False
+assert baybe.settings.preprocess_dataframes is False
 
 # Within the context, the specified settings become active
 with slow_and_pedantic:
-    assert baybe.settings.dataframe_validation is True
+    assert baybe.settings.preprocess_dataframes is True
 
 # Outside the context, the previous settings are restored
-assert baybe.settings.dataframe_validation is False
+assert baybe.settings.preprocess_dataframes is False
 ```
 
 #### Decorator Activation
@@ -108,15 +108,15 @@ Finally, {class}`~baybe.settings.Settings` objects can also be used to decorate
 callables, activating the corresponding configuration for the duration of the call:
 
 ```python
-assert baybe.settings.dataframe_validation is False
+assert baybe.settings.preprocess_dataframes is False
 
 @slow_and_pedantic
 def validate_dataframes_carefully():
-    assert baybe.settings.dataframe_validation is True
+    assert baybe.settings.preprocess_dataframes is True
 
 validate_dataframes_carefully()  # <-- the assert passes
 
-assert baybe.settings.dataframe_validation is False
+assert baybe.settings.preprocess_dataframes is False
 ```
 
 ### Environment Variables
@@ -126,8 +126,8 @@ underlying code.
 
 Each individual setting attribute has a corresponding environment variable, written in
 uppercase letters and prefixed with `BAYBE_`. For example, the
-{attr}`~baybe.settings.Settings.dataframe_validation` attribute is linked to the
-`BAYBE_DATAFRAME_VALIDATION` environment variable.
+{attr}`~baybe.settings.Settings.preprocess_dataframes` attribute is linked to the
+`BAYBE_PREPROCESS_DATAFRAMES` environment variable.
 
 When present, these variables can be used to populate settings attributes instead of
 falling back to defaults, which is controlled via the `restore_environment` flag. For
@@ -147,7 +147,7 @@ from baybe import active_settings, Settings
 print(active_settings)
 
 # Inspect a specific configuration object
-print(Settings(dataframe_validation=True, use_polars=True))
+print(Settings(preprocess_dataframes=True, use_polars=True))
 ```
 
 ## Initialization Precedence

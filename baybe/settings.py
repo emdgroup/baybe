@@ -187,8 +187,8 @@ class Settings(_SlottedContextDecorator):
     _previous_random_state: _RandomState | None = field(init=False, default=None)
     """The previously set random state."""
 
-    dataframe_validation: bool = field(default=True, converter=_to_bool)
-    """Controls if dataframe content is validated against the recommendation context."""
+    preprocess_dataframes: bool = field(default=True, converter=_to_bool)
+    """Controls if dataframe content is validated and normalized before used."""
 
     random_seed: int | None = field(
         default=None,
