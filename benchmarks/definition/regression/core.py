@@ -263,15 +263,20 @@ def run_tl_regression_benchmark(
                     f"Pts {n_train_pts}/{settings.max_n_train_points}"
                 )
 
-                # Sample source data using configured sampling strategy
-                source_subset = _sample_source_data(
-                    source_data,
-                    source_tasks,
-                    fraction_source,
-                    name_task,
-                    settings.random_seed + mc_iter,
-                    settings.stratified_source_sampling,
-                )
+                # Sample source data
+                if settings.stratified_source_sampling:
+                    source_subset, _ = train_test_split(
+                        source_data,
+                        train_size=fraction_source,
+                        stratify=source_data[name_task],
+                        random_state=settings.random_seed + mc_iter,
+                    )
+                else:
+                    source_subset, _ = train_test_split(
+                        source_data,
+                        train_size=fraction_source,
+                        random_state=settings.random_seed + mc_iter,
+                    )
 
                 combined_data = pd.concat([source_subset, target_train])
 
@@ -306,50 +311,6 @@ def run_tl_regression_benchmark(
     results_df = pd.DataFrame(results)
 
     return results_df
-
-
-def _sample_source_data(
-    source_data: pd.DataFrame,
-    source_tasks: list[str],
-    fraction_source: float,
-    task_column: str,
-    source_data_seed: int,
-    stratified_sampling: bool = True,
-) -> pd.DataFrame:
-    """Sample source data with configurable sampling strategy.
-
-    Args:
-        source_data: DataFrame containing all source task data.
-        source_tasks: List of source task identifiers.
-        fraction_source: Fraction of data to sample.
-        task_column: Name of column containing task identifiers.
-        source_data_seed: Random seed for reproducible sampling.
-        stratified_sampling: If True, samples the same fraction from each source
-            task independently (ensures balanced representation across tasks).
-            If False, samples the fraction from all source data combined.
-
-    Returns:
-        Combined DataFrame with sampled data from source tasks.
-    """
-    if stratified_sampling:
-        # Sample same fraction from each source task
-        source_subsets: list[pd.DataFrame] = []
-
-        for source_task in source_tasks:
-            task_data = source_data[source_data[task_column] == source_task]
-            if len(task_data) > 0:
-                task_subset = task_data.sample(
-                    frac=fraction_source,
-                    random_state=source_data_seed,
-                )
-                source_subsets.append(task_subset)
-        return pd.concat(source_subsets, ignore_index=True)
-    else:
-        # Sample fraction from all source data combined
-        return source_data.sample(
-            frac=fraction_source,
-            random_state=source_data_seed,
-        )
 
 
 def _evaluate_model(
