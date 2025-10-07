@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import os
 import random
 import tempfile
@@ -330,6 +331,10 @@ class Settings(_SlottedContextDecorator):
         """Overwrite the settings of another :class:`Settings` object."""
         for fld in self.attributes:
             setattr(target, fld.name, getattr(self, fld.name))
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
 
 
 active_settings = Settings(restore_environment=True)
