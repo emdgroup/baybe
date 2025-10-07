@@ -92,19 +92,22 @@ def test_match_constructors(constructor, kwargs, transformed_value, mismatch_ins
     delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     series = pd.Series(delta) + match_value
 
-    # On the target level, "worse" can mean "larger" or "smaller",
-    # depending on the minimization flag and the mismatch flag
+    # Check transformed value at the match point
+    assert target.transform(series[0:1]).iloc[0] == transformed_value
+
+    # Ensure the sequence now always describes "worsening" values
+    if mismatch_instead:
+        series = series[::-1]
+
+    # On the target level, "worse" can mean "larger" or "smaller", depending on the
+    # minimization flag
     t1 = target.transform(series)
-    operator = op.gt if (target.minimize ^ mismatch_instead) else op.lt
-    assert t1[0] == transformed_value
+    operator = op.gt if target.minimize else op.lt
     assert operator(t1.diff().dropna(), 0).all()
 
-    # Objectives, on the other hand, are always to be maximized.
-    # Hence, "worse" means "smaller".
+    # By contrast, objectives are always to be maximized, so "worse" means "smaller"
     t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
     diffs_correct = t2.diff().dropna() < 0
-    if mismatch_instead:
-        diffs_correct = ~diffs_correct
 
     assert diffs_correct.all(), t2.diff()
 
