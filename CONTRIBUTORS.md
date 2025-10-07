@@ -36,3 +36,5 @@
   Metadata system
 - Chung Hsuan (Jonathan) Shan (External Contractor at Merck KGaA, Darmstadt, Germany):\
   `fpsample` implementation for `FPSRecommender` 
+- Kathrin Skubch (Merck KGaA, Darmstadt, Germany):\
+  Transfer learning regression benchmarks infrastructure
