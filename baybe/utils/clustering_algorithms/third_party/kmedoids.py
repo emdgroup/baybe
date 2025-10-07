@@ -49,7 +49,6 @@ from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.validation import check_is_fitted
 
-from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.settings import active_settings
 
 
