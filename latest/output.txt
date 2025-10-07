@@ -3,8 +3,8 @@ misc/contributing_link.md:118: [redirected with Found] http://www.pydocstyle.org
 misc/contributing_link.md:142: [redirected with Found] https://catt.rs/ to https://catt.rs/en/stable/
 misc/contributing_link.md:120: [redirected with Found] https://docs.pytest.org/ to https://docs.pytest.org/en/stable/
 misc/contributing_link.md:16: [redirected with Found] https://github.com/emdgroup/BayBE/fork to https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Femdgroup%2FBayBE%2Ffork
-_autosummary/baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory.rst:6: [redirected with Found] https://doi.org/10.1038/s41586-021-03213-y to https://www.nature.com/articles/s41586-021-03213-y
 index.md:316: [redirected with Found] https://doi.org/10.1039/D5DD00050E to https://pubs.rsc.org/en/content/articlelanding/2025/dd/d5dd00050e
+_autosummary/baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory.rst:6: [redirected with Found] https://doi.org/10.1038/s41586-021-03213-y to https://www.nature.com/articles/s41586-021-03213-y
 misc/contributing_link.md:144: [redirected with Found] https://hypothesis.readthedocs.io/ to https://hypothesis.readthedocs.io/en/latest/
 misc/contributing_link.md:117: [redirected with Found] https://mypy.readthedocs.io/ to https://mypy.readthedocs.io/en/stable/
 misc/contributing_link.md:121: [redirected with Found] https://pytest-cov.readthedocs.io/ to https://pytest-cov.readthedocs.io/en/latest/

@@ -1184,13 +1184,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-      Solvent               Base                        Ligand  Temperature  \
-295      DMAc  Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-384  p-Xylene  Potassium acetate                 (t-Bu)PhCPhos        120.0   
+         Solvent                Base                        Ligand  \
+266         DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
+103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration  
-295          0.100  
-384          0.057  
+     Temperature  Concentration  
+266        105.0          0.153  
+103        105.0          0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1203,13 +1203,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-      Solvent               Base                        Ligand  Temperature  \
-295      DMAc  Potassium acetate  Di-tert-butylphenylphosphine        120.0   
-384  p-Xylene  Potassium acetate                 (t-Bu)PhCPhos        120.0   
+         Solvent                Base                        Ligand  \
+266         DMAc     Cesium pivalate  Di-tert-butylphenylphosphine   
+103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
 
-     Concentration      yield  
-295          0.100 -87.898501  
-384          0.057 -99.125420  
+     Temperature  Concentration      yield  
+266        105.0          0.153 -62.963146  
+103        105.0          0.100 -21.690898  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
