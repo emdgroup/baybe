@@ -217,28 +217,45 @@ def run_tl_regression_benchmark(
                     0, settings.noise_std, len(target_train)
                 )
 
-            # Evaluate naive models once per (mc_iter, n_train_pts)
-            naive_results = _evaluate_naive_models(
+            # Naive GP on reduced search space
+            metrics = _evaluate_model(
+                GaussianProcessSurrogate(),
                 target_train,
                 target_test,
                 vanilla_searchspace,
+                objective,
+            )
+            result = {
+                "scenario": "0_reduced_searchspace",
+                "mc_iter": mc_iter,
+                "n_train_pts": n_train_pts,
+                "fraction_source": 0.0,
+                "n_source_pts": 0,
+                "n_test_pts": len(target_test),
+                "source_data_seed": settings.random_seed + mc_iter,
+            }
+            result.update(metrics)
+            results.append(result)
+
+            # Naive GP on full search space
+            metrics = _evaluate_model(
+                GaussianProcessSurrogate(),
+                target_train,
+                target_test,
                 tl_searchspace,
                 objective,
             )
-
-            # Add metadata for naive models (fraction_source = 0 for consistency)
-            for naive_result in naive_results:
-                naive_result.update(
-                    {
-                        "mc_iter": mc_iter,
-                        "n_train_pts": n_train_pts,
-                        "fraction_source": 0.0,  # Naive models don't use source data
-                        "n_source_pts": 0,
-                        "n_test_pts": len(target_test),
-                        "source_data_seed": settings.random_seed + mc_iter,
-                    }
-                )
-                results.append(naive_result)
+            result = {
+                "scenario": "0_full_searchspace",
+                "mc_iter": mc_iter,
+                "n_train_pts": n_train_pts,
+                "fraction_source": 0.0,
+                "n_source_pts": 0,
+                "n_test_pts": len(target_test),
+                "source_data_seed": settings.random_seed + mc_iter,
+            }
+            result.update(metrics)
+            results.append(result)
 
             # Evaluate transfer learning models for each source fraction
             for fraction_source in settings.source_fractions:
@@ -259,28 +276,31 @@ def run_tl_regression_benchmark(
                     settings.stratified_source_sampling,
                 )
 
-                tl_results = _evaluate_transfer_learning_models(
-                    source_subset,
-                    target_train,
-                    target_test,
-                    tl_searchspace,
-                    objective,
-                    fraction_source,
-                )
+                combined_data = pd.concat([source_subset, target_train])
 
-                # Add metadata for transfer learning models
-                for tl_result in tl_results:
-                    tl_result.update(
-                        {
-                            "mc_iter": mc_iter,
-                            "n_train_pts": n_train_pts,
-                            "fraction_source": fraction_source,
-                            "n_source_pts": len(source_subset),
-                            "n_test_pts": len(target_test),
-                            "source_data_seed": settings.random_seed + mc_iter,
-                        }
+                for model_suffix, model_class in TL_MODELS.items():
+                    scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
+                    model = model_class()
+
+                    metrics = _evaluate_model(
+                        model,
+                        combined_data,
+                        target_test,
+                        tl_searchspace,
+                        objective,
                     )
-                    results.append(tl_result)
+
+                    result = {
+                        "scenario": scenario_name,
+                        "mc_iter": mc_iter,
+                        "n_train_pts": n_train_pts,
+                        "fraction_source": fraction_source,
+                        "n_source_pts": len(source_subset),
+                        "n_test_pts": len(target_test),
+                        "source_data_seed": settings.random_seed + mc_iter,
+                    }
+                    result.update(metrics)
+                    results.append(result)
 
                 pbar.update(1)
 
@@ -371,98 +391,6 @@ def _evaluate_model(
     )
 
     return metrics
-
-
-def _evaluate_naive_models(
-    target_train: pd.DataFrame,
-    target_test: pd.DataFrame,
-    vanilla_searchspace: SearchSpace,
-    tl_searchspace: SearchSpace,
-    objective: SingleTargetObjective,
-) -> list[dict[str, Any]]:
-    """Evaluate both naive model baselines that do not use source data.
-
-    Args:
-        target_train: Target task training data.
-        target_test: Target task test data.
-        vanilla_searchspace: Search space without task parameter.
-        tl_searchspace: Search space with task parameter.
-        objective: Optimization objective.
-
-    Returns:
-        List of evaluation results for naive baselines.
-    """
-    # Collect evaluation results for models without source data
-    results: list[dict[str, Any]] = []
-
-    # Naive GP on reduced search space (no source data, no task parameter)
-    scenario = {"scenario": "0_reduced_searchspace"}
-    metrics = _evaluate_model(
-        GaussianProcessSurrogate(),
-        target_train,
-        target_test,
-        vanilla_searchspace,
-        objective,
-    )
-    scenario.update(metrics)
-    results.append(scenario)
-
-    # Naive GP on full search space (no source data, with task parameter)
-    scenario = {"scenario": "0_full_searchspace"}
-    metrics = _evaluate_model(
-        GaussianProcessSurrogate(),
-        target_train,
-        target_test,
-        tl_searchspace,
-        objective,
-    )
-    scenario.update(metrics)
-    results.append(scenario)
-
-    return results
-
-
-def _evaluate_transfer_learning_models(
-    source_data: pd.DataFrame,
-    target_train: pd.DataFrame,
-    target_test: pd.DataFrame,
-    tl_searchspace: SearchSpace,
-    objective: SingleTargetObjective,
-    fraction_source: float,
-) -> list[dict[str, Any]]:
-    """Evaluate all transfer learning models using source and target data.
-
-    Args:
-        source_data: Source task data.
-        target_train: Target task training data.
-        target_test: Target task test data.
-        tl_searchspace: Search space with task parameter.
-        objective: Optimization objective.
-        fraction_source: Fraction of source data used.
-
-    Returns:
-        List of evaluation results for transfer learning models.
-    """
-    # Collect evaluation results for transfer learning models
-    results: list[dict[str, Any]] = []
-
-    combined_data = pd.concat([source_data, target_train])
-
-    for model_suffix, model_class in TL_MODELS.items():
-        scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
-        model = model_class()
-        scenario = {"scenario": scenario_name}
-        metrics = _evaluate_model(
-            model,
-            combined_data,
-            target_test,
-            tl_searchspace,
-            objective,
-        )
-        scenario.update(metrics)
-        results.append(scenario)
-
-    return results
 
 
 def _calculate_metrics(
