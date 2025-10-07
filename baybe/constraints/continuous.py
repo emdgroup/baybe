@@ -168,8 +168,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             # adjusted to account for the batch size:
             # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
             assert batch_size is not None
-            coefficients = coefficients.repeat_interleave(batch_size)
-            idxs = torch.cartesian_prod(idxs, torch.arange(batch_size)).flip(1)
+            coefficients = coefficients.repeat(batch_size)
+            idxs = torch.cartesian_prod(torch.arange(batch_size), idxs)
 
         return (
             idxs,
