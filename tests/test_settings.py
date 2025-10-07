@@ -152,36 +152,36 @@ def test_setting_via_context(immediately: bool, original_values, toggled_values)
 
 def test_nested_contexts():
     """Settings can be nested and properly restored in LIFO order."""
-    original_value = active_settings.dataframe_validation
+    original_value = active_settings.preprocess_dataframes
 
-    with Settings(dataframe_validation=True):
-        assert active_settings.dataframe_validation
+    with Settings(preprocess_dataframes=True):
+        assert active_settings.preprocess_dataframes
 
-        with Settings(dataframe_validation=False):
-            assert not active_settings.dataframe_validation
+        with Settings(preprocess_dataframes=False):
+            assert not active_settings.preprocess_dataframes
 
         # After exiting inner context, outer setting should be restored
-        assert active_settings.dataframe_validation
+        assert active_settings.preprocess_dataframes
 
     # After exiting outer context, original setting should be restored
-    assert active_settings.dataframe_validation == original_value
+    assert active_settings.preprocess_dataframes == original_value
 
 
 def test_exception_during_context_settings():
     """Exceptions raised inside a context are propagated and settings are restored."""
-    original_value = active_settings.dataframe_validation
+    original_value = active_settings.preprocess_dataframes
 
     class CustomError(Exception):
         """A custom exception for testing purposes."""
 
     # The custom exception is properly propagated
     with pytest.raises(CustomError, match="Test exception"):
-        with Settings(dataframe_validation=not original_value):
-            assert active_settings.dataframe_validation == (not original_value)
+        with Settings(preprocess_dataframes=not original_value):
+            assert active_settings.preprocess_dataframes == (not original_value)
             raise CustomError("Test exception")
 
     # Settings are restored despite the exception
-    assert active_settings.dataframe_validation == original_value
+    assert active_settings.preprocess_dataframes == original_value
 
 
 def test_setting_via_decorator(original_values, toggled_values):
@@ -259,11 +259,11 @@ def test_initial_environment_reading(inject_env: bool):
     # initialized directly at package import time, which makes it difficult to modify
     # the environment variables via fixtures beforehand
 
-    env = {"BAYBE_DATAFRAME_VALIDATION": "false"} if inject_env else {}
+    env = {"BAYBE_PREPROCESS_DATAFRAMES": "false"} if inject_env else {}
     expected = not inject_env
     script = textwrap.dedent(f"""
         from baybe import active_settings
-        value = active_settings.dataframe_validation
+        value = active_settings.preprocess_dataframes
         assert value == {expected}, f"Expected '{expected}', got '{{value}}'"
     """)
     result = subprocess.run(

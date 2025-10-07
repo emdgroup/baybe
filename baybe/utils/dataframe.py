@@ -677,10 +677,6 @@ def arrays_to_dataframes(
     return decorator
 
 
-class _ValidatedDataFrame(pd.DataFrame):
-    """Wrapper indicating the underlying experimental data was already validated."""
-
-
 def handle_missing_values(
     data: pd.DataFrame, columns: Collection[str], drop: bool = False
 ) -> pd.DataFrame:

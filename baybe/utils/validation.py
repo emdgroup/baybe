@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -11,6 +11,7 @@ import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
+from baybe.utils.dataframe import normalize_input_dtypes
 
 if TYPE_CHECKING:
     from baybe.objectives.base import Objective
@@ -220,3 +221,37 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
             f"All parameters and targets must have unique names. The following names "
             f"appear multiple times: {duplicates}."
         )
+
+
+def preprocess_dataframe(
+    df: pd.DataFrame,
+    /,
+    parameters: Sequence[Parameter],
+    objective: Objective | None = None,
+    numerical_measurements_must_be_within_tolerance: bool = True,
+) -> pd.DataFrame:
+    """Preprocess an experimental dataframe by validating and normalizing its contents.
+
+    Checks that the dataframe contains all required columns for the given
+    parameters/objective and adjusts their dtypes accordingly.
+
+    Args:
+        df: The dataframe to preprocess.
+        parameters: The parameters to validate the dataframe columns against.
+        objective: The objective to validate the dataframe columns against.
+        numerical_measurements_must_be_within_tolerance:
+            See :meth:`validate_parameter_input`.
+
+    Returns:
+        The preprocessed dataframe.
+    """
+    validate_parameter_input(
+        df, parameters, numerical_measurements_must_be_within_tolerance
+    )
+    if objective is not None:
+        targets = objective.targets
+        validate_target_input(df, targets)
+        validate_objective_input(df, objective)
+    else:
+        targets = ()
+    return normalize_input_dtypes(df, [*parameters, *targets])

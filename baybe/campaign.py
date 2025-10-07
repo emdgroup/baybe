@@ -37,23 +37,14 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
+from baybe.settings import active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import (
-    _ValidatedDataFrame,
-    filter_df,
-    fuzzy_row_match,
-    normalize_input_dtypes,
-)
-from baybe.utils.validation import (
-    validate_object_names,
-    validate_objective_input,
-    validate_parameter_input,
-    validate_target_input,
-)
+from baybe.utils.dataframe import filter_df, fuzzy_row_match
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction
@@ -316,15 +307,14 @@ class Campaign(SerialMixin):
             numerical_measurements_must_be_within_tolerance: Flag indicating if
                 numerical parameters need to be within their tolerances.
         """
-        # Validate target and parameter input values
-        validate_target_input(data, self.targets)
-        if self.objective is not None:
-            validate_objective_input(data, self.objective)
-        validate_parameter_input(
-            data, self.parameters, numerical_measurements_must_be_within_tolerance
-        )
-        data = normalize_input_dtypes(data, self.parameters + self.targets)
-        data.__class__ = _ValidatedDataFrame
+        # Preprocess incoming data
+        if active_settings.preprocess_dataframes:
+            data = preprocess_dataframe(
+                data,
+                self.parameters,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            )
 
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -367,15 +357,14 @@ class Campaign(SerialMixin):
             ValueError: If the given data contains indices not present in existing
                 measurements.
         """
-        # Validate target and parameter input values
-        validate_target_input(data, self.targets)
-        if self.objective is not None:
-            validate_objective_input(data, self.objective)
-        validate_parameter_input(
-            data, self.parameters, numerical_measurements_must_be_within_tolerance
-        )
-        data = normalize_input_dtypes(data, self.parameters + self.targets)
-        data.__class__ = _ValidatedDataFrame
+        # Preprocess incoming data
+        if active_settings.preprocess_dataframes:
+            data = preprocess_dataframe(
+                data,
+                self.parameters,
+                self.objective,
+                numerical_measurements_must_be_within_tolerance,
+            )
 
         # With changed measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -498,15 +487,16 @@ class Campaign(SerialMixin):
         # IMPROVE: Currently, we simply invalidate the cache whenever pending
         #     experiments are provided, because in order to use it, we need to check if
         #     the previous call was done with the same pending experiments.
-
         if pending_experiments is not None:
             self.clear_cache()
 
-            validate_parameter_input(pending_experiments, self.parameters)
-            pending_experiments = normalize_input_dtypes(
-                pending_experiments, self.parameters
+        # Preprocess pending experiments
+        if active_settings.preprocess_dataframes and pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                self.parameters,
+                numerical_measurements_must_be_within_tolerance=False,
             )
-            pending_experiments.__class__ = _ValidatedDataFrame
 
         if (
             pending_experiments is None
