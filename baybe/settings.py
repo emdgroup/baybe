@@ -350,3 +350,4 @@ gc.collect()
 
 
 active_settings = Settings(restore_environment=True)
+"""The currently active global settings instance."""
