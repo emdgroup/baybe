@@ -2,6 +2,7 @@
 
 import warnings
 from itertools import pairwise
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
@@ -514,3 +515,10 @@ def test_deprecated_parallelization_environment_variables(monkeypatch, value: bo
     monkeypatch.setenv("BAYBE_PARALLEL_SIMULATION_RUNS", str(value))
     with pytest.warns(DeprecationWarning):
         assert Settings(restore_environment=True).parallelize_simulations is value
+
+
+def test_deprecated_cache_environment_variables(monkeypatch):
+    """Using the deprecated cache environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_CACHE_DIR", "test")
+    with pytest.warns(DeprecationWarning):
+        assert Settings(restore_environment=True).cache_directory == Path("test")
