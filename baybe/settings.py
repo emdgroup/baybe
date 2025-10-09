@@ -197,11 +197,11 @@ class Settings(_SlottedContextDecorator):
     )
     """The used random seed."""
 
-    use_polars: AutoBool = field(
+    use_polars_for_constraints: AutoBool = field(
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
-    """Controls if polars acceleration is to be used, if available."""
+    """Controls if polars acceleration is to be used for constraints, if available."""
 
     use_fpsample: AutoBool = field(
         default=AutoBool.AUTO,
@@ -235,7 +235,7 @@ class Settings(_SlottedContextDecorator):
         for env_var, fld in [
             ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
-            ("BAYBE_DEACTIVATE_POLARS", flds.use_polars),
+            ("BAYBE_DEACTIVATE_POLARS", flds.use_polars_for_constraints),
             ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]:
@@ -287,8 +287,8 @@ class Settings(_SlottedContextDecorator):
     ) -> None:
         self._restore_previous()
 
-    @use_polars.validator
-    def _validate_use_polars(self, _, value: AutoBool) -> None:
+    @use_polars_for_constraints.validator
+    def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
         if value is AutoBool.TRUE and not POLARS_INSTALLED:
             raise OptionalImportError(
                 _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="polars")
@@ -302,9 +302,9 @@ class Settings(_SlottedContextDecorator):
             )
 
     @property
-    def is_polars_enabled(self) -> bool:
+    def is_polars_enabled_for_constraints(self) -> bool:
         """Indicates if polars is enabled (i.e., installed and set to be used)."""
-        return self.use_polars.evaluate(lambda: POLARS_INSTALLED)
+        return self.use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @property
     def is_fpsample_enabled(self) -> bool:

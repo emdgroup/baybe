@@ -56,12 +56,12 @@ immediately, set the `activate_immediately` argument to
 from baybe import Settings, active_settings
 
 assert active_settings.preprocess_dataframes is False
-assert active_settings.use_polars is False
+assert active_settings.use_polars_for_constraints is False
 
-Settings(activate_immediately=True, preprocess_dataframes=True, use_polars=True)
+Settings(activate_immediately=True, preprocess_dataframes=True, use_polars_for_constraints=True)
 
 assert active_settings.preprocess_dataframes is True
-assert active_settings.use_polars is True
+assert active_settings.use_polars_for_constraints is True
 ```
 
 ### Delayed Activation
@@ -73,8 +73,8 @@ configurations in your code. For example:
 ```python
 from baybe import Settings
 
-slow_and_pedantic = Settings(preprocess_dataframes=True, use_polars=False)
-fast_and_furious = Settings(preprocess_dataframes=False, use_polars=True)
+slow_and_pedantic = Settings(preprocess_dataframes=True, use_polars_for_constraints=False)
+fast_and_furious = Settings(preprocess_dataframes=False, use_polars_for_constraints=True)
 ```
 
 You can then active these configurations in various places and in different ways:
@@ -147,7 +147,7 @@ from baybe import active_settings, Settings
 print(active_settings)
 
 # Inspect a specific configuration object
-print(Settings(preprocess_dataframes=True, use_polars=True))
+print(Settings(preprocess_dataframes=True, use_polars_for_constraints=True))
 ```
 
 ## Initialization Precedence
