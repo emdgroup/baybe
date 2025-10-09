@@ -188,7 +188,7 @@ class SubspaceDiscrete(SerialMixin):
             key=lambda x: DISCRETE_CONSTRAINTS_FILTERING_ORDER.index(x.__class__),
         )
 
-        if active_settings.is_polars_enabled:
+        if active_settings.is_polars_enabled_for_constraints:
             lazy_df = parameter_cartesian_prod_polars(parameters)
             lazy_df, mask_missing = _apply_constraint_filter_polars(
                 lazy_df, constraints

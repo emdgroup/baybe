@@ -506,7 +506,9 @@ def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
     """Using the deprecated polars environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
     with pytest.warns(DeprecationWarning):
-        assert Settings(restore_environment=True).use_polars is not value
+        assert (
+            Settings(restore_environment=True).use_polars_for_constraints is not value
+        )
 
 
 @pytest.mark.parametrize("value", [True, False])
