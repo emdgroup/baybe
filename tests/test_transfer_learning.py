@@ -12,9 +12,15 @@ from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
 
 
-@pytest.fixture(params=[False, True], ids=["source_active", "both_active"])
-def campaign(training_data: Literal["source", "target", "both"], request) -> Campaign:
+@pytest.fixture
+def campaign(
+    training_data: Literal["source", "target", "both"],
+    active_tasks: Literal["target_only", "both"],
+) -> Campaign:
     """A transfer-learning campaign with various active tasks and training data."""
+    assert training_data in ["source", "target", "both"]
+    assert active_tasks in ["target_only", "both"]
+
     source = "B"
     target = "A"
     parameters = [
@@ -22,7 +28,9 @@ def campaign(training_data: Literal["source", "target", "both"], request) -> Cam
         TaskParameter(
             "task",
             values=(target, source),
-            active_values=(target,) if not request.param else (target, source),
+            active_values=(
+                (target,) if active_tasks == "target_only" else (target, source)
+            ),
         ),
     ]
     searchspace = SearchSpace.from_product(parameters=parameters)
@@ -36,7 +44,6 @@ def campaign(training_data: Literal["source", "target", "both"], request) -> Cam
         }
     )
 
-    assert training_data in ["source", "target", "both"]
     if training_data == "source":
         lookup = lookup[lookup["task"] == source]
     elif training_data == "target":
@@ -52,6 +59,7 @@ def campaign(training_data: Literal["source", "target", "both"], request) -> Cam
     return campaign
 
 
+@pytest.mark.parametrize("active_tasks", ["target_only", "both"])
 @pytest.mark.parametrize("training_data", ["source", "target", "both"])
 def test_recommendation(campaign: Campaign):
     """Transfer learning recommendation works regardless of which task are
