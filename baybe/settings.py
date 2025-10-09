@@ -237,6 +237,7 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
             ("BAYBE_DEACTIVATE_POLARS", flds.use_polars),
             ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
+            ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]:
             if (val := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
@@ -251,6 +252,8 @@ class Settings(_SlottedContextDecorator):
                 elif env_var.endswith("POLARS"):
                     new_value = "false" if _to_bool(val) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
+                    new_value = val
+                elif env_var.endswith("CACHE_DIR"):
                     new_value = val
                 os.environ[f"BAYBE_{fld.name.upper()}"] = new_value
         # <<<<< Deprecation
