@@ -22,14 +22,13 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.settings import active_settings
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import (
     IndependentGaussianSurrogate,
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.validation import preprocess_dataframe, validate_object_names
+from baybe.utils.validation import validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -167,21 +166,6 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
             )
-
-        if active_settings.preprocess_dataframes:
-            measurements = preprocess_dataframe(
-                measurements,
-                searchspace.parameters,
-                objective,
-                numerical_measurements_must_be_within_tolerance=False,
-            )
-
-            if pending_experiments is not None:
-                pending_experiments = preprocess_dataframe(
-                    pending_experiments,
-                    searchspace.parameters,
-                    numerical_measurements_must_be_within_tolerance=False,
-                )
 
         if (
             isinstance(self._surrogate_model, IndependentGaussianSurrogate)
