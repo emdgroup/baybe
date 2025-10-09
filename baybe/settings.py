@@ -187,27 +187,10 @@ class Settings(_SlottedContextDecorator):
     _previous_random_state: _RandomState | None = field(init=False, default=None)
     """The previously set random state."""
 
-    preprocess_dataframes: bool = field(default=True, converter=_to_bool)
-    """Controls if dataframe content is validated and normalized before used."""
-
-    random_seed: int | None = field(
-        default=None,
-        validator=optional_v(instance_of(int)),
-        on_setattr=_activate_random_seed,
+    cache_directory: Path = field(
+        converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
     )
-    """The used random seed."""
-
-    use_polars_for_constraints: AutoBool = field(
-        default=AutoBool.AUTO,
-        converter=AutoBool.from_unstructured,  # type: ignore[misc]
-    )
-    """Controls if polars acceleration is to be used for constraints, if available."""
-
-    use_fpsample: AutoBool = field(
-        default=AutoBool.AUTO,
-        converter=AutoBool.from_unstructured,  # type: ignore[misc]
-    )
-    """Controls if fpsample acceleration is to be used, if available."""
+    """Controls which directory is used for caching."""
 
     float_precision_numpy: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
@@ -224,10 +207,27 @@ class Settings(_SlottedContextDecorator):
     )
     """Controls if simulation runs are parallelized in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_."""
 
-    cache_directory: Path = field(
-        converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
+    preprocess_dataframes: bool = field(default=True, converter=_to_bool)
+    """Controls if dataframe content is validated and normalized before used."""
+
+    random_seed: int | None = field(
+        default=None,
+        validator=optional_v(instance_of(int)),
+        on_setattr=_activate_random_seed,
     )
-    """Controls which directory is used for caching."""
+    """The used random seed."""
+
+    use_fpsample: AutoBool = field(
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
+    )
+    """Controls if fpsample acceleration is to be used, if available."""
+
+    use_polars_for_constraints: AutoBool = field(
+        default=AutoBool.AUTO,
+        converter=AutoBool.from_unstructured,  # type: ignore[misc]
+    )
+    """Controls if polars acceleration is to be used for constraints, if available."""
 
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
