@@ -190,22 +190,22 @@ class Settings(_SlottedContextDecorator):
     cache_directory: Path = field(
         converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
     )
-    """Controls which directory is used for caching."""
+    """The directory used for caching."""
 
     float_precision_numpy: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
     )
-    """Controls the floating point precision used for numpy arrays."""
+    """The floating point precision used for NumPy arrays."""
 
     float_precision_torch: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
     )
-    """Controls the floating point precision used for torch tensors."""
+    """The floating point precision used for Torch tensors."""
 
     parallelize_simulations: bool = field(
         default=True, converter=_to_bool, validator=instance_of(bool)
     )
-    """Controls if simulation runs are parallelized in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_."""
+    """Controls if simulation runs in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_ are executed in parallel."""  # noqa: E501
 
     preprocess_dataframes: bool = field(default=True, converter=_to_bool)
     """Controls if dataframe content is validated and normalized before used."""
@@ -221,7 +221,7 @@ class Settings(_SlottedContextDecorator):
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
-    """Controls if fpsample acceleration is to be used, if available."""
+    """Controls if `fpsample <https://github.com/leonardodalinky/fpsample>`_ acceleration is to be used, if available."""  # noqa: E501
 
     use_polars_for_constraints: AutoBool = field(
         default=AutoBool.AUTO,
@@ -303,22 +303,22 @@ class Settings(_SlottedContextDecorator):
 
     @property
     def is_polars_enabled_for_constraints(self) -> bool:
-        """Indicates if polars is enabled (i.e., installed and set to be used)."""
+        """Indicates if Polars is enabled (i.e., installed and set to be used)."""
         return self.use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @property
     def is_fpsample_enabled(self) -> bool:
-        """Indicates if fpsample is enabled (i.e., installed and set to be used)."""
+        """Indicates if `fpsample <https://github.com/leonardodalinky/fpsample>`_  is enabled (i.e., installed and set to be used)."""  # noqa: E501
         return self.use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
 
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
-        """The floating point data type used for numpy arrays."""
+        """The floating point data type used for NumPy arrays."""
         return getattr(np, f"float{self.float_precision_numpy}")
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:
-        """The floating point data type used for torch tensors."""
+        """The floating point data type used for Torch tensors."""
         import torch
 
         return getattr(torch, f"float{self.float_precision_torch}")
