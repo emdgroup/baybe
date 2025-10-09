@@ -498,3 +498,11 @@ def test_deprecated_floating_point_environment_variables(
         attr = getattr(Settings(restore_environment=True), f"DTypeFloat{library}")
     namespace = np if library == "Numpy" else torch
     assert attr is namespace.float32 if value else namespace.float64
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
+    """Using the deprecated polars environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
+    with pytest.warns(DeprecationWarning):
+        assert Settings(restore_environment=True).use_polars is not value
