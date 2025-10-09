@@ -83,7 +83,7 @@ class GaussianProcessSurrogate(Surrogate):
     # Note [Scaling Workaround]
     # -------------------------
     # For GPs, we deactivate the base class scaling and instead let the botorch
-    # model internally handle input/output scaling. The reasons is that we need to
+    # model internally handle input/output scaling. The reason is that we need to
     # make `to_botorch` expose the actual botorch GP object, instead of going
     # via the `AdapterModel`, because certain acquisition functions (like qNIPV)
     # require the capability to `fantasize`, which the `AdapterModel` does not support.
@@ -146,55 +146,52 @@ class GaussianProcessSurrogate(Surrogate):
         import gpytorch
         import torch
 
-        # FIXME[typing]: It seems there is currently no better way to inform the type
-        #   checker that the attribute is available at the time of the function call
-        assert self._searchspace is not None
-
+        assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
+        batch_shape = train_x.shape[:-2]
 
-        numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
-
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
+        # Input/output scaling
+        # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=context.get_numerical_indices(train_x.shape[-1]),
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # extract the batch shape of the training data
-        batch_shape = train_x.shape[:-2]
-
-        # create GP mean
+        # Mean function
         mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
+        # Covariance function
+        kernel = self.kernel_factory(context.searchspace, train_x, train_y)
+        covar_module = kernel.to_gpytorch(
             ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
             batch_shape=batch_shape,
         )
 
-        # create GP covariance
-        if not context.is_multitask:
-            covar_module = base_covar_module
-        else:
-            task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=context.n_tasks,
-                active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
-            )
-            covar_module = base_covar_module * task_covar_module
-
-        # create GP likelihood
+        # Likelihood model
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
-        # construct and fit the Gaussian process
-        self._model = botorch.models.SingleTaskGP(
+        # Model selection
+        if (task_param := context.searchspace._task_parameter) is None:
+            model_cls = botorch.models.SingleTaskGP
+            model_kwargs = {}
+        else:
+            model_cls = botorch.models.MultiTaskGP
+            task_comp_rep = task_param.comp_df.iloc[:, 0]
+            model_kwargs = {
+                "task_feature": context.task_idx,
+                "output_tasks": task_comp_rep[list(task_param.active_values)],  # type: ignore[index]
+                "rank": context.n_tasks,
+                "all_tasks": task_comp_rep.to_list(),
+            }
+
+        # Model construction and fitting
+        self._model = model_cls(
             train_x,
             train_y,
             input_transform=input_transform,
@@ -202,6 +199,7 @@ class GaussianProcessSurrogate(Surrogate):
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,
+            **model_kwargs,
         )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
