@@ -37,7 +37,7 @@ from baybe.searchspace.core import (
     validate_searchspace_from_config,
 )
 from baybe.serialization import SerialMixin, converter
-from baybe.settings import active_settings
+from baybe.settings import Settings, active_settings
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.targets.base import Target
 from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
@@ -555,15 +555,16 @@ class Campaign(SerialMixin):
 
         # Get the recommended search space entries
         try:
-            # NOTE: The `recommend` call must happen on `self.recommender` to update
-            #   potential inner states in case of meta recommenders!
-            rec = self.recommender.recommend(
-                batch_size,
-                searchspace,
-                self.objective,
-                self._measurements_exp,
-                None if is_nonpredictive else pending_experiments,
-            )
+            with Settings(preprocess_dataframes=False):
+                # NOTE: The `recommend` call must happen on `self.recommender` to update
+                #   potential inner states in case of meta recommenders!
+                rec = self.recommender.recommend(
+                    batch_size,
+                    searchspace,
+                    self.objective,
+                    self._measurements_exp,
+                    None if is_nonpredictive else pending_experiments,
+                )
         except NotEnoughPointsLeftError as ex:
             # Aliases for code compactness
             f = fields(Campaign)
