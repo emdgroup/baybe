@@ -305,3 +305,9 @@ def test_random_seed_control():
 
     # After exiting the context, the previous state is restored
     assert draw_random_numbers() == x_1337
+
+
+def test_settings_are_sorted_alphabetically():
+    """The available settings are sorted alphabetically by their name."""
+    names = [fld.name for fld in Settings.available_settings]
+    assert names == sorted(names)
