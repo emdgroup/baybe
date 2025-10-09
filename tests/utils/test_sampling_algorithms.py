@@ -12,11 +12,12 @@ from hypothesis import example, given
 from pytest import param
 from sklearn.metrics import pairwise_distances
 
+from baybe._optional.info import FPSAMPLE_INSTALLED
 from baybe.recommenders.pure.nonpredictive.sampling import (
-    FPSAMPLE_USED,
     FPSInitialization,
     FPSRecommender,
 )
+from baybe.settings import Settings
 from baybe.utils.sampling_algorithms import (
     DiscreteSamplingMethod,
     farthest_point_sampling,
@@ -120,8 +121,8 @@ def test_farthest_point_sampling_pathological_case():
 
 
 @pytest.mark.skipif(
-    not FPSAMPLE_USED,
-    reason="Optional 'fpsample' package not used.",
+    not FPSAMPLE_INSTALLED,
+    reason="Optional 'fpsample' package not installed.",
 )
 @pytest.mark.parametrize(
     ("init", "tie_break", "match"),
@@ -140,6 +141,7 @@ def test_farthest_point_sampling_pathological_case():
         ),
     ],
 )
+@Settings(use_fpsample=True)
 def test_fps_recommender_expected_errors(init, tie_break, match):
     """Test that FPSRecommender emits exceptions for unsupported arguments."""
     with pytest.raises(ValueError, match=match):
@@ -216,9 +218,10 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
         farthest_point_sampling(points, n_requested, initialization=initialization)
 
 
-def test_fps_recommender_utility_call(searchspace):
+@pytest.mark.parametrize("use_fpsample", [True, False])
+def test_fps_recommender_utility_call(searchspace, use_fpsample):
     """FPSRecommender calls expected underlying utility."""
-    if FPSAMPLE_USED:
+    if use_fpsample:
         context = patch("baybe._optional.fpsample.fps_sampling", return_value=[0, 1, 2])
     else:
         context = patch(
@@ -226,7 +229,7 @@ def test_fps_recommender_utility_call(searchspace):
             return_value=[0, 1, 2],
         )
 
-    with context as mock_:
+    with context as mock_, Settings(use_fpsample=use_fpsample):
         result = FPSRecommender().recommend(batch_size=3, searchspace=searchspace)
 
     mock_.assert_called_once()
@@ -234,8 +237,8 @@ def test_fps_recommender_utility_call(searchspace):
 
 
 @pytest.mark.skipif(
-    not FPSAMPLE_USED,
-    reason="Optional 'fpsample' package not used.",
+    not FPSAMPLE_INSTALLED,
+    reason="Optional 'fpsample' package not installed.",
 )
 def test_fps_recommender_result_consistency(searchspace):
     """FPS utilities return consistent results."""

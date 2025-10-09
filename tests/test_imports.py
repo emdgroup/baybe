@@ -79,7 +79,6 @@ WHITELISTS = {
         "baybe.objectives.botorch",
         "baybe.targets.botorch",
         "baybe.surrogates._adapter",
-        "baybe.utils.torch",
     ],
     "scipy": [
         "baybe._optional.chem",

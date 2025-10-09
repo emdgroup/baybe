@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Removed
+- `parallel_runs` argument from `simulate_scenarios`, since parallelization
+  can now be conveniently controlled via the new `Settings` mechanism
+
+### Deprecations
+- The environment variables
+  `BAYBE_NUMPY_USE_SINGLE_PRECISION`/`BAYBE_TORCH_USE_SINGLE_PRECISION` have been
+  replaced with the variables
+  `BAYBE_FLOAT_PRECISION_NUMPY`/`BAYBE_FLOAT_PRECISION_TORCH` linked to the
+  corresponding `float_precision_numpy`/`float_precision_torch` attributes of the new
+  `Settings` class
+- The environment variable `BAYBE_DEACTIVATE_POLARS` has been replaced with
+  `BAYBE_USE_POLARS` linked to the `use_polars` attribute of the new `Settings` class
+- The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
+  `BAYBE_PARALLELIZE_SIMULATIONS` linked to the `parallelize_simulations` attribute of
+  the new `Settings` class
+
 ## [0.14.1] - 2025-10-01
 ### Added
 - `to_json` and `from_json` methods now also natively support (de)serialization to/from
