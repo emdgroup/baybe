@@ -2,9 +2,7 @@
 
 import os
 import random
-import subprocess
 import sys
-import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -66,6 +64,12 @@ def toggled_values():
         fld.name: toggle(getattr(active_settings, fld.name))
         for fld in Settings.available_settings
     }
+
+
+@pytest.fixture()
+def reset_settings_imports():
+    """Remove the setting module from the cache."""
+    sys.modules.pop("baybe.settings", None)
 
 
 def test_setting_unknown_attribute():
@@ -252,29 +256,18 @@ def test_settings_initialization(
     assert_attribute_values(s, {"cache_directory": expected})
 
 
+@pytest.mark.usefixtures("reset_settings_imports")
 @pytest.mark.parametrize("inject_env", [True, False], ids=["with_env", "without_env"])
-def test_initial_environment_reading(inject_env: bool):
+def test_initial_environment_reading(monkeypatch, inject_env: bool):
     """When initializing the global settings, environment variables are ingested."""
-    # Note: This test runs in a subprocess because the global settings object is
-    # initialized directly at package import time, which makes it difficult to modify
-    # the environment variables via fixtures beforehand
+    if inject_env:
+        monkeypatch.setenv("BAYBE_PREPROCESS_DATAFRAMES", "false")
 
-    env = {"BAYBE_PREPROCESS_DATAFRAMES": "false"} if inject_env else {}
-    expected = not inject_env
-    script = textwrap.dedent(f"""
-        from baybe import active_settings
-        value = active_settings.preprocess_dataframes
-        assert value == {expected}, f"Expected '{expected}', got '{{value}}'"
-    """)
-    result = subprocess.run(
-        [sys.executable, "-c", script],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=env,
+    from baybe.settings import (
+        active_settings,  # <-- first baybe import must happen after patch
     )
-    if result.stderr:
-        raise AssertionError(f"Subprocess failed: {result.stderr}")
+
+    assert active_settings.preprocess_dataframes != inject_env
 
 
 def test_random_seed_control():
