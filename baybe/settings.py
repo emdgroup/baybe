@@ -219,7 +219,9 @@ class Settings(_SlottedContextDecorator):
     )
     """Controls the floating point precision used for torch tensors."""
 
-    parallelize_simulations: bool = field(default=True, validator=instance_of(bool))
+    parallelize_simulations: bool = field(
+        default=True, converter=_to_bool, validator=instance_of(bool)
+    )
     """Controls if simulation runs are parallelized in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_."""
 
     cache_directory: Path = field(
@@ -234,6 +236,7 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
             ("BAYBE_DEACTIVATE_POLARS", flds.use_polars),
+            ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
         ]:
             if (val := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
@@ -247,6 +250,8 @@ class Settings(_SlottedContextDecorator):
                     new_value = "32" if _to_bool(val) else "64"
                 elif env_var.endswith("POLARS"):
                     new_value = "false" if _to_bool(val) else "true"
+                elif env_var.endswith("SIMULATION_RUNS"):
+                    new_value = val
                 os.environ[f"BAYBE_{fld.name.upper()}"] = new_value
         # <<<<< Deprecation
 

@@ -506,3 +506,11 @@ def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
     with pytest.warns(DeprecationWarning):
         assert Settings(restore_environment=True).use_polars is not value
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_deprecated_parallelization_environment_variables(monkeypatch, value: bool):
+    """Using the deprecated parallelization environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_PARALLEL_SIMULATION_RUNS", str(value))
+    with pytest.warns(DeprecationWarning):
+        assert Settings(restore_environment=True).parallelize_simulations is value
