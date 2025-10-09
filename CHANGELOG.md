@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BAYBE_FLOAT_PRECISION_NUMPY`/`BAYBE_FLOAT_PRECISION_TORCH` linked to the
   corresponding `float_precision_numpy`/`float_precision_torch` attributes of the new
   `Settings` class
+- The environment variable `BAYBE_DEACTIVATE_POLARS` has been replaced with
+  `BAYBE_USE_POLARS` linked to the `use_polars` attribute of the new `Settings` class
 
 ## [0.14.1] - 2025-10-01
 ### Added

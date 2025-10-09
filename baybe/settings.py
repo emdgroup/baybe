@@ -230,10 +230,11 @@ class Settings(_SlottedContextDecorator):
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
         flds = fields(Settings)
-        for fld, env_var in zip(
-            [flds.float_precision_numpy, flds.float_precision_torch],
-            ["BAYBE_NUMPY_USE_SINGLE_PRECISION", "BAYBE_TORCH_USE_SINGLE_PRECISION"],
-        ):
+        for env_var, fld in [
+            ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
+            ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
+            ("BAYBE_DEACTIVATE_POLARS", flds.use_polars),
+        ]:
             if (val := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
@@ -242,8 +243,11 @@ class Settings(_SlottedContextDecorator):
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
-                if _to_bool(val):
-                    os.environ[f"BAYBE_{fld.name.upper()}"] = "32"
+                if env_var.endswith("SINGLE_PRECISION"):
+                    new_value = "32" if _to_bool(val) else "64"
+                elif env_var.endswith("POLARS"):
+                    new_value = "false" if _to_bool(val) else "true"
+                os.environ[f"BAYBE_{fld.name.upper()}"] = new_value
         # <<<<< Deprecation
 
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
