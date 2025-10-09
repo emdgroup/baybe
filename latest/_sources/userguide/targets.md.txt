@@ -86,7 +86,7 @@ For example:
   to less desirable outcomes. Examples can be found 
   [here](../../examples/Transformations/Transformations).
 
-Many cases – especially the first two described above – are so common that we offer
+Many cases – especially the first two described above – are so common that we offer
 convenient ways to directly create the corresponding target objects for many
 optimization workflows, eliminating the need to manually specify the necessary
 {class}`~baybe.transformations.base.Transformation` object yourself:
@@ -153,11 +153,17 @@ For common matching transformations, we provide convenience constructors with th
 `match_` prefix (see {class}`~baybe.targets.numerical.NumericalTarget` for all options).
 Similar to [minimization](#minimization) targets, these constructors inject a
 suitable transformation computing some form of "proximity" to the set point value.
-  
+
+```{admonition} *Mis*matching
+:class: note
+Instead of seeking to match a certain value, you might want to avoid that value.
+The `match_*` constructors have the `mismatch_instead` argument for this purpose. If
+set to `True`, the resulting target will seek to avoid the specified `match_value`.
+```
+
 While you can easily implement your own (potentially complex) matching logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, let us have a look at
 how we can match a single set point using built-in constructors:
-
 
 #### Absolute Transformation
 

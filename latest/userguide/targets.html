@@ -1175,7 +1175,7 @@ transformation that assigns higher values to more desirable outcomes and lower v
 to less desirable outcomes. Examples can be found
 <a class="reference internal" href="../examples/Transformations/Transformations.html"><span class="doc std std-doc">here</span></a>.</p></li>
 </ul>
-<p>Many cases – especially the first two described above – are so common that we offer
+<p>Many cases – especially the first two described above – are so common that we offer
 convenient ways to directly create the corresponding target objects for many
 optimization workflows, eliminating the need to manually specify the necessary
 <a class="reference internal" href="../_autosummary/baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a> object yourself:</p>
@@ -1240,6 +1240,12 @@ well as by the resulting objects:</p>
 <code class="docutils literal notranslate"><span class="pre">match_</span></code> prefix (see <a class="reference internal" href="../_autosummary/baybe.targets.numerical.NumericalTarget.html#baybe.targets.numerical.NumericalTarget" title="baybe.targets.numerical.NumericalTarget"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumericalTarget</span></code></a> for all options).
 Similar to <a class="reference internal" href="#minimization">minimization</a> targets, these constructors inject a
 suitable transformation computing some form of “proximity” to the set point value.</p>
+<div class="note admonition">
+<p class="admonition-title"><em>Mis</em>matching</p>
+<p>Instead of seeking to match a certain value, you might want to avoid that value.
+The <code class="docutils literal notranslate"><span class="pre">match_*</span></code> constructors have the <code class="docutils literal notranslate"><span class="pre">mismatch_instead</span></code> argument for this purpose. If
+set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the resulting target will seek to avoid the specified <code class="docutils literal notranslate"><span class="pre">match_value</span></code>.</p>
+</div>
 <p>While you can easily implement your own (potentially complex) matching logic using the
 <a class="reference internal" href="../_autosummary/baybe.transformations.basic.CustomTransformation.html#baybe.transformations.basic.CustomTransformation" title="baybe.transformations.basic.CustomTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">CustomTransformation</span></code></a> class, let us have a look at
 how we can match a single set point using built-in constructors:</p>

@@ -1371,6 +1371,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">match_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">mismatch_instead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target to match a given value using an absolute transformation.</span>
@@ -1378,6 +1379,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            name: The name of the target.</span>
 <span class="sd">            match_value: The value to be matched.</span>
+<span class="sd">            mismatch_instead: If ``True``, the target will instead seek to maximize</span>
+<span class="sd">                the distance to the given ``match_value``.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
@@ -1386,7 +1389,7 @@
         <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span>
             <span class="n">name</span><span class="p">,</span>
             <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">shift</span><span class="o">=-</span><span class="n">match_value</span><span class="p">)</span> <span class="o">|</span> <span class="n">AbsoluteTransformation</span><span class="p">(),</span>
-            <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">minimize</span><span class="o">=</span><span class="ow">not</span> <span class="n">mismatch_instead</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -1399,6 +1402,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">match_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">mismatch_instead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target to match a given value using a quadratic transformation.</span>
@@ -1406,13 +1410,19 @@
 <span class="sd">        Args:</span>
 <span class="sd">            name: The name of the target.</span>
 <span class="sd">            match_value: The value to be matched.</span>
+<span class="sd">            mismatch_instead: If ``True``, the target will instead seek to maximize</span>
+<span class="sd">                the distance to the given ``match_value``.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The target with applied quadratic matching transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NumericalTarget</span><span class="o">.</span><span class="n">match_power</span><span class="p">(</span>
-            <span class="n">name</span><span class="p">,</span> <span class="n">match_value</span><span class="p">,</span> <span class="n">exponent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">match_value</span><span class="p">,</span>
+            <span class="n">exponent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">mismatch_instead</span><span class="o">=</span><span class="n">mismatch_instead</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -1425,6 +1435,7 @@
         <span class="n">match_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">exponent</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">mismatch_instead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target to match a given value using a power transformation.</span>
@@ -1433,6 +1444,8 @@
 <span class="sd">            name: The name of the target.</span>
 <span class="sd">            match_value: The value to be matched.</span>
 <span class="sd">            exponent: The exponent of applied the power transformation.</span>
+<span class="sd">            mismatch_instead: If ``True``, the target will instead seek to maximize</span>
+<span class="sd">                the distance to the given ``match_value``.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
@@ -1443,7 +1456,7 @@
             <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">shift</span><span class="o">=-</span><span class="n">match_value</span><span class="p">)</span>
             <span class="o">|</span> <span class="n">AbsoluteTransformation</span><span class="p">()</span>
             <span class="o">|</span> <span class="n">PowerTransformation</span><span class="p">(</span><span class="n">exponent</span><span class="p">),</span>
-            <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">minimize</span><span class="o">=</span><span class="ow">not</span> <span class="n">mismatch_instead</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -1459,6 +1472,7 @@
         <span class="n">cutoffs</span><span class="p">:</span> <span class="n">ConvertibleToInterval</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">margins</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mismatch_instead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target to match a given value using a triangular transformation.</span>
@@ -1472,6 +1486,8 @@
 <span class="sd">            width: The width of the (symmetric) triangular transformation.</span>
 <span class="sd">            margins: The margins defining how far the triangle extends in both</span>
 <span class="sd">                directions.</span>
+<span class="sd">            mismatch_instead: If ``True``, the target will instead seek to maximize</span>
+<span class="sd">                the distance to the given ``match_value``.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Raises:</span>
@@ -1501,7 +1517,9 @@
         <span class="k">elif</span> <span class="n">margins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">transformation</span> <span class="o">=</span> <span class="n">TriangularTransformation</span><span class="o">.</span><span class="n">from_margins</span><span class="p">(</span><span class="n">match_value</span><span class="p">,</span> <span class="n">margins</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">transformation</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">transformation</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="n">mismatch_instead</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NumericalTarget.match_bell">
@@ -1513,6 +1531,7 @@
         <span class="n">match_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">sigma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">mismatch_instead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target to match a given value using a bell transformation.</span>
@@ -1522,13 +1541,18 @@
 <span class="sd">            match_value: The value to be matched.</span>
 <span class="sd">            sigma: The scale parameter controlling the width of the bell curve. For more</span>
 <span class="sd">                details, see :class:`baybe.transformations.basic.BellTransformation`.</span>
+<span class="sd">            mismatch_instead: If ``True``, the target will instead seek to maximize</span>
+<span class="sd">                the distance to the given ``match_value``.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The target with applied bell matching transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span>
-            <span class="n">name</span><span class="p">,</span> <span class="n">BellTransformation</span><span class="p">(</span><span class="n">match_value</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">BellTransformation</span><span class="p">(</span><span class="n">match_value</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span>
+            <span class="n">minimize</span><span class="o">=</span><span class="n">mismatch_instead</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
