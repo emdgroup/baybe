@@ -53,7 +53,7 @@ def original_values():
     """The original settings values."""
     return {
         fld.name: getattr(active_settings, fld.name)
-        for fld in Settings.available_settings
+        for fld in Settings._settings_attributes
     }
 
 
@@ -62,7 +62,7 @@ def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
         fld.name: toggle(getattr(active_settings, fld.name))
-        for fld in Settings.available_settings
+        for fld in Settings._settings_attributes
     }
 
 
@@ -80,7 +80,9 @@ def test_setting_unknown_attribute():
         Settings(unknown_setting=True)
 
 
-@pytest.mark.parametrize("attribute", Settings.available_settings, ids=lambda a: a.name)
+@pytest.mark.parametrize(
+    "attribute", Settings._settings_attributes, ids=lambda a: a.name
+)
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
     original_value = getattr(active_settings, attribute.name)
@@ -90,7 +92,9 @@ def test_invalid_setting(attribute: Attribute):
         Settings(**{attribute.name: invalidate(original_value)})
 
 
-@pytest.mark.parametrize("attribute", Settings.available_settings, ids=lambda a: a.name)
+@pytest.mark.parametrize(
+    "attribute", Settings._settings_attributes, ids=lambda a: a.name
+)
 def test_direct_setting(attribute: Attribute):
     """Attributes of the global settings object can be directly modified."""
     original_value = getattr(active_settings, attribute.name)
@@ -124,7 +128,7 @@ def test_sequential_setting_via_instantiation(original_values):
     # The growing collection of all modified attributes
     modified: dict[str, Any] = {}
 
-    for attr in Settings.available_settings:
+    for attr in Settings._settings_attributes:
         # Modify one attribute at a time
         change = {attr.name: toggle(original_values[attr.name])}
         modified.update(change)
@@ -300,7 +304,7 @@ def test_random_seed_control():
     # Restoring previous settings also activate the corresponding seed
     s = Settings(random_seed=1338, activate_immediately=True)
     x_1338 = draw_random_numbers()
-    s._restore_previous()
+    s.restore_previous()
     assert active_settings.random_seed == 1337
     assert draw_random_numbers() == x_1337
 
@@ -319,5 +323,5 @@ def test_random_seed_control():
 
 def test_settings_are_sorted_alphabetically():
     """The available settings are sorted alphabetically by their name."""
-    names = [fld.name for fld in Settings.available_settings]
+    names = [fld.name for fld in Settings._settings_attributes]
     assert names == sorted(names)
