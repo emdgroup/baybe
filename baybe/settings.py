@@ -279,7 +279,7 @@ class Settings(_SlottedContextDecorator):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self._restore_previous()
+        self.restore_previous()
 
     @use_polars_for_constraints.validator
     def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
@@ -329,9 +329,13 @@ class Settings(_SlottedContextDecorator):
         if self.random_seed is not None:
             _RandomState.activate_from_seed(self.random_seed)
 
-    def _restore_previous(self) -> None:
+    def restore_previous(self) -> None:
         """Restore the previous settings."""
-        assert self._previous_settings is not None
+        if self._previous_settings is None:
+            raise RuntimeError(
+                "The settings have not yet been activated, "
+                "so there are no previous settings to restore."
+            )
         self._previous_settings.overwrite(active_settings)
         self._previous_settings = None
 
