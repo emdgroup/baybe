@@ -21,8 +21,8 @@ from typing_extensions import Self
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import OptionalImportError
-from baybe.utils.basic import AutoBool, classproperty
-from baybe.utils.boolean import strtobool
+from baybe.utils.basic import classproperty
+from baybe.utils.boolean import AutoBool, strtobool
 
 if TYPE_CHECKING:
     from types import TracebackType

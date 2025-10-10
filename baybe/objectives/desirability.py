@@ -19,8 +19,8 @@ from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
-from baybe.targets.numerical import UncertainBool
 from baybe.utils.basic import to_tuple
+from baybe.utils.boolean import UncertainBool
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
