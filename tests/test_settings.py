@@ -18,6 +18,18 @@ from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.utils.basic import cache_to_disk
 
+INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
+    "cache_campaign_recommendations": (0, TypeError, "must be <class 'bool'>"),
+    "cache_directory": (0, TypeError, "expected str"),
+    "float_precision_numpy": (0, ValueError, r"must be in \(16, 32, 64\)"),
+    "float_precision_torch": (0, ValueError, r"must be in \(16, 32, 64\)"),
+    "parallelize_simulations": (0, TypeError, "must be <class 'bool'>"),
+    "preprocess_dataframes": (0, TypeError, "must be <class 'bool'>"),
+    "random_seed": (0.0, TypeError, "must be <class 'int'>"),
+    "use_fpsample": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
+    "use_polars_for_constraints": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),
+}
+
 
 def toggle(value: Any, /) -> Any:
     """Toggle a given settings value."""
@@ -42,14 +54,6 @@ def toggle(value: Any, /) -> Any:
             members = list(type(e))
             return members[(members.index(e) + 1) % len(members)]
     raise ValueError(f"Undefined toggling operation for type '{type(value)}'.")
-
-
-def invalidate(value: Any, /) -> Any:
-    """Create an invalid value for a given setting."""
-    match value:
-        case bool():
-            return "invalid"
-    raise ValueError(f"Undefined invalidation operation for type '{type(value)}'.")
 
 
 def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
@@ -107,11 +111,11 @@ def test_setting_unknown_attribute():
 )
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
-    original_value = getattr(active_settings, attribute.name)
-    with pytest.raises(ValueError):
-        setattr(active_settings, attribute.name, invalidate(original_value))
-    with pytest.raises(ValueError):
-        Settings(**{attribute.name: invalidate(original_value)})
+    invalid, error, match = INVALID_VALUES[attribute.name]
+    with pytest.raises(error, match=match):
+        setattr(active_settings, attribute.name, invalid)
+    with pytest.raises(error, match=match):
+        Settings(**{attribute.name: invalid})
 
 
 @pytest.mark.parametrize(

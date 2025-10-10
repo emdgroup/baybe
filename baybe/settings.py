@@ -214,7 +214,7 @@ class Settings(_SlottedContextDecorator):
     random_seed: int | None = field(
         default=None,
         validator=optional_v(instance_of(int)),
-        on_setattr=_on_set_random_seed,
+        on_setattr=[optional_v(instance_of(int)), _on_set_random_seed],
     )
     """The used random seed."""
 

@@ -182,18 +182,19 @@ class AutoBool(enum.Enum):
             >>> AutoBool.from_unstructured("auto")
             <AutoBool.AUTO: 'AUTO'>
         """
-        if isinstance(value, AutoBool):
-            return value
-
-        if isinstance(value, bool):
-            return cls.TRUE if value else cls.FALSE
-
-        if value is None or value.lower() == "auto":
-            return cls.AUTO
-
-        try:
-            return cls.from_unstructured(strtobool(value))
-        except ValueError:
-            pass
+        match value:
+            case AutoBool():
+                return value
+            case bool() as b:
+                return cls.TRUE if b else cls.FALSE
+            case None:
+                return cls.AUTO
+            case str() as s:
+                if s.lower() == "auto":
+                    return cls.AUTO
+                try:
+                    return cls.from_unstructured(strtobool(s))
+                except ValueError:
+                    pass
 
         raise ValueError(f"Cannot convert '{value}' to '{cls.__name__}'.")
