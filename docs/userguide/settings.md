@@ -81,16 +81,53 @@ You can then active these configurations in various places and in different ways
 
 #### Manual Activation
 To *manually* activate a particular settings configuration, use its
-{meth}`~baybe.settings.Settings.activate` method:
+{meth}`~baybe.settings.Settings.activate` method. The previously active settings will be
+automatically remembered and can easily be restored at a later point using the
+corresponding {meth}`~baybe.settings.Settings.restore_previous` method:
 
 ```python
 assert baybe.settings.preprocess_dataframes is True
 fast_and_furious.activate()
 assert baybe.settings.preprocess_dataframes is False
+fast_and_furious.deactivate()
+assert baybe.settings.preprocess_dataframes is True
+```
+
+```{admonition} Restoring Previous Settings
+:class: important
+
+Note that {meth}`~baybe.settings.Settings.restore_previous` restores the settings that
+were active **at the time of the {meth}`~baybe.settings.Settings.activate` call**, not
+the previously global active settings. The latter might potentially have changed in the
+meantime, depending on execution flow:
+
+```python
+from baybe import Settings, active_settings
+
+s_0 = Settings(random_seed=0, activate_immediately=True)
+assert active_settings.random_seed == 0
+
+s_42 = Settings(random_seed=42, activate_immediately=True)
+assert active_settings.random_seed == 42
+
+s_1337 = Settings(random_seed=1337)
+assert active_settings.random_seed == 1337
+
+# At this point, the active seed is 1337, and the previous active seed was 42.
+# However, the effect of "restoring settings" crucially depends on which object is used:
+
+s_42.restore_previous()
+assert active_settings.random_seed == 0 # <-- the active seed before s_42 got activated
+
+s_1337.restore_previous()
+assert active_settings.random_seed == 42 # <-- the active seed before s_42 got activated
 ```
 
 #### Context Activation
-A settings configuration can be also activated *temporarily*, using a context:
+Using {meth}`~baybe.settings.Settings.restore_previous` can be useful in special cases
+where settings objects need to be passed around. However, in most cases where settings
+should be activated *temporarily* within a specific scope, a more convenient approach is
+to use a context manager:
 
 ```python
 assert baybe.settings.preprocess_dataframes is False
