@@ -706,7 +706,9 @@ def handle_missing_values(
     return data.loc[~mask]
 
 
-def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.DataFrame:
+def normalize_input_dtypes(
+    df: pd.DataFrame, objects: Iterable[Parameter | Target], /
+) -> pd.DataFrame:
     """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:

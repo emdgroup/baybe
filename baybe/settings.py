@@ -102,7 +102,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     # If enabled, the environment values take precedence for the default
                     env_name = f"BAYBE_{fld.name.upper()}"
                     value = os.getenv(env_name, default)
-                    if eval(fld.type) is bool:
+                    if fld.type == "bool":
                         value = _to_bool(value)
                     return value
 
@@ -233,13 +233,14 @@ class Settings(_SlottedContextDecorator):
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
         flds = fields(Settings)
-        for env_var, fld in [
+        pairs: list[tuple[str, Attribute]] = [
             ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
             ("BAYBE_DEACTIVATE_POLARS", flds.use_polars_for_constraints),
             ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
             ("BAYBE_CACHE_DIR", flds.cache_directory),
-        ]:
+        ]
+        for env_var, fld in pairs:
             if (val := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
