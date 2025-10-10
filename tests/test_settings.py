@@ -17,6 +17,7 @@ from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.utils.basic import cache_to_disk
+from baybe.utils.boolean import AutoBool
 
 
 def toggle(value: Any, /) -> Any:
@@ -44,12 +45,22 @@ def toggle(value: Any, /) -> Any:
     raise ValueError(f"Undefined toggling operation for type '{type(value)}'.")
 
 
-def invalidate(value: Any, /) -> Any:
+def make_invalid_value(attribute: Attribute, /) -> Any:
     """Create an invalid value for a given setting."""
-    match value:
-        case bool():
+
+    class NoInvalidValueDefinedError(Exception): ...
+
+    match attribute:
+        case Attribute(type="bool" | "int" | AutoBool.__name__):
             return "invalid"
-    raise ValueError(f"Undefined invalidation operation for type '{type(value)}'.")
+        case Attribute(name="random_seed"):
+            return "invalid"
+        case Attribute(name="cache_directory"):
+            return 0
+        case _:
+            raise NoInvalidValueDefinedError(
+                f"No invalid value defined for setting '{attribute.name}'."
+            )
 
 
 def assert_attribute_values(obj: Any, attributes: dict[str, Any], /) -> None:
@@ -107,11 +118,11 @@ def test_setting_unknown_attribute():
 )
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
-    original_value = getattr(active_settings, attribute.name)
-    with pytest.raises(ValueError):
-        setattr(active_settings, attribute.name, invalidate(original_value))
-    with pytest.raises(ValueError):
-        Settings(**{attribute.name: invalidate(original_value)})
+    invalid = make_invalid_value(attribute)
+    with pytest.raises((TypeError, ValueError)):
+        setattr(active_settings, attribute, invalid)
+    with pytest.raises((TypeError, ValueError)):
+        Settings(**{attribute.name: invalid})
 
 
 @pytest.mark.parametrize(
