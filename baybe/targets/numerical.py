@@ -40,7 +40,7 @@ from baybe.transformations import (
     TriangularTransformation,
     convert_transformation,
 )
-from baybe.utils.basic import UncertainBool
+from baybe.utils.basic import MatchMode, UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,
@@ -99,7 +99,7 @@ def _translate_legacy_arguments(
             width = (bounds.upper - bounds.lower) / 2
             modern_transformation = BellTransformation(bounds.center, width)
         else:
-            # Use transformation from what would have been the appropriate call
+            # Use transformation from what would have been the appropriate callss
             modern_transformation = cast(
                 Transformation,
                 NumericalTarget.match_triangular(
@@ -270,6 +270,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         *,
         mismatch_instead: bool = False,
+        match_mode: MatchMode | str = MatchMode.eq,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using an absolute transformation.
@@ -279,6 +280,8 @@ class NumericalTarget(Target, SerialMixin):
             match_value: The value to be matched.
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
+            match_mode: The matching mode to be used. See
+                :class:`baybe.targets.numerical.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -289,7 +292,7 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
             minimize=not mismatch_instead,
             metadata=metadata,
-        )
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_quadratic(
@@ -298,6 +301,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         *,
         mismatch_instead: bool = False,
+        match_mode: MatchMode | str = MatchMode.eq,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a quadratic transformation.
@@ -307,6 +311,8 @@ class NumericalTarget(Target, SerialMixin):
             match_value: The value to be matched.
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
+            match_mode: The matching mode to be used. See
+                :class:`baybe.targets.numerical.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -317,6 +323,7 @@ class NumericalTarget(Target, SerialMixin):
             match_value,
             exponent=2,
             mismatch_instead=mismatch_instead,
+            match_mode=match_mode,
             metadata=metadata,
         )
 
@@ -328,6 +335,7 @@ class NumericalTarget(Target, SerialMixin):
         exponent: int,
         *,
         mismatch_instead: bool = False,
+        match_mode: MatchMode | str = MatchMode.eq,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a power transformation.
@@ -338,6 +346,8 @@ class NumericalTarget(Target, SerialMixin):
             exponent: The exponent of applied the power transformation.
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
+            match_mode: The matching mode to be used. See
+                :class:`baybe.targets.numerical.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -350,7 +360,7 @@ class NumericalTarget(Target, SerialMixin):
             | PowerTransformation(exponent),
             minimize=not mismatch_instead,
             metadata=metadata,
-        )
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_triangular(
@@ -362,6 +372,7 @@ class NumericalTarget(Target, SerialMixin):
         width: float | None = None,
         margins: Sequence[float] | None = None,
         mismatch_instead: bool = False,
+        match_mode: MatchMode | str = MatchMode.eq,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a triangular transformation.
@@ -377,6 +388,8 @@ class NumericalTarget(Target, SerialMixin):
                 directions.
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
+            match_mode: The matching mode to be used. See
+                :class:`baybe.targets.numerical.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Raises:
@@ -408,7 +421,7 @@ class NumericalTarget(Target, SerialMixin):
 
         return NumericalTarget(
             name, transformation, minimize=mismatch_instead, metadata=metadata
-        )
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_bell(
@@ -418,6 +431,7 @@ class NumericalTarget(Target, SerialMixin):
         sigma: float,
         *,
         mismatch_instead: bool = False,
+        match_mode: MatchMode | str = MatchMode.eq,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a bell transformation.
@@ -429,6 +443,8 @@ class NumericalTarget(Target, SerialMixin):
                 details, see :class:`baybe.transformations.basic.BellTransformation`.
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
+            match_mode: The matching mode to be used. See
+                :class:`baybe.targets.numerical.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -439,7 +455,7 @@ class NumericalTarget(Target, SerialMixin):
             BellTransformation(match_value, sigma),
             minimize=mismatch_instead,
             metadata=metadata,
-        )
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def normalized_ramp(
@@ -572,6 +588,32 @@ class NumericalTarget(Target, SerialMixin):
         min = min if min is not None else float("-inf")
         max = max if max is not None else float("inf")
         return self._append_transformation(ClampingTransformation(min, max))
+
+    def _hold_output(self, abscissa: float, direction: MatchMode, /) -> NumericalTarget:
+        """Hold the target value beyond a certain abscissa value."""
+        return evolve(
+            self, transformation=self.transformation._hold_output(abscissa, direction)
+        )
+
+    def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
+        """Hold the output of the target left from a given abscissa value."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_left_from(abscissa)
+        )
+
+    def hold_output_right_from(self, abscissa: float, /) -> NumericalTarget:
+        """Hold the output of the target right from a given abscissa value."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_right_from(abscissa)
+        )
+
+    def hold_output_outside(
+        self, interval: ConvertibleToInterval, /
+    ) -> NumericalTarget:
+        """Hold the output of the target outside a given interval."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_outside(interval)
+        )
 
     def log(self) -> NumericalTarget:
         """Apply a logarithmic transformation to the target.
