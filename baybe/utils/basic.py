@@ -369,7 +369,7 @@ def compose(*fs: Callable) -> Callable:
     return functools.reduce(compose_two, fs)
 
 
-def cache_to_disk(func: callable, /) -> callable:
+def cache_to_disk(func: Callable, /) -> Callable:
     """Cache a callable to the filesystem using :class:`joblib.Memory`.
 
     Allows for persistent caching across different Python sessions.
