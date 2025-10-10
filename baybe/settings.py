@@ -254,7 +254,7 @@ class Settings(_SlottedContextDecorator):
 
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
         unknown = env_vars - (
-            {f"BAYBE_{attr.name.upper()}" for attr in self.available_settings}
+            {f"BAYBE_{attr.name.upper()}" for attr in self._settings_attributes}
             | _ENV_VARS_WHITELIST
         )
         if unknown:
@@ -318,8 +318,8 @@ class Settings(_SlottedContextDecorator):
         return getattr(torch, f"float{self.float_precision_torch}")
 
     @classproperty
-    def available_settings(cls) -> tuple[Attribute, ...]:
-        """The available settings."""  # noqa: D401
+    def _settings_attributes(cls) -> tuple[Attribute, ...]:
+        """The attributes representing the available settings."""  # noqa: D401
         return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
 
     def activate(self) -> None:
@@ -341,7 +341,7 @@ class Settings(_SlottedContextDecorator):
 
     def overwrite(self, target: Settings) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
-        for fld in self.available_settings:
+        for fld in self._settings_attributes:
             setattr(target, fld.name, getattr(self, fld.name))
 
 
