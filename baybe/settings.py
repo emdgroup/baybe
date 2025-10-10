@@ -101,7 +101,10 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                 if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
                     env_name = f"BAYBE_{fld.name.upper()}"
-                    return os.getenv(env_name, default)
+                    value = os.getenv(env_name, default)
+                    if eval(fld.type) is bool:
+                        value = _to_bool(value)
+                    return value
 
                 return default
 
@@ -182,7 +185,9 @@ class Settings(_SlottedContextDecorator):
     _previous_random_state: _RandomState | None = field(init=False, default=None)
     """The previously set random state."""
 
-    cache_campaign_recommendations: bool = field(default=True, converter=_to_bool)
+    cache_campaign_recommendations: bool = field(
+        default=True, validator=instance_of(bool)
+    )
     """Controls if campaigns cache their latest recommendation."""
 
     cache_directory: Path | None = field(
@@ -200,12 +205,10 @@ class Settings(_SlottedContextDecorator):
     )
     """The floating point precision used for Torch tensors."""
 
-    parallelize_simulations: bool = field(
-        default=True, converter=_to_bool, validator=instance_of(bool)
-    )
+    parallelize_simulations: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_ are executed in parallel."""  # noqa: E501
 
-    preprocess_dataframes: bool = field(default=True, converter=_to_bool)
+    preprocess_dataframes: bool = field(default=True, validator=instance_of(bool))
     """Controls if dataframe content is validated and normalized before used."""
 
     random_seed: int | None = field(
