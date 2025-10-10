@@ -272,32 +272,49 @@ def test_initial_environment_reading(monkeypatch, inject_env: bool):
 
 def test_random_seed_control():
     """Random seeds are respected regardless if set directly or via context."""
-    # Subsequent generation yields different results
+    # Setting the seed changes the attribute value
+    active_settings.random_seed = 0
+    assert active_settings.random_seed == 0
+
+    # Generation with different seeds yields different results
     x0 = draw_random_numbers()
     active_settings.random_seed = 1337
     x_1337 = draw_random_numbers()
     assert x0 != x_1337
 
-    # Setting the seed to `None` restores the previously set state
+    # Using the same seed again reproduces the results
     active_settings.random_seed = 1337
-    active_settings.random_seed = 1338
+    assert draw_random_numbers() == x_1337
+
+    # Creating settings objects without activation does not affect the RNG states
+    assert active_settings.random_seed == 1337
+    s = Settings(random_seed=1337)
+    assert draw_random_numbers() != x_1337
+    assert active_settings.random_seed == 1337
+
+    # Neither does setting the seed attribute of these objects
+    s.random_seed = 1337
+    assert draw_random_numbers() != x_1337
+    assert active_settings.random_seed == 1337
+
+    # Restoring previous settings also activate the corresponding seed
+    s = Settings(random_seed=1338, activate_immediately=True)
     x_1338 = draw_random_numbers()
-
-    active_settings.random_seed = None
-    x_restored = draw_random_numbers()
-    assert x_restored == x_1337
-
-    # Set state to be recovered after context
-    active_settings.random_seed = 1337
+    s._restore_previous()
+    assert active_settings.random_seed == 1337
+    assert draw_random_numbers() == x_1337
 
     # Within the context, the seed is temporarily overwritten
-    for _ in range(2):
-        with Settings(random_seed=1338):
-            assert draw_random_numbers() == x_1338
-            assert draw_random_numbers() != x_1338
+    active_settings.random_seed = 1337  # <-- state to be recovered afterwards
+    with Settings(random_seed=1338):
+        assert draw_random_numbers() == x_1338
+        assert draw_random_numbers() != x_1338
 
     # After exiting the context, the previous state is restored
     assert draw_random_numbers() == x_1337
+
+    # The seed can be set to `None`
+    active_settings.random_seed = None
 
 
 def test_settings_are_sorted_alphabetically():
