@@ -499,8 +499,9 @@ class Campaign(SerialMixin):
             )
 
         if (
-            pending_experiments is None
+            active_settings.cache_campaign_recommendations
             and (cache := self._cached_recommendation) is not None
+            and pending_experiments is None
             and self.allow_recommending_already_recommended
             and len(cache) == batch_size
         ):
@@ -595,7 +596,10 @@ class Campaign(SerialMixin):
                 f"{str(ex)} Consider setting {message}."
             ) from ex
 
-        if pending_experiments is None:  # see IMPROVE comment above
+        if (
+            active_settings.cache_campaign_recommendations
+            and pending_experiments is None  # see IMPROVE comment above
+        ):
             self._cache_recommendation(rec)
 
         # Update metadata
