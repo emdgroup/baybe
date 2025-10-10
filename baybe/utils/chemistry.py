@@ -1,17 +1,13 @@
 """Chemistry tools."""
 
-import os
 import ssl
-import tempfile
 import urllib.request
 import warnings
 from collections.abc import Sequence
 from functools import lru_cache
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from joblib import Memory
 
 from baybe._optional.chem import (
     BaseFingerprintTransformer,
@@ -22,20 +18,7 @@ from baybe._optional.chem import (
 )
 from baybe.parameters.enum import SubstanceEncoding
 from baybe.settings import active_settings
-
-# Caching
-_cachedir = os.environ.get(
-    "BAYBE_CACHE_DIR", str(Path(tempfile.gettempdir()) / ".baybe_cache")
-)
-
-
-def _dummy_wrapper(func):
-    return func
-
-
-_disk_cache = (
-    _dummy_wrapper if _cachedir == "" else Memory(Path(_cachedir), verbose=0).cache
-)
+from baybe.utils.basic import cache_to_disk
 
 
 def name_to_smiles(name: str) -> str:
@@ -73,7 +56,7 @@ def name_to_smiles(name: str) -> str:
 
 
 @lru_cache(maxsize=None)
-@_disk_cache
+@cache_to_disk
 def _molecule_to_fingerprint_features(
     molecule: str | Chem.Mol,
     encoder: BaseFingerprintTransformer,

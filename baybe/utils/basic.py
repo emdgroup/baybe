@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
 import cattrs
 from attrs import asdict, has
+from joblib import Memory
 from typing_extensions import override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
@@ -491,3 +492,30 @@ def compose_two(f: Callable, g: Callable, /) -> Callable:
 def compose(*fs: Callable) -> Callable:
     """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
+
+
+def cache_to_disk(func: callable, /) -> callable:
+    """Cache a callable to the filesystem using :class:`joblib.Memory`.
+
+    Allows for persistent caching across different Python sessions.
+    The cache directory is retrieved on-the-fly from the global settings configuration.
+
+    Args:
+        func: The callable to be cached.
+
+    Returns:
+        A wrapped version of the function with filesystem caching enabled.
+    """
+    from baybe import active_settings
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # The path resolution must happen here inside the wrapper since otherwise
+        # settings changes would not take effect
+        if (dir := active_settings.cache_directory) is not None:
+            f = Memory(dir).cache(func)
+        else:
+            f = func
+        return f(*args, **kwargs)
+
+    return wrapper

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
+from attrs.converters import optional as optional_c
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
 from typing_extensions import Self
@@ -184,10 +185,10 @@ class Settings(_SlottedContextDecorator):
     cache_campaign_recommendations: bool = field(default=True, converter=_to_bool)
     """Controls if campaigns cache their latest recommendation."""
 
-    cache_directory: Path = field(
-        converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
+    cache_directory: Path | None = field(
+        default=Path(tempfile.gettempdir()) / ".baybe_cache", converter=optional_c(Path)
     )
-    """The directory used for caching."""
+    """The directory used for caching. Set to ``None`` to disable caching."""
 
     float_precision_numpy: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
