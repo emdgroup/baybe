@@ -40,7 +40,7 @@ from baybe.transformations import (
     TriangularTransformation,
     convert_transformation,
 )
-from baybe.utils.basic import UncertainBool
+from baybe.utils.boolean import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,

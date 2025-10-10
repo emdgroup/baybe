@@ -1,6 +1,10 @@
 """Functions implementing Boolean checks."""
 
+from __future__ import annotations
+
+import enum
 from abc import ABC
+from collections.abc import Callable
 from typing import Any
 
 from attrs import cmp_using
@@ -69,3 +73,127 @@ def check_if_in(element: Any, allowed: list):
         raise ValueError(
             f"The value '{element}' is not allowed. Must be one of {allowed}."
         )
+
+
+class UncertainBool(enum.Enum):
+    """Enum for representing uncertain Boolean values."""
+
+    TRUE = "TRUE"
+    """Represents the Boolean value `True`."""
+
+    FALSE = "FALSE"
+    """Represents the Boolean value `False`."""
+
+    UNKNOWN = "UNKNOWN"
+    """Indicates that the value of the Boolean cannot be determined."""
+
+    def __bool__(self):
+        if self is UncertainBool.TRUE:
+            return True
+        elif self is UncertainBool.FALSE:
+            return False
+        elif self is UncertainBool.UNKNOWN:
+            raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
+        raise ValueError(f"Unknown value: '{self}'")
+
+    @classmethod
+    def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
+        """Create an uncertain Boolean from a potentially erroneous Boolean call."""
+        try:
+            return cls.TRUE if callable_() else cls.FALSE
+        except Exception:
+            return cls.UNKNOWN
+
+
+class AutoBool(enum.Enum):
+    """Enum for representing Booleans whose values can be determined automatically."""
+
+    TRUE = "TRUE"
+    """Represents the Boolean value `True`."""
+
+    FALSE = "FALSE"
+    """Represents the Boolean value `False`."""
+
+    AUTO = "AUTO"
+    """
+    Indicates that the value of the Boolean should be determined automatically
+    on-the-fly, using a predicate function.
+    """
+
+    def __bool__(self):
+        if self is AutoBool.TRUE:
+            return True
+        elif self is AutoBool.FALSE:
+            return False
+        elif self is AutoBool.AUTO:
+            raise TypeError(f"'{AutoBool.AUTO}' has no Boolean representation.")
+        raise ValueError(f"Unknown value: '{self}'")
+
+    def evaluate(self, predicate_function: Callable[[], bool]) -> bool:
+        """Evaluate the Boolean value under a given predicate function."""
+        if self is AutoBool.TRUE:
+            return True
+        elif self is AutoBool.FALSE:
+            return False
+        elif self is AutoBool.AUTO:
+            return predicate_function()
+        raise ValueError(f"Unknown value: '{self}'")
+
+    @classmethod
+    def from_unstructured(cls, value: AutoBool | bool | str | None, /) -> AutoBool:
+        """Create the enum member from unstructured input.
+
+        For string inputs, see :func:`~baybe.utils.boolean.strtobool`.
+
+        Args:
+            value: The (possibly unstructured) input value to be converted.
+
+        Returns:
+            The corresponding enum member.
+
+        Raises:
+            ValueError: If the input cannot be converted to an enum member.
+
+        Example:
+            >>> AutoBool.from_unstructured(AutoBool.TRUE)
+            <AutoBool.TRUE: 'TRUE'>
+
+            >>> AutoBool.from_unstructured(True)
+            <AutoBool.TRUE: 'TRUE'>
+
+            >>> AutoBool.from_unstructured("t")
+            <AutoBool.TRUE: 'TRUE'>
+
+            >>> AutoBool.from_unstructured(AutoBool.FALSE)
+            <AutoBool.FALSE: 'FALSE'>
+
+            >>> AutoBool.from_unstructured(False)
+            <AutoBool.FALSE: 'FALSE'>
+
+            >>> AutoBool.from_unstructured("f")
+            <AutoBool.FALSE: 'FALSE'>
+
+            >>> AutoBool.from_unstructured(AutoBool.AUTO)
+            <AutoBool.AUTO: 'AUTO'>
+
+            >>> AutoBool.from_unstructured(None)
+            <AutoBool.AUTO: 'AUTO'>
+
+            >>> AutoBool.from_unstructured("auto")
+            <AutoBool.AUTO: 'AUTO'>
+        """
+        if isinstance(value, AutoBool):
+            return value
+
+        if isinstance(value, bool):
+            return cls.TRUE if value else cls.FALSE
+
+        if value is None or value.lower() == "auto":
+            return cls.AUTO
+
+        try:
+            return cls.from_unstructured(strtobool(value))
+        except ValueError:
+            pass
+
+        raise ValueError(f"Cannot convert '{value}' to '{cls.__name__}'.")
