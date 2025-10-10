@@ -5,7 +5,6 @@ from __future__ import annotations
 import gc
 import warnings
 from collections.abc import Sequence
-from enum import Enum
 from operator import add, mul, sub
 from typing import Any, cast
 
@@ -39,75 +38,15 @@ from baybe.transformations import (
     SigmoidTransformation,
     Transformation,
     TriangularTransformation,
-    TwoSidedAffineTransformation,
     convert_transformation,
 )
-from baybe.utils.basic import UncertainBool
+from baybe.utils.basic import MatchMode, UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,
     MeasurableMetadata,
     to_metadata,
 )
-
-
-class MatchMode(Enum):
-    """Enum for specifying match modes.
-
-    The default match mode is "=", aiming to perform a typical matching of the
-    respective set point. In the other modes (">=" or "<="), the match is effectively
-    "one-sided", ie target values where the condition is met are considered equally
-    good as the match+value itself.
-    """
-
-    le = "<="
-    """Less or equal."""
-
-    eq = "="
-    """Equal."""
-
-    ge = ">="
-    """Greater or equal."""
-
-
-def _get_initial_match_mode_transformation(
-    match_mode: MatchMode | str, match_value: float, /
-) -> Transformation:
-    """Return a suitable initial transformation for different match modes.
-
-    Injected as first step in matching transformations, this effectively causes the
-    intended side of the resulting transformation to have the same value as at its
-    ``match_value``.
-
-    Args:
-        match_mode: The matching mode for which to return an initial transformation.
-        match_value: The value to be matched.
-
-    Returns:
-        A suitable transformation to be injected as first element into the existing
-        match transformations.
-
-    Raises:
-        ValueError: If an unknown match mode is provided.
-    """
-    if isinstance(match_mode, str):
-        match_mode = MatchMode(match_mode)
-
-    match match_mode:
-        case MatchMode.eq:
-            return AffineTransformation(shift=-match_value)
-        case MatchMode.le:
-            return TwoSidedAffineTransformation(
-                slope_left=0.0, slope_right=1.0, midpoint=match_value
-            )
-        case MatchMode.ge:
-            return TwoSidedAffineTransformation(
-                slope_left=1.0, slope_right=0.0, midpoint=match_value
-            )
-        case _:
-            raise ValueError(
-                f"Unknown match mode: {match_mode}. Must be one of {MatchMode}."
-            )
 
 
 @define
@@ -348,12 +287,12 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied absolute matching transformation.
         """
-        trf_0 = _get_initial_match_mode_transformation(match_mode, match_value)
-        trf = trf_0 | AbsoluteTransformation()
-
         return NumericalTarget(
-            name, trf, minimize=not mismatch_instead, metadata=metadata
-        )
+            name,
+            AffineTransformation(shift=-match_value) | AbsoluteTransformation(),
+            minimize=not mismatch_instead,
+            metadata=metadata,
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_quadratic(
@@ -414,12 +353,14 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied power matching transformation.
         """
-        trf_0 = _get_initial_match_mode_transformation(match_mode, match_value)
-        trf = trf_0 | AbsoluteTransformation() | PowerTransformation(exponent)
-
         return NumericalTarget(
-            name, trf, minimize=not mismatch_instead, metadata=metadata
-        )
+            name,
+            AffineTransformation(shift=-match_value)
+            | AbsoluteTransformation()
+            | PowerTransformation(exponent),
+            minimize=not mismatch_instead,
+            metadata=metadata,
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_triangular(
@@ -463,7 +404,8 @@ class NumericalTarget(Target, SerialMixin):
                 raise ValueError(
                     "If no 'match_value' is provided, 'cutoffs' must be specified."
                 )
-            match_value = Interval.create(cutoffs).center
+            cutoffs = Interval.create(cutoffs)
+            match_value = cutoffs.center
 
         if sum(x is not None for x in (cutoffs, width, margins)) != 1:
             raise ValueError(
@@ -471,17 +413,15 @@ class NumericalTarget(Target, SerialMixin):
             )
 
         if cutoffs is not None:
-            cutoffs = Interval.create(cutoffs)
-            transformation = TriangularTransformation(cutoffs - match_value, 0.0)
+            transformation = TriangularTransformation(cutoffs, match_value)
         elif width is not None:
-            transformation = TriangularTransformation.from_width(0.0, width)
+            transformation = TriangularTransformation.from_width(match_value, width)
         elif margins is not None:
-            transformation = TriangularTransformation.from_margins(0.0, margins)
+            transformation = TriangularTransformation.from_margins(match_value, margins)
 
-        trf_0 = _get_initial_match_mode_transformation(match_mode, match_value)
-        trf = trf_0 | transformation
-
-        return NumericalTarget(name, trf, minimize=mismatch_instead, metadata=metadata)
+        return NumericalTarget(
+            name, transformation, minimize=mismatch_instead, metadata=metadata
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def match_bell(
@@ -510,15 +450,12 @@ class NumericalTarget(Target, SerialMixin):
         Returns:
             The target with applied bell matching transformation.
         """
-        trf_0 = _get_initial_match_mode_transformation(match_mode, match_value)
-        trf = trf_0 | BellTransformation(0.0, sigma)
-
         return NumericalTarget(
             name,
-            trf,
+            BellTransformation(match_value, sigma),
             minimize=mismatch_instead,
             metadata=metadata,
-        )
+        )._hold_output(match_value, match_mode)
 
     @classmethod
     def normalized_ramp(
@@ -651,6 +588,32 @@ class NumericalTarget(Target, SerialMixin):
         min = min if min is not None else float("-inf")
         max = max if max is not None else float("inf")
         return self._append_transformation(ClampingTransformation(min, max))
+
+    def _hold_output(self, abscissa: float, direction: MatchMode, /) -> NumericalTarget:
+        """Hold the target value beyond a certain abscissa value."""
+        return evolve(
+            self, transformation=self.transformation._hold_output(abscissa, direction)
+        )
+
+    def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
+        """Hold the output of the target left from a given abscissa value."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_left_from(abscissa)
+        )
+
+    def hold_output_right_from(self, abscissa: float, /) -> NumericalTarget:
+        """Hold the output of the target right from a given abscissa value."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_right_from(abscissa)
+        )
+
+    def hold_output_outside(
+        self, interval: ConvertibleToInterval, /
+    ) -> NumericalTarget:
+        """Hold the output of the target outside a given interval."""
+        return evolve(
+            self, transformation=self.transformation.hold_output_outside(interval)
+        )
 
     def log(self) -> NumericalTarget:
         """Apply a logarithmic transformation to the target.
