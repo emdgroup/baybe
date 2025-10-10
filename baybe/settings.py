@@ -10,7 +10,7 @@ import warnings
 from copy import deepcopy
 from functools import wraps
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     import torch
+
+    _TSeed = TypeVar("_TSeed", int, None)
 
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
@@ -128,25 +130,6 @@ class _RandomState:
 
         return torch.get_rng_state()
 
-    @classmethod
-    def from_seed(cls, seed: int) -> Self:
-        """Get the random state corresponding to a given seed value."""
-        import torch
-
-        # Remember the current state
-        previous_state = cls()
-
-        # Set the requested seed and extract the corresponding state
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        new_state = cls()
-
-        # Restore the previous state
-        previous_state.activate()
-
-        return new_state
-
     def activate(self) -> None:
         """Activate the random state."""
         import torch
@@ -155,22 +138,33 @@ class _RandomState:
         np.random.set_state(self.state_numpy)
         torch.set_rng_state(self.state_torch)
 
+    @classmethod
+    def activate_from_seed(cls, seed: int) -> Self:
+        """Active the random state corresponding to a given seed."""
+        import torch
 
-def _activate_random_seed(
-    self: Settings, attribute: Attribute, value: int | None
-) -> None:
-    """Activate the random seed, remembering the previous state."""
-    if value is None:
-        if self._previous_random_state is not None:
-            self._previous_random_state.activate()
-        return
-    self._previous_random_state = _RandomState()
-    _RandomState.from_seed(value).activate()
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
+        return cls()
+
+
+def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
+    """Activate the given random seed on attribute change."""
+    if id(instance) == Settings._global_settings_id and value is not None:
+        _RandomState.activate_from_seed(value)
+    return value
 
 
 @define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
+
+    _global_settings_id: ClassVar[int]
+    """The id of the global settings instance.
+
+    Useful to identify if an action is performed on the global or a local instance."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
@@ -213,7 +207,7 @@ class Settings(_SlottedContextDecorator):
     random_seed: int | None = field(
         default=None,
         validator=optional_v(instance_of(int)),
-        on_setattr=_activate_random_seed,
+        on_setattr=_on_set_random_seed,
     )
     """The used random seed."""
 
@@ -332,6 +326,8 @@ class Settings(_SlottedContextDecorator):
         """Activate the settings globally."""
         self._previous_settings = deepcopy(active_settings)
         self.overwrite(active_settings)
+        if self.random_seed is not None:
+            _RandomState.activate_from_seed(self.random_seed)
 
     def _restore_previous(self) -> None:
         """Restore the previous settings."""
@@ -350,4 +346,5 @@ gc.collect()
 
 
 active_settings = Settings(restore_environment=True)
+Settings._global_settings_id = id(active_settings)
 """The currently active global settings instance."""
