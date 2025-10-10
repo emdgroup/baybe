@@ -48,9 +48,8 @@ with pytest.raises(ValueError):
 ### Joint Activation
 While you can change several settings one at a time using direct assignment, a more
 convenient way is to instantiate a {class}`baybe.settings.Settings` object, which allows
-to define multiple settings at once. In order for the settings to take effect
-immediately, set the `activate_immediately` argument to
-`True`:
+to define multiple settings at once. In order for the settings to take effect,
+call its :meth:`~baybe.settings.Settings.activate` method:
 
 ```python
 from baybe import Settings, active_settings
@@ -58,7 +57,7 @@ from baybe import Settings, active_settings
 assert active_settings.preprocess_dataframes is False
 assert active_settings.use_polars_for_constraints is False
 
-Settings(activate_immediately=True, preprocess_dataframes=True, use_polars_for_constraints=True)
+Settings(preprocess_dataframes=True, use_polars_for_constraints=True).activate()
 
 assert active_settings.preprocess_dataframes is True
 assert active_settings.use_polars_for_constraints is True
@@ -104,10 +103,10 @@ meantime, depending on execution flow:
 ```python
 from baybe import Settings, active_settings
 
-s_0 = Settings(random_seed=0, activate_immediately=True)
+s_0 = Settings(random_seed=0).activate()
 assert active_settings.random_seed == 0
 
-s_42 = Settings(random_seed=42, activate_immediately=True)
+s_42 = Settings(random_seed=42).activate()
 assert active_settings.random_seed == 42
 
 s_1337 = Settings(random_seed=1337)
