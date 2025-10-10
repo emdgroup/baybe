@@ -11,7 +11,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 import torch
-from attrs import Attribute, evolve
+from attrs import Attribute
 
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
@@ -130,21 +130,20 @@ def test_direct_setting(attribute: Attribute):
     assert getattr(active_settings, attribute.name) == new_value
 
 
-def test_setting_via_instantiation(original_values, toggled_values):
-    """Activating settings jointly can be done via settings instantiation."""
-    # A collection of settings can be activated immediately
-    s = Settings(**toggled_values, activate_immediately=True)
+def test_setting_via_activation(original_values, toggled_values):
+    """Activating settings jointly can be done via the activation method."""
+    assert_attribute_values(active_settings, original_values)
+
+    # A collection of settings can be activated jointly
+    s = Settings(**toggled_values)
+    assert_attribute_values(s, toggled_values)
+    assert_attribute_values(active_settings, original_values)
+    s.activate()
     assert_attribute_values(s, toggled_values)
     assert_attribute_values(active_settings, toggled_values)
 
-    # The same applies for evolving a settings object (here, we roll back the changes)
-    s2 = evolve(s, **original_values, activate_immediately=True)
-    assert_attribute_values(s, toggled_values)
-    assert_attribute_values(s2, original_values)
-    assert_attribute_values(active_settings, original_values)
 
-
-def test_sequential_setting_via_instantiation(original_values):
+def test_sequential_setting_via_activation(original_values):
     """New settings have previous settings as their default.
 
     Settings can be activated sequentially, one attribute at a time. That is, instead of
@@ -158,21 +157,19 @@ def test_sequential_setting_via_instantiation(original_values):
         # Modify one attribute at a time
         change = {attr.name: toggle(original_values[attr.name])}
         modified.update(change)
-        s = Settings(**change, activate_immediately=True)
+        s = Settings(**change).activate()
 
         # The new object carries the currently modified attribute and all previous ones
         assert_attribute_values(s, original_values | modified)
         assert_attribute_values(active_settings, original_values | modified)
 
 
-@pytest.mark.parametrize("immediately", [True, False])
-def test_setting_via_context(immediately: bool, original_values, toggled_values):
+def test_setting_via_context(original_values, toggled_values):
     """Settings are rolled back after exiting a settings context."""
-    # The settings of a new object are only activated immediately if specified
-    s = Settings(activate_immediately=immediately, **toggled_values)
-    reference = toggled_values if immediately else original_values
+    # The settings of a new object are only activated on request
+    s = Settings(**toggled_values)
     assert_attribute_values(s, toggled_values)
-    assert_attribute_values(active_settings, reference)
+    assert_attribute_values(active_settings, original_values)
 
     # The new settings are activated within the context
     with s:
@@ -181,7 +178,7 @@ def test_setting_via_context(immediately: bool, original_values, toggled_values)
 
     # After exiting the context, the original settings are restored
     assert_attribute_values(s, toggled_values)
-    assert_attribute_values(active_settings, reference)
+    assert_attribute_values(active_settings, original_values)
 
 
 def test_nested_contexts():
@@ -327,8 +324,8 @@ def test_random_seed_control():
     assert draw_random_numbers() != x_1337
     assert active_settings.random_seed == 1337
 
-    # Restoring previous settings also activate the corresponding seed
-    s = Settings(random_seed=1338, activate_immediately=True)
+    # Restoring previous settings also activates the corresponding seed
+    s = Settings(random_seed=1338).activate()
     x_1338 = draw_random_numbers()
     s.restore_previous()
     assert active_settings.random_seed == 1337

@@ -179,9 +179,6 @@ class Settings(_SlottedContextDecorator):
     _restore_environment: bool = field(default=False, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
 
-    _activate_immediately: bool = field(default=False, validator=instance_of(bool))
-    """Controls if settings are activated immediately upon instantiation."""
-
     _previous_random_state: _RandomState | None = field(init=False, default=None)
     """The previously set random state."""
 
@@ -268,15 +265,6 @@ class Settings(_SlottedContextDecorator):
         if unknown:
             raise RuntimeError(f"Unknown environment variables: {unknown}")
 
-    def __attrs_post_init__(self) -> None:
-        if active_settings is None:
-            # If we arrive here, we are in the initialization of the global object
-            # --> Nothing to do
-            return
-
-        if self._activate_immediately:
-            self.activate()
-
     def __enter__(self) -> Settings:
         self.activate()
         return self
@@ -330,12 +318,13 @@ class Settings(_SlottedContextDecorator):
         """The attributes representing the available settings."""  # noqa: D401
         return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
 
-    def activate(self) -> None:
+    def activate(self) -> Settings:
         """Activate the settings globally."""
         self._previous_settings = deepcopy(active_settings)
         self.overwrite(active_settings)
         if self.random_seed is not None:
             _RandomState.activate_from_seed(self.random_seed)
+        return self
 
     def restore_previous(self) -> None:
         """Restore the previous settings."""
