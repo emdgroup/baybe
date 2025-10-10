@@ -181,6 +181,9 @@ class Settings(_SlottedContextDecorator):
     _previous_random_state: _RandomState | None = field(init=False, default=None)
     """The previously set random state."""
 
+    cache_campaign_recommendations: bool = field(default=True, converter=_to_bool)
+    """Controls if campaigns cache their latest recommendation."""
+
     cache_directory: Path = field(
         converter=Path, default=Path(tempfile.gettempdir()) / ".baybe_cache"
     )

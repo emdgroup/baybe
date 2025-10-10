@@ -6,6 +6,7 @@ import sys
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -13,6 +14,8 @@ import torch
 from attrs import Attribute, evolve
 
 from baybe import Settings, active_settings
+from baybe.campaign import Campaign
+from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 
 
 def toggle(value: Any, /) -> Any:
@@ -343,3 +346,19 @@ def test_settings_are_sorted_alphabetically():
     """The available settings are sorted alphabetically by their name."""
     names = [fld.name for fld in Settings._settings_attributes]
     assert names == sorted(names)
+
+
+@pytest.mark.parametrize("cache", [True, False], ids=["cache", "no_cache"])
+def test_recommendation_caching(campaign: Campaign, cache: bool):
+    """Recommendations are (not) cached according to the settings."""
+    campaign.allow_recommending_already_recommended = True
+    campaign.recommender = Mock(wraps=RandomRecommender())
+    with Settings(cache_campaign_recommendations=cache):
+        df1 = campaign.recommend(2)
+        assert campaign.recommender.recommend.call_count == 1
+        df2 = campaign.recommend(2)
+        assert campaign.recommender.recommend.call_count == 1 if cache else 2
+
+    if cache:
+        assert df1.equals(df2)
+        assert df1 is not df2
