@@ -3,6 +3,7 @@
 import os
 import random
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,23 @@ def toggle(value: Any, /) -> Any:
     match value:
         case bool():
             return not value
+
+        # TODO: The approach for these two cases is a bit hacky because it only works
+        #       for the currently available settings. If needed, can be fixed by
+        #       additionally passing the attribute context.
+        case None:
+            return 0
+        case int() as v:
+            return v / 2
+
+        case str():
+            suff = "_toggled"
+            return value + suff if not value.endswith(suff) else value[: -len(suff)]
+        case Path():
+            return Path(toggle(str(value)))
+        case Enum() as e:
+            members = list(type(e))
+            return members[(members.index(e) + 1) % len(members)]
     raise ValueError(f"Undefined toggling operation for type '{type(value)}'.")
 
 
