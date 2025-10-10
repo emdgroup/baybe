@@ -16,6 +16,7 @@ from attrs import Attribute, evolve
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.utils.basic import cache_to_disk
 
 
 def toggle(value: Any, /) -> Any:
@@ -362,3 +363,26 @@ def test_recommendation_caching(campaign: Campaign, cache: bool):
     if cache:
         assert df1.equals(df2)
         assert df1 is not df2
+
+
+def test_cache_directory(tmp_path: Path):
+    """The cache directory is used to store cached results."""
+    mock = Mock(return_value=0)
+    f = cache_to_disk(lambda: mock())
+
+    for path in [tmp_path / "a", tmp_path / "b", None]:
+        mock.reset_mock()
+        with Settings(cache_directory=path):
+            if path is not None:
+                assert not path.exists()
+            mock.assert_not_called()
+
+            f()
+            mock.assert_called_once()
+
+            f()
+            if path is None:
+                assert mock.call_count == 2
+            else:
+                mock.assert_called_once()
+                assert path.exists()
