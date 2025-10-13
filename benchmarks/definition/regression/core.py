@@ -264,19 +264,16 @@ def run_tl_regression_benchmark(
                 )
 
                 # Sample source data
-                if settings.stratified_source_sampling:
-                    source_subset, _ = train_test_split(
-                        source_data,
-                        train_size=fraction_source,
-                        stratify=source_data[name_task],
-                        random_state=settings.random_seed + mc_iter,
-                    )
-                else:
-                    source_subset, _ = train_test_split(
-                        source_data,
-                        train_size=fraction_source,
-                        random_state=settings.random_seed + mc_iter,
-                    )
+                source_subset, _ = train_test_split(
+                    source_data,
+                    train_size=fraction_source,
+                    random_state=settings.random_seed + mc_iter,
+                    **{
+                        "stratify": source_data[name_task]
+                        if settings.stratified_source_sampling
+                        else None
+                    },
+                )
 
                 combined_data = pd.concat([source_subset, target_train])
 
