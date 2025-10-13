@@ -10,13 +10,15 @@ from attrs import define
 from typing_extensions import assert_never, override
 
 from baybe.serialization.mixin import SerialMixin
-from baybe.utils.basic import MatchMode, is_all_instance
+from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
+    from baybe.targets.enum import MatchMode
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
 
@@ -96,9 +98,15 @@ class Transformation(SerialMixin, ABC):
 
         return self | ClampingTransformation(min, max)
 
-    def _hold_output(self, abscissa: float, direction: MatchMode, /) -> Transformation:
+    def _hold_output(
+        self, abscissa: float, direction: MatchMode | str, /
+    ) -> Transformation:
         """Hold the output of the transformation beyond a certain abscissa value."""
+        from baybe.targets.enum import MatchMode
         from baybe.transformations.basic import ClampingTransformation
+
+        if isinstance(direction, str):
+            direction = MatchMode(direction)
 
         if direction is MatchMode.eq:
             return self
@@ -106,6 +114,7 @@ class Transformation(SerialMixin, ABC):
             return ClampingTransformation(min=abscissa) | self
         if direction is MatchMode.ge:
             return ClampingTransformation(max=abscissa) | self
+
         assert_never(direction)
 
     def hold_output_left_from(self, abscissa: float, /) -> Transformation:
