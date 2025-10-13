@@ -7,7 +7,7 @@ from functools import reduce
 from typing import TYPE_CHECKING, Any
 
 from attrs import define, field
-from attrs.validators import and_, deep_iterable, instance_of, max_len, min_len
+from attrs.validators import deep_iterable, instance_of, max_len, min_len
 from typing_extensions import override
 
 from baybe.transformations.base import Transformation
@@ -69,7 +69,7 @@ class AdditiveTransformation(Transformation):
     transformations: tuple[Transformation, Transformation] = field(
         converter=to_tuple,
         validator=deep_iterable(
-            iterable_validator=and_(min_len(2), max_len(2)),
+            iterable_validator=(min_len(2), max_len(2)),
             member_validator=instance_of(Transformation),
         ),
     )
@@ -94,7 +94,7 @@ class MultiplicativeTransformation(Transformation):
     transformations: tuple[Transformation, Transformation] = field(
         converter=to_tuple,
         validator=deep_iterable(
-            iterable_validator=and_(min_len(2), max_len(2)),
+            iterable_validator=(min_len(2), max_len(2)),
             member_validator=instance_of(Transformation),
         ),
     )

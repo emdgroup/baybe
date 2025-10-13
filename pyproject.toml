@@ -29,7 +29,7 @@ keywords = [
 ]
 dynamic = ['version']
 dependencies = [
-    "attrs>=24.1.0",
+    "attrs>=25.4.0",
     "botorch>=0.13.0,<1",
     "cattrs>=25.2.0",
     "exceptiongroup",
@@ -88,7 +88,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.7.0",
+    "uv>=0.8.23",
 ]
 
 insights = [
@@ -126,7 +126,7 @@ lint = [
     "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
     "pyupgrade==3.20.0", # see DEV TOOLS NOTE
-    "ruff==0.12.2", # see DEV TOOLS NOTE
+    "ruff==0.13.3", # see DEV TOOLS NOTE
 ]
 
 mypy = [
