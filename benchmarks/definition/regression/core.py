@@ -32,7 +32,7 @@ class DataLoader(Protocol):
         """Load and return the dataset for regression benchmark evaluation.
 
         Returns:
-            DataFrame containing the data with parameters and target values.
+            DataFrame containing the data with parameter and target values.
         """
 
 
