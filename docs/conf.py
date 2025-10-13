@@ -140,12 +140,13 @@ nitpick_ignore_regex = [
     (r"py:.*", r".*_compute_inertia.*"),
     ("ref", "k_medoids"),
     # Other
-    (r"py:obj", "baybe.utils.boolean.UnspecifiedType.UNSPECIFIED"),
+    (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
     (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
     ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
     ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
+    ("py:class", "baybe.settings._SlottedContextDecorator"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
