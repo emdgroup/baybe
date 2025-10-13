@@ -9,6 +9,7 @@ from pandas.testing import assert_series_equal
 from pytest import param
 
 from baybe.exceptions import IncompatibilityError
+from baybe.targets import MatchMode
 from baybe.targets.numerical import NumericalTarget
 from baybe.transformations.basic import (
     AffineTransformation,
@@ -73,6 +74,7 @@ def test_target_normalization(monkeypatch, minimize):
     assert t.normalize().get_codomain() != Interval(0, 1)
 
 
+@pytest.mark.parametrize("match_mode", MatchMode)
 @pytest.mark.parametrize("mismatch_instead", [False, True], ids=["match", "mismatch"])
 @pytest.mark.parametrize(
     ("constructor", "kwargs", "transformed_value"),
@@ -84,18 +86,35 @@ def test_target_normalization(monkeypatch, minimize):
         param("match_triangular", {"width": 40}, 1, id="triangular"),
     ],
 )
-def test_match_constructors(constructor, kwargs, transformed_value, mismatch_instead):
+def test_match_constructors(
+    constructor, kwargs, transformed_value, mismatch_instead, match_mode
+):
     """Distance to match values yields expected transformed values."""
     match_value = 2
-    kwargs |= {"mismatch_instead": mismatch_instead}
+    kwargs |= {"mismatch_instead": mismatch_instead, "match_mode": match_mode}
     target = getattr(NumericalTarget, constructor)("t", match_value, **kwargs)
     delta = [0, 0.01, -0.02, 0.1, -0.2, 1, -2, 10, -20]
     series = pd.Series(delta) + match_value
 
-    # Check transformed value at the match point
-    assert target.transform(series[0:1]).iloc[0] == transformed_value
+    # Ensure all expected points map to the expected transformed value
+    if match_mode is MatchMode.eq:
+        # For "=" mode, just the first entry should map to the transformed value
+        idxs = pd.Index([0])
+    else:
+        # For the other modes, all entries on the match side should transform to the
+        # match value
+        idxs = series[
+            series <= match_value
+            if match_mode is MatchMode.le
+            else series >= match_value
+        ].index
+    assert target.transform(series[idxs]).eq(transformed_value).all()
 
-    # Ensure the sequence now always describes "worsening" values
+    # We now drop points that are on the match side (except for the exact match value).
+    # The result is a sequence which should result in monotonous transformed values.
+    # We can ensure the sequence always describes "worsening" (decreasing) values
+    # by reversing the leftover sequence depending on the mismatch mode.
+    series.drop(index=idxs.drop(0), inplace=True)
     if mismatch_instead:
         series = series[::-1]
 
@@ -108,7 +127,6 @@ def test_match_constructors(constructor, kwargs, transformed_value, mismatch_ins
     # By contrast, objectives are always to be maximized, so "worse" means "smaller"
     t2 = target.to_objective().transform(series.to_frame(name=target.name)).squeeze()
     diffs_correct = t2.diff().dropna() < 0
-
     assert diffs_correct.all(), t2.diff()
 
 
