@@ -64,19 +64,6 @@ class UncertainBool(enum.Enum):
             return cls.UNKNOWN
 
 
-class MatchMode(enum.Enum):
-    """Enum representing modes for inexact matching of real-valued numbers."""
-
-    le = "<="
-    """Less or equal."""
-
-    eq = "="
-    """Equal."""
-
-    ge = ">="
-    """Greater or equal."""
-
-
 @dataclass(frozen=True, repr=False)
 class Dummy:
     """Placeholder element for array-like data types.

@@ -22,6 +22,7 @@ from baybe.targets._deprecated import (
     TargetTransformation,
 )
 from baybe.targets.base import Target
+from baybe.targets.enum import MatchMode
 from baybe.targets.utils import (
     combine_numerical_targets,
 )
@@ -40,7 +41,7 @@ from baybe.transformations import (
     TriangularTransformation,
     convert_transformation,
 )
-from baybe.utils.basic import MatchMode, UncertainBool
+from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
     ConvertibleToMeasurableMetadata,
@@ -99,7 +100,7 @@ def _translate_legacy_arguments(
             width = (bounds.upper - bounds.lower) / 2
             modern_transformation = BellTransformation(bounds.center, width)
         else:
-            # Use transformation from what would have been the appropriate callss
+            # Use transformation from what would have been the appropriate calls
             modern_transformation = cast(
                 Transformation,
                 NumericalTarget.match_triangular(
@@ -281,7 +282,7 @@ class NumericalTarget(Target, SerialMixin):
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
             match_mode: The matching mode to be used. See
-                :class:`baybe.targets.numerical.MatchMode`.
+                :class:`baybe.targets.enum.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -312,7 +313,7 @@ class NumericalTarget(Target, SerialMixin):
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
             match_mode: The matching mode to be used. See
-                :class:`baybe.targets.numerical.MatchMode`.
+                :class:`baybe.targets.enum.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -347,7 +348,7 @@ class NumericalTarget(Target, SerialMixin):
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
             match_mode: The matching mode to be used. See
-                :class:`baybe.targets.numerical.MatchMode`.
+                :class:`baybe.targets.enum.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -389,7 +390,7 @@ class NumericalTarget(Target, SerialMixin):
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
             match_mode: The matching mode to be used. See
-                :class:`baybe.targets.numerical.MatchMode`.
+                :class:`baybe.targets.enum.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Raises:
@@ -444,7 +445,7 @@ class NumericalTarget(Target, SerialMixin):
             mismatch_instead: If ``True``, the target will instead seek to maximize
                 the distance to the given ``match_value``.
             match_mode: The matching mode to be used. See
-                :class:`baybe.targets.numerical.MatchMode`.
+                :class:`baybe.targets.enum.MatchMode`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -589,21 +590,26 @@ class NumericalTarget(Target, SerialMixin):
         max = max if max is not None else float("inf")
         return self._append_transformation(ClampingTransformation(min, max))
 
-    def _hold_output(self, abscissa: float, direction: MatchMode, /) -> NumericalTarget:
+    def _hold_output(
+        self, abscissa: float, direction: MatchMode | str, /
+    ) -> NumericalTarget:
         """Hold the target value beyond a certain abscissa value."""
-        return evolve(
+        if isinstance(direction, str):
+            direction = MatchMode(direction)
+
+        return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation._hold_output(abscissa, direction)
         )
 
     def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
         """Hold the output of the target left from a given abscissa value."""
-        return evolve(
+        return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_left_from(abscissa)
         )
 
     def hold_output_right_from(self, abscissa: float, /) -> NumericalTarget:
         """Hold the output of the target right from a given abscissa value."""
-        return evolve(
+        return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_right_from(abscissa)
         )
 
@@ -611,7 +617,7 @@ class NumericalTarget(Target, SerialMixin):
         self, interval: ConvertibleToInterval, /
     ) -> NumericalTarget:
         """Hold the output of the target outside a given interval."""
-        return evolve(
+        return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation.hold_output_outside(interval)
         )
 
