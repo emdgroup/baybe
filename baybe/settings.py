@@ -82,7 +82,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
     for fld in fields:
-        if fld.name.startswith("_"):
+        if fld.name in cls._internal_attributes:
             results.append(fld)
             continue
 
@@ -323,16 +323,29 @@ class Settings(_SlottedContextDecorator):
         return getattr(torch, f"float{self.float_precision_torch}")
 
     @classproperty
+    def _internal_attributes(cls) -> frozenset[str]:
+        """The names of the internal attributes not representing settings."""  # noqa: D401
+        # IMPROVE: This approach is not type-safe but the set is needed already at
+        #   class definition time, which means we cannot use `attrs.fields` or similar.
+        #   Perhaps `typing.Annotated` can be used, if there's an elegant way to
+        #   resolve the stringified types coming from `__future__.annotations`?
+        return frozenset(
+            {
+                "_previous_random_state",
+                "_previous_settings",
+                "_restore_defaults",
+                "_restore_environment",
+            }
+        )
+
+    @classproperty
     def _settings_attributes(cls) -> tuple[Attribute, ...]:
         """The attributes representing the available settings."""  # noqa: D401
-        flds = fields(Settings)
-        excludes = {
-            flds._previous_random_state.name,
-            flds._previous_settings.name,
-            flds._restore_defaults.name,
-            flds._restore_environment.name,
-        }
-        return tuple(fld for fld in fields(Settings) if fld.name not in excludes)
+        return tuple(
+            fld
+            for fld in fields(Settings)
+            if fld.name not in Settings._internal_attributes
+        )
 
     def activate(self) -> Settings:
         """Activate the settings globally."""
