@@ -268,7 +268,7 @@ class Settings(_SlottedContextDecorator):
 
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
         unknown = env_vars - (
-            {f"BAYBE_{attr.name.upper()}" for attr in self._settings_attributes}
+            {f"BAYBE_{attr.alias.upper()}" for attr in self._settings_attributes}
             | _ENV_VARS_WHITELIST
         )
         if unknown:
