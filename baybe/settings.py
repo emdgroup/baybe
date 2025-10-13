@@ -89,6 +89,9 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
         # We use a factory here because the environment variables should be lookup up
         # at instantiation time, not at class definition time
         def make_default_factory(fld: Attribute) -> Any:
+            # TODO: https://github.com/python-attrs/attrs/issues/1479
+            name = fld.alias or fld.name
+
             def _(self: Settings) -> Any:
                 if self._restore_defaults:
                     default = fld.default
@@ -101,7 +104,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
                 if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
-                    env_name = f"BAYBE_{fld.name.upper()}"
+                    env_name = f"BAYBE_{name.upper()}"
                     value = os.getenv(env_name, default)
                     if fld.type == "bool":
                         value = _to_bool(value)
@@ -251,7 +254,7 @@ class Settings(_SlottedContextDecorator):
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
                     f"been deprecated and support will be dropped in a future version. "
-                    f"Please use 'BAYBE_{fld.alias.upper()}' instead. "
+                    f"Please use 'BAYBE_{(fld.alias or fld.name).upper()}' instead. "
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
@@ -263,7 +266,7 @@ class Settings(_SlottedContextDecorator):
                     new_value = val
                 elif env_var.endswith("CACHE_DIR"):
                     new_value = val
-                os.environ[f"BAYBE_{fld.name.upper()}"] = new_value
+                os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = new_value
         # <<<<< Deprecation
 
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
