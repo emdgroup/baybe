@@ -8,7 +8,7 @@ from collections.abc import Callable
 from typing import Any
 
 from attrs import cmp_using
-from typing_extensions import is_protocol
+from typing_extensions import is_protocol, override
 
 # Used for comparing pandas dataframes in attrs classes
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
@@ -108,6 +108,9 @@ class UncertainBool(enum.Enum):
 class AutoBool(enum.Enum):
     """Enum for representing Booleans whose values can be determined automatically."""
 
+    # https://github.com/python-attrs/attrs/issues/1462
+    __hash__ = object.__hash__
+
     TRUE = "TRUE"
     """Represents the Boolean value `True`."""
 
@@ -128,6 +131,17 @@ class AutoBool(enum.Enum):
         elif self is AutoBool.AUTO:
             raise TypeError(f"'{AutoBool.AUTO}' has no Boolean representation.")
         raise ValueError(f"Unknown value: '{self}'")
+
+    @override
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, (bool, AutoBool)):
+            raise NotImplementedError
+
+        if self is AutoBool.TRUE or self is AutoBool.FALSE:
+            return bool(self) == other
+        elif isinstance(other, AutoBool) and other is AutoBool.AUTO:
+            return True
+        return False
 
     def evaluate(self, predicate_function: Callable[[], bool]) -> bool:
         """Evaluate the Boolean value under a given predicate function."""
