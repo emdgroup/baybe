@@ -18,13 +18,13 @@ different ways, adapted to your specific needs and use cases.
 ### Direct Assignment
 You can change any specific setting by directly assigning a new value to the
 corresponding attribute of the {data}`~baybe.settings.active_settings` object. For
-example, to set a value for {attr}`~baybe.settings.Settings.preprocess_dataframes`,
+example, to set a value for {attr}`~baybe.settings.Settings.random_seed`,
 simply run:
 
 ```python
 from baybe import active_settings
 
-active_settings.preprocess_dataframes = False
+active_settings.random_seed = 1337
 ```
 
 ````{admonition} Validation
@@ -35,13 +35,13 @@ attribute exists and if the assigned value is compatible:
 
 ```python
 import pytest
-import baybe
+from baybe import active_settings
 
 with pytest.raises(AttributeError):
-    baybe.settings.non_existent_setting = 1337  # <-- error!
+    active_settings.non_existent_setting = 1337  # <-- error!
 
-with pytest.raises(ValueError):
-    baybe.settings.preprocess_dataframes = "not_representing_a_boolean"  # <-- error!
+with pytest.raises(TypeError):
+    active_settings.preprocess_dataframes = "not_representing_a_boolean"  # <-- error!
 ```
 ````
 
@@ -54,13 +54,13 @@ call its :meth:`~baybe.settings.Settings.activate` method:
 ```python
 from baybe import Settings, active_settings
 
-assert active_settings.preprocess_dataframes is False
-assert active_settings.use_polars_for_constraints is False
-
-Settings(preprocess_dataframes=True, use_polars_for_constraints=True).activate()
-
-assert active_settings.preprocess_dataframes is True
+assert active_settings.parallelize_simulations is True
 assert active_settings.use_polars_for_constraints is True
+
+Settings(parallelize_simulations=False, use_polars_for_constraints=False).activate()
+
+assert active_settings.parallelize_simulations is False
+assert active_settings.use_polars_for_constraints is False
 ```
 
 ### Delayed Activation
@@ -72,8 +72,8 @@ configurations in your code. For example:
 ```python
 from baybe import Settings
 
-slow_and_pedantic = Settings(preprocess_dataframes=True, use_polars_for_constraints=False)
-fast_and_furious = Settings(preprocess_dataframes=False, use_polars_for_constraints=True)
+slow_and_pedantic = Settings(preprocess_dataframes=True, use_fpsample=False)
+fast_and_furious = Settings(preprocess_dataframes=False, use_fpsample=True)
 ```
 
 You can then active these configurations in various places and in different ways:
@@ -85,11 +85,11 @@ automatically remembered and can easily be restored at a later point using the
 corresponding {meth}`~baybe.settings.Settings.restore_previous` method:
 
 ```python
-assert baybe.settings.preprocess_dataframes is True
+assert active_settings.preprocess_dataframes is True
 fast_and_furious.activate()
-assert baybe.settings.preprocess_dataframes is False
-fast_and_furious.deactivate()
-assert baybe.settings.preprocess_dataframes is True
+assert active_settings.preprocess_dataframes is False
+fast_and_furious.restore_previous()
+assert active_settings.preprocess_dataframes is True
 ```
 
 ```{admonition} Restoring Previous Settings
@@ -109,7 +109,7 @@ assert active_settings.random_seed == 0
 s_42 = Settings(random_seed=42).activate()
 assert active_settings.random_seed == 42
 
-s_1337 = Settings(random_seed=1337)
+s_1337 = Settings(random_seed=1337).activate()
 assert active_settings.random_seed == 1337
 
 # At this point, the active seed is 1337, and the previous active seed was 42.
@@ -129,14 +129,14 @@ should be activated *temporarily* within a specific scope, a more convenient app
 to use a context manager:
 
 ```python
-assert baybe.settings.preprocess_dataframes is False
+assert active_settings.preprocess_dataframes is True
 
 # Within the context, the specified settings become active
-with slow_and_pedantic:
-    assert baybe.settings.preprocess_dataframes is True
+with fast_and_furious:
+    assert active_settings.preprocess_dataframes is False
 
 # Outside the context, the previous settings are restored
-assert baybe.settings.preprocess_dataframes is False
+assert active_settings.preprocess_dataframes is True
 ```
 
 #### Decorator Activation
@@ -144,15 +144,15 @@ Finally, {class}`~baybe.settings.Settings` objects can also be used to decorate
 callables, activating the corresponding configuration for the duration of the call:
 
 ```python
-assert baybe.settings.preprocess_dataframes is False
+assert active_settings.preprocess_dataframes is True
 
-@slow_and_pedantic
+@fast_and_furious
 def validate_dataframes_carefully():
-    assert baybe.settings.preprocess_dataframes is True
+    assert active_settings.preprocess_dataframes is False
 
 validate_dataframes_carefully()  # <-- the assert passes
 
-assert baybe.settings.preprocess_dataframes is False
+assert active_settings.preprocess_dataframes is True 
 ```
 
 ### Environment Variables
