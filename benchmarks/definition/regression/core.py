@@ -106,7 +106,7 @@ TL_MODELS = {
 }
 
 
-# List of regression metrics to evaluate model performance
+# Regression metrics to evaluate model performance
 REGRESSION_METRICS = {
     root_mean_squared_error,
     mean_squared_error,
