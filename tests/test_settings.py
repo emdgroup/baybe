@@ -87,7 +87,7 @@ def original_values():
 def toggled_values():
     """Toggled settings values (i.e. differing from the original values)."""
     return {
-        fld.name: toggle(getattr(active_settings, fld.name))
+        fld.alias: toggle(getattr(active_settings, fld.name))
         for fld in Settings._settings_attributes
     }
 
@@ -111,11 +111,11 @@ def test_setting_unknown_attribute():
 )
 def test_invalid_setting(attribute: Attribute):
     """Attempting to activate an invalid settings value raises an error."""
-    invalid, error, match = INVALID_VALUES[attribute.name]
+    invalid, error, match = INVALID_VALUES[attribute.alias]
     with pytest.raises(error, match=match):
         setattr(active_settings, attribute.name, invalid)
     with pytest.raises(error, match=match):
-        Settings(**{attribute.name: invalid})
+        Settings(**{attribute.alias: invalid})
 
 
 @pytest.mark.parametrize(
@@ -155,8 +155,9 @@ def test_sequential_setting_via_activation(original_values):
 
     for attr in Settings._settings_attributes:
         # Modify one attribute at a time
-        change = {attr.name: toggle(original_values[attr.name])}
-        modified.update(change)
+        new_value = toggle(original_values[attr.name])
+        change = {attr.alias: new_value}
+        modified.update({attr.name: new_value})
         s = Settings(**change).activate()
 
         # The new object carries the currently modified attribute and all previous ones
@@ -346,7 +347,7 @@ def test_random_seed_control():
 
 def test_settings_are_sorted_alphabetically():
     """The available settings are sorted alphabetically by their name."""
-    names = [fld.name for fld in Settings._settings_attributes]
+    names = [fld.alias for fld in Settings._settings_attributes]
     assert names == sorted(names)
 
 

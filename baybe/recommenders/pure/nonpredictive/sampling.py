@@ -97,10 +97,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @initialization.validator
     def _validate_initialization(self, _, value):
-        if (
-            active_settings.is_fpsample_enabled
-            and value is not FPSInitialization.FARTHEST
-        ):
+        if active_settings.use_fpsample and value is not FPSInitialization.FARTHEST:
             raise ValueError(
                 f"'{self.__class__.__name__}' is currently using the optional "
                 f"'fpsample' package, which does not support the "
@@ -116,7 +113,7 @@ class FPSRecommender(NonPredictiveRecommender):
 
     @random_tie_break.validator
     def _validate_random_tie_break(self, _, value):
-        if active_settings.is_fpsample_enabled and value:
+        if active_settings.use_fpsample and value:
             raise ValueError(
                 f"'{self.__class__.__name__}' is currently using the optional "
                 f"'fpsample' package, which does not support random tie-breaking. "
@@ -144,7 +141,7 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        if active_settings.is_fpsample_enabled:
+        if active_settings.use_fpsample:
             from baybe._optional.fpsample import fps_sampling
 
             ilocs = fps_sampling(

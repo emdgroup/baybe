@@ -165,23 +165,28 @@ def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TS
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
+    # >>>>> Internal
     _global_settings_id: ClassVar[int]
     """The id of the global settings instance.
 
     Useful to identify if an action is performed on the global or a local instance."""
 
+    _previous_random_state: _RandomState | None = field(init=False, default=None)
+    """The previously set random state."""
+
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
+    # <<<<< Internal
 
+    # >>>>> Control flags
     _restore_defaults: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings shall be restored to their default values."""
 
     _restore_environment: bool = field(default=False, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
+    # <<<<< Control flags
 
-    _previous_random_state: _RandomState | None = field(init=False, default=None)
-    """The previously set random state."""
-
+    # >>>>> Settings attributes
     cache_campaign_recommendations: bool = field(
         default=True, validator=instance_of(bool)
     )
@@ -215,17 +220,20 @@ class Settings(_SlottedContextDecorator):
     )
     """The used random seed."""
 
-    use_fpsample: AutoBool = field(
+    _use_fpsample: AutoBool = field(
+        alias="use_fpsample",
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
     """Controls if `fpsample <https://github.com/leonardodalinky/fpsample>`_ acceleration is to be used, if available."""  # noqa: E501
 
-    use_polars_for_constraints: AutoBool = field(
+    _use_polars_for_constraints: AutoBool = field(
+        alias="use_polars_for_constraints",
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
     """Controls if polars acceleration is to be used for constraints, if available."""
+    # <<<<< Settings attributes
 
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
@@ -233,7 +241,7 @@ class Settings(_SlottedContextDecorator):
         pairs: list[tuple[str, Attribute]] = [
             ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
-            ("BAYBE_DEACTIVATE_POLARS", flds.use_polars_for_constraints),
+            ("BAYBE_DEACTIVATE_POLARS", flds._use_polars_for_constraints),
             ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]
@@ -242,7 +250,7 @@ class Settings(_SlottedContextDecorator):
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
                     f"been deprecated and support will be dropped in a future version. "
-                    f"Please use 'BAYBE_{fld.name.upper()}' instead. "
+                    f"Please use 'BAYBE_{fld.alias.upper()}' instead. "
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
@@ -277,14 +285,14 @@ class Settings(_SlottedContextDecorator):
     ) -> None:
         self.restore_previous()
 
-    @use_polars_for_constraints.validator
+    @_use_polars_for_constraints.validator
     def _validate_use_polars_for_constraints(self, _, value: AutoBool) -> None:
         if value is AutoBool.TRUE and not POLARS_INSTALLED:
             raise OptionalImportError(
                 _MISSING_PACKAGE_ERROR_MESSAGE.format(package_name="polars")
             )
 
-    @use_fpsample.validator
+    @_use_fpsample.validator
     def _validate_use_fpsample(self, _, value: AutoBool) -> None:
         if value is AutoBool.TRUE and not FPSAMPLE_INSTALLED:
             raise OptionalImportError(
@@ -292,14 +300,14 @@ class Settings(_SlottedContextDecorator):
             )
 
     @property
-    def is_polars_enabled_for_constraints(self) -> bool:
+    def use_polars_for_constraints(self) -> bool:
         """Indicates if Polars is enabled (i.e., installed and set to be used)."""
-        return self.use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
+        return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @property
-    def is_fpsample_enabled(self) -> bool:
+    def use_fpsample(self) -> bool:
         """Indicates if `fpsample <https://github.com/leonardodalinky/fpsample>`_  is enabled (i.e., installed and set to be used)."""  # noqa: E501
-        return self.use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
+        return self._use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
 
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
@@ -316,7 +324,14 @@ class Settings(_SlottedContextDecorator):
     @classproperty
     def _settings_attributes(cls) -> tuple[Attribute, ...]:
         """The attributes representing the available settings."""  # noqa: D401
-        return tuple(fld for fld in fields(Settings) if not fld.name.startswith("_"))
+        flds = fields(Settings)
+        excludes = {
+            flds._previous_random_state.name,
+            flds._previous_settings.name,
+            flds._restore_defaults.name,
+            flds._restore_environment.name,
+        }
+        return tuple(fld for fld in fields(Settings) if fld.name not in excludes)
 
     def activate(self) -> Settings:
         """Activate the settings globally."""
