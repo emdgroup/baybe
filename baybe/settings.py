@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
 from attrs.converters import optional as optional_c
+from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
 from typing_extensions import Self
@@ -216,7 +217,7 @@ class Settings(_SlottedContextDecorator):
     random_seed: int | None = field(
         default=None,
         validator=optional_v(instance_of(int)),
-        on_setattr=[optional_v(instance_of(int)), _on_set_random_seed],
+        on_setattr=[validate, _on_set_random_seed],
     )
     """The used random seed."""
 
