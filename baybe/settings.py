@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
 from attrs import Attribute, Factory, define, field, fields
-from attrs.converters import optional as optional_c
 from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
@@ -197,9 +196,10 @@ class Settings(_SlottedContextDecorator):
     """Controls if campaigns cache their latest recommendation."""
 
     cache_directory: Path | None = field(
-        default=Path(tempfile.gettempdir()) / ".baybe_cache", converter=optional_c(Path)
+        default=Path(tempfile.gettempdir()) / ".baybe_cache",
+        converter=lambda x: Path(x) if x else None,
     )
-    """The directory used for caching. Set to ``None`` to disable caching."""
+    """The directory used for caching. Set to "" or ``None`` to disable caching."""
 
     float_precision_numpy: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
@@ -250,7 +250,7 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]
         for env_var, fld in pairs:
-            if (val := os.environ.pop(env_var, None)) is not None:
+            if (value := os.environ.pop(env_var, None)) is not None:
                 warnings.warn(
                     f"The environment variable '{env_var}' has "
                     f"been deprecated and support will be dropped in a future version. "
@@ -259,14 +259,12 @@ class Settings(_SlottedContextDecorator):
                     DeprecationWarning,
                 )
                 if env_var.endswith("SINGLE_PRECISION"):
-                    new_value = "32" if _to_bool(val) else "64"
+                    value = "32" if _to_bool(value) else "64"
                 elif env_var.endswith("POLARS"):
-                    new_value = "false" if _to_bool(val) else "true"
+                    value = "false" if _to_bool(value) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
-                    new_value = val
-                elif env_var.endswith("CACHE_DIR"):
-                    new_value = val
-                os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = new_value
+                    value = "true" if _to_bool(value) else "false"
+                os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = value
         # <<<<< Deprecation
 
         env_vars = {name for name in os.environ if name.startswith("BAYBE_")}

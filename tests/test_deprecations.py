@@ -505,12 +505,12 @@ def test_deprecated_floating_point_environment_variables(
     "value",
     [
         pytest.param(
-            True,
+            False,
             marks=pytest.mark.skipif(
                 not POLARS_INSTALLED, reason="Optional polars dependency not installed."
             ),
         ),
-        False,
+        True,
     ],
 )
 def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
@@ -530,11 +530,14 @@ def test_deprecated_parallelization_environment_variables(monkeypatch, value: bo
         assert Settings(restore_environment=True).parallelize_simulations is value
 
 
-def test_deprecated_cache_environment_variables(monkeypatch):
+@pytest.mark.parametrize(
+    ("value", "expected"), [("test", Path("test")), ("", None)], ids=["set", "None"]
+)
+def test_deprecated_cache_environment_variables(monkeypatch, value: str, expected: str):
     """Using the deprecated cache environment variables raises warnings."""
-    monkeypatch.setenv("BAYBE_CACHE_DIR", "test")
+    monkeypatch.setenv("BAYBE_CACHE_DIR", value)
     with pytest.warns(DeprecationWarning):
-        assert Settings(restore_environment=True).cache_directory == Path("test")
+        assert Settings(restore_environment=True).cache_directory == expected
 
 
 def test_deprecated_environment_variables_user_guide_page_exists():
