@@ -39,7 +39,7 @@ active_settings: Settings = None  # type: ignore[assignment]
 
 _MISSING_PACKAGE_ERROR_MESSAGE = (
     "The setting 'use_{package_name}' cannot be set to 'True' because '{package_name}' "
-    "is not installed. Either install 'polars' or set 'use_{package_name}' "
+    "is not installed. Either install '{package_name}' or set 'use_{package_name}' "
     "to 'False'/'Auto'."
 )
 
