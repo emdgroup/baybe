@@ -115,18 +115,34 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        # Set model parameters and perform fit
-        model = self._get_model_cls()(
-            **{self.model_cluster_num_parameter_name: batch_size},
-            **self.model_params,
-        )
-        model.fit(candidates_scaled)
-
-        # Perform selection based on assigned clusters
-        if self._use_custom_selector:
-            selection = self._make_selection_custom(model, candidates_scaled)
+        n_candidates = len(candidates_exp)
+        
+        # If batch size exceeds number of candidates, select all candidates first
+        # and then fill remaining slots with random sampling with replacement
+        if batch_size > n_candidates:
+            # Select all candidates
+            all_ilocs = list(range(n_candidates))
+            
+            # Fill remaining slots with random sampling with replacement
+            n_remaining = batch_size - n_candidates
+            additional_ilocs = np.random.choice(
+                n_candidates, size=n_remaining, replace=True
+            ).tolist()
+            
+            selection = all_ilocs + additional_ilocs
         else:
-            selection = self._make_selection_default(model, candidates_scaled)
+            # Set model parameters and perform fit
+            model = self._get_model_cls()(
+                **{self.model_cluster_num_parameter_name: batch_size},
+                **self.model_params,
+            )
+            model.fit(candidates_scaled)
+
+            # Perform selection based on assigned clusters
+            if self._use_custom_selector:
+                selection = self._make_selection_custom(model, candidates_scaled)
+            else:
+                selection = self._make_selection_default(model, candidates_scaled)
 
         # Convert positional indices into DataFrame indices and return result
         return candidates_comp.index[selection]

@@ -279,14 +279,11 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Get discrete candidates
         candidates_exp, _ = searchspace.discrete.get_candidates()
 
-        # TODO: Introduce new flag to recommend batches larger than the search space
-
-        # Check if enough candidates are left
-        # TODO [15917]: This check is not perfectly correct.
-        if (not is_hybrid_space) and (len(candidates_exp) < batch_size):
+        # Check if there are any candidates left at all
+        if len(candidates_exp) == 0:
             raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are fewer than {batch_size} "
-                f"possible data points left to recommend."
+                f"Using the current settings, there are no possible data points "
+                f"left to recommend."
             )
 
         # Get recommendations
