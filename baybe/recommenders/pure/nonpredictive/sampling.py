@@ -151,32 +151,31 @@ class FPSRecommender(NonPredictiveRecommender):
         # and then fill remaining slots with random sampling with replacement
         n_candidates = len(candidates_exp)
         if batch_size > n_candidates:
-            # Select all candidates using FPS (or just return all if batch_size == n_candidates)
+            # Select all candidates (FPS not needed when taking all)
             all_ilocs = list(range(n_candidates))
-            
+
             # Fill remaining slots with random sampling with replacement
             n_remaining = batch_size - n_candidates
             additional_ilocs = np.random.choice(
                 n_candidates, size=n_remaining, replace=True
             ).tolist()
-            
-            ilocs = all_ilocs + additional_ilocs
-        else:
-            if FPSAMPLE_USED:
-                from baybe._optional.fpsample import fps_sampling
 
-                ilocs = fps_sampling(
-                    candidates_scaled,
-                    n_samples=batch_size,
-                )
-            else:
-                # Custom implementation as fallback
-                ilocs = farthest_point_sampling(
-                    candidates_scaled,
-                    batch_size,
-                    initialization=self.initialization.value,
-                    random_tie_break=self.random_tie_break,
-                )
+            ilocs = all_ilocs + additional_ilocs
+        elif FPSAMPLE_USED:
+            from baybe._optional.fpsample import fps_sampling
+
+            ilocs = fps_sampling(
+                candidates_scaled,
+                n_samples=batch_size,
+            )
+        else:
+            # Custom implementation as fallback
+            ilocs = farthest_point_sampling(
+                candidates_scaled,
+                batch_size,
+                initialization=self.initialization.value,
+                random_tie_break=self.random_tie_break,
+            )
         return candidates_comp.index[ilocs]
 
     @override

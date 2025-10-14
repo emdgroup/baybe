@@ -116,19 +116,19 @@ class SKLearnClusteringRecommender(NonPredictiveRecommender, ABC):
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
         n_candidates = len(candidates_exp)
-        
+
         # If batch size exceeds number of candidates, select all candidates first
         # and then fill remaining slots with random sampling with replacement
         if batch_size > n_candidates:
             # Select all candidates
             all_ilocs = list(range(n_candidates))
-            
+
             # Fill remaining slots with random sampling with replacement
             n_remaining = batch_size - n_candidates
             additional_ilocs = np.random.choice(
                 n_candidates, size=n_remaining, replace=True
             ).tolist()
-            
+
             selection = all_ilocs + additional_ilocs
         else:
             # Set model parameters and perform fit

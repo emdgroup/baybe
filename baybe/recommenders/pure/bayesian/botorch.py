@@ -185,7 +185,7 @@ class BotorchRecommender(BayesianRecommender):
                 how="left",
             )["index"]
         )
-        
+
         # If batch size exceeds number of returned points (e.g., when requesting more
         # points than unique candidates available), fill remaining slots with random
         # sampling with replacement from the returned points

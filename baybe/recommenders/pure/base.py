@@ -282,8 +282,8 @@ class PureRecommender(ABC, RecommenderProtocol):
         # Check if there are any candidates left at all
         if len(candidates_exp) == 0:
             raise NotEnoughPointsLeftError(
-                f"Using the current settings, there are no possible data points "
-                f"left to recommend."
+                "Using the current settings, there are no possible data points "
+                "left to recommend."
             )
 
         # Get recommendations

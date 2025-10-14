@@ -438,3 +438,33 @@ def test_cache_invalidation(
         assert campaign._cached_recommendation is None
     else:
         assert campaign._cached_recommendation is not None
+
+
+@pytest.mark.parametrize(
+    "recommender",
+    [
+        RandomRecommender(),
+        FPSRecommender(),
+    ],
+)
+def test_batch_size_exceeds_candidates(recommender: RecommenderProtocol):
+    """Test that batch_size > candidates works with allow_recommending_already_recommended=True."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    objective = NumericalTarget("t").to_objective()
+    campaign = Campaign(
+        searchspace=searchspace,
+        objective=objective,
+        recommender=recommender,
+        allow_recommending_already_recommended=True,
+    )
+
+    # Request more recommendations than there are candidates
+    batch_size = 5
+    n_candidates = len(searchspace.discrete.exp_rep)
+    assert batch_size > n_candidates, "Test setup error: batch_size must exceed n_candidates"
+
+    # This should work without raising an exception
+    recommendations = campaign.recommend(batch_size)
+    assert len(recommendations) == batch_size, (
+        f"Expected {batch_size} recommendations, got {len(recommendations)}"
+    )
