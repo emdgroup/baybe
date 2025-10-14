@@ -410,12 +410,6 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 f"surrogate model type ({self.__class__.__name__}) does not "
                 f"support transfer learning."
             )
-        if (not searchspace.continuous.is_empty) and (
-            "GaussianProcess" not in self.__class__.__name__
-        ):
-            raise NotImplementedError(
-                "Continuous search spaces are currently only supported by GPs."
-            )
 
         # Block partial measurements
         handle_missing_values(measurements, [t.name for t in objective.targets])
