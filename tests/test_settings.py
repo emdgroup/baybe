@@ -18,6 +18,11 @@ from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.utils.basic import cache_to_disk
 
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Only possible in FULLTEST environment.",
+)
+
 INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "cache_campaign_recommendations": (0, TypeError, "must be <class 'bool'>"),
     "cache_directory": (0, TypeError, "expected str"),
