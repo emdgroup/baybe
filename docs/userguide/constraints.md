@@ -27,12 +27,6 @@ is exclusively discrete or continuous in most cases.
 
 ## Continuous Constraints
 
-```{admonition} Surrogate Model Limitations
-:class: warning
-Not all surrogate models are able to treat continuous constraints. In such situations
-the constraints are currently silently ignored.
-```   
-
 (CLC)=
 ### ContinuousLinearConstraint
 The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
