@@ -308,10 +308,20 @@ class Settings(_SlottedContextDecorator):
         """Indicates if Polars is enabled (i.e., installed and set to be used)."""
         return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
+    @use_polars_for_constraints.setter
+    def use_polars_for_constraints(self, value: AutoBool | bool, /) -> None:
+        # Note: uses attrs converter
+        self._use_polars_for_constraints = value  # type: ignore[assignment]
+
     @property
     def use_fpsample(self) -> bool:
         """Indicates if `fpsample <https://github.com/leonardodalinky/fpsample>`_  is enabled (i.e., installed and set to be used)."""  # noqa: E501
         return self._use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
+
+    @use_fpsample.setter
+    def use_fpsample(self, value: AutoBool | bool, /) -> None:
+        # Note: uses attrs converter
+        self._use_fpsample = value  # type: ignore[assignment]
 
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
