@@ -141,10 +141,9 @@ def test_farthest_point_sampling_pathological_case():
         ),
     ],
 )
-@Settings(use_fpsample=True)
 def test_fps_recommender_expected_errors(init, tie_break, match):
     """Test that FPSRecommender emits exceptions for unsupported arguments."""
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(ValueError, match=match), Settings(use_fpsample=True):
         FPSRecommender(initialization=init, random_tie_break=tie_break)
 
 
@@ -218,7 +217,19 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
         farthest_point_sampling(points, n_requested, initialization=initialization)
 
 
-@pytest.mark.parametrize("use_fpsample", [True, False])
+@pytest.mark.parametrize(
+    "use_fpsample",
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.skipif(
+                not FPSAMPLE_INSTALLED,
+                reason="Optional 'fpsample' package not installed.",
+            ),
+        ),
+        False,
+    ],
+)
 def test_fps_recommender_utility_call(searchspace, use_fpsample):
     """FPSRecommender calls expected underlying utility."""
     if use_fpsample:
