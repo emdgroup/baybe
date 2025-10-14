@@ -26,7 +26,7 @@ from scipy.stats import gaussian_kde
 from baybe import active_settings
 from baybe.acquisition import ProbabilityOfImprovement
 from baybe.campaign import Campaign
-from baybe.objectives import Objective
+from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import (
     BotorchRecommender,
