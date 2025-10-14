@@ -22,13 +22,14 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings, active_settings
 from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import (
     IndependentGaussianSurrogate,
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.validation import validate_object_names
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -167,6 +168,21 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"empty training data."
             )
 
+        if active_settings.preprocess_dataframes:
+            measurements = preprocess_dataframe(
+                measurements,
+                searchspace.parameters,
+                objective,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
+
+            if pending_experiments is not None:
+                pending_experiments = preprocess_dataframe(
+                    pending_experiments,
+                    searchspace.parameters,
+                    numerical_measurements_must_be_within_tolerance=False,
+                )
+
         if (
             isinstance(self._surrogate_model, IndependentGaussianSurrogate)
             and batch_size > 1
@@ -184,13 +200,14 @@ class BayesianRecommender(PureRecommender, ABC):
             searchspace, objective, measurements, pending_experiments
         )
 
-        return super().recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
-        )
+        with Settings(preprocess_dataframes=False):
+            return super().recommend(
+                batch_size=batch_size,
+                searchspace=searchspace,
+                objective=objective,
+                measurements=measurements,
+                pending_experiments=pending_experiments,
+            )
 
     def acquisition_values(
         self,

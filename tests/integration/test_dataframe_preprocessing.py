@@ -9,8 +9,12 @@ from baybe.utils.dataframe import add_fake_measurements
 
 @patch("baybe.campaign.preprocess_dataframe", wraps=preprocess_dataframe)
 @patch("baybe.recommenders.pure.base.preprocess_dataframe", wraps=preprocess_dataframe)
+@patch(
+    "baybe.recommenders.pure.bayesian.base.preprocess_dataframe",
+    wraps=preprocess_dataframe,
+)
 def test_dataframes_are_preprocessed_only_once(
-    mock_recommender, mock_campaign, campaign
+    mock_bayesian, mock_recommender, mock_campaign, campaign
 ):
     """Data preprocessing happens only once, regardless of the entry point."""
     # NOTE: This test only ensures that preprocessing happens mutually exclusively
@@ -30,7 +34,8 @@ def test_dataframes_are_preprocessed_only_once(
     campaign.recommend(1)
     assert mock_campaign.call_count == 1
     assert mock_recommender.call_count == 0
+    assert mock_bayesian.call_count == 0
 
     # However, calling the recommender directly triggers preprocessing
     BotorchRecommender().recommend(1, campaign.searchspace, campaign.objective, df)
-    assert mock_recommender.call_count == 1
+    assert mock_bayesian.call_count + mock_recommender.call_count == 1
