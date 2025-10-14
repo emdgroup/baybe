@@ -103,7 +103,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 f"'fpsample' package, which does not support the "
                 f"'{self.initialization}' mode. "
                 f"Please choose a supported initialization mode or deactivate "
-                f"`fpsample` usage via the '{fields(Settings).use_fpsample.name}' "
+                f"`fpsample` usage via the '{fields(Settings)._use_fpsample.alias}' "
                 f"option in BayBE's settings."
             )
 
@@ -119,7 +119,7 @@ class FPSRecommender(NonPredictiveRecommender):
                 f"'fpsample' package, which does not support random tie-breaking. "
                 f"Either disable the mechanism by passing "
                 f"'{fields(self.__class__).random_tie_break.name}=False' or deactivate "
-                f"`fpsample` usage via the '{fields(Settings).use_fpsample.name}' "
+                f"`fpsample` usage via the '{fields(Settings)._use_fpsample.alias}' "
                 f"option in BayBE's settings."
             )
 

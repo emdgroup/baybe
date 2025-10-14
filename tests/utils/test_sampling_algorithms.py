@@ -130,7 +130,7 @@ def test_farthest_point_sampling_pathological_case():
         param(
             FPSInitialization.RANDOM,
             True,
-            "does not support 'FPSInitialization.RANDOM'",
+            "does not support the 'FPSInitialization.RANDOM'",
             id="raise_initial_random",
         ),
         param(
