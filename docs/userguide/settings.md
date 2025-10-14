@@ -116,10 +116,10 @@ assert active_settings.random_seed == 1337
 # However, the effect of "restoring settings" crucially depends on which object is used:
 
 s_42.restore_previous()
-assert active_settings.random_seed == 0 # <-- the active seed before s_42 got activated
+assert active_settings.random_seed == 0  # <-- the seed before s_42 got activated
 
 s_1337.restore_previous()
-assert active_settings.random_seed == 42 # <-- the active seed before s_42 got activated
+assert active_settings.random_seed == 42  # <-- the seed before s_42 got activated
 ```
 
 #### Context Activation
@@ -146,13 +146,15 @@ callables, activating the corresponding configuration for the duration of the ca
 ```python
 assert active_settings.preprocess_dataframes is True
 
+
 @fast_and_furious
 def validate_dataframes_carefully():
     assert active_settings.preprocess_dataframes is False
 
+
 validate_dataframes_carefully()  # <-- the assert passes
 
-assert active_settings.preprocess_dataframes is True 
+assert active_settings.preprocess_dataframes is True
 ```
 
 ### Environment Variables
