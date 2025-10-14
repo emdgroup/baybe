@@ -131,7 +131,7 @@ def test_direct_setting(attribute: Attribute):
     original_value = getattr(active_settings, attribute.name)
     new_value = toggle(original_value)
     assert original_value != new_value
-    setattr(active_settings, attribute.name, new_value)
+    setattr(active_settings, attribute.alias, new_value)
     assert getattr(active_settings, attribute.name) == new_value
 
 
