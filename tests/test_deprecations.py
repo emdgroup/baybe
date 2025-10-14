@@ -12,7 +12,7 @@ import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from baybe._optional.info import CHEM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
     ContinuousLinearEqualityConstraint,
@@ -501,7 +501,18 @@ def test_deprecated_floating_point_environment_variables(
     assert attr is namespace.float32 if value else namespace.float64
 
 
-@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.skipif(
+                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+            ),
+        ),
+        False,
+    ],
+)
 def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
     """Using the deprecated polars environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
