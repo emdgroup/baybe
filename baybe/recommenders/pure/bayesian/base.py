@@ -207,13 +207,33 @@ class BayesianRecommender(PureRecommender, ABC):
             searchspace, objective, measurements, pending_experiments
         )
 
-        return super().recommend(
-            batch_size=batch_size,
-            searchspace=searchspace,
-            objective=objective,
-            measurements=measurements,
-            pending_experiments=pending_experiments,
-        )
+        try:
+            return super().recommend(
+                batch_size=batch_size,
+                searchspace=searchspace,
+                objective=objective,
+                measurements=measurements,
+                pending_experiments=pending_experiments,
+            )
+        except RuntimeError as e:
+            # Search spaces with continuous components are incompatible with surrogates
+            # that do not support gradient computation
+            if (
+                "does not have a grad_fn" in str(e)
+                and not searchspace.continuous.is_empty
+            ):
+                from baybe.exceptions import IncompatibleSurrogateError
+                from baybe.surrogates import GaussianProcessSurrogate
+
+                raise IncompatibleSurrogateError(
+                    f"The search space contains continuous parameters, but the applied "
+                    f"surrogate of type '{self._surrogate_model.__class__.__name__}' "
+                    f"does not support the required gradient computation. Choose a "
+                    f"surrogate which supports gradients, e.g. the "
+                    f"'{GaussianProcessSurrogate.__name__}'"
+                )
+            else:
+                raise
 
     def acquisition_values(
         self,
