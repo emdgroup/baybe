@@ -594,8 +594,7 @@ class NumericalTarget(Target, SerialMixin):
         self, abscissa: float, direction: MatchMode | str, /
     ) -> NumericalTarget:
         """Hold the target value beyond a certain abscissa value."""
-        if isinstance(direction, str):
-            direction = MatchMode(direction)
+        direction = MatchMode(direction)
 
         return evolve(  # type: ignore[call-arg]
             self, transformation=self.transformation._hold_output(abscissa, direction)
