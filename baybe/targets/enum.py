@@ -8,11 +8,11 @@ from baybe.targets._deprecated import TargetMode, TargetTransformation  # noqa: 
 class MatchMode(Enum):
     """Enum representing modes for inexact matching of real-valued numbers."""
 
-    le = "<="
+    LE = "<="
     """Less or equal."""
 
-    eq = "="
+    EQ = "="
     """Equal."""
 
-    ge = ">="
+    GE = ">="
     """Greater or equal."""

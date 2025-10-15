@@ -107,11 +107,11 @@ class Transformation(SerialMixin, ABC):
 
         direction = MatchMode(direction)
 
-        if direction is MatchMode.eq:
+        if direction is MatchMode.EQ:
             return self
-        if direction is MatchMode.le:
+        if direction is MatchMode.LE:
             return ClampingTransformation(min=abscissa) | self
-        if direction is MatchMode.ge:
+        if direction is MatchMode.GE:
             return ClampingTransformation(max=abscissa) | self
 
         assert_never(direction)
