@@ -161,13 +161,13 @@ class Interval(SerialMixin):
             or (self.lower < number < self.upper)
         )
 
-    def __sub__(self, other: float | int) -> Interval:
-        """Shift bounds via scalar subtraction."""
-        return Interval(self.lower - other, self.upper - other)
-
     def __add__(self, other: float | int) -> Interval:
         """Shift bounds via scalar addition."""
         return Interval(self.lower + other, self.upper + other)
+
+    def __sub__(self, other: float | int) -> Interval:
+        """Shift bounds via scalar subtraction."""
+        return self + (-other)
 
 
 def use_fallback_constructor_hook(value: Any, cls: type[Interval]) -> Interval:
