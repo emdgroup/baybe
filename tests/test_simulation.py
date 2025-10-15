@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 
 pytestmark = pytest.mark.skipif(
@@ -43,6 +44,7 @@ _aggregators: dict[str, Callable] = {
         ),
     ],
 )
+@Settings(parallelize_simulations=False)
 def test_simulate_scenarios_structure(campaign, batch_size):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2
@@ -57,7 +59,6 @@ def test_simulate_scenarios_structure(campaign, batch_size):
         batch_size=batch_size,
         random_seed=simulation_random_seed,
         n_mc_iterations=n_mc_iterations,
-        parallel_runs=False,
     )
 
     assert isinstance(result, pd.DataFrame)
