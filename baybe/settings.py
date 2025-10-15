@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
-from attrs import Attribute, Factory, define, field, fields
+from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
 from attrs.validators import in_, instance_of
 from attrs.validators import optional as optional_v
@@ -171,6 +171,21 @@ def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TS
     return value
 
 
+def _convert_cache_directory(
+    value: str | Path | None, field: Attribute, /
+) -> Path | None:
+    """Attrs converter for the cache directory setting."""
+    if value is None or value == "":
+        return None
+    try:
+        return Path(value)
+    except Exception as ex:
+        raise type(ex)(
+            f"Cannot set '{field.alias}' to '{value}'. "
+            f"Expected 'None' or a path-like object."
+        ) from ex
+
+
 @define(kw_only=True, field_transformer=adjust_defaults)
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
@@ -204,7 +219,7 @@ class Settings(_SlottedContextDecorator):
 
     cache_directory: Path | None = field(
         default=Path(tempfile.gettempdir()) / ".baybe_cache",
-        converter=lambda x: Path(x) if x else None,
+        converter=Converter(_convert_cache_directory, takes_field=True),  # type: ignore[misc]
     )
     """The directory used for caching. Set to "" or ``None`` to disable caching."""
 
