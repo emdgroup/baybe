@@ -154,30 +154,6 @@ For common matching transformations, we provide convenience constructors with th
 Similar to [minimization](#minimization) targets, these constructors inject a
 suitable transformation computing some form of "proximity" to the set point value.
 
-```{admonition} *Mis*matching
-:class: note
-Instead of seeking to match a certain value, you might want to avoid that value.
-The `match_*` constructors have the `mismatch_instead` argument for this purpose. If
-set to `True`, the resulting target will seek to avoid the specified `match_value`.
-```
-
-```{admonition} One-Sided (Mis-)Matching
-:class: note
-The `match_*` constructors also have the `match_mode` argument. The default `"="` corresponds
-to matching the exact match point. But if you use `">="` or `<=` you can indicate that
-the entire respective number region is a valid match. This enables to express desired 
-targets like 
-- "The rate should be lower than 200 per minute, but it does not matter how much lower."
-  (`NumericalTarget.match_absolute("rate", 200, match_mode="<=")`)
-- "The yield should be at least 80%, but it does not matter if it's even higher."
-  (`NumericalTarget.match_absolute("yield", 80, match_mode=">=")`)
-
-Behind the scenes, BayBE transforms the targets in a way such that all 
-values inside the specified region are considered equally good (or bad if 
-`mismatch_instead=True`). If the value of the target behind the threshold matters, it is
-rather a case for traditional maximization / minimization without match considerations.
-```
-
 While you can easily implement your own (potentially complex) matching logic using the
 {class}`~baybe.transformations.basic.CustomTransformation` class, let us have a look at
 how we can match a single set point using built-in constructors:
@@ -287,6 +263,54 @@ you always have the fallback option to create a
 {class}`~baybe.transformations.basic.CustomTransformation` that implements the
 corresponding logic and pass it to the regular
 {class}`~baybe.targets.numerical.NumericalTarget` constructor.
+
+#### Advanced Matching Options
+Instead of seeking to match a certain value, you might want to avoid that value 
+altogether. The `match_*` constructors have the `mismatch_instead` argument for this 
+purpose. If set to `True`, the resulting target will seek to avoid the specified 
+`match_value`.
+
+**Example**
+```python
+target = NumericalTarget.match_quadratic(
+    name="Particle_Size",
+    match_value=50,
+    mismatch_instead=True,  # Try to avoid particle size 50
+)
+```
+
+The `match_*` constructors also have the `match_mode` argument. The default `"="`
+corresponds to matching the exact `match_value`. But if you use `">="` or `"<="` you
+can indicate that the entire respective number region is a valid match. This enables to
+express desired outcomes like:
+- "The rate should be lower than 200 per minute, but it does not matter how much lower."
+  (`NumericalTarget.match_absolute("rate", 200, match_mode="<=")`)
+- "The yield should be at least 80%, but it does not matter if it's even higher."
+  (`NumericalTarget.match_absolute("yield", 80, match_mode=">=")`)
+
+Behind the scenes, BayBE transforms the targets in a way such that all 
+values inside the region specified by the operator are considered equally good (or bad
+if `mismatch_instead=True`). If the value of the target beyond the `match_value`
+matters, it is rather a case for traditional maximization / minimization without match
+considerations.
+
+**Example**
+```python
+target1 = NumericalTarget.match_absolute(
+    name="Yield",
+    match_value=80,
+    match_mode=">=",  # Yield should be over 80. 95 is *not* considered better than 80
+)
+target2 = NumericalTarget(
+    name="Yield"  # Yield should be as high as possible, 95 is considered better than 80
+)
+```
+
+Below we illustrate the overall transformations resulting from different combinations
+of the arguments for the exemplary case of
+{meth}`~baybe.targets.numerical.NumericalTarget.match_bell`:
+
+![Advanced_Matching_Options](../_static/targets/matching.svg)
 
 
 ### Target Normalization
