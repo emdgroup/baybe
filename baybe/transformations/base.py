@@ -110,7 +110,7 @@ class Transformation(SerialMixin, ABC):
         """Prepend a shift to the input (horizontal shift)."""
         from baybe.transformations import AffineTransformation
 
-        return AffineTransformation(factor=1.0, shift=-shift) | self
+        return AffineTransformation(shift=-shift) | self
 
     def __neg__(self) -> Transformation:
         return self.negate()
