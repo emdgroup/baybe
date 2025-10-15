@@ -42,10 +42,17 @@ _MISSING_PACKAGE_ERROR_MESSAGE = (
     "to 'False'/'Auto'."
 )
 
-_ENV_VARS_WHITELIST = {
-    "BAYBE_TEST_ENV",  # defines testing scope
-}
-"""The collection of whitelisted **additional** environment variables allowed."""
+
+def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
+    """Validate the values of non-settings environment variables."""
+    if (value := vars.pop("BAYBE_TEST_ENV", None)) is not None:
+        if value not in {"CORETEST", "FULLTEST", "GPUTEST"}:
+            raise ValueError(
+                f"Allowed values for 'BAYBE_TEST_ENV' are "
+                f"'CORETEST', 'FULLTEST', and 'GPUTEST'. Given: '{value}'"
+            )
+    if vars:
+        raise RuntimeError(f"Unknown environment variables: {set(vars)}")
 
 
 class _SlottedContextDecorator:
@@ -267,13 +274,16 @@ class Settings(_SlottedContextDecorator):
                 os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = value
         # <<<<< Deprecation
 
-        env_vars = {name for name in os.environ if name.startswith("BAYBE_")}
-        unknown = env_vars - (
-            {f"BAYBE_{attr.alias.upper()}" for attr in self._settings_attributes}
-            | _ENV_VARS_WHITELIST
+        known_env_vars = {
+            f"BAYBE_{attr.alias.upper()}" for attr in self._settings_attributes
+        }
+        _validate_whitelist_env_vars(
+            {
+                k: v
+                for k, v in os.environ.items()
+                if k.startswith("BAYBE_") and k not in known_env_vars
+            }
         )
-        if unknown:
-            raise RuntimeError(f"Unknown environment variables: {unknown}")
 
     def __enter__(self) -> Settings:
         self.activate()
