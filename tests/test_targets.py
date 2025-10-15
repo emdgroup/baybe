@@ -97,7 +97,7 @@ def test_match_constructors(
     series = pd.Series(delta) + match_value
 
     # Ensure all expected points map to the expected transformed value
-    if match_mode is MatchMode.eq:
+    if match_mode is MatchMode.EQ:
         # For "=" mode, just the first entry should map to the transformed value
         idxs = pd.Index([0])
     else:
@@ -105,7 +105,7 @@ def test_match_constructors(
         # match value
         idxs = series[
             series <= match_value
-            if match_mode is MatchMode.le
+            if match_mode is MatchMode.LE
             else series >= match_value
         ].index
     assert target.transform(series[idxs]).eq(transformed_value).all()

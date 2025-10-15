@@ -271,7 +271,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         *,
         mismatch_instead: bool = False,
-        match_mode: MatchMode | str = MatchMode.eq,
+        match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using an absolute transformation.
@@ -302,7 +302,7 @@ class NumericalTarget(Target, SerialMixin):
         match_value: float,
         *,
         mismatch_instead: bool = False,
-        match_mode: MatchMode | str = MatchMode.eq,
+        match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a quadratic transformation.
@@ -336,7 +336,7 @@ class NumericalTarget(Target, SerialMixin):
         exponent: int,
         *,
         mismatch_instead: bool = False,
-        match_mode: MatchMode | str = MatchMode.eq,
+        match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a power transformation.
@@ -373,7 +373,7 @@ class NumericalTarget(Target, SerialMixin):
         width: float | None = None,
         margins: Sequence[float] | None = None,
         mismatch_instead: bool = False,
-        match_mode: MatchMode | str = MatchMode.eq,
+        match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a triangular transformation.
@@ -432,7 +432,7 @@ class NumericalTarget(Target, SerialMixin):
         sigma: float,
         *,
         mismatch_instead: bool = False,
-        match_mode: MatchMode | str = MatchMode.eq,
+        match_mode: MatchMode | str = MatchMode.EQ,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target to match a given value using a bell transformation.
