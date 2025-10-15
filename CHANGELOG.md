@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   set to `True`, targets seek to avoid the given `match_value` instead of matching it.
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
   performance on regression tasks
+
+### Fixed
+- Random seed not entering simulation when explicitly passed to `simulate_scenarios`
  
 ## [0.14.1] - 2025-10-01
 ### Added
