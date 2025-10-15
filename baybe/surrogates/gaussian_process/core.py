@@ -164,9 +164,11 @@ class GaussianProcessSurrogate(Surrogate):
 
         # Covariance function
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
+        kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
         covar_module = kernel.to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+            ard_num_dims=kernel_num_dims,
             batch_shape=batch_shape,
+            active_dims=tuple(range(kernel_num_dims)),
         )
 
         # Likelihood model
