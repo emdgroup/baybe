@@ -1,5 +1,6 @@
 """Deprecation tests."""
 
+import os
 import warnings
 from itertools import pairwise
 from pathlib import Path
@@ -530,9 +531,18 @@ def test_deprecated_parallelization_environment_variables(monkeypatch, value: bo
         assert Settings(restore_environment=True).parallelize_simulations is value
 
 
+@pytest.fixture
+def set_cache_directory_env_var(monkeypatch, value: str):
+    """Remove the translated environment variable after the test."""
+    monkeypatch.setenv("BAYBE_CACHE_DIR", value)
+    yield
+    os.environ.pop("BAYBE_CACHE_DIRECTORY", None)
+
+
 @pytest.mark.parametrize(
     ("value", "expected"), [("test", Path("test")), ("", None)], ids=["set", "None"]
 )
+@pytest.mark.usefixtures("set_cache_directory_env_var")
 def test_deprecated_cache_environment_variables(monkeypatch, value: str, expected: str):
     """Using the deprecated cache environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_CACHE_DIR", value)
