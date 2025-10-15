@@ -105,8 +105,7 @@ class Transformation(SerialMixin, ABC):
         from baybe.targets.enum import MatchMode
         from baybe.transformations.basic import ClampingTransformation
 
-        if isinstance(direction, str):
-            direction = MatchMode(direction)
+        direction = MatchMode(direction)
 
         if direction is MatchMode.eq:
             return self
