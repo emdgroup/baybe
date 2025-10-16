@@ -6,6 +6,11 @@ from benchmarks.domains.aryl_halides.convergence_tl import (
     aryl_halide_CT_IM_tl_benchmark,
     aryl_halide_IP_CP_tl_benchmark,
 )
+from benchmarks.domains.aryl_halides.regression_tl import (
+    aryl_halide_CT_I_BM_tl_regr_benchmark,
+    aryl_halide_CT_IM_tl_regr_benchmark,
+    aryl_halide_IP_CP_tl_regr_benchmark,
+)
 from benchmarks.domains.direct_arylation.convergence import (
     direct_arylation_multi_batch_benchmark,
     direct_arylation_single_batch_benchmark,
@@ -50,6 +55,9 @@ BENCHMARKS: list[Benchmark] = [
     michalewicz_tl_continuous_benchmark,
     # Transfer-Learning Regression Benchmarks
     direct_arylation_temperature_tl_regr_benchmark,
+    aryl_halide_CT_I_BM_tl_regr_benchmark,
+    aryl_halide_CT_IM_tl_regr_benchmark,
+    aryl_halide_IP_CP_tl_regr_benchmark,
 ]
 
 
