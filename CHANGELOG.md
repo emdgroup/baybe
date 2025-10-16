@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   set to `True`, targets seek to avoid the given `match_value` instead of matching it.
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
   corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
-  the entire number region is a valid match, resulting in identical transformed target 
+  the entire associated interval is a valid match, resulting in identical transformed target 
   values as for the `match_value` itself.
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
   performance on regression tasks
