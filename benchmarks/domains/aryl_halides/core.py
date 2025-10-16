@@ -86,6 +86,11 @@ def make_initial_data(data: pd.DataFrame, source_tasks: Sequence[str]) -> pd.Dat
     return data[data["aryl_halide"].isin(source_tasks)]
 
 
+def make_objective() -> SingleTargetObjective:
+    """Create the objective for aryl halides benchmarks."""
+    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
+
+
 def aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
     source_tasks: Sequence[str],
@@ -113,7 +118,7 @@ def aryl_halide_tl_substance_benchmark(
 
     lookup = make_lookup(data, target_tasks)
     initial_data = make_initial_data(data, source_tasks)
-    objective = SingleTargetObjective(NumericalTarget(name="yield"))
+    objective = make_objective()
 
     tl_campaign = Campaign(
         searchspace=searchspace,
