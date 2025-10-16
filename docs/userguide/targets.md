@@ -281,7 +281,7 @@ target = NumericalTarget.match_quadratic(
 
 The `match_*` constructors also have the `match_mode` argument. The default `"="`
 corresponds to matching the exact `match_value`. But if you use `">="` or `"<="` you
-can indicate that the entire respective number region is a valid match. This enables to
+can indicate that the entire associated interval is a valid match. This enables to
 express desired outcomes like:
 - "The rate should be lower than 200 per minute, but it does not matter how much lower."
   (`NumericalTarget.match_absolute("rate", 200, match_mode="<=")`)
