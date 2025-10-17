@@ -1,15 +1,19 @@
 """Tests for augmentation of measurements."""
 
+import math
 from unittest.mock import patch
 
+import numpy as np
 import pytest
 from attrs import evolve
 from pandas.testing import assert_frame_equal
 
 from baybe.acquisition import qLogEI
+from baybe.constraints import (
+    DiscretePermutationInvarianceConstraint,
+)
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.symmetry import DependencySymmetry, PermutationSymmetry
 from baybe.utils.dataframe import create_fake_input
 
 
@@ -20,8 +24,8 @@ from baybe.utils.dataframe import create_fake_input
     "dep_augmentation", [True, False], ids=["dep_aug", "dep_noaug"]
 )
 @pytest.mark.parametrize(
-    "constraint_names", [["Constraint_2", "Constraint_11"]], ids=["c"]
-)  # constraints are not strictly needed for this test but reduce runtime
+    "constraint_names", [["Constraint_11", "Constraint_7"]], ids=["c"]
+)
 @pytest.mark.parametrize(
     "parameter_names",
     [
@@ -32,7 +36,6 @@ from baybe.utils.dataframe import create_fake_input
             "Fraction_1",
             "Fraction_2",
             "Fraction_3",
-            "Switch_1",
         ]
     ],
     ids=["p"],
@@ -55,39 +58,49 @@ def test_measurement_augmentation(
 
     with patch.object(qLogEI, "to_botorch", side_effect=spy, autospec=True):
         # Basic setup
-        s1 = DependencySymmetry(
-            parameters=constraints[0].parameters,
-            conditions=constraints[0].conditions,
-            affected_parameters=constraints[0].affected_parameters,
-            use_data_augmentation=dep_augmentation,
+        c_perm = next(
+            c
+            for c in constraints
+            if isinstance(c, DiscretePermutationInvarianceConstraint)
         )
-        s2 = PermutationSymmetry(
-            parameters=constraints[1].parameters,
-            use_data_augmentation=perm_augmentation,
-        )
+        c_dep = c_perm.dependencies
+        s_perm = c_perm.to_symmetry(perm_augmentation)
+        s_dep = c_dep.to_symmetry(dep_augmentation)
         searchspace = SearchSpace.from_product(parameters, constraints)
-        surrogate = evolve(surrogate_model, symmetries=[s1, s2])
-        acqf = qLogEI()
+        surrogate = evolve(surrogate_model, symmetries=[s_dep, s_perm])
         recommender = BotorchRecommender(
-            surrogate_model=surrogate, acquisition_function=acqf
+            surrogate_model=surrogate, acquisition_function=qLogEI()
         )
 
-        # Create measurements which would be augmented
-        measurements = create_fake_input(parameters, objective.targets, 4)
-        measurements.loc[:, "Switch_1"] = ["on", "on", "off", "off"]
-        measurements.loc[:, "Fraction_1"] = [0.0, 100.0, 0.0, 100.0]
-
-        # Perform call
-        recommender.recommend(2, searchspace, objective, measurements)
+        # Perform call and watch measurements
+        measurements = create_fake_input(parameters, objective.targets, 5)
+        recommender.recommend(1, searchspace, objective, measurements)
         measurements_passed = called_args_list[0][0][3]  # take 4th arg from first call
 
+        # Create expectation
+        # We calculate how many degenerate points the augmentation should create:
+        #  - n_dep: Product of the number of active values for all affected parameters
+        #  - n_perm: Number of permutations possible
+        #  - If augmentation is turned off, the corresponding factor becomes 1
+        # We expect a given row to produce n_perm * (n_dep^k) points, where k is the
+        # number of "Fraction_*" parameters having the "causing" value 0.0. The total
+        # number of expected points after augmentation is the sum over the expectations
+        # for all rows.
+        dep_affected = [p for p in parameters if p.name in c_dep.affected_parameters[0]]
+        n_dep = (
+            math.prod(len(p.active_values) for p in dep_affected)
+            if dep_augmentation
+            else 1
+        )
+        n_perm = (  # number of permutations
+            math.prod(range(1, len(c_perm.parameters) + 1)) if perm_augmentation else 1
+        )
+        n_expected = 0
+        for _, row in measurements.iterrows():
+            n_expected += n_perm * np.pow(n_dep, row[c_dep.parameters].eq(0).sum())
+
         # Check expectation
-        # If any of the symmetries consider augmentation, the measurements passed to
-        # `to_botorch` should be larger than the original measurements - otherwise,
-        # they should be identical
-        len1 = len(measurements)
-        len2 = len(measurements_passed)
         if any([dep_augmentation, perm_augmentation]):
-            assert len1 < len2, (len1, len2)
+            assert len(measurements_passed) == n_expected
         else:
             assert_frame_equal(measurements, measurements_passed)
