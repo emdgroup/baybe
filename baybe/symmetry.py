@@ -20,7 +20,7 @@ from baybe.utils.augmentation import (
 )
 
 if TYPE_CHECKING:
-    from baybe.parameters.base import DiscreteParameter, Parameter
+    from baybe.parameters.base import Parameter
 
 
 @define(frozen=True)
@@ -83,8 +83,11 @@ class PermutationSymmetry(Symmetry):
     $f(x,y) = f(y,x)$.
     """
 
+    # TODO: Validation
+    #  - Each entry in copermuted_groups must have the same length as parameters
+
     # Object variables
-    copermuted_parameters: list[str] = field(factory=list)
+    copermuted_groups: tuple[tuple[str, ...], ...] = field(factory=tuple)
     """The list of parameters used for the constraint."""
 
     @override
@@ -93,19 +96,18 @@ class PermutationSymmetry(Symmetry):
     ) -> pd.DataFrame:
         # See base class.
 
-        # Associated parameters can come from dependencies and need to be
-        # co-permuted in the same manner as the parameters of this
-        # constraint.
+        if not self.consider_data_augmentation:
+            return df
 
-        # This creates groups like (("p1", "a1"), ("p2", "a2"), ...) if the
-        # parameters "p_k" have associated parameters "a_k". It results in
-        # just (("p1",), ("p2",), ...) if there are no associated
-        # parameters.
-        groups = tuple(
-            zip(self.parameters, self.copermuted_parameters, strict=True)
-            if self.copermuted_parameters
-            else zip(self.parameters)
-        )
+        # The input could look like:
+        #  - params = ["p_1", "p_2", ...]
+        #  - copermuted_groups = [["a_1", "a_2", ...], ["b_1", "b_2", ...]]
+        # indicating that the groups "a_k" and "b_k" should be permuted in the same way
+        # as the group "p_k".
+        # We create `groups` to look like (("p1", "a1", "b1"), ("p2", "a2", "b2"), ...).
+        # It results in just (("p1",), ("p2",), ...) if there are no copermuted groups.
+        groups = tuple(zip(self.parameters, *self.copermuted_groups, strict=True))
+
         df = df_apply_permutation_augmentation(df, groups)
 
         return df
@@ -120,6 +122,8 @@ class MirrorSymmetry(Symmetry):
     $f(x,y) = f(-x,y)$.
     """
 
+    # TODO: Validation
+    #  - Only numerical parameters are supported
     @override
     def augment_measurements(
         self, df: pd.DataFrame, _: Iterable[Parameter]
@@ -140,6 +144,8 @@ class DependencySymmetry(Symmetry):
     parameter y only matters if parameter x has the value 'on'.".
     """
 
+    # TODO: Validation
+    #  - Only discrete parameters are supported here due to the conditions
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -169,6 +175,10 @@ class DependencySymmetry(Symmetry):
         self, df: pd.DataFrame, parameters: Iterable[Parameter]
     ) -> pd.DataFrame:
         # See base class.
+        if not self.consider_data_augmentation:
+            return df
+
+        from baybe.parameters.base import DiscreteParameter
 
         for param_name, cond, affected_param_names in zip(
             self.parameters, self.conditions, self.affected_parameters
