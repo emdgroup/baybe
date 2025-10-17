@@ -29,6 +29,8 @@ from baybe.utils.basic import Dummy
 if TYPE_CHECKING:
     import polars as pl
 
+    from baybe.symmetry import DependencySymmetry, PermutationSymmetry
+
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
@@ -268,6 +270,17 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
+    def to_symmetry(self, consider_data_augmentation=True) -> DependencySymmetry:
+        """Convert to a :class:`~baybe.symmetry.DependencySymmetry`."""
+        from baybe.symmetry import DependencySymmetry
+
+        return DependencySymmetry(
+            parameters=self.parameters,
+            conditions=self.conditions,
+            affected_parameters=self.affected_parameters,
+            consider_data_augmentation=consider_data_augmentation,
+        )
+
 
 @define
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
@@ -329,6 +342,18 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+    def to_symmetry(self, consider_data_augmentation=True) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetry.PermutationSymmetry`."""
+        from baybe.symmetry import PermutationSymmetry
+
+        return PermutationSymmetry(
+            parameters=self.parameters,
+            copermuted_groups=(tuple(self.dependencies.parameters),)
+            if self.dependencies
+            else tuple(),
+            consider_data_augmentation=consider_data_augmentation,
+        )
 
 
 @define
