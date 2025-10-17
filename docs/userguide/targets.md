@@ -256,14 +256,6 @@ assert t_power == t_quad
 ❌ Cannot be used in situations where normalized targets are required
 ```
 
-#### Custom Transformation
-If none of the built-in constructors fit your needs because you need more fine-grained
-control over the matching behavior (e.g. when there are multiple acceptable set points),
-you always have the fallback option to create a
-{class}`~baybe.transformations.basic.CustomTransformation` that implements the
-corresponding logic and pass it to the regular
-{class}`~baybe.targets.numerical.NumericalTarget` constructor.
-
 #### Advanced Matching Options
 Instead of seeking to match a certain value, you might want to avoid that value 
 altogether. The `match_*` constructors have the `mismatch_instead` argument for this 
@@ -275,43 +267,54 @@ purpose. If set to `True`, the resulting target will seek to avoid the specified
 target = NumericalTarget.match_quadratic(
     name="Particle_Size",
     match_value=50,
-    mismatch_instead=True,  # Try to avoid particle size 50
+    mismatch_instead=True,  # try to avoid particle size 50
 )
 ```
 
 The `match_*` constructors also have the `match_mode` argument. The default `"="`
-corresponds to matching the exact `match_value`. But if you use `">="` or `"<="` you
+corresponds to matching the exact `match_value`. But if you use `">="` or `"<="`, you
 can indicate that the entire associated interval is a valid match. This enables to
 express desired outcomes like:
 - "The rate should be lower than 200 per minute, but it does not matter how much lower."
-  (`NumericalTarget.match_absolute("rate", 200, match_mode="<=")`)
+  ```python
+  NumericalTarget.match_absolute("rate", 200, match_mode="<=")
+  ```
 - "The yield should be at least 80%, but it does not matter if it's even higher."
-  (`NumericalTarget.match_absolute("yield", 80, match_mode=">=")`)
+  ```python
+  NumericalTarget.match_absolute("yield", 80, match_mode=">=")
+  ```
 
 Behind the scenes, BayBE transforms the targets in a way such that all 
 values inside the region specified by the operator are considered equally good (or bad
 if `mismatch_instead=True`). If the value of the target beyond the `match_value`
 matters, it is rather a case for traditional maximization / minimization without match
-considerations.
+considerations or applying [custom transformations](#custom-transformation).
 
 **Example**
 ```python
 target1 = NumericalTarget.match_absolute(
-    name="Yield",
+    name="yield",
     match_value=80,
-    match_mode=">=",  # Yield should be over 80. 95 is *not* considered better than 80
+    match_mode=">=",  # yield should be over 80. 95 is *not* considered better than 80
 )
 target2 = NumericalTarget(
-    name="Yield"  # Yield should be as high as possible, 95 is considered better than 80
+    name="yield"  # yield should be as high as possible, 95 is considered better than 80
 )
 ```
 
-Below we illustrate the overall transformations resulting from different combinations
+Below, we illustrate the overall transformations resulting from different combinations
 of the arguments for the exemplary case of
 {meth}`~baybe.targets.numerical.NumericalTarget.match_bell`:
 
 ![Advanced_Matching_Options](../_static/targets/matching.svg)
 
+#### Custom Transformation
+If none of the built-in constructors fit your needs because you need more fine-grained
+control over the matching behavior (e.g. when there are multiple acceptable set points),
+you always have the fallback option to create a
+{class}`~baybe.transformations.basic.CustomTransformation` that implements the
+corresponding logic and pass it to the regular
+{class}`~baybe.targets.numerical.NumericalTarget` constructor.
 
 ### Target Normalization
 Sometimes, it is necessary to normalize targets to the interval [0, 1] – especially when
