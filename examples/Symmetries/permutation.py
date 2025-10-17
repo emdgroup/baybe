@@ -1,7 +1,7 @@
 # # Optimizing a Function that is Permutation Invariant
 
 # In this example, we explore BayBE's capabilities for handling optimization problems
-# with symmetry via automatic data augmentation.
+# with symmetry via automatic data augmentation and / or constraint.
 
 # ## Imports
 
@@ -40,25 +40,16 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
 # (a common way of also resulting in permutation invariance) and have multiple minima.
 # In practice, permutation invariance can arise e.g. for
 # [mixtures when modeled with a slot-based approach](/examples/Mixtures/slot_based).
-# There are other kinds of invariance as well, e.g. expressed by a
-# {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint` (not part of this
-# example).
+# BayBE supports other kinds of symmetries as well (not part of this example).
 
 # There are several ways to handle such symmetries. The simplest one is
-# to augment your data. In the case of permutation-invariance, augmentation means for
-# each measurement (x,y) you also add a measurement where you just switch the
-# numbers: (y,x). This has the advantage that it is fully model-agnostic, but might
+# to augment your data. In the case of permutation invariance, augmentation means for
+# each measurement (x,y) you also add a measurement with switched values: (y,x).
+# This has the advantage that it is fully model-agnostic, but might
 # come at the expense of increased training time and efficiency due to the larger amount
-# of effective training points. Other methods, such as using special kernels for a GP,
-# will not be discussed in this example.
+# of effective training points. Other ways of treating symmetry, such as using special
+# kernels for a GP, will not be discussed in this example.
 
-# BayBE can automatically perform this augmentation if configured to do so.
-# Specifically, surrogate models and some constraints offer the argument
-# {attr}`~baybe.constraints.base.Constraint.consider_data_augmentation` /
-# {attr}`~baybe.surrogates.base.Surrogate.consider_data_augmentation`
-# respectively when initialized. If a surrogate for which this is
-# enabled encounters one or more constraints for which this is enabled, BayBE will
-# automatically augment measurements internally before performing the model fit.
 
 # ## The Function
 
@@ -107,20 +98,20 @@ axs[0].set_ylabel("y");
 # local minima.
 
 # Such a situation can be challenging for optimization algorithms if no information
-# about the symmetry is considered. For instance, if no
+# about the invariance is considered. For instance, if no
 # {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint` was used
 # at all, BayBE would search for the optima across the entire 2D space. But it is clear
 # that the search can be restricted to the lower (or equivalently the upper) triangle
 # of the searchspace. This is exactly what
 # {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint` does:
 # Remove entries that are "duplicated" in the sense of already being represented by
-# another point due to the symmetry.
+# another invariant point.
 
-# If the constraint is additionally configured with `consider_data_augmentation=True`,
-# the surrogate model will be fit with an extended set of points, including the
-# augmented ones. So as a user, you don't have to generate permutations and add them
-# manually. Depending on the surrogate model, this might have differing strengths of
-# impact. We can expect a strong effect for tree-based models because their splits are
+# If the surrogate is additionally configured with `symmetries` that use
+# `use_data_augmentation=True`, the model will be fit with an extended set of points,
+# including augmented ones. So as a user, you don't have to generate permutations and
+# add them manually. Depending on the surrogate model, this might have different
+# impacts. We can expect a strong effect for tree-based models because their splits are
 # always parallel to the parameter axes. Thus, without augmented measurements, it is
 # easy to fall into suboptimal splits and overfit. We illustrate this by using the
 # {class}`~baybe.surrogates.ngboost.NGBoostSurrogate`.
@@ -131,35 +122,16 @@ p1 = NumericalDiscreteParameter("x", np.linspace(LBOUND, UBOUND, 51))
 p2 = NumericalDiscreteParameter("y", np.linspace(LBOUND, UBOUND, 51))
 objective = NumericalTarget("f", minimize=True).to_objective()
 
-recommender = TwoPhaseMetaRecommender(
-    recommender=BotorchRecommender(
-        surrogate_model=NGBoostSurrogate(
-            consider_data_augmentation=True,  # this is the default
-        )
-    )
-)
+# We set up a constrained and unconstrained searchspace to demonstrate the impact of
+# the constraint on optimization performance.
 
-# We set up a few variants of constraints to examine the optimization performance with
-# and without augmentation. We will also look at a campaign not having the permutation
-# constraint at all.
-
-constraint_aug = DiscretePermutationInvarianceConstraint(
-    ["x", "y"],
-    consider_data_augmentation=True,  # this is the default
-)
-constraint_noaug = DiscretePermutationInvarianceConstraint(
-    ["x", "y"], consider_data_augmentation=False
-)
-searchspace_noinv = SearchSpace.from_product([p1, p2])
-searchspace_inv_aug = SearchSpace.from_product([p1, p2], [constraint_aug])
-searchspace_inv_noaug = SearchSpace.from_product([p1, p2], [constraint_noaug])
+constraint = DiscretePermutationInvarianceConstraint(["x", "y"])
+searchspace_plain = SearchSpace.from_product([p1, p2])
+searchspace_constrained = SearchSpace.from_product([p1, p2], [constraint])
 
 print("Number of Points in the Searchspace")
-print(f"{'Without Constraint:':<35} {len(searchspace_noinv.discrete.exp_rep)}")
-print(f"{'With Constraint:':<35} {len(searchspace_inv_noaug.discrete.exp_rep)}")
-print(
-    f"{'With Constraint and Augmentation:':<35} {len(searchspace_inv_aug.discrete.exp_rep)}"
-)
+print(f"{'Without Constraint:':<35} {len(searchspace_plain.discrete.exp_rep)}")
+print(f"{'With Constraint:':<35} {len(searchspace_constrained.discrete.exp_rep)}")
 
 # We can see that the searchspace without the constraint has more points than the other
 # two. This is the effect of the utilized
@@ -168,17 +140,39 @@ print(
 # the optimization will only be performed within the lower triangle of the first
 # subplot.
 
-campaign_noinv = Campaign(searchspace_noinv, objective, recommender)
-campaign_inv_aug = Campaign(searchspace_inv_aug, objective, recommender)
-campaign_inv_noaug = Campaign(searchspace_inv_noaug, objective, recommender)
+# BayBE can automatically perform this augmentation if configured to do so.
+# Specifically, surrogate models have the `Surrogate.symmetries` attribute. If any of
+# these symmetries has `use_data_augmentation=True` (enabled by default),
+# BayBE will automatically augment measurements internally before performing the model
+# fit. To construct symmetries quickly, we use the `to_symmetry` method of the
+# constraint.
+
+symmetry = constraint.to_symmetry(use_data_augmentation=True)
+recommender_plain = TwoPhaseMetaRecommender(
+    recommender=BotorchRecommender(surrogate_model=NGBoostSurrogate())
+)
+recommender_symmetric = TwoPhaseMetaRecommender(
+    recommender=BotorchRecommender(
+        surrogate_model=NGBoostSurrogate(symmetries=[symmetry])
+    )
+)
+
+# The combination of constraint and augmentation settings resutls in four different
+# campaigns:
+
+campaign_plain = Campaign(searchspace_plain, objective, recommender_plain)
+campaign_c = Campaign(searchspace_constrained, objective, recommender_plain)
+campaign_s = Campaign(searchspace_plain, objective, recommender_symmetric)
+campaign_cs = Campaign(searchspace_constrained, objective, recommender_symmetric)
 
 # ## Simulating the Optimization Loop
 
 
 scenarios = {
-    "No Invariance": campaign_noinv,
-    "Invariance (no augmentation)": campaign_inv_noaug,
-    "Invariance (augmentation)": campaign_inv_aug,
+    "Unconstrained, Unsymmetric": campaign_plain,
+    "Constrained, Unsymmetric": campaign_c,
+    "Unconstrained, Symmetric": campaign_s,
+    "Constrained, Symmetric": campaign_cs,
 }
 
 results = simulate_scenarios(
@@ -211,12 +205,14 @@ axs[1].set_title("Minimization Performance")
 plt.tight_layout()
 plt.show()
 
-# We can see that the campaigns utilizing the permutation invariance constraint
-# perform better than the one without. This can be attributed simply to the reduced
-# number of searchspace points they operate on.
+# We find that the campaigns utilizing the permutation invariance constraint
+# perform better than the ones without. This can be attributed simply to the reduced
+# number of searchspace points they operate on. However, this effect is rather minor
+# compared to the effect of symmetry.
 
 # Furthermore, there is a strong impact on whether data augmentation is used or not,
 # the effect we expected for a tree-based surrogate model. Indeed, the campaign with
 # constraint but without augmentation is barely better than the campaign not utilizing
 # the constraint at all. Conversely, the data-augmented campaign has a clearly superior
-# performance.
+# performance. The best result is achieved by using both constraints and data
+# augmentation.
