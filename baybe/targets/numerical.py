@@ -11,7 +11,7 @@ from typing import Any, cast
 import pandas as pd
 from attrs import define, evolve, field
 from attrs.validators import instance_of
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
@@ -596,9 +596,14 @@ class NumericalTarget(Target, SerialMixin):
         """Hold the target value beyond a certain abscissa value."""
         direction = MatchMode(direction)
 
-        return evolve(  # type: ignore[call-arg]
-            self, transformation=self.transformation._hold_output(abscissa, direction)
-        )
+        if direction is MatchMode.EQ:
+            return self
+        if direction is MatchMode.LE:
+            return self.hold_output_left_from(abscissa)
+        if direction is MatchMode.GE:
+            return self.hold_output_right_from(abscissa)
+
+        assert_never(direction)
 
     def hold_output_left_from(self, abscissa: float, /) -> NumericalTarget:
         """Hold the output of the target left from a given abscissa value."""
