@@ -59,11 +59,11 @@ def test_measurement_augmentation(
             parameters=constraints[0].parameters,
             conditions=constraints[0].conditions,
             affected_parameters=constraints[0].affected_parameters,
-            consider_data_augmentation=dep_augmentation,
+            use_data_augmentation=dep_augmentation,
         )
         s2 = PermutationSymmetry(
             parameters=constraints[1].parameters,
-            consider_data_augmentation=perm_augmentation,
+            use_data_augmentation=perm_augmentation,
         )
         searchspace = SearchSpace.from_product(parameters, constraints)
         surrogate = evolve(surrogate_model, symmetries=[s1, s2])

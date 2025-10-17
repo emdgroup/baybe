@@ -35,7 +35,7 @@ class Symmetry(SerialMixin, ABC):
     parameters: list[str] = field(validator=min_len(1))
     """The list of parameters used for the constraint."""
 
-    consider_data_augmentation: bool = field(
+    use_data_augmentation: bool = field(
         default=True, validator=instance_of(bool), kw_only=True
     )
     """Flag indicating whether data augmentation would be used with surrogates that
@@ -96,7 +96,7 @@ class PermutationSymmetry(Symmetry):
     ) -> pd.DataFrame:
         # See base class.
 
-        if not self.consider_data_augmentation:
+        if not self.use_data_augmentation:
             return df
 
         # The input could look like:
@@ -175,7 +175,7 @@ class DependencySymmetry(Symmetry):
         self, df: pd.DataFrame, parameters: Iterable[Parameter]
     ) -> pd.DataFrame:
         # See base class.
-        if not self.consider_data_augmentation:
+        if not self.use_data_augmentation:
             return df
 
         from baybe.parameters.base import DiscreteParameter

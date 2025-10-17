@@ -108,13 +108,6 @@ class GaussianProcessSurrogate(Surrogate):
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
     into a :class:`.kernel_factory.PlainKernelFactory`."""
 
-    # TODO: Default set to True until invariant kernels have been implemented, then
-    #  the default should become False
-    consider_data_augmentation: bool = field(
-        default=True, validator=instance_of(bool), kw_only=True
-    )
-    # See base class
-
     # TODO: type should be Optional[botorch.models.SingleTaskGP] but is currently
     #   omitted due to: https://github.com/python-attrs/cattrs/issues/531
     _model = field(init=False, default=None, eq=False)

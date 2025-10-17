@@ -341,7 +341,6 @@ DiscreteDependenciesConstraint(
         ["Solvent", "Fraction"],  # parameters affected by Switch_1
         ["Frame_1", "Frame_2"],  # parameters affected by Switch_2
     ],
-    consider_data_augmentation=False,  # optional, data augmentation will be turned off
 )
 ```
 
@@ -423,7 +422,6 @@ DiscretePermutationInvarianceConstraint(
         ],
         affected_parameters=[["Solvent_1"], ["Solvent_2"], ["Solvent_3"]],
     ),
-    consider_data_augmentation=False,  # optional, data augmentation will be turned off
 )
 ```
 
