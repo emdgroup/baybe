@@ -82,7 +82,15 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 if dtype == "object":
                     dtype = tensor_to_numpy_dtype_mapping[DTypeFloatTorch]
 
-                return torch.from_numpy(x.to_numpy(dtype=dtype)).to(DTypeFloatTorch)
+                # The `contiguous` call brings us closest to getting reproducible
+                # results downstream in the torch ecosystem
+                # https://github.com/meta-pytorch/botorch/issues/3046
+                return (
+                    torch.from_numpy(x.to_numpy(dtype=dtype))
+                    .to(DTypeFloatTorch)
+                    .contiguous()
+                )
+
         assert_never(x)
 
     converted = tuple(_convert(xi) for xi in x)
