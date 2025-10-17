@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import numpy as np
 import pandas as pd
+from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.parameters.base import Parameter
@@ -42,30 +43,54 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
     Returns:
         The provided inputs represented as tensor(s).
     """
-    # FIXME This function seems to trigger a problem when some columns in either of
-    #  the dfs have a dtype other than int or float (e.g. object, bool). This can
-    #  weirdly happen, even if all values are numeric, e.g. when a target column is
-    #  looked up from a df in simulation, it can have dtype object even if it's all
-    #  floats. As a simple fix (this seems to be the most reasonable place to take
-    #  care of this) df.values has been changed to df.values.astype(float),
-    #  even though this seems like double casting here.
     import torch
 
     from baybe.utils.torch import DTypeFloatTorch
 
-    out = tuple(
-        torch.tensor(xi, dtype=DTypeFloatTorch)
-        if isinstance(xi, (int, float))
-        else torch.from_numpy(
-            (xi.values if isinstance(xi, (pd.Series, pd.DataFrame)) else xi).astype(
-                DTypeFloatNumpy
-            )
-        ).to(DTypeFloatTorch)
-        for xi in x
-    )
+    tensor_to_numpy_dtype_mapping: dict[torch.dtype, np.dtype[Any]] = {
+        torch.float32: np.dtype("float32"),
+        torch.float64: np.dtype("float64"),
+    }
+
+    def _convert(x: _ConvertibleToTensor, /) -> Tensor:
+        match x:
+            case int() | float():
+                return torch.tensor(x, dtype=DTypeFloatTorch)
+            case np.ndarray():
+                return torch.from_numpy(x).to(DTypeFloatTorch)
+            case pd.Series() | pd.DataFrame():
+                if x.empty:
+                    return torch.empty(x.shape, dtype=DTypeFloatTorch)
+
+                # We first coerce to the minimal common dtype because the
+                # dataframe-to-numpy conversion might otherwise return an array of type
+                # `object` in case of mixed dataframe types, which would cause the torch
+                # conversion to fail. This happens, for example, when the dataframe
+                # contains one Boolean and one integer column.
+                dtype = (
+                    np.result_type(*x.dtypes)
+                    if isinstance(x, pd.DataFrame)
+                    else x.dtype
+                )
+
+                # FIXME:
+                # This step should not be necessary because an `object` dtype should
+                # never occur (since tensor conversion is only ever called with
+                # numerical data). However, third-party code might still do unintended
+                # column dtype conversion. Currently, shap is one such example.
+                # Hence, we keep this as a safety net for now.
+                if dtype == "object":
+                    dtype = tensor_to_numpy_dtype_mapping[DTypeFloatTorch]
+
+                return torch.from_numpy(x.to_numpy(dtype=dtype)).to(DTypeFloatTorch)
+        assert_never(x)
+
+    converted = tuple(_convert(xi) for xi in x)
+
     if len(x) == 1:
-        out = out[0]
-    return out
+        return converted[0]
+
+    return converted
 
 
 def add_fake_measurements(
