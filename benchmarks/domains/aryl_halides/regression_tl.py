@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from functools import partial
+
 import pandas as pd
 
 from benchmarks.definition import (
@@ -17,17 +19,24 @@ from benchmarks.domains.aryl_halides.core import (
 )
 
 
-def aryl_halide_CT_I_BM_tl_regr(
+def _aryl_halide_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
+    source_tasks: list[str],
+    target_tasks: list[str],
 ) -> pd.DataFrame:
-    """Benchmark function for comparing regression performance of GP vs TL models.
+    """General benchmark function for aryl halide transfer learning regression.
 
-    This benchmark uses different aryl halide substrates as tasks:
-    - Source tasks: 1-chloro-4-(trifluoromethyl)benzene + 2-iodopyridine
-    - Target task: 1-iodo-4-methoxybenzene
+    This benchmark compares regression performance of GP vs TL models using different
+    aryl halide substrates as tasks. It trains models with varying amounts of source
+    and target data, and evaluates their predictive performance on held-out target data.
 
-    It trains models with varying amounts of source and target data, and evaluates
-    their predictive performance on held-out target data.
+    Three different task combinations:
+    - CT_I_BM: Source tasks ["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"]
+               → Target task ["1-iodo-4-methoxybenzene"]
+    - CT_IM: Source task ["1-chloro-4-(trifluoromethyl)benzene"]
+             → Target task ["1-iodo-4-methoxybenzene"]
+    - IP_CP: Source task ["2-iodopyridine"]
+             → Target task ["3-chloropyridine"]
 
     Key characteristics:
     • Parameters:
@@ -41,17 +50,19 @@ def aryl_halide_CT_I_BM_tl_regr(
 
     Args:
         settings: The benchmark settings.
+        source_tasks: List of source task names (aryl halide substrates).
+        target_tasks: List of target task names (aryl halide substrates).
 
     Returns:
-        DataFrame with benchmark results
+        DataFrame with benchmark results.
     """
 
     def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool):
         if use_task_parameter:
             return make_searchspace(
                 data=data,
-                source_tasks=["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],
-                target_tasks=["1-iodo-4-methoxybenzene"],
+                source_tasks=source_tasks,
+                target_tasks=target_tasks,
             )
         else:
             return make_searchspace(data=data)
@@ -64,98 +75,24 @@ def aryl_halide_CT_I_BM_tl_regr(
     )
 
 
-def aryl_halide_CT_IM_tl_regr(
-    settings: TransferLearningRegressionBenchmarkSettings,
-) -> pd.DataFrame:
-    """Benchmark function for comparing regression performance of GP vs TL models.
+# Create the three specific benchmark functions using partial
+aryl_halide_CT_I_BM_tl_regr = partial(
+    _aryl_halide_tl_regr,
+    source_tasks=["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],
+    target_tasks=["1-iodo-4-methoxybenzene"],
+)
 
-    This benchmark uses different aryl halide substrates as tasks:
-    - Source task: 1-chloro-4-(trifluoromethyl)benzene
-    - Target task: 1-iodo-4-methoxybenzene
+aryl_halide_CT_IM_tl_regr = partial(
+    _aryl_halide_tl_regr,
+    source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
+    target_tasks=["1-iodo-4-methoxybenzene"],
+)
 
-    It trains models with varying amounts of source and target data, and evaluates
-    their predictive performance on held-out target data.
-
-    Key characteristics:
-    • Parameters:
-      - Base: Substance with MORDRED encoding
-      - Ligand: Substance with MORDRED encoding
-      - Additive: Substance with MORDRED encoding
-      - aryl_halide: Task parameter
-    • Target: Reaction yield (continuous)
-    • Objective: Maximization
-    • Compares TL models (SourcePrior, MHGP, SHGP, Index Kernel) vs vanilla GP
-
-    Args:
-        settings: The benchmark settings.
-
-    Returns:
-        DataFrame with benchmark results
-    """
-
-    def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool):
-        if use_task_parameter:
-            return make_searchspace(
-                data=data,
-                source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
-                target_tasks=["1-iodo-4-methoxybenzene"],
-            )
-        else:
-            return make_searchspace(data=data)
-
-    return run_tl_regression_benchmark(
-        settings=settings,
-        data_loader=load_data,
-        searchspace_factory=make_searchspace_wrapper,
-        objective_factory=make_objective,
-    )
-
-
-def aryl_halide_IP_CP_tl_regr(
-    settings: TransferLearningRegressionBenchmarkSettings,
-) -> pd.DataFrame:
-    """Benchmark function for comparing regression performance of GP vs TL models.
-
-    This benchmark uses different aryl halide substrates as tasks:
-    - Source task: 2-iodopyridine
-    - Target task: 3-chloropyridine
-
-    It trains models with varying amounts of source and target data, and evaluates
-    their predictive performance on held-out target data.
-
-    Key characteristics:
-    • Parameters:
-      - Base: Substance with MORDRED encoding
-      - Ligand: Substance with MORDRED encoding
-      - Additive: Substance with MORDRED encoding
-      - aryl_halide: Task parameter
-    • Target: Reaction yield (continuous)
-    • Objective: Maximization
-    • Compares TL models (SourcePrior, MHGP, SHGP, Index Kernel) vs vanilla GP
-
-    Args:
-        settings: The benchmark settings.
-
-    Returns:
-        DataFrame with benchmark results
-    """
-
-    def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool):
-        if use_task_parameter:
-            return make_searchspace(
-                data=data,
-                source_tasks=["2-iodopyridine"],
-                target_tasks=["3-chloropyridine"],
-            )
-        else:
-            return make_searchspace(data=data)
-
-    return run_tl_regression_benchmark(
-        settings=settings,
-        data_loader=load_data,
-        searchspace_factory=make_searchspace_wrapper,
-        objective_factory=make_objective,
-    )
+aryl_halide_IP_CP_tl_regr = partial(
+    _aryl_halide_tl_regr,
+    source_tasks=["2-iodopyridine"],
+    target_tasks=["3-chloropyridine"],
+)
 
 
 # Benchmark configurations
