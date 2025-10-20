@@ -47,7 +47,7 @@ def test_simulate_scenarios_structure(campaign, batch_size):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2
     n_mc_iterations = 2
-    simulation_random_seed = 1337
+    simulation_random_seed = 59234  # <-- uncommon number to avoid clash with default
     scenarios = {"test": campaign}
 
     result = simulate_scenarios(
