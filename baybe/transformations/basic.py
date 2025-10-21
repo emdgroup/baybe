@@ -72,6 +72,11 @@ class IdentityTransformation(MonotonicTransformation):
             return other
         return NotImplemented
 
+    if TYPE_CHECKING:
+
+        @override
+        def negate(self) -> IdentityTransformation: ...
+
 
 @define(frozen=True, init=False)
 class ClampingTransformation(MonotonicTransformation):
@@ -174,6 +179,11 @@ class AffineTransformation(MonotonicTransformation):
             return x.new_full(x.shape, fill_value=self.shift)
 
         return x * self.factor + self.shift
+
+    if TYPE_CHECKING:
+
+        @override
+        def negate(self) -> AffineTransformation: ...
 
 
 @_image_equals_codomain
