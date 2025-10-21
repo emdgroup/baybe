@@ -10,7 +10,7 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
@@ -81,7 +81,7 @@ class SingleTargetObjective(Objective):
                 (tr := t.transformation), (IdentityTransformation, AffineTransformation)
             )
         ):
-            raise IncompatibilityError(
+            raise NonGaussianityError(
                 f"Converting an objective of type '{type(self).__name__}' is only "
                 f"possible when the transformation result is Gaussian, that is, "
                 f"when the target is of type '{NumericalTarget.__name__}' and the "

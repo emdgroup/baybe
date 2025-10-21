@@ -28,7 +28,11 @@ from baybe.acquisition.acqfs import (
 )
 from baybe.acquisition.base import AcquisitionFunction, _get_botorch_acqf_class
 from baybe.acquisition.utils import make_partitioning
-from baybe.exceptions import IncompatibilityError, IncompleteMeasurementsError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompleteMeasurementsError,
+    NonGaussianityError,
+)
 from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
@@ -198,9 +202,18 @@ class BotorchAcquisitionFunctionBuilder:
         #   all other cases.
 
         if self.acqf.is_analytic:
-            self._args.posterior_transform = (
-                self.objective.to_botorch_posterior_transform()
-            )
+            try:
+                transform = self.objective.to_botorch_posterior_transform()
+            except NonGaussianityError as ex:
+                raise IncompatibilityError(
+                    f"The selected analytical acquisition function "
+                    f"'{type(self.acqf).__name__}' is incompatible with the "
+                    f"assigned objective '{type(self.objective).__name__}' "
+                    f"because the former requires a Gaussian distribution and the "
+                    f"latter is configured to produce non-Gaussian outcomes."
+                ) from ex
+
+            self._args.posterior_transform = transform
         else:
             # TODO: Enable once clarified:
             # https://github.com/pytorch/botorch/discussions/2849
