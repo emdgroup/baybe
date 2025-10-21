@@ -256,7 +256,10 @@ class DesirabilityObjective(Objective):
         return ChainedMCObjective(inner, outer)
 
     @override
-    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform | None:
+        if self.as_pre_transformation:
+            return None
+
         if self.scalarizer is not Scalarizer.MEAN or not (
             is_all_instance(targets := self.targets, NumericalTarget)
             and is_all_instance(
