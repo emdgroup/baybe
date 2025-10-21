@@ -20,13 +20,17 @@ from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.numerical import UncertainBool
-from baybe.utils.basic import to_tuple
+from baybe.transformations.basic import AffineTransformation, IdentityTransformation
+from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
+    from botorch.acquisition.objective import (
+        MCAcquisitionObjective,
+        ScalarizedPosteriorTransform,
+    )
     from torch import Tensor
 
 _OUTPUT_NAME = "Desirability"
@@ -251,6 +255,51 @@ class DesirabilityObjective(Objective):
 
         inner = super().to_botorch()
         return ChainedMCObjective(inner, outer)
+
+    @override
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
+        if self.scalarizer is not Scalarizer.MEAN or not (
+            is_all_instance(targets := self.targets, NumericalTarget)
+            and is_all_instance(
+                transformations := [t.transformation for t in targets],
+                (IdentityTransformation, AffineTransformation),
+            )
+        ):
+            raise IncompatibilityError(
+                f"Converting an objective of type '{type(self).__name__}' is only "
+                f"possible when the transformation result is Gaussian, that is, "
+                f"when all targets are of type '{NumericalTarget.__name__}', the "
+                f"assigned transformations are affine, and arithmetic averaging is "
+                f"used as desirability scalarization operation."
+            )
+
+        import torch
+        from botorch.acquisition.objective import ScalarizedPosteriorTransform
+
+        from baybe.utils.torch import DTypeFloatTorch
+
+        # Account for minimization
+        oriented = [
+            tr if not t.minimize else tr.negate()
+            for t, tr in zip(targets, transformations)
+        ]
+
+        # Treat identity transformations as affine for harmonized logic below
+        converted = [
+            AffineTransformation() if isinstance(tr, IdentityTransformation) else tr
+            for tr in oriented
+        ]
+
+        # Compute the distribution parameters of the weighted sum of Gaussians
+        weights = torch.tensor(
+            [w * tr.factor for w, tr in zip(self._normalized_weights, converted)],
+            dtype=DTypeFloatTorch,
+        )
+        offset = torch.tensor(
+            sum(w * tr.shift for w, tr in zip(self._normalized_weights, converted)),
+            dtype=DTypeFloatTorch,
+        )
+        return ScalarizedPosteriorTransform(weights, offset)
 
     @override
     def _pre_transform(
