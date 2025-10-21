@@ -13,7 +13,7 @@ from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
@@ -267,12 +267,15 @@ class DesirabilityObjective(Objective):
                 (IdentityTransformation, AffineTransformation),
             )
         ):
-            raise IncompatibilityError(
+            raise NonGaussianityError(
                 f"Converting an objective of type '{type(self).__name__}' is only "
-                f"possible when the transformation result is Gaussian, that is, "
-                f"when all targets are of type '{NumericalTarget.__name__}', the "
-                f"assigned transformations are affine, and arithmetic averaging is "
-                f"used as desirability scalarization operation."
+                f"possible when the transformation result is Gaussian. This is the "
+                f"case when all targets are of type '{NumericalTarget.__name__}' and "
+                f"1) either "
+                f"'{fields(DesirabilityObjective).as_pre_transformation.name}' "
+                f"is set to 'True' "
+                f"2) or when the assigned transformations are affine and arithmetic "
+                f"averaging is used as desirability scalarization operation."
             )
 
         import torch
