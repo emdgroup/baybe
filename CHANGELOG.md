@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
+
+### Removed
+- `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
  
 ## [0.14.1] - 2025-10-01
 ### Added
