@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 from functools import cached_property
 from inspect import signature
 from types import MappingProxyType
-from typing import Any, cast
+from typing import Any
 
 import pandas as pd
 import torch
@@ -34,9 +34,8 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
-from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
-from baybe.transformations import AffineTransformation, IdentityTransformation
+from baybe.transformations import IdentityTransformation
 from baybe.utils.basic import match_attributes
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
@@ -199,40 +198,9 @@ class BotorchAcquisitionFunctionBuilder:
         #   all other cases.
 
         if self.acqf.is_analytic:
-            if not isinstance(self.objective, SingleTargetObjective):
-                targets = self.objective.targets
-                raise IncompatibilityError(
-                    f"The selected analytic acquisition "
-                    f"'{self.acqf.__class__.__name__}' can handle one target only but "
-                    f"the specified objective comprises {len(targets)} targets: "
-                    f"{[t.name for t in targets]}"
-                )
-
-            match target := self.objective._target:
-                case NumericalTarget():
-                    pass
-                case BinaryTarget():
-                    return
-                case _:
-                    raise NotImplementedError("No transformation handling implemented.")
-
-            match t := target.transformation:
-                case IdentityTransformation() | AffineTransformation():
-                    # The identity/affine type narrowing is lost due to the `negate`
-                    # call, but we know that the result will be an AffineTransformation
-                    # in this specific context
-                    oriented = cast(
-                        AffineTransformation, t.negate() if target.minimize else t
-                    )
-                    self._args.posterior_transform = (
-                        oriented.to_botorch_posterior_transform()
-                    )
-                case _:
-                    raise NotImplementedError(
-                        f"The selected analytic acquisition "
-                        f"'{self.acqf.__class__.__name__}' supports only affine "
-                        f"target transformations. "
-                    )
+            self._args.posterior_transform = (
+                self.objective.to_botorch_posterior_transform()
+            )
         else:
             # TODO: Enable once clarified:
             # https://github.com/pytorch/botorch/discussions/2849
