@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
   performance on regression tasks
 
+### Changed
+- `DesirabilityObjective.weights` now returns the normalized target weights
+
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
  

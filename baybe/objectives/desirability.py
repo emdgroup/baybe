@@ -87,7 +87,8 @@ class DesirabilityObjective(Objective):
     )
     "The targets considered by the objective."
 
-    weights: tuple[float, ...] = field(
+    _weights: tuple[float, ...] = field(
+        alias="weights",
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
         validator=deep_iterable(member_validator=[finite_float, gt(0.0)]),
     )
@@ -107,7 +108,7 @@ class DesirabilityObjective(Objective):
     )
     """Controls if the desirability computation is applied as a pre-transformation."""
 
-    @weights.default
+    @_weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
         return tuple(1.0 for _ in range(len(self.targets)))
@@ -144,7 +145,7 @@ class DesirabilityObjective(Objective):
                 f"'False' to allow unnormalized targets."
             )
 
-    @weights.validator
+    @_weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
         if (lw := len(weights)) != (lt := len(self.targets)):
             raise ValueError(
@@ -177,9 +178,9 @@ class DesirabilityObjective(Objective):
         return not self.as_pre_transformation
 
     @cached_property
-    def _normalized_weights(self) -> np.ndarray:
+    def weights(self) -> tuple[float, ...]:
         """The normalized target weights."""
-        return np.asarray(self.weights) / np.sum(self.weights)
+        return tuple(np.asarray(self._weights) / np.sum(self._weights))
 
     @override
     def __str__(self) -> str:
@@ -239,13 +240,11 @@ class DesirabilityObjective(Objective):
         from baybe.objectives.botorch import ChainedMCObjective
 
         if self.scalarizer is Scalarizer.MEAN:
-            outer = LinearMCObjective(torch.tensor(self._normalized_weights))
+            outer = LinearMCObjective(torch.tensor(self.weights))
 
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
             outer = GenericMCObjective(
-                lambda samples, X: _geometric_mean(
-                    samples, torch.tensor(self._normalized_weights)
-                )
+                lambda samples, X: _geometric_mean(samples, torch.tensor(self.weights))
             )
 
         else:
@@ -292,11 +291,11 @@ class DesirabilityObjective(Objective):
 
         # Compute the distribution parameters of the weighted sum of Gaussians
         weights = torch.tensor(
-            [w * tr.factor for w, tr in zip(self._normalized_weights, converted)],
+            [w * tr.factor for w, tr in zip(self.weights, converted)],
             dtype=DTypeFloatTorch,
         )
         offset = torch.tensor(
-            sum(w * tr.shift for w, tr in zip(self._normalized_weights, converted)),
+            sum(w * tr.shift for w, tr in zip(self.weights, converted)),
             dtype=DTypeFloatTorch,
         )
         return ScalarizedPosteriorTransform(weights, offset)
