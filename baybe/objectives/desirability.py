@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import cattrs
 import numpy as np
@@ -290,10 +290,15 @@ class DesirabilityObjective(Objective):
         ]
 
         # Treat identity transformations as affine for harmonized logic below
-        converted = [
-            AffineTransformation() if isinstance(tr, IdentityTransformation) else tr
-            for tr in oriented
-        ]
+        # TODO[typing]: The cast is necessary because the `is_all_instance` TypeGuard
+        #   above does not properly handle union types
+        converted = cast(
+            list[AffineTransformation],
+            [
+                AffineTransformation() if isinstance(tr, IdentityTransformation) else tr
+                for tr in oriented
+            ],
+        )
 
         # Compute the distribution parameters of the weighted sum of Gaussians
         weights = torch.tensor(
