@@ -38,6 +38,7 @@ from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import SurrogateProtocol
+from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 from baybe.transformations import IdentityTransformation
 from baybe.utils.basic import match_attributes
@@ -200,6 +201,11 @@ class BotorchAcquisitionFunctionBuilder:
         #   and objectives (https://github.com/pytorch/botorch/discussions/2164).
         #   We use the former for affine transformations and the latter to handle
         #   all other cases.
+
+        # TODO: Needs to be revisited once binary targets are supported more generally
+        match self.objective:
+            case SingleTargetObjective(_target=BinaryTarget()):
+                return
 
         if self.acqf.is_analytic:
             try:
