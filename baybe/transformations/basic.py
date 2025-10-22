@@ -19,7 +19,6 @@ from baybe.transformations.base import (
 )
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import Interval
-from baybe.utils.torch import DTypeFloatTorch
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -138,6 +137,8 @@ class AffineTransformation(MonotonicTransformation):
         """
         import torch
         from botorch.acquisition.objective import ScalarizedPosteriorTransform
+
+        from baybe.utils.torch import DTypeFloatTorch
 
         return ScalarizedPosteriorTransform(
             weights=torch.tensor([self.factor], dtype=DTypeFloatTorch),
