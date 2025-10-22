@@ -203,6 +203,7 @@ benchmarking = [
     { name = "shap", extra = ["others"] },
     { name = "skl2onnx" },
     { name = "streamlit" },
+    { name = "torch" },
     { name = "tornado" },
     { name = "xyzpy" },
 ]
@@ -252,6 +253,7 @@ dev = [
     { name = "sphinxcontrib-bibtex" },
     { name = "streamlit" },
     { name = "tenacity" },
+    { name = "torch" },
     { name = "tornado" },
     { name = "tox-uv" },
     { name = "tqdm" },
@@ -426,6 +428,7 @@ requires-dist = [
     { name = "streamlit", marker = "extra == 'examples'", specifier = ">=1.37.0" },
     { name = "tenacity", marker = "extra == 'test'", specifier = ">=8.5.0" },
     { name = "torch", specifier = ">=1.13.1,<3" },
+    { name = "torch", marker = "extra == 'benchmarking'", specifier = ">=2.4.0" },
     { name = "tornado", marker = "extra == 'examples'", specifier = ">=6.3.3" },
     { name = "tox-uv", marker = "extra == 'dev'", specifier = ">=1.7.0" },
     { name = "tqdm", marker = "extra == 'docs'" },
