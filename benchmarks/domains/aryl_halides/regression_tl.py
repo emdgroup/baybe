@@ -26,9 +26,10 @@ def _aryl_halide_tl_regr(
 ) -> pd.DataFrame:
     """General benchmark function for aryl halide transfer learning regression.
 
-    This benchmark compares regression performance of GP vs TL models using different
-    aryl halide substrates as tasks. It trains models with varying amounts of source
-    and target data, and evaluates their predictive performance on held-out target data.
+    This benchmark compares regression performance of TL and non-TL GP models using
+    different aryl halide substrates as tasks. It trains models with varying amounts
+    of source and target data, and evaluates their predictive performance on held-out
+    target data.
 
     Three different task combinations:
     - CT_I_BM: Source tasks ["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"]
