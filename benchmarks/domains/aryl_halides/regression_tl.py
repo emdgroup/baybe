@@ -33,11 +33,11 @@ def _aryl_halide_tl_regr(
 
     Three different task combinations:
     - CT_I_BM: Source tasks ["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"]
-               → Target task ["1-iodo-4-methoxybenzene"]
+            → Target task ["1-iodo-4-methoxybenzene"]
     - CT_IM: Source task ["1-chloro-4-(trifluoromethyl)benzene"]
-             → Target task ["1-iodo-4-methoxybenzene"]
+            → Target task ["1-iodo-4-methoxybenzene"]
     - IP_CP: Source task ["2-iodopyridine"]
-             → Target task ["3-chloropyridine"]
+            → Target task ["3-chloropyridine"]
 
     Key characteristics:
     • Parameters:
