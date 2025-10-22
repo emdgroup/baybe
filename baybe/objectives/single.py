@@ -88,7 +88,7 @@ class SingleTargetObjective(Objective):
                 f"assigned transformation is affine."
             )
 
-        if isinstance(tr, IdentityTransformation):
+        if isinstance(tr, IdentityTransformation) and not t.minimize:
             return None
 
         return (tr if not t.minimize else tr.negate()).to_botorch_posterior_transform()
