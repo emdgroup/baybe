@@ -96,7 +96,7 @@ aryl_halide_IP_CP_tl_regr = partial(
 
 
 # Benchmark configurations
-aryl_halide_sou_CT_benchmark_config = TransferLearningRegressionBenchmarkSettings(
+aryl_halide_benchmark_config = TransferLearningRegressionBenchmarkSettings(
     n_mc_iterations_settings={
         RunMode.DEFAULT: 50,
         RunMode.SMOKETEST: 2,
@@ -115,34 +115,15 @@ aryl_halide_sou_CT_benchmark_config = TransferLearningRegressionBenchmarkSetting
     },
 )
 
-aryl_halide_IP_CP_tl_benchmark_config = TransferLearningRegressionBenchmarkSettings(
-    n_mc_iterations_settings={
-        RunMode.DEFAULT: 60,
-        RunMode.SMOKETEST: 2,
-    },
-    max_n_train_points_settings={
-        RunMode.DEFAULT: 25,
-        RunMode.SMOKETEST: 2,
-    },
-    source_fractions_settings={
-        RunMode.DEFAULT: (0.01, 0.05, 0.1, 0.2),
-        RunMode.SMOKETEST: (0.01,),
-    },
-    noise_std_settings={
-        RunMode.DEFAULT: 0.0,
-        RunMode.SMOKETEST: 0.0,
-    },
-)
-
 # Create benchmarks
 aryl_halide_CT_I_BM_tl_regr_benchmark = TransferLearningRegressionBenchmark(
-    function=aryl_halide_CT_I_BM_tl_regr, settings=aryl_halide_sou_CT_benchmark_config
+    function=aryl_halide_CT_I_BM_tl_regr, settings=aryl_halide_benchmark_config
 )
 
 aryl_halide_CT_IM_tl_regr_benchmark = TransferLearningRegressionBenchmark(
-    function=aryl_halide_CT_IM_tl_regr, settings=aryl_halide_sou_CT_benchmark_config
+    function=aryl_halide_CT_IM_tl_regr, settings=aryl_halide_benchmark_config
 )
 
 aryl_halide_IP_CP_tl_regr_benchmark = TransferLearningRegressionBenchmark(
-    function=aryl_halide_IP_CP_tl_regr, settings=aryl_halide_IP_CP_tl_benchmark_config
+    function=aryl_halide_IP_CP_tl_regr, settings=aryl_halide_benchmark_config
 )
