@@ -27,8 +27,26 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for Bayesian Design
-of Experiments, focusing on additions that enable real-world experimental campaigns.
+The **Bay**esian **B**ack **E**nd (**BayBE**) 
+helps to find a **good parameter setting** 
+within a complex parameter search space. 
+
+```{dropdown} Example use-cases
+- Find chemical reaction conditions or process parameters
+- Create materials, chemical mixtures, or formulations with desired properties
+- Optimize the 3D shape of a physical object
+- Find model hyperparameters
+- Find tasty espresso machine settings
+```
+
+This is achieved via **Bayesian Design of Experiments**, 
+which is an efficient way for navigating parameter search spaces. 
+It balances
+exploitation of parameter space regions known to lead to good outcomes 
+and exploration of unknown regions. 
+
+BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments, 
+focusing on making this procedure easily-accessible within real-world experimental campaigns.
 
 ## 🔋 Batteries Included
 Besides its core functionality to perform a typical recommend-measure loop, BayBE
