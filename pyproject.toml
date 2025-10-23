@@ -153,7 +153,7 @@ benchmarking = [
     "boto3>=1.0.0,<2",
     "GitPython>=3.0.6,<4", # Necessary since older versions rely on a specific version of GitDB: https://github.com/gitpython-developers/GitPython/issues/983
     "psutil>=7.0.0",
-    "torch>=2.4.0",
+    "torch>=2.4.0", # Required for torch.get_device_module()
 ]
 
 test = [
