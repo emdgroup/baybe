@@ -31,13 +31,12 @@ The **Bay**esian **B**ack **E**nd (**BayBE**)
 helps to find a **good parameter setting** 
 within a complex parameter search space. 
 
-```{dropdown} Example use-cases
+Example use-cases:
 - Find chemical reaction conditions or process parameters
 - Create materials, chemical mixtures, or formulations with desired properties
 - Optimize the 3D shape of a physical object
 - Find model hyperparameters
 - Find tasty espresso machine settings
-```
 
 This is achieved via **Bayesian Design of Experiments**, 
 which is an efficient way for navigating parameter search spaces. 
