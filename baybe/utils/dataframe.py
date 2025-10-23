@@ -57,41 +57,21 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
             case int() | float():
                 return torch.tensor(x, dtype=DTypeFloatTorch)
             case np.ndarray():
-                return torch.from_numpy(x).to(DTypeFloatTorch)
+                array = x
             case pd.Series() | pd.DataFrame():
-                if x.empty:
-                    return torch.empty(x.shape, dtype=DTypeFloatTorch)
+                # We already coerce to the target dtype during the dataframe-to-numpy
+                # conversion since this step might otherwise return an array of type
+                # `object` in case of mixed column types, which would cause the
+                # subsequent numpy-to-torch conversion to fail. This happens, for
+                # example, when the dataframe contains Boolean and integer columns.
+                array = x.to_numpy(tensor_to_numpy_dtype_mapping[DTypeFloatTorch])
+            case _:
+                assert_never(x)
 
-                # We first coerce to the minimal common dtype because the
-                # dataframe-to-numpy conversion might otherwise return an array of type
-                # `object` in case of mixed dataframe types, which would cause the torch
-                # conversion to fail. This happens, for example, when the dataframe
-                # contains one Boolean and one integer column.
-                dtype = (
-                    np.result_type(*x.dtypes)
-                    if isinstance(x, pd.DataFrame)
-                    else x.dtype
-                )
-
-                # FIXME:
-                # This step should not be necessary because an `object` dtype should
-                # never occur (since tensor conversion is only ever called with
-                # numerical data). However, third-party code might still do unintended
-                # column dtype conversion. Currently, shap is one such example.
-                # Hence, we keep this as a safety net for now.
-                if dtype == "object":
-                    dtype = tensor_to_numpy_dtype_mapping[DTypeFloatTorch]
-
-                # The `contiguous` call brings us closest to getting reproducible
-                # results downstream in the torch ecosystem
-                # https://github.com/meta-pytorch/botorch/issues/3046
-                return (
-                    torch.from_numpy(x.to_numpy(dtype=dtype))
-                    .to(DTypeFloatTorch)
-                    .contiguous()
-                )
-
-        assert_never(x)
+        # The `contiguous` call brings us closest to getting reproducible
+        # results downstream in the torch ecosystem
+        # https://github.com/meta-pytorch/botorch/issues/3046
+        return torch.from_numpy(array).to(dtype=DTypeFloatTorch)
 
     converted = tuple(_convert(xi) for xi in x)
 
