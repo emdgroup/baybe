@@ -45,12 +45,7 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
     """
     import torch
 
-    from baybe.utils.torch import DTypeFloatTorch
-
-    tensor_to_numpy_dtype_mapping: dict[torch.dtype, np.dtype[Any]] = {
-        torch.float32: np.dtype("float32"),
-        torch.float64: np.dtype("float64"),
-    }
+    from baybe.utils.torch import DTypeFloatTorch, torch_to_numpy_dtype_mapping
 
     def _convert(x: _ConvertibleToTensor, /) -> Tensor:
         match x:
@@ -68,9 +63,7 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # * A copy is created in the inner step to avoid memory sharing, while
                 #   the outer step reuses the created array.
                 tensor = torch.from_numpy(
-                    x.to_numpy(
-                        tensor_to_numpy_dtype_mapping[DTypeFloatTorch], copy=True
-                    )
+                    x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch], copy=True)
                 )
             case _:
                 assert_never(x)
