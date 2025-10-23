@@ -68,6 +68,12 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
             case _:
                 assert_never(x)
 
+        # Copy the array to:
+        # 1) avoid memory sharing
+        # 2) avoid torch problems with the input memory layout (e.g. negative striding
+        #    is not supported)
+        array = array.copy()
+
         # The `contiguous` call brings us closest to getting reproducible
         # results downstream in the torch ecosystem
         # https://github.com/meta-pytorch/botorch/issues/3046
