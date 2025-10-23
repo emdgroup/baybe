@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import ClassVar
+from typing import ClassVar, NoReturn
 
 from attrs import define, field
 from attrs.validators import deep_iterable, instance_of, min_len
@@ -47,6 +47,14 @@ class ParetoObjective(Objective):
     @property
     def supports_partial_measurements(self) -> bool:
         return True
+
+    @override
+    def to_botorch_posterior_transform(self) -> NoReturn:
+        raise NotImplementedError(
+            f"Objectives of type '{type(self).__name__}' do not support conversion "
+            f"to BoTorch posterior transforms because BayBE does not (yet) offer "
+            f"any analytic multi-output acquisition functions."
+        )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

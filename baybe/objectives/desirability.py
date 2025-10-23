@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import cattrs
 import numpy as np
@@ -13,20 +13,24 @@ from attrs import define, field, fields
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
 from baybe.targets.numerical import UncertainBool
-from baybe.utils.basic import to_tuple
+from baybe.transformations.basic import AffineTransformation, IdentityTransformation
+from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
+    from botorch.acquisition.objective import (
+        MCAcquisitionObjective,
+        ScalarizedPosteriorTransform,
+    )
     from torch import Tensor
 
 _OUTPUT_NAME = "Desirability"
@@ -83,7 +87,8 @@ class DesirabilityObjective(Objective):
     )
     "The targets considered by the objective."
 
-    weights: tuple[float, ...] = field(
+    _weights: tuple[float, ...] = field(
+        alias="weights",
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
         validator=deep_iterable(member_validator=[finite_float, gt(0.0)]),
     )
@@ -103,7 +108,7 @@ class DesirabilityObjective(Objective):
     )
     """Controls if the desirability computation is applied as a pre-transformation."""
 
-    @weights.default
+    @_weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
         return tuple(1.0 for _ in range(len(self.targets)))
@@ -140,7 +145,7 @@ class DesirabilityObjective(Objective):
                 f"'False' to allow unnormalized targets."
             )
 
-    @weights.validator
+    @_weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
         if (lw := len(weights)) != (lt := len(self.targets)):
             raise ValueError(
@@ -173,9 +178,9 @@ class DesirabilityObjective(Objective):
         return not self.as_pre_transformation
 
     @cached_property
-    def _normalized_weights(self) -> np.ndarray:
+    def weights(self) -> tuple[float, ...]:
         """The normalized target weights."""
-        return np.asarray(self.weights) / np.sum(self.weights)
+        return tuple(np.asarray(self._weights) / np.sum(self._weights))
 
     @override
     def __str__(self) -> str:
@@ -235,13 +240,11 @@ class DesirabilityObjective(Objective):
         from baybe.objectives.botorch import ChainedMCObjective
 
         if self.scalarizer is Scalarizer.MEAN:
-            outer = LinearMCObjective(torch.tensor(self._normalized_weights))
+            outer = LinearMCObjective(torch.tensor(self.weights))
 
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
             outer = GenericMCObjective(
-                lambda samples, X: _geometric_mean(
-                    samples, torch.tensor(self._normalized_weights)
-                )
+                lambda samples, X: _geometric_mean(samples, torch.tensor(self.weights))
             )
 
         else:
@@ -251,6 +254,62 @@ class DesirabilityObjective(Objective):
 
         inner = super().to_botorch()
         return ChainedMCObjective(inner, outer)
+
+    @override
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform | None:
+        if self.as_pre_transformation:
+            return None
+
+        if self.scalarizer is not Scalarizer.MEAN or not (
+            is_all_instance(targets := self.targets, NumericalTarget)
+            and is_all_instance(
+                transformations := [t.transformation for t in targets],
+                (IdentityTransformation, AffineTransformation),
+            )
+        ):
+            raise NonGaussianityError(
+                f"Converting an objective of type '{type(self).__name__}' is only "
+                f"possible when the transformation result is Gaussian. This is the "
+                f"case when all targets are of type '{NumericalTarget.__name__}' and "
+                f"1) either "
+                f"'{fields(DesirabilityObjective).as_pre_transformation.name}' "
+                f"is set to 'True' "
+                f"2) or when the assigned transformations are affine and arithmetic "
+                f"averaging is used as desirability scalarization operation."
+            )
+
+        import torch
+        from botorch.acquisition.objective import ScalarizedPosteriorTransform
+
+        from baybe.utils.torch import DTypeFloatTorch
+
+        # Account for minimization
+        oriented = [
+            tr if not t.minimize else tr.negate()
+            for t, tr in zip(targets, transformations)
+        ]
+
+        # Treat identity transformations as affine for harmonized logic below
+        # TODO[typing]: The cast is necessary because the `is_all_instance` TypeGuard
+        #   above does not properly handle union types
+        converted = cast(
+            list[AffineTransformation],
+            [
+                AffineTransformation() if isinstance(tr, IdentityTransformation) else tr
+                for tr in oriented
+            ],
+        )
+
+        # Compute the distribution parameters of the weighted sum of Gaussians
+        weights = torch.tensor(
+            [w * tr.factor for w, tr in zip(self.weights, converted)],
+            dtype=DTypeFloatTorch,
+        )
+        offset = torch.tensor(
+            sum(w * tr.shift for w, tr in zip(self.weights, converted)),
+            dtype=DTypeFloatTorch,
+        )
+        return ScalarizedPosteriorTransform(weights, offset)
 
     @override
     def _pre_transform(
