@@ -6,6 +6,6 @@ These examples demonstrate the most basic aspects of BayBE: How to set up a
 ```{toctree}
 :maxdepth: 1
 
-Recommenders<recommenders>
 Campaign<campaign>
+Recommenders<recommenders>
 ```
