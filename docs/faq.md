@@ -25,3 +25,75 @@ your campaign, depending on your settings for the
 {attr}`~baybe.campaign.Campaign.allow_recommending_already_recommended` flags.
 ```
 
+## Checklist for designing BayBE experiments
+
+### Defining targets
+
+```{dropdown} Should be target value maximized rather than minimized or matched to specific value?
+
+Specify this when
+[defining the target](userguide/targets.html#numericaltarget).
+```
+
+```{dropdown} Should be multiple target optimized simultaneously?
+
+See how to use 
+[multi-target objectives](userguide/objectives.html).
+```
+
+### Defining parameter search space
+
+```{dropdown} Are only some parameter values of interest/possible?
+
+See how to exclude some 
+[parameter values](userguide/getting_recommendations.html#excluding-configurations) 
+from being recommended, such as by defining
+[bounds for continuous parameters](userguide/parameters.html#numericalcontinuousparameter)
+or [active values for discrete parameters](userguide/parameters.html#discrete-parameters).
+```
+
+```{dropdown} Are only some parameter combinations of interest/possible?
+
+See how to exclude some 
+parameter combinations from being considered by using 
+[constraints](userguide/constraints.html) or
+[constrained searchspaces](userguide/searchspace.html#creating-a-simplex-bound-discrete-subspace).
+Alternatively, if the aim is to use only a few specific parameter configurations the search space can be created from a 
+[dataframe](userguide/searchspace.html#id3) 
+rather than from the product of all possible parameter combinations.
+```
+
+```{dropdown} Are some parameters non-numeric or allow only discrete numbers?
+
+  > Use [discrete](userguide/parameters.html#discrete-parameters)
+rather than [continuous](userguide/parameters.html#continuous-parameters) parameters.
+```
+
+```{dropdown} Is it possible to encode discrete parameters based on domain knowledge to capture relationships between categories (e.g., ordered values, molecular fingerprints, model embeddings)?
+
+See how to 
+[encode](userguide/parameters.html#discrete-parameters)
+discrete parameters or provide custom encodings.
+```
+
+### Account for specifics of data availability or acquisition procedure
+
+```{dropdown} Is additional data from historic or other partially-related experiments available?
+
+  > Use [transfer learning](userguide/transfer_learning.html).
+```
+
+```{dropdown} Will the outcome measurements of different parameter setting become available at different times?
+
+  > Use [asynchronous workflows](userguide/async.html).
+```
+
+### Advanced: adjust how recommendations are prioritized
+
+```{dropdown} Is the aim to reduce the overall uncertainty across different regions of the search space rather than optimize a specific objective?
+
+  > Use [active learning](userguide/active_learning.html).
+```
+
+
+
