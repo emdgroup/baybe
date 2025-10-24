@@ -22,8 +22,10 @@ def get_shifted_hartmann(
         **kwargs: Additional keyword arguments to pass to the Hartmann function.
 
     Returns:
-        Callable that wraps Hartmann with shifted dimension-0
-          Expects as input a tensor of shape (n_samples, n_dimensions).
+        Callable that wraps Hartmann with shifted dimensions and shifted bounds.
+          The callable expects as input a tensor of shape (n_samples, n_dimensions).
+          The bounds are transformed so that they can be directly used in 
+          further Hartmann function calls.
     """
     # Make sure input dimensions are consistent
     dim = kwargs.get("dim", None)
