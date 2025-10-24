@@ -453,3 +453,57 @@ def test_sample_from_polytope_mixed_constraints_with_interpoint():
         # Verify interpoint constraint is satisfied across the batch
         interpoint_constraint_result = samples["Conti_finite1"].sum()
         assert np.isclose(interpoint_constraint_result, 0.6, atol=1e-6)
+
+
+def test_sample_from_polytope_interpoint_ordering_robustness():
+    """Test that interpoint sampling works regardless of parameter ordering.
+
+    This test verifies that the sampling logic correctly handles interpoint
+    constraints regardless of how parameters are ordered in the subspace or
+    in the constraint definition.
+    """
+    # Create parameters in two different orders
+    params_order1 = [
+        NumericalContinuousParameter("x", (0, 1)),
+        NumericalContinuousParameter("y", (-1, 0)),
+    ]
+
+    params_order2 = [
+        NumericalContinuousParameter("y", (-1, 0)),
+        NumericalContinuousParameter("x", (0, 1)),
+    ]
+
+    # Create an interpoint constraint: x + 2*y = 0.3 across batch
+    constraint1 = ContinuousLinearConstraint(
+        parameters=["x", "y"],
+        operator="=",
+        coefficients=[1.0, 2.0],
+        rhs=0.3,
+        interpoint=True,
+    )
+
+    # Same constraint but with parameters in different order
+    constraint2 = ContinuousLinearConstraint(
+        parameters=["y", "x"],
+        operator="=",
+        coefficients=[2.0, 1.0],
+        rhs=0.3,
+        interpoint=True,
+    )
+
+    # Test spaces with all combinations of parameter orders and constraint definitions
+    for params in [params_order1, params_order2]:
+        for constraint in [constraint1, constraint2]:
+            subspace = SubspaceContinuous(
+                parameters=params,
+                constraints_lin_eq=[constraint],
+            )
+
+            # Sample from the subspace with different batch sizes
+            for batch_size in [1, 5, 10]:
+                np.random.seed(42)
+                samples = subspace.sample_uniform(batch_size)
+
+                # Verify that the interpoint constraint is satisfied
+                constraint_result = samples["x"].sum() + 2 * samples["y"].sum()
+                assert np.isclose(constraint_result, 0.3, atol=1e-6)
