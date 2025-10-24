@@ -265,11 +265,12 @@ class BotorchAcquisitionFunctionBuilder:
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
+        # TODO: Needs redesign once bandits are supported more generally
         if not isinstance(self.acqf, qThompsonSampling):
             return
 
         assert hasattr(acqf, "_default_sample_shape")
-        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])
+        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])  # type: ignore[assignment]
 
     def _set_mc_points(self) -> None:
         """Set BoTorch's ``mc_points`` argument."""
