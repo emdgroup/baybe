@@ -21,8 +21,8 @@ from benchmarks.domains.aryl_halides.core import (
 
 def _aryl_halide_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
-    source_tasks: list[str],
-    target_tasks: list[str],
+    source_tasks: Sequence[str],
+    target_tasks: Sequence[str],
 ) -> pd.DataFrame:
     """General benchmark function for aryl halide transfer learning regression.
 
