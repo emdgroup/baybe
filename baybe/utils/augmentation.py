@@ -178,3 +178,66 @@ def df_apply_dependency_augmentation(
         )
 
     return pd.concat(new_rows)
+
+
+def df_apply_mirror_augmentation(
+    df: pd.DataFrame,
+    column: str,
+    *,
+    mirror_point: float = 0.0,
+) -> pd.DataFrame:
+    """Augment a dataframe for a mirror invariant column.
+
+    Args:
+        df: The dataframe that should be augmented.
+        column: The name of the affected column.
+        mirror_point: The point along which to mirror the values. Points that have
+            exatly this value will not be augmented.
+
+    Returns:
+        The augmented dataframe containing the original one. Augmented row indices are
+        identical with the index of their original row.
+
+    Examples:
+        >>> df = pd.DataFrame({'A':[1, 0, -2], 'B': [3, 4, 5]})
+        >>> df
+           A  B
+        0  1  3
+        1  0  4
+        2 -2  5
+
+        >>> dfa = df_apply_mirror_augmentation(df, "A")
+        >>> dfa
+           A  B
+        0  1  3
+        0 -1  3
+        1  0  4
+        2 -2  5
+        2  2  5
+
+        >>> dfa = df_apply_mirror_augmentation(df, "A", mirror_point=1)
+        >>> dfa
+           A  B
+        0  1  3
+        1  0  4
+        1  2  4
+        2 -2  5
+        2  4  5
+    """
+    new_rows: list[pd.DataFrame] = []
+    for _, row in df.iterrows():
+        to_add = [row]  # Always keep original row
+
+        # Create the augmented row by mirroring the point at the mirror point.
+        # x_mirrored = mirror_point + (mirror_point - x) = 2*mirror_point - x
+        if row[column] != mirror_point:
+            row_new = row.copy()
+            row_new[column] = 2.0 * mirror_point - row[column]
+            to_add.append(row_new)
+
+        # Store augmented rows, keeping the index of their original row
+        new_rows.append(
+            pd.DataFrame(to_add, columns=df.columns, index=[row.name] * len(to_add))
+        )
+
+    return pd.concat(new_rows)
