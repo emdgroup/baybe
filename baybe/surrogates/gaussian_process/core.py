@@ -156,7 +156,9 @@ class GaussianProcessSurrogate(Surrogate):
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
         input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
+            train_x.shape[-1],
+            bounds=context.parameter_bounds,
+            indices=list(numerical_idxs),
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
