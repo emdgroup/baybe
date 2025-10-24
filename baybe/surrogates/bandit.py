@@ -99,7 +99,8 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
             @override
             def forward(self, posterior: Posterior) -> Tensor:
                 """Sample the posterior."""
-                with temporary_seed(self.seed):
+                # FIXME[typing]: https://github.com/meta-pytorch/botorch/issues/3061
+                with temporary_seed(int(self.seed)):
                     samples = posterior.rsample(self.sample_shape)
                 return samples
 
