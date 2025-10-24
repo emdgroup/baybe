@@ -149,6 +149,9 @@ class MirrorSymmetry(Symmetry):
     ) -> pd.DataFrame:
         # See base class.
 
+        if not self.use_data_augmentation:
+            return df
+
         df = df_apply_mirror_augmentation(
             df, self._parameter, mirror_point=self.mirror_point
         )
