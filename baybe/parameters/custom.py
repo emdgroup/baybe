@@ -13,9 +13,9 @@ from typing_extensions import override
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CustomEncoding
 from baybe.parameters.validation import validate_decorrelation
+from baybe.settings import active_settings
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.dataframe import df_uncorrelated_features
-from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
@@ -107,7 +107,7 @@ class CustomDiscreteParameter(_DiscreteLabelLikeParameter):
         # We prepend the parameter name to the columns names to avoid potential
         # conflicts with other parameters
         comp_df = self.data.rename(columns=lambda x: f"{self.name}_{x}").astype(
-            DTypeFloatNumpy
+            active_settings.DTypeFloatNumpy
         )
 
         # Get a decorrelated subset of the provided features

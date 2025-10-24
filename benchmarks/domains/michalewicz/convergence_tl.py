@@ -19,9 +19,9 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.random import temporary_seed
 from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSettings
 from benchmarks.definition.base import RunMode
 
@@ -145,7 +145,7 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     )
 
     initial_data_samples = {}
-    with temporary_seed(settings.random_seed):
+    with Settings(random_seed=settings.random_seed):
         for p in n_points:
             initial_data_samples[p] = [
                 make_initial_data(

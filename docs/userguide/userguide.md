@@ -42,6 +42,7 @@ Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
 Serialization <serialization>
+Settings <settings>
 Simulation <simulation>
 Surrogates <surrogates>
 Targets <targets>
