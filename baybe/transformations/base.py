@@ -103,11 +103,11 @@ class Transformation(SerialMixin, ABC):
         return self | AbsoluteTransformation()
 
     def vshift(self, shift: float | int, /) -> Transformation:
-        """Add a constant to the transformation (vertical shift)."""
+        """Vertical shift (i.e. add a constant to the transformation output)."""
         return self + shift
 
     def hshift(self, shift: float | int, /) -> Transformation:
-        """Prepend a shift to the input (horizontal shift)."""
+        """Horizontal shift (i.e. subtract a constant from the transformation input)."""
         from baybe.transformations import AffineTransformation
 
         return AffineTransformation(shift=-shift) | self
