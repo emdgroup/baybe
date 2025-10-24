@@ -448,7 +448,7 @@ def test_cache_invalidation(
     ],
 )
 def test_batch_size_exceeds_candidates(recommender: RecommenderProtocol):
-    """Test that batch_size > candidates works with allow_recommending_already_recommended=True."""
+    """Test batch_size > candidates with allow_recommending_already_recommended=True."""
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = NumericalTarget("t").to_objective()
     campaign = Campaign(
@@ -461,7 +461,9 @@ def test_batch_size_exceeds_candidates(recommender: RecommenderProtocol):
     # Request more recommendations than there are candidates
     batch_size = 5
     n_candidates = len(searchspace.discrete.exp_rep)
-    assert batch_size > n_candidates, "Test setup error: batch_size must exceed n_candidates"
+    assert batch_size > n_candidates, (
+        "Test setup error: batch_size must exceed n_candidates"
+    )
 
     # This should work without raising an exception
     recommendations = campaign.recommend(batch_size)
