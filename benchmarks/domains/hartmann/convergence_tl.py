@@ -83,7 +83,7 @@ def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFr
 
 
 def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function for transfer learning with the Hartmann function in 3D.
+    """Benchmark function for transfer learning with the shifted Hartmann function in 3D.
 
     Key characteristics:
     • Compares two versions of Hartmann function:
