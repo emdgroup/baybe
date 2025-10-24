@@ -39,7 +39,7 @@ class AdapterModel(Model):
         self,
         X: Tensor,
         output_indices: list[int] | None = None,
-        observation_noise: bool = False,
+        observation_noise: bool | Tensor = False,
         posterior_transform: Callable[[Posterior], Posterior] | None = None,
         **kwargs: Any,
     ) -> Posterior:
