@@ -96,6 +96,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         class CustomMCSampler(MCSampler):
             """Customer sampler for beta posterior."""
 
+            @override
             def forward(self, posterior: TorchPosterior) -> Tensor:
                 """Sample the posterior."""
                 with temporary_seed(self.seed):
