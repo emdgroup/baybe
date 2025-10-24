@@ -12,11 +12,12 @@ from typing_extensions import override
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.interval import Interval
+from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
 
@@ -95,6 +96,24 @@ class Transformation(SerialMixin, ABC):
         from baybe.transformations.basic import ClampingTransformation
 
         return self | ClampingTransformation(min, max)
+
+    def hold_output_left_from(self, abscissa: float, /) -> Transformation:
+        """Hold the output of the transformation left from a given abscissa value."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(min=abscissa) | self
+
+    def hold_output_right_from(self, abscissa: float, /) -> Transformation:
+        """Hold the output of the transformation right from a given abscissa value."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(max=abscissa) | self
+
+    def hold_output_outside(self, interval: ConvertibleToInterval, /) -> Transformation:
+        """Hold the output of the transformation outside a given interval."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(*Interval.create(interval).to_tuple()) | self
 
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
