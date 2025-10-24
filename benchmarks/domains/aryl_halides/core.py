@@ -88,7 +88,7 @@ def make_initial_data(data: pd.DataFrame, source_tasks: Sequence[str]) -> pd.Dat
 
 def make_objective() -> SingleTargetObjective:
     """Create the objective for aryl halides benchmarks."""
-    return SingleTargetObjective(NumericalTarget(name="yield", mode="MAX"))
+    return NumericalTarget(name="yield").to_objective()
 
 
 def aryl_halide_tl_substance_benchmark(
