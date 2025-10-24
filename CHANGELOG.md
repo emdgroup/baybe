@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Target` and `Parameter` now have a `metadata` attribute as well as `description` and
   `unit` properties
 
+### Changed
+- Documentation is now more accessible for new users
+
 ### Fixed
 - `Campaign` no longer allows overlapping names between parameters and targets
 
