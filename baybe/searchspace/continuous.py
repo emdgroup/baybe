@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, cast
 import numpy as np
 import pandas as pd
 from attrs import define, evolve, field, fields
+from torch import Tensor
 from typing_extensions import override
 
 from baybe.constraints import (
@@ -506,64 +507,141 @@ class SubspaceContinuous(SerialMixin):
                 ],
             )
         else:
-            # If the space has interpoint constraints, we need to sample from a larger
-            # searchspace that models the batch size via additional dimension. This is
-            # necessary since `get_polytope_samples` cannot handle interpoint
-            # constraints, see https://github.com/pytorch/botorch/issues/2468
-
-            n_params = len(self.comp_rep_columns)
-            eq_constraints, ineq_constraints = [], []
-
-            for c in self.constraints_lin_eq + self.constraints_lin_ineq:
-                if not c.is_interpoint:
-                    param_indices, coefficients, rhs = c.to_botorch(self.parameters)
-                    for b in range(batch_size):
-                        # Repeat the constraint for each "row"
-                        botorch_tuple = (
-                            param_indices + b * n_params,
-                            coefficients,
-                            rhs,
-                        )
-                        if c.is_eq:
-                            eq_constraints.append(botorch_tuple)
-                        else:
-                            ineq_constraints.append(botorch_tuple)
-                else:
-                    # Get the indices of the parameters used in the constraint
-                    param_index = {
-                        name: self.parameter_names.index(name) for name in c.parameters
-                    }
-                    param_indices_list = [
-                        param_index[param] + b * n_params
-                        for param in c.parameters
-                        for b in range(batch_size)
-                    ]
-                    _, coefficients, rhs = c.to_botorch(
-                        parameters=self.parameters, batch_size=batch_size
-                    )
-                    botorch_tuple = (
-                        torch.tensor(param_indices_list),
-                        coefficients,
-                        rhs,
-                    )
-                    if c.is_eq:
-                        eq_constraints.append(botorch_tuple)
-                    else:
-                        ineq_constraints.append(botorch_tuple)
-            bounds_joint = torch.cat(
-                [torch.from_numpy(bounds) for _ in range(batch_size)], dim=-1
+            points = self._sample_from_polytope_with_interpoint_constraints(
+                batch_size, bounds
             )
 
-            points = get_polytope_samples(
-                n=1,
-                bounds=bounds_joint,
-                equality_constraints=eq_constraints,
-                inequality_constraints=ineq_constraints,
-            )
-            points_per_batch, remainder = divmod(points.shape[-1], batch_size)
-            assert remainder == 0, "Dimensions mismatch."
-            points = points.reshape(batch_size, points_per_batch)
         return pd.DataFrame(points, columns=self.parameter_names)
+
+    def _sample_from_polytope_with_interpoint_constraints(
+        self, batch_size: int, bounds: np.ndarray
+    ) -> np.ndarray:
+        """Draw samples from a polytope with interpoint constraints.
+
+        If the space has interpoint constraints, we need to sample from a larger
+        searchspace that models the batch size via additional dimension. This is
+        necessary since `get_polytope_samples` cannot handle interpoint
+        constraints, see https://github.com/pytorch/botorch/issues/2468
+
+        Args:
+            batch_size: The number of samples to draw.
+            bounds: The bounds of the parameters as a 2D array where the first row
+                contains the lower bounds and the second row the upper bounds.
+
+        Returns:
+            An array of shape (batch_size, n_params) containing the samples.
+        """
+        import torch
+        from botorch.utils.sampling import get_polytope_samples
+
+        n_params = len(self.comp_rep_columns)
+
+        eq_constraints: list[tuple[Tensor, Tensor, float]] = []
+        ineq_constraints: list[tuple[Tensor, Tensor, float]] = []
+
+        all_constraints = self.constraints_lin_eq + self.constraints_lin_ineq
+        for constraint in all_constraints:
+            if constraint.is_interpoint:
+                botorch_tuple = self._build_interpoint_constraint_tuple(
+                    constraint, n_params, batch_size
+                )
+                target_list = eq_constraints if constraint.is_eq else ineq_constraints
+                target_list.append(botorch_tuple)
+            else:
+                # Intrapoint constraints must be replicated for each point
+                # Each replication is a separate constraint
+                botorch_tuples = self._build_intrapoint_constraint_tuples(
+                    constraint, n_params, batch_size
+                )
+                # Add all replications to the appropriate list
+                target_list = eq_constraints if constraint.is_eq else ineq_constraints
+                target_list.extend(botorch_tuples)
+
+        bounds_joint = torch.cat(
+            [torch.from_numpy(bounds) for _ in range(batch_size)], dim=-1
+        )
+
+        points = get_polytope_samples(
+            n=1,
+            bounds=bounds_joint,
+            equality_constraints=eq_constraints,
+            inequality_constraints=ineq_constraints,
+        )
+
+        # Reshape to separate batch dimension from parameter dimension
+        points_per_batch, remainder = divmod(points.shape[-1], batch_size)
+        assert remainder == 0, "Dimensions mismatch."
+        return points.reshape(batch_size, points_per_batch).numpy()
+
+    def _build_interpoint_constraint_tuple(
+        self,
+        constraint: ContinuousLinearConstraint,
+        n_params: int,
+        batch_size: int,
+    ) -> tuple[Tensor, Tensor, float]:
+        """Build a BoTorch constraint tuple for an interpoint constraint.
+
+        This method constructs the constraint tuple for the joint space where all
+        batch elements are concatenated. It uses the constraint's own `to_botorch`
+        method to get the base indices and coefficients, then adjusts them to work
+        in the flattened joint space.
+
+        Args:
+            constraint: The interpoint constraint to convert.
+            n_params: Total number of parameters per batch element.
+            batch_size: The batch size.
+
+        Returns:
+            A tuple (indices, coefficients, rhs) for BoTorch.
+        """
+        # Get the constraint representation from the constraint itself
+        # For interpoint constraints, this returns indices as a 2D tensor where
+        # each row is [batch_idx, param_idx], and coefficients already repeated
+        # for the batch size
+        base_indices, coefficients, rhs = constraint.to_botorch(
+            parameters=self.parameters, batch_size=batch_size
+        )
+
+        # Convert the 2D indices [batch_idx, param_idx] to flat indices in the
+        # joint space. The joint space has shape (1, batch_size * n_params),
+        # where parameters for batch b are at positions [b * n_params, (b+1) * n_params)
+        flat_indices = base_indices[:, 0] * n_params + base_indices[:, 1]
+
+        return (flat_indices, coefficients, rhs)
+
+    def _build_intrapoint_constraint_tuples(
+        self,
+        constraint: ContinuousLinearConstraint,
+        n_params: int,
+        batch_size: int,
+    ) -> list[tuple[Tensor, Tensor, float]]:
+        """Build BoTorch constraint tuples for an intrapoint constraint.
+
+        Intrapoint constraints must be satisfied by each individual point in the batch.
+        This method replicates the constraint for each batch element with appropriate
+        index offsets, creating a separate constraint tuple for each batch element.
+
+        Args:
+            constraint: The intrapoint constraint to convert.
+            n_params: Total number of parameters per batch element.
+            batch_size: The batch size.
+
+        Returns:
+            A list of tuples (indices, coefficients, rhs), one for each batch element.
+        """
+        # Get the base constraint representation for a single point
+        base_indices, base_coefficients, rhs = constraint.to_botorch(self.parameters)
+
+        # Create a separate constraint for each batch element
+        # In the joint space, batch b's parameters are at positions
+        # [b*n_params, (b+1)*n_params)
+        constraint_tuples = []
+        for b in range(batch_size):
+            # Offset indices for this batch element
+            offset_indices = base_indices + b * n_params
+            constraint_tuples.append((offset_indices, base_coefficients, rhs))
+
+        return constraint_tuples
 
     def _sample_from_polytope_with_cardinality_constraints(
         self, batch_size: int
