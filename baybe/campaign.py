@@ -56,8 +56,10 @@ from baybe.utils.validation import (
 )
 
 if TYPE_CHECKING:
-    from botorch.acquisition import AcquisitionFunction
+    from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
     from botorch.posteriors import Posterior
+
+    from baybe.acquisition.base import AcquisitionFunction
 
     _T = TypeVar("_T")
 
@@ -779,8 +781,8 @@ class Campaign(SerialMixin):
         self,
         batch_size: int | None = None,
         pending_experiments: pd.DataFrame | None = None,
-    ) -> AcquisitionFunction:
-        """Get the current acquisition function.
+    ) -> BoAcquisitionFunction:
+        """Get the current BoTorch acquisition function.
 
         Args:
             batch_size: See :meth:`recommend`.
@@ -794,7 +796,7 @@ class Campaign(SerialMixin):
                 function.
 
         Returns:
-            The acquisition function of the current recommender.
+            The BoTorch acquisition function of the current recommender.
         """
         if self.objective is None:
             raise IncompatibilityError(

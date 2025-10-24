@@ -6,6 +6,7 @@ from typing import Any
 from botorch.models.gpytorch import Model
 from botorch.posteriors import Posterior
 from torch import Tensor
+from typing_extensions import override
 
 from baybe.surrogates.base import Surrogate
 
@@ -24,6 +25,7 @@ class AdapterModel(Model):
         super().__init__()
         self._surrogate = surrogate
 
+    @override
     @property
     def num_outputs(self) -> int:
         if (objective := self._surrogate._objective) is None:
@@ -32,11 +34,12 @@ class AdapterModel(Model):
             )
         return objective.n_outputs
 
+    @override
     def posterior(
         self,
         X: Tensor,
         output_indices: list[int] | None = None,
-        observation_noise: bool = False,
+        observation_noise: bool | Tensor = False,
         posterior_transform: Callable[[Posterior], Posterior] | None = None,
         **kwargs: Any,
     ) -> Posterior:
