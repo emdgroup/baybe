@@ -13,123 +13,112 @@ TOLERANCE = 0.01
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_equality1(campaign, n_iterations, batch_size):
-    """Test equality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_2"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_equality2(campaign, n_iterations, batch_size):
-    """Test equality constraint with unequal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert np.allclose(1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"], 0.3)
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_inequality1(campaign, n_iterations, batch_size):
-    """Test inequality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_4"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_inequality2(campaign, n_iterations, batch_size):
-    """Test inequality constraint with unequal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).ge(0.299).all()
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_6"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_inequality3(campaign, n_iterations, batch_size):
-    """Test inequality constraint with unequal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert (1.0 * res["Conti_finite1"] + 3.0 * res["Conti_finite2"]).le(0.301).all()
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_1"]])
-def test_interpoint_equality_single_parameter(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
-    n_iterations,
-    batch_size,
-):
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
+@pytest.mark.parametrize(
+    ("constraint_names", "coef1", "coef2", "expected_value", "check_type"),
+    [
+        param(
+            ["ContiConstraint_2"],
+            1.0,
+            3.0,
+            0.3,
+            "eq",
+            id="eq",
         ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
-    """Test single parameter interpoint equality constraint."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    res_grouped = res.groupby("BatchNr")
-    interpoint_result = res_grouped["Conti_finite1"].sum()
-    assert np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_2"]])
-def test_interpoint_inequality_single_parameter(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
-    n_iterations,
-    batch_size,
-):
-    """Test single parameter interpoint inequality constraint."""
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
+        param(
+            ["ContiConstraint_4"],
+            1.0,
+            3.0,
+            0.299,
+            "ge",
+            id="ge",
         ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
+        param(
+            ["ContiConstraint_6"],
+            1.0,
+            3.0,
+            0.301,
+            "le",
+            id="le",
+        ),
+    ],
+)
+def test_intrapoint_linear_constraints(
+    campaign, n_iterations, batch_size, coef1, coef2, expected_value, check_type
+):
+    """Test intrapoint linear constraints with various operators and weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
-    res_grouped = res.groupby("BatchNr")
-    interpoint_result = 2 * res_grouped["Conti_finite1"].sum()
-    assert interpoint_result.ge(0.3 - TOLERANCE).all()
+    result = coef1 * res["Conti_finite1"] + coef2 * res["Conti_finite2"]
+
+    if check_type == "eq":
+        assert np.allclose(result, expected_value)
+    elif check_type == "ge":
+        assert result.ge(expected_value).all()
+    elif check_type == "le":
+        assert result.le(expected_value).all()
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
-def test_interpoint_equality_multiple_parameters(
+@pytest.mark.parametrize(
+    ("constraint_names", "calculation", "expected_value", "check_type"),
+    [
+        param(
+            ["InterConstraint_1"],
+            lambda grouped: grouped["Conti_finite1"].sum(),
+            0.3,
+            "eq",
+            id="equality_single_param",
+        ),
+        param(
+            ["InterConstraint_2"],
+            lambda grouped: 2 * grouped["Conti_finite1"].sum(),
+            0.3,
+            "ge",
+            id="inequality_ge_single_param",
+        ),
+        param(
+            ["InterConstraint_3"],
+            lambda grouped: (
+                grouped["Conti_finite1"].sum() + 2 * grouped["Conti_finite2"].sum()
+            ),
+            0.3,
+            "eq",
+            id="equality_multiple_params",
+        ),
+        param(
+            ["InterConstraint_4"],
+            lambda grouped: (
+                2 * grouped["Conti_finite1"].sum() - grouped["Conti_finite2"].sum()
+            ),
+            0.3,
+            "ge",
+            id="inequality_ge_multiple_params",
+        ),
+        param(
+            ["InterConstraint_5"],
+            lambda grouped: (
+                2 * grouped["Conti_finite1"].sum() - grouped["Conti_finite2"].sum()
+            ),
+            0.3,
+            "le",
+            id="inequality_le_multiple_params",
+        ),
+    ],
+)
+def test_interpoint_linear_constraints(
     non_sequential_recommender,
     parameters,
     constraints,
     objective,
     n_iterations,
     batch_size,
+    calculation,
+    expected_value,
+    check_type,
 ):
-    """Test interpoint equality constraint involving multiple parameters."""
+    """Test interpoint linear constraints with various operators and parameters."""
     campaign = Campaign(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
@@ -141,74 +130,21 @@ def test_interpoint_equality_multiple_parameters(
     res = campaign.measurements
 
     res_grouped = res.groupby("BatchNr")
-    interpoint_result = (
-        res_grouped["Conti_finite1"].sum() + 2 * res_grouped["Conti_finite2"].sum()
-    )
-    assert np.allclose(interpoint_result, 0.3, atol=TOLERANCE)
+    interpoint_result = calculation(res_grouped)
 
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
-def test_geq_interpoint_inequality_multiple_parameters(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
-    n_iterations,
-    batch_size,
-):
-    """Test geq-interpoint inequality constraint involving multiple parameters."""
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
-        ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    res_grouped = res.groupby("BatchNr")
-    interpoint_result = (
-        2 * res_grouped["Conti_finite1"].sum() - res_grouped["Conti_finite2"].sum()
-    )
-    print(f"{interpoint_result=}")
-    assert interpoint_result.ge(0.3 - TOLERANCE).all()
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_5"]])
-def test_leq_interpoint_inequality_multiple_parameters(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
-    n_iterations,
-    batch_size,
-):
-    """Test leq-interpoint inequality constraint involving multiple parameters."""
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
-        ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    res_grouped = res.groupby("BatchNr")
-    interpoint_result = (
-        2 * res_grouped["Conti_finite1"].sum() - res_grouped["Conti_finite2"].sum()
-    )
-    assert interpoint_result.le(0.3 + TOLERANCE).all()
+    if check_type == "eq":
+        assert np.allclose(interpoint_result, expected_value, atol=TOLERANCE)
+    elif check_type == "ge":
+        assert interpoint_result.ge(expected_value - TOLERANCE).all()
+    elif check_type == "le":
+        assert interpoint_result.le(expected_value + TOLERANCE).all()
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
 @pytest.mark.parametrize(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
-def test_interpoint_normal_mix(
+def test_interpoint_intrapoint_mix(
     non_sequential_recommender,
     parameters,
     constraints,
@@ -216,7 +152,7 @@ def test_interpoint_normal_mix(
     n_iterations,
     batch_size,
 ):
-    """Test mixing interpoint and normal inequality constraints."""
+    """Test mixing interpoint and intrapoint inequality constraints."""
     campaign = Campaign(
         searchspace=SearchSpace.from_product(
             parameters=parameters, constraints=constraints
@@ -238,32 +174,25 @@ def test_interpoint_normal_mix(
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "parameter_names",
-    [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
+    ("constraint_names", "expected_value", "check_type"),
+    [
+        param(["ContiConstraint_1"], 0.3, "eq", id="equality"),
+        param(["ContiConstraint_3"], 0.299, "ge", id="inequality_ge"),
+    ],
 )
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_hybridspace_eq(campaign, n_iterations, batch_size):
-    """Test equality constraint with equal weights."""
+def test_hybridspace_linear_constraints(
+    campaign, n_iterations, batch_size, expected_value, check_type
+):
+    """Test linear constraints in hybrid search spaces."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
-    assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
+    result = 1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]
 
-
-@pytest.mark.slow
-@pytest.mark.parametrize(
-    "parameter_names",
-    [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
-)
-@pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
-@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-def test_hybridspace_ineq(campaign, n_iterations, batch_size):
-    """Test inequality constraint with equal weights."""
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
-
-    assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
+    if check_type == "eq":
+        assert np.allclose(result, expected_value)
+    elif check_type == "ge":
+        assert result.ge(expected_value).all()
 
 
 @pytest.mark.parametrize(
