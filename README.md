@@ -31,6 +31,12 @@ The **Bay**esian **B**ack **E**nd (**BayBE**)
 helps to find a **good parameter setting** 
 within a complex parameter search space. 
 
+<div align="center">
+
+![complex search space](docs/_static/complex_search_space_automatic.svg)
+
+</div>
+
 Example use-cases:
 - Find chemical reaction conditions or process parameters
 - Create materials, chemical mixtures, or formulations with desired properties
@@ -45,7 +51,7 @@ exploitation of parameter space regions known to lead to good outcomes
 and exploration of unknown regions. 
 
 BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments, 
-focusing on making this procedure easily-accessible within real-world experimental campaigns.
+focusing on making this procedure easily-accessible for real-world experiments.
 
 ## 🔋 Batteries Included
 BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
@@ -54,12 +60,12 @@ The following provides a non-comprehensive overview:
 - 🛠️ Leverage **domain knowledge** for encoding categorical data, thus capturing relationships between categories.
   - 🧪 BayBE also provides built-in chemical encodings.
 - 🚀 Leverage **historic data** to accelerate optimization via transfer learning.
-- **Flexible** definition of target outcomes, search spaces, and optimization strategy:
-  - 🎯 Option to use numerical targets (e.g., measured outcome value) or binary targets (e.g., good/bad classification). Targets can be minimized, maximized, or matched to a target value.
+- **Flexible** definition of target outcomes, parameter search spaces, and optimization strategies:
+  - 🎯 Option to use numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized, or matched to a specific value.
   - ⚖️ Multiple targets can be optimized at once (e.g., via Pareto optimization).
-  - 🎭 Use both continuous and discrete parameters in a single search space.
-  - 🔢 Define maximal number of mixture components via cardinality constraints.
-  - 🎰 Different optimization strategies to balance exploration and exploitation, including bandit models and active learning.
+  - 🎭 Both continuous and discrete parameters can be used within a single search space.
+  - 🔢 The maximal number of mixture components can be defined via cardinality constraints.
+  - 🎰 Different optimization strategies can be selected to balance exploration and exploitation of the search space, including bandit models and active learning.
 - 🌎 Run campaigns **asynchronously** with pending experiments and partial measurements via distributed workflows.
 - 🔍 **Insights**: Easily analyze feature importance and model behavior.
 - 📈 Utilities for **benchmarking**, such as backtesting and simulations.
@@ -69,8 +75,26 @@ The following provides a non-comprehensive overview:
 
 ## ⚡ Quick Start
 
-Let us consider a simple experiment where we control three parameters and want to
-maximize a single target called `Yield`.
+To perform Bayesian Design of Experiments with BayBE, 
+the users must first specify the **parameter search space** and **objective** to be optimized. 
+Based on this information and any **available data** about outcomes of specific parameter settings, 
+BayBE will **recommend the next set of parameter combinations** to be **measured**. 
+To inform the next recommendation cycle, the newly generated measurements can be added to BayBE.
+
+<div align="center">
+
+![quick start](docs/_static/quick_start_automatic.svg)
+
+</div>
+
+From the user-perspective, the most important part is the "design" step.
+If you are new to BayBE, we suggest consulting our 
+[design checklist](https://emdgroup.github.io/baybe/stable/faq.html#checklist-for-designing-baybe-experiments) 
+to help you with the design setup.
+
+Below we show a simple optimization procedure, starting with the design step and subsequently
+performing the recommendation loop. 
+The provided example aims to maximize the yield of a chemical reaction by adjusting reaction parameters.
 
 First, install BayBE into your Python environment: 
 ```bash 
@@ -81,7 +105,7 @@ For more information on this step, see our
 
 ### Defining the Optimization Objective
 
-In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
+In BayBE's language, the reaction yield can be represented as a `NumericalTarget`,
 which we wrap into a `SingleTargetObjective`:
 
 ```python
@@ -91,7 +115,8 @@ from baybe.objectives import SingleTargetObjective
 target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target=target)
 ```
-In cases where we are confronted with multiple (potentially conflicting) targets,
+In cases where we are confronted with multiple (potentially conflicting) targets 
+(e.g., yield vs cost),
 the `ParetoObjective` or `DesirabilityObjective` can be used instead.
 These allow to define additional settings, such as how the targets should be balanced.
 For more details, see the
@@ -101,11 +126,9 @@ of the user guide.
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-system parameters we can tune to optimize our targets. This also involves specifying 
-their values/ranges and other parameter-specific details.
-
-For our example, we assume that we can control three parameters – `Granularity`,
-`Pressure[bar]`, and `Solvent` – as follows:
+reaction `Parameters` we can tune (e.g., granularity,
+pressure, and solvent) to optimize the yield. We also need to specify
+which values individual parameters can take.
 
 ```python
 from baybe.parameters import (
@@ -162,20 +185,15 @@ and alternative ways of construction.
 
 ### Optional: Defining the Optimization Strategy
 
-As an optional step, we can specify details on how the optimization should be
-conducted. If omitted, BayBE will choose a default setting.
+As an optional step, we can specify details on how the optimization of the experiment should be
+performed. If omitted, BayBE will choose a default setting.
 
 For our example, we combine two recommenders via a so-called meta recommender named
 `TwoPhaseMetaRecommender`:
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
-   a selection via `initial_recommender` is used.
-2. As soon as the first measurements are available, we switch to `recommender`.
-
-For more details on the different recommenders, their underlying algorithmic
-details, and their configuration settings, see the
-[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
-of the user guide.
+   the parameters will be recommended with the `initial_recommender`.
+2. As soon as the first measurements are available, we switch to the `recommender`.
 
 ```python
 from baybe.recommenders import (
@@ -190,9 +208,14 @@ recommender = TwoPhaseMetaRecommender(
 )
 ```
 
+For more details on the different recommenders, their underlying algorithmic
+details, and their configuration settings, see the
+[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
+of the user guide.
+
 ### The Optimization Loop
 
-We can now construct a campaign object that brings all pieces of the puzzle together:
+We can now construct a `Campaign` that performs the Bayesian optimization of the experiment:
 
 ```python
 from baybe import Campaign
@@ -203,18 +226,24 @@ campaign = Campaign(searchspace, objective, recommender)
 With this object at hand, we can start our experimentation cycle.
 In particular:
 
-* We can ask BayBE to `recommend` new experiments.
-* We can `add_measurements` for certain experimental settings to the campaign's 
-  database.
+* The campaign can `recommend` new experiments.
+* We can `add_measurements` of target values for the measured parameter settings 
+  to the campaign's database.
 
 Note that these two steps can be performed in any order.
 In particular, available measurements can be submitted at any time and also several 
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_size=3)
+df = campaign.recommend(batch_size=3) # Recommend three parameter settings
 print(df)
 ```
+
+The below table shows the three parameter setting for which BayBE recommended to 
+measure the reaction yield.
+
+Note that the specific recommendations will depend on both the data
+already fed to the campaign and the random number generator seed that is used.
 
 ```none
    Granularity  Pressure[bar]    Solvent
@@ -223,31 +252,30 @@ print(df)
 29        fine            5.0  Solvent B
 ```
 
-Note that the specific recommendations will depend on both the data
-already fed to the campaign and the random number generator seed that is used.
-
-After having conducted the corresponding experiments, we can add our measured
-targets to the table and feed it back to the campaign:
+After having conducted the recommended experiments, we can add the newly measured
+target information to the campaign:
 
 ```python
-df["Yield"] = [79.8, 54.1, 59.4]
+df["Yield"] = [79.8, 54.1, 59.4] # Measured yields for the three recommended parameter settings
 campaign.add_measurements(df)
 ```
 
-With the newly arrived data, BayBE can produce a refined design for the next iteration.
-This loop would typically continue until a desired target value has been achieved in
-the experiment.
+With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
+This loop typically continues until a desired target value is achieved in the experiment.
 
-### Advanced Example: Chemical Substances
-BayBE has several modules to go beyond traditional approaches. One such example is the
-use of custom encodings for categorical parameters. Chemical encodings for substances
-are a special built-in case of this that comes with BayBE.
+### Inspect the progress of the experiment optimization
 
-In the following picture you can see
-the outcome for treating the solvent, base and ligand in a direct arylation reaction
-optimization (from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)) with
-chemical encodings compared to one-hot and a random baseline:
+The below plot shows progression of a campaign that optimized direct arylation reaction
+by tuning the solvent, base and ligand 
+(from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)).
+Each line shows the best target value that was measured in each experimental iteration.
+Different lines show outcomes of `Campaigns` with different designs.
+
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
+
+In particular, the five `Campaigns` differ in how the chemical `Parameters` were encoded.
+We can see that optimization is more efficient when 
+using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding or *random* features.
 
 (installation)=
 ## 💻 Installation
