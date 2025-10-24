@@ -24,6 +24,9 @@ NumericalTarget
       ~NumericalTarget.from_modern_interface
       ~NumericalTarget.get_codomain
       ~NumericalTarget.get_image
+      ~NumericalTarget.hold_output_left_from
+      ~NumericalTarget.hold_output_outside
+      ~NumericalTarget.hold_output_right_from
       ~NumericalTarget.log
       ~NumericalTarget.match_absolute
       ~NumericalTarget.match_bell

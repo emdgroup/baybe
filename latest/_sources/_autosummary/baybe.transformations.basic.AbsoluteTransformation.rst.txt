@@ -22,6 +22,9 @@ AbsoluteTransformation
       ~AbsoluteTransformation.from_json
       ~AbsoluteTransformation.get_codomain
       ~AbsoluteTransformation.get_image
+      ~AbsoluteTransformation.hold_output_left_from
+      ~AbsoluteTransformation.hold_output_outside
+      ~AbsoluteTransformation.hold_output_right_from
       ~AbsoluteTransformation.hshift
       ~AbsoluteTransformation.negate
       ~AbsoluteTransformation.to_botorch_objective

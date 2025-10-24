@@ -22,6 +22,9 @@ MultiplicativeTransformation
       ~MultiplicativeTransformation.from_json
       ~MultiplicativeTransformation.get_codomain
       ~MultiplicativeTransformation.get_image
+      ~MultiplicativeTransformation.hold_output_left_from
+      ~MultiplicativeTransformation.hold_output_outside
+      ~MultiplicativeTransformation.hold_output_right_from
       ~MultiplicativeTransformation.hshift
       ~MultiplicativeTransformation.negate
       ~MultiplicativeTransformation.to_botorch_objective

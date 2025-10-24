@@ -22,6 +22,9 @@ PowerTransformation
       ~PowerTransformation.from_json
       ~PowerTransformation.get_codomain
       ~PowerTransformation.get_image
+      ~PowerTransformation.hold_output_left_from
+      ~PowerTransformation.hold_output_outside
+      ~PowerTransformation.hold_output_right_from
       ~PowerTransformation.hshift
       ~PowerTransformation.negate
       ~PowerTransformation.to_botorch_objective

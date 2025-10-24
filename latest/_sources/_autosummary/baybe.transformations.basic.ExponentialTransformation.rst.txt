@@ -22,6 +22,9 @@ ExponentialTransformation
       ~ExponentialTransformation.from_json
       ~ExponentialTransformation.get_codomain
       ~ExponentialTransformation.get_image
+      ~ExponentialTransformation.hold_output_left_from
+      ~ExponentialTransformation.hold_output_outside
+      ~ExponentialTransformation.hold_output_right_from
       ~ExponentialTransformation.hshift
       ~ExponentialTransformation.negate
       ~ExponentialTransformation.to_botorch_objective

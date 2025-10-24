@@ -22,6 +22,9 @@ BellTransformation
       ~BellTransformation.from_json
       ~BellTransformation.get_codomain
       ~BellTransformation.get_image
+      ~BellTransformation.hold_output_left_from
+      ~BellTransformation.hold_output_outside
+      ~BellTransformation.hold_output_right_from
       ~BellTransformation.hshift
       ~BellTransformation.negate
       ~BellTransformation.to_botorch_objective

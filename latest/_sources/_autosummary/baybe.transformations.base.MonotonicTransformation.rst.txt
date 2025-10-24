@@ -22,6 +22,9 @@ MonotonicTransformation
       ~MonotonicTransformation.from_json
       ~MonotonicTransformation.get_codomain
       ~MonotonicTransformation.get_image
+      ~MonotonicTransformation.hold_output_left_from
+      ~MonotonicTransformation.hold_output_outside
+      ~MonotonicTransformation.hold_output_right_from
       ~MonotonicTransformation.hshift
       ~MonotonicTransformation.negate
       ~MonotonicTransformation.to_botorch_objective

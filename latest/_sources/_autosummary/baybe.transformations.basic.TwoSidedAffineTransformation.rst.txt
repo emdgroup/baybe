@@ -22,6 +22,9 @@ TwoSidedAffineTransformation
       ~TwoSidedAffineTransformation.from_json
       ~TwoSidedAffineTransformation.get_codomain
       ~TwoSidedAffineTransformation.get_image
+      ~TwoSidedAffineTransformation.hold_output_left_from
+      ~TwoSidedAffineTransformation.hold_output_outside
+      ~TwoSidedAffineTransformation.hold_output_right_from
       ~TwoSidedAffineTransformation.hshift
       ~TwoSidedAffineTransformation.negate
       ~TwoSidedAffineTransformation.to_botorch_objective

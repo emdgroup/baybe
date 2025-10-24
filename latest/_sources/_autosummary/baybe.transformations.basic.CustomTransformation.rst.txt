@@ -22,6 +22,9 @@ CustomTransformation
       ~CustomTransformation.from_json
       ~CustomTransformation.get_codomain
       ~CustomTransformation.get_image
+      ~CustomTransformation.hold_output_left_from
+      ~CustomTransformation.hold_output_outside
+      ~CustomTransformation.hold_output_right_from
       ~CustomTransformation.hshift
       ~CustomTransformation.negate
       ~CustomTransformation.to_botorch_objective
