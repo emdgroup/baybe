@@ -53,8 +53,8 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     return _compose_hartmann_tl_3_20_15(settings=settings, functions=functions)
 
 
-def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function for transfer learning with the Hartmann function in 3D.
+def hartmann_tl_inverted_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+    """Benchmark function for transfer learning with the inverted Hartmann function in 3D.
 
     Key characteristics:
     • Compares two versions of Hartmann function:
