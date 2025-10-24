@@ -29,7 +29,7 @@ your campaign, depending on your settings for the
 
 ### Defining targets
 
-- Should be target value maximized rather than minimized?
+- Should be target value maximized rather than minimized or matched to specific value?
 
   > Specify this when
 [defining the target](https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget).

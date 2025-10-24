@@ -48,25 +48,23 @@ BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments,
 focusing on making this procedure easily-accessible within real-world experimental campaigns.
 
 ## 🔋 Batteries Included
-Besides its core functionality to perform a typical recommend-measure loop, BayBE
-offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
+BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
 The following provides a non-comprehensive overview:
 
-- 🛠️ Custom parameter encodings: Improve your campaign with domain knowledge
-- 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
-- 🎯 Numerical and binary targets with min, max and match objectives
-- ⚖️  Multi-target support via Pareto optimization and desirability scalarization
-- 🔍 Insights: Easily analyze feature importance and model behavior
-- 🎭 Hybrid (mixed continuous and discrete) spaces
-- 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
-- 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
-- 🔢 Cardinality constraints: Control the number of active factors in your design
-- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments and partial measurements
-- 🎓 Active learning: Perform smart data acquisition campaigns
-- ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
-- 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
-- 📝 Fully typed and hypothesis-tested: Robust code base
-- 🔄 All objects are fully (de-)serializable: Useful for storing results in databases or use in wrappers like APIs
+- 🛠️ Leverage **domain knowledge** for encoding categorical data, thus capturing relationships between categories.
+  - 🧪 BayBE also provides built-in chemical encodings.
+- 🚀 Leverage **historic data** to accelerate optimization via transfer learning.
+- **Flexible** definition of target outcomes, search spaces, and optimization strategy:
+  - 🎯 Option to use numerical targets (e.g., measured outcome value) or binary targets (e.g., good/bad classification). Targets can be minimized, maximized, or matched to a target value.
+  - ⚖️ Multiple targets can be optimized at once (e.g., via Pareto optimization).
+  - 🎭 Use both continuous and discrete parameters in a single search space.
+  - 🔢 Define maximal number of mixture components via cardinality constraints.
+  - 🎰 Different optimization strategies to balance exploration and exploitation, including bandit models and active learning.
+- 🌎 Run campaigns **asynchronously** with pending experiments and partial measurements via distributed workflows.
+- 🔍 **Insights**: Easily analyze feature importance and model behavior.
+- 📈 Utilities for **benchmarking**, such as backtesting and simulations.
+- 📝 **High-quality code base** with comprehensive tests and typing.
+- 🔄 Code is designed with **database storage and API** wrappers in mind via serialization.
 
 
 ## ⚡ Quick Start
