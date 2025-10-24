@@ -47,7 +47,7 @@ def _aryl_halide_tl_regr(
       - aryl_halide: Task parameter
     • Target: Reaction yield (continuous)
     • Objective: Maximization
-    • Compares TL models (SourcePrior, MHGP, SHGP, Index Kernel) vs vanilla GP
+    • Compares TL and non-TL GP models
 
     Args:
         settings: The benchmark settings.
