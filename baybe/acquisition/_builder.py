@@ -107,7 +107,7 @@ class BotorchAcquisitionFunctionBuilder:
 
     # Context shared across building methods
     _args: BotorchAcquisitionArgs = field(init=False)
-    _botorch_acqf_cls: BoAcquisitionFunction = field(init=False)
+    _botorch_acqf_cls: type[BoAcquisitionFunction] = field(init=False)
     _signature: MappingProxyType = field(init=False)
 
     def __attrs_post_init__(self) -> None:
