@@ -51,8 +51,8 @@ def _aryl_halide_tl_regr(
 
     Args:
         settings: The benchmark settings.
-        source_tasks: List of source task names (aryl halide substrates).
-        target_tasks: List of target task names (aryl halide substrates).
+        source_tasks: Source task names (aryl halide substrates).
+        target_tasks: Target task names (aryl halide substrates).
 
     Returns:
         DataFrame with benchmark results.
