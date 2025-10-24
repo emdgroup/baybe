@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the entire associated interval is a valid match, resulting in identical transformed target 
   values as for the `match_value` itself.
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
-  performance on regression tasks
+  performance on regression tasks (direct arilation and aryl halide)
 - Scalar addition and subtraction for `Interval` objects
 - Methods `hshift` and `vshift` to `Transformation` for conveniently performing
   horizontal / vertical shifts
