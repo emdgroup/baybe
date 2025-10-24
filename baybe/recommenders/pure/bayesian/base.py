@@ -125,6 +125,10 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"{len(objective.targets)}-target multi-output context."
             )
 
+        # Perform data augmentation if configured
+        if hasattr(s := self._surrogate_model, "augment_measurements"):
+            measurements = s.augment_measurements(measurements, searchspace.parameters)
+
         surrogate = self.get_surrogate(searchspace, objective, measurements)
         self._botorch_acqf = acqf.to_botorch(
             surrogate,

@@ -117,7 +117,6 @@ class PureRecommender(ABC, RecommenderProtocol):
             and not isinstance(measurements, _ValidatedDataFrame)
             and not measurements.empty
             and objective is not None
-            and searchspace is not None
         ):
             validate_target_input(measurements, objective.targets)
             validate_objective_input(measurements, objective)
@@ -126,10 +125,8 @@ class PureRecommender(ABC, RecommenderProtocol):
                 measurements, searchspace.parameters + objective.targets
             )
             measurements.__class__ = _ValidatedDataFrame
-        if (
-            pending_experiments is not None
-            and not isinstance(pending_experiments, _ValidatedDataFrame)
-            and searchspace is not None
+        if pending_experiments is not None and not isinstance(
+            pending_experiments, _ValidatedDataFrame
         ):
             validate_parameter_input(pending_experiments, searchspace.parameters)
             pending_experiments = normalize_input_dtypes(

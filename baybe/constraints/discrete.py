@@ -29,6 +29,8 @@ from baybe.utils.basic import Dummy
 if TYPE_CHECKING:
     import polars as pl
 
+    from baybe.symmetry import DependencySymmetry, PermutationSymmetry
+
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
@@ -195,10 +197,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     a single constraint.
     """
 
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
-
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -272,6 +270,17 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
+    def to_symmetry(self, use_data_augmentation=True) -> DependencySymmetry:
+        """Convert to a :class:`~baybe.symmetry.DependencySymmetry`."""
+        from baybe.symmetry import DependencySymmetry
+
+        return DependencySymmetry(
+            parameters=self.parameters,
+            conditions=self.conditions,
+            affected_parameters=self.affected_parameters,
+            use_data_augmentation=use_data_augmentation,
+        )
+
 
 @define
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
@@ -285,10 +294,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
     """
-
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
 
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
@@ -337,6 +342,18 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+    def to_symmetry(self, use_data_augmentation=True) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetry.PermutationSymmetry`."""
+        from baybe.symmetry import PermutationSymmetry
+
+        return PermutationSymmetry(
+            parameters=self.parameters,
+            copermuted_groups=(tuple(self.dependencies.parameters),)
+            if self.dependencies
+            else tuple(),
+            use_data_augmentation=use_data_augmentation,
+        )
 
 
 @define
