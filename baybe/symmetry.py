@@ -8,16 +8,19 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
-from attrs import define, field
-from attrs.validators import instance_of, min_len
+from attrs import Converter, define, field
+from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
+from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import SerialMixin
 from baybe.utils.augmentation import (
     df_apply_dependency_augmentation,
+    df_apply_mirror_augmentation,
     df_apply_permutation_augmentation,
 )
+from baybe.utils.conversion import normalize_str_sequence
 
 if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
@@ -31,30 +34,16 @@ class Symmetry(SerialMixin, ABC):
     presence of invariances.
     """
 
-    # Object variables
-    parameters: list[str] = field(validator=min_len(1))
-    """The list of parameters used for the constraint."""
-
     use_data_augmentation: bool = field(
         default=True, validator=instance_of(bool), kw_only=True
     )
     """Flag indicating whether data augmentation would be used with surrogates that
     support this."""
 
-    @parameters.validator
-    def _validate_params(  # noqa: DOC101, DOC103
-        self, _: Any, params: list[str]
-    ) -> None:
-        """Validate the parameter list.
-
-        Raises:
-            ValueError: If ``params`` contains duplicate values.
-        """
-        if len(params) != len(set(params)):
-            raise ValueError(
-                f"The given 'parameters' list must have unique values "
-                f"but was: {params}."
-            )
+    @property
+    @abstractmethod
+    def parameters(self) -> tuple[str, ...]:
+        """The parameters affected by the symmetry."""
 
     def summary(self) -> dict:
         """Return a custom summarization of the symmetry."""
@@ -82,6 +71,23 @@ class PermutationSymmetry(Symmetry):
     affecting the outcome of the model. For instance, this is the case if
     $f(x,y) = f(y,x)$.
     """
+
+    _parameters: tuple[str, ...] = field(
+        alias="parameters",
+        converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
+        validator=(  # type: ignore
+            validate_unique_values,
+            deep_iterable(
+                member_validator=instance_of(str), iterable_validator=min_len(2)
+            ),
+        ),
+    )
+    """The parameters affected by the symmetry."""
+
+    @override
+    @property
+    def parameters(self) -> tuple[str, ...]:
+        return self._parameters
 
     # TODO: Validation
     #  - Each entry in copermuted_groups must have the same length as parameters
@@ -117,22 +123,37 @@ class PermutationSymmetry(Symmetry):
 class MirrorSymmetry(Symmetry):
     """Class for representing mirror symmetries.
 
-    A mirror symmetry expresses that certain parameters can be negated without
-    affecting the outcome of the model. For instance, this is the case if
-    $f(x,y) = f(-x,y)$.
+    A mirror symmetry expresses that certain parameters can be inflected at a mirror
+    point without affecting the outcome of the model. For instance, this is the case if
+    $f(x,y) = f(-x,y)$ (mirror point is 0).
     """
+
+    _parameter: str = field(validator=instance_of(str), alias="parameter")
+    """The single parameter affected by the symmetry."""
+
+    # object variables
+    mirror_point: float = field(default=0.0, converter=float, kw_only=True)
+    """The mirror point."""
+
+    @override
+    @property
+    def parameters(self) -> tuple[str]:
+        return (self._parameter,)
 
     # TODO: Validation
     #  - Only numerical parameters are supported
+
     @override
     def augment_measurements(
         self, df: pd.DataFrame, _: Iterable[Parameter]
     ) -> pd.DataFrame:
         # See base class.
 
-        raise NotImplementedError(
-            "Augmentation for mirror symmetry is not yet implemented."
+        df = df_apply_mirror_augmentation(
+            df, self._parameter, mirror_point=self.mirror_point
         )
+
+        return df
 
 
 @define(frozen=True)
@@ -143,6 +164,22 @@ class DependencySymmetry(Symmetry):
     parameter having a specific value. For instance, the situation "The value of
     parameter y only matters if parameter x has the value 'on'.".
     """
+
+    _parameters: tuple[str, ...] = field(
+        alias="parameters",
+        converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
+        validator=(  # type: ignore
+            deep_iterable(
+                member_validator=instance_of(str), iterable_validator=min_len(1)
+            ),
+        ),
+    )
+    """The parameters affected by the symmetry."""
+
+    @override
+    @property
+    def parameters(self) -> tuple[str, ...]:
+        return self._parameters
 
     # TODO: Validation
     #  - Only discrete parameters are supported here due to the conditions
