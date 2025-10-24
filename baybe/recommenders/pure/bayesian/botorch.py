@@ -427,8 +427,8 @@ class BotorchRecommender(BayesianRecommender):
         """
         assert self._objective is not None
 
-        # TODO Defining interpoint constraints for hybrid spaces is probably not
-        # that hard, but should be investigated in a follow up PR.
+        # Interpoint constraints cannot be used with optimize_acqf_mixed, see
+        # https://github.com/meta-pytorch/botorch/issues/2996
         if searchspace.continuous.has_interpoint_constraints:
             raise IncompatibilityError(
                 "Interpoint constraints are not available in hybrid spaces."
