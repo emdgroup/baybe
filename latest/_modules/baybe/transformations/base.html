@@ -1214,6 +1214,22 @@
         <span class="k">return</span> <span class="bp">self</span> <span class="o">|</span> <span class="n">AbsoluteTransformation</span><span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="Transformation.vshift">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation.vshift">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vshift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transformation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Vertical shift (i.e. add a constant to the transformation output).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span> <span class="o">+</span> <span class="n">shift</span></div>
+
+
+<div class="viewcode-block" id="Transformation.hshift">
+<a class="viewcode-back" href="../../../_autosummary/baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation.hshift">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hshift</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transformation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Horizontal shift (i.e. subtract a constant from the transformation input).&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations</span><span class="w"> </span><span class="kn">import</span> <span class="n">AffineTransformation</span>
+
+        <span class="k">return</span> <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">shift</span><span class="o">=-</span><span class="n">shift</span><span class="p">)</span> <span class="o">|</span> <span class="bp">self</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__neg__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transformation</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">()</span>
 

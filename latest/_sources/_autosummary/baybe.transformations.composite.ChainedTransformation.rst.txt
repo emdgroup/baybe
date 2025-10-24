@@ -22,10 +22,12 @@ ChainedTransformation
       ~ChainedTransformation.from_json
       ~ChainedTransformation.get_codomain
       ~ChainedTransformation.get_image
+      ~ChainedTransformation.hshift
       ~ChainedTransformation.negate
       ~ChainedTransformation.to_botorch_objective
       ~ChainedTransformation.to_dict
       ~ChainedTransformation.to_json
+      ~ChainedTransformation.vshift
    
    
 

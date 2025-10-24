@@ -22,10 +22,12 @@ AdditiveTransformation
       ~AdditiveTransformation.from_json
       ~AdditiveTransformation.get_codomain
       ~AdditiveTransformation.get_image
+      ~AdditiveTransformation.hshift
       ~AdditiveTransformation.negate
       ~AdditiveTransformation.to_botorch_objective
       ~AdditiveTransformation.to_dict
       ~AdditiveTransformation.to_json
+      ~AdditiveTransformation.vshift
    
    
 

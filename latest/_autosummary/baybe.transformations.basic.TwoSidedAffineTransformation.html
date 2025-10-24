@@ -1128,17 +1128,23 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.get_image" title="baybe.transformations.basic.TwoSidedAffineTransformation.get_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_image</span></code></a>([interval])</p></td>
 <td><p>Get the image of a certain interval (assuming transformation continuity).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.negate" title="baybe.transformations.basic.TwoSidedAffineTransformation.negate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">negate</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.hshift" title="baybe.transformations.basic.TwoSidedAffineTransformation.hshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hshift</span></code></a>(shift, /)</p></td>
+<td><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.negate" title="baybe.transformations.basic.TwoSidedAffineTransformation.negate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">negate</span></code></a>()</p></td>
 <td><p>Negate the output of the transformation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_botorch_objective" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_botorch_objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_objective</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_botorch_objective" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_botorch_objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_objective</span></code></a>()</p></td>
 <td><p>Convert to BoTorch objective.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_dict" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_dict" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_json" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_json" title="baybe.transformations.basic.TwoSidedAffineTransformation.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.vshift" title="baybe.transformations.basic.TwoSidedAffineTransformation.vshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vshift</span></code></a>(shift, /)</p></td>
+<td><p>Vertical shift (i.e. add a constant to the transformation output).</p></td>
 </tr>
 </tbody>
 </table>
@@ -1280,6 +1286,17 @@ the <code class="xref py py-class docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.TwoSidedAffineTransformation.hshift">
+<span class="sig-name descname"><span class="pre">hshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TwoSidedAffineTransformation.hshift" title="Link to this definition">¶</a></dt>
+<dd><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.TwoSidedAffineTransformation.negate">
 <span class="sig-name descname"><span class="pre">negate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TwoSidedAffineTransformation.negate" title="Link to this definition">¶</a></dt>
 <dd><p>Negate the output of the transformation.</p>
@@ -1344,6 +1361,17 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The JSON representation as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.TwoSidedAffineTransformation.vshift">
+<span class="sig-name descname"><span class="pre">vshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TwoSidedAffineTransformation.vshift" title="Link to this definition">¶</a></dt>
+<dd><p>Vertical shift (i.e. add a constant to the transformation output).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1435,10 +1463,12 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.from_json"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.get_codomain"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.get_codomain()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.get_image"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.get_image()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.hshift"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.hshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.negate"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.negate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_botorch_objective"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.to_botorch_objective()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_dict"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.to_json"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.vshift"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.vshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.midpoint"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.midpoint</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.slope_left"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.slope_left</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TwoSidedAffineTransformation.slope_right"><code class="docutils literal notranslate"><span class="pre">TwoSidedAffineTransformation.slope_right</span></code></a></li>

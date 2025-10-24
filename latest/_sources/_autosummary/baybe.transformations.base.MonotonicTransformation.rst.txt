@@ -22,10 +22,12 @@ MonotonicTransformation
       ~MonotonicTransformation.from_json
       ~MonotonicTransformation.get_codomain
       ~MonotonicTransformation.get_image
+      ~MonotonicTransformation.hshift
       ~MonotonicTransformation.negate
       ~MonotonicTransformation.to_botorch_objective
       ~MonotonicTransformation.to_dict
       ~MonotonicTransformation.to_json
+      ~MonotonicTransformation.vshift
    
    
 

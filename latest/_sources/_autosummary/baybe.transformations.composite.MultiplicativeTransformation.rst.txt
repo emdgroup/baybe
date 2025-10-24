@@ -22,10 +22,12 @@ MultiplicativeTransformation
       ~MultiplicativeTransformation.from_json
       ~MultiplicativeTransformation.get_codomain
       ~MultiplicativeTransformation.get_image
+      ~MultiplicativeTransformation.hshift
       ~MultiplicativeTransformation.negate
       ~MultiplicativeTransformation.to_botorch_objective
       ~MultiplicativeTransformation.to_dict
       ~MultiplicativeTransformation.to_json
+      ~MultiplicativeTransformation.vshift
    
    
 

@@ -22,10 +22,12 @@ ExponentialTransformation
       ~ExponentialTransformation.from_json
       ~ExponentialTransformation.get_codomain
       ~ExponentialTransformation.get_image
+      ~ExponentialTransformation.hshift
       ~ExponentialTransformation.negate
       ~ExponentialTransformation.to_botorch_objective
       ~ExponentialTransformation.to_dict
       ~ExponentialTransformation.to_json
+      ~ExponentialTransformation.vshift
    
    
 

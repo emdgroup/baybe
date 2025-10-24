@@ -22,10 +22,12 @@ ClampingTransformation
       ~ClampingTransformation.from_json
       ~ClampingTransformation.get_codomain
       ~ClampingTransformation.get_image
+      ~ClampingTransformation.hshift
       ~ClampingTransformation.negate
       ~ClampingTransformation.to_botorch_objective
       ~ClampingTransformation.to_dict
       ~ClampingTransformation.to_json
+      ~ClampingTransformation.vshift
    
    
 

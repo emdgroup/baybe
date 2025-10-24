@@ -22,11 +22,13 @@ IdentityTransformation
       ~IdentityTransformation.from_json
       ~IdentityTransformation.get_codomain
       ~IdentityTransformation.get_image
+      ~IdentityTransformation.hshift
       ~IdentityTransformation.negate
       ~IdentityTransformation.to_botorch_objective
       ~IdentityTransformation.to_botorch_posterior_transform
       ~IdentityTransformation.to_dict
       ~IdentityTransformation.to_json
+      ~IdentityTransformation.vshift
    
    
 

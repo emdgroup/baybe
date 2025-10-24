@@ -22,10 +22,12 @@ PowerTransformation
       ~PowerTransformation.from_json
       ~PowerTransformation.get_codomain
       ~PowerTransformation.get_image
+      ~PowerTransformation.hshift
       ~PowerTransformation.negate
       ~PowerTransformation.to_botorch_objective
       ~PowerTransformation.to_dict
       ~PowerTransformation.to_json
+      ~PowerTransformation.vshift
    
    
 

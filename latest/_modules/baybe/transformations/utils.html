@@ -1095,6 +1095,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">attrs</span><span class="w"> </span><span class="kn">import</span> <span class="n">evolve</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Transformation</span>
 
@@ -1161,10 +1162,15 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        The minimum sequence of transformations that is equivalent to the input.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">AffineTransformation</span><span class="p">,</span> <span class="n">IdentityTransformation</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.transformations.basic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">AffineTransformation</span><span class="p">,</span>
+        <span class="n">BellTransformation</span><span class="p">,</span>
+        <span class="n">IdentityTransformation</span><span class="p">,</span>
+        <span class="n">TriangularTransformation</span><span class="p">,</span>
+        <span class="n">TwoSidedAffineTransformation</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">aggregated</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Transformation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">last</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">id_</span> <span class="o">=</span> <span class="n">IdentityTransformation</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">_flatten_transformations</span><span class="p">(</span><span class="n">transformations</span><span class="p">):</span>
@@ -1172,19 +1178,27 @@
         <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">id_</span><span class="p">:</span>
             <span class="k">continue</span>
 
-        <span class="c1"># Combine subsequent affine transformations</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">aggregated</span>
-            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">last</span> <span class="o">:=</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">pop</span><span class="p">(),</span> <span class="n">AffineTransformation</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">AffineTransformation</span><span class="p">)</span>
-        <span class="p">):</span>
-            <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">combine_affine_transformations</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
-
-        <span class="c1"># Keep other transformations</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">last</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">)</span>
-            <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">last</span> <span class="o">=</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span> <span class="k">if</span> <span class="n">aggregated</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">match</span> <span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+            <span class="k">case</span> <span class="n">AffineTransformation</span><span class="p">(),</span> <span class="n">AffineTransformation</span><span class="p">():</span>
+                <span class="c1"># Two subsequent affine transformations</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">combine_affine_transformations</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+            <span class="k">case</span> <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">BellTransformation</span><span class="p">():</span>
+                <span class="c1"># Bell transformation after a pure input shift</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evolve</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">center</span> <span class="o">-</span> <span class="n">last</span><span class="o">.</span><span class="n">shift</span><span class="p">))</span>
+            <span class="k">case</span> <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">TwoSidedAffineTransformation</span><span class="p">():</span>
+                <span class="c1"># 2-sided affine transformation after a pure input shift</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evolve</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">midpoint</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">midpoint</span> <span class="o">-</span> <span class="n">last</span><span class="o">.</span><span class="n">shift</span><span class="p">))</span>
+            <span class="k">case</span> <span class="n">AffineTransformation</span><span class="p">(</span><span class="n">factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">),</span> <span class="n">TriangularTransformation</span><span class="p">():</span>
+                <span class="c1"># Triangular transformation after a pure input shift</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">evolve</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">peak</span> <span class="o">-</span> <span class="n">last</span><span class="o">.</span><span class="n">shift</span><span class="p">,</span> <span class="n">cutoffs</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">cutoffs</span> <span class="o">-</span> <span class="n">last</span><span class="o">.</span><span class="n">shift</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="k">_</span><span class="p">):</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="k">_</span><span class="p">):</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+                <span class="n">aggregated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
     <span class="c1"># Handle edge case when there was only a single identity transformation</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">aggregated</span><span class="p">:</span>

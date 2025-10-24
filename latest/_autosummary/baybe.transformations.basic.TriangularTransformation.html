@@ -1150,17 +1150,23 @@ where the highest value of 1 is reached:</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.get_image" title="baybe.transformations.basic.TriangularTransformation.get_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_image</span></code></a>([interval])</p></td>
 <td><p>Get the image of a certain interval (assuming transformation continuity).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.negate" title="baybe.transformations.basic.TriangularTransformation.negate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">negate</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.hshift" title="baybe.transformations.basic.TriangularTransformation.hshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hshift</span></code></a>(shift, /)</p></td>
+<td><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.negate" title="baybe.transformations.basic.TriangularTransformation.negate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">negate</span></code></a>()</p></td>
 <td><p>Negate the output of the transformation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_botorch_objective" title="baybe.transformations.basic.TriangularTransformation.to_botorch_objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_objective</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_botorch_objective" title="baybe.transformations.basic.TriangularTransformation.to_botorch_objective"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_objective</span></code></a>()</p></td>
 <td><p>Convert to BoTorch objective.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_dict" title="baybe.transformations.basic.TriangularTransformation.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_dict" title="baybe.transformations.basic.TriangularTransformation.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_json" title="baybe.transformations.basic.TriangularTransformation.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_json" title="baybe.transformations.basic.TriangularTransformation.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.vshift" title="baybe.transformations.basic.TriangularTransformation.vshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vshift</span></code></a>(shift, /)</p></td>
+<td><p>Vertical shift (i.e. add a constant to the transformation output).</p></td>
 </tr>
 </tbody>
 </table>
@@ -1324,6 +1330,17 @@ the <code class="xref py py-class docutils literal notranslate"><span class="pre
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.TriangularTransformation.hshift">
+<span class="sig-name descname"><span class="pre">hshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TriangularTransformation.hshift" title="Link to this definition">¶</a></dt>
+<dd><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.TriangularTransformation.negate">
 <span class="sig-name descname"><span class="pre">negate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TriangularTransformation.negate" title="Link to this definition">¶</a></dt>
 <dd><p>Negate the output of the transformation.</p>
@@ -1388,6 +1405,17 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The JSON representation as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.TriangularTransformation.vshift">
+<span class="sig-name descname"><span class="pre">vshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.TriangularTransformation.vshift" title="Link to this definition">¶</a></dt>
+<dd><p>Vertical shift (i.e. add a constant to the transformation output).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1481,10 +1509,12 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.from_width"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.from_width()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.get_codomain"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.get_codomain()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.get_image"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.get_image()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.hshift"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.hshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.negate"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.negate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_botorch_objective"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.to_botorch_objective()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_dict"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.to_json"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.vshift"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.vshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.cutoffs"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.cutoffs</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.margins"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.margins</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.TriangularTransformation.peak"><code class="docutils literal notranslate"><span class="pre">TriangularTransformation.peak</span></code></a></li>

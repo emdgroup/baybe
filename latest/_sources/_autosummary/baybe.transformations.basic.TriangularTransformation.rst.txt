@@ -24,10 +24,12 @@ TriangularTransformation
       ~TriangularTransformation.from_width
       ~TriangularTransformation.get_codomain
       ~TriangularTransformation.get_image
+      ~TriangularTransformation.hshift
       ~TriangularTransformation.negate
       ~TriangularTransformation.to_botorch_objective
       ~TriangularTransformation.to_dict
       ~TriangularTransformation.to_json
+      ~TriangularTransformation.vshift
    
    
 

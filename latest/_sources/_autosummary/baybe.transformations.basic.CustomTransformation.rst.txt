@@ -22,10 +22,12 @@ CustomTransformation
       ~CustomTransformation.from_json
       ~CustomTransformation.get_codomain
       ~CustomTransformation.get_image
+      ~CustomTransformation.hshift
       ~CustomTransformation.negate
       ~CustomTransformation.to_botorch_objective
       ~CustomTransformation.to_dict
       ~CustomTransformation.to_json
+      ~CustomTransformation.vshift
    
    
 

@@ -22,10 +22,12 @@ BellTransformation
       ~BellTransformation.from_json
       ~BellTransformation.get_codomain
       ~BellTransformation.get_image
+      ~BellTransformation.hshift
       ~BellTransformation.negate
       ~BellTransformation.to_botorch_objective
       ~BellTransformation.to_dict
       ~BellTransformation.to_json
+      ~BellTransformation.vshift
    
    
 

@@ -22,10 +22,12 @@ TwoSidedAffineTransformation
       ~TwoSidedAffineTransformation.from_json
       ~TwoSidedAffineTransformation.get_codomain
       ~TwoSidedAffineTransformation.get_image
+      ~TwoSidedAffineTransformation.hshift
       ~TwoSidedAffineTransformation.negate
       ~TwoSidedAffineTransformation.to_botorch_objective
       ~TwoSidedAffineTransformation.to_dict
       ~TwoSidedAffineTransformation.to_json
+      ~TwoSidedAffineTransformation.vshift
    
    
 
