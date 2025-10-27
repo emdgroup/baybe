@@ -129,7 +129,7 @@ class GPBuilder:
         )
         if use_prior_kernel:
             # Extract the source kernel and freeze its parameters
-            #base_covar_module = GPyTKernel(prior.covar_module)
+            # base_covar_module = GPyTKernel(prior.covar_module)
             prior_covar = prior.covar_module
             if hasattr(prior_covar,'kernels'):
                 prior_base_kernel=prior_covar.kernels[0].base_kernel
@@ -266,8 +266,6 @@ class GPyTKernel(gpytorch.kernels.Kernel):
             Kernel matrix computed by the wrapped kernel.
         """
         self.reset()
-        # Allow gradient flow for input optimization while keeping kernel parameters frozen
-        # The kernel parameters are already frozen via requires_grad=False in __init__
         with gpytorch.settings.fast_pred_var():
             with gpytorch.settings.detach_test_caches(False):
                 k = self.base_kernel.forward(x1, x2, **params)
@@ -361,9 +359,6 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
     use_prior_kernel: bool = field(default=False)
     """Whether to use the source GP's kernel as prior kernel for the target GP."""
-
-    numerical_stability: bool = field(default=True)
-    """Whether to use numerically stable implementation."""
 
     # Private attributes for storing model state
     _model: Model | None = field(init=False, default=None, eq=False)
