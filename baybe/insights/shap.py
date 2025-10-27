@@ -15,7 +15,11 @@ from shap import KernelExplainer
 
 from baybe import Campaign
 from baybe._optional.insights import shap
-from baybe.exceptions import IncompatibleExplainerError, NoMeasurementsError
+from baybe.exceptions import (
+    IncompatibilityError,
+    IncompatibleExplainerError,
+    NoMeasurementsError,
+)
 from baybe.objectives.base import Objective
 from baybe.recommenders.base import RecommenderProtocol
 from baybe.searchspace import SearchSpace
@@ -101,19 +105,27 @@ def make_explainer_for_surrogate(
 
     if use_comp_rep:
 
+        @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             tensor = to_tensor(x)
-            with torch.no_grad():
-                output = surrogate._posterior_comp(tensor).mean
-            return output.numpy()
+            posterior = surrogate._posterior_comp(tensor)
+            if not hasattr(posterior, "mean"):
+                raise IncompatibilityError(
+                    "SHAP explainers require a posterior that allows mean computation."
+                )
+            return posterior.mean.numpy()
 
     else:
 
+        @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             df = pd.DataFrame(x, columns=data.columns)
-            with torch.no_grad():
-                output = surrogate.posterior(df).mean
-            return output.numpy()
+            posterior = surrogate.posterior(df)
+            if not hasattr(posterior, "mean"):
+                raise IncompatibilityError(
+                    "SHAP explainers require a posterior that allows mean computation."
+                )
+            return posterior.mean.numpy()
 
     # Handle special settings: Lime default mode is otherwise set to "classification"
     kwargs = {"mode": "regression"} if explainer_cls.__name__ == "LimeTabular" else {}
