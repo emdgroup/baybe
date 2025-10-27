@@ -13,6 +13,7 @@ from attrs.validators import instance_of, optional
 from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
 from botorch.acquisition.monte_carlo import MCAcquisitionObjective
 from botorch.acquisition.objective import PosteriorTransform
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.models.model import Model
 from botorch.utils.multi_objective.box_decompositions.box_decomposition import (
     BoxDecomposition,
@@ -139,6 +140,7 @@ class BotorchAcquisitionFunctionBuilder:
         """The posterior mean of the (transformed) targets of the training data."""
         # TODO: Currently, this is the "transformed posterior mean of the targets"
         #   rather than the "posterior mean of the transformed targets".
+        assert isinstance(self._botorch_surrogate, GPyTorchModel)
         posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
         return self.objective.to_botorch()(posterior.mean)
 
