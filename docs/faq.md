@@ -76,7 +76,12 @@ See how to
 discrete parameters or provide custom encodings.
 ```
 
-### Account for specifics of data availability or acquisition procedure
+### Account for specifics of data availability or data acquisition procedure
+
+```{dropdown} Is no prior data available and the experiments should be done in batches?
+
+  > Use [clustering](userguide/recommenders.html#clustering-recommenders) or [sampling](userguide/recommenders.html#sampling-recommenders) recommenders to diversify the first batch of parameter settings to be tested.
+```
 
 ```{dropdown} Is additional data from historic or other partially-related experiments available?
 
