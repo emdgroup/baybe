@@ -44,7 +44,7 @@ def capture_constructor_metadata(
     constructor: Callable[..., NumericalTarget], /
 ) -> Callable[..., NumericalTarget]:
     """Decorator to capture constructor metadata upon object creation."""  # noqa: D401
-    from baybe.targets.numerical import ConstructorMetadata, OptionalAttributes
+    from baybe.targets.numerical import ConstructorMetadata, _OptionalAttributes
 
     @wraps(constructor)
     def wrapper(*args: object, **kwargs: object) -> NumericalTarget:
@@ -59,7 +59,7 @@ def capture_constructor_metadata(
         object.__setattr__(
             target,
             "optional",
-            OptionalAttributes(
+            _OptionalAttributes(
                 ConstructorMetadata(constructor.__name__, bound.arguments)
             ),
         )

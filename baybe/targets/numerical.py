@@ -112,13 +112,13 @@ def _translate_legacy_arguments(
 
 
 @define(frozen=True)
-class OptionalAttribute:
+class _OptionalAttribute:
     """Descriptor for accessing optional attributes storing constructor metadata."""
 
     name: str = field()
     """The name of the optional attribute."""
 
-    def __get__(self, instance: OptionalAttributes, owner=None):
+    def __get__(self, instance: _OptionalAttributes, owner=None):
         try:
             return instance._constructor_metadata.kwargs[self.name]
         except KeyError as e:
@@ -129,31 +129,31 @@ class OptionalAttribute:
 
 
 @define(frozen=True, auto_attribs=False)
-class OptionalAttributes:
+class _OptionalAttributes:
     """Optional target attributes."""
 
     _constructor_metadata: ConstructorMetadata = field(factory=ConstructorMetadata)
     """The constructor metadata."""
 
-    match_value: float = OptionalAttribute("match_value")  # type: ignore[assignment]
+    match_value: float = _OptionalAttribute("match_value")  # type: ignore[assignment]
     """The value to be matched by the target."""
 
-    mismatch_instead: bool = OptionalAttribute("mismatch_instead")  # type: ignore[assignment]
+    mismatch_instead: bool = _OptionalAttribute("mismatch_instead")  # type: ignore[assignment]
     """Boolean flag indicating if the target seeks to mismatch the specified value."""
 
-    exponent: int = OptionalAttribute("exponent")  # type: ignore[assignment]
+    exponent: int = _OptionalAttribute("exponent")  # type: ignore[assignment]
     """See :meth:`baybe.targets.numerical.NumericalTarget.match_power`."""
 
-    cutoffs: ConvertibleToInterval = OptionalAttribute("cutoffs")  # type: ignore[assignment]
+    cutoffs: ConvertibleToInterval = _OptionalAttribute("cutoffs")  # type: ignore[assignment]
     """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
 
-    width: float = OptionalAttribute("width")  # type: ignore[assignment]
+    width: float = _OptionalAttribute("width")  # type: ignore[assignment]
     """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
 
-    margins: Sequence[float] = OptionalAttribute("margins")  # type: ignore[assignment]
+    margins: Sequence[float] = _OptionalAttribute("margins")  # type: ignore[assignment]
     """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
 
-    sigma: float = OptionalAttribute("sigma")  # type: ignore[assignment]
+    sigma: float = _OptionalAttribute("sigma")  # type: ignore[assignment]
     """The standard deviation of the bell transformation used for matching."""
 
 
@@ -169,7 +169,7 @@ class NumericalTarget(Target, SerialMixin):
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
     """Boolean flag indicating if the target is to be minimized."""
 
-    optional: OptionalAttributes = field(init=False, factory=OptionalAttributes)
+    optional: _OptionalAttributes = field(init=False, factory=_OptionalAttributes)
     """Optional target attributes."""
 
     def __init__(  # noqa: DOC301
