@@ -61,7 +61,7 @@ class GPBuilder:
         train_x: Tensor,
         train_y: Tensor,
         prior: SingleTaskGP | None = None,
-        use_prior_mean: bool = True,
+        use_prior_mean: bool = False,
         use_prior_kernel: bool = False,
     ) -> SingleTaskGP:
         """Build a GP from a pretrained prior GP.
@@ -86,6 +86,13 @@ class GPBuilder:
         import botorch
         import gpytorch
 
+        if (use_prior_mean or use_prior_kernel) and prior is None:
+            raise ValueError(
+                "Prior GP must be provided when using prior mean or kernel."
+            )
+        if (use_prior_mean and use_prior_kernel):
+            raise ValueError("Choose either mean or covariance transfer.")
+
         numerical_idxs = self._context.get_numerical_indices(train_x.shape[-1])
 
         # Configure mean module and transforms based on prior
@@ -101,7 +108,6 @@ class GPBuilder:
             outcome_transform = botorch.models.transforms.Standardize(1)
         else:
             # Use the provided prior GP as mean function (source_prior approach)
-            from baybe.surrogates.source_prior.source_prior import GPyTMean
 
             prior_model = deepcopy(prior)
             mean_module = GPyTMean(prior_model)
@@ -113,16 +119,28 @@ class GPBuilder:
         mean_module.batch_shape = batch_shape
 
         # Define the covariance module for the numeric dimensions using BayBE's kernel factory
-        if prior is None or not use_prior_kernel:
-            base_covar_module = self.kernel_factory(
-                self._context.searchspace, train_x, train_y
-            ).to_gpytorch(
-                ard_num_dims=train_x.shape[-1] - self._context.n_task_dimensions,
-                active_dims=numerical_idxs,
-                batch_shape=batch_shape,
-            )
-        elif use_prior_kernel:
-            raise NotImplementedError("Using prior kernel is not yet implemented.")
+        #if prior is None or not use_prior_kernel:
+        base_covar_module = self.kernel_factory(
+            self._context.searchspace, train_x, train_y
+        ).to_gpytorch(
+            ard_num_dims=train_x.shape[-1] - self._context.n_task_dimensions,
+            active_dims=numerical_idxs,
+            batch_shape=batch_shape,
+        )
+        if use_prior_kernel:
+            # Extract the source kernel and freeze its parameters
+            #base_covar_module = GPyTKernel(prior.covar_module)
+            prior_covar = prior.covar_module
+            if hasattr(prior_covar,'kernels'):
+                prior_base_kernel=prior_covar.kernels[0].base_kernel
+            else:
+                prior_base_kernel=prior_covar.base_kernel
+            base_covar_module.base_kernel = GPyTKernel(kernel=deepcopy(prior_base_kernel))
+
+            # For kernel transfer, also use source transforms for consistency
+            input_transform = prior.input_transform
+            outcome_transform = prior.outcome_transform
+            #raise NotImplementedError("Using prior kernel is not yet implemented.")
 
         # # TODO: This can be removed.
         # # Handle multi-task kernels (though reduced searchspace shouldn't have tasks)
@@ -248,9 +266,11 @@ class GPyTKernel(gpytorch.kernels.Kernel):
             Kernel matrix computed by the wrapped kernel.
         """
         self.reset()
-        with torch.no_grad(), gpytorch.settings.fast_pred_var():
+        # Allow gradient flow for input optimization while keeping kernel parameters frozen
+        # The kernel parameters are already frozen via requires_grad=False in __init__
+        with gpytorch.settings.fast_pred_var():
             with gpytorch.settings.detach_test_caches(False):
-                k = self.base_kernel.forward(x1, x2, **params).detach()
+                k = self.base_kernel.forward(x1, x2, **params)
         return k
 
 
@@ -744,3 +764,4 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
                 "Model must be fitted before accessing BoTorch model."
             )
         return SourcePriorWrapperModel(self)
+
