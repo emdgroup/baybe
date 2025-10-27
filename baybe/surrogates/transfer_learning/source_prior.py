@@ -33,8 +33,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
 
 
 class GPBuilder:
-    """
-    Builds a GP from a pretrained prior GP, by using the posterior mean of the prior GP as the
+    """Builds a GP from a pretrained prior GP, by using the posterior mean of the prior GP as the
     prior mean for the new GP.
 
     Args:
@@ -58,10 +57,15 @@ class GPBuilder:
         self._context: _ModelContext = _ModelContext(searchspace)
 
     def create_gp(
-        self, train_x: Tensor, train_y: Tensor, prior: SingleTaskGP | None = None
+        self,
+        train_x: Tensor,
+        train_y: Tensor,
+        prior: SingleTaskGP | None = None,
+        use_prior_mean: bool = True,
+        use_prior_kernel: bool = False,
     ) -> SingleTaskGP:
         """Build a GP from a pretrained prior GP.
-        
+
         If a prior is provided, its posterior mean is used as the mean function for the new GP.
         If no prior is provided, a standard GP is created. For the covariance, BayBE's kernel factory
         is used in both cases.
@@ -85,7 +89,7 @@ class GPBuilder:
         numerical_idxs = self._context.get_numerical_indices(train_x.shape[-1])
 
         # Configure mean module and transforms based on prior
-        if prior is None:
+        if prior is None or not use_prior_mean:
             # Standard GP without prior knowledge
             mean_module = gpytorch.means.ConstantMean()
             # For GPs, we let botorch handle the scaling.
@@ -109,25 +113,31 @@ class GPBuilder:
         mean_module.batch_shape = batch_shape
 
         # Define the covariance module for the numeric dimensions using BayBE's kernel factory
-        base_covar_module = self.kernel_factory(
-            self._context.searchspace, train_x, train_y
-        ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - self._context.n_task_dimensions,
-            active_dims=numerical_idxs,
-            batch_shape=batch_shape,
-        )
-
-        # Handle multi-task kernels (though reduced searchspace shouldn't have tasks)
-        if not self._context.is_multitask:
-            covar_module = base_covar_module
-        else:
-            # This branch should rarely be hit since we work with reduced searchspace
-            task_covar_module = gpytorch.kernels.IndexKernel(
-                num_tasks=self._context.n_tasks,
-                active_dims=self._context.task_idx,
-                rank=self._context.n_tasks,
+        if prior is None or not use_prior_kernel:
+            base_covar_module = self.kernel_factory(
+                self._context.searchspace, train_x, train_y
+            ).to_gpytorch(
+                ard_num_dims=train_x.shape[-1] - self._context.n_task_dimensions,
+                active_dims=numerical_idxs,
+                batch_shape=batch_shape,
             )
-            covar_module = base_covar_module * task_covar_module
+        elif use_prior_kernel:
+            raise NotImplementedError("Using prior kernel is not yet implemented.")
+
+        # # TODO: This can be removed.
+        # # Handle multi-task kernels (though reduced searchspace shouldn't have tasks)
+        # if not self._context.is_multitask:
+        #     covar_module = base_covar_module
+        # else:
+        #     # This branch should rarely be hit since we work with reduced searchspace
+        #     task_covar_module = gpytorch.kernels.IndexKernel(
+        #         num_tasks=self._context.n_tasks,
+        #         active_dims=self._context.task_idx,
+        #         rank=self._context.n_tasks,
+        #     )
+        #     covar_module = base_covar_module * task_covar_module
+
+        covar_module = base_covar_module
 
         # Create GP likelihood with BayBE's noise configuration
         noise_prior = _default_noise_factory(
@@ -164,10 +174,7 @@ class GPyTMean(gpytorch.means.Mean):
     """
 
     def __init__(
-        self,
-        gp: SingleTaskGP,
-        batch_shape: torch.Size = torch.Size(),
-        **kwargs: Any
+        self, gp: SingleTaskGP, batch_shape: torch.Size = torch.Size(), **kwargs: Any
     ) -> None:
         """Initialize the GP-based mean module.
 
@@ -204,18 +211,62 @@ class GPyTMean(gpytorch.means.Mean):
         mean = mean.reshape(torch.broadcast_shapes(self.batch_shape, input.shape[:-1]))
         return mean
 
-class SourcePriorWrapperModel(Model):
-    """BoTorch Model wrapper for SourcePriorGaussianProcessSurrogate.
+
+class GPyTKernel(gpytorch.kernels.Kernel):
+    """GPyTorch kernel module wrapping a pre-trained kernel.
+
+    This kernel module wraps a trained kernel and uses it as a fixed kernel
+    component in another GP. The wrapped kernel's parameters are frozen.
     """
 
-    def __init__(self, source_prior_surrogate: "SourcePriorGaussianProcessSurrogate") -> None:
+    def __init__(self, kernel, **kwargs):
+        """Initialize the kernel wrapper.
+
+        Args:
+            kernel: Pre-trained kernel to wrap.
+            **kwargs: Additional keyword arguments.
+        """
+        super().__init__()
+        # See https://github.com/cornellius-gp/gpytorch/issues/743
+        self.base_kernel = deepcopy(kernel)
+        for param in self.base_kernel.parameters():
+            param.requires_grad = False
+
+    def reset(self):
+        """Reset the wrapped kernel to evaluation mode."""
+        self.base_kernel.eval()
+
+    def forward(self, x1, x2, **params):
+        """Compute kernel matrix using the wrapped kernel.
+
+        Args:
+            x1: First set of input points.
+            x2: Second set of input points.
+            **params: Additional kernel parameters.
+
+        Returns:
+            Kernel matrix computed by the wrapped kernel.
+        """
+        self.reset()
+        with torch.no_grad(), gpytorch.settings.fast_pred_var():
+            with gpytorch.settings.detach_test_caches(False):
+                k = self.base_kernel.forward(x1, x2, **params).detach()
+        return k
+
+
+class SourcePriorWrapperModel(Model):
+    """BoTorch Model wrapper for SourcePriorGaussianProcessSurrogate."""
+
+    def __init__(
+        self, source_prior_surrogate: SourcePriorGaussianProcessSurrogate
+    ) -> None:
         """Initialize the wrapper model.
 
         Args:
             source_prior_surrogate: The SourcePriorGaussianProcessSurrogate to wrap.
         """
         super().__init__()
-        self.surrogate: "SourcePriorGaussianProcessSurrogate" = source_prior_surrogate
+        self.surrogate: SourcePriorGaussianProcessSurrogate = source_prior_surrogate
 
     @property
     def num_outputs(self) -> int:
@@ -284,6 +335,12 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
     # Input dim of the problem
     input_dim: int | None = field(default=None)
     """Dimensionality of the input space (excluding task feature)."""
+
+    use_prior_mean: bool = field(default=True)
+    """Whether to use the source GP as prior mean for the target GP."""
+
+    use_prior_kernel: bool = field(default=False)
+    """Whether to use the source GP's kernel as prior kernel for the target GP."""
 
     numerical_stability: bool = field(default=True)
     """Whether to use numerically stable implementation."""
@@ -459,7 +516,7 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         1. Validate transfer learning context
         2. Identify target task from TaskParameter
         3. Fit source GP on the source task data
-        4. Fit target GP on the target task data using source GP posterior mean 
+        4. Fit target GP on the target task data using source GP posterior mean
            as prior mean.
 
         Args:
@@ -525,7 +582,11 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         else:
             # Target data available - fit target model using source posterior as prior
             self._target_gp = gp_builder.create_gp(
-                train_x=X_target, train_y=Y_target, prior=self._source_gp
+                train_x=X_target,
+                train_y=Y_target,
+                prior=self._source_gp,
+                use_prior_mean=self.use_prior_mean,
+                use_prior_kernel=self.use_prior_kernel,
             )
 
     @override
