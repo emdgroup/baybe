@@ -260,11 +260,13 @@ class DesirabilityObjective(Objective):
         if self.as_pre_transformation:
             return None
 
-        if self.scalarizer is not Scalarizer.MEAN or not (
-            is_all_instance(targets := self.targets, NumericalTarget)
-            and is_all_instance(
-                transformations := [t.transformation for t in targets],
-                (IdentityTransformation, AffineTransformation),
+        targets = self.targets
+        transformations = [t.transformation for t in targets]
+        if (
+            self.scalarizer is not Scalarizer.MEAN
+            or not is_all_instance(targets, NumericalTarget)
+            or not is_all_instance(
+                transformations, (IdentityTransformation, AffineTransformation)
             )
         ):
             raise NonGaussianityError(
