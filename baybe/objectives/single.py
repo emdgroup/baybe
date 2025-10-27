@@ -74,7 +74,7 @@ class SingleTargetObjective(Objective):
         return IdentityMCObjective()
 
     @override
-    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform | None:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         if not (
             isinstance((t := self._target), NumericalTarget)
             and isinstance(
@@ -87,9 +87,6 @@ class SingleTargetObjective(Objective):
                 f"when the target is of type '{NumericalTarget.__name__}' and the "
                 f"assigned transformation is affine."
             )
-
-        if isinstance(tr, IdentityTransformation) and not t.minimize:
-            return None
 
         return (tr if not t.minimize else tr.negate()).to_botorch_posterior_transform()
 

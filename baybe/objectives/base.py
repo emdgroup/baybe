@@ -118,7 +118,7 @@ class Objective(ABC, SerialMixin):
         )
 
     @abstractmethod
-    def to_botorch_posterior_transform(self) -> PosteriorTransform | None:
+    def to_botorch_posterior_transform(self) -> PosteriorTransform:
         """Convert to BoTorch posterior transform, if possible.
 
         A representation as posterior transformation is only possible if Gaussianity

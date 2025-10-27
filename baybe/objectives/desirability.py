@@ -256,9 +256,9 @@ class DesirabilityObjective(Objective):
         return ChainedMCObjective(inner, outer)
 
     @override
-    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform | None:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         if self.as_pre_transformation:
-            return None
+            return IdentityTransformation().to_botorch_posterior_transform()
 
         targets = self.targets
         transformations = [t.transformation for t in targets]
