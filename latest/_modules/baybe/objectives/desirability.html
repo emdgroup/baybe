@@ -1331,16 +1331,15 @@
 
         <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.botorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChainedMCObjective</span>
 
+        <span class="n">outer</span><span class="p">:</span> <span class="n">MCAcquisitionObjective</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scalarizer</span> <span class="ow">is</span> <span class="n">Scalarizer</span><span class="o">.</span><span class="n">MEAN</span><span class="p">:</span>
             <span class="n">outer</span> <span class="o">=</span> <span class="n">LinearMCObjective</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalized_weights</span><span class="p">))</span>
-
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">scalarizer</span> <span class="ow">is</span> <span class="n">Scalarizer</span><span class="o">.</span><span class="n">GEOM_MEAN</span><span class="p">:</span>
             <span class="n">outer</span> <span class="o">=</span> <span class="n">GenericMCObjective</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">_geometric_mean</span><span class="p">(</span>
                     <span class="n">samples</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalized_weights</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;No scalarization mechanism defined for &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scalarizer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>

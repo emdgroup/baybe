@@ -1141,7 +1141,7 @@ series of measurements and the iterative sequence of events involved.</p>
 <td><p>Create an object from its JSON representation.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.get_acquisition_function" title="baybe.campaign.Campaign.get_acquisition_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_acquisition_function</span></code></a>([batch_size, ...])</p></td>
-<td><p>Get the current acquisition function.</p></td>
+<td><p>Get the current BoTorch acquisition function.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.get_surrogate" title="baybe.campaign.Campaign.get_surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_surrogate</span></code></a>([batch_size, pending_experiments])</p></td>
 <td><p>Get the current surrogate model.</p></td>
@@ -1350,7 +1350,7 @@ numerical parameters need to be within their tolerances.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.campaign.Campaign.get_acquisition_function">
 <span class="sig-name descname"><span class="pre">get_acquisition_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pending_experiments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pd.DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.get_acquisition_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.get_acquisition_function" title="Link to this definition">¶</a></dt>
-<dd><p>Get the current acquisition function.</p>
+<dd><p>Get the current BoTorch acquisition function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1368,10 +1368,10 @@ Only required when using meta recommenders that demand it.</p></li>
 </ul>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">AcquisitionFunction</span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">BoAcquisitionFunction</span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The acquisition function of the current recommender.</p>
+<dd class="field-even"><p>The BoTorch acquisition function of the current recommender.</p>
 </dd>
 </dl>
 </dd></dl>

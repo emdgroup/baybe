@@ -1193,7 +1193,7 @@
 <a class="viewcode-back" href="../../../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.to_botorch">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCAcquisitionObjective</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to BoTorch representation.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_all_instance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_oriented_targets</span><span class="p">,</span> <span class="n">NumericalTarget</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_all_instance</span><span class="p">(</span><span class="n">targets</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_oriented_targets</span><span class="p">,</span> <span class="n">NumericalTarget</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">&quot;Conversion to BoTorch is only supported for numerical targets.&quot;</span>
             <span class="p">)</span>
@@ -1207,7 +1207,7 @@
             <span class="k">lambda</span> <span class="n">samples</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
                 <span class="p">[</span>
                     <span class="n">t</span><span class="o">.</span><span class="n">transformation</span><span class="o">.</span><span class="n">to_botorch_objective</span><span class="p">()(</span><span class="n">samples</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_oriented_targets</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
                 <span class="p">],</span>
                 <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="p">)</span>

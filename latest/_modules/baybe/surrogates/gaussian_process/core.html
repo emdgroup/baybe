@@ -1119,7 +1119,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.gpytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchModel</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.input</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputTransform</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms.outcome</span><span class="w"> </span><span class="kn">import</span> <span class="n">OutcomeTransform</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Posterior</span>
@@ -1218,7 +1218,7 @@
 <div class="viewcode-block" id="GaussianProcessSurrogate.to_botorch">
 <a class="viewcode-back" href="../../../../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.to_botorch">[docs]</a>
     <span class="nd">@override</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Model</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_botorch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchModel</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span></div>
 
 
@@ -1256,7 +1256,9 @@
 
         <span class="c1"># For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.</span>
         <span class="n">input_transform</span> <span class="o">=</span> <span class="n">botorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span>
-            <span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="n">numerical_idxs</span>
+            <span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">,</span>
+            <span class="n">indices</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">numerical_idxs</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">botorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Standardize</span><span class="p">(</span><span class="n">train_y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
