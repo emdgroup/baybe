@@ -101,8 +101,11 @@ def make_explainer_for_surrogate(
             f"'{KernelExplainer.__name__}'."
         )
 
+    import torch
+
     if use_comp_rep:
 
+        @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             tensor = to_tensor(x)
             posterior = surrogate._posterior_comp(tensor)
@@ -114,6 +117,7 @@ def make_explainer_for_surrogate(
 
     else:
 
+        @torch.no_grad()
         def model(x: np.ndarray) -> np.ndarray:
             df = pd.DataFrame(x, columns=data.columns)
             posterior = surrogate.posterior(df)
