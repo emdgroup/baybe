@@ -72,7 +72,7 @@ class IdentityTransformation(MonotonicTransformation):
     if TYPE_CHECKING:
 
         @override
-        def negate(self) -> IdentityTransformation: ...
+        def negate(self) -> AffineTransformation: ...
 
 
 @define(frozen=True, init=False)
