@@ -44,6 +44,7 @@ from baybe.transformations import (
 from baybe.utils.basic import UncertainBool
 from baybe.utils.interval import ConvertibleToInterval, Interval
 from baybe.utils.metadata import (
+    ConstructorMetadata,
     ConvertibleToMeasurableMetadata,
     MeasurableMetadata,
     to_metadata,
@@ -108,24 +109,6 @@ def _translate_legacy_arguments(
                 ).transformation,
             )
         return (modern_transformation, False)
-
-
-@define(frozen=True)
-class ConstructorMetadata:
-    """Metadata describing the used constructor and its arguments."""
-
-    name: str = field(default="__init__")
-    """The name of the constructor."""
-
-    kwargs: dict[str, Any] = field(factory=dict)
-    """Arguments passed to the constructor.
-
-    Convention:
-        * The arguments are stored as keyword arguments, even if they were
-          provided as positional arguments.
-        * If the default `__init__` constructor is used, no arguments are recorded since
-          they are directly available as attributes of the created object.
-    """
 
 
 @define(frozen=True)

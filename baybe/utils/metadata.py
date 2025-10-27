@@ -123,3 +123,21 @@ def _flatten_misc_metadata(metadata: Metadata) -> dict[str, Any]:
     dct = fn(metadata)
     dct = dct | dct.pop(fields(Metadata).misc.name)
     return dct
+
+
+@define(frozen=True)
+class ConstructorMetadata:
+    """Metadata describing the used constructor and its arguments."""
+
+    name: str = field(default="__init__")
+    """The name of the constructor."""
+
+    kwargs: dict[str, Any] = field(factory=dict)
+    """Arguments passed to the constructor.
+
+    Convention:
+        * The arguments are stored as keyword arguments, even if they were
+          provided as positional arguments.
+        * If the default `__init__` constructor is used, no arguments are recorded since
+          they are directly available as attributes of the created object.
+    """
