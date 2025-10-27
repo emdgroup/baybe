@@ -286,7 +286,7 @@ class DesirabilityObjective(Objective):
         # Account for minimization
         oriented = [
             tr if not t.minimize else tr.negate()
-            for t, tr in zip(targets, transformations)
+            for t, tr in zip(targets, transformations, strict=True)
         ]
 
         # Treat identity transformations as affine for harmonized logic below
