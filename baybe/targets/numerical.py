@@ -13,7 +13,7 @@ from attrs import define, evolve, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, OptionalAttributeError
 from baybe.serialization import SerialMixin, converter
 from baybe.serialization.core import select_constructor_hook
 from baybe.targets._deprecated import (
@@ -23,6 +23,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.base import Target
 from baybe.targets.utils import (
+    capture_constructor_metadata,
     combine_numerical_targets,
 )
 from baybe.transformations import (
@@ -109,6 +110,70 @@ def _translate_legacy_arguments(
         return (modern_transformation, False)
 
 
+@define(frozen=True)
+class ConstructorMetadata:
+    """Metadata describing the used constructor and its arguments."""
+
+    name: str = field(default="__init__")
+    """The name of the constructor."""
+
+    kwargs: dict[str, Any] = field(factory=dict)
+    """Arguments passed to the constructor.
+
+    Convention:
+        * The arguments are stored as keyword arguments, even if they were
+          provided as positional arguments.
+        * If the default `__init__` constructor is used, no arguments are recorded since
+          they are directly available as attributes of the created object.
+    """
+
+
+@define(frozen=True)
+class OptionalAttribute:
+    """Descriptor for accessing optional attributes storing constructor metadata."""
+
+    name: str = field()
+    """The name of the optional attribute."""
+
+    def __get__(self, instance: OptionalAttributes, owner=None):
+        try:
+            return instance._constructor_metadata.kwargs[self.name]
+        except KeyError as e:
+            raise OptionalAttributeError(
+                f"In the specified context, the optional attribute '{self.name}' "
+                f"is not available."
+            ) from e
+
+
+@define(frozen=True, auto_attribs=False)
+class OptionalAttributes:
+    """Optional target attributes."""
+
+    _constructor_metadata: ConstructorMetadata = field(factory=ConstructorMetadata)
+    """The constructor metadata."""
+
+    match_value: float = OptionalAttribute("match_value")  # type: ignore[assignment]
+    """The value to be matched by the target."""
+
+    mismatch_instead: bool = OptionalAttribute("mismatch_instead")  # type: ignore[assignment]
+    """Boolean flag indicating if the target seeks to mismatch the specified value."""
+
+    exponent: int = OptionalAttribute("exponent")  # type: ignore[assignment]
+    """See :meth:`baybe.targets.numerical.NumericalTarget.match_power`."""
+
+    cutoffs: ConvertibleToInterval = OptionalAttribute("cutoffs")  # type: ignore[assignment]
+    """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
+
+    width: float = OptionalAttribute("width")  # type: ignore[assignment]
+    """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
+
+    margins: Sequence[float] = OptionalAttribute("margins")  # type: ignore[assignment]
+    """See :meth:`baybe.targets.numerical.NumericalTarget.match_triangular`."""
+
+    sigma: float = OptionalAttribute("sigma")  # type: ignore[assignment]
+    """The standard deviation of the bell transformation used for matching."""
+
+
 @define(frozen=True, init=False)
 class NumericalTarget(Target, SerialMixin):
     """Class for numerical targets."""
@@ -120,6 +185,9 @@ class NumericalTarget(Target, SerialMixin):
 
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
     """Boolean flag indicating if the target is to be minimized."""
+
+    optional: OptionalAttributes = field(init=False, factory=OptionalAttributes)
+    """Optional target attributes."""
 
     def __init__(  # noqa: DOC301
         self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
@@ -264,6 +332,7 @@ class NumericalTarget(Target, SerialMixin):
             return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
+    @capture_constructor_metadata
     def match_absolute(
         cls,
         name: str,
@@ -292,6 +361,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_metadata
     def match_quadratic(
         cls,
         name: str,
@@ -321,6 +391,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_metadata
     def match_power(
         cls,
         name: str,
@@ -353,6 +424,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_metadata
     def match_triangular(
         cls,
         name: str,
@@ -411,6 +483,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_metadata
     def match_bell(
         cls,
         name: str,

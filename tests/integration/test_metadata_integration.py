@@ -1,5 +1,7 @@
 """Integration tests for metadata with BayBE components."""
 
+import inspect
+
 import pytest
 from pytest import param
 
@@ -28,6 +30,22 @@ def make_objective(metadata: TMetadata = None) -> SingleTargetObjective:
     return SingleTargetObjective(
         target=make_target(), metadata=metadata or MeasurableMetadata()
     )
+
+
+def _get_match_constructors():
+    """Dynamically discover all `match_*` constructors and assign their kwargs."""
+    constructors = []
+    for name, _ in inspect.getmembers(NumericalTarget, predicate=inspect.ismethod):
+        if name.startswith("match_"):
+            kwargs = {}
+            if name == "match_power":
+                kwargs["exponent"] = 3
+            elif name == "match_triangular":
+                kwargs["width"] = 1
+            elif name == "match_bell":
+                kwargs["sigma"] = 1
+            constructors.append((name, kwargs))
+    return constructors
 
 
 @pytest.mark.parametrize(
@@ -64,3 +82,13 @@ class TestMetadataIntegration:
         assert container.description is None
         if metadata_cls is MeasurableMetadata:
             assert container.unit is None
+
+
+@pytest.mark.parametrize(("constructor", "kwargs"), _get_match_constructors())
+def test_constructor_metadata(constructor, kwargs):
+    """The constructor metadata allows to reconstruct the object."""
+    t = getattr(NumericalTarget, constructor)("t", match_value=0, **kwargs)
+    meta_constructor = t.optional._constructor_metadata.name
+    meta_kwargs = t.optional._constructor_metadata.kwargs
+    t2 = getattr(NumericalTarget, meta_constructor)(**meta_kwargs)
+    assert t == t2

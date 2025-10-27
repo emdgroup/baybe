@@ -154,8 +154,12 @@ class ModelNotTrainedError(Exception):
     """A prediction/transformation is attempted before the model has been trained."""
 
 
-class UnmatchedAttributeError(Exception):
+class UnmatchedAttributeError(AttributeError):
     """An attribute cannot be matched against a certain callable signature."""
+
+
+class OptionalAttributeError(AttributeError):
+    """An optional attribute is not available in the given context."""
 
 
 class InvalidSurrogateModelError(Exception):

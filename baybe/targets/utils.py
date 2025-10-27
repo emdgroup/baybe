@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
+from collections.abc import Callable
+from functools import wraps
 from typing import TYPE_CHECKING
 
 from attrs import evolve, fields
@@ -35,3 +38,31 @@ def combine_numerical_targets(
     """Combine two numerical targets using a binary operator."""
     _validate_numerical_target_combination(t1, t2)
     return evolve(t1, transformation=operator(t1.transformation, t2.transformation))  # type: ignore[call-arg]
+
+
+def capture_constructor_metadata(
+    constructor: Callable[..., NumericalTarget], /
+) -> Callable[..., NumericalTarget]:
+    """Decorator to capture constructor metadata upon object creation."""  # noqa: D401
+    from baybe.targets.numerical import ConstructorMetadata, OptionalAttributes
+
+    @wraps(constructor)
+    def wrapper(*args: object, **kwargs: object) -> NumericalTarget:
+        sig = inspect.signature(constructor)
+        bound = sig.bind(*args, **kwargs)
+        bound.apply_defaults()
+
+        # We don't need to store the first argument, since it's the class itself
+        bound.arguments.pop(next(iter(bound.arguments)))
+
+        target = constructor(*args, **kwargs)
+        object.__setattr__(
+            target,
+            "optional",
+            OptionalAttributes(
+                ConstructorMetadata(constructor.__name__, bound.arguments)
+            ),
+        )
+        return target
+
+    return wrapper
