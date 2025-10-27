@@ -101,14 +101,12 @@ def make_explainer_for_surrogate(
             f"'{KernelExplainer.__name__}'."
         )
 
-    from botorch.posteriors import GPyTorchPosterior
-
     if use_comp_rep:
 
         def model(x: np.ndarray) -> np.ndarray:
             tensor = to_tensor(x)
             posterior = surrogate._posterior_comp(tensor)
-            if not isinstance(posterior, GPyTorchPosterior):
+            if not hasattr(posterior, "mean"):
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
@@ -119,7 +117,7 @@ def make_explainer_for_surrogate(
         def model(x: np.ndarray) -> np.ndarray:
             df = pd.DataFrame(x, columns=data.columns)
             posterior = surrogate.posterior(df)
-            if not isinstance(posterior, GPyTorchPosterior):
+            if not hasattr(posterior, "mean"):
                 raise IncompatibilityError(
                     "SHAP explainers require a posterior that allows mean computation."
                 )
