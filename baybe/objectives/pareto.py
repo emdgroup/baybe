@@ -52,8 +52,7 @@ class ParetoObjective(Objective):
     def to_botorch_posterior_transform(self) -> NoReturn:
         raise NotImplementedError(
             f"Objectives of type '{type(self).__name__}' do not support conversion "
-            f"to BoTorch posterior transforms because BayBE does not (yet) offer "
-            f"any analytic multi-output acquisition functions."
+            f"to BoTorch posterior transforms."
         )
 
 
