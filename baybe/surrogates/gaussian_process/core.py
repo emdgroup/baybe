@@ -27,7 +27,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
-    from botorch.models.model import Model
+    from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
@@ -119,7 +119,7 @@ class GaussianProcessSurrogate(Surrogate):
         return make_gp_from_preset(preset)
 
     @override
-    def to_botorch(self) -> Model:
+    def to_botorch(self) -> GPyTorchModel:
         return self._model
 
     @override
