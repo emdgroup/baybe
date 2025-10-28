@@ -25,7 +25,11 @@ your campaign, depending on your settings for the
 {attr}`~baybe.campaign.Campaign.allow_recommending_already_recommended` flags.
 ```
 
-## Checklist for designing BayBE experiments
+## Checklist for designing BayBE optimization campaigns
+
+This checklist collects **common questions that you need to ask yourself** when designing a BayBE optimization campaign. It also provides documentation references that will help you with the corresponding setup. 
+
+Note that this is not a comprehensive guide of all BayBE's functionalities, but rather a "quick start" meant to help you with the most basic design principles.
 
 ### Defining targets
 
