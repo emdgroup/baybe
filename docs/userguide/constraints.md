@@ -31,18 +31,18 @@ is exclusively discrete or continuous in most cases.
 ### ContinuousLinearConstraint
 
 The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
-is used to model linear relationship between between continuous parameters.
+is used to model linear relationships between continuous parameters.
 BayBE supports two different kinds of continuous linear constraints:
 1. **Intrapoint constraints:** These constraints model the relationship between the parameters
-within (*intra-*) individual experiments (*-points*) and are what people typically think of when
-simply speaking about "constraints". For that reason, a `ContinuousLinearConstraint` is
+within (= *intra*) individual experiments (0 *points*) and are what people typically think of when
+speaking about "constraints". For that reason, a
+[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint) is
 interpreted as an intrapoint constraint if not explicitly declared otherwise.
 2. **Interpoint constraints:** These constraints model the relationship of different experiments
-across the whole batch (*inter-*) of exeriments (*-points*).
+across (= *inter*) the whole batch of experiments ( = *points*).
 
 #### Intrapoint Constraints
-When not explicitly declaring it an interpoint constraint, the
-[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
 asserts that the following kind of equations are true (up to numerical rounding errors):
 
 $$
@@ -91,26 +91,27 @@ A more detailed example can be found
 
 #### Interpoint constraints
 
-In contrast to the intrapoint constrains discussed in the previous paragraph,
-interpoint constraints models constraints **across** the points of the batch.
-That is, an interpoint constraint of the form $x + y \leq 1$ encodes
+In contrast to [intrapoint constraints](#intrapoint-constraints), 
+interpoint constraints model constraints **across** the points of the batch.
+That is, an interpoint constraint of the form $x + y \leq 1$ enforces that the sum of all 
+$x$ values plus the sum of all $y$ values across all experiments in the batch must not exceed 1:
 
 $$
-\sum_{b\text{ in batch}}x_b + \sum_{b\text{ in batch}}y_b \leq 1
+\sum_{i=1}^{n} x_i + \sum_{i=1}^{n} y_i \leq 1
 $$
 
-They can be defined by using the `interpoint` argument of the
-[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
-class.
+where $x_i$ and $y_i$ are the values of parameters $x$ and $y$ in the $i$-th experiment, 
+and $n$ is the batch size.
+
+They can be defined by using the `interpoint` argument of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint) class.
 A possible relevant constraint might be that only 100ml of a given solvent are available for 
-a full batch.
-
+a full batch:
 
 ```python
 from baybe.constraints import ContinuousLinearConstraint
 
 ContinuousLinearConstraint(
-    parameters=["SolventAmount[ml]"],
+    parameters=["SolventAmount"],
     operator="<=",
     coefficients=[1.0],
     rhs=100,
@@ -118,14 +119,17 @@ ContinuousLinearConstraint(
 )
 ```
 
+A more detailed example can be found
+[here](../../examples/Constraints_Continuous/interpoint).
+
 ```{admonition} Limited Scope
 :class: warning
 There are some limitations regarding the use of interpoint constraints that you need
 to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
-- When using interpoint constraints, the candidate generation has be done sequentially,
-and an error is raised if attempting to use them for joint optimization.
+- When using interpoint constraints, the candidate generation cannot be done sequentially,
+and an error is raised if attempting to use them for sequential optimization.
 - Interpoint constraints are only supported in purely continuous spaces and are not
 available in hybrid spaces.
 ```
@@ -133,7 +137,7 @@ available in hybrid spaces.
 ### ContinuousCardinalityConstraint
 The {class}`~baybe.constraints.continuous.ContinuousCardinalityConstraint` gives you a
 tool to control the number of active factors (i.e. parameters that take a non-zero
-value) in your designs. This comes handy, for example, when designing mixtures with a
+value) in your designs. This comes in handy, for example, when designing mixtures with a
 limited number of components.
 
 To create a constraint of this kind, simply specify the set of parameters on which the
@@ -212,7 +216,7 @@ In the default implementation, BayBE first creates the full discrete searchspace
 then applies filters to it to remove candidates not complying with discrete constraints.
 This requires that the entire unfiltered searchspace fits into memory, which is
 inefficient, given that the filtering might reduce the amount of relevant candidates by
-orders of magnitude. For many dicrete contraints, BayBE offers a more efficient
+orders of magnitude. For many discrete constraints, BayBE offers a more efficient
 implementation via [polars] that needs much less memory. This is automatically activated
 if [polars] is present in the Python environment, for instance if BayBE was installed
 with the optional dependency group via `pip install baybe[polars]`. In many cases, this
