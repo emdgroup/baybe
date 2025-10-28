@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -24,6 +24,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.surrogates.gaussian_process.prior_modules import PriorMean, PriorKernel
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -113,10 +114,70 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    # Transfer learning fields
+    _prior_gp = field(init=False, default=None, eq=False)
+    """Prior GP to extract mean/covariance from for transfer learning."""
+
+    _transfer_mode: Literal["mean", "kernel"] | None = field(init=False, default=None, eq=False)
+    """Transfer learning mode: 'mean' uses prior as mean function, 'kernel' uses prior covariance."""
+
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
+
+    @classmethod
+    def from_prior_gp(
+        cls,
+        prior_gp,
+        transfer_mode: Literal["mean", "kernel"] = "mean",
+        kernel_factory: KernelFactory | None = None,
+        **kwargs
+    ) -> GaussianProcessSurrogate:
+        """Create a GP surrogate from a prior GP.
+
+        Args:
+            prior_gp: Fitted SingleTaskGP to use as prior 
+            transfer_mode: "mean" extracts posterior mean as prior mean,
+                          "kernel" uses prior's covariance
+            kernel_factory: Kernel factory for new covariance (required for mean mode,
+                           ignored for kernel mode)
+            **kwargs: Additional arguments passed to GaussianProcessSurrogate constructor
+
+        Returns:
+            New GaussianProcessSurrogate instance with prior mean or covariance
+
+        Raises:
+            ValueError: If prior_gp is not fitted or configuration is invalid
+        """
+        from copy import deepcopy
+        from botorch.models import SingleTaskGP
+
+        # Validate prior GP is fitted
+        if not isinstance(prior_gp, SingleTaskGP):
+            raise ValueError("prior_gp must be a fitted SingleTaskGP instance")
+        if not hasattr(prior_gp, 'train_inputs') or prior_gp.train_inputs is None:
+            raise ValueError("Prior GP must be fitted (have train_inputs) before use")
+
+        # Validate transfer mode configuration
+        if transfer_mode not in ["mean", "kernel"]:
+            raise ValueError("transfer_mode must be 'mean' or 'kernel'")
+
+        if transfer_mode == "mean" and kernel_factory is None:
+            raise ValueError("kernel_factory is required for mean transfer mode")
+
+        # For kernel transfer, kernel_factory is ignored (we use prior's kernel)
+        if transfer_mode == "kernel":
+            kernel_factory = kernel_factory or DefaultKernelFactory()
+
+        # Create new surrogate instance
+        instance = cls(kernel_or_factory=kernel_factory, **kwargs)
+
+        # Configure for transfer learning
+        instance._prior_gp = deepcopy(prior_gp)
+        instance._transfer_mode = transfer_mode
+
+        return instance
 
     @override
     def to_botorch(self) -> Model:
@@ -140,60 +201,79 @@ class GaussianProcessSurrogate(Surrogate):
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         return self._model.posterior(candidates_comp_scaled)
 
-    @override
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _initialize_model(
+        self,
+        train_x: Tensor,
+        train_y: Tensor,
+        context: _ModelContext,
+        batch_shape,
+    ) -> None:
+        """Initialize the GP model with appropriate mean and covariance modules.
+
+        Handles both standard GP creation and creation of GP from given prior.
+
+        Args:
+            train_x: Training input data
+            train_y: Training target data
+            context: Model context containing searchspace information
+            batch_shape: Batch shape for the training data
+        """
         import botorch
         import gpytorch
         import torch
 
-        # FIXME[typing]: It seems there is currently no better way to inform the type
-        #   checker that the attribute is available at the time of the function call
-        assert self._searchspace is not None
-
-        context = _ModelContext(self._searchspace)
-
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
 
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
-        )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+        # Configure input/output transforms
+        if self._prior_gp is not None:
+            # Use prior's transforms for consistency in transfer learning
+            input_transform = self._prior_gp.input_transform
+            outcome_transform = self._prior_gp.outcome_transform
+        else:
+            # Standard transform setup
+            input_transform = botorch.models.transforms.Normalize(
+                train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
+            )
+            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # extract the batch shape of the training data
-        batch_shape = train_x.shape[:-2]
+        # Configure mean module
+        if self._prior_gp is not None and self._transfer_mode == "mean":
+            mean_module = PriorMean(self._prior_gp, batch_shape=batch_shape)
+        else:
+            mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # create GP mean
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
+        # Configure base covariance module
+        if self._prior_gp is not None and self._transfer_mode == "kernel":
+            base_covar_module = PriorKernel(self._prior_gp.covar_module)
+        else:
+            # Use kernel factory
+            base_covar_module = self.kernel_factory(
+                context.searchspace, train_x, train_y
+            ).to_gpytorch(
+                ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+                active_dims=numerical_idxs,
+                batch_shape=batch_shape,
+            )
 
-        # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
-            batch_shape=batch_shape,
-        )
-
-        # create GP covariance
+        # Handle multi-task covariance (keep existing logic)
         if not context.is_multitask:
             covar_module = base_covar_module
         else:
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
+                rank=context.n_tasks,
             )
             covar_module = base_covar_module * task_covar_module
 
-        # create GP likelihood
+        # Configure likelihood (keep existing logic)
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
-        # construct and fit the Gaussian process
+        # Create the model
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
@@ -203,6 +283,21 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=covar_module,
             likelihood=likelihood,
         )
+
+    @override
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        import botorch
+        import gpytorch
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._searchspace is not None
+
+        context = _ModelContext(self._searchspace)
+        batch_shape = train_x.shape[:-2]
+
+        # Initialize model
+        self._initialize_model(train_x, train_y, context, batch_shape)
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
         #  low-dimensional TL cases. More robust settings are being researched.
