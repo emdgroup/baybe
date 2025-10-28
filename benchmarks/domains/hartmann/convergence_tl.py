@@ -21,7 +21,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
-from benchmarks.domains.hartmann.utils import get_shifted_hartmann
+from benchmarks.domains.hartmann.utils import HartmannShifted
 
 
 def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -44,17 +44,23 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         DataFrame containing benchmark results.
     """
 
-    def functions(bounds, dim):
-        bounds = bounds.transpose()
-        source_function = Hartmann(dim=dim, noise_std=0.15, bounds=bounds)
-        target_function = Hartmann(dim=dim, bounds=bounds)
-        return target_function, source_function
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
 
-    return _compose_hartmann_tl_3_20_15(settings=settings, functions=functions)
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds)
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
 
 
 def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function for transfer learning with the inverted Hartmann function in 3D.
+    """Benchmark function for transfer learning with inverted Hartmann function in 3D.
 
     Key characteristics:
     • Compares two versions of Hartmann function:
@@ -73,22 +79,29 @@ def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFr
         DataFrame containing benchmark results.
     """
 
-    def functions(bounds, dim):
-        bounds = bounds.transpose()
-        source_function = Hartmann(dim=dim, noise_std=0.15, negate=True, bounds=bounds)
-        target_function = Hartmann(dim=dim, bounds=bounds)
-        return target_function, source_function
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
 
-    return _compose_hartmann_tl_3_20_15(settings=settings, functions=functions)
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds, negate=True)
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
 
 
 def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
-    """Benchmark function for transfer learning with the shifted Hartmann function in 3D.
+    """Benchmark function for transfer learning with shifted input Hartmann in 3D.
 
     Key characteristics:
     • Compares two versions of Hartmann function:
       - Target: standard Hartmann
-      - Source: Shifted Hartmann (first dimension) with added noise (noise_std=0.15)
+      - Source: Shifted Hartmann (shifted first input dimension)
+        with added noise (noise_std=0.15)
     • Uses 20 points per dimension
     • Tests transfer learning with different source data percentages:
       - 1% of source data
@@ -102,20 +115,29 @@ def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.Data
         DataFrame containing benchmark results.
     """
 
-    def functions(bounds, dim):
-        shifts = [0.2] + [0] * (dim - 1)
-        source_function, bounds_func = get_shifted_hartmann(
-            shifts=shifts, dim=dim, noise_std=0.15, bounds=bounds
-        )
-        target_function = Hartmann(dim=dim, bounds=bounds_func)
-        return target_function, source_function
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
 
-    return _compose_hartmann_tl_3_20_15(settings=settings, functions=functions)
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        shifts = [0.2] + [0] * (dim - 1)
+        return HartmannShifted(
+            shifts=shifts,
+            kwargs_dict={"bounds": bounds, "dim": dim, "noise_std": 0.15},
+        )
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
 
 
 def _compose_hartmann_tl_3_20_15(
     settings: ConvergenceBenchmarkSettings,
-    functions: callable,
+    source: callable,
+    target: callable | None = None,
 ) -> pd.DataFrame:
     """Construct benchmark for transfer learning with the Hartmann function in 3D.
 
@@ -129,18 +151,25 @@ def _compose_hartmann_tl_3_20_15(
 
     Args:
         settings: Configuration settings for the convergence benchmark.
-        functions: A callable that returns the target and source functions.
-            Takes as inputs bounds - array of size (2, *dim),
-            with first row being lower bounds
-            and second row being upper bounds;
+        source: A callable that returns the source function.
+            Takes as inputs bounds - array of size (dim, 2),
+            with first column being lower bounds
+            and second column being upper bounds;
             and dim - the number of dimensions.
-            Returns as output tuple of target and source callables.
+        target: A callable that returns the target function.
+           The function is initialized so that dimensions and bounds
+           match the source function.
+           If None uses the default Hartmann function.
+
 
     Returns:
         DataFrame containing benchmark results.
     """
-    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
-    target_function, source_function = functions(bounds=bounds, dim=3)
+    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]).T
+    source_function = source(dim=3, bounds=bounds)
+    if target is None:
+        target = Hartmann
+    target_function = target(dim=source_function.dim, bounds=source_function._bounds)
 
     points_per_dim = 20
     percentages = [0.01, 0.05, 0.1]
@@ -148,7 +177,7 @@ def _compose_hartmann_tl_3_20_15(
     # Create grid locations for the parameters
     grid_locations = {
         f"x{d}": np.linspace(lower, upper, points_per_dim)
-        for d, (lower, upper) in enumerate(bounds.T)
+        for d, (lower, upper) in enumerate(bounds)
     }
 
     params: list[DiscreteParameter] = [
