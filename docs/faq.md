@@ -29,13 +29,13 @@ your campaign, depending on your settings for the
 
 ### Defining targets
 
-```{dropdown} Should be target value maximized rather than minimized or matched to specific value?
+```{dropdown} Should the target value be maximized, minimized, or be matched to a specific value?
 
 Specify this when
 [defining the target](userguide/targets.html#numericaltarget).
 ```
 
-```{dropdown} Should be multiple target optimized simultaneously?
+```{dropdown} Should multiple target be optimized simultaneously?
 
 See how to use 
 [multi-target objectives](userguide/objectives.html).
