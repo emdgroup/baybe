@@ -269,7 +269,8 @@ This loop typically continues until a desired target value is achieved in the ex
 The below plot shows progression of a campaign that optimized direct arylation reaction
 by tuning the solvent, base and ligand 
 (from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)).
-Each line shows the best target value that was measured in each experimental iteration.
+Each line shows the best target value that was cumulatively achieved after a given number of experimental iteration.
+
 Different lines show outcomes of `Campaigns` with different designs.
 
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
