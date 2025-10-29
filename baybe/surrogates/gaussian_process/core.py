@@ -24,11 +24,11 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
-from baybe.surrogates.gaussian_process.prior_modules import PriorMean, PriorKernel
+from baybe.surrogates.gaussian_process.prior_modules import PriorKernel, PriorMean
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
-    from botorch.models.model import Model
+    from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
@@ -118,7 +118,9 @@ class GaussianProcessSurrogate(Surrogate):
     _prior_gp = field(init=False, default=None, eq=False)
     """Prior GP to extract mean/covariance from for transfer learning."""
 
-    _transfer_mode: Literal["mean", "kernel"] | None = field(init=False, default=None, eq=False)
+    _transfer_mode: Literal["mean", "kernel"] | None = field(
+        init=False, default=None, eq=False
+    )
     """Transfer learning mode: 'mean' uses prior as mean function, 'kernel' uses prior covariance."""
 
     @staticmethod
@@ -132,12 +134,12 @@ class GaussianProcessSurrogate(Surrogate):
         prior_gp,
         transfer_mode: Literal["mean", "kernel"] = "mean",
         kernel_factory: KernelFactory | None = None,
-        **kwargs
+        **kwargs,
     ) -> GaussianProcessSurrogate:
         """Create a GP surrogate from a prior GP.
 
         Args:
-            prior_gp: Fitted SingleTaskGP to use as prior 
+            prior_gp: Fitted SingleTaskGP to use as prior
             transfer_mode: "mean" extracts posterior mean as prior mean,
                           "kernel" uses prior's covariance
             kernel_factory: Kernel factory for new covariance (required for mean mode,
@@ -151,12 +153,13 @@ class GaussianProcessSurrogate(Surrogate):
             ValueError: If prior_gp is not fitted or configuration is invalid
         """
         from copy import deepcopy
+
         from botorch.models import SingleTaskGP
 
         # Validate prior GP is fitted
         if not isinstance(prior_gp, SingleTaskGP):
             raise ValueError("prior_gp must be a fitted SingleTaskGP instance")
-        if not hasattr(prior_gp, 'train_inputs') or prior_gp.train_inputs is None:
+        if not hasattr(prior_gp, "train_inputs") or prior_gp.train_inputs is None:
             raise ValueError("Prior GP must be fitted (have train_inputs) before use")
 
         # Validate transfer mode configuration
@@ -180,7 +183,7 @@ class GaussianProcessSurrogate(Surrogate):
         return instance
 
     @override
-    def to_botorch(self) -> Model:
+    def to_botorch(self) -> GPyTorchModel:
         return self._model
 
     @override
@@ -232,7 +235,9 @@ class GaussianProcessSurrogate(Surrogate):
         else:
             # Standard transform setup
             input_transform = botorch.models.transforms.Normalize(
-                train_x.shape[-1], bounds=context.parameter_bounds, indices=numerical_idxs
+                train_x.shape[-1],
+                bounds=context.parameter_bounds,
+                indices=numerical_idxs,
             )
             outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 

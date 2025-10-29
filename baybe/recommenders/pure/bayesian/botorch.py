@@ -448,7 +448,7 @@ class BotorchRecommender(BayesianRecommender):
             q=batch_size,
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
-            fixed_features_list=fixed_features_list,
+            fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
             equality_constraints=[
                 c.to_botorch(
                     searchspace.continuous.parameters,

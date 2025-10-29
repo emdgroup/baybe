@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
+from attrs import evolve
 
 from baybe.transformations.base import Transformation
 
@@ -64,10 +65,15 @@ def compress_transformations(
     Returns:
         The minimum sequence of transformations that is equivalent to the input.
     """
-    from baybe.transformations.basic import AffineTransformation, IdentityTransformation
+    from baybe.transformations.basic import (
+        AffineTransformation,
+        BellTransformation,
+        IdentityTransformation,
+        TriangularTransformation,
+        TwoSidedAffineTransformation,
+    )
 
     aggregated: list[Transformation] = []
-    last = None
     id_ = IdentityTransformation()
 
     for t in _flatten_transformations(transformations):
@@ -75,19 +81,27 @@ def compress_transformations(
         if t == id_:
             continue
 
-        # Combine subsequent affine transformations
-        if (
-            aggregated
-            and isinstance(last := aggregated.pop(), AffineTransformation)
-            and isinstance(t, AffineTransformation)
-        ):
-            aggregated.append(combine_affine_transformations(last, t))
-
-        # Keep other transformations
-        else:
-            if last is not None:
-                aggregated.append(last)
-            aggregated.append(t)
+        last = aggregated.pop() if aggregated else None
+        match (last, t):
+            case AffineTransformation(), AffineTransformation():
+                # Two subsequent affine transformations
+                aggregated.append(combine_affine_transformations(last, t))
+            case AffineTransformation(factor=1.0), BellTransformation():
+                # Bell transformation after a pure input shift
+                aggregated.append(evolve(t, center=t.center - last.shift))
+            case AffineTransformation(factor=1.0), TwoSidedAffineTransformation():
+                # 2-sided affine transformation after a pure input shift
+                aggregated.append(evolve(t, midpoint=t.midpoint - last.shift))
+            case AffineTransformation(factor=1.0), TriangularTransformation():
+                # Triangular transformation after a pure input shift
+                aggregated.append(
+                    evolve(t, peak=t.peak - last.shift, cutoffs=t.cutoffs - last.shift)
+                )
+            case (None, _):
+                aggregated.append(t)
+            case (l, _):
+                aggregated.append(l)
+                aggregated.append(t)
 
     # Handle edge case when there was only a single identity transformation
     if not aggregated:

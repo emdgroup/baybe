@@ -87,10 +87,49 @@ def test_affine_transformation_compression():
     t = IdentityTransformation()
 
     t1 = t * 2 + 3 | t
-    assert t1 == AffineTransformation(factor=2, shift=3)
+    t1b = (t * 2).vshift(3)
+    assert t1 == t1b == AffineTransformation(factor=2, shift=3)
 
     t2 = (t + 3) * 2 | t
-    assert t2 == AffineTransformation(factor=2, shift=3, shift_first=True)
+    t2b = t.vshift(3) * 2
+    assert t2 == t2b == AffineTransformation(factor=2, shift=3, shift_first=True)
+
+
+@pytest.mark.parametrize(
+    "t, expected",
+    [
+        param(
+            BellTransformation(center=0, sigma=1),
+            BellTransformation(center=2, sigma=1),
+            id="bell",
+        ),
+        param(
+            TwoSidedAffineTransformation(midpoint=0, slope_left=-4, slope_right=2),
+            TwoSidedAffineTransformation(midpoint=2, slope_left=-4, slope_right=2),
+            id="2sided_affine",
+        ),
+        param(
+            TriangularTransformation(peak=0, cutoffs=(-2, 1)),
+            TriangularTransformation(peak=2, cutoffs=(0, 3)),
+            id="triangular_cutoffs",
+        ),
+        param(
+            TriangularTransformation.from_margins(peak=0.0, margins=(2, 1)),
+            TriangularTransformation(peak=2, cutoffs=(0, 3)),
+            id="triangular_margins",
+        ),
+        param(
+            TriangularTransformation.from_width(peak=0.0, width=4),
+            TriangularTransformation(peak=2, cutoffs=(0, 4)),
+            id="triangular_width",
+        ),
+    ],
+)
+def test_positional_shift_transformation_compression(t, expected):
+    """Simple input shifts are compressed correctly."""
+    t1 = AffineTransformation(shift=-2) | t
+    t2 = t.hshift(2)
+    assert t1 == t2 == expected
 
 
 def test_identity_transformation_chaining():
