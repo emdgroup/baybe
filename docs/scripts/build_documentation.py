@@ -111,11 +111,11 @@ def build_documentation(
         "html",
         "docs",
         build_dir,
-        #"-n",  # Being nitpicky
-        #"-W",  # Fail when encountering an error or a warning
+        "-n",  # Being nitpicky
+        "-W",  # Fail when encountering an error or a warning
     ]
 
-    if True:
+    if force:
         print("Force-building the documentation, ignoring errors and warnings.")
         # In force mode, we do not want to fail, even if an error code is returned.
         # Hence, we use run instead of check_call
