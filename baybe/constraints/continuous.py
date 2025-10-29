@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Collection, Iterator, Sequence
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from itertools import combinations
 from math import comb
 from typing import TYPE_CHECKING, Any
@@ -117,7 +117,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     def to_botorch(
         self,
-        parameters: Sequence[NumericalContinuousParameter],
+        parameters: Iterable[NumericalContinuousParameter],
         idx_offset: int = 0,
         *,
         batch_size: int | None = None,
@@ -157,9 +157,9 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         # Locate where the parameters referenced by the constraint will later be found
         # in the input tensor provided to BoTorch
         # NOTE: We assume here that all referenced parameters actually exist in the
-        #       provided ``parameters`` list, which is pre-validated when creating the
-        #       search space. If this assumption is violated for whatever reason, an
-        #       exception would still be thrown by the lookup attempt below.
+        #   provided ``parameters`` list, which is pre-validated when creating the
+        #   search space. If this assumption is violated for whatever reason, an
+        #   exception would still be thrown by the lookup attempt below.
         names = [p.name for p in parameters]
         idxs = torch.tensor([names.index(p) + idx_offset for p in self.parameters])
 
@@ -167,6 +167,8 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             # For interpoint constraints, the coefficients and indices need to be
             # adjusted to account for the batch size:
             # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
+            # * Coefficients: [c1, c2], batch_size=2 -> [c1, c2, c1, c2]
+            # * Indices:[i1, i2], batch_size=2 -> [[0, i1], [0, i2], [1, i1], [1, i2]]
             assert batch_size is not None
             coefficients = coefficients.repeat(batch_size)
             idxs = torch.cartesian_prod(torch.arange(batch_size), idxs)
