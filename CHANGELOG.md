@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `farthest_point_sampling` now correctly handles predefined `initialization` indices
 - `SearchSpace.from_dataframe` now validates that dataframes contain only
   `active_values`, raising `IncompatibilityError` otherwise
+- False-negative surrogate cache hits when using multi-model surrogates
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
