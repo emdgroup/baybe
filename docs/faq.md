@@ -25,13 +25,13 @@ your campaign, depending on your settings for the
 {attr}`~baybe.campaign.Campaign.allow_recommending_already_recommended` flags.
 ```
 
-## Checklist for designing BayBE optimization campaigns
+## Checklist for Designing BayBE Optimization Campaigns
 
 This checklist collects **common questions that you need to ask yourself** when designing a BayBE optimization campaign. It also provides documentation references that will help you with the corresponding setup. 
 
 Note that this is not a comprehensive guide of all BayBE's functionalities, but rather a "quick start" meant to help you with the most basic design principles.
 
-### Defining targets
+### Defining Targets
 
 ```{dropdown} Should the target value be maximized, minimized, or be matched to a specific value?
 
@@ -45,7 +45,7 @@ See how to use
 [multi-target objectives](userguide/objectives.html).
 ```
 
-### Defining parameter search space
+### Defining Parameter Search Space
 
 ```{dropdown} Are only some parameter values of interest/possible?
 
@@ -80,7 +80,7 @@ See how to
 discrete parameters or provide custom encodings.
 ```
 
-### Account for specifics of data availability or data acquisition procedure
+### Account for Specifics of Data Availability or Data Acquisition Procedure
 
 ```{dropdown} Is no prior data available and the experiments should be done in batches?
 
@@ -97,7 +97,7 @@ discrete parameters or provide custom encodings.
   > Use [asynchronous workflows](userguide/async.html).
 ```
 
-### Advanced: adjust how recommendations are prioritized
+### Advanced: Adjust how Recommendations are Prioritized
 
 ```{dropdown} Is the aim to reduce the overall uncertainty across different regions of the search space rather than optimize a specific objective?
 
