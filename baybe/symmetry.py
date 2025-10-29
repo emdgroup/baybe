@@ -42,13 +42,13 @@ class Symmetry(SerialMixin, ABC):
 
     @property
     @abstractmethod
-    def parameters(self) -> tuple[str, ...]:
-        """The parameters affected by the symmetry."""
+    def parameter_names(self) -> tuple[str, ...]:
+        """The names of the parameters affected by the symmetry."""
 
     def summary(self) -> dict:
         """Return a custom summarization of the symmetry."""
         symmetry_dict = dict(
-            Type=self.__class__.__name__, Affected_Parameters=self.parameters
+            Type=self.__class__.__name__, Affected_Parameters=self.parameter_names
         )
         return symmetry_dict
 
@@ -72,8 +72,8 @@ class PermutationSymmetry(Symmetry):
     $f(x,y) = f(y,x)$.
     """
 
-    _parameters: tuple[str, ...] = field(
-        alias="parameters",
+    _parameter_names: tuple[str, ...] = field(
+        alias="parameter_names",
         converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             validate_unique_values,
@@ -82,19 +82,21 @@ class PermutationSymmetry(Symmetry):
             ),
         ),
     )
-    """The parameters affected by the symmetry."""
+    """The names of the parameters affected by the symmetry."""
 
     @override
     @property
-    def parameters(self) -> tuple[str, ...]:
-        return self._parameters
+    def parameter_names(self) -> tuple[str, ...]:
+        return self._parameter_names
 
     # TODO: Validation
-    #  - Each entry in copermuted_groups must have the same length as parameters
+    #  - Each entry in copermuted_groups must have the same length as parameter_names
+    #  - parameters in each group must have identical specification as otherwise
+    #    disallowed parameter values could be produced
 
     # Object variables
     copermuted_groups: tuple[tuple[str, ...], ...] = field(factory=tuple)
-    """The list of parameters used for the constraint."""
+    """Groups of parameter names that are co-permuted like the other parameters."""
 
     @override
     def augment_measurements(
@@ -112,8 +114,7 @@ class PermutationSymmetry(Symmetry):
         # as the group "p_k".
         # We create `groups` to look like (("p1", "a1", "b1"), ("p2", "a2", "b2"), ...).
         # It results in just (("p1",), ("p2",), ...) if there are no copermuted groups.
-        groups = tuple(zip(self.parameters, *self.copermuted_groups, strict=True))
-
+        groups = tuple(zip(self.parameter_names, *self.copermuted_groups, strict=True))
         df = df_apply_permutation_augmentation(df, groups)
 
         return df
@@ -128,8 +129,8 @@ class MirrorSymmetry(Symmetry):
     $f(x,y) = f(-x,y)$ (mirror point is 0).
     """
 
-    _parameter: str = field(validator=instance_of(str), alias="parameter")
-    """The single parameter affected by the symmetry."""
+    _parameter_name: str = field(validator=instance_of(str), alias="parameter_name")
+    """The anme of the single parameter affected by the symmetry."""
 
     # object variables
     mirror_point: float = field(default=0.0, converter=float, kw_only=True)
@@ -137,8 +138,8 @@ class MirrorSymmetry(Symmetry):
 
     @override
     @property
-    def parameters(self) -> tuple[str]:
-        return (self._parameter,)
+    def parameter_names(self) -> tuple[str]:
+        return (self._parameter_name,)
 
     # TODO: Validation
     #  - Only numerical parameters are supported
@@ -153,7 +154,7 @@ class MirrorSymmetry(Symmetry):
             return df
 
         df = df_apply_mirror_augmentation(
-            df, self._parameter, mirror_point=self.mirror_point
+            df, self._parameter_name, mirror_point=self.mirror_point
         )
 
         return df
@@ -168,8 +169,8 @@ class DependencySymmetry(Symmetry):
     parameter y only matters if parameter x has the value 'on'.".
     """
 
-    _parameters: tuple[str, ...] = field(
-        alias="parameters",
+    _parameter_names: tuple[str, ...] = field(
+        alias="parameter_names",
         converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             deep_iterable(
@@ -177,15 +178,17 @@ class DependencySymmetry(Symmetry):
             ),
         ),
     )
-    """The parameters affected by the symmetry."""
+    """The names of the parameters affected by the symmetry."""
 
     @override
     @property
-    def parameters(self) -> tuple[str, ...]:
-        return self._parameters
+    def parameter_names(self) -> tuple[str, ...]:
+        return self._parameter_names
 
     # TODO: Validation
-    #  - Only discrete parameters are supported here due to the conditions
+    #  - Only discrete parameters are supported as "causing" due to the conditions
+    #  - Length and content of conditions and affected_parameters
+
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -221,7 +224,7 @@ class DependencySymmetry(Symmetry):
         from baybe.parameters.base import DiscreteParameter
 
         for param_name, cond, affected_param_names in zip(
-            self.parameters, self.conditions, self.affected_parameters
+            self.parameter_names, self.conditions, self.affected_parameters
         ):
             # The 'causing' entry describes the parameters and the value
             # for which one or more affected parameters become degenerate.

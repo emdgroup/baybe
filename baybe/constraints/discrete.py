@@ -275,7 +275,7 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
         from baybe.symmetry import DependencySymmetry
 
         return DependencySymmetry(
-            parameters=self.parameters,
+            parameter_names=self.parameters,
             conditions=self.conditions,
             affected_parameters=self.affected_parameters,
             use_data_augmentation=use_data_augmentation,
@@ -348,7 +348,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         from baybe.symmetry import PermutationSymmetry
 
         return PermutationSymmetry(
-            parameters=self.parameters,
+            parameter_names=self.parameters,
             copermuted_groups=(tuple(self.dependencies.parameters),)
             if self.dependencies
             else tuple(),
