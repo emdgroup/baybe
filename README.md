@@ -264,7 +264,7 @@ campaign.add_measurements(df)
 With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
 This loop typically continues until a desired target value is achieved in the experiment.
 
-### Inspect the progress of the experimental setting optimization
+### Inspect the Progress of the Experimental Setting Optimization
 
 The below plot shows progression of a campaign that optimized direct arylation reaction
 by tuning the solvent, base and ligand 
