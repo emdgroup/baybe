@@ -186,7 +186,7 @@ and alternative ways of construction.
 
 ### Optional: Defining the Optimization Strategy
 
-As an optional step, we can specify details on how the optimization of the experiment should be
+As an optional step, we can specify details on how the optimization of the experimental settings should be
 performed. If omitted, BayBE will choose a default setting.
 
 For our example, we combine two recommenders via a so-called meta recommender named
@@ -216,7 +216,7 @@ of the user guide.
 
 ### The Optimization Loop
 
-We can now construct a `Campaign` that performs the Bayesian optimization of the experiment:
+We can now construct a `Campaign` that performs the Bayesian optimization of the experimental settings:
 
 ```python
 from baybe import Campaign
@@ -224,7 +224,7 @@ from baybe import Campaign
 campaign = Campaign(searchspace, objective, recommender)
 ```
 
-With this object at hand, we can start our experimentation cycle.
+With this object at hand, we can start our optimization cycle.
 In particular:
 
 * The campaign can `recommend` new experiments.
@@ -264,7 +264,7 @@ campaign.add_measurements(df)
 With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
 This loop typically continues until a desired target value is achieved in the experiment.
 
-### Inspect the progress of the experiment optimization
+### Inspect the progress of the experimental setting optimization
 
 The below plot shows progression of a campaign that optimized direct arylation reaction
 by tuning the solvent, base and ligand 
