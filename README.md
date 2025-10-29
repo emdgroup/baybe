@@ -90,7 +90,7 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 From the user-perspective, the most important part is the "design" step.
 If you are new to BayBE, we suggest consulting our 
-[design checklist](https://emdgroup.github.io/baybe/stable/faq.html#checklist-for-designing-baybe-experiments) 
+[design checklist](https://emdgroup.github.io/baybe/stable/faq.html) 
 to help you with the design setup.
 
 Below we show a simple optimization procedure, starting with the design step and subsequently
