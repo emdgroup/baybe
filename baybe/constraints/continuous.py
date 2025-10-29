@@ -121,6 +121,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         idx_offset: int = 0,
         *,
         batch_size: int | None = None,
+        flatten: bool = False,
     ) -> tuple[Tensor, Tensor, float]:
         """Cast the constraint in a format required by botorch.
 
@@ -142,7 +143,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         Returns:
             The tuple required by botorch.
         """
-        if (batch_size is not None) ^ (self.is_interpoint):
+        if (batch_size is not None) ^ (self.is_interpoint or flatten):
             raise ValueError(
                 "A batch size must be set if and only if the constraint is "
                 "an interpoint constraint."
@@ -152,7 +153,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         from baybe.utils.torch import DTypeFloatTorch
 
-        coefficients = torch.tensor(self.coefficients, dtype=DTypeFloatTorch)
+        coefficients = self._multiplier * torch.tensor(
+            self.coefficients, dtype=DTypeFloatTorch
+        )
+        rhs = self._multiplier * torch.tensor(self.rhs, dtype=DTypeFloatTorch).item()
 
         # Locate where the parameters referenced by the constraint will later be found
         # in the input tensor provided to BoTorch
@@ -161,6 +165,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         #   search space. If this assumption is violated for whatever reason, an
         #   exception would still be thrown by the lookup attempt below.
         names = [p.name for p in parameters]
+        n_parameters = len(names)
         idxs = torch.tensor([names.index(p) + idx_offset for p in self.parameters])
 
         if self.is_interpoint:
@@ -173,11 +178,16 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             coefficients = coefficients.repeat(batch_size)
             idxs = torch.cartesian_prod(torch.arange(batch_size), idxs)
 
-        return (
-            idxs,
-            self._multiplier * coefficients,
-            torch.tensor(self._multiplier * self.rhs, dtype=DTypeFloatTorch).item(),
-        )
+        if not flatten:
+            return (idxs, coefficients, rhs)
+
+        if self.is_interpoint:
+            idxs = idxs[:, 0] * n_parameters + idxs[:, 1]
+            return [(idxs, coefficients, rhs)]
+        else:
+            return [
+                (idxs + b * n_parameters, coefficients, rhs) for b in range(batch_size)
+            ]
 
 
 @define
