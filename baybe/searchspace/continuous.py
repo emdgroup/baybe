@@ -34,7 +34,7 @@ from baybe.searchspace.validation import (
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import flatten, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
@@ -498,12 +498,12 @@ class SubspaceContinuous(SerialMixin):
             points = get_polytope_samples(
                 n=batch_size,
                 bounds=torch.from_numpy(bounds),
-                equality_constraints=[
+                equality_constraints=flatten(
                     c.to_botorch(self.parameters) for c in self.constraints_lin_eq
-                ],
-                inequality_constraints=[
+                ),
+                inequality_constraints=flatten(
                     c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
-                ],
+                ),
             )
         else:
             points = self._sample_from_polytope_with_interpoint_constraints(
@@ -532,12 +532,6 @@ class SubspaceContinuous(SerialMixin):
         """
         import torch
         from botorch.utils.sampling import get_polytope_samples
-
-        def flatten(lst):
-            # Flatten one level of nesting
-            import itertools
-
-            return list(itertools.chain.from_iterable(item for item in lst))
 
         eq_constraints = flatten(
             c.to_botorch(self.parameters, batch_size=batch_size, flatten=True)
