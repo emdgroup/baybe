@@ -32,6 +32,7 @@ from baybe.searchspace import (
     SubspaceContinuous,
     SubspaceDiscrete,
 )
+from baybe.utils.basic import flatten
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.sampling_algorithms import (
@@ -372,21 +373,21 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features=fixed_parameters or None,
-            equality_constraints=[
+            equality_constraints=flatten(
                 c.to_botorch(
                     subspace_continuous.parameters,
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in subspace_continuous.constraints_lin_eq
-            ]
+            )
             or None,
-            inequality_constraints=[
+            inequality_constraints=flatten(
                 c.to_botorch(
                     subspace_continuous.parameters,
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in subspace_continuous.constraints_lin_ineq
-            ]
+            )
             or None,
             sequential=self.sequential_continuous,
         )
@@ -475,23 +476,23 @@ class BotorchRecommender(BayesianRecommender):
             num_restarts=self.n_restarts,
             raw_samples=self.n_raw_samples,
             fixed_features_list=fixed_features_list,  # type: ignore[arg-type]
-            equality_constraints=[
+            equality_constraints=flatten(
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=len(candidates_comp.columns),
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_eq
-            ]
+            )
             or None,
-            inequality_constraints=[
+            inequality_constraints=flatten(
                 c.to_botorch(
                     searchspace.continuous.parameters,
                     idx_offset=num_comp_columns,
                     batch_size=batch_size if c.is_interpoint else None,
                 )
                 for c in searchspace.continuous.constraints_lin_ineq
-            ]
+            )
             or None,
         )
 
