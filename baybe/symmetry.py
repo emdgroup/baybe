@@ -8,9 +8,10 @@ from collections.abc import Iterable
 from itertools import combinations
 from typing import TYPE_CHECKING, Any, cast
 
+import numpy as np
 import pandas as pd
 from attrs import Converter, define, field
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs.validators import deep_iterable, ge, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
@@ -324,6 +325,11 @@ class DependencySymmetry(Symmetry):
     )
     """The parameters affected by the dependency."""
 
+    n_discretization_points: int = field(
+        default=3, validator=(instance_of(int), ge(2)), kw_only=True
+    )
+    """Number of points used when subsampling continuous parameter ranges."""
+
     @override
     @property
     def parameter_names(self) -> tuple[str, ...]:
@@ -365,13 +371,21 @@ class DependencySymmetry(Symmetry):
         # The 'affected' entry describes the affected parameters and the
         # values they are allowed to take, which are all degenerate if
         # the corresponding condition for the causing parameter is met.
-        affected = [
-            (
-                (ap := next(p for p in parameters if p.name == pn)).name,
-                ap.values,  # type: ignore[attr-defined]
-            )
-            for pn in self.affected_parameter_names
-        ]
+        affected: list[tuple[str, tuple[float, ...]]] = []
+        for pn in self.affected_parameter_names:
+            p = next(p for p in parameters if p.name == pn)
+            if p.is_discrete:
+                # Use all values for augmentation
+                vals = p.values
+            else:
+                # Use linear subsample of parameter bounds interval for augmentation.
+                # Note: The original value will not necessarily be part of this.
+                vals = tuple(
+                    np.linspace(
+                        p.bounds.lower, p.bounds.upper, self.n_discretization_points
+                    )
+                )
+            affected.append((p.name, vals))
 
         df = df_apply_dependency_augmentation(df, causing, affected)
 
@@ -388,7 +402,6 @@ class DependencySymmetry(Symmetry):
             ValueError: If any of the affected parameters is not present in the
                 searchspace.
             TypeError: If the causing parameter is not discrete.
-            TypeError: If any of the affected parameters is not discrete.
         """
         super().validate_searchspace_context(searchspace)
 
@@ -410,19 +423,6 @@ class DependencySymmetry(Symmetry):
                 f"In the {self.__class__.__name__}, the causing parameter must be "
                 f"discrete. However, the parameter '{param.name}' is of type "
                 f"'{param.__class__.__name__}' and is not discrete."
-            )
-
-        # Affected parameters can only be discrete
-        affected_not_discrete = [
-            p.name
-            for p in searchspace.get_parameters_by_name(self.affected_parameter_names)
-            if not p.is_discrete
-        ]
-        if affected_not_discrete:
-            raise TypeError(
-                f"In the {self.__class__.__name__}, all affected parameters must be "
-                f"discrete. However, the following affected parameters are of a "
-                f"different type: {affected_not_discrete}."
             )
 
 

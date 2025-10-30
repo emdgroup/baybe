@@ -4,6 +4,7 @@ import math
 from unittest.mock import patch
 
 import numpy as np
+import pandas as pd
 import pytest
 from attrs import evolve
 from pandas.testing import assert_frame_equal
@@ -11,10 +12,16 @@ from pandas.testing import assert_frame_equal
 from baybe.acquisition import qLogEI
 from baybe.constraints import (
     DiscretePermutationInvarianceConstraint,
+    ThresholdCondition,
+)
+from baybe.parameters import (
+    CategoricalParameter,
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
 )
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.symmetry import MirrorSymmetry
+from baybe.symmetry import DependencySymmetry, MirrorSymmetry
 from baybe.utils.dataframe import create_fake_input
 
 
@@ -106,3 +113,31 @@ def test_measurement_augmentation(
             assert len(measurements_passed) == n_expected
         else:
             assert_frame_equal(measurements, measurements_passed)
+
+
+@pytest.mark.parametrize("n_points", [2, 5])
+@pytest.mark.parametrize("mixed", [True, False])
+def test_continuous_dependency_augmentation(n_points, mixed):
+    """Dependency augmentation with continuous affected parameters works correctly."""
+    df = pd.DataFrame({"n1": [1, 0], "cat1": ["a", "b"], "c1": [1, 2]})
+    ps = [
+        NumericalDiscreteParameter("n1", (0, 0.5, 1.0)),
+        CategoricalParameter("cat1", ("a", "b", "c")),
+        NumericalContinuousParameter("c1", (0, 10)),
+    ]
+
+    # Model "Affected parameters only matter if n1 is > 0"
+    s = DependencySymmetry(
+        "n1",
+        condition=ThresholdCondition(0.0, ">"),
+        affected_parameter_names=("cat1", "c1") if mixed else ("c1",),
+        n_discretization_points=n_points,
+    )
+    dfa = s.augment_measurements(df, ps)
+
+    # Calculate expectation. The first row is not affected and contributes one point.
+    # The second row is degenerate and contributes `n_points` values for c1 and 3
+    # values for cat1 (if part of the symmetry).
+    n_expected = 1 + n_points * (3 if mixed else 1)
+
+    assert len(dfa) == n_expected

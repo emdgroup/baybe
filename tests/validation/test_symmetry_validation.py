@@ -177,16 +177,6 @@ def searchspace(parameter_names):
             id="dep_causing_not_discrete",
         ),
         param(
-            ["n1", "n2_not_discrete", "cat1"],
-            DependencySymmetry(
-                **valid_config_dep
-                | {"affected_parameter_names": ["n2_not_discrete", "cat1"]}
-            ),
-            TypeError,
-            r"affected parameters are of a different type: \['n2_not_discrete'\]",
-            id="dep_affected_not_discrete",
-        ),
-        param(
             ["cat1", "n1", "n2"],
             PermutationSymmetry(**valid_config_perm),
             ValueError,
