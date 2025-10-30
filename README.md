@@ -90,7 +90,7 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 </div>
 
-From the user-perspective, the most important part is the "design" step.
+From the user perspective, the most important part is the "design" step.
 If you are new to BayBE, we suggest consulting our 
 [design checklist](https://emdgroup.github.io/baybe/stable/faq.html) 
 to help you with the design setup.
