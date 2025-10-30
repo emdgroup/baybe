@@ -195,14 +195,12 @@ def test_to_botorch(flatten: bool, interpoint: bool):
             idxs = [[4, 6, 12, 14]]
         else:
             idxs = [[4, 6], [12, 14]]
-        for idx, t in zip(idxs, constraint_tuple):
-            assert t[0].equal(torch.tensor(idx))
+    elif interpoint:
+        idxs = [[[0, 4], [0, 6], [1, 4], [1, 6]]]
     else:
-        if interpoint:
-            idxs = [[0, 4], [0, 6], [1, 4], [1, 6]]
-        else:
-            idxs = [4, 6]
-        assert constraint_tuple[0].equal(torch.tensor(idxs))
+        idxs = [[4, 6]]
+    for idx, t in zip(idxs, constraint_tuple):
+        assert t[0].equal(torch.tensor(idx))
 
 
 @pytest.mark.slow

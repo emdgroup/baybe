@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
   reproducibility of downstream operations
 
+### Breaking Changes
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
 - `DesirabilityObjective` now properly interplays with analytical acquisition functions

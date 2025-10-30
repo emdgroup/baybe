@@ -5,6 +5,7 @@ from __future__ import annotations
 import enum
 import functools
 import inspect
+import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
@@ -389,3 +390,8 @@ def compose_two(f: Callable, g: Callable, /) -> Callable:
 def compose(*fs: Callable) -> Callable:
     """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
+
+
+def flatten(x: Iterable[Iterable[_T]]) -> list[_T]:
+    """Flatten one level of nesting of a given iterable."""
+    return list(itertools.chain.from_iterable(item for item in x))
