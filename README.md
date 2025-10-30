@@ -34,7 +34,7 @@ within a complex parameter search space.
 
 <div align="center">
 
-![complex search space](docs/_static/complex_search_space_light.svg)
+![complex search space](./docs/_static/complex_search_space_automatic.svg)
 
 </div>
 
@@ -86,7 +86,7 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 <div align="center">
 
-![quick start](docs/_static/quick_start_light.svg)
+![quick start](./docs/_static/quick_start_automatic.svg)
 
 </div>
 
