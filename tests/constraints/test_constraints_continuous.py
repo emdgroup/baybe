@@ -2,10 +2,12 @@
 
 import numpy as np
 import pytest
+import torch
 from pytest import param
 
 from baybe.campaign import Campaign
 from baybe.constraints import ContinuousLinearConstraint
+from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from tests.conftest import run_iterations
 
@@ -170,6 +172,37 @@ def test_interpoint_intrapoint_mix(
         .ge(0.3 - TOLERANCE)
         .all()
     )
+
+
+@pytest.mark.parametrize("flatten", [True, False], ids=["1d", "2d"])
+@pytest.mark.parametrize("interpoint", [False, True], ids=["intra", "inter"])
+def test_to_botorch(flatten: bool, interpoint: bool):
+    """BoTorch conversion of constraints yields the correct indices."""
+    n_disc_parameters = 3
+    batch_size = 2
+    cont_parameters = [NumericalContinuousParameter(f"c{i}", (0, 1)) for i in range(5)]
+    constraint_tuple = ContinuousLinearConstraint(
+        ["c1", "c3"], "<=", [3, 5], interpoint=interpoint
+    ).to_botorch(
+        cont_parameters,
+        idx_offset=n_disc_parameters,
+        batch_size=batch_size if flatten or interpoint else None,
+        flatten=flatten,
+    )
+
+    if flatten:
+        if interpoint:
+            idxs = [[4, 6, 12, 14]]
+        else:
+            idxs = [[4, 6], [12, 14]]
+        for idx, t in zip(idxs, constraint_tuple):
+            assert t[0].equal(torch.tensor(idx))
+    else:
+        if interpoint:
+            idxs = [[0, 4], [0, 6], [1, 4], [1, 6]]
+        else:
+            idxs = [4, 6]
+        assert constraint_tuple[0].equal(torch.tensor(idxs))
 
 
 @pytest.mark.slow
