@@ -7,7 +7,7 @@ import math
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from itertools import combinations
 from math import comb
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any
 
 import cattrs
 import numpy as np
@@ -117,26 +117,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             parameters, self.operator, coefficients, self.rhs
         )
 
-    @overload
-    def to_botorch(
-        self,
-        parameters: Iterable[NumericalContinuousParameter],
-        idx_offset: int = 0,
-        *,
-        batch_size: int | None = None,
-        flatten: Literal[False] = False,
-    ) -> ConstraintTuple: ...
-
-    @overload
-    def to_botorch(
-        self,
-        parameters: Iterable[NumericalContinuousParameter],
-        idx_offset: int = 0,
-        *,
-        batch_size: int | None = None,
-        flatten: Literal[True],
-    ) -> list[ConstraintTuple]: ...
-
     def to_botorch(
         self,
         parameters: Iterable[NumericalContinuousParameter],
@@ -144,7 +124,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         *,
         batch_size: int | None = None,
         flatten: bool = False,
-    ) -> ConstraintTuple | list[ConstraintTuple]:
+    ) -> list[ConstraintTuple]:
         """Cast the constraint in a format required by botorch.
 
         Used in calling ``optimize_acqf_*`` functions, for details see
@@ -168,8 +148,7 @@ class ContinuousLinearConstraint(ContinuousConstraint):
             ValueError: When a batch size is provided but not required, or vice versa.
 
         Returns:
-            A tuple (``flatten=False``) or list of tuples (``flatten=True``)
-            representing the constraint in BoTorch format.
+            A collection of tuples representing the constraint in BoTorch format.
         """
         if (batch_size is not None) ^ (self.is_interpoint or flatten):
             raise ValueError(
@@ -214,10 +193,10 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         elif self.is_interpoint:
             # The constraint can be represented in 2D form
             # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
-            return (idxs_batched_2d, coefficients_batched, rhs)
+            return [(idxs_batched_2d, coefficients_batched, rhs)]
         else:
             # A single constraint that is used for all elements of the batch
-            return (idxs, coefficients, rhs)
+            return [(idxs, coefficients, rhs)]
 
 
 @define

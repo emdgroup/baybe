@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   horizontal / vertical shifts
 - Interpoint constraints for continuous search spaces
 
+### Breaking Changes
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
  
