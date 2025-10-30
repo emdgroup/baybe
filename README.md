@@ -97,7 +97,8 @@ to help you with the design setup.
 
 Below we show a simple optimization procedure, starting with the design step and subsequently
 performing the recommendation loop. 
-The provided example aims to maximize the yield of a chemical reaction by adjusting reaction parameters.
+The provided example aims to maximize the yield of a chemical reaction by adjusting its parameters 
+(also known as reaction conditions).
 
 First, install BayBE into your Python environment: 
 ```bash 
