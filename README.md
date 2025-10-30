@@ -40,7 +40,7 @@ within a complex parameter search space.
 
 Example use-cases:
 - 🧪 Find chemical reaction conditions or process parameters
-- 🥣 Create materials, chemical mixtures, or formulations with desired properties
+- 🥣 Create materials, chemical mixtures or formulations with desired properties
 - ✈️ Optimize the 3D shape of a physical object
 - 🖥️ Optimize an in silico simulation
 - ⚙️ Select model hyperparameters
@@ -63,8 +63,8 @@ The following provides a non-comprehensive overview:
   - 🎨 Encode categorical data to capture relationships between categories. BayBE also provides built-in chemical encodings.
   - 🛠️ Option to build-in mechanistic process understanding via custom surrogate models.
 - 🏛️ Leverage **historic data** to accelerate optimization via transfer learning.
-- 🌀 **Flexible** definition of target outcomes, parameter search spaces, and optimization strategies:
-  - 🎯 Option to use numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized, or matched to a specific value.
+- 🌀 **Flexible** definition of target outcomes, parameter search spaces and optimization strategies:
+  - 🎯 Option to use numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized or matched to a specific value.
   - 👥👥 Multiple targets can be optimized at once (e.g., via Pareto optimization).
   - 🎭 Both continuous and discrete parameters can be used within a single search space.
   - 🔢 The maximal number of mixture components can be defined via cardinality constraints.
@@ -130,7 +130,7 @@ of the user guide.
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
 reaction `Parameters` we can tune (e.g., granularity,
-pressure, and solvent) to optimize the yield. We also need to specify
+pressure and solvent) to optimize the yield. We also need to specify
 which values individual parameters can take.
 
 ```python
@@ -212,7 +212,7 @@ recommender = TwoPhaseMetaRecommender(
 ```
 
 For more details on the different recommenders, their underlying algorithmic
-details, and their configuration settings, see the
+details and their configuration settings, see the
 [recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
 of the user guide.
 
@@ -312,7 +312,7 @@ pip install git+https://github.com/emdgroup/baybe.git@main
 
 Alternatively, you can install the package from your own local copy.
 First, clone the repository, navigate to the repository root folder, check out the
-desired commit, and run:
+desired commit and run:
 
 ```bash
 pip install .
