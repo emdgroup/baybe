@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Iterable
+from collections import Counter
+from collections.abc import Callable, Collection, Iterable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -219,4 +220,32 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
         raise ValueError(
             f"All parameters and targets must have unique names. The following names "
             f"appear multiple times: {duplicates}."
+        )
+
+
+def validate_is_finite(  # noqa: DOC101, DOC103
+    _: Any, attribute: Any, value: float | Sequence[float]
+) -> None:
+    """Validate that ``value`` contains no infinity/nan.
+
+    Raises:
+        ValueError: If ``value`` contains infinity/nan.
+    """
+    if not np.isfinite(value).all():
+        raise ValueError(
+            f"Cannot assign the following values containing infinity/nan to "
+            f"attribute '{attribute.name}': {value}."
+        )
+
+
+def validate_unique_values(  # noqa: DOC101, DOC103
+    _: Any, attribute: Any, value: Collection[str]
+) -> None:
+    """Validate that there are no duplicates in a collection."""
+    counts = Counter(value)
+    duplicates = [item for item, count in counts.items() if count > 1]
+    if duplicates:
+        raise ValueError(
+            f"Only unique entries are allowed for attribute '{attribute.name}'. "
+            f"Entries appearing multiple times: {duplicates}."
         )

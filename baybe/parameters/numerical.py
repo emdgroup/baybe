@@ -13,9 +13,10 @@ from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
-from baybe.parameters.validation import validate_is_finite, validate_unique_values
+from baybe.parameters.validation import validate_unique_values
 from baybe.utils.interval import InfiniteIntervalError, Interval
 from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.utils.validation import validate_is_finite
 
 
 @define(frozen=True, slots=False)

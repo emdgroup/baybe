@@ -65,10 +65,10 @@ def test_measurement_augmentation(
         )
         c_dep = c_perm.dependencies
         s_perm = c_perm.to_symmetry(perm_aug)
-        s_dep = c_dep.to_symmetry(dep_aug)
+        s_deps = c_dep.to_symmetries(dep_aug)  # this is a tuple of multiple
         s_mirror = MirrorSymmetry("Num_disc_2", use_data_augmentation=mirror_aug)
         searchspace = SearchSpace.from_product(parameters, constraints)
-        surrogate = evolve(surrogate_model, symmetries=[s_dep, s_perm, s_mirror])
+        surrogate = evolve(surrogate_model, symmetries=[*s_deps, s_perm, s_mirror])
         recommender = BotorchRecommender(
             surrogate_model=surrogate, acquisition_function=qLogEI()
         )

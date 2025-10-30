@@ -270,15 +270,20 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
-    def to_symmetry(self, use_data_augmentation=True) -> DependencySymmetry:
+    def to_symmetries(self, use_data_augmentation=True) -> tuple[DependencySymmetry]:
         """Convert to a :class:`~baybe.symmetry.DependencySymmetry`."""
         from baybe.symmetry import DependencySymmetry
 
-        return DependencySymmetry(
-            parameter_names=self.parameters,
-            conditions=self.conditions,
-            affected_parameters=self.affected_parameters,
-            use_data_augmentation=use_data_augmentation,
+        return tuple(
+            DependencySymmetry(
+                parameter_name=p,
+                condition=c,
+                affected_parameter_names=aps,
+                use_data_augmentation=use_data_augmentation,
+            )
+            for p, c, aps in zip(
+                self.parameters, self.conditions, self.affected_parameters, strict=True
+            )
         )
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import gc
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+from itertools import combinations
 from typing import TYPE_CHECKING, Any, cast
 
 import pandas as pd
@@ -13,7 +14,6 @@ from attrs.validators import deep_iterable, instance_of, min_len
 from typing_extensions import override
 
 from baybe.constraints.conditions import Condition
-from baybe.parameters.validation import validate_unique_values
 from baybe.serialization import SerialMixin
 from baybe.utils.augmentation import (
     df_apply_dependency_augmentation,
@@ -21,9 +21,11 @@ from baybe.utils.augmentation import (
     df_apply_permutation_augmentation,
 )
 from baybe.utils.conversion import normalize_str_sequence
+from baybe.utils.validation import validate_is_finite, validate_unique_values
 
 if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
+    from baybe.searchspace import SearchSpace
 
 
 @define(frozen=True)
@@ -53,14 +55,39 @@ class Symmetry(SerialMixin, ABC):
         return symmetry_dict
 
     @abstractmethod
-    def augment_measurements(self, df: pd.DataFrame, parameters: Iterable[Parameter]):
+    def augment_measurements(
+        self, df: pd.DataFrame, parameters: Iterable[Parameter]
+    ) -> pd.DataFrame:
         """Augment the given measurements according to the symmetry.
 
         Args:
             df: The dataframe containing the measurements to be augmented.
             parameters: Parameter objects carrying additional information (might not be
                 needed by all augmentation implementations).
+
+        Returns:
+            The augmented dataframe including the original measurements.
         """
+
+    def validate_searchspace_context(self, searchspace: SearchSpace) -> None:
+        """Validate that the symmetry is compatible with the given searchspace.
+
+        Args:
+            searchspace: The searchspace to validate against.
+
+        Raises:
+            ValueError: If the symmetry affects parameters not present in the
+                searchspace.
+        """
+        parameters_missing = set(self.parameter_names).difference(
+            searchspace.parameter_names
+        )
+        if parameters_missing:
+            raise ValueError(
+                f"The symmetry of type {self.__class__.__name__} was set up with at "
+                f"least one parameter which is not present in the searchspace: "
+                f"{parameters_missing}."
+            )
 
 
 @define(frozen=True)
@@ -89,14 +116,48 @@ class PermutationSymmetry(Symmetry):
     def parameter_names(self) -> tuple[str, ...]:
         return self._parameter_names
 
-    # TODO: Validation
-    #  - Each entry in copermuted_groups must have the same length as parameter_names
-    #  - parameters in each group must have identical specification as otherwise
-    #    disallowed parameter values could be produced
-
     # Object variables
     copermuted_groups: tuple[tuple[str, ...], ...] = field(factory=tuple)
     """Groups of parameter names that are co-permuted like the other parameters."""
+
+    @copermuted_groups.validator
+    def _validate_copermuted_groups(  # noqa: DOC101, DOC103
+        self, _: Any, groups: tuple[tuple[str, ...], ...]
+    ) -> None:
+        """Validate the copermuted groups.
+
+        Raises:
+            ValueError: If any of the copermuted groups don't have the same length as
+                the primary group.
+            ValueError: If any of the copermuted groups contain duplicate parameters.
+            ValueError: If any parameter name appears in multiple permutation groups.
+        """
+        for k, group in enumerate(groups):
+            # Ensure all groups have the same length as the primary group
+            if len(group) != len(self.parameter_names):
+                raise ValueError(
+                    f"In the {self.__class__.__name__}, all copermuted groups must "
+                    f"have the same length as the primary parameter group "
+                    f"({len(self.parameter_names)} in this case). But group {k + 1} "
+                    f"has {len(group)} entries: {group}."
+                )
+
+            # Ensure parameter names in a group are unique
+            if len(set(group)) != len(group):
+                raise ValueError(
+                    f"In the {self.__class__.__name__}, all parameter names being "
+                    f"permuted with each other must be unique. However, the "
+                    f"following group contains duplicates: {group}."
+                )
+
+        # Ensure there is no overlap between any permutation group
+        for a, b in combinations((self.parameter_names, *groups), 2):
+            if overlap := set(a) & set(b):
+                raise ValueError(
+                    f"In the {self.__class__.__name__}, parameter names cannot appear "
+                    f"in multiple permutation groups. However, the following parameter "
+                    f"names appear in several groups {overlap}."
+                )
 
     @override
     def augment_measurements(
@@ -119,6 +180,62 @@ class PermutationSymmetry(Symmetry):
 
         return df
 
+    @override
+    def validate_searchspace_context(self, searchspace: SearchSpace) -> None:
+        """See base class.
+
+        Args:
+            searchspace: The searchspace to validate against.
+
+        Raises:
+            ValueError: If any of the copermuted groups contain parameters not present
+                in the searchspace.
+            TypeError: If parameters withing a permutation group do not have the same
+                type.
+            ValueError: If parameters withing a permutation group do not have a
+                compatible set of values.
+        """
+        super().validate_searchspace_context(searchspace)
+
+        # Ensure all copermuted parameters are in the searchspace
+        for group in self.copermuted_groups:
+            parameters_missing = set(group).difference(searchspace.parameter_names)
+            if parameters_missing:
+                raise ValueError(
+                    f"The symmetry of type {self.__class__.__name__} was set up with "
+                    f"at least one parameter which is not present in the searchspace: "
+                    f"{parameters_missing}."
+                )
+
+        # Ensure permuted parameters all have the same specification.
+        # Without this, it could be attempted to read in data that is not allowed for
+        # parameters that only allow a subset or different values compared to
+        # parameters they are being permuted with.
+        for group in (self.parameter_names, *self.copermuted_groups):
+            params = searchspace.get_parameters_by_name(group)
+
+            # All parameters in a group must be of the same type
+            if len(types := {type(p).__name__ for p in params}) != 1:
+                raise TypeError(
+                    f"In the {self.__class__.__name__}, all parameters being "
+                    f"permuted with each other must have the same type. However, the "
+                    f"following multiple types were found in the permutation group "
+                    f"{group}: {types}."
+                )
+
+            # ALl parameters in a group must have the same values. Numerical parameters
+            # are not considered here since technically for them this restriction is not
+            # required as al numbers can be added if the tolerance is configured
+            # accordingly.
+            if all(p.is_discrete and not p.is_numerical for p in params):
+                ref_vals = set(params[0].values)
+                if any(set(p.values) != ref_vals for p in params):
+                    raise ValueError(
+                        f"The parameter group '{group}' contains parameters which have "
+                        f"different values. All parameters in a group must have the "
+                        f"same specification."
+                    )
+
 
 @define(frozen=True)
 class MirrorSymmetry(Symmetry):
@@ -130,19 +247,18 @@ class MirrorSymmetry(Symmetry):
     """
 
     _parameter_name: str = field(validator=instance_of(str), alias="parameter_name")
-    """The anme of the single parameter affected by the symmetry."""
+    """The name of the single parameter affected by the symmetry."""
 
     # object variables
-    mirror_point: float = field(default=0.0, converter=float, kw_only=True)
+    mirror_point: float = field(
+        default=0.0, converter=float, validator=validate_is_finite, kw_only=True
+    )
     """The mirror point."""
 
     @override
     @property
     def parameter_names(self) -> tuple[str]:
         return (self._parameter_name,)
-
-    # TODO: Validation
-    #  - Only numerical parameters are supported
 
     @override
     def augment_measurements(
@@ -159,6 +275,26 @@ class MirrorSymmetry(Symmetry):
 
         return df
 
+    @override
+    def validate_searchspace_context(self, searchspace: SearchSpace) -> None:
+        """See base class.
+
+        Args:
+            searchspace: The searchspace to validate against.
+
+        Raises:
+            TypeError: If the affected parameter is not numerical.
+        """
+        super().validate_searchspace_context(searchspace)
+
+        param = searchspace.get_parameters_by_name(self.parameter_names)[0]
+        if not param.is_numerical:
+            raise TypeError(
+                f"In the {self.__class__.__name__}, the affected parameter must be "
+                f"numerical. However, the parameter '{param.name}' is of type "
+                f"{param.__class__.__name__} and is not numerical."
+            )
+
 
 @define(frozen=True)
 class DependencySymmetry(Symmetry):
@@ -166,52 +302,32 @@ class DependencySymmetry(Symmetry):
 
     A dependency symmetry expresses that certain parameters are dependent on another
     parameter having a specific value. For instance, the situation "The value of
-    parameter y only matters if parameter x has the value 'on'.".
+    parameter y only matters if parameter x has the value 'on'.". In this scenario x
+    is the causing parameter and y depends on x.
     """
 
-    _parameter_names: tuple[str, ...] = field(
-        alias="parameter_names",
+    _parameter_name: str = field(validator=instance_of(str), alias="parameter_name")
+    """The names of the causing parameter others are depending on."""
+
+    # object variables
+    condition: Condition = field(validator=instance_of(Condition))
+    """The condition specifying the active range of the causing parameter."""
+
+    affected_parameter_names: tuple[str] = field(
         converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
+            validate_unique_values,
             deep_iterable(
                 member_validator=instance_of(str), iterable_validator=min_len(1)
             ),
         ),
     )
-    """The names of the parameters affected by the symmetry."""
+    """The parameters affected by the dependency."""
 
     @override
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        return self._parameter_names
-
-    # TODO: Validation
-    #  - Only discrete parameters are supported as "causing" due to the conditions
-    #  - Length and content of conditions and affected_parameters
-
-    # object variables
-    conditions: list[Condition] = field()
-    """The list of individual conditions."""
-
-    affected_parameters: list[list[str]] = field()
-    """The parameters affected by the individual conditions."""
-
-    @affected_parameters.validator
-    def _validate_affected_parameters(  # noqa: DOC101, DOC103
-        self, _: Any, value: list[list[str]]
-    ) -> None:
-        """Validate the affected parameters.
-
-        Raises:
-            ValueError: If one set of affected parameters does not have exactly one
-                condition.
-        """
-        if len(self.conditions) != len(value):
-            raise ValueError(
-                f"For the {self.__class__.__name__}, for each item in the "
-                f"affected_parameters list you must provide exactly one condition in "
-                f"the conditions list."
-            )
+        return (self._parameter_name,)
 
     @override
     def augment_measurements(
@@ -223,44 +339,91 @@ class DependencySymmetry(Symmetry):
 
         from baybe.parameters.base import DiscreteParameter
 
-        for param_name, cond, affected_param_names in zip(
-            self.parameter_names, self.conditions, self.affected_parameters
-        ):
-            # The 'causing' entry describes the parameters and the value
-            # for which one or more affected parameters become degenerate.
-            # 'cond' specifies for which values the affected parameter
-            # values are active, i.e. not degenerate. Hence, here we get the
-            # values that are not active, as rows containing them should be
-            # augmented.
-            param = next(
-                cast(DiscreteParameter, p) for p in parameters if p.name == param_name
+        # The 'causing' entry describes the parameters and the value
+        # for which one or more affected parameters become degenerate.
+        # 'cond' specifies for which values the affected parameter
+        # values are active, i.e. not degenerate. Hence, here we get the
+        # values that are not active, as rows containing them should be
+        # augmented.
+        param = next(
+            cast(DiscreteParameter, p)
+            for p in parameters
+            if p.name == self._parameter_name
+        )
+
+        causing_values = [
+            x
+            for x, flag in zip(
+                param.values,
+                ~self.condition.evaluate(pd.Series(param.values)),
+                strict=True,
             )
+            if flag
+        ]
+        causing = (param.name, causing_values)
 
-            causing_values = [
-                x
-                for x, flag in zip(
-                    param.values,
-                    ~cond.evaluate(pd.Series(param.values)),
-                    strict=True,
-                )
-                if flag
-            ]
-            causing = (param.name, causing_values)
+        # The 'affected' entry describes the affected parameters and the
+        # values they are allowed to take, which are all degenerate if
+        # the corresponding condition for the causing parameter is met.
+        affected = [
+            (
+                (ap := next(p for p in parameters if p.name == pn)).name,
+                ap.values,  # type: ignore[attr-defined]
+            )
+            for pn in self.affected_parameter_names
+        ]
 
-            # The 'affected' entry describes the affected parameters and the
-            # values they are allowed to take, which are all degenerate if
-            # the corresponding condition for the causing parameter is met.
-            affected = [
-                (
-                    (ap := next(p for p in parameters if p.name == pn)).name,
-                    ap.values,  # type: ignore[attr-defined]
-                )
-                for pn in affected_param_names
-            ]
-
-            df = df_apply_dependency_augmentation(df, causing, affected)
+        df = df_apply_dependency_augmentation(df, causing, affected)
 
         return df
+
+    @override
+    def validate_searchspace_context(self, searchspace: SearchSpace) -> None:
+        """See base class.
+
+        Args:
+            searchspace: The searchspace to validate against.
+
+        Raises:
+            ValueError: If any of the affected parameters is not present in the
+                searchspace.
+            TypeError: If the causing parameter is not discrete.
+            TypeError: If any of the affected parameters is not discrete.
+        """
+        super().validate_searchspace_context(searchspace)
+
+        # Affected parameters must be in the searchspace
+        parameters_missing = set(self.affected_parameter_names).difference(
+            searchspace.parameter_names
+        )
+        if parameters_missing:
+            raise ValueError(
+                f"The symmetry of type {self.__class__.__name__} was set up with at "
+                f"least one parameter which is not present in the searchspace: "
+                f"{parameters_missing}."
+            )
+
+        # Causing parameter must be discrete
+        param = searchspace.get_parameters_by_name(self._parameter_name)[0]
+        if not param.is_discrete:
+            raise TypeError(
+                f"In the {self.__class__.__name__}, the causing parameter must be "
+                f"discrete. However, the parameter '{param.name}' is of type "
+                f"'{param.__class__.__name__}' and is not discrete."
+            )
+
+        # Affected parameters can only be discrete
+        affected_not_discrete = [
+            p.name
+            for p in searchspace.get_parameters_by_name(self.affected_parameter_names)
+            if not p.is_discrete
+        ]
+        if affected_not_discrete:
+            raise TypeError(
+                f"In the {self.__class__.__name__}, all affected parameters must be "
+                f"discrete. However, the following affected parameters are of a "
+                f"different type: {affected_not_discrete}."
+            )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
