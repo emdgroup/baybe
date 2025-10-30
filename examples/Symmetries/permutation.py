@@ -157,7 +157,7 @@ recommender_symmetric = TwoPhaseMetaRecommender(
     )
 )
 
-# The combination of constraint and augmentation settings resutls in four different
+# The combination of constraint and augmentation settings results in four different
 # campaigns:
 
 campaign_plain = Campaign(searchspace_plain, objective, recommender_plain)
