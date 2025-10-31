@@ -40,6 +40,8 @@ from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
+    from torch import Tensor
+
     from baybe.searchspace.core import SearchSpace
 
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
@@ -514,7 +516,7 @@ class SubspaceContinuous(SerialMixin):
 
     def _sample_from_polytope_with_interpoint_constraints(
         self, batch_size: int, bounds: np.ndarray
-    ) -> np.ndarray:
+    ) -> Tensor:
         """Draw samples from a polytope with interpoint constraints.
 
         If the space has interpoint constraints, we need to sample from a larger
@@ -554,7 +556,7 @@ class SubspaceContinuous(SerialMixin):
         # Reshape to separate batch dimension from parameter dimension
         points_per_batch, remainder = divmod(points.shape[-1], batch_size)
         assert remainder == 0, "Dimensions mismatch."
-        return points.reshape(batch_size, points_per_batch).numpy()
+        return points.reshape(batch_size, points_per_batch)
 
     def _sample_from_polytope_with_cardinality_constraints(
         self, batch_size: int
