@@ -137,7 +137,7 @@ class DesirabilityObjective(Objective):
                 f"a suitable target transformation) or explicitly set "
                 f"'{DesirabilityObjective.__name__}."
                 f"{fields(DesirabilityObjective).require_normalization.name}' to "
-                f"'True' to allow unnormalized targets."
+                f"'False' to allow unnormalized targets."
             )
 
     @weights.validator
@@ -234,16 +234,15 @@ class DesirabilityObjective(Objective):
 
         from baybe.objectives.botorch import ChainedMCObjective
 
+        outer: MCAcquisitionObjective
         if self.scalarizer is Scalarizer.MEAN:
             outer = LinearMCObjective(torch.tensor(self._normalized_weights))
-
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
             outer = GenericMCObjective(
                 lambda samples, X: _geometric_mean(
                     samples, torch.tensor(self._normalized_weights)
                 )
             )
-
         else:
             raise NotImplementedError(
                 f"No scalarization mechanism defined for '{self.scalarizer.name}'."

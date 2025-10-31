@@ -89,17 +89,7 @@ def add_fake_measurements(
                 [target.failure_value, target.success_value], size=len(data)
             )
         elif isinstance(target, NumericalTarget):
-            # We respect expected target bounds. The main reason is to avoid causing
-            # degenerate points, which make testing harder
-            transformation = target.transformation
-            try:
-                interval = transformation.get_image()
-            except NotImplementedError:
-                interval = transformation.get_codomain()
-            lower = interval.lower if np.isfinite(interval.lower) else -100
-            upper = interval.upper if np.isfinite(interval.upper) else 100
-
-            data[target.name] = np.random.uniform(lower, upper, size=len(data))
+            data[target.name] = np.random.uniform(-100, 100, size=len(data))
 
     return data
 

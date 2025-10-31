@@ -19,11 +19,6 @@ from baybe.utils.dataframe import (
 )
 
 
-@pytest.fixture()
-def n_grid_points():
-    return 5
-
-
 def test_degenerate_rows():
     """Test noise-based deduplication of degenerate rows."""
     # Create random dataframe

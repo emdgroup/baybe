@@ -5,6 +5,21 @@ import math
 import pytest
 
 
+@pytest.fixture(
+    params=[5, pytest.param(8, marks=pytest.mark.slow)],
+    name="n_grid_points",
+    ids=["g5", "g8"],
+)
+def fixture_n_grid_points(request):
+    """Number of grid points used in e.g. the mixture tests.
+
+    Test an even number (5 grid points will cause 4 sections) and a number that causes
+    division into numbers that have no perfect floating point representation (8 grid
+    points will cause 7 sections).
+    """
+    return request.param
+
+
 @pytest.mark.parametrize(
     "parameter_names",
     [["Switch_1", "Switch_2", "Fraction_1", "Solvent_1", "Frame_A", "Frame_B"]],

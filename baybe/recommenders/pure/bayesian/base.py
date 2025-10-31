@@ -145,7 +145,7 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
     ) -> BoAcquisitionFunction:
-        """Get the acquisition function for the given recommendation context.
+        """Get the BoTorch acquisition function for the given recommendation context.
 
         For details on the method arguments, see :meth:`recommend`.
         """

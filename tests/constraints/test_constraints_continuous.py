@@ -75,7 +75,6 @@ def test_inequality3(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-@pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
 def test_hybridspace_eq(campaign, n_iterations, batch_size):
     """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
@@ -92,7 +91,6 @@ def test_hybridspace_eq(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
 @pytest.mark.parametrize("batch_size", [5], ids=["b5"])
-@pytest.mark.parametrize("n_grid_points", [5], ids=["grid5"])
 def test_hybridspace_ineq(campaign, n_iterations, batch_size):
     """Test inequality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)

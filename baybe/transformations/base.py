@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -11,11 +12,12 @@ from typing_extensions import override
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import to_tensor
-from baybe.utils.interval import Interval
+from baybe.utils.interval import ConvertibleToInterval, Interval
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective
     from torch import Tensor
+
 
 _TTransformation = TypeVar("_TTransformation", bound="Transformation")
 
@@ -95,11 +97,39 @@ class Transformation(SerialMixin, ABC):
 
         return self | ClampingTransformation(min, max)
 
+    def hold_output_left_from(self, abscissa: float, /) -> Transformation:
+        """Hold the output of the transformation left from a given abscissa value."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(min=abscissa) | self
+
+    def hold_output_right_from(self, abscissa: float, /) -> Transformation:
+        """Hold the output of the transformation right from a given abscissa value."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(max=abscissa) | self
+
+    def hold_output_outside(self, interval: ConvertibleToInterval, /) -> Transformation:
+        """Hold the output of the transformation outside a given interval."""
+        from baybe.transformations.basic import ClampingTransformation
+
+        return ClampingTransformation(*Interval.create(interval).to_tuple()) | self
+
     def abs(self) -> Transformation:
         """Take the absolute value of the output of the transformation."""
         from baybe.transformations.basic import AbsoluteTransformation
 
         return self | AbsoluteTransformation()
+
+    def vshift(self, shift: float | int, /) -> Transformation:
+        """Vertical shift (i.e. add a constant to the transformation output)."""
+        return self + shift
+
+    def hshift(self, shift: float | int, /) -> Transformation:
+        """Horizontal shift (i.e. subtract a constant from the transformation input)."""
+        from baybe.transformations import AffineTransformation
+
+        return AffineTransformation(shift=-shift) | self
 
     def __neg__(self) -> Transformation:
         return self.negate()
@@ -203,3 +233,7 @@ class MonotonicTransformation(Transformation, ABC):
                 ]
             )
         )
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()

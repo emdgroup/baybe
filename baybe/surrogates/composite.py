@@ -115,12 +115,11 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         from botorch.models import ModelList
         from botorch.models.model_list_gp_regression import ModelListGP
 
-        cls = (
-            ModelListGP
-            if is_all_instance(self._surrogates_flat, GaussianProcessSurrogate)
-            else ModelList
-        )
-        return cls(*(s.to_botorch() for s in self._surrogates_flat))
+        surrogates = self._surrogates_flat
+        if is_all_instance(surrogates, GaussianProcessSurrogate):
+            return ModelListGP(*(s.to_botorch() for s in surrogates))
+        else:
+            return ModelList(*(s.to_botorch() for s in surrogates))
 
     def posterior(self, candidates: pd.DataFrame) -> PosteriorList:
         """Compute the posterior for candidates in experimental representation.

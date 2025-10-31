@@ -6,7 +6,7 @@ from typing import Any
 
 import pandas as pd
 from attrs import define, field
-from attrs.validators import and_, deep_mapping, instance_of, min_len
+from attrs.validators import deep_mapping, instance_of, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import _DiscreteLabelLikeParameter
@@ -44,9 +44,7 @@ class SubstanceParameter(_DiscreteLabelLikeParameter):
         converter=lambda x: dict(sorted(x.items())),
         validator=deep_mapping(
             mapping_validator=min_len(2),
-            # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1206
-            key_validator=and_(instance_of(str), min_len(1)),
-            value_validator=lambda *x: None,
+            key_validator=(instance_of(str), min_len(1)),
         ),
     )
     """A mapping that provides the SMILES strings for all available parameter values."""

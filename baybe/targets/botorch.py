@@ -3,6 +3,7 @@
 from botorch.acquisition.objective import PosteriorTransform
 from botorch.posteriors import GPyTorchPosterior
 from torch import Tensor
+from typing_extensions import override
 
 
 class AffinePosteriorTransform(PosteriorTransform):
@@ -13,8 +14,10 @@ class AffinePosteriorTransform(PosteriorTransform):
         self.factor = factor
         self.shift = shift
 
+    @override
     def forward(self, posterior: GPyTorchPosterior) -> GPyTorchPosterior:  # noqa: D102
         return GPyTorchPosterior(posterior.distribution * self.factor + self.shift)
 
+    @override
     def evaluate(self, Y: Tensor) -> Tensor:  # noqa: D102
         raise NotImplementedError()

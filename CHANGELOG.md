@@ -5,13 +5,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
+  set to `True`, targets seek to avoid the given `match_value` instead of matching it.
+- `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
+  corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
+  the entire associated interval is a valid match, resulting in identical transformed target 
+  values as for the `match_value` itself.
+- Transfer learning regression benchmarks infrastructure for evaluating TL model
+  performance on regression tasks
+- Scalar addition and subtraction for `Interval` objects
+- Methods `hshift` and `vshift` to `Transformation` for conveniently performing
+  horizontal / vertical shifts
+
+### Fixed
+- Random seed not entering simulation when explicitly passed to `simulate_scenarios`
+ 
+## [0.14.1] - 2025-10-01
+### Added
+- `to_json` and `from_json` methods now also natively support (de)serialization to/from
+  files and file-like objects
+
 ### Changed
-- `add_fake_measurements` now generates values inside each target's image / codomain
+- Instead of requiring already read string representations of json files, `.from_json`
+  now also supports file paths as argument and will read the file itself
+- `from_json` now strictly expects the source as a positional argument
+- `to_json` now accepts `kwargs` and passes them to `json.dumps`
 
 ### Fixed
 - Crash in `simulate_experiment` when calculating cumulative best values for
   `batch_size>1`
-- Crash with minimized targets constructed via the legacy interface
+- `Campaign.allow_*` flags now properly take into account recommendation caching
+- The campaign recommendation cache is now properly invalidated during context changes
 
 ## [0.14.0] - 2025-09-10
 ### Added

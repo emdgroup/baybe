@@ -54,7 +54,6 @@ def test_roundtrip(strategy: st.SearchStrategy, data: st.DataObject):
     "constraint_names",
     [["Constraint_13"]],
 )
-@pytest.mark.parametrize("n_grid_points", [5])
 def test_unsupported_serialization_of_custom_constraint(constraints):
     with pytest.raises(NotImplementedError):
         constraint = constraints[0]

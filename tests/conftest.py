@@ -143,19 +143,10 @@ def fixture_fake_measurements(parameters, targets, batch_size):
     return create_fake_input(parameters, targets, batch_size)
 
 
-@pytest.fixture(
-    params=[5, pytest.param(8, marks=pytest.mark.slow)],
-    name="n_grid_points",
-    ids=["g5", "g8"],
-)
-def fixture_n_grid_points(request):
-    """Number of grid points used in e.g. the mixture tests.
-
-    Test an even number (5 grid points will cause 4 sections) and a number that causes
-    division into numbers that have no perfect floating point representation (8 grid
-    points will cause 7 sections).
-    """
-    return request.param
+@pytest.fixture
+def n_grid_points():
+    """Number of grid points used in e.g. the mixture tests."""
+    return 5
 
 
 @pytest.fixture(name="mock_substances")
@@ -390,14 +381,13 @@ def fixture_targets(target_names: list[str]):
             name="Target_min",
             minimize=True,
         ),
-        NumericalTarget.normalized_ramp(
+        NumericalTarget.normalized_sigmoid(
             name="Target_max_bounded",
-            cutoffs=(0, 100),
+            anchors=[(0, 0.05), (100, 0.95)],
         ),
-        NumericalTarget.normalized_ramp(
+        NumericalTarget.normalized_sigmoid(
             name="Target_min_bounded",
-            cutoffs=(0, 100),
-            descending=True,
+            anchors=[(0, 0.95), (100, 0.05)],
         ),
         NumericalTarget.match_bell(
             name="Target_match_bell",
