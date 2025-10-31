@@ -30,16 +30,17 @@ is exclusively discrete or continuous in most cases.
 (CLC)=
 ### ContinuousLinearConstraint
 
-The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
-is used to model linear relationships between continuous parameters.
-BayBE supports two different kinds of continuous linear constraints:
-1. **Intrapoint constraints:** These constraints model the relationship between the parameters
-within (= *intra*) individual experiments (0 *points*) and are what people typically think of when
-speaking about "constraints". For that reason, a
-[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint) is
-interpreted as an intrapoint constraint if not explicitly declared otherwise.
-2. **Interpoint constraints:** These constraints model the relationship of different experiments
-across (= *inter*) the whole batch of experiments ( = *points*).
+The
+[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+is used to model linear relationships between continuous parameters. BayBE supports 
+these constraints in two different flavors:
+1. **Intrapoint constraints** model the relationship between the
+parameters within (= *intra*) individual experiments (= *points*) and correspond to what
+is commonly associated with the concept of a "constraint". For this reason, a
+[`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
+is interpreted as an intrapoint constraint unless specified otherwise.
+2. **Interpoint constraints** model the relationship of different
+experiments across (= *inter*) a whole batch of experiments (= *points*).
 
 #### Intrapoint Constraints
 The [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint)
@@ -104,14 +105,14 @@ where $x_i$ and $y_i$ are the values of parameters $x$ and $y$ in the $i$-th exp
 and $n$ is the batch size.
 
 They can be defined by using the `interpoint` argument of the [`ContinuousLinearConstraint`](baybe.constraints.continuous.ContinuousLinearConstraint) class.
-A possible relevant constraint might be that only 100ml of a given solvent are available for 
-a full batch:
+In a chemical optimization context, for example, a relevant constraint might be that
+only 100 ml of a given solvent are available for all experiments of the next batch:
 
 ```python
 from baybe.constraints import ContinuousLinearConstraint
 
 ContinuousLinearConstraint(
-    parameters=["SolventAmount"],
+    parameters=["Solvent_Amount"],
     operator="<=",
     coefficients=[1.0],
     rhs=100,
@@ -128,8 +129,9 @@ There are some limitations regarding the use of interpoint constraints that you 
 to be aware of:
 - BayBE does not support to use both interpoint and cardinality constraints
 within the same search space.
-- When using interpoint constraints, the candidate generation cannot be done sequentially,
-and an error is raised if attempting to use them for sequential optimization.
+- When using interpoint constraints, candidate generation cannot be done
+{attr}`sequentially <baybe.recommenders.pure.bayesian.botorch.BotorchRecommender.sequential_continuous>`,
+and an error is raised when attempted.
 - Interpoint constraints are only supported in purely continuous spaces and are not
 available in hybrid spaces.
 ```
