@@ -232,8 +232,12 @@ class PermutationSymmetry(Symmetry):
             # required as al numbers can be added if the tolerance is configured
             # accordingly.
             if all(p.is_discrete and not p.is_numerical for p in params):
-                ref_vals = set(params[0].values)
-                if any(set(p.values) != ref_vals for p in params):
+                from baybe.parameters.base import DiscreteParameter
+
+                ref_vals = set(cast(DiscreteParameter, params[0]).values)
+                if any(
+                    set(cast(DiscreteParameter, p).values) != ref_vals for p in params
+                ):
                     raise ValueError(
                         f"The parameter group '{group}' contains parameters which have "
                         f"different values. All parameters in a group must have the "
@@ -379,13 +383,15 @@ class DependencySymmetry(Symmetry):
             p = next(p for p in parameters if p.name == pn)
             if p.is_discrete:
                 # Use all values for augmentation
-                vals = p.values
+                vals = cast(DiscreteParameter, p).values
             else:
                 # Use linear subsample of parameter bounds interval for augmentation.
                 # Note: The original value will not necessarily be part of this.
                 vals = tuple(
                     np.linspace(
-                        p.bounds.lower, p.bounds.upper, self.n_discretization_points
+                        p.bounds.lower,  # type: ignore[attr-defined]
+                        p.bounds.upper,  # type: ignore[attr-defined]
+                        self.n_discretization_points,
                     )
                 )
             affected.append((p.name, vals))

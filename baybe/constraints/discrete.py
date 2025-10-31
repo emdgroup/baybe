@@ -270,7 +270,9 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
-    def to_symmetries(self, use_data_augmentation=True) -> tuple[DependencySymmetry]:
+    def to_symmetries(
+        self, use_data_augmentation=True
+    ) -> tuple[DependencySymmetry, ...]:
         """Convert to a :class:`~baybe.symmetry.DependencySymmetry`."""
         from baybe.symmetry import DependencySymmetry
 
@@ -354,7 +356,7 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
 
         return PermutationSymmetry(
             parameter_names=self.parameters,
-            copermuted_groups=(tuple(self.dependencies.parameters),)
+            copermuted_groups=(tuple(self.dependencies.parameters),)  # type: ignore[arg-type]
             if self.dependencies
             else tuple(),
             use_data_augmentation=use_data_augmentation,
