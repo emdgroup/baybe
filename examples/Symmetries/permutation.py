@@ -51,8 +51,6 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
 # kernels for a GP, will not be discussed in this example.
 
 
-# ## The Function
-
 LBOUND = -2.0
 UBOUND = 2.0
 
@@ -74,8 +72,8 @@ def lookup(df: pd.DataFrame, a=1.0, b=1.0, c=1.0, d=1.0, phi=0.5) -> pd.DataFram
 
 
 # Grid and dataframe for plotting
-x = np.linspace(LBOUND, UBOUND, 100)
-y = np.linspace(LBOUND, UBOUND, 100)
+x = np.linspace(LBOUND, UBOUND, 25)
+y = np.linspace(LBOUND, UBOUND, 25)
 xx, yy = np.meshgrid(x, y)
 df_plot = lookup(pd.DataFrame({"x": xx.ravel(), "y": yy.ravel()}))
 zz = df_plot["f"].values.reshape(xx.shape)
