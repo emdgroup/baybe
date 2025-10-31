@@ -118,7 +118,10 @@ class PermutationSymmetry(Symmetry):
         return self._parameter_names
 
     # Object variables
-    copermuted_groups: tuple[tuple[str, ...], ...] = field(factory=tuple)
+    # TODO: Needs inner converter to tuple
+    copermuted_groups: tuple[tuple[str, ...], ...] = field(
+        factory=tuple, converter=tuple
+    )
     """Groups of parameter names that are co-permuted like the other parameters."""
 
     @copermuted_groups.validator
@@ -314,7 +317,7 @@ class DependencySymmetry(Symmetry):
     condition: Condition = field(validator=instance_of(Condition))
     """The condition specifying the active range of the causing parameter."""
 
-    affected_parameter_names: tuple[str] = field(
+    affected_parameter_names: tuple[str, ...] = field(
         converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             validate_unique_values,
