@@ -329,16 +329,20 @@ If you find BayBE useful, please consider citing [our paper](https://doi.org/10.
 }
 ```
 
+## 🛠️ Known Issues
+A list of know issues can be found [here](https://emdgroup.github.io/baybe/stable/known_issues.html).
+
 ## 👨🏻‍🔧 Maintainers
 
 - Martin Fitzner (Merck KGaA, Darmstadt, Germany), [Contact](mailto:martin.fitzner@merckgroup.com), [Github](https://github.com/Scienfitz)
 - Adrian Šošić (Merck Life Science KGaA, Darmstadt, Germany), [Contact](mailto:adrian.sosic@merckgroup.com), [Github](https://github.com/AdrianSosic)
 - Alexander Hopp (Merck KGaA, Darmstadt, Germany) [Contact](mailto:alexander.hopp@merckgroup.com), [Github](https://github.com/AVHopp)
 
+## 🙏 Contributors
 
-## 🛠️ Known Issues
-A list of know issues can be found [here](https://emdgroup.github.io/baybe/stable/known_issues.html).
+Thanks to our contributors!
 
+[![Contributors](https://contrib.rocks/image?repo=emdgroup/baybe)](https://github.com/emdgroup/baybe/graphs/contributors)
 
 ## 📄 License
 
