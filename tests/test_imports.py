@@ -97,7 +97,7 @@ WHITELISTS = {
         "baybe.utils.clustering_algorithms.third_party",
         "baybe.utils.clustering_algorithms.third_party.kmedoids",
     ]
-    + (["baybe._optional.simulation"] if sys.version_info >= (3, 13) else []),
+    + (["baybe._optional.simulation"] if sys.version_info >= (3, 11) else []),
     "sklearn": [
         "baybe._optional.chem",
         "baybe._optional.insights",
