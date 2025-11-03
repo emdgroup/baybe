@@ -41,7 +41,8 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
         *x: The int(s)/float(s)/array(s)/series/dataframe(s) to be converted.
 
     Returns:
-        Copies of the provided inputs represented as tensor(s).
+        The provided inputs represented as tensor(s). If possible, returns a view of the
+        original data.
     """
     import torch
 
@@ -52,18 +53,15 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
             case int() | float():
                 return torch.tensor(x, dtype=DTypeFloatTorch)
             case np.ndarray():
-                # We use `torch.tensor`, which creates a copy, to avoid memory sharing
-                tensor = torch.tensor(x, dtype=DTypeFloatTorch)
+                tensor = torch.from_numpy(x).to(DTypeFloatTorch)
             case pd.Series() | pd.DataFrame():
-                # * We already coerce to the target dtype during the dataframe-to-numpy
-                #   conversion since this step might otherwise return an array of type
-                #   `object` in case of mixed column types, which would cause the
-                #   subsequent numpy-to-torch conversion to fail. This happens, for
-                #   example, when the dataframe contains Boolean and integer columns.
-                # * A copy is created in the inner step to avoid memory sharing, while
-                #   the outer step reuses the created array.
+                # We already coerce to the target dtype during the dataframe-to-numpy
+                # conversion since this step might otherwise return an array of type
+                # `object` in case of mixed column types, which would cause the
+                # subsequent numpy-to-torch conversion to fail. This happens, for
+                # example, when the dataframe contains Boolean and integer columns.
                 tensor = torch.from_numpy(
-                    x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch], copy=True)
+                    x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch])
                 )
             case _:
                 assert_never(x)
