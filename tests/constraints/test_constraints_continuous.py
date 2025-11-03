@@ -205,25 +205,32 @@ def test_to_botorch(flatten: bool, interpoint: bool):
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    ("constraint_names", "expected_value", "check_type"),
-    [
-        param(["ContiConstraint_1"], 0.3, "eq", id="equality"),
-        param(["ContiConstraint_3"], 0.299, "ge", id="inequality_ge"),
-    ],
+    "parameter_names",
+    [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
 )
-def test_hybridspace_linear_constraints(
-    campaign, n_iterations, batch_size, expected_value, check_type
-):
-    """Test linear constraints in hybrid search spaces."""
+@pytest.mark.parametrize("constraint_names", [["ContiConstraint_1"]])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_hybridspace_eq(campaign, n_iterations, batch_size):
+    """Test equality constraint with equal weights."""
     run_iterations(campaign, n_iterations, batch_size, add_noise=False)
     res = campaign.measurements
 
-    result = 1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]
+    assert np.allclose(1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"], 0.3)
 
-    if check_type == "eq":
-        assert np.allclose(result, expected_value)
-    elif check_type == "ge":
-        assert result.ge(expected_value).all()
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Solvent_1", "Conti_finite1", "Conti_finite3", "Conti_finite2"]],
+)
+@pytest.mark.parametrize("constraint_names", [["ContiConstraint_3"]])
+@pytest.mark.parametrize("batch_size", [5], ids=["b5"])
+def test_hybridspace_ineq(campaign, n_iterations, batch_size):
+    """Test inequality constraint with equal weights."""
+    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+    res = campaign.measurements
+
+    assert (1.0 * res["Conti_finite1"] + 1.0 * res["Conti_finite2"]).ge(0.299).all()
 
 
 @pytest.mark.parametrize(
