@@ -172,31 +172,30 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         n_parameters = len(names)
         idxs = torch.tensor([names.index(p) + idx_offset for p in self.parameters])
 
-        # Construct augmented indices for batched constraints
-        if batch_size is not None:
-            idxs_batched_2d = torch.cartesian_prod(torch.arange(batch_size), idxs)
-            idxs_batched_1d = torch.mv(
-                idxs_batched_2d, torch.tensor([n_parameters + idx_offset, 1])
-            )
-            coefficients_batched = coefficients.repeat(batch_size)
+        # Early return for the simplest case: single constraint for all batch elements
+        if not flatten and not self.is_interpoint:
+            return [(idxs, coefficients, rhs)]
 
-        if flatten:
-            assert batch_size is not None
-            if self.is_interpoint:
-                # One joint constraint over the entire flattened batch
-                return [(idxs_batched_1d, coefficients_batched, rhs)]
-            else:
-                # One constraint per batch element in the flattened representation
-                return [
-                    (i, coefficients, rhs) for i in idxs_batched_1d.view(batch_size, -1)
-                ]
-        elif self.is_interpoint:
-            # The constraint can be represented in 2D form
+        # mypy is not able to infer that batch_size is not None due to the xor check‚
+        assert batch_size is not None
+
+        # Construct augmented indices for batched constraints
+        idxs_batched_2d = torch.cartesian_prod(torch.arange(batch_size), idxs)
+        idxs_batched_1d = torch.mv(
+            idxs_batched_2d, torch.tensor([n_parameters + idx_offset, 1])
+        )
+        coefficients_batched = coefficients.repeat(batch_size)
+
+        if flatten and self.is_interpoint:
+            return [(idxs_batched_1d, coefficients_batched, rhs)]
+        elif flatten:
+            return [
+                (i, coefficients, rhs) for i in idxs_batched_1d.view(batch_size, -1)
+            ]
+        else:
+            # The constraint can be represented in 2D form (interpoint, non-flattened)
             # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
             return [(idxs_batched_2d, coefficients_batched, rhs)]
-        else:
-            # A single constraint that is used for all elements of the batch
-            return [(idxs, coefficients, rhs)]
 
 
 @define
