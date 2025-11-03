@@ -78,7 +78,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     surrogates: _SurrogateGetter = field()
     """An index-based mapping from target names to single-target surrogates."""
 
-    _target_names: tuple[str, ...] | None = field(init=False, eq=False)
+    _target_names: tuple[str, ...] | None = field(init=False, default=None, eq=False)
     """The names of the targets modeled by the surrogate outputs."""
 
     @classmethod
