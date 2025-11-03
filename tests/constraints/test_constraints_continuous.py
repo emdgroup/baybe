@@ -5,10 +5,8 @@ import pytest
 import torch
 from pytest import param
 
-from baybe.campaign import Campaign
 from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.searchspace import SearchSpace
 from tests.conftest import run_iterations
 
 TOLERANCE = 0.01
@@ -110,10 +108,7 @@ def test_intrapoint_linear_constraints(
     ],
 )
 def test_interpoint_linear_constraints(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
+    campaign_non_sequential,
     n_iterations,
     batch_size,
     calculation,
@@ -121,15 +116,8 @@ def test_interpoint_linear_constraints(
     check_type,
 ):
     """Test interpoint linear constraints with various operators and parameters."""
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
-        ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
+    run_iterations(campaign_non_sequential, n_iterations, batch_size, add_noise=False)
+    res = campaign_non_sequential.measurements
 
     res_grouped = res.groupby("BatchNr")
     interpoint_result = calculation(res_grouped)
@@ -147,23 +135,13 @@ def test_interpoint_linear_constraints(
     "constraint_names", [["ContiConstraint_4", "InterConstraint_2"]]
 )
 def test_interpoint_intrapoint_mix(
-    non_sequential_recommender,
-    parameters,
-    constraints,
-    objective,
+    campaign_non_sequential,
     n_iterations,
     batch_size,
 ):
     """Test mixing interpoint and intrapoint inequality constraints."""
-    campaign = Campaign(
-        searchspace=SearchSpace.from_product(
-            parameters=parameters, constraints=constraints
-        ),
-        recommender=non_sequential_recommender,
-        objective=objective,
-    )
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
-    res = campaign.measurements
+    run_iterations(campaign_non_sequential, n_iterations, batch_size, add_noise=False)
+    res = campaign_non_sequential.measurements
 
     interpoint_result = 2 * res.groupby("BatchNr")["Conti_finite1"].sum()
     assert interpoint_result.ge(0.3 - TOLERANCE).all()

@@ -630,6 +630,20 @@ def fixture_campaign(parameters, constraints, recommender, objective):
     )
 
 
+@pytest.fixture(name="campaign_non_sequential")
+def fixture_campaign_non_sequential(
+    parameters, constraints, non_sequential_recommender, objective
+):
+    """Returns a campaign using non-sequential recommender."""
+    return Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
+        objective=objective,
+    )
+
+
 @pytest.fixture(name="ongoing_campaign")
 def fixture_ongoing_campaign(campaign, n_iterations, batch_size):
     """Returns a campaign that already ran for several iterations."""
