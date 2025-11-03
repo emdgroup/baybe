@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
@@ -202,6 +203,10 @@ def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Unstructure as the concrete type."""
     container_type = _get_surrogate_getter_type(type(obj).__name__)
     return converter.unstructure(obj, unstructure_as=container_type)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
 
 
 converter.register_structure_hook_func(
