@@ -47,11 +47,13 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
+from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
+from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from tests.conftest import run_iterations
@@ -290,10 +292,19 @@ def test_kernel_factories(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [
+        *valid_surrogate_models,
+        # also test with a non-batchable composite surrogate:
+        param(BayesianLinearSurrogate().replicate(), id="composite"),
+    ],
+)
 def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
     context = nullcontext()
-    if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
+    if batch_size > 1 and isinstance(
+        surrogate_model, (IndependentGaussianSurrogate, CompositeSurrogate)
+    ):
         context = pytest.raises(InvalidSurrogateModelError)
 
     with context:
