@@ -142,7 +142,7 @@ class AffineTransformation(MonotonicTransformation):
 
         return ScalarizedPosteriorTransform(
             weights=torch.tensor([self.factor], dtype=DTypeFloatTorch),
-            offset=torch.tensor(self.shift, dtype=DTypeFloatTorch),
+            offset=torch.tensor(self.shift, dtype=DTypeFloatTorch).item(),
         )
 
     @classmethod

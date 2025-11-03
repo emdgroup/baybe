@@ -309,7 +309,7 @@ class DesirabilityObjective(Objective):
         offset = torch.tensor(
             sum(w * tr.shift for w, tr in zip(self.weights, converted)),
             dtype=DTypeFloatTorch,
-        )
+        ).item()
         return ScalarizedPosteriorTransform(weights, offset)
 
     @override
