@@ -420,51 +420,39 @@ def test_task_parameter_active_values_validation():
 
 
 @pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_3"]])
-def test_sample_from_polytope_with_interpoint_constraints_equality(
-    parameters, constraints
+@pytest.mark.parametrize(
+    ("constraint_names", "calculation", "assertion_func"),
+    [
+        (
+            ["InterConstraint_3"],
+            lambda samples: samples["Conti_finite1"].sum()
+            + 2 * samples["Conti_finite2"].sum(),
+            lambda result: np.isclose(result, 0.3, atol=1e-6),
+        ),
+        (
+            ["InterConstraint_4"],
+            lambda samples: 2 * samples["Conti_finite1"].sum()
+            - samples["Conti_finite2"].sum(),
+            lambda result: result >= 0.3 - 1e-6,
+        ),
+    ],
+    ids=["equality", "inequality"],
+)
+def test_sample_from_polytope_with_interpoint_constraints(
+    searchspace, calculation, assertion_func
 ):
-    """Test _sample_from_polytope method with interpoint equality constraints."""
-    subspace = SubspaceContinuous(
-        parameters=parameters,
-        constraints_lin_eq=constraints,
-    )
+    """Test _sample_from_polytope method with interpoint constraints."""
+    subspace = searchspace.continuous
 
     assert subspace.has_interpoint_constraints
 
-    # Test batch size of 1 as well as one small and one large batch size
-    for batch_size in [1, 2, 42]:
+    # Test batch_size=1 and batch_size>1 as those the first one is a special case
+    for batch_size in [1, 42]:
         bounds = subspace.comp_rep_bounds.values
         samples = subspace._sample_from_polytope(batch_size, bounds)
 
-        constraint_result = (
-            samples["Conti_finite1"].sum() + 2 * samples["Conti_finite2"].sum()
-        )
-        assert np.isclose(constraint_result, 0.3, atol=1e-6)
-
-
-@pytest.mark.parametrize("parameter_names", [["Conti_finite1", "Conti_finite2"]])
-@pytest.mark.parametrize("constraint_names", [["InterConstraint_4"]])
-def test_sample_from_polytope_with_interpoint_constraints_inequality(
-    parameters, constraints
-):
-    """Test _sample_from_polytope method with interpoint inequality constraints."""
-    subspace = SubspaceContinuous(
-        parameters=parameters,
-        constraints_lin_ineq=constraints,
-    )
-
-    assert subspace.has_interpoint_constraints
-
-    # Test batch size of 1 as well as one small and one large batch size
-    for batch_size in [1, 2, 42]:
-        bounds = subspace.comp_rep_bounds.values
-        samples = subspace._sample_from_polytope(batch_size, bounds)
-
-        constraint_result = (
-            2 * samples["Conti_finite1"].sum() - samples["Conti_finite2"].sum()
-        )
-        assert constraint_result >= 0.3 - 1e-6
+        constraint_result = calculation(samples)
+        assert assertion_func(constraint_result)
 
 
 def test_sample_from_polytope_mixed_constraints_with_interpoint():
