@@ -330,7 +330,7 @@ If you find BayBE useful, please consider citing [our paper](https://doi.org/10.
 ```
 
 ## 🛠️ Known Issues
-A list of know issues can be found [here](https://emdgroup.github.io/baybe/stable/known_issues.html).
+A list of known issues can be found [here](https://emdgroup.github.io/baybe/stable/known_issues.html).
 
 ## 👨🏻‍🔧 Maintainers
 
