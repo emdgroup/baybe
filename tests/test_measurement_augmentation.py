@@ -21,7 +21,7 @@ from baybe.parameters import (
 )
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.symmetry import DependencySymmetry, MirrorSymmetry
+from baybe.symmetries import DependencySymmetry, MirrorSymmetry
 from baybe.utils.dataframe import create_fake_input
 
 

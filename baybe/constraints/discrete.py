@@ -29,7 +29,7 @@ from baybe.utils.basic import Dummy
 if TYPE_CHECKING:
     import polars as pl
 
-    from baybe.symmetry import DependencySymmetry, PermutationSymmetry
+    from baybe.symmetries import DependencySymmetry, PermutationSymmetry
 
 
 @define
@@ -273,8 +273,8 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     def to_symmetries(
         self, use_data_augmentation=True
     ) -> tuple[DependencySymmetry, ...]:
-        """Convert to a :class:`~baybe.symmetry.DependencySymmetry`."""
-        from baybe.symmetry import DependencySymmetry
+        """Convert to a :class:`~baybe.symmetries.DependencySymmetry`."""
+        from baybe.symmetries import DependencySymmetry
 
         return tuple(
             DependencySymmetry(
@@ -351,8 +351,8 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
         return inds_invalid
 
     def to_symmetry(self, use_data_augmentation=True) -> PermutationSymmetry:
-        """Convert to a :class:`~baybe.symmetry.PermutationSymmetry`."""
-        from baybe.symmetry import PermutationSymmetry
+        """Convert to a :class:`~baybe.symmetries.PermutationSymmetry`."""
+        from baybe.symmetries import PermutationSymmetry
 
         return PermutationSymmetry(
             parameter_names=self.parameters,

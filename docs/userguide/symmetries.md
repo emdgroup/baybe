@@ -1,9 +1,9 @@
 # Symmetry
-{class}`~baybe.symmetry.Symmetry` is a concept tied to the structure of the searchspace.
+{class}`~baybe.symmetries.Symmetry` is a concept tied to the structure of the searchspace.
 It is thus closely related to a {class}`~baybe.constraints.base.Constraint`, but has a
 different purpose in BayBE. If the searchspace is symmetric in any sense, you can
 exclude the degenerate parts via a constraint. But this would not change the modeling
-process. The role of a {class}`~baybe.symmetry.Symmetry` is exactly this: Influence how
+process. The role of a {class}`~baybe.symmetries.Symmetry` is exactly this: Influence how
 the surrogate model is constructed to include the knowledge about the symmetry. This 
 can be applied independently of constraints. For an example of the influence of
 symmetries and constraints on the optimization of a permutation invariant function,
@@ -12,11 +12,11 @@ symmetries and constraints on the optimization of a permutation invariant functi
 ## Definitions
 The following table summarizes available symmetries in BayBE:
 
-| Symmetry                                     | Functional Definition                                                                                                                            | Corresponding Constraint                                                                           | 
-|:---------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------|
-| {class}`~baybe.symmetry.PermutationSymmetry` | $f(x,y) = f(y,x)$                                                                                                                                | {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint`                       |
-| {class}`~baybe.symmetry.DependencySymmetry`  | $f(x,y) = \begin{cases}f(x,y) & \text{if }c(x) \\f(x) & \text{otherwise}\end{cases}$<br>where $c(x)$ is a condition that is either true or false | {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint`                                |
-| {class}`~baybe.symmetry.MirrorSymmetry`      | $f(x,y) = f(-x,y)$                                                                                                                               | No constraint is available. Instead, the number range for that parameter can simply be restricted. | 
+| Symmetry                                       | Functional Definition                                                                                                                            | Corresponding Constraint                                                                           | 
+|:-----------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------|
+| {class}`~baybe.symmetries.PermutationSymmetry` | $f(x,y) = f(y,x)$                                                                                                                                | {class}`~baybe.constraints.discrete.DiscretePermutationInvarianceConstraint`                       |
+| {class}`~baybe.symmetries.DependencySymmetry`  | $f(x,y) = \begin{cases}f(x,y) & \text{if }c(x) \\f(x) & \text{otherwise}\end{cases}$<br>where $c(x)$ is a condition that is either true or false | {class}`~baybe.constraints.discrete.DiscreteDependenciesConstraint`                                |
+| {class}`~baybe.symmetries.MirrorSymmetry`      | $f(x,y) = f(-x,y)$                                                                                                                               | No constraint is available. Instead, the number range for that parameter can simply be restricted. | 
 
 ## Data Augmentation
 This can be a powerful tool to improve the modeling process. Data augmentation
@@ -29,14 +29,14 @@ If the surrogate model receives such augmented points, it can learn the symmetry
 has the advantage that it can improve predictions for unseen points and is fully 
 model-agnostic. Downsides are increased training time and potential computational 
 challenges arising from a fit on substantially more points. It is thus possible to 
-control the data augmentation behavior of any {class}`~baybe.symmetry.Symmetry` by 
-setting its {attr}`~baybe.symmetry.Symmetry.use_data_augmentation` attribute
+control the data augmentation behavior of any {class}`~baybe.symmetries.Symmetry` by 
+setting its {attr}`~baybe.symmetries.Symmetry.use_data_augmentation` attribute
 (`True` by default).
 
 Below we illustrate the effect of data augmentation for the different symmetries
 supported by BayBE:
 
-![Symmetry and Data Augmentation](../_static/symmetry/augmentation.svg)
+![Symmetry and Data Augmentation](../_static/symmetries/augmentation.svg)
 
 ## Invariant Kernels
 Some machine learning models can be constructed with architectures that automatically

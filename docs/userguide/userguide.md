@@ -44,7 +44,7 @@ Search Spaces <searchspace>
 Serialization <serialization>
 Simulation <simulation>
 Surrogates <surrogates>
-Symmetry <symmetry>
+Symmetries <symmetries>
 Targets <targets>
 Transformations <transformations>
 Transfer Learning <transfer_learning>

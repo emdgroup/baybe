@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given
 from pytest import param
 
-from tests.hypothesis_strategies.symmetry import (
+from tests.hypothesis_strategies.symmetries import (
     dependency_symmetries,
     mirror_symmetries,
     permutation_symmetries,

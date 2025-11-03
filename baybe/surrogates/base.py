@@ -19,7 +19,7 @@ from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
-from baybe.symmetry import Symmetry
+from baybe.symmetries import Symmetry
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer

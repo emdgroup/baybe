@@ -6,7 +6,7 @@ import hypothesis.strategies as st
 from hypothesis import assume
 
 from baybe.parameters.base import Parameter
-from baybe.symmetry import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
+from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from tests.hypothesis_strategies.basic import finite_floats
 from tests.hypothesis_strategies.conditions import (
     sub_selection_conditions,
@@ -16,7 +16,7 @@ from tests.hypothesis_strategies.conditions import (
 
 @st.composite
 def mirror_symmetries(draw: st.DrawFn, parameter_pool: list[Parameter] | None = None):
-    """Generate :class:`baybe.symmetry.MirrorSymmetry`."""
+    """Generate :class:`baybe.symmetries.MirrorSymmetry`."""
     if parameter_pool is None:
         parameter_name = draw(st.text(min_size=1))
     else:
@@ -35,7 +35,7 @@ def mirror_symmetries(draw: st.DrawFn, parameter_pool: list[Parameter] | None = 
 def permutation_symmetries(
     draw: st.DrawFn, parameter_pool: list[Parameter] | None = None
 ):
-    """Generate :class:`baybe.symmetry.PermutationSymmetry`."""
+    """Generate :class:`baybe.symmetries.PermutationSymmetry`."""
     if parameter_pool is None:
         parameter_names_pool = draw(
             st.lists(st.text(min_size=1), unique=True, min_size=2)
@@ -83,7 +83,7 @@ def permutation_symmetries(
 def dependency_symmetries(
     draw: st.DrawFn, parameter_pool: list[Parameter] | None = None
 ):
-    """Generate :class:`baybe.symmetry.DependencySymmetry`."""
+    """Generate :class:`baybe.symmetries.DependencySymmetry`."""
     if parameter_pool is None:
         parameter_name = draw(st.text(min_size=1))
         affected_strat = st.lists(

@@ -13,7 +13,7 @@ from baybe.parameters import (
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
 from baybe.surrogates import GaussianProcessSurrogate
-from baybe.symmetry import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
+from baybe.symmetries import DependencySymmetry, MirrorSymmetry, PermutationSymmetry
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
