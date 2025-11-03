@@ -10,7 +10,7 @@ from pytest import param
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import (
-    InvalidSurrogateModelError,
+    IncompatibleSurrogateError,
     OptionalImportError,
     UnusedObjectWarning,
 )
@@ -305,7 +305,9 @@ def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
     if batch_size > 1 and isinstance(
         surrogate_model, (IndependentGaussianSurrogate, CompositeSurrogate)
     ):
-        context = pytest.raises(InvalidSurrogateModelError)
+        context = pytest.raises(
+            IncompatibleSurrogateError, match="cannot be used for batch recommendation"
+        )
 
     with context:
         run_iterations(campaign, n_iterations, batch_size)

@@ -471,6 +471,13 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
+        if (batch_size := candidates_comp_scaled.shape[-2]) != 1:
+            raise IncompatibleSurrogateError(
+                f"The specified surrogate model of type '{type(self).__name__}' "
+                f"cannot be used for batch recommendation. "
+                f"Requested batch size: {batch_size}"
+            )
+
         import torch
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal
