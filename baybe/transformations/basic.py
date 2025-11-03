@@ -51,13 +51,13 @@ class CustomTransformation(Transformation):
 class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
 
-    def to_botorch_posterior_transform(self) -> None:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
 
         Returns:
             The representation of the transform as BoTorch posterior transform.
         """
-        return None
+        return AffineTransformation().to_botorch_posterior_transform()
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
