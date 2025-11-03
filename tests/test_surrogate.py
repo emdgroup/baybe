@@ -89,7 +89,7 @@ def test_composite_surrogates(surrogate):
     t2 = NumericalTarget("t2", minimize=True)
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
-    measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0, 1], "t2": [0, 1]})
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
