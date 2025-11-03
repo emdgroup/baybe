@@ -21,7 +21,7 @@ from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
-    from botorch.posteriors import TorchPosterior
+    from botorch.posteriors import Posterior, TorchPosterior
     from torch import Tensor
 
 
@@ -96,9 +96,11 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
         class CustomMCSampler(MCSampler):
             """Customer sampler for beta posterior."""
 
-            def forward(self, posterior: TorchPosterior) -> Tensor:
+            @override
+            def forward(self, posterior: Posterior) -> Tensor:
                 """Sample the posterior."""
-                with temporary_seed(self.seed):
+                # FIXME[typing]: https://github.com/meta-pytorch/botorch/issues/3061
+                with temporary_seed(int(self.seed)):
                     samples = posterior.rsample(self.sample_shape)
                 return samples
 

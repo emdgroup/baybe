@@ -111,7 +111,7 @@ class BotorchAcquisitionFunctionBuilder:
 
     # Context shared across building methods
     _args: BotorchAcquisitionArgs = field(init=False)
-    _botorch_acqf_cls: BoAcquisitionFunction = field(init=False)
+    _botorch_acqf_cls: type[BoAcquisitionFunction] = field(init=False)
     _signature: MappingProxyType = field(init=False)
 
     def __attrs_post_init__(self) -> None:
@@ -144,6 +144,12 @@ class BotorchAcquisitionFunctionBuilder:
         # TODO: Currently, this is the "transformed posterior mean of the targets"
         #   rather than the "posterior mean of the transformed targets".
         posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
+        if not hasattr(posterior, "mean"):
+            raise IncompatibilityError(
+                f"The used surrogate model of type "
+                f"'{type(self._botorch_surrogate).__name__}' "
+                f"does not provide a posterior mean."
+            )
         return self.objective.to_botorch()(posterior.mean)
 
     @cached_property
@@ -252,11 +258,12 @@ class BotorchAcquisitionFunctionBuilder:
 
     def set_default_sample_shape(self, acqf: BoAcquisitionFunction, /):
         """Apply temporary workaround for Thompson sampling."""
+        # TODO: Needs redesign once bandits are supported more generally
         if not isinstance(self.acqf, qThompsonSampling):
             return
 
         assert hasattr(acqf, "_default_sample_shape")
-        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])
+        acqf._default_sample_shape = torch.Size([self.acqf.n_mc_samples])  # type: ignore[assignment]
 
     def _set_mc_points(self) -> None:
         """Set BoTorch's ``mc_points`` argument."""

@@ -2,6 +2,7 @@
 
 from botorch.acquisition.objective import MCAcquisitionObjective
 from torch import Tensor
+from typing_extensions import override
 
 from baybe.utils.basic import compose
 
@@ -13,5 +14,6 @@ class ChainedMCObjective(MCAcquisitionObjective):
         super().__init__()
         self.objectives = objectives
 
+    @override
     def forward(self, samples: Tensor, X: Tensor | None = None) -> Tensor:  # noqa: D102
         return compose(*(o.forward for o in self.objectives))(samples, X)

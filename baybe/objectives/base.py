@@ -97,7 +97,7 @@ class Objective(ABC, SerialMixin):
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""
-        if not is_all_instance(self._oriented_targets, NumericalTarget):
+        if not is_all_instance(targets := self._oriented_targets, NumericalTarget):
             raise NotImplementedError(
                 "Conversion to BoTorch is only supported for numerical targets."
             )
@@ -111,7 +111,7 @@ class Objective(ABC, SerialMixin):
             lambda samples, X: torch.stack(
                 [
                     t.transformation.to_botorch_objective()(samples[..., i])
-                    for i, t in enumerate(self._oriented_targets)
+                    for i, t in enumerate(targets)
                 ],
                 dim=-1,
             )

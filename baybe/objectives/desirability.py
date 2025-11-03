@@ -239,14 +239,13 @@ class DesirabilityObjective(Objective):
 
         from baybe.objectives.botorch import ChainedMCObjective
 
+        outer: MCAcquisitionObjective
         if self.scalarizer is Scalarizer.MEAN:
             outer = LinearMCObjective(torch.tensor(self.weights))
-
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
             outer = GenericMCObjective(
                 lambda samples, X: _geometric_mean(samples, torch.tensor(self.weights))
             )
-
         else:
             raise NotImplementedError(
                 f"No scalarization mechanism defined for '{self.scalarizer.name}'."
