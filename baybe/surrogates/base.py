@@ -97,6 +97,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         validator=deep_iterable(member_validator=instance_of(Symmetry)),
         kw_only=True,
     )
+    """Symmetries to be considered by the surrogate model."""
 
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
