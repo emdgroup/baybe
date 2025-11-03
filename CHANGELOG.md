@@ -19,9 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   horizontal / vertical shifts
 - `Objective.to_botorch_posterior_transform` for use of affine transformations with
   analytical acquisition functions
+- `DesirabilityObjective.normalized_weights` property 
 
 ### Changed
-- `DesirabilityObjective.weights` now returns the normalized target weights
+- The unnormalized weights of `DesirabilityObjective` are now stored privately under the
+  `_weights` attribute
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`

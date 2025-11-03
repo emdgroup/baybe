@@ -178,7 +178,7 @@ class DesirabilityObjective(Objective):
         return not self.as_pre_transformation
 
     @cached_property
-    def weights(self) -> tuple[float, ...]:
+    def normalized_weights(self) -> tuple[float, ...]:
         """The normalized target weights."""
         return tuple(np.asarray(self._weights) / np.sum(self._weights))
 
@@ -186,7 +186,7 @@ class DesirabilityObjective(Objective):
     def __str__(self) -> str:
         targets_list = [target.summary() for target in self.targets]
         targets_df = pd.DataFrame(targets_list)
-        targets_df["Weight"] = self.weights
+        targets_df["Weights"] = self.normalized_weights
 
         fields = [
             to_string("Type", self.__class__.__name__, single_line=True),
@@ -241,10 +241,12 @@ class DesirabilityObjective(Objective):
 
         outer: MCAcquisitionObjective
         if self.scalarizer is Scalarizer.MEAN:
-            outer = LinearMCObjective(torch.tensor(self.weights))
+            outer = LinearMCObjective(torch.tensor(self.normalized_weights))
         elif self.scalarizer is Scalarizer.GEOM_MEAN:
             outer = GenericMCObjective(
-                lambda samples, X: _geometric_mean(samples, torch.tensor(self.weights))
+                lambda samples, X: _geometric_mean(
+                    samples, torch.tensor(self.normalized_weights)
+                )
             )
         else:
             raise NotImplementedError(
@@ -301,11 +303,11 @@ class DesirabilityObjective(Objective):
 
         # Compute the distribution parameters of the weighted sum of Gaussians
         weights = torch.tensor(
-            [w * tr.factor for w, tr in zip(self.weights, converted)],
+            [w * tr.factor for w, tr in zip(self.normalized_weights, converted)],
             dtype=DTypeFloatTorch,
         )
         offset = torch.tensor(
-            sum(w * tr.shift for w, tr in zip(self.weights, converted)),
+            sum(w * tr.shift for w, tr in zip(self.normalized_weights, converted)),
             dtype=DTypeFloatTorch,
         ).item()
         return ScalarizedPosteriorTransform(weights, offset)
