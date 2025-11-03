@@ -44,9 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SearchSpace.from_dataframe` now validates that dataframes contain only
   `active_values`, raising `IncompatibilityError` otherwise
 - False-negative surrogate cache hits when using multi-model surrogates
+- `IndependentGaussianSurrogate` models now properly refuse batch recommendation
+  regardless of their context (e.g. when used within a `CompositeSurrogate`)
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
+- `InvalidSurrogateModelError` exception because there already exists a more appropriate
+  `IncompatibleSurrogateError` exception
  
 ## [0.14.1] - 2025-10-01
 ### Added
