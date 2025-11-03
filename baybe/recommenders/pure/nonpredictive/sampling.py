@@ -35,7 +35,10 @@ class RandomRecommender(NonPredictiveRecommender):
         batch_size: int,
     ) -> pd.DataFrame:
         if searchspace.type == SearchSpaceType.DISCRETE:
-            return candidates_exp.sample(batch_size)
+            return candidates_exp.sample(
+                n=batch_size,
+                replace=len(candidates_exp) < batch_size,
+            )
 
         cont_random = searchspace.continuous.sample_uniform(batch_size=batch_size)
         if searchspace.type == SearchSpaceType.CONTINUOUS:
@@ -144,7 +147,21 @@ class FPSRecommender(NonPredictiveRecommender):
         candidates_comp = subspace_discrete.transform(candidates_exp)
         candidates_scaled = np.ascontiguousarray(scaler.transform(candidates_comp))
 
-        if FPSAMPLE_USED:
+        # If batch size exceeds number of candidates, select all candidates first
+        # and then fill remaining slots with random sampling with replacement
+        n_candidates = len(candidates_exp)
+        if batch_size > n_candidates:
+            # Select all candidates (FPS not needed when taking all)
+            all_ilocs = list(range(n_candidates))
+
+            # Fill remaining slots with random sampling with replacement
+            n_remaining = batch_size - n_candidates
+            additional_ilocs = np.random.choice(
+                n_candidates, size=n_remaining, replace=True
+            ).tolist()
+
+            ilocs = all_ilocs + additional_ilocs
+        elif FPSAMPLE_USED:
             from baybe._optional.fpsample import fps_sampling
 
             ilocs = fps_sampling(

@@ -186,6 +186,16 @@ class BotorchRecommender(BayesianRecommender):
             )["index"]
         )
 
+        # If batch size exceeds number of returned points (e.g., when requesting more
+        # points than unique candidates available), fill remaining slots with random
+        # sampling with replacement from the returned points
+        if len(idxs) < batch_size:
+            n_remaining = batch_size - len(idxs)
+            additional_idxs = pd.Index(
+                np.random.choice(idxs, size=n_remaining, replace=True)
+            )
+            idxs = idxs.append(additional_idxs)
+
         return idxs
 
     @override
