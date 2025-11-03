@@ -46,6 +46,10 @@ class ChainedTransformation(Transformation):
         return NotImplemented
 
     @override
+    def is_affine(self) -> bool:
+        return all(t.is_affine() for t in self.transformations)
+
+    @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
         return reduce(
@@ -76,6 +80,10 @@ class AdditiveTransformation(Transformation):
     """The transformations to be added."""
 
     @override
+    def is_affine(self) -> bool:
+        return all(t.is_affine() for t in self.transformations)
+
+    @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         interval = Interval.create(interval)
         im1 = self.transformations[0].get_codomain(interval)
@@ -99,6 +107,10 @@ class MultiplicativeTransformation(Transformation):
         ),
     )
     """The transformations to be multiplied."""
+
+    @override
+    def is_affine(self) -> bool:
+        return all(t.is_affine() for t in self.transformations)
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:

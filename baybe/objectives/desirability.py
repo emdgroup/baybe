@@ -264,9 +264,7 @@ class DesirabilityObjective(Objective):
         if (
             self.scalarizer is not Scalarizer.MEAN
             or not is_all_instance(targets, NumericalTarget)
-            or not is_all_instance(
-                transformations, (IdentityTransformation, AffineTransformation)
-            )
+            or not all(tr.is_affine for tr in transformations)
         ):
             raise NonGaussianityError(
                 f"Converting an objective of type '{type(self).__name__}' is only "

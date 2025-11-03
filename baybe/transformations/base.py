@@ -36,6 +36,11 @@ class Transformation(SerialMixin, ABC):
     def __call__(self, x: Tensor, /) -> Tensor:
         """Transform a given input tensor."""
 
+    @property
+    def is_affine(self) -> bool:
+        """Boolean indicating if the transformation is affine."""
+        return False
+
     @abstractmethod
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
         """Get the codomain of a certain interval (assuming transformation continuity).
