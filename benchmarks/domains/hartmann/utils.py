@@ -20,7 +20,7 @@ class HartmannShifted:
     and 0 for dimensions 0 and 2.
     """
 
-    kwargs_dict: dict | None = field(factory=dict)
+    kwargs_dict: dict = field(factory=dict)
     """Additional keyword arguments for the Hartmann function.
 
     If bounds are not specified, uses bounds of [0, 1] for each dimension.
