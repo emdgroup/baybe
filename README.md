@@ -27,9 +27,7 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The **Bay**esian **B**ack **E**nd (**BayBE**) 
-helps to find a **good parameter settings** 
-
+The **Bay**esian **B**ack **E**nd (**BayBE**) helps to find **good parameter settings** 
 within a complex parameter search space. 
 
 <div align="center">
