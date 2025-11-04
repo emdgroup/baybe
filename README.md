@@ -277,7 +277,7 @@ Different lines show outcomes of `Campaigns` with different designs.
 
 ![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
 
-In particular, the five `Campaigns` differ in how the chemical `Parameters` were encoded.
+In particular, the five `Campaigns` differ in how molecules are encoded within each chemical `Parameter`.
 We can see that optimization is more efficient when 
 using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding or *random* features.
 
