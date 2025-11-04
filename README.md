@@ -67,7 +67,7 @@ The following provides a non-comprehensive overview:
   - 🎭 Both continuous and discrete parameters can be used within a single search space.
   - 🔢 The maximal number of mixture components can be defined via cardinality constraints.
   - ⚖️ Different optimization strategies can be selected to balance exploration and exploitation of the search space, including bandit models and active learning.
-- 🌎 Run campaigns **asynchronously** with pending experiments and partial measurements via distributed workflows.
+- 🌎 Run campaigns **asynchronously** with pending experiments and partial measurements.
 - 🔍 **Insights**: Easily analyze feature importance and model behavior.
 - 📈 Utilities for **benchmarking**, such as backtesting and simulations.
 - 📝 **High-quality code base** with comprehensive tests and typing.
