@@ -85,7 +85,7 @@ class SingleTargetObjective(Objective):
                 f"assigned transformation is affine."
             )
 
-        return (tr if not t.minimize else tr.negate()).to_botorch_posterior_transform()
+        return (tr.negate() if t.minimize else tr).to_botorch_posterior_transform()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
