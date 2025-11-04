@@ -32,7 +32,7 @@ within a complex parameter search space.
 
 <div align="center">
 
-![complex search space](./docs/_static/complex_search_space_automatic.svg)
+[![Complex Search Space](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/complex_search_space_automatic.svg)](https://github.com/emdgroup/baybe/)
 
 </div>
 
@@ -84,7 +84,7 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 <div align="center">
 
-![quick start](./docs/_static/quick_start_automatic.svg)
+[![Quick Start](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/quick_start_automatic.svg)](https://github.com/emdgroup/baybe/)
 
 </div>
 
