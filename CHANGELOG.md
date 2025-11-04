@@ -99,9 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `unstructure_base` and `get_base_structure_hook` (de-)serialization utilities
   have been replaced with `unstructure_with_type` and `make_base_structure_hook`
 
-### Changed
-- Documentation is now more accessible for new users
-
 ### Fixed
 - It is no longer possible to use identical names between parameters and targets
 - Random seed context is correctly set within benchmarks
