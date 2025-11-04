@@ -288,18 +288,18 @@ benchmark_config = ConvergenceBenchmarkSettings(
 
 hartmann_tl_3_20_15_benchmark = ConvergenceBenchmark(
     function=hartmann_tl_3_20_15,
-    optimal_target_values={"Target": -3.851831124860353},
+    optimal_target_values={"Target": -3.8324342572721695},
     settings=benchmark_config,
 )
 
 hartmann_tl_inv_3_20_15_benchmark = ConvergenceBenchmark(
     function=hartmann_tl_inv_3_20_15,
-    optimal_target_values={"Target": -3.851831124860353},
+    optimal_target_values={"Target": -3.8324342572721695},
     settings=benchmark_config,
 )
 
 hartmann_tl_shift_3_20_15_benchmark = ConvergenceBenchmark(
     function=hartmann_tl_shift_3_20_15,
-    optimal_target_values={"Target": -3.851831124860353},
+    optimal_target_values={"Target": -3.8324342572721695},
     settings=benchmark_config,
 )
