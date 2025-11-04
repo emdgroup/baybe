@@ -52,7 +52,7 @@ def permutation_symmetries(
     n_copermuted_groups = draw(
         st.integers(
             min_value=0,
-            max_value=len(parameter_names_pool) // len(parameter_names_pool),
+            max_value=len(parameter_names_pool) // n_params - 1,
         )
     )
     copermuted_groups = draw(
