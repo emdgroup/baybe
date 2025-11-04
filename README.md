@@ -128,9 +128,9 @@ of the user guide.
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-reaction `Parameters` we can tune (e.g., granularity,
-pressure and solvent) to optimize the yield. We also need to specify
-which values individual parameters can take.
+reaction parameters we can tune to optimize the yield. 
+In this case we tune granularity, pressure and solvent, each being encoded as a `Parameter`.
+We also need to specify which values individual parameters can take.
 
 ```python
 from baybe.parameters import (
