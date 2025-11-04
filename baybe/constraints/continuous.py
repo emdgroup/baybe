@@ -176,7 +176,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         if not flatten and not self.is_interpoint:
             return [(idxs, coefficients, rhs)]
 
-        # mypy is not able to infer that batch_size is not None due to the xor check‚
         assert batch_size is not None
 
         # Construct augmented indices for batched constraints
