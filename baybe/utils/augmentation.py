@@ -192,7 +192,7 @@ def df_apply_mirror_augmentation(
         df: The dataframe that should be augmented.
         column: The name of the affected column.
         mirror_point: The point along which to mirror the values. Points that have
-            exatly this value will not be augmented.
+            exactly this value will not be augmented.
 
     Returns:
         The augmented dataframe containing the original one. Augmented row indices are
