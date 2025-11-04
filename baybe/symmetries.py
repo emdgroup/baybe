@@ -227,7 +227,7 @@ class PermutationSymmetry(Symmetry):
                     f"{group}: {types}."
                 )
 
-            # ALl parameters in a group must have the same values. Numerical parameters
+            # All parameters in a group must have the same values. Numerical parameters
             # are not considered here since technically for them this restriction is not
             # required as al numbers can be added if the tolerance is configured
             # accordingly.
