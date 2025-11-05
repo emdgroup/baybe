@@ -41,8 +41,11 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
         *x: The int(s)/float(s)/array(s)/series/dataframe(s) to be converted.
 
     Returns:
-        The provided inputs represented as tensor(s). If possible, returns a view of the
-        original data.
+        The provided inputs represented as tensor(s).
+
+        If possible, returns views of the original data, otherwise creates copies.
+        The latter will be the case if the input data is not contiguous in memory or not
+        of the configured Torch dtype.
     """
     import torch
 
