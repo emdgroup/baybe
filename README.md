@@ -46,7 +46,7 @@ Example use cases:
 - 🫖 Find tasty espresso machine settings
 
 This is achieved via **Bayesian Design of Experiments**, 
-which is an efficient way for navigating parameter search spaces. 
+which helps to efficiently navigate parameter search spaces. 
 It balances
 exploitation of parameter space regions known to lead to good outcomes 
 and exploration of unknown regions. 
