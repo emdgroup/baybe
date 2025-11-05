@@ -84,6 +84,22 @@ class ProductKernel(CompositeKernel):
         return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 
+_field_n_projections = field(
+    default=None, validator=optional_v([instance_of(int), ge(0)]), kw_only=True
+)
+"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.n_projections`."""
+
+_field_projection_matrix = field(
+    default=None, converter=optional_c(np.asarray), kw_only=True
+)
+"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.projection_matrix`."""
+
+_field_learn_projection = field(
+    default=False, validator=instance_of(bool), kw_only=True
+)
+"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.learn_projection`."""
+
+
 @define(frozen=True)
 class ProjectionKernel(CompositeKernel):
     """A random projection kernel for dimensionality reduction."""
@@ -91,25 +107,19 @@ class ProjectionKernel(CompositeKernel):
     base_kernel: Kernel = field(validator=instance_of(Kernel))
     """The kernel to apply after projection."""
 
-    n_projections: int | None = field(
-        default=None, validator=optional_v([instance_of(int), ge(0)]), kw_only=True
-    )
+    n_projections: int | None = _field_n_projections
     """The number of projections used (i.e. dimensionality of the projection space).
 
     Must be provided if no projection matrix is specified.
     """
 
-    projection_matrix: np.ndarray | None = field(
-        default=None, converter=optional_c(np.asarray), kw_only=True
-    )
+    projection_matrix: np.ndarray | None = _field_projection_matrix
     """A pre-specified projection matrix.
 
     Must be provided if no number of projections is specified.
     """
 
-    learn_projection: bool = field(
-        default=False, validator=instance_of(bool), kw_only=True
-    )
+    learn_projection: bool = _field_learn_projection
     """Boolean specifying if the projection matrix should be learned.
 
     If a projection matrix is provided and learning is activated, the provided matrix
