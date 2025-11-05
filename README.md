@@ -52,7 +52,8 @@ exploitation of parameter space regions known to lead to good outcomes
 and exploration of unknown regions. 
 
 BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments, 
-focusing on making this procedure easily-accessible for real-world experiments.
+focusing on making this procedure easily accessible for real-world experiments.
+
 
 ## 🔋 Batteries Included
 BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
