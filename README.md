@@ -81,7 +81,7 @@ The following provides a non-comprehensive overview:
 ## ⚡ Quick Start
 
 To perform Bayesian Design of Experiments with BayBE, 
-the users must first specify the **parameter search space** and **objective** to be optimized. 
+you should first specify the **parameter search space** and **objective** to be optimized. 
 Based on this information and any **available data** about outcomes of specific parameter settings, 
 BayBE will **recommend the next set of parameter combinations** to be **measured**. 
 To inform the next recommendation cycle, the newly generated measurements can be added to BayBE.
