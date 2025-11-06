@@ -41,7 +41,7 @@ Example use cases:
 - 🧪 Find chemical reaction conditions or process parameters
 - 🥣 Create materials, chemical mixtures or formulations with desired properties
 - ✈️ Optimize the 3D shape of a physical object
-- 🖥️ Optimize an in silico simulation
+- 🖥️ Optimize a virtual simulation
 - ⚙️ Select model hyperparameters
 - 🫖 Find tasty espresso machine settings
 
