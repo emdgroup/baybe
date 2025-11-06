@@ -69,7 +69,7 @@ rather than from the product of all possible parameter combinations.
 
 ```{dropdown} Are some parameters non-numeric or allow only discrete numbers?
 
-  > Use [discrete](userguide/parameters.html#discrete-parameters)
+Use [discrete](userguide/parameters.html#discrete-parameters)
 rather than [continuous](userguide/parameters.html#continuous-parameters) parameters.
 ```
 
@@ -84,24 +84,24 @@ discrete parameters or provide custom encodings.
 
 ```{dropdown} Is no prior data available and the experiments should be done in batches?
 
-  > Use [clustering](userguide/recommenders.html#clustering-recommenders) or [sampling](userguide/recommenders.html#sampling-recommenders) recommenders to diversify the first batch of parameter configurations to be tested.
+Use [clustering](userguide/recommenders.html#clustering-recommenders) or [sampling](userguide/recommenders.html#sampling-recommenders) recommenders to diversify the first batch of parameter configurations to be tested.
 ```
 
 ```{dropdown} Is additional data from historic or other partially-related experiments available?
 
-  > Use [transfer learning](userguide/transfer_learning.html).
+Use [transfer learning](userguide/transfer_learning.html).
 ```
 
 ```{dropdown} Will the outcome measurements of different parameter configurations become available at different times?
 
-  > Use [asynchronous workflows](userguide/async.html).
+Use [asynchronous workflows](userguide/async.html).
 ```
 
 ### Advanced: Adjust how Recommendations are Prioritized
 
 ```{dropdown} Is the aim to reduce the overall uncertainty across different regions of the search space rather than optimize a specific objective?
 
-  > Use [active learning](userguide/active_learning.html).
+Use [active learning](userguide/active_learning.html).
 ```
 
 
