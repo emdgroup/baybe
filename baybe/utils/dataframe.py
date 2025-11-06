@@ -44,8 +44,8 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
         The provided inputs represented as tensor(s).
 
         If possible, returns views of the original data, otherwise creates copies.
-        The latter will be the case if the input data is not contiguous in memory or not
-        of the configured Torch dtype.
+        The latter will be the case if the input data is not contiguous in memory, not
+        of the configured Torch dtype, or uses negative strides.
     """
     import torch
 
@@ -63,9 +63,11 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # `object` in case of mixed column types, which would cause the
                 # subsequent numpy-to-torch conversion to fail. This happens, for
                 # example, when the dataframe contains Boolean and integer columns.
-                tensor = torch.from_numpy(
-                    x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch])
-                )
+                array = x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch])
+                if any(s < 0 for s in array.strides):
+                    # Tensors with negative strides are not supported by PyTorch
+                    array = array.copy()
+                tensor = torch.from_numpy(array)
             case _:
                 assert_never(x)
 
