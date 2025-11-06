@@ -27,7 +27,7 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The **Bay**esian **B**ack **E**nd (**BayBE**) helps to find **good parameter settings** 
+The **Bay**esian **B**ack **E**nd (**BayBE**) helps to find **good parameter configurations** 
 within complex parameter search spaces. 
 
 <div align="center">
@@ -82,8 +82,8 @@ The following provides a non-comprehensive overview:
 
 To perform Bayesian Design of Experiments with BayBE, 
 you should first specify the **parameter search space** and **objective** to be optimized. 
-Based on this information and any **available data** about outcomes of specific parameter settings, 
-BayBE will **recommend the next set of parameter combinations** to be **measured**. 
+Based on this information and any **available data** about outcomes of specific parameter configurations, 
+BayBE will **recommend the next set of parameter configurations** to be **measured**. 
 To inform the next recommendation cycle, the newly generated measurements can be added to BayBE.
 
 <div align="center">
@@ -99,7 +99,7 @@ to help you with the design setup.
 
 Below we show a simple optimization procedure, starting with the design step and subsequently
 performing the recommendation loop. 
-The provided example aims to maximize the yield of a chemical reaction by adjusting its parameters 
+The provided example aims to maximize the yield of a chemical reaction by adjusting its parameter configurations 
 (also known as reaction conditions).
 
 First, install BayBE into your Python environment: 
@@ -123,8 +123,7 @@ objective = SingleTargetObjective(target=target)
 ```
 In cases where we are confronted with multiple (potentially conflicting) targets 
 (e.g., yield vs cost),
-the `ParetoObjective` or `DesirabilityObjective` can be used instead.
-These allow to define additional settings, such as how the targets should be balanced.
+the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
 For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
 of the user guide.
@@ -191,8 +190,8 @@ and alternative ways of construction.
 
 ### Optional: Defining the Optimization Strategy
 
-As an optional step, we can specify details on how the optimization of the experimental settings should be
-performed. If omitted, BayBE will choose a default setting.
+As an optional step, we can specify details on how the optimization of the experimental configurations should be
+performed. If omitted, BayBE will choose a default Bayesian optimization setting.
 
 For our example, we combine two recommenders via a so-called meta recommender named
 `TwoPhaseMetaRecommender`:
@@ -215,13 +214,13 @@ recommender = TwoPhaseMetaRecommender(
 ```
 
 For more details on the different recommenders, their underlying algorithmic
-details and their configuration settings, see the
+details and how their settings can be adjusted, see the
 [recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
 of the user guide.
 
 ### The Optimization Loop
 
-We can now construct a `Campaign` that performs the Bayesian optimization of the experimental settings:
+We can now construct a `Campaign` that performs the Bayesian optimization of the experimental configurations:
 
 ```python
 from baybe import Campaign
@@ -233,7 +232,7 @@ With this object at hand, we can start our optimization cycle.
 In particular:
 
 * The campaign can `recommend` new experiments.
-* We can `add_measurements` of target values for the measured parameter settings 
+* We can `add_measurements` of target values for the measured parameter configurations 
   to the campaign's database.
 
 Note that these two steps can be performed in any order.
@@ -241,11 +240,11 @@ In particular, available measurements can be submitted at any time and also seve
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_size=3) # Recommend three experimental settings to test
+df = campaign.recommend(batch_size=3) # Recommend three experimental configurations to test
 print(df)
 ```
 
-The below table shows the three parameter setting for which BayBE recommended to 
+The below table shows the three parameter configurations for which BayBE recommended to 
 measure the reaction yield.
 
 Note that the specific recommendations will depend on both the data
@@ -262,14 +261,14 @@ After having conducted the recommended experiments, we can add the newly measure
 target information to the campaign:
 
 ```python
-df["Yield"] = [79.8, 54.1, 59.4] # Measured yields for the three recommended parameter settings
+df["Yield"] = [79.8, 54.1, 59.4] # Measured yields for the three recommended parameter configurations
 campaign.add_measurements(df)
 ```
 
 With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
 This loop typically continues until a desired target value is achieved in the experiment.
 
-### Inspect the Progress of the Experimental Setting Optimization
+### Inspect the Progress of the Experimental Configuration Optimization
 
 The below plot shows progression of a campaign that optimized direct arylation reaction
 by tuning the solvent, base and ligand 

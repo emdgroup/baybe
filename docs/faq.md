@@ -84,7 +84,7 @@ discrete parameters or provide custom encodings.
 
 ```{dropdown} Is no prior data available and the experiments should be done in batches?
 
-  > Use [clustering](userguide/recommenders.html#clustering-recommenders) or [sampling](userguide/recommenders.html#sampling-recommenders) recommenders to diversify the first batch of parameter settings to be tested.
+  > Use [clustering](userguide/recommenders.html#clustering-recommenders) or [sampling](userguide/recommenders.html#sampling-recommenders) recommenders to diversify the first batch of parameter configurations to be tested.
 ```
 
 ```{dropdown} Is additional data from historic or other partially-related experiments available?
@@ -92,7 +92,7 @@ discrete parameters or provide custom encodings.
   > Use [transfer learning](userguide/transfer_learning.html).
 ```
 
-```{dropdown} Will the outcome measurements of different parameter setting become available at different times?
+```{dropdown} Will the outcome measurements of different parameter configurations become available at different times?
 
   > Use [asynchronous workflows](userguide/async.html).
 ```
