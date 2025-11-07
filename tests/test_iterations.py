@@ -10,7 +10,7 @@ from pytest import param
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import (
-    InvalidSurrogateModelError,
+    IncompatibleSurrogateError,
     OptionalImportError,
     UnusedObjectWarning,
 )
@@ -47,11 +47,13 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
+from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
+from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from tests.conftest import run_iterations
@@ -65,10 +67,7 @@ for cls in get_subclasses(Surrogate):
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
         continue
-    try:
-        p = param(cls(), id=cls.__name__)
-    except OptionalImportError:
-        p = param(cls, marks=pytest.mark.skip(reason="missing optional dependency"))
+    p = param(cls(), id=cls.__name__)
     valid_surrogate_models.append(p)
 
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
@@ -290,14 +289,28 @@ def test_kernel_factories(campaign, n_iterations, batch_size):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [
+        *valid_surrogate_models,
+        # also test with a non-batchable composite surrogate:
+        param(BayesianLinearSurrogate().replicate(), id="composite"),
+    ],
+)
 def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
     context = nullcontext()
-    if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
-        context = pytest.raises(InvalidSurrogateModelError)
+    if batch_size > 1 and isinstance(
+        surrogate_model, (IndependentGaussianSurrogate, CompositeSurrogate)
+    ):
+        context = pytest.raises(
+            IncompatibleSurrogateError, match="cannot be used for batch recommendation"
+        )
 
     with context:
-        run_iterations(campaign, n_iterations, batch_size)
+        try:
+            run_iterations(campaign, n_iterations, batch_size)
+        except OptionalImportError:
+            pytest.skip("missing optional dependency")
 
 
 @pytest.mark.slow

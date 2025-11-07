@@ -6,7 +6,9 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.surrogates import BayesianLinearSurrogate, NGBoostSurrogate
@@ -14,6 +16,7 @@ from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.dataframe import create_fake_input
 
 
 @patch.object(GaussianProcessSurrogate, "_fit")
@@ -34,6 +37,36 @@ def test_caching(patched, searchspace, objective, fake_measurements):
 
 
 @pytest.mark.parametrize(
+    "objective",
+    [
+        SingleTargetObjective(NumericalTarget("t1")),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+        ),
+        ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+    ],
+    ids=["single", "desirability", "pareto"],
+)
+@patch.object(
+    GaussianProcessSurrogate,
+    "_fit",
+    side_effect=GaussianProcessSurrogate._fit,
+    autospec=True,
+)
+def test_caching_via_recommender(mock, objective):
+    """Surrogates are correctly cached when requested via a recommender."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    recommender = BotorchRecommender(GaussianProcessSurrogate())
+
+    for _ in range(2):
+        recommender.get_surrogate(searchspace, objective, measurements)
+        assert mock.call_count == objective._n_models
+
+
+@pytest.mark.parametrize(
     "surrogate",
     [
         CompositeSurrogate(
@@ -49,7 +82,7 @@ def test_composite_surrogates(surrogate):
     t2 = NumericalTarget("t2", minimize=True)
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
-    measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0, 1], "t2": [0, 1]})
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
