@@ -8,10 +8,10 @@ misc/contributing_link.md:144: [redirected with Found] https://hypothesis.readth
 misc/contributing_link.md:117: [redirected with Found] https://mypy.readthedocs.io/ to https://mypy.readthedocs.io/en/stable/
 misc/changelog_link.md:525: [redirected permanently] https://github.com/pytorch/botorch/pull/2293 to https://github.com/meta-pytorch/botorch/pull/2293
 misc/contributing_link.md:121: [redirected with Found] https://pytest-cov.readthedocs.io/ to https://pytest-cov.readthedocs.io/en/latest/
-userguide/parameters.md:157: [redirected with Found] https://scikit-fingerprints.readthedocs.io to https://scikit-fingerprints.readthedocs.io/stable/
 _autosummary/baybe.parameters.enum.rst:1: [redirected with Found] https://scikit-fingerprints.readthedocs.io/ to https://scikit-fingerprints.readthedocs.io/stable/
+userguide/parameters.md:157: [redirected with Found] https://scikit-fingerprints.readthedocs.io to https://scikit-fingerprints.readthedocs.io/stable/
 index.md:316: [redirected with Found] https://doi.org/10.1039/D5DD00050E to https://pubs.rsc.org/en/content/articlelanding/2025/dd/d5dd00050e
 index.md:307: [redirected with Found] https://shap.readthedocs.io/ to https://shap.readthedocs.io/en/latest/
+misc/contributing_link.md:122: [redirected with Found] https://www.sphinx-doc.org/ to https://www.sphinx-doc.org/en/master/
 misc/contributing_link.md:124: [redirected with Found] https://tox.wiki/ to https://tox.wiki/en/4.32.0/
 misc/contributing_link.md:140: [redirected with Found] https://www.attrs.org/ to https://www.attrs.org/en/stable/
-misc/contributing_link.md:122: [redirected with Found] https://www.sphinx-doc.org/ to https://www.sphinx-doc.org/en/master/
