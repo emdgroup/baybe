@@ -496,11 +496,11 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
-        bounds = torch.from_numpy(bounds)
+        bounds_tensor = torch.from_numpy(bounds)
         if not self.has_interpoint_constraints:
             points = get_polytope_samples(
                 n=batch_size,
-                bounds=bounds,
+                bounds=bounds_tensor,
                 equality_constraints=flatten(
                     c.to_botorch(self.parameters) for c in self.constraints_lin_eq
                 ),
@@ -510,7 +510,7 @@ class SubspaceContinuous(SerialMixin):
             )
         else:
             points = self._sample_from_polytope_with_interpoint_constraints(
-                batch_size, bounds
+                batch_size, bounds_tensor
             )
 
         return pd.DataFrame(points, columns=self.parameter_names)
