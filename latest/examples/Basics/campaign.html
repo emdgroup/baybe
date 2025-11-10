@@ -1027,6 +1027,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-135" name="toctree-checkbox-135" role="switch" type="checkbox"/><label for="toctree-checkbox-135"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1187,13 +1188,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent             Base                        Ligand  Temperature  \
-40   Butyl Ester  Cesium pivalate                     BrettPhos        105.0   
-262         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+           Solvent             Base                        Ligand  \
+50     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
+121  Butyornitrile   Cesium acetate                     BrettPhos   
 
-     Concentration  
-40             0.1  
-262            0.1  
+     Temperature  Concentration  
+50         105.0          0.153  
+121        105.0          0.100  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1206,13 +1207,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent             Base                        Ligand  Temperature  \
-40   Butyl Ester  Cesium pivalate                     BrettPhos        105.0   
-262         DMAc  Cesium pivalate  Di-tert-butylphenylphosphine         90.0   
+           Solvent             Base                        Ligand  \
+50     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
+121  Butyornitrile   Cesium acetate                     BrettPhos   
 
-     Concentration      yield  
-40             0.1 -40.364125  
-262            0.1  97.275556  
+     Temperature  Concentration      yield  
+50         105.0          0.153 -65.743404  
+121        105.0          0.100  56.534799  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

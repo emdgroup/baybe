@@ -1026,6 +1026,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-135" name="toctree-checkbox-135" role="switch" type="checkbox"/><label for="toctree-checkbox-135"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1101,6 +1102,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">assert_never</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InputDataTypeWarning</span><span class="p">,</span> <span class="n">SearchSpaceMatchWarning</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
@@ -1135,31 +1137,51 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The provided inputs represented as tensor(s).</span>
+
+<span class="sd">        If possible, returns views of the original data, otherwise creates copies.</span>
+<span class="sd">        The latter will be the case if the input data is not contiguous in memory, not</span>
+<span class="sd">        of the configured Torch dtype, or uses negative strides.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># FIXME This function seems to trigger a problem when some columns in either of</span>
-    <span class="c1">#  the dfs have a dtype other than int or float (e.g. object, bool). This can</span>
-    <span class="c1">#  weirdly happen, even if all values are numeric, e.g. when a target column is</span>
-    <span class="c1">#  looked up from a df in simulation, it can have dtype object even if it&#39;s all</span>
-    <span class="c1">#  floats. As a simple fix (this seems to be the most reasonable place to take</span>
-    <span class="c1">#  care of this) df.values has been changed to df.values.astype(float),</span>
-    <span class="c1">#  even though this seems like double casting here.</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeFloatTorch</span><span class="p">,</span> <span class="n">torch_to_numpy_dtype_mapping</span>
 
-    <span class="n">out</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatTorch</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
-        <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
-            <span class="p">(</span><span class="n">xi</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">))</span> <span class="k">else</span> <span class="n">xi</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
-                <span class="n">DTypeFloatNumpy</span>
-            <span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">DTypeFloatTorch</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span>
-    <span class="p">)</span>
+    <span class="n">numpy_dtype</span> <span class="o">=</span> <span class="n">torch_to_numpy_dtype_mapping</span><span class="p">[</span><span class="n">DTypeFloatTorch</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_convert</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">_ConvertibleToTensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">match</span> <span class="n">x</span><span class="p">:</span>
+            <span class="k">case</span> <span class="nb">int</span><span class="p">()</span> <span class="o">|</span> <span class="nb">float</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">DTypeFloatTorch</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">():</span>
+                <span class="c1"># tensors with negative strides are not supported by PyTorch</span>
+                <span class="n">fix_strides</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy_dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">fix_strides</span><span class="p">)</span>
+                <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">()</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">():</span>
+                <span class="c1"># We already coerce to the target dtype during the dataframe-to-numpy</span>
+                <span class="c1"># conversion since this step might otherwise return an array of type</span>
+                <span class="c1"># `object` in case of mixed column types, which would cause the</span>
+                <span class="c1"># subsequent numpy-to-torch conversion to fail. This happens, for</span>
+                <span class="c1"># example, when the dataframe contains Boolean and integer columns.</span>
+
+                <span class="c1"># tensors with negative strides are not supported by PyTorch</span>
+                <span class="n">fix_strides</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span>
+                <span class="n">array</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">numpy_dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">fix_strides</span><span class="p">)</span>
+                <span class="n">tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="n">assert_never</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># The `contiguous` call brings us closest to getting reproducible</span>
+        <span class="c1"># results downstream in the torch ecosystem</span>
+        <span class="c1"># https://github.com/meta-pytorch/botorch/issues/3046</span>
+        <span class="k">return</span> <span class="n">tensor</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+
+    <span class="n">converted</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">out</span></div>
+        <span class="k">return</span> <span class="n">converted</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">converted</span></div>
 
 
 

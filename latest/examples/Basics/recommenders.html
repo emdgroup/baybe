@@ -1027,6 +1027,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-135" name="toctree-checkbox-135" role="switch" type="checkbox"/><label for="toctree-checkbox-135"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1303,15 +1304,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent                Base                        Ligand  \
-102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-343     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
-31   Butyl Ester     Cesium pivalate                 (t-Bu)PhCPhos   
+           Solvent                Base         Ligand  Temperature  \
+299           DMAc  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+308           DMAc  Potassium pivalate      BrettPhos         90.0   
+140  Butyornitrile     Cesium pivalate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration  
-102        105.0          0.057  
-343         90.0          0.100  
-31         105.0          0.100  
+     Concentration  
+299          0.153  
+308          0.153  
+140          0.153  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1320,15 +1321,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-102  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-343     p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
-31   Butyl Ester     Cesium pivalate                 (t-Bu)PhCPhos   
+           Solvent                Base         Ligand  Temperature  \
+299           DMAc  Potassium pivalate  (t-Bu)PhCPhos         90.0   
+308           DMAc  Potassium pivalate      BrettPhos         90.0   
+140  Butyornitrile     Cesium pivalate  (t-Bu)PhCPhos        105.0   
 
-     Temperature  Concentration      yield  
-102        105.0          0.057 -97.255425  
-343         90.0          0.100 -37.836100  
-31         105.0          0.100 -20.117008  
+     Concentration      yield  
+299          0.153 -41.786026  
+308          0.153 -78.997846  
+140          0.153  -7.293048  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
