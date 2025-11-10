@@ -20,6 +20,7 @@ from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import create_fake_input
 
 
@@ -147,8 +148,8 @@ def test_continuous_incompatibility(campaign):
     s = campaign.get_surrogate()
     if isinstance(s, GaussianProcessSurrogate):
         skip = True
-    elif isinstance(s, CompositeSurrogate) and isinstance(
-        s.surrogates[campaign.targets[0].name], GaussianProcessSurrogate
+    elif isinstance(s, CompositeSurrogate) and is_all_instance(
+        tuple(s.surrogates[t] for t in s._target_names), GaussianProcessSurrogate
     ):
         skip = True
 
