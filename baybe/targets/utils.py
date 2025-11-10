@@ -53,7 +53,7 @@ def capture_constructor_metadata(
         bound.apply_defaults()
 
         # We don't need to store the first argument, since it's the class itself
-        bound.arguments.pop(next(iter(bound.arguments)))
+        bound.arguments.pop(next(iter(sig.parameters)))
 
         target = constructor(*args, **kwargs)
         object.__setattr__(
