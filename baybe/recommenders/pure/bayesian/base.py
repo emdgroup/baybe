@@ -231,7 +231,7 @@ class BayesianRecommender(PureRecommender, ABC):
                     f"does not support the required gradient computation. Choose a "
                     f"surrogate that supports gradients, e.g. the "
                     f"'{GaussianProcessSurrogate.__name__}'."
-                )
+                ) from ex
             else:
                 raise
 
