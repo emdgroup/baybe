@@ -1,7 +1,9 @@
 """Torch utilities shipped as separate module for lazy-loading."""
 
 import os
+from typing import Any
 
+import numpy as np
 import torch
 
 from baybe.utils.boolean import strtobool
@@ -15,3 +17,9 @@ DTypeFloatTorch = (
     else torch.float64
 )
 """Floating point data type used for torch tensors."""
+
+torch_to_numpy_dtype_mapping: dict[torch.dtype, np.dtype[Any]] = {
+    torch.float32: np.dtype("float32"),
+    torch.float64: np.dtype("float64"),
+}
+"""Mapping from Torch to NumPy dtypes."""
