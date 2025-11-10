@@ -58,20 +58,20 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
             case int() | float():
                 return torch.tensor(x, dtype=DTypeFloatTorch)
             case np.ndarray():
-                if any(s < 0 for s in x.strides):
-                    # Tensors with negative strides are not supported by PyTorch
-                    x = x.astype(numpy_dtype)
-                tensor = torch.from_numpy(x).to(DTypeFloatTorch)
+                # tensors with negative strides are not supported by PyTorch
+                fix_strides = any(s < 0 for s in x.strides)
+                x = x.astype(numpy_dtype, copy=fix_strides)
+                tensor = torch.from_numpy(x)
             case pd.Series() | pd.DataFrame():
                 # We already coerce to the target dtype during the dataframe-to-numpy
                 # conversion since this step might otherwise return an array of type
                 # `object` in case of mixed column types, which would cause the
                 # subsequent numpy-to-torch conversion to fail. This happens, for
                 # example, when the dataframe contains Boolean and integer columns.
-                array = x.to_numpy(numpy_dtype)
-                if any(s < 0 for s in array.strides):
-                    # Tensors with negative strides are not supported by PyTorch
-                    array = array.copy()
+
+                # tensors with negative strides are not supported by PyTorch
+                fix_strides = any(s < 0 for s in x.to_numpy().strides)
+                array = x.to_numpy(numpy_dtype, copy=fix_strides)
                 tensor = torch.from_numpy(array)
             case _:
                 assert_never(x)
