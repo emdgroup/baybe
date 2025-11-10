@@ -69,9 +69,14 @@ class _ModelContext:
 
         return torch.from_numpy(self.searchspace.scaling_bounds.values)
 
-    def get_numerical_indices(self, n_inputs: int) -> tuple[int, ...]:
-        """Get the indices of the regular numerical model inputs."""
-        return tuple(i for i in range(n_inputs) if i != self.task_idx)
+    @property
+    def numerical_indices(self) -> tuple[int, ...]:
+        """The indices of the regular numerical model inputs."""
+        return tuple(
+            i
+            for i in range(len(self.searchspace.comp_rep_columns))
+            if i != self.task_idx
+        )
 
 
 @define
@@ -148,37 +153,33 @@ class GaussianProcessSurrogate(Surrogate):
 
         assert self._searchspace is not None  # provided by base class
         context = _ModelContext(self._searchspace)
-        batch_shape = train_x.shape[:-2]
 
         # Input/output scaling
         # NOTE: For GPs, we let BoTorch handle scaling (see [Scaling Workaround] above)
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
-            indices=list(context.get_numerical_indices(train_x.shape[-1])),
+            indices=list(context.numerical_indices),
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         # Mean function
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
+        mean_module = gpytorch.means.ConstantMean()
 
         # Covariance function
         kernel = self.kernel_factory(context.searchspace, train_x, train_y)
         kernel_num_dims = train_x.shape[-1] - context.n_task_dimensions
-        covar_module = kernel.to_gpytorch(
-            ard_num_dims=kernel_num_dims,
-            batch_shape=batch_shape,
-            active_dims=tuple(range(kernel_num_dims)),
-        )
+        covar_module = kernel.to_gpytorch(ard_num_dims=kernel_num_dims)
 
         # Likelihood model
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
+            noise_prior=noise_prior[0].to_gpytorch()
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
         # Model selection
+        model_cls: type[botorch.models.SingleTaskGP] | type[botorch.models.MultiTaskGP]
         if (task_param := context.searchspace._task_parameter) is None:
             model_cls = botorch.models.SingleTaskGP
             model_kwargs = {}
@@ -201,7 +202,7 @@ class GaussianProcessSurrogate(Surrogate):
             mean_module=mean_module,
             covar_module=covar_module,
             likelihood=likelihood,
-            **model_kwargs,
+            **model_kwargs,  # type: ignore[arg-type]
         )
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
