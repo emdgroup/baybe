@@ -51,11 +51,16 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
 
     from baybe.utils.torch import DTypeFloatTorch, torch_to_numpy_dtype_mapping
 
+    numpy_dtype = torch_to_numpy_dtype_mapping[DTypeFloatTorch]
+
     def _convert(x: _ConvertibleToTensor, /) -> Tensor:
         match x:
             case int() | float():
                 return torch.tensor(x, dtype=DTypeFloatTorch)
             case np.ndarray():
+                if any(s < 0 for s in x.strides):
+                    # Tensors with negative strides are not supported by PyTorch
+                    x = x.astype(numpy_dtype)
                 tensor = torch.from_numpy(x).to(DTypeFloatTorch)
             case pd.Series() | pd.DataFrame():
                 # We already coerce to the target dtype during the dataframe-to-numpy
@@ -63,7 +68,7 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
                 # `object` in case of mixed column types, which would cause the
                 # subsequent numpy-to-torch conversion to fail. This happens, for
                 # example, when the dataframe contains Boolean and integer columns.
-                array = x.to_numpy(torch_to_numpy_dtype_mapping[DTypeFloatTorch])
+                array = x.to_numpy(numpy_dtype)
                 if any(s < 0 for s in array.strides):
                     # Tensors with negative strides are not supported by PyTorch
                     array = array.copy()
