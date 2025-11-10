@@ -1,9 +1,12 @@
 """Tests for using analytic acquisition functions with affine transformations."""
 
+from contextlib import nullcontext
+
 import pandas as pd
 import pytest
 
 from baybe.acquisition import ProbabilityOfImprovement
+from baybe.exceptions import NonGaussianityError
 from baybe.objectives import DesirabilityObjective
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.recommenders import BotorchRecommender
@@ -15,23 +18,28 @@ measurements = pd.DataFrame({"p": [0.1], "t1": [0.2], "t2": [0.3]})
 
 
 @pytest.mark.parametrize(
-    "objective",
+    ("objective", "allowed"),
     [
-        (NumericalTarget("t1") * 2 + 1).to_objective(),
-        DesirabilityObjective(
-            [NumericalTarget("t1"), NumericalTarget("t2")],
-            scalarizer="MEAN",
-            require_normalization=False,
+        ((NumericalTarget("t1") * 2 + 1).to_objective(), True),
+        (NumericalTarget("t1").abs().to_objective(), False),
+        (
+            DesirabilityObjective(
+                [NumericalTarget("t1"), NumericalTarget("t2")],
+                scalarizer="MEAN",
+                require_normalization=False,
+            ),
+            True,
         ),
     ],
-    ids=["single-affine", "multi-affine"],
+    ids=["single-affine", "single-nonlinear", "multi-affine"],
 )
-def test_analytic_acqf_with_affine_target(objective):
+def test_analytic_acqf_with_affine_target(objective, allowed):
     """Analytic acquisition functions can be used with affine target transformations."""
-    BotorchRecommender().acquisition_values(
-        candidates,
-        searchspace,
-        objective,
-        measurements,
-        acquisition_function=ProbabilityOfImprovement(),
-    )
+    with nullcontext() if allowed else pytest.raises(NonGaussianityError):
+        BotorchRecommender().acquisition_values(
+            candidates,
+            searchspace,
+            objective,
+            measurements,
+            acquisition_function=ProbabilityOfImprovement(),
+        )
