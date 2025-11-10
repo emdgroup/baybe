@@ -20,10 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective.to_botorch_posterior_transform` for use of affine transformations with
   analytical acquisition functions
 - `DesirabilityObjective.normalized_weights` property 
+- Abstract `CompositeTransformation` base class
 
 ### Changed
 - The unnormalized weights of `DesirabilityObjective` are now stored privately under the
   `_weights` attribute
+- Creating one-element composite transformations now returns the contained
+  transformation directly
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`

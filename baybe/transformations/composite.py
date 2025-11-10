@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import gc
 from functools import reduce
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from attrs import define, field
-from attrs.validators import deep_iterable, instance_of, max_len, min_len
+from attrs import define
 from typing_extensions import override
 
-from baybe.transformations.base import Transformation
-from baybe.transformations.utils import compress_transformations
-from baybe.utils.basic import compose, to_tuple
+from baybe.transformations.base import CompositeTransformation
+from baybe.utils.basic import compose
 from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
@@ -20,30 +18,11 @@ if TYPE_CHECKING:
 
 
 @define(frozen=True)
-class ChainedTransformation(Transformation):
-    """A chained transformation composing several individual transformations."""
+class ChainedTransformation(CompositeTransformation):
+    """A chained transformation composing several individual transformations.
 
-    # https://github.com/python-attrs/attrs/issues/1462
-    __hash__ = object.__hash__
-
-    transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
-        validator=[
-            min_len(1),
-            deep_iterable(member_validator=instance_of(Transformation)),
-        ],
-    )
-    """The transformations to be composed (the first element gets applied first)."""
-
-    @override
-    def __eq__(self, other: Any, /) -> bool:
-        if len(self.transformations) == 1:
-            # A chained transformation with only one element is equivalent to that
-            # element
-            return self.transformations[0] == other
-        if isinstance(other, ChainedTransformation):
-            return self.transformations == other.transformations
-        return NotImplemented
+    The first transformations in the chain is applied first.
+    """
 
     @override
     def is_affine(self) -> bool:
@@ -67,17 +46,8 @@ class ChainedTransformation(Transformation):
 
 
 @define(frozen=True)
-class AdditiveTransformation(Transformation):
+class AdditiveTransformation(CompositeTransformation):
     """A transformation implementing the sum of two transformations."""
-
-    transformations: tuple[Transformation, Transformation] = field(
-        converter=to_tuple,
-        validator=deep_iterable(
-            iterable_validator=(min_len(2), max_len(2)),
-            member_validator=instance_of(Transformation),
-        ),
-    )
-    """The transformations to be added."""
 
     @override
     def is_affine(self) -> bool:
@@ -96,17 +66,8 @@ class AdditiveTransformation(Transformation):
 
 
 @define(frozen=True)
-class MultiplicativeTransformation(Transformation):
+class MultiplicativeTransformation(CompositeTransformation):
     """A transformation implementing the product of two transformations."""
-
-    transformations: tuple[Transformation, Transformation] = field(
-        converter=to_tuple,
-        validator=deep_iterable(
-            iterable_validator=(min_len(2), max_len(2)),
-            member_validator=instance_of(Transformation),
-        ),
-    )
-    """The transformations to be multiplied."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:

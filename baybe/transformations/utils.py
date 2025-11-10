@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 from attrs import evolve
 
-from baybe.transformations.base import Transformation
-
 if TYPE_CHECKING:
     from torch import Tensor
+
+    from baybe.transformations.base import Transformation
 
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 def convert_transformation(x: Transformation | TensorCallable, /) -> Transformation:
     """Autowrap a torch callable as transformation (with transformation passthrough)."""
+    from baybe.transformations.base import Transformation
     from baybe.transformations.basic import CustomTransformation
 
     return x if isinstance(x, Transformation) else CustomTransformation(x)
