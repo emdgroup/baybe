@@ -87,6 +87,13 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
+    @override
+    @cached_property
+    def comp_df(self) -> pd.DataFrame:
+        # Task parameters do not enter the regular kernel computation (which operates
+        # on floats) but are used for indexing purposes and are thus treated as integers
+        return super().comp_df.astype(int)
+
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
