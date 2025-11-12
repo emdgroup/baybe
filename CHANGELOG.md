@@ -23,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Abstract `CompositeTransformation` base class
 
 ### Changed
-- The unnormalized weights of `DesirabilityObjective` are now stored privately under the
-  `_weights` attribute
 - Creating one-element composite transformations now returns the contained
   transformation directly
 

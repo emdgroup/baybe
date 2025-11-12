@@ -87,8 +87,7 @@ class DesirabilityObjective(Objective):
     )
     "The targets considered by the objective."
 
-    _weights: tuple[float, ...] = field(
-        alias="weights",
+    weights: tuple[float, ...] = field(
         converter=lambda w: cattrs.structure(w, tuple[float, ...]),
         validator=deep_iterable(member_validator=[finite_float, gt(0.0)]),
     )
@@ -108,7 +107,7 @@ class DesirabilityObjective(Objective):
     )
     """Controls if the desirability computation is applied as a pre-transformation."""
 
-    @_weights.default
+    @weights.default
     def _default_weights(self) -> tuple[float, ...]:
         """Create unit weights for all targets."""
         return tuple(1.0 for _ in range(len(self.targets)))
@@ -145,7 +144,7 @@ class DesirabilityObjective(Objective):
                 f"'False' to allow unnormalized targets."
             )
 
-    @_weights.validator
+    @weights.validator
     def _validate_weights(self, _, weights) -> None:  # noqa: DOC101, DOC103
         if (lw := len(weights)) != (lt := len(self.targets)):
             raise ValueError(
@@ -180,7 +179,7 @@ class DesirabilityObjective(Objective):
     @cached_property
     def normalized_weights(self) -> tuple[float, ...]:
         """The normalized target weights."""
-        return tuple(np.asarray(self._weights) / np.sum(self._weights))
+        return tuple(np.asarray(self.weights) / np.sum(self.weights))
 
     @override
     def __str__(self) -> str:
