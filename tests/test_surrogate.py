@@ -1,19 +1,27 @@
 """Surrogate tests."""
 
+from contextlib import nullcontext
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.pareto import ParetoObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
-from baybe.surrogates import BayesianLinearSurrogate, NGBoostSurrogate
+from baybe.surrogates import (
+    BayesianLinearSurrogate,
+    MeanPredictionSurrogate,
+    NGBoostSurrogate,
+)
 from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.basic import is_all_instance
+from baybe.utils.dataframe import create_fake_input
 
 
 @patch.object(GaussianProcessSurrogate, "_fit")
@@ -109,3 +117,48 @@ def test_invalid_model_params(model_cls, params):
     """Ensure valid model_params cannot be set."""
     with pytest.raises(TypeError, match="model_params"):
         model_cls(model_params=params)
+
+
+@pytest.mark.parametrize(
+    "target_names",
+    [["Target_max"], ["Target_max_bounded", "Target_min_bounded"]],
+    ids=["single", "multi"],
+)
+@pytest.mark.parametrize(
+    "parameter_names",
+    [["Conti_finite1"], ["Categorical_1", "Conti_finite1"]],
+    ids=["conti", "hybrid"],
+)
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [
+        param(GaussianProcessSurrogate(), id="gp"),
+        param(MeanPredictionSurrogate(), id="mean"),
+        param(RandomForestSurrogate(), id="rf"),
+        param(NGBoostSurrogate(), id="ng"),
+        param(BayesianLinearSurrogate(), id="lin"),
+    ],
+)
+def test_continuous_incompatibility(campaign):
+    """Using surrogates without gradients on continuous spaces fails expectedly."""
+    data = create_fake_input(campaign.parameters, campaign.targets)
+    campaign.add_measurements(data)
+
+    skip = False
+    s = campaign.get_surrogate()
+    if isinstance(s, GaussianProcessSurrogate):
+        skip = True
+    elif isinstance(s, CompositeSurrogate) and is_all_instance(
+        tuple(s.surrogates[t] for t in s._target_names), GaussianProcessSurrogate
+    ):
+        skip = True
+
+    with (
+        nullcontext()
+        if skip
+        else pytest.raises(
+            IncompatibleSurrogateError,
+            match="does not support the required gradient computation",
+        )
+    ):
+        campaign.recommend(1)
