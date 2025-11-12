@@ -25,8 +25,6 @@ from baybe.utils.basic import classproperty
 from baybe.utils.boolean import AutoBool, strtobool
 
 if TYPE_CHECKING:
-    from types import TracebackType
-
     import torch
     from torch import Tensor
 
@@ -306,12 +304,7 @@ class Settings(_SlottedContextDecorator):
         self.activate()
         return self
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
+    def __exit__(self, *args) -> None:
         self.restore_previous()
 
     @_use_polars_for_constraints.validator
