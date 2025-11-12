@@ -190,7 +190,7 @@ def _convert_cache_directory(
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
-    # >>>>> Internal
+    # ----- Internal ----- #
     _global_settings_id: ClassVar[int]
     """The id of the global settings instance.
 
@@ -201,17 +201,15 @@ class Settings(_SlottedContextDecorator):
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
-    # <<<<< Internal
 
-    # >>>>> Control flags
+    # ----- Control flags ----- #
     _restore_defaults: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings shall be restored to their default values."""
 
     _restore_environment: bool = field(default=False, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
-    # <<<<< Control flags
 
-    # >>>>> Settings attributes
+    # ----- Settings attributes ----- #
     cache_campaign_recommendations: bool = field(
         default=True, validator=instance_of(bool)
     )
@@ -259,7 +257,6 @@ class Settings(_SlottedContextDecorator):
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
     """Controls if polars acceleration is to be used for constraints, if available."""
-    # <<<<< Settings attributes
 
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
