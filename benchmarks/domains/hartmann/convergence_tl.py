@@ -21,6 +21,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
+from benchmarks.domains.hartmann.utils import HartmannShifted
 
 
 def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -42,17 +43,141 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     Returns:
         DataFrame containing benchmark results.
     """
-    target_function = Hartmann(dim=3)
-    source_function = Hartmann(dim=3, noise_std=0.15)
+
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
+
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds)
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+
+
+def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+    """Benchmark function for transfer learning with inverted Hartmann function in 3D.
+
+    Key characteristics:
+    • Compares two versions of Hartmann function:
+      - Target: standard Hartmann
+      - Source: Inverted Hartmann with added noise (noise_std=0.15)
+    • Uses 20 points per dimension
+    • Tests transfer learning with different source data percentages:
+      - 1% of source data
+      - 10% of source data
+      - 20% of source data
+
+    Args:
+        settings: Configuration settings for the convergence benchmark.
+
+    Returns:
+        DataFrame containing benchmark results.
+    """
+
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
+
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds, negate=True)
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+
+
+def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
+    """Benchmark function for transfer learning with shifted input Hartmann in 3D.
+
+    Key characteristics:
+    • Compares two versions of Hartmann function:
+      - Target: standard Hartmann
+      - Source: Shifted Hartmann (shifted first input dimension)
+        with added noise (noise_std=0.15)
+    • Uses 20 points per dimension
+    • Tests transfer learning with different source data percentages:
+      - 1% of source data
+      - 10% of source data
+      - 20% of source data
+
+    Args:
+        settings: Configuration settings for the convergence benchmark.
+
+    Returns:
+        DataFrame containing benchmark results.
+    """
+
+    def source(dim: int, bounds: np.ndarray) -> callable:
+        """Source function definition.
+
+        Args:
+            dim: Dimension of the input space.
+            bounds: Input space bounds of shape (dim, 2)
+
+        Returns:
+            Source function callable.
+        """
+        shifts = [0.2] + [0] * (dim - 1)
+        return HartmannShifted(
+            shifts=shifts,
+            kwargs_dict={"bounds": bounds, "dim": dim, "noise_std": 0.15},
+        )
+
+    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+
+
+def _compose_hartmann_tl_3_20_15(
+    settings: ConvergenceBenchmarkSettings,
+    source: callable,
+    target: callable | None = None,
+) -> pd.DataFrame:
+    """Construct benchmark for transfer learning with the Hartmann function in 3D.
+
+    Key characteristics:
+    • Compares two versions of Hartmann functions (source and target)
+    • Uses 20 points per dimension
+    • Tests transfer learning with different source data percentages:
+      - 1% of source data
+      - 10% of source data
+      - 20% of source data
+
+    Args:
+        settings: Configuration settings for the convergence benchmark.
+        source: A callable that returns the source function.
+            Takes as inputs bounds - array of size (dim, 2),
+            with first column being lower bounds
+            and second column being upper bounds;
+            and dim - the number of dimensions.
+        target: A callable that returns the target function.
+           The function is initialized so that dimensions and bounds
+           match the source function.
+           If None uses the default Hartmann function.
+
+
+    Returns:
+        DataFrame containing benchmark results.
+    """
+    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]).T
+    source_function = source(dim=3, bounds=bounds)
+    if target is None:
+        target = Hartmann
+    target_function = target(dim=source_function.dim, bounds=source_function._bounds)
 
     points_per_dim = 20
     percentages = [0.01, 0.05, 0.1]
 
     # Create grid locations for the parameters
-    bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
     grid_locations = {
         f"x{d}": np.linspace(lower, upper, points_per_dim)
-        for d, (lower, upper) in enumerate(bounds.T)
+        for d, (lower, upper) in enumerate(bounds)
     }
 
     params: list[DiscreteParameter] = [
@@ -163,6 +288,18 @@ benchmark_config = ConvergenceBenchmarkSettings(
 
 hartmann_tl_3_20_15_benchmark = ConvergenceBenchmark(
     function=hartmann_tl_3_20_15,
-    optimal_target_values={"Target": -3.851831124860353},
+    optimal_target_values={"Target": -3.8324342572721695},
+    settings=benchmark_config,
+)
+
+hartmann_tl_inv_3_20_15_benchmark = ConvergenceBenchmark(
+    function=hartmann_tl_inv_3_20_15,
+    optimal_target_values={"Target": -3.8324342572721695},
+    settings=benchmark_config,
+)
+
+hartmann_tl_shift_3_20_15_benchmark = ConvergenceBenchmark(
+    function=hartmann_tl_shift_3_20_15,
+    optimal_target_values={"Target": -3.8324342572721695},
     settings=benchmark_config,
 )
