@@ -1310,13 +1310,33 @@
             <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span>
-            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-            <span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span>
-            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
-            <span class="n">measurements</span><span class="o">=</span><span class="n">measurements</span><span class="p">,</span>
-            <span class="n">pending_experiments</span><span class="o">=</span><span class="n">pending_experiments</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">searchspace</span><span class="o">=</span><span class="n">searchspace</span><span class="p">,</span>
+                <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+                <span class="n">measurements</span><span class="o">=</span><span class="n">measurements</span><span class="p">,</span>
+                <span class="n">pending_experiments</span><span class="o">=</span><span class="n">pending_experiments</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c1"># Search spaces with continuous components are incompatible with surrogates</span>
+            <span class="c1"># that do not support gradient computation</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="s2">&quot;does not have a grad_fn&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="ow">not</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">continuous</span><span class="o">.</span><span class="n">is_empty</span>
+            <span class="p">):</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">IncompatibleSurrogateError</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
+
+                <span class="k">raise</span> <span class="n">IncompatibleSurrogateError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;The search space contains continuous parameters, but the applied &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;surrogate of type &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;does not support the required gradient computation. Choose a &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;surrogate that supports gradients, e.g. the &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">GaussianProcessSurrogate</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
+                <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ex</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span></div>
 
 
 <div class="viewcode-block" id="BayesianRecommender.acquisition_values">
