@@ -3,14 +3,20 @@
 from __future__ import annotations
 
 import gc
+import inspect
 from functools import reduce
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from attrs import define
+from attrs import define, field, fields
+from attrs.validators import deep_iterable, instance_of, max_len, min_len
 from typing_extensions import override
 
-from baybe.transformations.base import CompositeTransformation
-from baybe.utils.basic import compose
+from baybe.transformations.base import Transformation
+from baybe.transformations.utils import (
+    compress_transformations,
+    merge_affine_transformations,
+)
+from baybe.utils.basic import compose, to_tuple
 from baybe.utils.interval import Interval
 
 if TYPE_CHECKING:
@@ -18,11 +24,32 @@ if TYPE_CHECKING:
 
 
 @define(frozen=True)
-class ChainedTransformation(CompositeTransformation):
-    """A chained transformation composing several individual transformations.
+class ChainedTransformation(Transformation):
+    """A chained transformation composing several individual transformations."""
 
-    The first transformations in the chain is applied first.
-    """
+    transformations: tuple[Transformation, ...] = field(
+        converter=compress_transformations,
+        validator=[
+            min_len(1),
+            deep_iterable(member_validator=instance_of(Transformation)),
+        ],
+    )
+    """The transformations to be composed (the first element gets applied first)."""
+
+    @override
+    def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
+        # If the transformations can be condensed into one, we return that instead
+        sig = inspect.signature(cls.__init__)
+        try:
+            bound = sig.bind(None, *args, **kwargs)
+        except TypeError:
+            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
+            # are not provided. Hence, we simply return an raw object.
+            return super().__new__(cls)
+        transformations = bound.arguments[fields(cls).transformations.name]
+        if len(compressed := compress_transformations(transformations)) == 1:
+            return compressed.pop()
+        return super().__new__(cls)
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -42,8 +69,32 @@ class ChainedTransformation(CompositeTransformation):
 
 
 @define(frozen=True)
-class AdditiveTransformation(CompositeTransformation):
+class AdditiveTransformation(Transformation):
     """A transformation implementing the sum of two transformations."""
+
+    transformations: tuple[Transformation, Transformation] = field(
+        converter=to_tuple,
+        validator=deep_iterable(
+            iterable_validator=(min_len(2), max_len(2)),
+            member_validator=instance_of(Transformation),
+        ),
+    )
+    """The transformations to be added."""
+
+    @override
+    def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
+        # If the transformations can be condensed into one, we return that instead
+        sig = inspect.signature(cls.__init__)
+        try:
+            bound = sig.bind(None, *args, **kwargs)
+        except TypeError:
+            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
+            # are not provided. Hence, we simply return an raw object.
+            return super().__new__(cls)
+        transformations = bound.arguments[fields(cls).transformations.name]
+        if len(compressed := merge_affine_transformations(transformations)) == 1:
+            return compressed.pop()
+        return super().__new__(cls)
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -58,8 +109,17 @@ class AdditiveTransformation(CompositeTransformation):
 
 
 @define(frozen=True)
-class MultiplicativeTransformation(CompositeTransformation):
+class MultiplicativeTransformation(Transformation):
     """A transformation implementing the product of two transformations."""
+
+    transformations: tuple[Transformation, Transformation] = field(
+        converter=to_tuple,
+        validator=deep_iterable(
+            iterable_validator=(min_len(2), max_len(2)),
+            member_validator=instance_of(Transformation),
+        ),
+    )
+    """The transformations to be multiplied."""
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:

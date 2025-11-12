@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from typing import TYPE_CHECKING
 
 import numpy as np
 from attrs import evolve
+
+from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -56,7 +58,7 @@ def _flatten_transformations(
 def compress_transformations(
     transformations: Iterable[Transformation], /
 ) -> tuple[Transformation, ...]:
-    """Compress any iterable of transformations by removing redundancies.
+    """Compress any chain of transformations by removing redundancies.
 
     Drops identity transformations and combines subsequent affine transformations.
 
@@ -109,3 +111,34 @@ def compress_transformations(
         return (IdentityTransformation(),)
 
     return tuple(aggregated)
+
+
+def merge_affine_transformations(
+    transformations: Collection[Transformation], /
+) -> set[Transformation]:
+    """Additively combine affine transformations in a given transformation collection.
+
+    Args:
+        transformations: A collection of transformations.
+
+    Returns:
+        A condensed version of the collection where all affine transformations have been
+        combined into one.
+    """
+    # Split into affine and non-affine transformations
+    is_affine = [
+        isinstance(tr, (IdentityTransformation, AffineTransformation))
+        for tr in transformations
+    ]
+    affines = [tr for tr, is_aff in zip(transformations, is_affine) if is_aff]
+    non_affines = [tr for tr, is_aff in zip(transformations, is_affine) if not is_aff]
+
+    # Compute the combined affine transformation coeffiecients
+    factor = sum(
+        tr.factor if isinstance(tr, AffineTransformation) else 1.0 for tr in affines
+    )
+    shift = sum(
+        tr.shift if isinstance(tr, AffineTransformation) else 0.0 for tr in affines
+    )
+
+    return {AffineTransformation(factor=factor, shift=shift), *non_affines}

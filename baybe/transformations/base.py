@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import gc
-import inspect
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from attrs import define, field, fields
-from attrs.validators import deep_iterable, instance_of, min_len
+from attrs import define
 from typing_extensions import override
 
 from baybe.serialization.mixin import SerialMixin
-from baybe.transformations.utils import compress_transformations
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import to_tensor
 from baybe.utils.interval import ConvertibleToInterval, Interval
@@ -236,35 +233,6 @@ class MonotonicTransformation(Transformation, ABC):
                 ]
             )
         )
-
-
-@define(frozen=True)
-class CompositeTransformation(Transformation, ABC):
-    """Abstract base class for composite transformations."""
-
-    transformations: tuple[Transformation, ...] = field(
-        converter=compress_transformations,
-        validator=[
-            min_len(1),
-            deep_iterable(member_validator=instance_of(Transformation)),
-        ],
-    )
-    """The transformations to be composed."""
-
-    @override
-    def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
-        # If the transformations can be compressed into one, we return that instead
-        sig = inspect.signature(cls.__init__)
-        try:
-            bound = sig.bind(None, *args, **kwargs)
-        except TypeError:
-            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
-            # are not provided. Hence, we simply return an raw object.
-            return super().__new__(cls)
-        transformations = bound.arguments[fields(cls).transformations.name]
-        if len(compressed := compress_transformations(transformations)) == 1:
-            return compressed[0]
-        return super().__new__(cls)
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
