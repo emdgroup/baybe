@@ -128,14 +128,15 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 class _RandomState:
     """Container for the random states of all managed numeric libraries."""
 
-    state_builtin = field(factory=random.getstate)
+    state_builtin = field(init=False, factory=random.getstate)
     """The state of the built-in random number generator."""
 
-    state_numpy = field(factory=np.random.get_state)
+    state_numpy = field(init=False, factory=np.random.get_state)
     """The state of the Numpy random number generator."""
 
-    state_torch = field()  # set by default method below (for lazy torch loading)
+    state_torch = field(init=False)
     """The state of the Torch random number generator."""
+    # Note: initialized by attrs default method below (for lazy torch loading)
 
     @state_torch.default
     def _default_state_torch(self) -> Any:
