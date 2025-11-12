@@ -260,7 +260,12 @@ class CompositeTransformation(Transformation, ABC):
     def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
         # If the transformations can be compressed into one, we return that instead
         sig = inspect.signature(cls.__init__)
-        bound = sig.bind(None, *args, **kwargs)
+        try:
+            bound = sig.bind(None, *args, **kwargs)
+        except TypeError:
+            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
+            # are not provided. Hence, we simply return an raw object.
+            return super().__new__(cls)
         transformations = bound.arguments[fields(cls).transformations.name]
         if len(compressed := compress_transformations(transformations)) == 1:
             return compressed[0]
