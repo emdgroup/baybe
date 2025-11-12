@@ -53,7 +53,7 @@ def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
                 f"'CORETEST', 'FULLTEST', and 'GPUTEST'. Given: '{value}'"
             )
     if vars:
-        raise RuntimeError(f"Unknown environment variables: {set(vars)}")
+        raise RuntimeError(f"Unknown 'BAYBE_*' environment variables: {set(vars)}")
 
 
 class _SlottedContextDecorator:
