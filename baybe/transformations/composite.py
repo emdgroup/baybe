@@ -48,7 +48,7 @@ class ChainedTransformation(Transformation):
             return super().__new__(cls)
         transformations = bound.arguments[fields(cls).transformations.name]
         if len(compressed := compress_transformations(transformations)) == 1:
-            return compressed.pop()
+            return compressed[0]
         return super().__new__(cls)
 
     @override
