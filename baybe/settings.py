@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     import torch
+    from torch import Tensor
 
     _TSeed = TypeVar("_TSeed", int, None)
 
@@ -134,12 +135,12 @@ class _RandomState:
     state_numpy = field(init=False, factory=np.random.get_state)
     """The state of the Numpy random number generator."""
 
-    state_torch = field(init=False)
+    state_torch: Tensor = field(init=False)
     """The state of the Torch random number generator."""
     # Note: initialized by attrs default method below (for lazy torch loading)
 
     @state_torch.default
-    def _default_state_torch(self) -> Any:
+    def _default_state_torch(self) -> Tensor:
         """Get the current Torch random state using a lazy import."""
         import torch
 
