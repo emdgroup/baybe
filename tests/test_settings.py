@@ -51,8 +51,10 @@ def toggle(value: Any, /) -> Any:
             return v / 2
 
         case str():
-            suff = "_toggled"
-            return value + suff if not value.endswith(suff) else value[: -len(suff)]
+            suffix = "_toggled"
+            return (
+                value + suffix if not value.endswith(suffix) else value[: -len(suffix)]
+            )
         case Path():
             return Path(toggle(str(value)))
         case Enum() as e:
