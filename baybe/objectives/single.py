@@ -14,6 +14,7 @@ from baybe.exceptions import NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
+from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df
 
@@ -76,7 +77,9 @@ class SingleTargetObjective(Objective):
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         if not (
             isinstance((t := self._target), NumericalTarget)
-            and ((tr := t.transformation).is_affine)
+            and isinstance(
+                (tr := t.transformation), (IdentityTransformation, AffineTransformation)
+            )
         ):
             raise NonGaussianityError(
                 f"Converting an objective of type '{type(self).__name__}' is only "

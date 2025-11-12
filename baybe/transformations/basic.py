@@ -51,10 +51,6 @@ class CustomTransformation(Transformation):
 class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
 
-    @override
-    def is_affine(self) -> bool:
-        return True
-
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
 
@@ -132,10 +128,6 @@ class AffineTransformation(MonotonicTransformation):
             # TODO: https://github.com/python-attrs/attrs/issues/1452
             return self.factor == other.factor and self.shift == other.shift
         return NotImplemented
-
-    @override
-    def is_affine(self) -> bool:
-        return True
 
     def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
