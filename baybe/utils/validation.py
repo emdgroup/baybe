@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -11,6 +11,7 @@ import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
+from baybe.searchspace.core import SearchSpace
 from baybe.utils.dataframe import normalize_input_dtypes
 
 if TYPE_CHECKING:
@@ -226,7 +227,7 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
 def preprocess_dataframe(
     df: pd.DataFrame,
     /,
-    parameters: Sequence[Parameter],
+    searchspace: SearchSpace,
     objective: Objective | None = None,
     numerical_measurements_must_be_within_tolerance: bool = True,
 ) -> pd.DataFrame:
@@ -237,7 +238,7 @@ def preprocess_dataframe(
 
     Args:
         df: The dataframe to preprocess.
-        parameters: The parameters to validate the dataframe columns against.
+        searchspace: The search space to validate the dataframe columns against.
         objective: The objective to validate the dataframe columns against.
         numerical_measurements_must_be_within_tolerance:
             See :meth:`validate_parameter_input`.
@@ -246,7 +247,7 @@ def preprocess_dataframe(
         The preprocessed dataframe.
     """
     validate_parameter_input(
-        df, parameters, numerical_measurements_must_be_within_tolerance
+        df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
     )
     if objective is not None:
         targets = objective.targets
@@ -254,4 +255,4 @@ def preprocess_dataframe(
         validate_objective_input(df, objective)
     else:
         targets = ()
-    return normalize_input_dtypes(df, [*parameters, *targets])
+    return normalize_input_dtypes(df, [*searchspace.parameters, *targets])

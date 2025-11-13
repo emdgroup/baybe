@@ -311,7 +311,7 @@ class Campaign(SerialMixin):
         if active_settings.preprocess_dataframes:
             data = preprocess_dataframe(
                 data,
-                self.parameters,
+                self.searchspace,
                 self.objective,
                 numerical_measurements_must_be_within_tolerance,
             )
@@ -361,7 +361,7 @@ class Campaign(SerialMixin):
         if active_settings.preprocess_dataframes:
             data = preprocess_dataframe(
                 data,
-                self.parameters,
+                self.searchspace,
                 self.objective,
                 numerical_measurements_must_be_within_tolerance,
             )
@@ -494,7 +494,7 @@ class Campaign(SerialMixin):
         if active_settings.preprocess_dataframes and pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
                 pending_experiments,
-                self.parameters,
+                self.searchspace,
                 numerical_measurements_must_be_within_tolerance=False,
             )
 

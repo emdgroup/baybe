@@ -110,7 +110,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             if measurements is not None:
                 measurements = preprocess_dataframe(
                     measurements,
-                    searchspace.parameters,
+                    searchspace,
                     objective,
                     numerical_measurements_must_be_within_tolerance=False,
                 )
@@ -118,7 +118,7 @@ class PureRecommender(ABC, RecommenderProtocol):
             if pending_experiments is not None:
                 pending_experiments = preprocess_dataframe(
                     pending_experiments,
-                    searchspace.parameters,
+                    searchspace,
                     numerical_measurements_must_be_within_tolerance=False,
                 )
 
