@@ -111,6 +111,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
             return Factory(_, takes_self=True)
 
         results.append(fld.evolve(default=make_default_factory(fld)))
+
     return results
 
 
