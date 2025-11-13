@@ -49,7 +49,7 @@ with pytest.raises(TypeError):
 While you can change several settings one at a time using direct assignment, a more
 convenient way is to instantiate a {class}`baybe.settings.Settings` object, which allows
 to define multiple settings at once. In order for the settings to take effect,
-call its :meth:`~baybe.settings.Settings.activate` method:
+call its {meth}`~baybe.settings.Settings.activate` method:
 
 ```python
 from baybe import Settings, active_settings
