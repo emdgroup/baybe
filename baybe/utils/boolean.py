@@ -8,7 +8,7 @@ from collections.abc import Callable
 from typing import Any
 
 from attrs import cmp_using
-from typing_extensions import is_protocol, override
+from typing_extensions import assert_never, is_protocol, override
 
 # Used for comparing pandas dataframes in attrs classes
 eq_dataframe = cmp_using(lambda x, y: x.equals(y))
@@ -96,14 +96,14 @@ class UncertainBool(enum.Enum):
     UNKNOWN = "UNKNOWN"
     """Indicates that the value of the Boolean cannot be determined."""
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         if self is UncertainBool.TRUE:
             return True
         elif self is UncertainBool.FALSE:
             return False
         elif self is UncertainBool.UNKNOWN:
             raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
-        raise ValueError(f"Unknown value: '{self}'")
+        assert_never(self)
 
     @classmethod
     def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
@@ -132,14 +132,14 @@ class AutoBool(enum.Enum):
     on-the-fly, using a predicate function.
     """
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         if self is AutoBool.TRUE:
             return True
         elif self is AutoBool.FALSE:
             return False
         elif self is AutoBool.AUTO:
             raise TypeError(f"'{AutoBool.AUTO}' has no Boolean representation.")
-        raise ValueError(f"Unknown value: '{self}'")
+        assert_never(self)
 
     @override
     def __eq__(self, other: Any) -> bool:
