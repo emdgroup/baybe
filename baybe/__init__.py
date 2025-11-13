@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """BayBE — A Bayesian Back End for Design of Experiments."""
 
 import warnings
@@ -5,8 +7,8 @@ import warnings
 # Show deprecation warnings
 warnings.filterwarnings("default", category=DeprecationWarning, module="baybe")
 
-from baybe.campaign import Campaign  # noqa: E402
-from baybe.settings import Settings, active_settings  # noqa: E402
+from baybe.campaign import Campaign
+from baybe.settings import Settings, active_settings
 
 
 def infer_version() -> str:  # pragma: no cover
