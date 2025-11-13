@@ -22,9 +22,8 @@ from baybe.utils.interval import Interval
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
+    from botorch.acquisition.objective import ScalarizedPosteriorTransform
     from torch import Tensor
-
-    from baybe.targets.botorch import AffinePosteriorTransform
 
     TensorCallable = Callable[[Tensor], Tensor]
     """Type alias for a torch-based function mapping from reals to reals."""
@@ -52,15 +51,13 @@ class CustomTransformation(Transformation):
 class IdentityTransformation(MonotonicTransformation):
     """The identity transformation."""
 
-    def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
 
         Returns:
             The representation of the transform as BoTorch posterior transform.
         """
-        from baybe.targets.botorch import AffinePosteriorTransform
-
-        return AffinePosteriorTransform(factor=1.0, shift=0.0)
+        return AffineTransformation().to_botorch_posterior_transform()
 
     @override
     def __call__(self, x: Tensor, /) -> Tensor:
@@ -71,6 +68,11 @@ class IdentityTransformation(MonotonicTransformation):
         if isinstance(other, Transformation):
             return other
         return NotImplemented
+
+    if TYPE_CHECKING:
+
+        @override
+        def negate(self) -> AffineTransformation: ...
 
 
 @define(frozen=True, init=False)
@@ -127,15 +129,21 @@ class AffineTransformation(MonotonicTransformation):
             return self.factor == other.factor and self.shift == other.shift
         return NotImplemented
 
-    def to_botorch_posterior_transform(self) -> AffinePosteriorTransform:
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
         """Convert to BoTorch posterior transform.
 
         Returns:
             The representation of the transform as BoTorch posterior transform.
         """
-        from baybe.targets.botorch import AffinePosteriorTransform
+        import torch
+        from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
-        return AffinePosteriorTransform(self.factor, self.shift)
+        from baybe.utils.torch import DTypeFloatTorch
+
+        return ScalarizedPosteriorTransform(
+            weights=torch.tensor([self.factor], dtype=DTypeFloatTorch),
+            offset=torch.tensor(self.shift, dtype=DTypeFloatTorch).item(),
+        )
 
     @classmethod
     def from_values_mapped_to_unit_interval(
@@ -174,6 +182,11 @@ class AffineTransformation(MonotonicTransformation):
             return x.new_full(x.shape, fill_value=self.shift)
 
         return x * self.factor + self.shift
+
+    if TYPE_CHECKING:
+
+        @override
+        def negate(self) -> AffineTransformation: ...
 
 
 @_image_equals_codomain

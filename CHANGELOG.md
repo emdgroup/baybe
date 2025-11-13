@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scalar addition and subtraction for `Interval` objects
 - Methods `hshift` and `vshift` to `Transformation` for conveniently performing
   horizontal / vertical shifts
+- `Objective.to_botorch_posterior_transform` for use of affine transformations with
+  analytical acquisition functions
+- `DesirabilityObjective.normalized_weights` property 
+
+### Changed
+- Creating one-element composite transformations now returns the contained
+  transformation directly
 
 ### Changed
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
@@ -24,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
+- `DesirabilityObjective` now properly interplays with analytical acquisition functions
+
+### Removed
+- `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
  
 ## [0.14.1] - 2025-10-01
 ### Added

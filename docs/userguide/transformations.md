@@ -301,9 +301,9 @@ t2 = (
 )
 t3 = AffineTransformation(factor=2, shift=3)  # compressed version
 
-assert isinstance(t1, ChainedTransformation)  # t1 is a explicitly constructed as chain
-assert not isinstance(t2, ChainedTransformation)  # not a chain due to auto-compression
-assert t1 == t2 == t3  # all are equal, even though t1 is a ChainedTransformation object
+assert isinstance(t1, AffineTransformation)  # dispatches to affine during instantiation
+assert isinstance(t2, AffineTransformation)  # auto-compresses in each chaining step
+assert t1 == t2 == t3  # as a consequence, all objects equal in the end
 ```
 ````
 
