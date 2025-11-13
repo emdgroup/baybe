@@ -53,7 +53,11 @@ def temporary_seed(seed: int):  # noqa: DOC402, DOC404
 
     # Set the requested seed
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.filterwarnings(
+            "ignore",
+            message="Using 'set_random_seed' is deprecated",
+            category=DeprecationWarning,
+        )
         set_random_seed(seed)
 
     # Run the context-specific code
