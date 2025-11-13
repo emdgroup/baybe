@@ -3,6 +3,7 @@
 import os
 import random
 import sys
+from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -173,37 +174,29 @@ def test_sequential_setting_via_activation(original_values):
 
 
 def test_setting_via_context(original_values, toggled_values):
-    """Settings are rolled back after exiting a settings context."""
+    """Settings can be nested in contexts and properly restored in LIFO order."""
+    # Create a second version of toggled settings for the nested context
+    toggled2_values = deepcopy(toggled_values)
+    toggled2_values["cache_directory"] = Path("yet_another_path")
+
     # The settings of a new object are only activated on request
-    s = Settings(**toggled_values)
-    assert_attribute_values(s, toggled_values)
+    toggled = Settings(**toggled_values)
+    toggled2 = Settings(**toggled2_values)
     assert_attribute_values(active_settings, original_values)
 
-    # The new settings are activated within the context
-    with s:
-        assert_attribute_values(s, toggled_values)
+    with toggled:
+        # The new settings are activated within the context
         assert_attribute_values(active_settings, toggled_values)
 
-    # After exiting the context, the original settings are restored
-    assert_attribute_values(s, toggled_values)
+        with toggled2:
+            # Same for the inner context
+            assert_attribute_values(active_settings, toggled2_values)
+
+        # After exiting the inner context, the outer settings are restored
+        assert_attribute_values(active_settings, toggled_values)
+
+    # After exiting outer context, original setting are restored
     assert_attribute_values(active_settings, original_values)
-
-
-def test_nested_contexts():
-    """Settings can be nested and properly restored in LIFO order."""
-    original_value = active_settings.preprocess_dataframes
-
-    with Settings(preprocess_dataframes=True):
-        assert active_settings.preprocess_dataframes
-
-        with Settings(preprocess_dataframes=False):
-            assert not active_settings.preprocess_dataframes
-
-        # After exiting inner context, outer setting should be restored
-        assert active_settings.preprocess_dataframes
-
-    # After exiting outer context, original setting should be restored
-    assert active_settings.preprocess_dataframes == original_value
 
 
 def test_exception_during_context_settings():
