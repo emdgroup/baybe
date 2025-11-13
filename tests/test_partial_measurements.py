@@ -4,14 +4,12 @@ import re
 from contextlib import nullcontext
 
 import numpy as np
-import pandas as pd
 import pytest
 from pytest import param
 
 from baybe.acquisition import qLogNEHVI
 from baybe.exceptions import IncompleteMeasurementsError
 from baybe.objectives import DesirabilityObjective, ParetoObjective
-from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.targets import NumericalTarget
 from baybe.utils.dataframe import create_fake_input
 
@@ -31,25 +29,18 @@ desirability_targets = [
         ),
     ],
 )
-@pytest.mark.parametrize("recommender", [RandomRecommender()])
 def test_invalid_partial_measurements(campaign):
     """Objectives that require complete measurements raise an error when encountering
     incomplete measurements.
     """  # noqa: D205
     target_names = [t.name for t in campaign.targets]
-    rec = campaign.recommend(1)
+    measurements = create_fake_input(campaign.parameters, campaign.targets, 2)
+    measurements[target_names] = float("nan")
     with pytest.raises(
         IncompleteMeasurementsError,
         match=f"missing values for the following targets: "
         f"{re.escape(str(target_names))}",
     ):
-        measurements = pd.concat(
-            [
-                rec.reset_index(drop=True),
-                pd.DataFrame({t.name: [float("nan")] for t in campaign.targets}),
-            ],
-            axis=1,
-        )
         campaign.add_measurements(measurements)
 
 
