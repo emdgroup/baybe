@@ -54,12 +54,12 @@ call its {meth}`~baybe.settings.Settings.activate` method:
 ```python
 from baybe import Settings, active_settings
 
-assert active_settings.parallelize_simulations is True
+assert active_settings.parallelize_simulation_runs is True
 assert active_settings.use_polars_for_constraints is True
 
-Settings(parallelize_simulations=False, use_polars_for_constraints=False).activate()
+Settings(parallelize_simulation_runs=False, use_polars_for_constraints=False).activate()
 
-assert active_settings.parallelize_simulations is False
+assert active_settings.parallelize_simulation_runs is False
 assert active_settings.use_polars_for_constraints is False
 ```
 

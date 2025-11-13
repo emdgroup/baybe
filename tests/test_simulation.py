@@ -44,7 +44,7 @@ _aggregators: dict[str, Callable] = {
         ),
     ],
 )
-@Settings(parallelize_simulations=False)
+@Settings(parallelize_simulation_runs=False)
 def test_simulate_scenarios_structure(campaign, batch_size):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2

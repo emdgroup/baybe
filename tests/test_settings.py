@@ -28,7 +28,7 @@ INVALID_VALUES: dict[str, tuple[Any, type[Exception], str]] = {
     "cache_directory": (0, TypeError, "Expected 'None' or a path-like"),
     "float_precision_numpy": (0, ValueError, r"must be in \(16, 32, 64\)"),
     "float_precision_torch": (0, ValueError, r"must be in \(16, 32, 64\)"),
-    "parallelize_simulations": (0, TypeError, "must be <class 'bool'>"),
+    "parallelize_simulation_runs": (0, TypeError, "must be <class 'bool'>"),
     "preprocess_dataframes": (0, TypeError, "must be <class 'bool'>"),
     "random_seed": (0.0, TypeError, "must be <class 'int'>"),
     "use_fpsample": (0, ValueError, "Cannot convert '0' to 'AutoBool'"),

@@ -528,7 +528,7 @@ def test_deprecated_parallelization_environment_variables(monkeypatch, value: bo
     """Using the deprecated parallelization environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_PARALLEL_SIMULATION_RUNS", str(value))
     with pytest.warns(DeprecationWarning):
-        assert Settings(restore_environment=True).parallelize_simulations is value
+        assert Settings(restore_environment=True).parallelize_simulation_runs is value
 
 
 @pytest.fixture

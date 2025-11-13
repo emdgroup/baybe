@@ -28,8 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The environment variable `BAYBE_DEACTIVATE_POLARS` has been replaced with
   `BAYBE_USE_POLARS` linked to the `use_polars` attribute of the new `Settings` class
 - The environment variable `BAYBE_PARALLEL_SIMULATION_RUNS` has been replaced with
-  `BAYBE_PARALLELIZE_SIMULATIONS` linked to the `parallelize_simulations` attribute of
-  the new `Settings` class
+  `BAYBE_PARALLELIZE_SIMULATION_RUNS` linked to the `parallelize_simulation_runs`
+  attribute of the new `Settings` class
 
 ## [0.14.1] - 2025-10-01
 ### Added

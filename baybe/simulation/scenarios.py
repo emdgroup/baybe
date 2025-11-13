@@ -153,7 +153,7 @@ def simulate_scenarios(
             module="baybe.recommenders.pure.nonpredictive.base",
         )
         da_results = batch_simulator.run_combos(
-            combos, parallel=active_settings.parallelize_simulations
+            combos, parallel=active_settings.parallelize_simulation_runs
         )[result_variable]
 
     df_results = unpack_simulation_results(da_results)

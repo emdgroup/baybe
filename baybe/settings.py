@@ -222,7 +222,7 @@ class Settings(_SlottedContextDecorator):
     )
     """The floating point precision used for Torch tensors."""
 
-    parallelize_simulations: bool = field(default=True, validator=instance_of(bool))
+    parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_ are executed in parallel."""  # noqa: E501
 
     preprocess_dataframes: bool = field(default=True, validator=instance_of(bool))
@@ -256,7 +256,7 @@ class Settings(_SlottedContextDecorator):
             ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
             ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
             ("BAYBE_DEACTIVATE_POLARS", flds._use_polars_for_constraints),
-            ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulations),
+            ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulation_runs),
             ("BAYBE_CACHE_DIR", flds.cache_directory),
         ]
         for env_var, fld in pairs:
