@@ -35,7 +35,6 @@ Campaigns <campaigns>
 Active Learning <active_learning>
 Asynchronous Workflows <async>
 Constraints <constraints>
-Environment Vars <envvars>
 Insights <insights>
 Objectives <objectives>
 Parameters <parameters>
