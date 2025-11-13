@@ -148,11 +148,11 @@ assert active_settings.preprocess_dataframes is True
 
 
 @fast_and_furious
-def validate_dataframes_carefully():
+def regret_nothing():
     assert active_settings.preprocess_dataframes is False
 
 
-validate_dataframes_carefully()  # <-- the assert passes
+regret_nothing()  # <-- the assert passes
 
 assert active_settings.preprocess_dataframes is True
 ```
