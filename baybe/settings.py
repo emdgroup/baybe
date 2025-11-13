@@ -22,7 +22,7 @@ from typing_extensions import Self
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import OptionalImportError
 from baybe.utils.basic import classproperty
-from baybe.utils.boolean import AutoBool, strtobool
+from baybe.utils.boolean import AutoBool, to_bool
 
 if TYPE_CHECKING:
     import torch
@@ -74,15 +74,6 @@ class _SlottedContextDecorator:
         return inner
 
 
-def _to_bool(value: Any) -> bool:
-    """Convert Booleans and strings representing Booleans to actual Booleans."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return strtobool(value)
-    raise TypeError(f"Cannot convert value of type '{type(value)}' to Boolean.")
-
-
 def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attribute]:
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
@@ -112,7 +103,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     env_name = f"BAYBE_{name.upper()}"
                     value = os.getenv(env_name, default)
                     if fld.type == "bool":
-                        value = _to_bool(value)
+                        value = to_bool(value)
                     return value
 
                 return default
@@ -278,11 +269,11 @@ class Settings(_SlottedContextDecorator):
                     DeprecationWarning,
                 )
                 if env_var.endswith("SINGLE_PRECISION"):
-                    value = "32" if _to_bool(value) else "64"
+                    value = "32" if to_bool(value) else "64"
                 elif env_var.endswith("POLARS"):
-                    value = "false" if _to_bool(value) else "true"
+                    value = "false" if to_bool(value) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
-                    value = "true" if _to_bool(value) else "false"
+                    value = "true" if to_bool(value) else "false"
                 os.environ[f"BAYBE_{(fld.alias or fld.name).upper()}"] = value
         # <<<<< Deprecation
 

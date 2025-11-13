@@ -59,6 +59,15 @@ def strtobool(val: str) -> bool:
     raise ValueError(f"Invalid truth value: {val}")
 
 
+def to_bool(value: Any) -> bool:
+    """Convert Booleans and strings representing Booleans to actual Booleans."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return strtobool(value)
+    raise TypeError(f"Cannot convert value of type '{type(value)}' to Boolean.")
+
+
 def check_if_in(element: Any, allowed: list):
     """Check if an element is in a given list of elements.
 
