@@ -9,6 +9,7 @@ import numpy as np
 from attrs import evolve
 
 from baybe.transformations.basic import AffineTransformation, IdentityTransformation
+from baybe.utils.basic import is_all_instance
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -65,9 +66,14 @@ def compress_transformations(
     Args:
         transformations: An iterable of transformations.
 
+    Raises:
+        TypeError: If any of the passed elements is not a
+            :class:`baybe.transformations.base.Transformation`.
+
     Returns:
         The minimum sequence of transformations that is equivalent to the input.
     """
+    from baybe.transformations.base import Transformation
     from baybe.transformations.basic import (
         AffineTransformation,
         BellTransformation,
@@ -75,6 +81,10 @@ def compress_transformations(
         TriangularTransformation,
         TwoSidedAffineTransformation,
     )
+
+    transformations = list(transformations)
+    if not is_all_instance(transformations, Transformation):
+        raise TypeError(f"All elements must be of type '{Transformation.__name__}'.")
 
     aggregated: list[Transformation] = []
     id_ = IdentityTransformation()
@@ -121,10 +131,19 @@ def merge_affine_transformations(
     Args:
         transformations: A collection of transformations.
 
+    Raises:
+        TypeError: If any of the passed elements is not a
+            :class:`baybe.transformations.base.Transformation`.
+
     Returns:
         A condensed version of the collection where all affine transformations have been
         combined into one.
     """
+    from baybe.transformations.base import Transformation
+
+    if not is_all_instance(transformations, Transformation):
+        raise TypeError(f"All elements must be of type '{Transformation.__name__}'.")
+
     # Split into affine and non-affine transformations
     is_affine = [
         isinstance(tr, (IdentityTransformation, AffineTransformation))
