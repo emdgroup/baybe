@@ -205,29 +205,31 @@ class Settings(_SlottedContextDecorator):
     cache_campaign_recommendations: bool = field(
         default=True, validator=instance_of(bool)
     )
-    """Controls if campaigns cache their latest recommendation."""
+    """Controls if :class:`~baybe.campaign.Campaign` objects cache their latest
+    recommendation to avoid unnecessary re-computation in case of
+    unchanged recommendation context."""
 
     cache_directory: Path | None = field(
         default=Path(tempfile.gettempdir()) / ".baybe_cache",
         converter=Converter(_convert_cache_directory, takes_field=True),  # type: ignore[misc]
     )
-    """The directory used for caching. Set to "" or ``None`` to disable caching."""
+    """The directory used for persistent caching on disk. Set to "" or ``None`` to disable caching."""  # noqa: E501
 
     float_precision_numpy: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
     )
-    """The floating point precision used for NumPy arrays."""
+    """The floating point precision used for `numpy <https://numpy.org/>`_ arrays."""
 
     float_precision_torch: int = field(
         default=64, converter=int, validator=in_((16, 32, 64))
     )
-    """The floating point precision used for Torch tensors."""
+    """The floating point precision used for `torch <https://pytorch.org/>`_ tensors."""
 
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
-    """Controls if simulation runs in `xyzpy <https://xyzpy.readthedocs.io/en/latest/index.html>`_ are executed in parallel."""  # noqa: E501
+    """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
 
     preprocess_dataframes: bool = field(default=True, validator=instance_of(bool))
-    """Controls if dataframe content is validated and normalized before used."""
+    """Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use."""  # noqa: E501
 
     random_seed: int | None = field(
         default=None,
@@ -248,7 +250,7 @@ class Settings(_SlottedContextDecorator):
         default=AutoBool.AUTO,
         converter=AutoBool.from_unstructured,  # type: ignore[misc]
     )
-    """Controls if polars acceleration is to be used for constraints, if available."""
+    """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
 
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
@@ -312,7 +314,7 @@ class Settings(_SlottedContextDecorator):
 
     @property
     def use_polars_for_constraints(self) -> bool:
-        """Indicates if Polars is enabled (i.e., installed and set to be used)."""
+        """Indicates if ``polars`` is enabled (i.e., installed and set to be used)."""
         return self._use_polars_for_constraints.evaluate(lambda: POLARS_INSTALLED)
 
     @use_polars_for_constraints.setter
@@ -322,7 +324,7 @@ class Settings(_SlottedContextDecorator):
 
     @property
     def use_fpsample(self) -> bool:
-        """Indicates if `fpsample <https://github.com/leonardodalinky/fpsample>`_  is enabled (i.e., installed and set to be used)."""  # noqa: E501
+        """Indicates if ``fpsample`` is enabled (i.e., installed and set to be used)."""  # noqa: E501
         return self._use_fpsample.evaluate(lambda: FPSAMPLE_INSTALLED)
 
     @use_fpsample.setter
@@ -332,12 +334,12 @@ class Settings(_SlottedContextDecorator):
 
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
-        """The floating point data type used for NumPy arrays."""
+        """The floating point precision used for ``numpy`` arrays."""
         return getattr(np, f"float{self.float_precision_numpy}")
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:
-        """The floating point data type used for Torch tensors."""
+        """The floating point precision used for ``torch`` tensors."""
         import torch
 
         return getattr(torch, f"float{self.float_precision_torch}")
