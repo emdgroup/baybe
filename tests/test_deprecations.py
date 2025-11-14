@@ -548,11 +548,3 @@ def test_deprecated_cache_environment_variables(monkeypatch, value: str, expecte
     monkeypatch.setenv("BAYBE_CACHE_DIR", value)
     with pytest.warns(DeprecationWarning):
         assert Settings(restore_environment=True).cache_directory == expected
-
-
-def test_deprecated_environment_variables_user_guide_page_exists():
-    """The deprecated user guide page for on environment variables exists."""
-    # This test serves as a reminder to remove the page when expiring the legacy
-    # environment variables.
-    path = Path(__file__).parent.parent / "docs" / "userguide" / "envvars.md"
-    assert path.is_file()
