@@ -101,7 +101,9 @@ def simulate_scenarios(
         ):
             """Callable for xyzpy simulation."""
             data = None if initial_data is None else initial_data[Initial_Data]
-            seed = None if random_seed is None else Monte_Carlo_Run + _DEFAULT_SEED
+            seed = Monte_Carlo_Run + (
+                _DEFAULT_SEED if random_seed is None else random_seed
+            )
             result = _simulate_groupby(
                 scenarios[Scenario],
                 lookup,

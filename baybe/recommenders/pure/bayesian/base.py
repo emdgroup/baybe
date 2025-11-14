@@ -136,7 +136,7 @@ class BayesianRecommender(PureRecommender, ABC):
         measurements: pd.DataFrame,
         pending_experiments: pd.DataFrame | None = None,
     ) -> BoAcquisitionFunction:
-        """Get the acquisition function for the given recommendation context.
+        """Get the BoTorch acquisition function for the given recommendation context.
 
         For details on the method arguments, see :meth:`recommend`.
         """
@@ -200,14 +200,34 @@ class BayesianRecommender(PureRecommender, ABC):
             searchspace, objective, measurements, pending_experiments
         )
 
-        with Settings(preprocess_dataframes=False):
-            return super().recommend(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
-            )
+        try:
+            with Settings(preprocess_dataframes=False):
+                return super().recommend(
+                    batch_size=batch_size,
+                    searchspace=searchspace,
+                    objective=objective,
+                    measurements=measurements,
+                    pending_experiments=pending_experiments,
+                )
+        except RuntimeError as ex:
+            # Search spaces with continuous components are incompatible with surrogates
+            # that do not support gradient computation
+            if (
+                "does not have a grad_fn" in str(ex)
+                and not searchspace.continuous.is_empty
+            ):
+                from baybe.exceptions import IncompatibleSurrogateError
+                from baybe.surrogates import GaussianProcessSurrogate
+
+                raise IncompatibleSurrogateError(
+                    f"The search space contains continuous parameters, but the applied "
+                    f"surrogate of type '{self._surrogate_model.__class__.__name__}' "
+                    f"does not support the required gradient computation. Choose a "
+                    f"surrogate that supports gradients, e.g. the "
+                    f"'{GaussianProcessSurrogate.__name__}'."
+                ) from ex
+            else:
+                raise
 
     def acquisition_values(
         self,

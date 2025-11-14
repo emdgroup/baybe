@@ -11,8 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings option for random seed control
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
   set to `True`, targets seek to avoid the given `match_value` instead of matching it.
+- `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
+  corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
+  the entire associated interval is a valid match, resulting in identical transformed target 
+  values as for the `match_value` itself.
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
-  performance on regression tasks
+  performance on regression tasks (direct arilation and aryl halide)
+- Scalar addition and subtraction for `Interval` objects
+- Methods `hshift` and `vshift` to `Transformation` for conveniently performing
+  horizontal / vertical shifts
+
+### Changed
+- Dataframe-to-tensor conversion now yields contiguous tensors, improving
+  reproducibility of downstream operations
+
+### Fixed
+- Random seed not entering simulation when explicitly passed to `simulate_scenarios`
  
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
