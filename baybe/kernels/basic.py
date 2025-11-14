@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from baybe.kernels.base import BasicKernel
 from baybe.priors.base import Prior
+from baybe.settings import active_settings
 from baybe.utils.conversion import fraction_to_float
 from baybe.utils.validation import finite_float
 
@@ -34,12 +35,10 @@ class LinearKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if (initial_value := self.variance_initial_value) is not None:
             gpytorch_kernel.variance = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=active_settings.DTypeFloatTorch
             )
         return gpytorch_kernel
 
@@ -101,14 +100,12 @@ class PeriodicKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         # lengthscale is handled by the base class
 
         if (initial_value := self.period_length_initial_value) is not None:
             gpytorch_kernel.period_length = torch.tensor(
-                initial_value, dtype=DTypeFloatTorch
+                initial_value, dtype=active_settings.DTypeFloatTorch
             )
         return gpytorch_kernel
 
@@ -156,11 +153,11 @@ class PolynomialKernel(BasicKernel):
     def to_gpytorch(self, *args, **kwargs):
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         gpytorch_kernel = super().to_gpytorch(*args, **kwargs)
         if (initial_value := self.offset_initial_value) is not None:
-            gpytorch_kernel.offset = torch.tensor(initial_value, dtype=DTypeFloatTorch)
+            gpytorch_kernel.offset = torch.tensor(
+                initial_value, dtype=active_settings.DTypeFloatTorch
+            )
         return gpytorch_kernel
 
 

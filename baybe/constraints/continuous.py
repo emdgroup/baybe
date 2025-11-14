@@ -20,8 +20,8 @@ from baybe.constraints.base import (
     ContinuousNonlinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.settings import active_settings
 from baybe.utils.interval import Interval
-from baybe.utils.numerical import DTypeFloatNumpy
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -121,8 +121,6 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         """
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         param_names = [p.name for p in parameters]
         param_indices = [
             param_names.index(p) + idx_offset
@@ -133,9 +131,12 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         return (
             torch.tensor(param_indices),
             torch.tensor(
-                [self._multiplier * c for c in self.coefficients], dtype=DTypeFloatTorch
+                [self._multiplier * c for c in self.coefficients],
+                dtype=active_settings.DTypeFloatTorch,
             ),
-            np.asarray(self._multiplier * self.rhs, dtype=DTypeFloatNumpy).item(),
+            np.asarray(
+                self._multiplier * self.rhs, dtype=active_settings.DTypeFloatNumpy
+            ).item(),
         )
 
 
