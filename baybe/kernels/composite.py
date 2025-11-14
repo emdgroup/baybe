@@ -145,7 +145,7 @@ class ProjectionKernel(CompositeKernel):
     def to_gpytorch(self, **kwargs):
         from baybe.kernels._gpytorch import ProjectionKernel as GPytorchProjectionKernel
 
-        gpytorch_kernel = self.base_kernel.to_gpytorch(**kwargs)
+        gpytorch_kernel = self.base_kernel.to_gpytorch(ard_num_dims=self.n_projections)
         return GPytorchProjectionKernel(
             gpytorch_kernel,
             n_projections=self.n_projections,
