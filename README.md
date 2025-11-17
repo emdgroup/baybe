@@ -92,9 +92,9 @@ To inform the next recommendation cycle, the newly generated measurements can be
 
 </div>
 
-From the user perspective, the most important part is the "design" step.
+From the user perspective, the most important part is the "setup" step (top of the figure).
 
-Below we show a simple optimization procedure, starting with the design step and subsequently
+Below we show a simple optimization procedure, starting with the setup step and subsequently
 performing the recommendation loop. 
 The provided example aims to maximize the yield of a chemical reaction by adjusting its parameter configurations 
 (also known as reaction conditions).
