@@ -77,24 +77,27 @@ def _aryl_halide_tl_regr(
     )
 
 
-# Create the three specific benchmark functions using partial
+# Create the three specific benchmark functions and assign name to partials
 aryl_halide_CT_I_BM_tl_regr = partial(
     _aryl_halide_tl_regr,
     source_tasks=["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],
     target_tasks=["1-iodo-4-methoxybenzene"],
 )
+aryl_halide_CT_I_BM_tl_regr.__name__ = "aryl_halide_CT_I_BM_tl_regr"
 
 aryl_halide_CT_IM_tl_regr = partial(
     _aryl_halide_tl_regr,
     source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
     target_tasks=["1-iodo-4-methoxybenzene"],
 )
+aryl_halide_CT_IM_tl_regr.__name__ = "aryl_halide_CT_IM_tl_regr"
 
 aryl_halide_IP_CP_tl_regr = partial(
     _aryl_halide_tl_regr,
     source_tasks=["2-iodopyridine"],
     target_tasks=["3-chloropyridine"],
 )
+aryl_halide_IP_CP_tl_regr.__name__ = "aryl_halide_IP_CP_tl_regr"
 
 
 # Benchmark configurations
