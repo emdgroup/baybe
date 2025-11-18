@@ -68,10 +68,13 @@ BATCH_SIZE = 1
 
 # We define the experimental conditions available in the dataset:
 
-TEMPERATURES = [90, 105, 120]  # reaction temperatures in Celsius
-CONCENTRATIONS = [0.057, 0.1, 0.153]  # concentrations in mol/L
-TARGET_TEMPERATURES = [90, 105, 120]  # temperatures to optimize for
-SAMPLE_FRACTIONS = [0.01, 0.02, 0.05, 0.1, 0.2]  # fractions of training data to use
+TEMPERATURES = [90, 105, 120]
+CONCENTRATIONS = [0.057, 0.1, 0.153]
+TARGET_TEMPERATURES = [90, 105, 120]
+if not SMOKE_TEST:
+    SAMPLE_FRACTIONS = [0.01, 0.02, 0.05, 0.1, 0.2]
+else:
+    SAMPLE_FRACTIONS = [0.01, 0.02]
 
 # ## Loading the Experimental Dataset
 
