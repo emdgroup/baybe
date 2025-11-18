@@ -106,10 +106,18 @@ def simulate_scenarios(
             Initial_Data=None,
         ):
             """Callable for xyzpy simulation."""
-            data = None if initial_data is None else initial_data[Initial_Data]
-            seed = Monte_Carlo_Run + (
+            # The random seed logic is based on the assumption that exactly one of the
+            # two counters is incremented by one per simulation run
+            assert (Initial_Data is None) ^ (Monte_Carlo_Run == 0)
+
+            # We increase the seed for every new run, i.e., even if only the initial
+            # data is changed. This is particularly important for non-predictive
+            # recommenders, which would otherwise repeatedly return the same candidates
+            seed = (Monte_Carlo_Run + Initial_Data) + (
                 _DEFAULT_SEED if random_seed is None else random_seed
             )
+
+            data = None if initial_data is None else initial_data[Initial_Data]
             result = _simulate_groupby(
                 scenarios[Scenario],
                 lookup,
