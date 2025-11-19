@@ -91,7 +91,7 @@ def aryl_halide_CT_I_BM_tl_regr(
 def aryl_halide_CT_IM_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Aryl halide CT_I_BM transfer learning regression benchmark."""
+    """Aryl halide CT_IM transfer learning regression benchmark."""
     return _aryl_halide_tl_regr(
         settings=settings,
         source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
@@ -102,7 +102,7 @@ def aryl_halide_CT_IM_tl_regr(
 def aryl_halide_IP_CP_tl_regr(
     settings: TransferLearningRegressionBenchmarkSettings,
 ) -> pd.DataFrame:
-    """Aryl halide CT_I_BM transfer learning regression benchmark."""
+    """Aryl halide IP_CP transfer learning regression benchmark."""
     return _aryl_halide_tl_regr(
         settings=settings,
         source_tasks=["2-iodopyridine"],
