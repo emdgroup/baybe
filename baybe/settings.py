@@ -78,7 +78,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
     for fld in fields:
-        if fld.name in cls._internal_attributes:
+        if fld.name in cls._non_setting_attributes:
             results.append(fld)
             continue
 
@@ -345,8 +345,8 @@ class Settings(_SlottedContextDecorator):
         return getattr(torch, f"float{self.float_precision_torch}")
 
     @classproperty
-    def _internal_attributes(cls) -> frozenset[str]:
-        """The names of the internal attributes not representing settings."""  # noqa: D401
+    def _non_setting_attributes(cls) -> frozenset[str]:
+        """The names of attributes that do not represent user-facing settings."""  # noqa: D401
         # IMPROVE: This approach is not type-safe but the set is needed already at
         #   class definition time, which means we cannot use `attrs.fields` or similar.
         #   Perhaps `typing.Annotated` can be used, if there's an elegant way to
@@ -366,7 +366,7 @@ class Settings(_SlottedContextDecorator):
         return tuple(
             fld
             for fld in fields(Settings)
-            if fld.name not in Settings._internal_attributes
+            if fld.name not in Settings._non_setting_attributes
         )
 
     def activate(self) -> Settings:
