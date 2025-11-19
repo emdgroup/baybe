@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from functools import partial
 
 import pandas as pd
 
@@ -77,24 +76,38 @@ def _aryl_halide_tl_regr(
     )
 
 
-# Create the three specific benchmark functions using partial
-aryl_halide_CT_I_BM_tl_regr = partial(
-    _aryl_halide_tl_regr,
-    source_tasks=["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],
-    target_tasks=["1-iodo-4-methoxybenzene"],
-)
+# Create the three specific benchmark functions
+def aryl_halide_CT_I_BM_tl_regr(
+    settings: TransferLearningRegressionBenchmarkSettings,
+) -> pd.DataFrame:
+    """Aryl halide CT_I_BM transfer learning regression benchmark."""
+    return _aryl_halide_tl_regr(
+        settings=settings,
+        source_tasks=["1-chloro-4-(trifluoromethyl)benzene", "2-iodopyridine"],
+        target_tasks=["1-iodo-4-methoxybenzene"],
+    )
 
-aryl_halide_CT_IM_tl_regr = partial(
-    _aryl_halide_tl_regr,
-    source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
-    target_tasks=["1-iodo-4-methoxybenzene"],
-)
 
-aryl_halide_IP_CP_tl_regr = partial(
-    _aryl_halide_tl_regr,
-    source_tasks=["2-iodopyridine"],
-    target_tasks=["3-chloropyridine"],
-)
+def aryl_halide_CT_IM_tl_regr(
+    settings: TransferLearningRegressionBenchmarkSettings,
+) -> pd.DataFrame:
+    """Aryl halide CT_IM transfer learning regression benchmark."""
+    return _aryl_halide_tl_regr(
+        settings=settings,
+        source_tasks=["1-chloro-4-(trifluoromethyl)benzene"],
+        target_tasks=["1-iodo-4-methoxybenzene"],
+    )
+
+
+def aryl_halide_IP_CP_tl_regr(
+    settings: TransferLearningRegressionBenchmarkSettings,
+) -> pd.DataFrame:
+    """Aryl halide IP_CP transfer learning regression benchmark."""
+    return _aryl_halide_tl_regr(
+        settings=settings,
+        source_tasks=["2-iodopyridine"],
+        target_tasks=["3-chloropyridine"],
+    )
 
 
 # Benchmark configurations
