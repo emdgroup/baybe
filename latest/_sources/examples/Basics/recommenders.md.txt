@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base                        Ligand  \
-    103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    22   Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
-    104  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    145  Butyornitrile     Cesium pivalate                     BrettPhos   
+    424       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    73     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    103        105.0          0.100  
-    22         105.0          0.100  
-    104        105.0          0.153  
+    145         90.0            0.1  
+    424         90.0            0.1  
+    73          90.0            0.1  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base                        Ligand  \
-    103  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
-    22   Butyl Ester      Cesium acetate  Di-tert-butylphenylphosphine   
-    104  Butyl Ester  Potassium pivalate  Di-tert-butylphenylphosphine   
+               Solvent                Base                        Ligand  \
+    145  Butyornitrile     Cesium pivalate                     BrettPhos   
+    424       p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine   
+    73     Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    103        105.0          0.100  -3.054694  
-    22         105.0          0.100 -66.903775  
-    104        105.0          0.153 -14.074071  
+    145         90.0            0.1  41.780972  
+    424         90.0            0.1  74.597267  
+    73          90.0            0.1 -62.543211  
 
 
 
