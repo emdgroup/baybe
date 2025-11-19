@@ -187,7 +187,7 @@ dependencies = [
 [package.optional-dependencies]
 benchmarking = [
     { name = "boto3" },
-    { name = "fpsample", marker = "python_full_version < '3.13'" },
+    { name = "fpsample" },
     { name = "gitpython" },
     { name = "matplotlib" },
     { name = "ngboost" },
@@ -213,7 +213,7 @@ chem = [
 dev = [
     { name = "boto3" },
     { name = "flake8" },
-    { name = "fpsample", marker = "python_full_version < '3.13'" },
+    { name = "fpsample" },
     { name = "furo" },
     { name = "gitpython" },
     { name = "hypothesis", extra = ["pandas"] },
@@ -264,7 +264,7 @@ dev = [
     { name = "xyzpy" },
 ]
 docs = [
-    { name = "fpsample", marker = "python_full_version < '3.13'" },
+    { name = "fpsample" },
     { name = "furo" },
     { name = "jupyter" },
     { name = "jupytext" },
@@ -295,7 +295,7 @@ docs = [
     { name = "xyzpy" },
 ]
 examples = [
-    { name = "fpsample", marker = "python_full_version < '3.13'" },
+    { name = "fpsample" },
     { name = "matplotlib" },
     { name = "ngboost" },
     { name = "onnx" },
@@ -313,7 +313,7 @@ examples = [
     { name = "xyzpy" },
 ]
 extras = [
-    { name = "fpsample", marker = "python_full_version < '3.13'" },
+    { name = "fpsample" },
     { name = "ngboost" },
     { name = "onnx" },
     { name = "onnxruntime" },
@@ -383,7 +383,7 @@ requires-dist = [
     { name = "cattrs", specifier = ">=25.2.0" },
     { name = "exceptiongroup" },
     { name = "flake8", marker = "extra == 'lint'", specifier = "==7.3.0" },
-    { name = "fpsample", marker = "python_full_version < '3.13' and extra == 'extras'", specifier = ">=0.3.3" },
+    { name = "fpsample", marker = "extra == 'extras'", specifier = ">=0.3.3" },
     { name = "furo", marker = "extra == 'docs'", specifier = ">=2023.9.10" },
     { name = "gitpython", marker = "extra == 'benchmarking'", specifier = ">=3.0.6,<4" },
     { name = "gpytorch", specifier = ">=1.9.1,<2" },
@@ -1195,7 +1195,7 @@ name = "fpsample"
 version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy", marker = "python_full_version < '3.13'" },
+    { name = "numpy" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a6/02/d945739d029b4c5fa7f9bff1ea47dc82b7f5cb1ae3afe3f825deaec337a8/fpsample-0.3.3-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:72a15c86ad38b1d834ba685141e59e9615e9b735eeb3602a278b311e3a9debeb", size = 280262, upload-time = "2024-08-31T18:43:21.064Z" },

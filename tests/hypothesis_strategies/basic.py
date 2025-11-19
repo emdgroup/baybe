@@ -5,13 +5,13 @@ from functools import partial
 import hypothesis.strategies as st
 import numpy as np
 
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 
 finite_floats = partial(
     st.floats,
     allow_infinity=False,
     allow_nan=False,
-    width=32 if DTypeFloatNumpy == np.float32 else 64,
+    width=32 if active_settings.DTypeFloatNumpy == np.float32 else 64,
 )
 """A strategy producing finite (i.e., non-nan and non-infinite) floats."""
 

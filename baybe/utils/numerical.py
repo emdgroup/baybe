@@ -1,21 +1,7 @@
 """Utilities for numeric operations."""
 
-import os
-
 import numpy as np
 import numpy.typing as npt
-
-from baybe.utils.boolean import strtobool
-
-VARNAME_NUMPY_USE_SINGLE_PRECISION = "BAYBE_NUMPY_USE_SINGLE_PRECISION"
-"""Environment variable name for enforcing single precision in numpy."""
-
-DTypeFloatNumpy = (
-    np.float32
-    if strtobool(os.environ.get(VARNAME_NUMPY_USE_SINGLE_PRECISION, "False"))
-    else np.float64
-)
-"""Floating point data type used for numpy arrays."""
 
 DTypeFloatONNX = np.float32
 """Floating point data type used for ONNX models.
