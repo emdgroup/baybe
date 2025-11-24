@@ -103,12 +103,13 @@ def simulate_scenarios(
         def simulate(
             Scenario: str,
             Monte_Carlo_Run: int,
-            Initial_Data=None,
+            Initial_Data: int | None = None,
         ):
             """Callable for xyzpy simulation."""
             # The random seed logic is based on the assumption that exactly one of the
             # two counters is incremented by one per simulation run
-            assert (Initial_Data is None) ^ (Monte_Carlo_Run == 0)
+            assert (Initial_Data is None) or (Monte_Carlo_Run == 0)
+            Initial_Data = Initial_Data or 0
 
             # We increase the seed for every new run, i.e., even if only the initial
             # data is changed. This is particularly important for non-predictive
