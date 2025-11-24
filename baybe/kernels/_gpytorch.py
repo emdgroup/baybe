@@ -12,7 +12,7 @@ _ConvertibleToTensor = Any
 """A type alias for objects convertible to tensors."""
 
 
-class ProjectionKernel(Kernel):
+class GPyTorchProjectionKernel(Kernel):
     """GPyTorch implementation of :class:`baybe.kernels.composite.ProjectionKernel`."""
 
     def __init__(
