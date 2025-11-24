@@ -5,9 +5,9 @@ from functools import reduce
 from operator import add, mul
 
 import numpy as np
-from attrs import define, field
+from attrs import Attribute, define, field
 from attrs.converters import optional as optional_c
-from attrs.validators import deep_iterable, ge, gt, instance_of, min_len
+from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
 from typing_extensions import override
 
@@ -84,57 +84,25 @@ class ProductKernel(CompositeKernel):
         return reduce(mul, (k.to_gpytorch(*args, **kwargs) for k in self.base_kernels))
 
 
-_field_n_projections = field(
-    default=None, validator=optional_v([instance_of(int), ge(0)]), kw_only=True
-)
-"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.n_projections`."""
-
-_field_projection_matrix = field(
-    default=None, converter=optional_c(np.asarray), kw_only=True
-)
-"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.projection_matrix`."""
-
-_field_learn_projection = field(
-    default=False, validator=instance_of(bool), kw_only=True
-)
-"""Attrs field for :attr:`baybe.kernels.ProjectionKernel.learn_projection`."""
-
-
 @define(frozen=True)
 class ProjectionKernel(CompositeKernel):
-    """A random projection kernel for dimensionality reduction."""
+    """A projection kernel for dimensionality reduction."""
 
     base_kernel: Kernel = field(validator=instance_of(Kernel))
-    """The kernel to apply after projection."""
+    """The kernel applied to the projected inputs."""
 
-    n_projections: int | None = _field_n_projections
-    """The number of projections used (i.e. dimensionality of the projection space).
+    projection_matrix: np.ndarray = field(converter=np.asarray)
+    """The projection matrix."""
 
-    Must be provided if no projection matrix is specified.
-    """
-
-    projection_matrix: np.ndarray | None = _field_projection_matrix
-    """A pre-specified projection matrix.
-
-    Must be provided if no number of projections is specified.
-    """
-
-    learn_projection: bool = _field_learn_projection
+    learn_projection: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
     """Boolean specifying if the projection matrix should be learned.
 
-    If a projection matrix is provided and learning is activated, the provided matrix
-    is used as initial value.
-    """
+    If ``True``, the provided projection matrix is used as initial value."""
 
     @projection_matrix.validator
-    def _validate_projection_matrix(self, attribute: field, value: np.ndarray | None):
-        if value is None:
-            if self.n_projections is None:
-                raise ValueError(
-                    "Either a projection matrix or the number of projections "
-                    "must be specified."
-                )
-            return
+    def _validate_projection_matrix(self, _: Attribute, value: np.ndarray):
         if value.ndim != 2:
             raise ValueError(
                 f"The projection matrix must be 2-dimensional, "
@@ -149,7 +117,6 @@ class ProjectionKernel(CompositeKernel):
         gpytorch_kernel = self.base_kernel.to_gpytorch(ard_num_dims=n_projections)
         return GPyTorchProjectionKernel(
             gpytorch_kernel,
-            n_projections=self.n_projections,
             projection_matrix=self.projection_matrix,
             learn_projection=self.learn_projection,
         )
