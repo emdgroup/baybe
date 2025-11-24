@@ -5,20 +5,15 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, Protocol
 
-import numpy as np
 from attrs import define, field
-from attrs.validators import instance_of
+from attrs.validators import ge, instance_of
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
-from baybe.kernels.composite import (
-    ProjectionKernel,
-    _field_learn_projection,
-    _field_n_projections,
-    _field_projection_matrix,
-)
+from baybe.kernels.composite import ProjectionKernel
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
+from baybe.surrogates.gaussian_process.presets.default import DefaultKernelFactory
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -58,17 +53,19 @@ class ProjectionKernelFactory(KernelFactory, SerialMixin):
     """A factory producing projected kernels."""
 
     base_kernel_factory: KernelFactory = field(
-        alias="kernel_or_factory", converter=to_kernel_factory
+        alias="kernel_or_factory",
+        factory=DefaultKernelFactory,
+        converter=to_kernel_factory,
     )
+    """The factory producing the base kernel applied to the projected inputs."""
 
-    n_projections: int | None = _field_n_projections
-    """See :class:`baybe.kernels.ProjectionKernel`."""
+    n_projections: int = field(validator=[instance_of(int), ge(1)])
+    """The number of projections to be used."""
 
-    projection_matrix: np.ndarray | None = _field_projection_matrix
-    """See :class:`baybe.kernels.ProjectionKernel`."""
-
-    learn_projection: bool = _field_learn_projection
-    """See :class:`baybe.kernels.ProjectionKernel`."""
+    learn_projection: bool = field(
+        default=True, validator=instance_of(bool), kw_only=True
+    )
+    """Boolean specifying if the projection matrix should be learned."""
 
     @override
     def __call__(
@@ -77,8 +74,7 @@ class ProjectionKernelFactory(KernelFactory, SerialMixin):
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         return ProjectionKernel(
             base_kernel=base_kernel,
-            n_projections=self.n_projections,
-            projection_matrix=self.projection_matrix,
+            projection_matrix=projection_matrix,
             learn_projection=self.learn_projection,
         )
 
