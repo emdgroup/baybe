@@ -123,7 +123,7 @@ def compress_transformations(
     return tuple(aggregated)
 
 
-def merge_affine_transformations(
+def sum_affine_transformations(
     transformations: Collection[Transformation], /
 ) -> set[Transformation]:
     """Additively combine affine transformations in a given transformation collection.

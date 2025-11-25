@@ -14,7 +14,7 @@ from typing_extensions import override
 from baybe.transformations.base import Transformation
 from baybe.transformations.utils import (
     compress_transformations,
-    merge_affine_transformations,
+    sum_affine_transformations,
 )
 from baybe.utils.basic import compose, to_tuple
 from baybe.utils.interval import Interval
@@ -92,7 +92,7 @@ class AdditiveTransformation(Transformation):
             # are not provided. Hence, we simply return an raw object.
             return super().__new__(cls)
         transformations = bound.arguments[fields(cls).transformations.name]
-        if len(compressed := merge_affine_transformations(transformations)) == 1:
+        if len(compressed := sum_affine_transformations(transformations)) == 1:
             return compressed.pop()
         return super().__new__(cls)
 
