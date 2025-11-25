@@ -12,11 +12,12 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.exceptions import EmptySearchSpaceError
+from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.searchspace import (
     SearchSpace,
@@ -361,3 +362,12 @@ def test_polars_pandas_equivalence(parameters):
 
     # Assert equality
     assert_frame_equal(df_pl.to_pandas(), df_pd)
+
+
+def test_task_parameter_incompatibility_with_from_dataframe():
+    """TaskParameters cannot be used with SearchSpace.from_dataframe."""
+    task_param = TaskParameter("task", values=["A", "B", "C"])
+    df = pd.DataFrame({"task": ["A", "B", "C"]})
+
+    with pytest.raises(IncompatibilityError):
+        SearchSpace.from_dataframe(df, parameters=[task_param])

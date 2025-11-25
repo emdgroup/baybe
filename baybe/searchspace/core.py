@@ -15,6 +15,7 @@ from baybe.constraints import (
     validate_constraints,
 )
 from baybe.constraints.base import Constraint
+from baybe.exceptions import IncompatibilityError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
 from baybe.searchspace.continuous import SubspaceContinuous
@@ -174,6 +175,15 @@ class SearchSpace(SerialMixin):
                 "The provided dataframe columns must match exactly with the specified "
                 "parameter names."
             )
+
+        # Check for TaskParameter incompatibility
+        for param in parameters:
+            if isinstance(param, TaskParameter):
+                raise IncompatibilityError(
+                    f"TaskParameter '{param.name}' cannot be used with"
+                    f"SearchSpace.from_dataframe."
+                    f"Use SearchSpace.from_product instead."
+                )
 
         disc_params = [p for p in parameters if p.is_discrete]
         cont_params = [p for p in parameters if p.is_continuous]
