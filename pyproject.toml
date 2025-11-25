@@ -30,7 +30,7 @@ keywords = [
 dynamic = ['version']
 dependencies = [
     "attrs>=25.4.0",
-    "botorch>=0.13.0,<0.16.0",  # https://github.com/meta-pytorch/botorch/issues/3085
+    "botorch>=0.13.0,<1",
     "cattrs>=25.2.0",
     "exceptiongroup",
     "gpytorch>=1.9.1,<2",

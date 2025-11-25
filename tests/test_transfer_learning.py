@@ -60,7 +60,28 @@ def campaign(
 
 
 @pytest.mark.parametrize("active_tasks", ["target_only", "both"])
-@pytest.mark.parametrize("training_data", ["source", "target", "both"])
+@pytest.mark.parametrize(
+    "training_data",
+    [
+        pytest.param(
+            "source",
+            marks=[
+                pytest.mark.xfail(
+                    reason="https://github.com/meta-pytorch/botorch/issues/3085",
+                    strict=True,
+                )
+            ],
+        ),
+        pytest.param(
+            "target",
+            marks=pytest.mark.xfail(
+                reason="https://github.com/meta-pytorch/botorch/issues/3085",
+                strict=True,
+            ),
+        ),
+        "both",
+    ],
+)
 def test_recommendation(campaign: Campaign):
     """Transfer learning recommendation works regardless of which task are
     present in the training data and which tasks are active.

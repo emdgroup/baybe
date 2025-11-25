@@ -379,7 +379,7 @@ requires-dist = [
     { name = "baybe", extras = ["simulation"], marker = "extra == 'extras'" },
     { name = "baybe", extras = ["test"], marker = "extra == 'dev'" },
     { name = "boto3", marker = "extra == 'benchmarking'", specifier = ">=1.0.0,<2" },
-    { name = "botorch", specifier = ">=0.13.0,<0.16.0" },
+    { name = "botorch", specifier = ">=0.13.0,<1" },
     { name = "cattrs", specifier = ">=25.2.0" },
     { name = "exceptiongroup" },
     { name = "flake8", marker = "extra == 'lint'", specifier = "==7.3.0" },
