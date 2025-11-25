@@ -157,8 +157,6 @@ all_results = {}
 for target_temp in TARGET_TEMPERATURES:
     training_temps = [t for t in TEMPERATURES if t != target_temp]
 
-    print(f"\nOptimizing for {target_temp}°C using data from {training_temps}°C...")
-
     searchspace = create_search_space(target_temp)
 
     training_temperatures = [str(t) for t in training_temps]
@@ -166,7 +164,7 @@ for target_temp in TARGET_TEMPERATURES:
         lookup_task["Temp_C"].isin(training_temperatures)
     ].copy()
 
-    results: list[pd.DataFrame] = []
+    results_list: list[pd.DataFrame] = []
 
     for fraction in SAMPLE_FRACTIONS:
         campaign = Campaign(searchspace=searchspace, objective=objective)
@@ -185,7 +183,7 @@ for target_temp in TARGET_TEMPERATURES:
             batch_size=BATCH_SIZE,
             n_doe_iterations=N_DOE_ITERATIONS,
         )
-        results.append(result)
+        results_list.append(result)
 
     # Baseline comparison: optimization without transfer learning
     result_baseline = simulate_scenarios(
@@ -195,7 +193,7 @@ for target_temp in TARGET_TEMPERATURES:
         n_doe_iterations=N_DOE_ITERATIONS,
         n_mc_iterations=N_MC_ITERATIONS,
     )
-    results = pd.concat([result_baseline, *results])
+    results = pd.concat([result_baseline, *results_list])
 
     all_results[target_temp] = results
 
@@ -262,17 +260,14 @@ if not SMOKE_TEST:
 
 # The results reveal several key insights:
 #
-# 1. **Consistent Benefits**: Transfer learning provides substantial improvements
-#    across all temperature conditions, demonstrating the robustness of the approach.
+# 1. Transfer learning provides substantial improvements across all temperature
+#    conditions, demonstrating the robustness of the approach.
 #
-# 2. **Variable Effectiveness**: The magnitude of improvement varies by condition,
-#    reflecting differences in how well knowledge transfers between specific
-#    temperature pairs.
+# 2. The magnitude of improvement varies by condition, reflecting differences in how
+#    well knowledge transfers between specific temperature pairs.
 #
-# 3. **Data Efficiency**: Even small amounts of training data (1-2%) can yield
-#    significant acceleration, making this approach practical even with limited
-#    historical data.
+# 2. Even small amounts of training data can yield significant acceleration, making thi
+#    technique practical even with limited historical data.
 #
-# 4. **Diminishing Returns**: Beyond a certain point, additional training data
-#    provides marginal benefits, suggesting an optimal balance between data
-#    utilization and computational efficiency.
+# 3. Beyond a certain point, additional training data
+#    provides marginal benefits.
