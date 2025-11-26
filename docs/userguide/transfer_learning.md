@@ -186,6 +186,7 @@ on the optimization:
 ```
 
 ```{bibliography}
+# :filter: docname in docnames
 ```
 
 [`TaskParameter`]: baybe.parameters.categorical.TaskParameter
