@@ -6,10 +6,15 @@ from typing import TypeVar
 
 import pandas as pd
 
-from baybe.exceptions import EmptySearchSpaceError
+from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
+
+try:  # For python < 3.11, use the exceptiongroup backport
+    ExceptionGroup
+except NameError:
+    from exceptiongroup import ExceptionGroup
 
 _T = TypeVar("_T", bound=Parameter)
 
@@ -46,6 +51,42 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 
     # Assert: unique names
     validate_parameter_names(parameters)
+
+
+def validate_dataframe_active_values(
+    df: pd.DataFrame, parameters: Sequence[Parameter]
+) -> None:
+    """Validate that dataframe content is compatible with active_values of parameters.
+
+    Args:
+        df: The dataframe to validate
+        parameters: List of parameters to check against
+
+    Raises:
+        IncompatibilityError: If dataframe contains values not in active_values
+            of the parameters
+        ExceptionGroup: If multiple parameters have validation errors
+    """
+    exceptions: list[Exception] = []
+
+    for param in parameters:
+        if isinstance(param, _DiscreteLabelLikeParameter):
+            df_values = set(df[param.name].unique())
+            active_values_set = set(param.active_values)
+            invalid_values = df_values - active_values_set
+
+            if invalid_values:
+                exceptions.append(
+                    IncompatibilityError(
+                        f"Dataframe column '{param.name}' contains invalid values "
+                        f"{invalid_values}. Only active values {param.active_values} "
+                        f"are allowed when using SearchSpace.from_dataframe."
+                    )
+                )
+    if exceptions:
+        if len(exceptions) == 1:
+            raise exceptions[0]
+        raise ExceptionGroup("dataframe active values validation errors", exceptions)
 
 
 def get_transform_parameters(

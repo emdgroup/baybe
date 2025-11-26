@@ -30,6 +30,11 @@ from baybe.searchspace.discrete import (
     parameter_cartesian_prod_polars,
 )
 
+try:
+    ExceptionGroup
+except NameError:
+    from exceptiongroup import ExceptionGroup
+
 
 def test_empty_parameters():
     """Creation of a search space with no parameters raises an exception."""
@@ -364,10 +369,40 @@ def test_polars_pandas_equivalence(parameters):
     assert_frame_equal(df_pl.to_pandas(), df_pd)
 
 
-def test_task_parameter_incompatibility_with_from_dataframe():
-    """TaskParameters cannot be used with SearchSpace.from_dataframe."""
-    task_param = TaskParameter("task", values=["A", "B", "C"])
-    df = pd.DataFrame({"task": ["A", "B", "C"]})
+def test_task_parameter_active_values_validation():
+    """Test SearchSpace.from_dataframe with TaskParameter active_values validation."""
+    df = pd.DataFrame(
+        [
+            {"task": "source", "method": "old", "x1": 1.0},
+            {"task": "source", "method": "old", "x1": 2.0},
+            {"task": "source", "method": "new", "x1": 1.0},
+            {"task": "target", "method": "new", "x1": 2.0},
+        ]
+    )
 
+    num_param = NumericalDiscreteParameter(name="x1", values=[1.0, 2.0])
+    task_param = TaskParameter(
+        name="task", values=["source1", "source2", "target"], active_values=["target"]
+    )
+    cat_param = CategoricalParameter(
+        name="method", values=["old", "new"], active_values=["new"]
+    )
+
+    # Test multiple source values (ExceptionGroup)
+    with pytest.raises(ExceptionGroup):
+        SearchSpace.from_dataframe(df, parameters=[num_param, task_param, cat_param])
+
+    # Test one source value (IncompatibilityError)
+    single_source_df = df[df["method"] == "new"]
     with pytest.raises(IncompatibilityError):
-        SearchSpace.from_dataframe(df, parameters=[task_param])
+        SearchSpace.from_dataframe(
+            single_source_df, parameters=[num_param, task_param, cat_param]
+        )
+
+    # Test only active values (valid)
+    target_df = df[(df["task"] == "target") & (df["method"] == "new")]
+    searchspace = SearchSpace.from_dataframe(
+        target_df, parameters=[num_param, task_param, cat_param]
+    )
+    assert len(searchspace.discrete.exp_rep) == 1
+    assert all(searchspace.discrete.exp_rep["task"] == "target")
