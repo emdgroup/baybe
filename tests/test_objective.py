@@ -66,9 +66,9 @@ class TestInvalidObjectiveCreation:
         """Unknown target images are not allowed unless explicitly declared."""
         # Create some targets with bounded codomain but unknown image
         t = IdentityTransformation()
-        t1 = NumericalTarget.match_bell("t1", 0, 1)._append_transformation(t + t)
-        t2 = NumericalTarget.match_bell("t2", 0, 1)._append_transformation(t + t)
-        assert t1.get_codomain() == Interval(0, 2)
+        t1 = NumericalTarget.match_bell("t1", 0, 1)._append_transformation(t * t)
+        t2 = NumericalTarget.match_bell("t2", 0, 1)._append_transformation(t * t)
+        assert t1.get_codomain() == Interval(0, 1)
 
         with pytest.raises(ValueError, match="normalization status is unclear"):
             DesirabilityObjective([t1, t2], require_normalization=True)

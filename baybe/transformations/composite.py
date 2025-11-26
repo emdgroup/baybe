@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 import gc
+import inspect
 from functools import reduce
 from typing import TYPE_CHECKING, Any
 
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import deep_iterable, instance_of, max_len, min_len
 from typing_extensions import override
 
 from baybe.transformations.base import Transformation
-from baybe.transformations.utils import compress_transformations
+from baybe.transformations.utils import (
+    compress_transformations,
+    sum_affine_transformations,
+)
 from baybe.utils.basic import compose, to_tuple
 from baybe.utils.interval import Interval
 
@@ -23,9 +27,6 @@ if TYPE_CHECKING:
 class ChainedTransformation(Transformation):
     """A chained transformation composing several individual transformations."""
 
-    # https://github.com/python-attrs/attrs/issues/1462
-    __hash__ = object.__hash__
-
     transformations: tuple[Transformation, ...] = field(
         converter=compress_transformations,
         validator=[
@@ -36,14 +37,19 @@ class ChainedTransformation(Transformation):
     """The transformations to be composed (the first element gets applied first)."""
 
     @override
-    def __eq__(self, other: Any, /) -> bool:
-        if len(self.transformations) == 1:
-            # A chained transformation with only one element is equivalent to that
-            # element
-            return self.transformations[0] == other
-        if isinstance(other, ChainedTransformation):
-            return self.transformations == other.transformations
-        return NotImplemented
+    def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
+        # If the transformations can be condensed into one, we return that instead
+        sig = inspect.signature(cls.__init__)
+        try:
+            bound = sig.bind(None, *args, **kwargs)
+        except TypeError:
+            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
+            # are not provided. Hence, we simply return an raw object.
+            return super().__new__(cls)
+        transformations = bound.arguments[fields(cls).transformations.name]
+        if len(compressed := compress_transformations(transformations)) == 1:
+            return compressed[0]
+        return super().__new__(cls)
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:
@@ -74,6 +80,21 @@ class AdditiveTransformation(Transformation):
         ),
     )
     """The transformations to be added."""
+
+    @override
+    def __new__(cls, *args: Any, **kwargs: Any) -> Transformation:  # type: ignore[misc]
+        # If the transformations can be condensed into one, we return that instead
+        sig = inspect.signature(cls.__init__)
+        try:
+            bound = sig.bind(None, *args, **kwargs)
+        except TypeError:
+            # Unpickling first creates an uninitialized instance, i.e. the args/kwargs
+            # are not provided. Hence, we simply return an raw object.
+            return super().__new__(cls)
+        transformations = bound.arguments[fields(cls).transformations.name]
+        if len(compressed := sum_affine_transformations(transformations)) == 1:
+            return compressed.pop()
+        return super().__new__(cls)
 
     @override
     def get_codomain(self, interval: Interval | None = None, /) -> Interval:

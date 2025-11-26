@@ -18,7 +18,7 @@ from baybe.utils.dataframe import get_transform_objects, to_tensor
 from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
+    from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
 
 
 # TODO: Reactive slots in all classes once cached_property is supported:
@@ -96,7 +96,7 @@ class Objective(ABC, SerialMixin):
         return self.to_botorch()
 
     def to_botorch(self) -> MCAcquisitionObjective:
-        """Convert to BoTorch representation."""
+        """Convert to BoTorch objective."""
         if not is_all_instance(targets := self._oriented_targets, NumericalTarget):
             raise NotImplementedError(
                 "Conversion to BoTorch is only supported for numerical targets."
@@ -116,6 +116,15 @@ class Objective(ABC, SerialMixin):
                 dim=-1,
             )
         )
+
+    @abstractmethod
+    def to_botorch_posterior_transform(self) -> PosteriorTransform:
+        """Convert to BoTorch posterior transform, if possible.
+
+        A representation as posterior transformation is only possible if Gaussianity
+        is preserved by the involved operations, that is, when all targets are
+        inherently numerical and their assigned transformations are affine.
+        """
 
     def _pre_transform(
         self,

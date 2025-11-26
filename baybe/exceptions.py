@@ -73,6 +73,10 @@ class IncompatibleArgumentError(IncompatibilityError):
     """An incompatible argument was passed to a callable."""
 
 
+class NonGaussianityError(Exception):
+    """An operation assuming Gaussianity is attempted on a non-Gaussian distribution."""
+
+
 class InfeasibilityError(Exception):
     """An optimization problem has no feasible solution."""
 
