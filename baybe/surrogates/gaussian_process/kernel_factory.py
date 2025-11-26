@@ -94,11 +94,11 @@ def _make_projection_matrices(
         matrices = [
             M,
             *_make_projection_matrices(
-                n_projections,
-                n_matrices - 1,
-                ProjectionMatrixInitialization.ORTHONORMAL,
-                train_x,
-                train_y,
+                n_projections=n_projections,
+                n_matrices=n_matrices - 1,
+                initialization=ProjectionMatrixInitialization.ORTHONORMAL,
+                train_x=train_x,
+                train_y=train_y,
             ),
         ]
 
@@ -179,11 +179,11 @@ class ProjectionKernelFactory(KernelFactory, SerialMixin):
     ) -> Kernel:
         base_kernel = self.base_kernel_factory(searchspace, train_x, train_y)
         projection_matrices = _make_projection_matrices(
-            self.n_matrices,
-            self.n_projections,
-            self.initialization,
-            train_x.numpy(),
-            train_y.numpy(),
+            n_projections=self.n_projections,
+            n_matrices=self.n_matrices,
+            initialization=self.initialization,
+            train_x=train_x.numpy(),
+            train_y=train_y.numpy(),
         )
         kernels = [
             ProjectionKernel(
