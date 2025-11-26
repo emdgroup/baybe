@@ -18,6 +18,7 @@ Objective
       ~Objective.from_dict
       ~Objective.from_json
       ~Objective.to_botorch
+      ~Objective.to_botorch_posterior_transform
       ~Objective.to_dict
       ~Objective.to_json
       ~Objective.transform

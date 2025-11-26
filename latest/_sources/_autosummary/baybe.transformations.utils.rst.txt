@@ -17,6 +17,7 @@ baybe.transformations.utils
       combine_affine_transformations
       compress_transformations
       convert_transformation
+      sum_affine_transformations
    
    
 

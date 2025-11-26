@@ -18,6 +18,7 @@ DesirabilityObjective
       ~DesirabilityObjective.from_dict
       ~DesirabilityObjective.from_json
       ~DesirabilityObjective.to_botorch
+      ~DesirabilityObjective.to_botorch_posterior_transform
       ~DesirabilityObjective.to_dict
       ~DesirabilityObjective.to_json
       ~DesirabilityObjective.transform
@@ -33,6 +34,7 @@ DesirabilityObjective
       ~DesirabilityObjective.description
       ~DesirabilityObjective.is_multi_output
       ~DesirabilityObjective.n_outputs
+      ~DesirabilityObjective.normalized_weights
       ~DesirabilityObjective.output_names
       ~DesirabilityObjective.supports_partial_measurements
       ~DesirabilityObjective.targets

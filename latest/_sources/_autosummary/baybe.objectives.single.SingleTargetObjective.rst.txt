@@ -18,6 +18,7 @@ SingleTargetObjective
       ~SingleTargetObjective.from_dict
       ~SingleTargetObjective.from_json
       ~SingleTargetObjective.to_botorch
+      ~SingleTargetObjective.to_botorch_posterior_transform
       ~SingleTargetObjective.to_dict
       ~SingleTargetObjective.to_json
       ~SingleTargetObjective.transform
