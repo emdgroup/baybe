@@ -5,7 +5,7 @@ from functools import reduce
 from operator import add, mul
 
 import numpy as np
-from attrs import Attribute, define, field
+from attrs import Attribute, cmp_using, define, field
 from attrs.converters import optional as optional_c
 from attrs.validators import deep_iterable, gt, instance_of, min_len
 from attrs.validators import optional as optional_v
@@ -91,7 +91,9 @@ class ProjectionKernel(CompositeKernel):
     base_kernel: Kernel = field(validator=instance_of(Kernel))
     """The kernel applied to the projected inputs."""
 
-    projection_matrix: np.ndarray = field(converter=np.asarray)
+    projection_matrix: np.ndarray = field(
+        converter=np.asarray, eq=cmp_using(eq=np.array_equal)
+    )
     """The projection matrix."""
 
     learn_projection: bool = field(

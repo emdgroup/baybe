@@ -3,6 +3,8 @@
 from enum import Enum
 
 import hypothesis.strategies as st
+from hypothesis.extra.numpy import arrays
+from typing_extensions import assert_never
 
 from baybe.kernels.basic import (
     LinearKernel,
@@ -14,7 +16,12 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import (
+    AdditiveKernel,
+    ProductKernel,
+    ProjectionKernel,
+    ScaleKernel,
+)
 from tests.hypothesis_strategies.basic import positive_finite_floats
 from tests.hypothesis_strategies.priors import priors
 
@@ -25,6 +32,7 @@ class KernelType(Enum):
     SINGLE = "SINGLE"
     ADDITIVE = "ADDITIVE"
     PRODUCT = "PRODUCT"
+    PROJECTION = "PROJECTION"
 
 
 linear_kernels = st.builds(
@@ -122,15 +130,38 @@ def single_kernels(draw: st.DrawFn):
 
 
 @st.composite
+def projection_kernels(draw: st.DrawFn):
+    """Generate :class:`baybe.kernels.composite.ProjectionKernel`."""
+    MAX_DIM = 5
+    shape = draw(
+        st.tuples(
+            st.integers(min_value=1, max_value=MAX_DIM),
+            st.integers(min_value=1, max_value=MAX_DIM),
+        )
+    )
+    projection_matrix = draw(
+        arrays(float, shape, elements=st.floats(allow_nan=False, allow_infinity=False))
+    )
+    base_kernel = draw(single_kernels())
+    learn_projection = draw(st.booleans())
+    return ProjectionKernel(
+        base_kernel, projection_matrix, learn_projection=learn_projection
+    )
+
+
+@st.composite
 def kernels(draw: st.DrawFn):
     """Generate :class:`baybe.kernels.base.Kernel`."""
     kernel_type = draw(st.sampled_from(KernelType))
 
     if kernel_type is KernelType.SINGLE:
         return draw(single_kernels())
-
-    base_kernels = draw(st.lists(single_kernels(), min_size=2))
     if kernel_type is KernelType.ADDITIVE:
+        base_kernels = draw(st.lists(single_kernels(), min_size=2))
         return AdditiveKernel(base_kernels)
     if kernel_type is KernelType.PRODUCT:
+        base_kernels = draw(st.lists(single_kernels(), min_size=2))
         return ProductKernel(base_kernels)
+    if kernel_type is KernelType.PROJECTION:
+        return draw(projection_kernels())
+    assert_never(kernel_type)
