@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import gc
-from math import sqrt
 from typing import TYPE_CHECKING, ClassVar
 
 from attrs import define, field
@@ -190,8 +189,8 @@ class GaussianProcessSurrogate(Surrogate):
             model_kwargs = {
                 "task_feature": context.task_idx,
                 "output_tasks": task_comp_rep[list(task_param.active_values)],  # type: ignore[index]
-                "rank": int(sqrt(context.n_tasks)),
                 "all_tasks": task_comp_rep.to_list(),
+                "validate_task_values": False,
             }
 
         # Model construction and fitting
