@@ -6,9 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `SearchSpace.from_dataframe()` now validates that dataframes contain only active 
-  values for parameters with restricted `active_values` (e.g., `TaskParameter`), 
-  raising `IncompatibilityError`
+- `SearchSpace.from_dataframe` now validates that dataframes contain only
+  `active_values`, raising `IncompatibilityError` otherwise
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
   set to `True`, targets seek to avoid the given `match_value` instead of matching it.
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`

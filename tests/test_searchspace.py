@@ -388,18 +388,18 @@ def test_task_parameter_active_values_validation():
         name="method", values=["old", "new"], active_values=["new"]
     )
 
-    # Test multiple source values (ExceptionGroup)
+    # Two parameters invalid (ExceptionGroup)
     with pytest.raises(ExceptionGroup):
         SearchSpace.from_dataframe(df, parameters=[num_param, task_param, cat_param])
 
-    # Test one source value (IncompatibilityError)
+    # One parameter invalid (IncompatibilityError)
     single_source_df = df[df["method"] == "new"]
     with pytest.raises(IncompatibilityError):
         SearchSpace.from_dataframe(
             single_source_df, parameters=[num_param, task_param, cat_param]
         )
 
-    # Test only active values (valid)
+    # All parameters valid
     target_df = df[(df["task"] == "target") & (df["method"] == "new")]
     searchspace = SearchSpace.from_dataframe(
         target_df, parameters=[num_param, task_param, cat_param]

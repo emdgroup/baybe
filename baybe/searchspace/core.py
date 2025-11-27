@@ -180,12 +180,9 @@ class SearchSpace(SerialMixin):
                 "parameter names."
             )
 
-        # Validate dataframe compatibility with parameter active_values
-        validate_dataframe_active_values(df, parameters)
-
         disc_params = [p for p in parameters if p.is_discrete]
         cont_params = [p for p in parameters if p.is_continuous]
-
+        validate_dataframe_active_values(df, disc_params)
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(
                 df[[p.name for p in disc_params]],
