@@ -4,21 +4,17 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+import torch
 from attrs import define, field
+from botorch.models import SingleTaskGP
 from botorch.models.model import Model
-from botorch.posteriors import Posterior
+from botorch.posteriors import GPyTorchPosterior, Posterior
+from gpytorch.distributions import MultivariateNormal
 from torch import Tensor
 from typing_extensions import override
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.parameters import TaskParameter
-
-import torch
-from botorch.models import SingleTaskGP
-from botorch.posteriors import GPyTorchPosterior
-from gpytorch.distributions import MultivariateNormal
-
-from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 
 
@@ -241,38 +237,6 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
         return source_data, (X_target, Y_target)
 
-    def _reduce_searchspace(self, searchspace: SearchSpace) -> SearchSpace:
-        """Remove TaskParameter from a SearchSpace if it exists.
-
-        Args:
-            searchspace: The SearchSpace to process.
-
-        Returns:
-            A new SearchSpace without TaskParameter, or the original SearchSpace
-            if no TaskParameter exists.
-        """
-        # Get all parameters from the search space
-        parameters = list(searchspace.parameters)
-
-        # Filter out TaskParameter instances
-        filtered_parameters = [
-            param for param in parameters if not isinstance(param, TaskParameter)
-        ]
-
-        # If no TaskParameter was found, return the original searchspace
-        if len(filtered_parameters) == len(parameters):
-            return searchspace
-
-        # If all parameters were TaskParameters, create empty SearchSpace
-        if not filtered_parameters:
-            return SearchSpace()
-
-        # Create new SearchSpace with filtered parameters and constraints
-        return SearchSpace.from_product(
-            parameters=filtered_parameters,
-            constraints=list(searchspace.constraints),
-        )
-
     @override
     def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
         """Fit the transfer learning model.
@@ -323,21 +287,22 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         X_source, Y_source = source_data
 
         # Remove task parameter from searchspace before training the GPs
-        reduced_searchspace = self._reduce_searchspace(searchspace=self._searchspace)
+        reduced_searchspace = self._searchspace.remove_task_parameters()
 
-        # 1. Create and fit source GP 
-        source_surrogate = GaussianProcessSurrogate(kernel_or_factory=self.kernel_factory)
-        source_surrogate._searchspace = reduced_searchspace 
+        # 1. Create and fit source GP
+        source_surrogate = GaussianProcessSurrogate(
+            kernel_or_factory=self.kernel_factory
+        )
+        source_surrogate._searchspace = reduced_searchspace
         source_surrogate._fit(X_source, Y_source)
         self._source_gp = source_surrogate.to_botorch()
 
         # 2. Train GP based on available data and transfer mode
         if X_target.shape[0] == 0:
             # Use copy of source GP if no target data available
-            print(
-                "No target data provided. Using copy of source GP as target GP."
-            )
+            print("No target data provided. Using copy of source GP as target GP.")
             from copy import deepcopy
+
             self._target_gp = deepcopy(self._source_gp)
         else:
             # Create target GP from prior based on transfer mode
@@ -345,15 +310,16 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
                 target_surrogate = GaussianProcessSurrogate.from_prior_gp(
                     prior_gp=self._source_gp,
                     transfer_mode="mean",
-                    kernel_factory=self.kernel_factory
+                    kernel_factory=self.kernel_factory,
                 )
             elif self.use_prior_kernel and not self.use_prior_mean:
                 target_surrogate = GaussianProcessSurrogate.from_prior_gp(
-                    prior_gp=self._source_gp,
-                    transfer_mode="kernel"
+                    prior_gp=self._source_gp, transfer_mode="kernel"
                 )
             else:
-                target_surrogate = GaussianProcessSurrogate(kernel_or_factory=self.kernel_factory)
+                target_surrogate = GaussianProcessSurrogate(
+                    kernel_or_factory=self.kernel_factory
+                )
 
             # Fit target GP
             target_surrogate._searchspace = reduced_searchspace
@@ -515,4 +481,3 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
                 "Model must be fitted before accessing BoTorch model."
             )
         return SourcePriorWrapperModel(self)
-
