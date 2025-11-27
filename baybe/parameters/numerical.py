@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from attrs import define, field
 from attrs.validators import min_len
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.exceptions import NumericalUnderflowError
@@ -17,6 +18,7 @@ from baybe.parameters.validation import validate_is_finite, validate_unique_valu
 from baybe.utils.interval import InfiniteIntervalError, Interval
 from baybe.utils.numerical import DTypeFloatNumpy
 
+import torch
 
 @define(frozen=True, slots=False)
 class NumericalDiscreteParameter(DiscreteParameter):
@@ -181,6 +183,83 @@ class _FixedNumericalContinuousParameter(ContinuousParameter):
             Value=self.value,
         )
 
+@define(frozen=True, slots=False)
+class DiscreteFidelityParameter(NumericalDiscreteParameter):
+    """Parameter class for fidelity parameters."""
+
+
+    # Overriding property to be sorted alongside _costs and _zetas in __attrs_post_init__
+    _values: tuple[float, ...] = field(
+        alias="values",
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),  # type: ignore
+        validator=[
+            min_len(2),
+            validate_unique_values,  # type: ignore
+            validate_is_finite,
+        ],
+        default=None,
+    )
+
+    _costs: tuple[float, ...] = field(
+        alias="costs",
+        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
+        validator=[
+            min_len(2),
+            validate_unique_values,  # type: ignore
+            validate_is_finite,
+        ],
+        default=None,
+    )
+
+    _zetas: tuple[float, ...] | None = field(
+        alias="zetas",
+        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
+        converter=lambda x: None if x is None else cattrs.structure(x, tuple[float, ...]),
+        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
+        validator=optional_v([
+            min_len(2),
+            validate_unique_values,  # type: ignore
+            validate_is_finite,
+        ]),
+        default=None,
+    )
+
+    def __attrs_post_init__(self):
+
+        super_post = getattr(super(), "__attrs_post_init__", None)
+        if callable(super_post):
+            super_post()
+
+        object.__setattr__(self, "fid_to_idx", {float(f): int(i) for i, f in enumerate(self._values)})
+        object.__setattr__(self, "idx_to_fid", {int(i): float(f) for i, f in enumerate(self._values)})
+        
+        if self._zetas is None: 
+            # TODO Jordan MHS: decide on default zeta parameters in future commit - or a default zetas-setting callable.
+            object.__setattr__(self, "_zetas", (0.0,) * len(self._values))
+
+        validate_same_shape(self, "values", self._values, "costs", self._costs)
+        validate_same_shape(self, "values", self._values, "zetas", self._costs)
+        
+        paired_values = sorted(zip(self._values, self._zetas, self._costs), key=lambda t: t[0])
+        sorted_values, sorted_zetas, sorted_costs = map(tuple, zip(*paired_values))
+
+        object.__setattr__(self, "_values", sorted_values)
+        object.__setattr__(self, "_zetas", sorted_zetas)
+        object.__setattr__(self, "_costs", sorted_costs)
+
+    def to_index(self, fidelities: torch.Tensor | tuple) -> torch.Tensor:
+        return torch.tensor(
+            [self.fid_to_idx[float(f)] for f in fidelities],
+            dtype=torch.long
+        )
+
+    def to_value(self, indices: torch.Tensor | tuple[int, ...]) -> torch.Tensor:
+        return torch.tensor(
+            [self.idx_to_fid[int(i)] for i in indices],
+            dtype=torch.float64
+        )
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()

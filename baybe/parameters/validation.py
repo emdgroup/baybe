@@ -43,3 +43,18 @@ def validate_is_finite(  # noqa: DOC101, DOC103
             f"Cannot assign the following values containing infinity/nan to "
             f"parameter {obj.name}: {value}."
         )
+
+def validate_same_shape(
+    obj: Any,
+    name_1: str,
+    tuple_1: tuple[float, ...], 
+    name_2: str,
+    tuple_2: tuple[float, ...],
+) -> None: 
+    """Validate that 'tuple_2' with matching 'name_2' has the same length as 'tuple_1' with 'name_1'"""
+    
+    if len(tuple_1) != len(tuple_2): 
+        raise ValueError(
+            f"Incompatible lengths for assignments {name_1} and {name_2} in parameter {obj.name}."
+            f"{name_1} has length {len(tuple_1)} while {name_2} has length {len(tuple_2)}."
+        )
