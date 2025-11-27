@@ -8,8 +8,7 @@ import torch
 from attrs import define, field
 from botorch.models import SingleTaskGP
 from botorch.models.model import Model
-from botorch.posteriors import GPyTorchPosterior, Posterior
-from gpytorch.distributions import MultivariateNormal
+from botorch.posteriors import Posterior
 from torch import Tensor
 from typing_extensions import override
 
@@ -328,143 +327,45 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
-        """Compute posterior predictions.
-
-        This method handles prediction for candidates that may contain
-        task indices for any of the available tasks (source or target).
+        """Compute posterior predictions for target task only.
 
         Args:
-            candidates_comp_scaled: Candidate points in computational
-                representation. Should include task indices in same format as
-                training data.
+            candidates_comp_scaled: Candidate points in computational representation.
+                                   Must contain only target task data.
 
         Returns:
             Posterior distribution for the candidate points.
 
         Raises:
             ModelNotTrainedError: If model hasn't been trained yet.
+            ValueError: If candidates contain source task data.
         """
         if self._target_gp is None:
             raise ModelNotTrainedError(
                 "Model must be fitted before making predictions. Call fit() first."
             )
 
-        # Handle non-batched inputs by adding a batch dimension
-        if candidates_comp_scaled.dim() == 2:
-            candidates_comp_scaled = candidates_comp_scaled.unsqueeze(0)
-            unbatch_output = True
+        # Check for source task data and reject it
+        task_indices = candidates_comp_scaled[:, self._task_column_idx].long()
+        if torch.any(task_indices != self._target_task_id).item():
+            raise ValueError(
+                "SourcePriorGaussianProcessSurrogate only supports predictions on "
+                "target task data. Found source task data in candidates."
+            )
+
+        # Extract target task features by removing task column
+        if self._task_column_idx == -1:
+            target_features = candidates_comp_scaled[:, :-1]
         else:
-            unbatch_output = False
-
-        # Save original shape for reshaping outputs later
-        batch_shape = candidates_comp_scaled.shape[
-            :-2
-        ]  # Everything except the last two dimensions
-        n_points = candidates_comp_scaled.shape[-2]  # Number of points
-
-        # Get dtype from the target GP to ensure consistency
-        gp_dtype = next(self._target_gp.parameters()).dtype
-        device = candidates_comp_scaled.device
-
-        # Process each batch element separately
-        batch_means = []
-        batch_covs = []
-
-        # Iterate over batch elements
-        for batch_idx in range(batch_shape.numel()):
-            # Get flat batch index
-            batch_indices = []
-            remaining = batch_idx
-            for dim_size in reversed(batch_shape):
-                batch_indices.insert(0, remaining % dim_size)
-                remaining = remaining // dim_size
-
-            # Extract data for this batch
-            if batch_shape.numel() == 1:
-                # Single batch dimension
-                candidates_batch = candidates_comp_scaled[batch_idx]
-            else:
-                # Multiple batch dimensions
-                candidates_batch = candidates_comp_scaled[tuple(batch_indices)]
-
-            # Initialize output tensors for this batch
-            batch_mean = torch.zeros(n_points, 1, dtype=gp_dtype, device=device)
-            batch_cov = torch.eye(n_points, dtype=gp_dtype, device=device) * 1e-6
-
-            # Extract task indices from candidates
-            task_indices = candidates_batch[:, self._task_column_idx].long()
-            target_mask = task_indices == self._target_task_id
-            source_mask = ~target_mask
-
-            # Extract source and target candidate points
-            source_data, (X_target, Y_target) = self._extract_task_data(
-                X=candidates_batch,
-                Y=None,
-                task_feature=self._task_column_idx,
-                target_task=self._target_task_id,
+            target_features = torch.cat(
+                [
+                    candidates_comp_scaled[:, : self._task_column_idx],
+                    candidates_comp_scaled[:, self._task_column_idx + 1 :],
+                ],
+                dim=1,
             )
 
-            # Handle target predictions if we have target candidates
-            if target_mask.any():
-                target_posterior = self._target_gp.posterior(X_target)
-                target_mean = target_posterior.mean
-                target_var = target_posterior.variance
-
-                # Fill in target predictions
-                batch_mean[target_mask] = target_mean
-
-                # Fill target covariance (diagonal approximation for simplicity)
-                target_indices = torch.where(target_mask)[0]
-                for i, idx in enumerate(target_indices):
-                    batch_cov[idx, idx] = target_var[i]
-
-            # Handle source predictions if we have source candidates
-            if source_mask.any() and len(source_data) > 0:
-                X_source, Y_source = source_data[0]
-
-                # Use source GP for source predictions
-                source_posterior = self._source_gp.posterior(X_source)
-                source_mean = source_posterior.mean
-                source_var = source_posterior.variance
-
-                # Fill in source predictions
-                batch_mean[source_mask] = source_mean
-
-                # Fill source covariance (diagonal approximation for simplicity)
-                source_indices = torch.where(source_mask)[0]
-                for i, idx in enumerate(source_indices):
-                    batch_cov[idx, idx] = source_var[i]
-
-            batch_means.append(batch_mean)
-            batch_covs.append(batch_cov)
-
-        # Stack results along batch dimension
-        if batch_shape.numel() == 1:
-            # Single batch dimension
-            stacked_means = torch.stack(batch_means, dim=0)
-            stacked_covs = torch.stack(batch_covs, dim=0)
-        else:
-            # Multiple batch dimensions - reshape to original batch shape
-            stacked_means = torch.stack(batch_means, dim=0).reshape(
-                *batch_shape, n_points, 1
-            )
-            stacked_covs = torch.stack(batch_covs, dim=0).reshape(
-                *batch_shape, n_points, n_points
-            )
-
-        # Remove extra batch dimension if input wasn't batched
-        if unbatch_output:
-            stacked_means = stacked_means.squeeze(0)
-            stacked_covs = stacked_covs.squeeze(0)
-
-        # Create the MultivariateNormal distribution
-        mvn = MultivariateNormal(
-            stacked_means.squeeze(-1),  # Remove last dimension: (..., n, 1) -> (..., n)
-            stacked_covs,
-        )
-        posterior = GPyTorchPosterior(mvn)
-
-        return posterior
+        return self._target_gp.posterior(target_features)
 
     @override
     def to_botorch(self) -> Model:
