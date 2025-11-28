@@ -246,15 +246,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-             Solvent                Base                        Ligand  \
-    50   Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
-    331     p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
-    96   Butyl Ester  Potassium pivalate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    322           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    214  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    350       p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    50         105.0          0.153  
-    331        120.0          0.100  
-    96         120.0          0.057  
+    322        120.0          0.100  
+    214        120.0          0.100  
+    350        120.0          0.153  
 
 
 
@@ -267,15 +267,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-             Solvent                Base                        Ligand  \
-    50   Butyl Ester     Cesium pivalate  Di-tert-butylphenylphosphine   
-    331     p-Xylene      Cesium acetate                 (t-Bu)PhCPhos   
-    96   Butyl Ester  Potassium pivalate                     BrettPhos   
+               Solvent                Base                        Ligand  \
+    322           DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+    214  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
+    350       p-Xylene      Cesium acetate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    50         105.0          0.153  53.248860  
-    331        120.0          0.100 -31.812734  
-    96         120.0          0.057 -29.931373  
+    322        120.0          0.100  16.620041  
+    214        120.0          0.100  20.622276  
+    350        120.0          0.153  11.733968  
 
 
 
