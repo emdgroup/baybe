@@ -188,7 +188,7 @@ class GaussianProcessSurrogate(Surrogate):
             task_comp_rep = task_param.comp_df.iloc[:, 0]
             model_kwargs = {
                 "task_feature": context.task_idx,
-                "output_tasks": task_comp_rep[list(task_param.active_values)],  # type: ignore[index]
+                "output_tasks": task_comp_rep[list(task_param.active_values)].to_list(),  # type: ignore[index]
                 "all_tasks": task_comp_rep.to_list(),
                 "validate_task_values": False,
             }
