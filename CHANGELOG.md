@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
 - `DesirabilityObjective` now properly interplays with analytical acquisition functions
+- `farthest_point_sampling` now correctly handles predefined `initialization` indices
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)

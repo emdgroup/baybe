@@ -216,6 +216,17 @@ def test_fps_utility_expected_errors(points, n_requested, initialization, match)
         farthest_point_sampling(points, n_requested, initialization=initialization)
 
 
+def test_fps_recommender_utility_initialization_indices(searchspace):
+    """FPS utilities return expected indices when initialization indices are used."""
+    points = searchspace.discrete.comp_rep.values
+    inds1 = farthest_point_sampling(points, 3, initialization=[0])
+    inds2 = farthest_point_sampling(points, 3, initialization=[1, 2])
+
+    assert inds1[0] == 0
+    assert inds2[0] == 1
+    assert inds2[1] == 2
+
+
 def test_fps_recommender_utility_call(searchspace):
     """FPSRecommender calls expected underlying utility."""
     if FPSAMPLE_USED:
