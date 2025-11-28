@@ -195,6 +195,9 @@ class SearchSpace(SerialMixin):
         Returns:
             A new SearchSpace without TaskParameter instances. If no TaskParameter
             exists, returns a copy of the original SearchSpace.
+
+        Raises:
+            ValueError: If removing TaskParameters would result in an empty SearchSpace.
         """
         all_parameters = list(self.parameters)
         filtered_parameters = [
@@ -202,7 +205,10 @@ class SearchSpace(SerialMixin):
         ]
 
         if not filtered_parameters:
-            return SearchSpace()
+            raise ValueError(
+                "Cannot remove TaskParameters: this would result in an empty SearchSpace. "
+                "At least one non-TaskParameter must be present."
+            )
 
         return SearchSpace.from_product(
             parameters=filtered_parameters, constraints=list(self.constraints)
