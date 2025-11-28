@@ -71,10 +71,7 @@ BATCH_SIZE = 1
 TEMPERATURES = [90, 105, 120]
 CONCENTRATIONS = [0.057, 0.1, 0.153]
 TARGET_TEMPERATURES = [90, 105, 120]
-if not SMOKE_TEST:
-    SAMPLE_FRACTIONS = [0.01, 0.02, 0.05, 0.1, 0.2]
-else:
-    SAMPLE_FRACTIONS = [0.01, 0.02]
+SAMPLE_FRACTIONS = [0.01, 0.02] if SMOKE_TEST else [0.01, 0.02, 0.05, 0.1, 0.2]
 
 # ## Loading the Experimental Dataset
 
