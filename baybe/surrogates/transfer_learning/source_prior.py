@@ -14,7 +14,10 @@ from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
 from baybe.parameters import TaskParameter
 from baybe.searchspace.core import SearchSpace
-from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.surrogates.gaussian_process.core import (
+    GaussianProcessSurrogate,
+    TransferConfig,
+)
 
 
 @define
@@ -26,6 +29,9 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
     2. Training a source GP on source task data (without task dimension)
     3. Training a target GP on target task data, using source GP as prior
     4. Using only the target GP for predictions
+
+    Transfer learning is configured via TransferConfig objects that specify how to
+    transfer mean functions and/or covariance functions from the source GP.
     """
 
     # Class variables
@@ -35,11 +41,13 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
     supports_multi_output: ClassVar[bool] = False
     """Class variable encoding multi-output compatibility."""
 
-    use_prior_mean: bool = field(default=True)
-    """Whether to use the source GP as prior mean for the target GP."""
+    mean_transfer: TransferConfig | None = field(
+        default=TransferConfig("freeze", "source")
+    )
+    """Configuration for transferring mean function from source GP."""
 
-    use_prior_kernel: bool = field(default=False)
-    """Whether to use the source GP's kernel as prior kernel for the target GP."""
+    covariance_transfer: TransferConfig | None = field(default=None)
+    """Configuration for transferring covariance from source GP."""
 
     # Private attributes for storing model state
     _source_surrogate: GaussianProcessSurrogate | None = field(
@@ -121,26 +129,23 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         if len(target_data) == 0:
             # No target data - use source surrogate directly
             self._target_surrogate = self._source_surrogate  # type: ignore[return-value]
-
-        if self.use_prior_mean and not self.use_prior_kernel:
-            # Transfer learning mode: use source GP as mean prior
-            self._target_surrogate = GaussianProcessSurrogate.from_prior_gp(
-                prior_gp=self._source_surrogate.to_botorch(),  # type: ignore[union-attr]
-                transfer_mode="mean",
-                kernel_factory=self.kernel_factory,
-            )
-        elif self.use_prior_kernel and not self.use_prior_mean:
-            # Transfer learning mode: use source GP's kernel as prior
-            self._target_surrogate = GaussianProcessSurrogate.from_prior_gp(
-                prior_gp=self._source_surrogate.to_botorch(),  # type: ignore[union-attr]
-                transfer_mode="kernel",
-                kernel_factory=self.kernel_factory,
-            )
-
         else:
-            raise NotImplementedError()
-
-        if len(target_data) > 0:
+            # Create target surrogate with transfer learning (if configured)
+            if self.mean_transfer is not None or self.covariance_transfer is not None:
+                # Transfer learning mode: use TransferConfig interface
+                self._target_surrogate = GaussianProcessSurrogate.from_prior_gp(
+                    prior_gp=self._source_surrogate.to_botorch(),  # type: ignore[union-attr]
+                    mean_transfer=self.mean_transfer,
+                    covariance_transfer=self.covariance_transfer,
+                    kernel_factory=self.kernel_factory,
+                )
+            else:
+                # No transfer learning is not supported in this class
+                raise ValueError(
+                    "At least one of mean_transfer or covariance_transfer must be set "
+                    "for SourcePriorGaussianProcessSurrogate."
+                )
+            # Fit the target surrogate with target data
             self._target_surrogate.fit(reduced_searchspace, objective, target_data)
 
     @override
@@ -155,14 +160,14 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
         Raises:
             ModelNotTrainedError: If model not fitted
-            ValueError: If candidates contain source task data (when task column present)
+            ValueError: If candidates contain source task data
         """
-        # TODO: Validate that candidates do not contain source task data if task column present
-        tasks = (
-            candidates.get(self._task_name).unique()
-            if self._task_name in candidates.columns
-            else None
-        )
+        # TODO: Validate that candidates do not contain source task data
+        # tasks = (
+        #     candidates.get(self._task_name).unique()
+        #     if self._task_name in candidates.columns
+        #     else None
+        # )
 
         if self._target_surrogate is None:
             raise ModelNotTrainedError("Model must be fitted first")

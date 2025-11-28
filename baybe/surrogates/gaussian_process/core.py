@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import gc
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, Literal
 
 from attrs import define, field
@@ -33,6 +34,34 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
+
+
+@dataclass(frozen=True)
+class TransferConfig:
+    """Configuration for how to transfer a component from prior GP.
+
+    Args:
+        hyperparameters: How to handle hyperparameters from prior
+            - "ignore": Don't use prior hyperparameters (train from scratch)
+            - "initialize": Initialize from prior hyperparameters (then optimize)
+            - "freeze": Use prior hyperparameters as fixed values
+        evaluation_domain: Where to evaluate the transferred component
+            - "source": Evaluate at source domain inputs
+            - "target": Evaluate at target domain inputs
+    """
+
+    hyperparameters: Literal["ignore", "initialize", "freeze"] = "ignore"
+    evaluation_domain: Literal["source", "target"] = "target"
+
+    def __post_init__(self) -> None:
+        """Validate configuration parameters."""
+        valid_hp_options = {"ignore", "initialize", "freeze"}
+        valid_domain_options = {"source", "target"}
+
+        if self.hyperparameters not in valid_hp_options:
+            raise ValueError(f"hyperparameters must be one of {valid_hp_options}")
+        if self.evaluation_domain not in valid_domain_options:
+            raise ValueError(f"evaluation_domain must be one of {valid_domain_options}")
 
 
 @define
@@ -118,10 +147,15 @@ class GaussianProcessSurrogate(Surrogate):
     _prior_gp = field(init=False, default=None, eq=False)
     """Prior GP to extract mean/covariance from for transfer learning."""
 
-    _transfer_mode: Literal["mean", "kernel"] | None = field(
+    _mean_transfer_config: TransferConfig | None = field(
         init=False, default=None, eq=False
     )
-    """Transfer learning mode: 'mean' uses prior as mean function, 'kernel' uses prior covariance."""
+    """Configuration for mean function transfer learning."""
+
+    _covariance_transfer_config: TransferConfig | None = field(
+        init=False, default=None, eq=False
+    )
+    """Configuration for covariance transfer learning."""
 
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
@@ -132,25 +166,32 @@ class GaussianProcessSurrogate(Surrogate):
     def from_prior_gp(
         cls,
         prior_gp,
-        transfer_mode: Literal["mean", "kernel"] = "mean",
+        mean_transfer: TransferConfig | None = None,
+        covariance_transfer: TransferConfig | None = None,
         kernel_factory: KernelFactory | None = None,
         **kwargs,
     ) -> GaussianProcessSurrogate:
-        """Create a GP surrogate from a prior GP.
+        """Create a GP surrogate with granular transfer learning control.
+
+        Currently only supports two specific transfer combinations:
+        1. Mean transfer only: mean_transfer=TransferConfig("freeze", "source"),
+           covariance_transfer=None
+        2. Covariance transfer only: mean_transfer=None,
+           covariance_transfer=TransferConfig("freeze", "target")
 
         Args:
             prior_gp: Fitted SingleTaskGP to use as prior
-            transfer_mode: "mean" extracts posterior mean as prior mean,
-                          "kernel" uses prior's covariance
-            kernel_factory: Kernel factory for new covariance (required for mean mode,
-                           ignored for kernel mode)
-            **kwargs: Additional arguments passed to GaussianProcessSurrogate constructor
+            mean_transfer: Configuration for transferring mean function
+            covariance_transfer: Configuration for transferring covariance
+            kernel_factory: Kernel factory for non-transferred components
+            **kwargs: Additional arguments for GaussianProcessSurrogate constructor
 
         Returns:
-            New GaussianProcessSurrogate instance with prior mean or covariance
+            New GaussianProcessSurrogate instance with configured transfer learning
 
         Raises:
             ValueError: If prior_gp is not fitted or configuration is invalid
+            NotImplementedError: For currently unsupported transfer combinations
         """
         from copy import deepcopy
 
@@ -162,23 +203,52 @@ class GaussianProcessSurrogate(Surrogate):
         if not hasattr(prior_gp, "train_inputs") or prior_gp.train_inputs is None:
             raise ValueError("Prior GP must be fitted (have train_inputs) before use")
 
-        # Validate transfer mode configuration
-        if transfer_mode not in ["mean", "kernel"]:
-            raise ValueError("transfer_mode must be 'mean' or 'kernel'")
+        # Validate that at least one transfer is configured
+        if mean_transfer is None and covariance_transfer is None:
+            raise ValueError(
+                "At least one of mean_transfer or covariance_transfer must be specified"
+            )
 
-        if transfer_mode == "mean" and kernel_factory is None:
-            raise ValueError("kernel_factory is required for mean transfer mode")
+        # Check for supported combinations only
+        mean_only_mode = (
+            mean_transfer is not None
+            and mean_transfer.hyperparameters == "freeze"
+            and mean_transfer.evaluation_domain == "source"
+            and covariance_transfer is None
+        )
 
-        # For kernel transfer, kernel_factory is ignored (we use prior's kernel)
-        if transfer_mode == "kernel":
-            kernel_factory = kernel_factory or DefaultKernelFactory()
+        covariance_only_mode = (
+            covariance_transfer is not None
+            and covariance_transfer.hyperparameters == "freeze"
+            and covariance_transfer.evaluation_domain == "target"
+            and mean_transfer is None
+        )
+
+        if not (mean_only_mode or covariance_only_mode):
+            raise NotImplementedError(
+                "Currently only two transfer combinations are supported:\n"
+                "1. Mean only: mean_transfer=TransferConfig('freeze', 'source'),"
+                "covariance_transfer=None\n"
+                "2. Covariance only: mean_transfer=None,"
+                "covariance_transfer=TransferConfig('freeze', 'target')"
+            )
+
+        # Configure kernel factory based on what's being transferred
+        if kernel_factory is None:
+            if covariance_transfer is None:
+                # Need kernel factory when not transferring covariance
+                kernel_factory = DefaultKernelFactory()
+            # When transferring covariance, we'll use the prior's covariance
 
         # Create new surrogate instance
-        instance = cls(kernel_or_factory=kernel_factory, **kwargs)
+        instance = cls(
+            kernel_or_factory=kernel_factory or DefaultKernelFactory(), **kwargs
+        )
 
         # Configure for transfer learning
         instance._prior_gp = deepcopy(prior_gp)
-        instance._transfer_mode = transfer_mode
+        instance._mean_transfer_config = mean_transfer
+        instance._covariance_transfer_config = covariance_transfer
 
         return instance
 
@@ -242,13 +312,13 @@ class GaussianProcessSurrogate(Surrogate):
             outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
         # Configure mean module
-        if self._prior_gp is not None and self._transfer_mode == "mean":
+        if self._mean_transfer_config is not None:
             mean_module = PriorMean(self._prior_gp, batch_shape=batch_shape)
         else:
             mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # Configure base covariance module
-        if self._prior_gp is not None and self._transfer_mode == "kernel":
+        if self._covariance_transfer_config is not None:
             base_covar_module = PriorKernel(self._prior_gp.covar_module)
         else:
             # Use kernel factory

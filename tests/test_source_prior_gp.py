@@ -7,6 +7,7 @@ import torch
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.searchspace import SearchSpace
+from baybe.surrogates.gaussian_process.core import TransferConfig
 from baybe.surrogates.transfer_learning.source_prior import (
     SourcePriorGaussianProcessSurrogate,
 )
@@ -175,21 +176,22 @@ def test_source_prior_gp_transfer_modes():
 
     # Test with prior mean transfer
     surrogate_mean = SourcePriorGaussianProcessSurrogate(
-        use_prior_mean=True, use_prior_kernel=False
+        mean_transfer=TransferConfig("freeze", "source"), covariance_transfer=None
     )
     surrogate_mean.fit(searchspace, objective, measurements)
     assert surrogate_mean._target_surrogate is not None
 
     # Test with prior kernel transfer
     surrogate_kernel = SourcePriorGaussianProcessSurrogate(
-        use_prior_mean=False, use_prior_kernel=True
+        mean_transfer=None, covariance_transfer=TransferConfig("freeze", "target")
     )
     surrogate_kernel.fit(searchspace, objective, measurements)
     assert surrogate_kernel._target_surrogate is not None
 
-    # Test without transfer (independent GP)
-    surrogate_independent = SourcePriorGaussianProcessSurrogate(
-        use_prior_mean=False, use_prior_kernel=False
-    )
-    with pytest.raises(NotImplementedError):
+    with pytest.raises(
+        ValueError,
+    ):
+        surrogate_independent = SourcePriorGaussianProcessSurrogate(
+            mean_transfer=None, covariance_transfer=None
+        )
         surrogate_independent.fit(searchspace, objective, measurements)
