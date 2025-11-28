@@ -11,9 +11,7 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.constraints import (
-    validate_constraints,
-)
+from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
@@ -171,8 +169,6 @@ class SearchSpace(SerialMixin):
 
         Raises:
             ValueError: If the dataframe columns do not match with the parameters.
-            IncompatibilityError: If the dataframe contains non-active values.
-            ExceptionGroup: If multiple parameters have active_values validation errors.
         """
         if {p.name for p in parameters} != set(df.columns.values):
             raise ValueError(
@@ -182,7 +178,9 @@ class SearchSpace(SerialMixin):
 
         disc_params = [p for p in parameters if p.is_discrete]
         cont_params = [p for p in parameters if p.is_continuous]
+
         validate_dataframe_active_values(df, disc_params)
+
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(
                 df[[p.name for p in disc_params]],

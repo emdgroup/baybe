@@ -8,10 +8,7 @@ import pandas as pd
 
 from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import TaskParameter
-from baybe.parameters.base import (
-    Parameter,
-    _DiscreteLabelLikeParameter,
-)
+from baybe.parameters.base import Parameter, _DiscreteLabelLikeParameter
 from baybe.utils.dataframe import get_transform_objects
 
 try:  # For python < 3.11, use the exceptiongroup backport
@@ -57,37 +54,36 @@ def validate_parameters(parameters: Collection[Parameter]) -> None:  # noqa: DOC
 
 
 def validate_dataframe_active_values(
-    df: pd.DataFrame, parameters: Sequence[Parameter]
+    df: pd.DataFrame, /, parameters: Sequence[Parameter]
 ) -> None:
-    """Validate that the dataframe is compatible with the active_values of parameters.
+    """Validate a dataframe content against the active values of certain parameters.
 
     Args:
-        df: The dataframe to validate
-        parameters: Sequence of parameters to check against
+        df: The dataframe to validate.
+        parameters: The parameters to check against.
 
     Raises:
-        IncompatibilityError: If dataframe contains values not in active_values
-            of the parameters
-        ExceptionGroup: If multiple parameters have validation errors
+        ExceptionGroup: Contains a :class:`~baybe.exceptions.IncompatibilityError`
+            for each dataframe column with values outside the active values set of
+            the corresponding parameter.
     """
-    exceptions: list[Exception] = []
+    exceptions: list[IncompatibilityError] = []
 
     for param in parameters:
         if isinstance(param, _DiscreteLabelLikeParameter):
-            df_values = set(df[param.name].unique())
-            active_values_set = set(param.active_values)
-            if invalid_values := df_values - active_values_set:
+            df_values = set(df[param.name])
+            active_values = set(param.active_values)
+            if invalid_values := df_values - active_values:
                 exceptions.append(
                     IncompatibilityError(
-                        f"Dataframe column '{param.name}' contains invalid values "
-                        f"{invalid_values}. Only active values {param.active_values} "
-                        f"are allowed when using SearchSpace.from_dataframe."
+                        f"Dataframe column '{param.name}' contains the following "
+                        f"invalid values: {invalid_values}. Only values from the "
+                        f"active values of the corresponding parameter are allowed: "
+                        f"{param.active_values}."
                     )
                 )
     if exceptions:
-        if len(exceptions) == 1:
-            raise exceptions[0]
-        raise ExceptionGroup("Dataframe 'active_values' validation errors", exceptions)
+        raise ExceptionGroup("Dataframe validation errors", exceptions)
 
 
 def get_transform_parameters(
