@@ -10,6 +10,7 @@
 ### Imports
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,13 @@ from examples.utils import create_example_plots
 # The following settings are used to set up the problem:
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ  # reduce the problem complexity in CI pipelines
+
+# Skip in SMOKE_TEST mode due to BoTorch limitation with predicting for tasks not in
+# training data. See: https://github.com/meta-pytorch/botorch/issues/3085
+if SMOKE_TEST:
+    print("Skipping example in SMOKE_TEST mode due to BoTorch limitation.")
+    sys.exit(0)
+
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 50  # number of Monte Carlo runs

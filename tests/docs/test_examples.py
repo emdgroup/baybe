@@ -16,6 +16,12 @@ os.environ["SMOKE_TEST"] = "true"
 
 paths = [str(x) for x in Path("examples/").rglob("*.py")]
 
+# Examples that are known to fail due to BoTorch limitations
+# https://github.com/meta-pytorch/botorch/issues/3085
+KNOWN_FAILING_EXAMPLES = {
+    "examples/Transfer_Learning/basic_transfer_learning.py",
+}
+
 
 @pytest.mark.slow
 @pytest.mark.skipif(
@@ -29,6 +35,12 @@ def test_example(example: str):
     monkeypatching in some examples affecting other tests if they were executed in the
     same environment.
     """
+    if example in KNOWN_FAILING_EXAMPLES:
+        pytest.xfail(
+            reason="BoTorch MultiTaskGP cannot predict for tasks not in training "
+            "data. See: https://github.com/meta-pytorch/botorch/issues/3085"
+        )
+
     env = os.environ | {
         "PYTHONPATH": os.getcwd(),  # to ensure examples are found
         "MPLBACKEND": "Agg",  # avoid popups resulting from plt.show()
