@@ -150,7 +150,6 @@ lookup_task["Temp_C"] = lookup_task["Temp_C"].astype(str)
 
 
 all_results = {}
-
 for target_temp in TARGET_TEMPERATURES:
     training_temps = [t for t in TEMPERATURES if t != target_temp]
 
