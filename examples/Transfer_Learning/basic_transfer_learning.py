@@ -4,12 +4,12 @@
 # experimental data from chemical synthesis. We explore how knowledge gained from
 # optimization experiments under certain reaction conditions can be transferred to
 # accelerate optimization under different conditions. Specifically, we investigate a
-# setting where:
-# * we have **historical experimental data** from chemical reactions conducted at
+# setting where we:
+# * have **historical experimental data** from chemical reactions conducted at
 #   different temperatures
-#   (taken from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)),
-# * we want to **optimize reaction yield** at a new target temperature,
-# * we can leverage the **relationships between reaction conditions** to accelerate
+#   (taken from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y))
+# * want to **maximize reaction yield** at a new target temperature
+# * can leverage the **relationships between reaction conditions** to accelerate
 #   the optimization process.
 
 # ## Imports and Settings
