@@ -12,7 +12,7 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
+from baybe.exceptions import EmptySearchSpaceError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -392,9 +392,9 @@ def test_task_parameter_active_values_validation():
     with pytest.raises(ExceptionGroup):
         SearchSpace.from_dataframe(df, parameters=[num_param, task_param, cat_param])
 
-    # One parameter invalid (IncompatibilityError)
+    # One parameter invalid (ExceptionGroup)
     single_source_df = df[df["method"] == "new"]
-    with pytest.raises(IncompatibilityError):
+    with pytest.raises(ExceptionGroup):
         SearchSpace.from_dataframe(
             single_source_df, parameters=[num_param, task_param, cat_param]
         )
