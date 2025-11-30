@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import gc
-from typing import TYPE_CHECKING, ClassVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from attrs import define, field
 from attrs.validators import instance_of
@@ -24,6 +25,7 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.surrogates.gaussian_process.prior_modules import PriorKernel, PriorMean
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -32,6 +34,34 @@ if TYPE_CHECKING:
     from botorch.models.transforms.outcome import OutcomeTransform
     from botorch.posteriors import Posterior
     from torch import Tensor
+
+
+@dataclass(frozen=True)
+class TransferConfig:
+    """Configuration for how to transfer a component from prior GP.
+
+    Args:
+        hyperparameters: How to handle hyperparameters from prior
+            - "ignore": Don't use prior hyperparameters (train from scratch)
+            - "initialize": Initialize from prior hyperparameters (then optimize)
+            - "freeze": Use prior hyperparameters as fixed values
+        evaluation_domain: Where to evaluate the transferred component
+            - "source": Evaluate at source domain inputs
+            - "target": Evaluate at target domain inputs
+    """
+
+    hyperparameters: Literal["ignore", "initialize", "freeze"] = "ignore"
+    evaluation_domain: Literal["source", "target"] = "target"
+
+    def __post_init__(self) -> None:
+        """Validate configuration parameters."""
+        valid_hp_options = {"ignore", "initialize", "freeze"}
+        valid_domain_options = {"source", "target"}
+
+        if self.hyperparameters not in valid_hp_options:
+            raise ValueError(f"hyperparameters must be one of {valid_hp_options}")
+        if self.evaluation_domain not in valid_domain_options:
+            raise ValueError(f"evaluation_domain must be one of {valid_domain_options}")
 
 
 @define
@@ -113,10 +143,114 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    # Transfer learning fields
+    _prior_gp = field(init=False, default=None, eq=False)
+    """Prior GP to extract mean/covariance from for transfer learning."""
+
+    _mean_transfer_config: TransferConfig | None = field(
+        init=False, default=None, eq=False
+    )
+    """Configuration for mean function transfer learning."""
+
+    _covariance_transfer_config: TransferConfig | None = field(
+        init=False, default=None, eq=False
+    )
+    """Configuration for covariance transfer learning."""
+
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
+
+    @classmethod
+    def from_prior_gp(
+        cls,
+        prior_gp,
+        mean_transfer: TransferConfig | None = None,
+        covariance_transfer: TransferConfig | None = None,
+        kernel_factory: KernelFactory | None = None,
+        **kwargs,
+    ) -> GaussianProcessSurrogate:
+        """Create a GP surrogate with granular transfer learning control.
+
+        Currently only supports two specific transfer combinations:
+        1. Mean transfer only: mean_transfer=TransferConfig("freeze", "source"),
+           covariance_transfer=None
+        2. Covariance transfer only: mean_transfer=None,
+           covariance_transfer=TransferConfig("freeze", "target")
+
+        Args:
+            prior_gp: Fitted SingleTaskGP to use as prior
+            mean_transfer: Configuration for transferring mean function
+            covariance_transfer: Configuration for transferring covariance
+            kernel_factory: Kernel factory for non-transferred components
+            **kwargs: Additional arguments for GaussianProcessSurrogate constructor
+
+        Returns:
+            New GaussianProcessSurrogate instance with configured transfer learning
+
+        Raises:
+            ValueError: If prior_gp is not fitted or configuration is invalid
+            NotImplementedError: For currently unsupported transfer combinations
+        """
+        from copy import deepcopy
+
+        from botorch.models import SingleTaskGP
+
+        # Validate prior GP is fitted
+        if not isinstance(prior_gp, SingleTaskGP):
+            raise ValueError("prior_gp must be a fitted SingleTaskGP instance")
+        if not hasattr(prior_gp, "train_inputs") or prior_gp.train_inputs is None:
+            raise ValueError("Prior GP must be fitted (have train_inputs) before use")
+
+        # Validate that at least one transfer is configured
+        if mean_transfer is None and covariance_transfer is None:
+            raise ValueError(
+                "At least one of mean_transfer or covariance_transfer must be specified"
+            )
+
+        # Check for supported combinations only
+        mean_only_mode = (
+            mean_transfer is not None
+            and mean_transfer.hyperparameters == "freeze"
+            and mean_transfer.evaluation_domain == "source"
+            and covariance_transfer is None
+        )
+
+        covariance_only_mode = (
+            covariance_transfer is not None
+            and covariance_transfer.hyperparameters == "freeze"
+            and covariance_transfer.evaluation_domain == "target"
+            and mean_transfer is None
+        )
+
+        if not (mean_only_mode or covariance_only_mode):
+            raise NotImplementedError(
+                "Currently only two transfer combinations are supported:\n"
+                "1. Mean only: mean_transfer=TransferConfig('freeze', 'source'),"
+                "covariance_transfer=None\n"
+                "2. Covariance only: mean_transfer=None,"
+                "covariance_transfer=TransferConfig('freeze', 'target')"
+            )
+
+        # Configure kernel factory based on what's being transferred
+        if kernel_factory is None:
+            if covariance_transfer is None:
+                # Need kernel factory when not transferring covariance
+                kernel_factory = DefaultKernelFactory()
+            # When transferring covariance, we'll use the prior's covariance
+
+        # Create new surrogate instance
+        instance = cls(
+            kernel_or_factory=kernel_factory or DefaultKernelFactory(), **kwargs
+        )
+
+        # Configure for transfer learning
+        instance._prior_gp = deepcopy(prior_gp)
+        instance._mean_transfer_config = mean_transfer
+        instance._covariance_transfer_config = covariance_transfer
+
+        return instance
 
     @override
     def to_botorch(self) -> GPyTorchModel:
@@ -140,62 +274,81 @@ class GaussianProcessSurrogate(Surrogate):
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> Posterior:
         return self._model.posterior(candidates_comp_scaled)
 
-    @override
-    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+    def _initialize_model(
+        self,
+        train_x: Tensor,
+        train_y: Tensor,
+        context: _ModelContext,
+        batch_shape,
+    ) -> None:
+        """Initialize the GP model with appropriate mean and covariance modules.
+
+        Handles both standard GP creation and creation of GP from given prior.
+
+        Args:
+            train_x: Training input data
+            train_y: Training target data
+            context: Model context containing searchspace information
+            batch_shape: Batch shape for the training data
+        """
         import botorch
         import gpytorch
         import torch
 
-        # FIXME[typing]: It seems there is currently no better way to inform the type
-        #   checker that the attribute is available at the time of the function call
-        assert self._searchspace is not None
-
-        context = _ModelContext(self._searchspace)
-
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
 
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=list(numerical_idxs),
-        )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+        # Configure input/output transforms
+        if self._prior_gp is not None:
+            # Use prior's transforms for consistency in transfer learning
+            input_transform = self._prior_gp.input_transform
+            outcome_transform = self._prior_gp.outcome_transform
+        else:
+            # Standard transform setup
+            input_transform = botorch.models.transforms.Normalize(
+                train_x.shape[-1],
+                bounds=context.parameter_bounds,
+                indices=numerical_idxs,
+            )
+            outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 
-        # extract the batch shape of the training data
-        batch_shape = train_x.shape[:-2]
+        # Configure mean module
+        if self._mean_transfer_config is not None:
+            mean_module = PriorMean(self._prior_gp, batch_shape=batch_shape)
+        else:
+            mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
-        # create GP mean
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
+        # Configure base covariance module
+        if self._covariance_transfer_config is not None:
+            base_covar_module = PriorKernel(self._prior_gp.covar_module)
+        else:
+            # Use kernel factory
+            base_covar_module = self.kernel_factory(
+                context.searchspace, train_x, train_y
+            ).to_gpytorch(
+                ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
+                active_dims=numerical_idxs,
+                batch_shape=batch_shape,
+            )
 
-        # define the covariance module for the numeric dimensions
-        base_covar_module = self.kernel_factory(
-            context.searchspace, train_x, train_y
-        ).to_gpytorch(
-            ard_num_dims=train_x.shape[-1] - context.n_task_dimensions,
-            active_dims=numerical_idxs,
-            batch_shape=batch_shape,
-        )
-
-        # create GP covariance
+        # Handle multi-task covariance (keep existing logic)
         if not context.is_multitask:
             covar_module = base_covar_module
         else:
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
-                rank=context.n_tasks,  # TODO: make controllable
+                rank=context.n_tasks,
             )
             covar_module = base_covar_module * task_covar_module
 
-        # create GP likelihood
+        # Configure likelihood (keep existing logic)
         noise_prior = _default_noise_factory(context.searchspace, train_x, train_y)
         likelihood = gpytorch.likelihoods.GaussianLikelihood(
             noise_prior=noise_prior[0].to_gpytorch(), batch_shape=batch_shape
         )
         likelihood.noise = torch.tensor([noise_prior[1]])
 
-        # construct and fit the Gaussian process
+        # Create the model
         self._model = botorch.models.SingleTaskGP(
             train_x,
             train_y,
@@ -205,6 +358,21 @@ class GaussianProcessSurrogate(Surrogate):
             covar_module=covar_module,
             likelihood=likelihood,
         )
+
+    @override
+    def _fit(self, train_x: Tensor, train_y: Tensor) -> None:
+        import botorch
+        import gpytorch
+
+        # FIXME[typing]: It seems there is currently no better way to inform the type
+        #   checker that the attribute is available at the time of the function call
+        assert self._searchspace is not None
+
+        context = _ModelContext(self._searchspace)
+        batch_shape = train_x.shape[:-2]
+
+        # Initialize model
+        self._initialize_model(train_x, train_y, context, batch_shape)
 
         # TODO: This is still a temporary workaround to avoid overfitting seen in
         #  low-dimensional TL cases. More robust settings are being researched.

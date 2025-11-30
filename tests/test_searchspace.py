@@ -17,6 +17,7 @@ from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.searchspace import (
     SearchSpace,
@@ -361,3 +362,46 @@ def test_polars_pandas_equivalence(parameters):
 
     # Assert equality
     assert_frame_equal(df_pl.to_pandas(), df_pd)
+
+
+def test_remove_task_parameters():
+    """Test SearchSpace.remove_task_parameters() method."""
+    task_param = TaskParameter(name="task", values=["A", "B"], active_values=["A"])
+    cont_param = NumericalContinuousParameter(name="x", bounds=(0, 1))
+    cat_param = CategoricalParameter(name="cat", values=["low", "high"])
+
+    searchspace = SearchSpace.from_product([task_param, cont_param, cat_param])
+    reduced_searchspace = searchspace.remove_task_parameters()
+    # Check that TaskParameter is removed
+    param_names = [p.name for p in reduced_searchspace.parameters]
+    assert "task" not in param_names
+    assert "x" in param_names
+    assert "cat" in param_names
+    assert len(reduced_searchspace.parameters) == 2
+
+
+def test_remove_task_parameters_no_task():
+    """Test remove_task_parameters when no TaskParameter exists."""
+    cont_param = NumericalContinuousParameter(name="x", bounds=(0, 1))
+    cat_param = CategoricalParameter(name="cat", values=["low", "high"])
+
+    searchspace = SearchSpace.from_product([cont_param, cat_param])
+    reduced_searchspace = searchspace.remove_task_parameters()
+
+    # Check all parameters are preserved
+    param_names = [p.name for p in reduced_searchspace.parameters]
+    assert "x" in param_names
+    assert "cat" in param_names
+    assert len(reduced_searchspace.parameters) == 2
+
+
+def test_remove_task_parameters_only_task():
+    """Test remove_task_parameters when only TaskParameter exists."""
+    task_param = TaskParameter(name="task", values=["A", "B"], active_values=["A"])
+
+    searchspace = SearchSpace.from_product([task_param])
+
+    with pytest.raises(
+        ValueError, match="Cannot remove TaskParameters.*empty SearchSpace"
+    ):
+        searchspace.remove_task_parameters()
