@@ -1207,7 +1207,9 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_samples</span><span class="p">))</span>
 
     <span class="c1"># Sort the points to produce the same result regardless of the input order</span>
-    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+    <span class="c1"># The choice here is done to produce the same results as fpsample==1.0.0</span>
+    <span class="c1"># See https://github.com/leonardodalinky/fpsample/issues/10</span>
+    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">T</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">points</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>
 
     <span class="c1"># Pre-compute the pairwise distances between all points</span>

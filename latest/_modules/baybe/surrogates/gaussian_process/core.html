@@ -1244,6 +1244,7 @@
         <span class="kn">import</span><span class="w"> </span><span class="nn">botorch</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">gpytorch</span>
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">Normalize</span><span class="p">,</span> <span class="n">Standardize</span>
 
         <span class="c1"># FIXME[typing]: It seems there is currently no better way to inform the type</span>
         <span class="c1">#   checker that the attribute is available at the time of the function call</span>
@@ -1254,12 +1255,12 @@
         <span class="n">numerical_idxs</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_numerical_indices</span><span class="p">(</span><span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
         <span class="c1"># For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.</span>
-        <span class="n">input_transform</span> <span class="o">=</span> <span class="n">botorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span>
+        <span class="n">input_transform</span> <span class="o">=</span> <span class="n">Normalize</span><span class="p">(</span>
             <span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
             <span class="n">bounds</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">parameter_bounds</span><span class="p">,</span>
             <span class="n">indices</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">numerical_idxs</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">botorch</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">transforms</span><span class="o">.</span><span class="n">Standardize</span><span class="p">(</span><span class="n">train_y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">outcome_transform</span> <span class="o">=</span> <span class="n">Standardize</span><span class="p">(</span><span class="n">train_y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
         <span class="c1"># extract the batch shape of the training data</span>
         <span class="n">batch_shape</span> <span class="o">=</span> <span class="n">train_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
