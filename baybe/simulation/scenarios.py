@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
+from attrs import define, field
+from attrs.validators import ge, instance_of, optional
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
@@ -22,6 +24,65 @@ if TYPE_CHECKING:
 _DEFAULT_SEED = 1337
 
 
+@define
+class _Rollouts:
+    """A utility class for managing multiple simulation rollouts."""
+
+    n_mc: int | None = field(
+        default=None, validator=optional([instance_of(int), ge(1)])
+    )
+    """The number of Monte Carlo runs.
+
+    * Integer values specify the number of Monte Carlo runs per initial data set.
+    * `None` means one Monte Carlo run per initial data set, but unlike when set to 1,
+      the random seed is incremented with each next data set.
+    """
+
+    n_initial_data: int | None = field(
+        default=None, validator=optional([instance_of(int), ge(1)])
+    )
+    """The number of initial data sets (if any)."""
+
+    initial_random_seed: int = field(
+        default=_DEFAULT_SEED,
+        converter=lambda x: _DEFAULT_SEED if x is None else x,
+        validator=instance_of(int),
+    )
+    """The random seed for the first Monte Carlo run."""
+
+    def __len__(self) -> int:
+        mc = self.n_mc or 1
+        data = self.n_initial_data if self.n_initial_data is not None else 1
+        return mc * data
+
+    def cases(self) -> pd.DataFrame:
+        """Get all rollout cases as a dataframe."""
+        cases = pd.DataFrame()
+        match self:
+            case _Rollouts(n_mc=None, n_initial_data=None):
+                cases = pd.DataFrame({"Monte_Carlo_Run": [0]})
+            case _Rollouts(n_mc=n_mc, n_initial_data=None):
+                cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc)})
+            case _Rollouts(n_mc=None, n_initial_data=n_initial_data):
+                cases = pd.DataFrame(
+                    {
+                        "Initial_Data": list(range(n_initial_data)),
+                        "Monte_Carlo_Run": 0,
+                    }
+                )
+            case _Rollouts(n_mc=n_mc, n_initial_data=n_initial_data):
+                cases = pd.MultiIndex.from_product(
+                    [
+                        list(range(n_initial_data)),
+                        range(n_mc),
+                    ],
+                    names=["Initial_Data", "Monte_Carlo_Run"],
+                ).to_frame(index=False)
+
+        cases["Random_Seed"] = cases["Monte_Carlo_Run"] + self.initial_random_seed
+        return cases
+
+
 def simulate_scenarios(
     scenarios: dict[Any, Campaign],
     lookup: pd.DataFrame | Callable[[pd.DataFrame], pd.DataFrame] | None = None,
@@ -31,7 +92,7 @@ def simulate_scenarios(
     n_doe_iterations: int | None = None,
     initial_data: list[pd.DataFrame] | None = None,
     groupby: list[str] | None = None,
-    n_mc_iterations: int = 1,
+    n_mc_iterations: int | None = None,
     random_seed: int | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -103,21 +164,10 @@ def simulate_scenarios(
         def simulate(
             Scenario: str,
             Monte_Carlo_Run: int,
+            Random_Seed: int,
             Initial_Data: int | None = None,
         ):
             """Callable for xyzpy simulation."""
-            # The random seed logic is based on the assumption that exactly one of the
-            # two counters is incremented by one per simulation run
-            assert (Initial_Data is None) or (Monte_Carlo_Run == 0)
-            Initial_Data = Initial_Data or 0
-
-            # We increase the seed for every new run, i.e., even if only the initial
-            # data is changed. This is particularly important for non-predictive
-            # recommenders, which would otherwise repeatedly return the same candidates
-            seed = (Monte_Carlo_Run + Initial_Data) + (
-                _DEFAULT_SEED if random_seed is None else random_seed
-            )
-
             data = None if initial_data is None else initial_data[Initial_Data]
             result = _simulate_groupby(
                 scenarios[Scenario],
@@ -126,12 +176,10 @@ def simulate_scenarios(
                 n_doe_iterations=n_doe_iterations,
                 initial_data=data,
                 groupby=groupby,
-                random_seed=seed,
+                random_seed=Random_Seed,
                 impute_mode=impute_mode,
                 noise_percent=noise_percent,
             )
-            if random_seed is not None:
-                result["Random_Seed"] = seed
             return SimulationResult(result)
 
         return simulate
@@ -139,7 +187,7 @@ def simulate_scenarios(
     def unpack_simulation_results(array: DataArray) -> pd.DataFrame:
         """Turn the xyzpy simulation results into a flat dataframe."""
         # Convert to dataframe and remove the wrapper layer
-        series = array.to_series()
+        series = array.to_series().dropna()
         series = series.apply(lambda x: x.result)
 
         # Un-nest all simulation results
@@ -154,10 +202,14 @@ def simulate_scenarios(
         return pd.concat(dfs, ignore_index=True)
 
     # Collect the settings to be simulated
-    combos = {"Scenario": scenarios.keys()}
-    combos["Monte_Carlo_Run"] = range(n_mc_iterations)
-    if initial_data:
-        combos["Initial_Data"] = range(len(initial_data))
+    rollouts = _Rollouts(
+        n_mc_iterations,
+        initial_data if initial_data is None else len(initial_data),
+        random_seed,
+    )
+    cases = pd.merge(
+        pd.DataFrame({"Scenario": scenarios.keys()}), rollouts.cases(), how="cross"
+    ).to_dict(orient="records")
 
     # Simulate and unpack
     result_variable = "simulation_result"
@@ -173,7 +225,7 @@ def simulate_scenarios(
             parallel_runs = strtobool(
                 os.environ.get("BAYBE_PARALLEL_SIMULATION_RUNS", "True")
             )
-        da_results = batch_simulator.run_combos(combos, parallel=parallel_runs)[
+        da_results = batch_simulator.run_cases(cases, parallel=parallel_runs)[
             result_variable
         ]
 
