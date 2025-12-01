@@ -316,8 +316,12 @@ If you find BayBE useful, please consider citing [our paper](https://doi.org/10.
 
 ```bibtex
 @article{baybe_2025,
-  author = "Fitzner, Martin and {\v S}o{\v s}i{\'c}, Adrian and Hopp, Alexander V. and M{\"u}ller, Marcel and Rihana, Rim and Hrovatin, Karin and Liebig, Fabian and Winkel, Mathias and Halter, Wolfgang and Brandenburg, Jan Gerit",
-  title  = "{BayBE}: a {B}ayesian {B}ack {E}nd for experimental planning in the low-to-no-data regime",
+  author = "Fitzner, Martin and {\v S}o{\v s}i{\'c}, Adrian and 
+            Hopp, Alexander V. and M{\"u}ller, Marcel and Rihana, Rim and 
+            Hrovatin, Karin and Liebig, Fabian and Winkel, Mathias and 
+            Halter, Wolfgang and Brandenburg, Jan Gerit",
+  title  = "{BayBE}: a {B}ayesian {B}ack {E}nd for experimental planning 
+            in the low-to-no-data regime",
   journal = "Digital Discovery",
   year = "2025",
   volume = "4",
