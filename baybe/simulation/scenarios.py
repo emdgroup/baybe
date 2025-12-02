@@ -206,7 +206,7 @@ def simulate_scenarios(
     # Collect the settings to be simulated
     rollouts = _Rollouts(
         n_mc_iterations,
-        initial_data if initial_data is None else len(initial_data),
+        len(initial_data) if initial_data is not None else None,
         random_seed,
     )
     cases = pd.merge(
