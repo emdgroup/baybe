@@ -52,9 +52,7 @@ class _Rollouts:
 
     def __len__(self) -> int:
         """The total number of simulation rollouts."""  # noqa: D401
-        mc = self.n_mc_iterations or 1
-        data = self.n_initial_data if self.n_initial_data is not None else 1
-        return mc * data
+        return (self.n_mc_iterations or 1) * (self.n_initial_data or 1)
 
     def cases(self) -> pd.DataFrame:
         """Get all rollout cases as a dataframe."""
