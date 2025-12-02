@@ -94,7 +94,7 @@ def simulate_scenarios(
     n_doe_iterations: int | None = None,
     initial_data: list[pd.DataFrame] | None = None,
     groupby: list[str] | None = None,
-    n_mc_iterations: int | None = None,
+    n_mc_iterations: int | None = 1,
     random_seed: int | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -117,7 +117,9 @@ def simulate_scenarios(
         groupby: The names of the parameters to be used to partition the search space.
             A separate simulation will be conducted for each partition, with the search
             restricted to that partition.
-        n_mc_iterations: The number of Monte Carlo simulations to be used.
+        n_mc_iterations: The number of Monte Carlo simulations to be used. If set to
+            `None`, one Monte Carlo simulation per initial data set is conducted, but
+            the random seed is incremented with each initial data set.
         random_seed: An optional integer specifying the random seed for the first Monte
             Carlo run. Each subsequent runs will increase this value by 1. If omitted,
             the current random seed is used.
