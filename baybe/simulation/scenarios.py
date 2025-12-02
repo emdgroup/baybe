@@ -28,7 +28,7 @@ _DEFAULT_SEED = 1337
 class _Rollouts:
     """A utility class for managing multiple simulation rollouts."""
 
-    n_mc: int | None = field(
+    n_mc_iterations: int | None = field(
         default=None, validator=optional([instance_of(int), ge(1)])
     )
     """The number of Monte Carlo runs.
@@ -52,7 +52,7 @@ class _Rollouts:
 
     def __len__(self) -> int:
         """The total number of simulation rollouts."""  # noqa: D401
-        mc = self.n_mc or 1
+        mc = self.n_mc_iterations or 1
         data = self.n_initial_data if self.n_initial_data is not None else 1
         return mc * data
 
@@ -60,22 +60,24 @@ class _Rollouts:
         """Get all rollout cases as a dataframe."""
         cases = pd.DataFrame()
         match self:
-            case _Rollouts(n_mc=None, n_initial_data=None):
+            case _Rollouts(n_mc_iterations=None, n_initial_data=None):
                 cases = pd.DataFrame({"Monte_Carlo_Run": [0]})
-            case _Rollouts(n_mc=n_mc, n_initial_data=None):
-                cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc)})
-            case _Rollouts(n_mc=None, n_initial_data=n_initial_data):
+            case _Rollouts(n_mc_iterations=n_mc_iterations, n_initial_data=None):
+                cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc_iterations)})
+            case _Rollouts(n_mc_iterations=None, n_initial_data=n_initial_data):
                 cases = pd.DataFrame(
                     {
                         "Initial_Data": list(range(n_initial_data)),
                         "Monte_Carlo_Run": 0,
                     }
                 )
-            case _Rollouts(n_mc=n_mc, n_initial_data=n_initial_data):
+            case _Rollouts(
+                n_mc_iterations=n_mc_iterations, n_initial_data=n_initial_data
+            ):
                 cases = pd.MultiIndex.from_product(
                     [
                         list(range(n_initial_data)),
-                        range(n_mc),
+                        range(n_mc_iterations),
                     ],
                     names=["Initial_Data", "Monte_Carlo_Run"],
                 ).to_frame(index=False)
