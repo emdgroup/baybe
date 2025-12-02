@@ -54,6 +54,7 @@ class _Rollouts:
         """The total number of simulation rollouts."""  # noqa: D401
         return (self.n_mc_iterations or 1) * (self.n_initial_data or 1)
 
+    @property
     def cases(self) -> pd.DataFrame:
         """Get all rollout cases as a dataframe."""
         cases = pd.DataFrame()
@@ -209,7 +210,7 @@ def simulate_scenarios(
         random_seed,
     )
     cases = pd.merge(
-        pd.DataFrame({"Scenario": scenarios.keys()}), rollouts.cases(), how="cross"
+        pd.DataFrame({"Scenario": scenarios.keys()}), rollouts.cases, how="cross"
     ).to_dict(orient="records")
 
     # Simulate and unpack
