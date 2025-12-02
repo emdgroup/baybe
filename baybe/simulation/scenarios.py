@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import pandas as pd
 from attrs import define, field
 from attrs.validators import ge, instance_of, optional
+from typing_extensions import assert_never
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
@@ -57,22 +58,19 @@ class _Rollouts:
     @property
     def cases(self) -> pd.DataFrame:
         """Get all rollout cases as a dataframe."""
-        cases = pd.DataFrame()
-        match self:
-            case _Rollouts(n_mc_iterations=None, n_initial_data=None):
+        match self.n_mc_iterations, self.n_initial_data:
+            case None, None:
                 cases = pd.DataFrame({"Monte_Carlo_Run": [0]})
-            case _Rollouts(n_mc_iterations=n_mc_iterations, n_initial_data=None):
+            case int(n_mc_iterations), None:
                 cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc_iterations)})
-            case _Rollouts(n_mc_iterations=None, n_initial_data=n_initial_data):
+            case None, int(n_initial_data):
                 cases = pd.DataFrame(
                     {
                         "Initial_Data": list(range(n_initial_data)),
                         "Monte_Carlo_Run": 0,
                     }
                 )
-            case _Rollouts(
-                n_mc_iterations=n_mc_iterations, n_initial_data=n_initial_data
-            ):
+            case int(n_mc_iterations), int(n_initial_data):
                 cases = pd.MultiIndex.from_product(
                     [
                         list(range(n_initial_data)),
@@ -80,6 +78,8 @@ class _Rollouts:
                     ],
                     names=["Initial_Data", "Monte_Carlo_Run"],
                 ).to_frame(index=False)
+            case _:
+                assert_never(self)
 
         cases["Random_Seed"] = cases["Monte_Carlo_Run"] + self.initial_random_seed
         return cases
