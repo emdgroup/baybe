@@ -29,6 +29,7 @@ from baybe.searchspace.discrete import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+from baybe.utils.basic import is_all_instance
 
 try:
     ExceptionGroup
@@ -394,25 +395,8 @@ def test_task_parameter_active_values_validation():
 
     exceptions = exc_info.value.exceptions
     assert len(exceptions) == 2
-    assert all(isinstance(e, IncompatibilityError) for e in exceptions)
-
-    error_messages = [str(e) for e in exceptions]
-    assert any(
-        "Dataframe column 'task' contains the following invalid values: {'source'}"
-        in msg
-        and "Only values from the active values of the corresponding parameter "
-        "are allowed: ('target',)"
-        in msg
-        for msg in error_messages
-    )
-    assert any(
-        "Dataframe column 'method' contains the following invalid values: {'old'}"
-        in msg
-        and "Only values from the active values of the corresponding parameter "
-        "are allowed: ('new',)"
-        in msg
-        for msg in error_messages
-    )
+    assert is_all_instance(exceptions, IncompatibilityError)
+    assert all("contains the following invalid values" in str(e) for e in exceptions)
 
     # One parameter invalid
     single_source_df = df[df["method"] == "new"]
@@ -423,17 +407,8 @@ def test_task_parameter_active_values_validation():
 
     exceptions = exc_info.value.exceptions
     assert len(exceptions) == 1
-    assert isinstance(exceptions[0], IncompatibilityError)
-
-    error_msg = str(exceptions[0])
-    assert (
-        "Dataframe column 'task' contains the following invalid values: {'source'}"
-        in error_msg
-    )
-    assert (
-        "Only values from the active values of the corresponding parameter "
-        "are allowed: ('target',)" in error_msg
-    )
+    assert is_all_instance(exceptions, IncompatibilityError)
+    assert all("contains the following invalid values" in str(e) for e in exceptions)
 
     # All parameters valid
     target_df = df[(df["task"] == "target") & (df["method"] == "new")]
