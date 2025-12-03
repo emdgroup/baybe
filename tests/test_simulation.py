@@ -69,27 +69,28 @@ def _validate_target_data(
     ],
 )
 @pytest.mark.parametrize(
-    "rollouts",
+    ("n_mc_iterations", "n_initial_data"),
     [
-        param(_Rollouts(n_mc_iterations=None, n_initial_data=None), id="one_run"),
-        param(_Rollouts(n_mc_iterations=2, n_initial_data=None), id="some_mc"),
-        param(_Rollouts(n_mc_iterations=None, n_initial_data=2), id="some_data"),
-        param(_Rollouts(n_mc_iterations=2, n_initial_data=2), id="cartesian"),
+        param(None, None, id="one_run"),
+        param(2, None, id="some_mc"),
+        param(None, 2, id="some_data"),
+        param(2, 2, id="cartesian"),
     ],
 )
-def test_simulate_scenarios_structure(campaign, batch_size, rollouts: _Rollouts):
+def test_simulate_scenarios_structure(
+    campaign, batch_size, n_mc_iterations, n_initial_data
+):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2
     simulation_random_seed = 59234  # <-- uncommon number to avoid clash with default
     scenarios = {"test": campaign}
 
-    n_mc_iterations = rollouts.n_mc_iterations
-    if (n_data := rollouts.n_initial_data) is None:
+    if n_initial_data is None:
         initial_data = None
     else:
         initial_data = [
             create_fake_input(campaign.parameters, campaign.targets)
-            for _ in range(n_data)
+            for _ in range(n_initial_data)
         ]
 
     result = simulate_scenarios(
@@ -103,7 +104,11 @@ def test_simulate_scenarios_structure(campaign, batch_size, rollouts: _Rollouts)
         parallel_runs=False,
     )
 
-    expected_length = len(scenarios) * doe_iterations * len(rollouts)
+    expected_length = (
+        len(scenarios)
+        * doe_iterations
+        * len(_Rollouts(n_mc_iterations, n_initial_data))
+    )
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == expected_length
