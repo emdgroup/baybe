@@ -718,6 +718,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.searchspace.validation.html">baybe.searchspace.validation</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.searchspace.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.searchspace.validation.get_transform_parameters.html">baybe.searchspace.validation.get_transform_parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.searchspace.validation.validate_dataframe_active_values.html">baybe.searchspace.validation.validate_dataframe_active_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.searchspace.validation.validate_parameter_names.html">baybe.searchspace.validation.validate_parameter_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.searchspace.validation.validate_parameters.html">baybe.searchspace.validation.validate_parameters</a></li>
 </ul>
@@ -1201,16 +1202,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>       Base1      Base2  PhaseAgent1  PhaseAgent2   Solvent1   Solvent2
-0  16.293861   6.542156     1.348223     2.275932  19.060908  54.478921
-1   2.053974   9.860927     0.496833     4.485100  41.723396  41.379770
-2   7.246333  13.242493     0.469488     1.927600  37.901353  39.212732
-3   8.709827  16.414525     0.606312     0.348521  14.711885  59.208931
-4  13.488534  19.364706     1.734869     1.772833  50.076173  13.562884
-5  10.027039  17.636929     0.949266     0.282299  24.164825  46.939641
-6  11.865276   0.931837     0.422934     3.014369  54.706401  29.059183
-7   7.213850  15.932039     1.120554     0.469603  47.750315  27.513639
-8  19.610645   7.404617     2.632237     2.097487  67.102130   1.152883
-9   3.574671  12.577721     2.742211     0.636925  76.032616   4.435855
+0   7.570877  19.284616     1.215813     1.398245  65.933394   4.597056
+1  10.895287  18.041219     0.024189     0.084015  33.535165  37.420126
+2  11.177900  16.363601     0.789422     1.724555  30.380928  39.563594
+3   6.543765   4.150699     4.535926     0.246827  33.568716  50.954066
+4  10.334997  13.934245     2.389518     1.798084  42.191235  29.351921
+5  10.288820  19.751702     3.864355     0.505048   0.681092  64.908983
+6  11.071717   4.022580     3.762920     0.867530  50.013423  30.261831
+7  10.391885   1.388450     1.008734     2.203554  73.507637  11.499741
+8   7.766142   6.031829     0.658234     3.321333  73.448529   8.773932
+9  12.887339   4.220072     0.960224     0.544659  78.283180   3.104526
 </pre></div>
 </div>
 <p>Computing the respective row sums reveals the expected result:</p>
@@ -1225,16 +1226,16 @@ random points from the search space:</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   Total  Total_Bases  Total_Phase_Agents
-0  100.0    22.836016            3.624155
-1  100.0    11.914901            4.981933
-2  100.0    20.488826            2.397089
-3  100.0    25.124352            0.954833
-4  100.0    32.853240            3.507702
-5  100.0    27.663968            1.231566
-6  100.0    12.797113            3.437303
-7  100.0    23.145889            1.590157
-8  100.0    27.015262            4.729724
-9  100.0    16.152392            3.379136
+0  100.0    26.855492            2.614058
+1  100.0    28.936506            0.108204
+2  100.0    27.541501            2.513977
+3  100.0    10.694464            4.782754
+4  100.0    24.269242            4.187603
+5  100.0    30.040522            4.369403
+6  100.0    15.094296            4.630449
+7  100.0    11.780334            3.212287
+8  100.0    13.797971            3.979568
+9  100.0    17.107411            1.504883
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;Total&quot;</span><span class="p">],</span> <span class="mi">100</span><span class="p">)</span>

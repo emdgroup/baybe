@@ -15,6 +15,7 @@ baybe.searchspace.validation
       :toctree:                                       
    
       get_transform_parameters
+      validate_dataframe_active_values
       validate_parameter_names
       validate_parameters
    
