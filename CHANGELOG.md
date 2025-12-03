@@ -46,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - False-negative surrogate cache hits when using multi-model surrogates
 - `IndependentGaussianSurrogate` models now properly refuse batch recommendation
   regardless of their context (e.g. when used within a `CompositeSurrogate`)
+- `CompositeSurrogate` models are now fit on the correct input when using
+  pre-transformations in the objective
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)

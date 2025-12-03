@@ -13,12 +13,14 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import handle_missing_values
 
@@ -79,8 +81,10 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     surrogates: _SurrogateGetter = field()
     """An index-based mapping from target names to single-target surrogates."""
 
-    _target_names: tuple[str, ...] | None = field(init=False, default=None, eq=False)
-    """The names of the targets modeled by the surrogate outputs."""
+    _modeled_quantity_names: tuple[str, ...] | None = field(
+        init=False, default=None, eq=False
+    )
+    """The names of the quantities modeled by the surrogate outputs."""
 
     @classmethod
     def from_replication(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
@@ -90,8 +94,8 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     @property
     def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
         """The surrogates ordered according to the targets of the modeled objective."""
-        assert self._target_names is not None
-        return tuple(self.surrogates[t] for t in self._target_names)
+        assert self._modeled_quantity_names is not None
+        return tuple(self.surrogates[t] for t in self._modeled_quantity_names)
 
     @override
     def fit(
@@ -100,16 +104,41 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        for target in objective.targets:
-            # Drop partial measurements for the respective target
+        # TODO: This is a temporary workaround to enable non-numerical targets,
+        #  which is required because the pre-transformation step in the other execution
+        #  branch implicitly assumes numerical targets, i.e. there exists no mechanism
+        #  yet to specify the "type" of the object returned by the pre-transformation,
+        #  which explains the hardcoded `NumericalTarget` type the `fit` call below.
+        if not is_all_instance(objective.targets, NumericalTarget):
+            if not isinstance(objective, SingleTargetObjective):
+                raise NotImplementedError(
+                    f"For target types other than '{NumericalTarget.__name__}', "
+                    f"'{self.__class__.__name__}' only supports a single target."
+                )
+            target = objective.targets[0]
             measurements_filtered = handle_missing_values(
                 measurements, [target.name], drop=True
             )
-
             self.surrogates[target.name].fit(
                 searchspace, target.to_objective(), measurements_filtered
             )
-        self._target_names = tuple(t.name for t in objective.targets)
+            self._modeled_quantity_names = tuple(t.name for t in objective.targets)
+            return
+
+        target_names = [t.name for t in objective.targets]
+        pre_transformed = objective._pre_transform(measurements[target_names])
+        pre_transformed = pd.concat(
+            [measurements[list(searchspace.parameter_names)], pre_transformed],
+            axis=1,
+        )
+        for name in objective._modeled_quantity_names:
+            filtered = handle_missing_values(pre_transformed, [name], drop=True)
+            self.surrogates[name].fit(
+                searchspace,
+                NumericalTarget(name).to_objective(),
+                filtered,
+            )
+        self._modeled_quantity_names = objective._modeled_quantity_names
 
     @override
     def to_botorch(self) -> ModelList:
