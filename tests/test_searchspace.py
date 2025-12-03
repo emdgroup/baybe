@@ -12,7 +12,7 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.exceptions import EmptySearchSpaceError
+from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
@@ -388,16 +388,52 @@ def test_task_parameter_active_values_validation():
         name="method", values=["old", "new"], active_values=["new"]
     )
 
-    # Two parameters invalid (ExceptionGroup)
-    with pytest.raises(ExceptionGroup):
+    # Two parameters invalid
+    with pytest.raises(ExceptionGroup) as exc_info:
         SearchSpace.from_dataframe(df, parameters=[num_param, task_param, cat_param])
 
-    # One parameter invalid (ExceptionGroup)
+    exceptions = exc_info.value.exceptions
+    assert len(exceptions) == 2
+    assert all(isinstance(e, IncompatibilityError) for e in exceptions)
+
+    error_messages = [str(e) for e in exceptions]
+    assert any(
+        "Dataframe column 'task' contains the following invalid values: {'source'}"
+        in msg
+        and "Only values from the active values of the corresponding parameter "
+        "are allowed: ('target',)"
+        in msg
+        for msg in error_messages
+    )
+    assert any(
+        "Dataframe column 'method' contains the following invalid values: {'old'}"
+        in msg
+        and "Only values from the active values of the corresponding parameter "
+        "are allowed: ('new',)"
+        in msg
+        for msg in error_messages
+    )
+
+    # One parameter invalid
     single_source_df = df[df["method"] == "new"]
-    with pytest.raises(ExceptionGroup):
+    with pytest.raises(ExceptionGroup) as exc_info:
         SearchSpace.from_dataframe(
             single_source_df, parameters=[num_param, task_param, cat_param]
         )
+
+    exceptions = exc_info.value.exceptions
+    assert len(exceptions) == 1
+    assert isinstance(exceptions[0], IncompatibilityError)
+
+    error_msg = str(exceptions[0])
+    assert (
+        "Dataframe column 'task' contains the following invalid values: {'source'}"
+        in error_msg
+    )
+    assert (
+        "Only values from the active values of the corresponding parameter "
+        "are allowed: ('target',)" in error_msg
+    )
 
     # All parameters valid
     target_df = df[(df["task"] == "target") & (df["method"] == "new")]
