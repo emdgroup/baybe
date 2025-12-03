@@ -11,9 +11,7 @@ import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
-from baybe.constraints import (
-    validate_constraints,
-)
+from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
@@ -23,7 +21,10 @@ from baybe.searchspace.discrete import (
     SubspaceDiscrete,
     validate_simplex_subspace_from_config,
 )
-from baybe.searchspace.validation import validate_parameters
+from baybe.searchspace.validation import (
+    validate_dataframe_active_values,
+    validate_parameters,
+)
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.utils.conversion import to_string
 
@@ -177,6 +178,8 @@ class SearchSpace(SerialMixin):
 
         disc_params = [p for p in parameters if p.is_discrete]
         cont_params = [p for p in parameters if p.is_continuous]
+
+        validate_dataframe_active_values(df, disc_params)
 
         return SearchSpace(
             discrete=SubspaceDiscrete.from_dataframe(

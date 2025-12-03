@@ -24,8 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Creating one-element composite transformations now returns the contained
   transformation directly
-
-### Changed
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
   reproducibility of downstream operations
 
@@ -33,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
 - `DesirabilityObjective` now properly interplays with analytical acquisition functions
 - `farthest_point_sampling` now correctly handles predefined `initialization` indices
+- `SearchSpace.from_dataframe` now validates that dataframes contain only
+  `active_values`, raising `IncompatibilityError` otherwise
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)

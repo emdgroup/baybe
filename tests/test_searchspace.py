@@ -12,11 +12,12 @@ from baybe.constraints import (
     DiscreteSumConstraint,
     ThresholdCondition,
 )
-from baybe.exceptions import EmptySearchSpaceError
+from baybe.exceptions import EmptySearchSpaceError, IncompatibilityError
 from baybe.parameters import (
     CategoricalParameter,
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
+    TaskParameter,
 )
 from baybe.searchspace import (
     SearchSpace,
@@ -28,6 +29,12 @@ from baybe.searchspace.discrete import (
     parameter_cartesian_prod_pandas,
     parameter_cartesian_prod_polars,
 )
+from baybe.utils.basic import is_all_instance
+
+try:
+    ExceptionGroup
+except NameError:
+    from exceptiongroup import ExceptionGroup
 
 
 def test_empty_parameters():
@@ -361,3 +368,52 @@ def test_polars_pandas_equivalence(parameters):
 
     # Assert equality
     assert_frame_equal(df_pl.to_pandas(), df_pd)
+
+
+def test_task_parameter_active_values_validation():
+    """Test SearchSpace.from_dataframe with TaskParameter active_values validation."""
+    df = pd.DataFrame(
+        [
+            {"task": "source", "method": "old", "x1": 1.0},
+            {"task": "source", "method": "old", "x1": 2.0},
+            {"task": "source", "method": "new", "x1": 1.0},
+            {"task": "target", "method": "new", "x1": 2.0},
+        ]
+    )
+
+    num_param = NumericalDiscreteParameter(name="x1", values=[1.0, 2.0])
+    task_param = TaskParameter(
+        name="task", values=["source1", "source2", "target"], active_values=["target"]
+    )
+    cat_param = CategoricalParameter(
+        name="method", values=["old", "new"], active_values=["new"]
+    )
+
+    # Two parameters invalid
+    with pytest.raises(ExceptionGroup) as exc_info:
+        SearchSpace.from_dataframe(df, parameters=[num_param, task_param, cat_param])
+
+    exceptions = exc_info.value.exceptions
+    assert len(exceptions) == 2
+    assert is_all_instance(exceptions, IncompatibilityError)
+    assert all("contains the following invalid values" in str(e) for e in exceptions)
+
+    # One parameter invalid
+    single_source_df = df[df["method"] == "new"]
+    with pytest.raises(ExceptionGroup) as exc_info:
+        SearchSpace.from_dataframe(
+            single_source_df, parameters=[num_param, task_param, cat_param]
+        )
+
+    exceptions = exc_info.value.exceptions
+    assert len(exceptions) == 1
+    assert is_all_instance(exceptions, IncompatibilityError)
+    assert all("contains the following invalid values" in str(e) for e in exceptions)
+
+    # All parameters valid
+    target_df = df[(df["task"] == "target") & (df["method"] == "new")]
+    searchspace = SearchSpace.from_dataframe(
+        target_df, parameters=[num_param, task_param, cat_param]
+    )
+    assert len(searchspace.discrete.exp_rep) == 1
+    assert all(searchspace.discrete.exp_rep["task"] == "target")
