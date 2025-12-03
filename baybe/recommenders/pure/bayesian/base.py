@@ -80,7 +80,7 @@ class BayesianRecommender(PureRecommender, ABC):
             f"Accessing the surrogate model via 'surrogate_model' has been "
             f"deprecated. Use '{self.get_surrogate.__name__}' instead to get a "
             f"trained model instance or "
-            f"'{type(self).current_surrogate.fget.__name__}' to access the current "
+            f"'{type(self).current_surrogate.fget.__name__}' to access the current "  # type: ignore[attr-defined]
             f"(possibly untrained) instance.",
             DeprecationWarning,
         )
