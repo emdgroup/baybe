@@ -123,11 +123,12 @@ class SimulationResult(NamedTuple):
 
 def simulate(acqf: AcquisitionFunction) -> SimulationResult:
     """Simulate the campaign with with the given acquisition function."""
+    model_based_recommender = BotorchRecommender(
+        surrogate_model=surrogate, acquisition_function=acqf
+    )
     recommender = TwoPhaseMetaRecommender(
         initial_recommender=RandomRecommender(),
-        recommender=BotorchRecommender(
-            surrogate_model=surrogate, acquisition_function=acqf
-        ),
+        recommender=model_based_recommender,
     )
 
     # Containers for storing the rewards and win rate estimates
@@ -154,7 +155,9 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
             df["clicked"] = reward
             campaign.add_measurements(df)
 
-        estimated_win_rates[mc] = surrogate.posterior_means()
+        estimated_win_rates[mc] = model_based_recommender.current_surrogate[
+            target.name
+        ].posterior_means()
 
     return SimulationResult(earned_rewards, estimated_win_rates)
 

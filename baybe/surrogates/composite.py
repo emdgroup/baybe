@@ -86,6 +86,10 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     )
     """The names of the quantities modeled by the surrogate outputs."""
 
+    def __getitem__(self, key: str, /) -> SurrogateProtocol:
+        """Access the surrogate for a specific quantity by its name."""
+        return self.surrogates[key]
+
     @classmethod
     def from_replication(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
         """Replicate a given single-target surrogate logic for multiple targets."""
