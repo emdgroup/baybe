@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal
 import pandas as pd
 from attrs import Attribute, define, field
 from attrs.validators import ge, instance_of, optional
-from typing_extensions import assert_never
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
@@ -67,44 +66,30 @@ class _Rollouts:
     @property
     def cases(self) -> pd.DataFrame:
         """Get all rollout cases as a dataframe."""
-        match self.n_mc_iterations, self.n_initial_data:
-            case None, None:
-                raise RuntimeError(
-                    "This line should be impossible to reach since prevented "
-                    "by attribute validators."
-                )
-            case int(n_mc_iterations), None:
-                cases = pd.DataFrame(
-                    {
-                        "Random_Seed": range(
-                            self.initial_random_seed,
-                            self.initial_random_seed + n_mc_iterations,
-                        ),
-                        "Initial_Data": float("nan"),
-                    }
-                )
-            case None, int(n_initial_data):
-                cases = pd.DataFrame(
-                    {
-                        "Random_Seed": self.initial_random_seed,
-                        "Initial_Data": list(range(n_initial_data)),
-                    }
-                )
-            case int(n_mc_iterations), int(n_initial_data):
-                cases = pd.MultiIndex.from_product(
-                    [
-                        range(
-                            self.initial_random_seed,
-                            self.initial_random_seed + n_mc_iterations,
-                        ),
-                        list(range(n_initial_data)),
-                    ],
-                    names=["Random_Seed", "Initial_Data"],
-                ).to_frame(index=False)
-            case _:
-                assert_never(self)
+        # When MC iterations is None, we pair each initial dataset with its own seed
+        if self.n_mc_iterations is None:
+            assert self.n_initial_data is not None  # ensured by validator
+            return pd.DataFrame(
+                {
+                    "Random_Seed": range(
+                        self.initial_random_seed,
+                        self.initial_random_seed + self.n_initial_data,
+                    ),
+                    "Initial_Data": range(self.n_initial_data),
+                }
+            )
 
-        return cases
+        # Otherwise, create cross-product of MC iterations and initial data
+        n_mc = self.n_mc_iterations
+        random_seeds = range(self.initial_random_seed, self.initial_random_seed + n_mc)
+        initial_data = (
+            range(self.n_initial_data) if self.n_initial_data else [float("nan")]
+        )
+
+        return pd.MultiIndex.from_product(
+            [random_seeds, initial_data],
+            names=["Random_Seed", "Initial_Data"],
+        ).to_frame(index=False)
 
 
 def simulate_scenarios(
