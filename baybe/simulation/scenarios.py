@@ -69,7 +69,10 @@ class _Rollouts:
         """Get all rollout cases as a dataframe."""
         match self.n_mc_iterations, self.n_initial_data:
             case None, None:
-                cases = pd.DataFrame({"Monte_Carlo_Run": [0]})
+                raise RuntimeError(
+                    "This line should be impossible to reach since prevented "
+                    "by attribute validators."
+                )
             case int(n_mc_iterations), None:
                 cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc_iterations)})
             case None, int(n_initial_data):
