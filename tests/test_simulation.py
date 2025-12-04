@@ -2,6 +2,7 @@
 
 import os
 from collections.abc import Callable, Collection, Sequence
+from contextlib import nullcontext
 from functools import partial
 
 import numpy as np
@@ -93,16 +94,23 @@ def test_simulate_scenarios_structure(
             for _ in range(n_initial_data)
         ]
 
-    result = simulate_scenarios(
-        scenarios,
-        None,  # use random data for lookup
-        n_doe_iterations=doe_iterations,
-        batch_size=batch_size,
-        random_seed=simulation_random_seed,
-        n_mc_iterations=n_mc_iterations,
-        initial_data=initial_data,
-        parallel_runs=False,
-    )
+    with (
+        pytest.raises(ValueError, match="requires that initial data is specified")
+        if (should_fail := n_mc_iterations is None and n_initial_data is None)
+        else nullcontext()
+    ):
+        result = simulate_scenarios(
+            scenarios,
+            None,  # use random data for lookup
+            n_doe_iterations=doe_iterations,
+            batch_size=batch_size,
+            random_seed=simulation_random_seed,
+            n_mc_iterations=n_mc_iterations,
+            initial_data=initial_data,
+            parallel_runs=False,
+        )
+    if should_fail:
+        return
 
     expected_length = (
         len(scenarios)

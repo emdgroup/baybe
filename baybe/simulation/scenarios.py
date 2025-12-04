@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 import pandas as pd
-from attrs import define, field
+from attrs import Attribute, define, field
 from attrs.validators import ge, instance_of, optional
 from typing_extensions import assert_never
 
@@ -50,6 +50,15 @@ class _Rollouts:
         validator=instance_of(int),
     )
     """The random seed for the first Monte Carlo run."""
+
+    @n_initial_data.validator
+    def _validate_n_initial_data(self, _: Attribute, value: Any):
+        if self.n_mc_iterations is None and value is None:
+            raise ValueError(
+                "Setting the number of Monte Carlo iterations to `None` requires that "
+                "initial data is specified. Perhaps you forgot to do so? If not, "
+                "consider setting the number of iterations to 1."
+            )
 
     def __len__(self) -> int:
         """The total number of simulation rollouts."""  # noqa: D401
