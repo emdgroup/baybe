@@ -74,26 +74,36 @@ class _Rollouts:
                     "by attribute validators."
                 )
             case int(n_mc_iterations), None:
-                cases = pd.DataFrame({"Monte_Carlo_Run": range(n_mc_iterations)})
+                cases = pd.DataFrame(
+                    {
+                        "Random_Seed": range(
+                            self.initial_random_seed,
+                            self.initial_random_seed + n_mc_iterations,
+                        ),
+                        "Initial_Data": None,
+                    }
+                )
             case None, int(n_initial_data):
                 cases = pd.DataFrame(
                     {
+                        "Random_Seed": self.initial_random_seed,
                         "Initial_Data": list(range(n_initial_data)),
-                        "Monte_Carlo_Run": 0,
                     }
                 )
             case int(n_mc_iterations), int(n_initial_data):
                 cases = pd.MultiIndex.from_product(
                     [
+                        range(
+                            self.initial_random_seed,
+                            self.initial_random_seed + n_mc_iterations,
+                        ),
                         list(range(n_initial_data)),
-                        range(n_mc_iterations),
                     ],
-                    names=["Initial_Data", "Monte_Carlo_Run"],
+                    names=["Random_Seed", "Initial_Data"],
                 ).to_frame(index=False)
             case _:
                 assert_never(self)
 
-        cases["Random_Seed"] = cases["Monte_Carlo_Run"] + self.initial_random_seed
         return cases
 
 
@@ -150,8 +160,6 @@ def simulate_scenarios(
         function:
 
         * ``Scenario``: Specifies the scenario identifier of the respective simulation.
-        * ``Monte_Carlo_Run``: Specifies the Monte Carlo repetition of the
-          respective simulation.
         * Optional, if ``random_seed`` is provided: A column ``Random_Seed`` that
           specifies the random seed used for the respective simulation.
         * Optional, if ``initial_data`` is provided: A column ``Initial_Data`` that
@@ -179,7 +187,6 @@ def simulate_scenarios(
         @xyzpy.label(var_names=[result_variable])
         def simulate(
             Scenario: str,
-            Monte_Carlo_Run: int,
             Random_Seed: int,
             Initial_Data: int | None = None,
         ):

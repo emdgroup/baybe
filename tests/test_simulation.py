@@ -123,10 +123,10 @@ def test_simulate_scenarios_structure(
 
     expected_cols = [
         "Scenario",
-        "Monte_Carlo_Run",
         "Iteration",
         "Num_Experiments",
         "Random_Seed",
+        "Initial_Data",
     ]
     for t in campaign.targets:
         expected_cols += [
@@ -134,11 +134,8 @@ def test_simulate_scenarios_structure(
             f"{t.name}_IterBest",
             f"{t.name}_CumBest",
         ]
-    if initial_data is not None:
-        expected_cols.append("Initial_Data")
     assert set(result.columns) == set(expected_cols), (result.columns, expected_cols)
     assert set(result["Scenario"].unique()) == set(scenarios.keys())
-    assert set(result["Monte_Carlo_Run"].unique()) == set(range(n_mc_iterations or 1))
     assert set(result["Iteration"].unique()) == set(range(doe_iterations))
 
     expected_seed_values = list(
@@ -146,7 +143,5 @@ def test_simulate_scenarios_structure(
     )
     assert set(result["Random_Seed"].unique()) == set(expected_seed_values)
 
-    groupby_cols = ["Scenario", "Monte_Carlo_Run"]
-    if initial_data is not None:
-        groupby_cols.append("Initial_Data")
+    groupby_cols = ["Scenario", "Random_Seed", "Initial_Data"]
     result.groupby(groupby_cols).apply(_validate_target_data, targets=campaign.targets)
