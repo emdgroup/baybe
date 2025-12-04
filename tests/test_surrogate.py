@@ -181,7 +181,7 @@ def test_continuous_incompatibility(campaign):
     if isinstance(s, GaussianProcessSurrogate):
         skip = True
     elif isinstance(s, CompositeSurrogate) and is_all_instance(
-        tuple(s.surrogates[t] for t in s._target_names), GaussianProcessSurrogate
+        s._surrogates_flat, GaussianProcessSurrogate
     ):
         skip = True
 
