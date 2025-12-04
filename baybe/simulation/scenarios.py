@@ -80,7 +80,7 @@ class _Rollouts:
                             self.initial_random_seed,
                             self.initial_random_seed + n_mc_iterations,
                         ),
-                        "Initial_Data": None,
+                        "Initial_Data": float("nan"),
                     }
                 )
             case None, int(n_initial_data):
@@ -160,11 +160,11 @@ def simulate_scenarios(
         function:
 
         * ``Scenario``: Specifies the scenario identifier of the respective simulation.
-        * Optional, if ``random_seed`` is provided: A column ``Random_Seed`` that
-          specifies the random seed used for the respective simulation.
-        * Optional, if ``initial_data`` is provided: A column ``Initial_Data`` that
-          specifies the index of the initial data set used for the respective
-          simulation.
+        * A column ``Random_Seed`` that specifies the random seed used for the
+          respective simulation.
+        * A column ``Initial_Data`` that specifies the index of the initial data set
+          used for the respective simulation or contains `NaN` if no initial data is
+          provided.
         * Optional, if ``groupby`` is provided: A column for each ``groupby`` parameter
           that specifies the search space partition considered for the respective
           simulation.
