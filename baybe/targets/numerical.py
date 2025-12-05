@@ -6,7 +6,6 @@ import gc
 import inspect
 import warnings
 from collections.abc import Sequence
-from functools import cached_property
 from operator import add, mul, sub
 from typing import Any, cast
 
@@ -192,7 +191,7 @@ class NumericalTarget(Target, SerialMixin):
             return self._append_transformation(AffineTransformation(factor=1 / other))
         return NotImplemented
 
-    @cached_property
+    @property
     def constructor_history(self) -> dict[str, Any]:
         """The constructor arguments used to create this target.
 
