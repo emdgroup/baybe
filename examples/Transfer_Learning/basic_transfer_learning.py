@@ -29,7 +29,7 @@ from examples.utils import create_example_plots
 # The following settings are used to set up the problem:
 
 SMOKE_TEST = os.environ.get(
-    "SMOKE_TEST", "false"
+    "SMOKE_TEST", "true"
 )  # reduce the problem complexity in CI pipelines
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
