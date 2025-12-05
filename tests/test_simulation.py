@@ -38,7 +38,7 @@ _aggregators: dict[str, Callable] = {
 def _validate_target_data(
     df: pd.DataFrame, targets: Collection[NumericalTarget]
 ) -> None:
-    """Validate that the target-related columns in the produced simulation dataframe."""
+    """Validate the target-related columns in the produced simulation dataframe."""
     for t in targets:
         aggregator = _aggregators[t.name]
         assert np.isclose(
