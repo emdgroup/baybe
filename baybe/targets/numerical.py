@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import gc
+import inspect
 import warnings
 from collections.abc import Sequence
+from functools import cached_property
 from operator import add, mul, sub
 from typing import Any, cast
 
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
 from typing_extensions import assert_never, override
 
@@ -24,6 +26,7 @@ from baybe.targets._deprecated import (
 from baybe.targets.base import Target
 from baybe.targets.enum import MatchMode
 from baybe.targets.utils import (
+    capture_constructor_history,
     combine_numerical_targets,
 )
 from baybe.transformations import (
@@ -122,6 +125,11 @@ class NumericalTarget(Target, SerialMixin):
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
     """Boolean flag indicating if the target is to be minimized."""
 
+    _constructor_history: dict[str, Any] | None = field(
+        default=None, init=False, eq=False
+    )
+    """Helper to keep track of the construction history used for this object."""
+
     def __init__(  # noqa: DOC301
         self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
     ):
@@ -183,6 +191,36 @@ class NumericalTarget(Target, SerialMixin):
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(factor=1 / other))
         return NotImplemented
+
+    @cached_property
+    def constructor_history(self) -> dict[str, Any]:
+        """The constructor arguments used to create this target.
+
+        This also includes default values of optional arguments that might not have
+        been used during construction. Values are affected by possible attribute
+        converters and hence do not necessarily resemble the original input, but an
+        equivalent.
+        """
+        init_fields = [f.name for f in fields(self.__class__) if f.init]
+
+        history: dict[str, Any] = {}
+        if self._constructor_history is None:
+            # The init constructor has no temporary arguments
+            history["constructor"] = "__init__"
+            parameters = init_fields
+        else:
+            # This includes the constructor name and temporary arguments
+            history.update(self._constructor_history)
+
+            constructor = getattr(self, history["constructor"])
+            sig = inspect.signature(constructor)
+            parameters = list(sig.parameters.keys())
+
+        for k in parameters:
+            if k in init_fields and k not in history:
+                history[k] = getattr(self, k)
+
+        return history
 
     @classmethod
     def from_modern_interface(
@@ -265,6 +303,7 @@ class NumericalTarget(Target, SerialMixin):
             return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
+    @capture_constructor_history
     def match_absolute(
         cls,
         name: str,
@@ -296,6 +335,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_history
     def match_quadratic(
         cls,
         name: str,
@@ -329,6 +369,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_history
     def match_power(
         cls,
         name: str,
@@ -364,6 +405,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_history
     def match_triangular(
         cls,
         name: str,
@@ -425,6 +467,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_history
     def match_bell(
         cls,
         name: str,
@@ -459,6 +502,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_history
     def normalized_ramp(
         cls,
         name: str,
@@ -491,6 +535,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_history
     def normalized_sigmoid(
         cls,
         name: str,
