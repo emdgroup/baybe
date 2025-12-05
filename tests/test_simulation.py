@@ -83,7 +83,7 @@ def test_simulate_scenarios_structure(
 ):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2
-    simulation_random_seed = 59234  # <-- uncommon number to avoid clash with default
+    seed = 59234  # <-- uncommon number to avoid clash with default
     scenarios = {"test": campaign}
 
     if n_initial_data is None:
@@ -104,7 +104,7 @@ def test_simulate_scenarios_structure(
             None,  # use random data for lookup
             n_doe_iterations=doe_iterations,
             batch_size=batch_size,
-            random_seed=simulation_random_seed,
+            random_seed=seed,
             n_mc_iterations=n_mc_iterations,
             initial_data=initial_data,
             parallel_runs=False,
@@ -139,7 +139,7 @@ def test_simulate_scenarios_structure(
     assert set(result["Iteration"].unique()) == set(range(doe_iterations))
 
     expected_seed_values = list(
-        range(simulation_random_seed, simulation_random_seed + (n_mc_iterations or 1))
+        range(seed, seed + (n_mc_iterations or len(initial_data)))
     )
     assert set(result["Random_Seed"].unique()) == set(expected_seed_values)
 
