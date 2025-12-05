@@ -72,7 +72,7 @@ def _validate_target_data(
 @pytest.mark.parametrize(
     ("n_mc_iterations", "n_initial_data"),
     [
-        param(None, None, id="one_run"),
+        param(None, None, id="invalid"),
         param(2, None, id="some_mc"),
         param(None, 2, id="some_data"),
         param(2, 2, id="cartesian"),
