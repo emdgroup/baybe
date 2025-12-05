@@ -80,12 +80,12 @@ class _Rollouts:
             )
 
         # Otherwise, create cross-product of MC iterations and initial data
-        n_mc = self.n_mc_iterations
-        random_seeds = range(self.initial_random_seed, self.initial_random_seed + n_mc)
+        random_seeds = range(
+            self.initial_random_seed, self.initial_random_seed + self.n_mc_iterations
+        )
         initial_data = (
             range(self.n_initial_data) if self.n_initial_data else [float("nan")]
         )
-
         return pd.MultiIndex.from_product(
             [random_seeds, initial_data],
             names=["Random_Seed", "Initial_Data"],
