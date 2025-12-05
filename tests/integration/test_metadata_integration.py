@@ -6,7 +6,8 @@ from pytest import param
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.targets.enum import TargetMode
-from baybe.targets.numerical import NumericalTarget
+from baybe.targets.numerical import MatchMode, NumericalTarget
+from baybe.transformations import ExponentialTransformation
 from baybe.utils.metadata import MeasurableMetadata, Metadata, to_metadata
 
 TMetadata = Metadata | dict | None
@@ -64,3 +65,67 @@ class TestMetadataIntegration:
         assert container.description is None
         if metadata_cls is MeasurableMetadata:
             assert container.unit is None
+
+
+@pytest.mark.parametrize(
+    ("constructor", "kwargs"),
+    [
+        param("__init__", {}, id="init1"),
+        param("__init__", {"minimize": True}, id="init2"),
+        param("__init__", {"transformation": ExponentialTransformation()}, id="init3"),
+        param("match_absolute", {}, id="match_abs1"),
+        param(
+            "match_absolute",
+            {"mismatch_instead": True, "match_mode": MatchMode.LE},
+            id="match_abs2",
+        ),
+        param("match_quadratic", {}, id="match_quad1"),
+        param(
+            "match_quadratic",
+            {"mismatch_instead": True, "match_mode": MatchMode.LE},
+            id="match_quad2",
+        ),
+        param("match_power", {"exponent": 5}, id="match_pow1"),
+        param(
+            "match_power",
+            {"exponent": 5, "mismatch_instead": True, "match_mode": MatchMode.LE},
+            id="match_pow2",
+        ),
+        param("match_triangular", {"cutoffs": [100, 10000]}, id="match_tri1"),
+        param("match_triangular", {"width": 10}, id="match_tri2"),
+        param(
+            "match_triangular",
+            {"margins": [4, 9], "match_mode": MatchMode.LE},
+            id="match_tri3",
+        ),
+        param("match_bell", {"sigma": 4.2}, id="match_bell1"),
+        param(
+            "match_bell",
+            {"sigma": 4.2, "mismatch_instead": True, "match_mode": MatchMode.LE},
+            id="match_bell2",
+        ),
+        param("normalized_ramp", {"cutoffs": [100, 10000]}, id="ramp"),
+        param(
+            "normalized_sigmoid", {"anchors": [[100, 0.1], [10000, 0.9]]}, id="sigmoid"
+        ),
+    ],
+)
+def test_constructor_history(constructor, kwargs):
+    """The constructor metadata allows to reconstruct the object."""
+    if constructor.startswith("match_"):
+        kwargs["match_value"] = 1337
+
+    if constructor == "__init__":
+        t1 = NumericalTarget("t", **kwargs)
+    else:
+        t1 = getattr(NumericalTarget, constructor)("t", **kwargs)
+    history = t1.constructor_history
+
+    meta_constructor = history.pop("constructor")
+    meta_kwargs = history
+    if meta_constructor == "__init__":
+        t2 = NumericalTarget(**meta_kwargs)
+    else:
+        t2 = getattr(NumericalTarget, meta_constructor)(**meta_kwargs)
+
+    assert t1 == t2
