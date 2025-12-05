@@ -23,6 +23,7 @@ from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 
 ### Parameters for a full simulation loop
 
@@ -30,7 +31,7 @@ from baybe.targets import NumericalTarget
 # Since this example uses initial data, we only need to define the number of iterations per run.
 # The number of runs is determined by the number of initial data points provided.
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5
 BATCH_SIZE = 1 if SMOKE_TEST else 3

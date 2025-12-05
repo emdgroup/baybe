@@ -22,13 +22,14 @@ from baybe.campaign import Campaign
 from baybe.parameters.numerical import NumericalContinuousParameter
 from baybe.simulation.scenarios import simulate_scenarios
 from baybe.targets.numerical import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.random import set_random_seed
 
 # ## Settings
 
 set_random_seed(1337)
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 20
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 20
 

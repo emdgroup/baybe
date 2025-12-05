@@ -22,13 +22,14 @@ from baybe.recommenders import RandomRecommender, TwoPhaseMetaRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 
 ### Parameters for a full simulation loop
 
 # For the full simulation, we need to define some additional parameters.
 # These are the number of Monte Carlo runs and the number of experiments to be conducted per run.
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 5
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 5

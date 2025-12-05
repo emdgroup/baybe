@@ -25,6 +25,7 @@ from baybe.recommenders import (
 )
 from baybe.surrogates import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.targets import BinaryTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.random import set_random_seed
 
 ### An Imaginary Use Case
@@ -82,7 +83,7 @@ BANDIT = MultiArmedBandit(WIN_RATES)
 
 # To estimate the corresponding effects, we simulate each campaign for a certain number of steps and repeat this process in multiple Monte Carlo runs:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 ACQFS = [
     qThompsonSampling(),  # Online optimization

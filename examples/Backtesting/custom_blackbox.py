@@ -18,13 +18,14 @@ from baybe.recommenders import RandomRecommender
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from examples.utils import create_example_plots
 
 ### Settings
 
 # Before we start, let us collect a few general settings for the example:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 BATCH_SIZE = 1
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 20

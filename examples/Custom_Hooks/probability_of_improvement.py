@@ -36,6 +36,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.random import set_random_seed
 from examples.utils import create_example_plots
@@ -45,7 +46,7 @@ from examples.utils import create_example_plots
 # For the simulation, we need to define some basic settings like the number of
 # iterations or the batch size:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 N_DOE_ITERATIONS = 3 if SMOKE_TEST else 7
 BATCH_SIZE = 2
 DIMENSION = 3

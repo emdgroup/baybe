@@ -22,6 +22,7 @@ from baybe.objectives import ParetoObjective
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import arrays_to_dataframes
 from baybe.utils.random import set_random_seed
 
@@ -29,7 +30,7 @@ from baybe.utils.random import set_random_seed
 
 # Let's first define some general settings for our example:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 BATCH_SIZE = 2 if SMOKE_TEST else 10
 N_TRAINING_DATA = 2 if SMOKE_TEST else 100

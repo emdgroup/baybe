@@ -25,11 +25,12 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment setup
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 RESOLUTION = 3 if SMOKE_TEST else 5
 

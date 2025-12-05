@@ -22,6 +22,7 @@ from baybe.constraints import ContinuousLinearConstraint
 from baybe.parameters import NumericalContinuousParameter
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import arrays_to_dataframes
 
 ### Defining the test function
@@ -92,7 +93,7 @@ campaign = Campaign(
 
 # Improve running time for CI via SMOKE_TEST
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 
 BATCH_SIZE = 2 if SMOKE_TEST else 3
 N_ITERATIONS = 2 if SMOKE_TEST else 3

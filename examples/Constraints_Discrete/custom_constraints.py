@@ -23,6 +23,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import add_fake_measurements
 
 ### Experiment setup
@@ -30,7 +31,7 @@ from baybe.utils.dataframe import add_fake_measurements
 # We begin by setting up some parameters for our experiments.
 # `TEMPERATURE_RESOLUTION` describes the number of different temperatures used.
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 TEMPERATURE_RESOLUTION = 3 if SMOKE_TEST else 10
 
 dict_solvent = {

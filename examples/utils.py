@@ -37,7 +37,7 @@ def create_example_plots(
         The ``Figure`` containing ``ax``
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
-    if "SMOKE_TEST" in os.environ:
+    if os.environ.get("SMOKE_TEST", "true"):
         return
 
     # Define a fallback theme in case no configuration is found

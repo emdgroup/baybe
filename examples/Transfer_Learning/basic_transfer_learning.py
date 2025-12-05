@@ -28,7 +28,9 @@ from examples.utils import create_example_plots
 
 # The following settings are used to set up the problem:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ  # reduce the problem complexity in CI pipelines
+SMOKE_TEST = os.environ.get(
+    "SMOKE_TEST", "false"
+)  # reduce the problem complexity in CI pipelines
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 50  # number of Monte Carlo runs

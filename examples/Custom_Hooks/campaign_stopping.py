@@ -34,6 +34,7 @@ from baybe.searchspace import SearchSpace, SearchSpaceType
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
 from baybe.utils import register_hooks
+from baybe.utils.boolean import strtobool
 from examples.utils import create_example_plots
 
 ### Temporary
@@ -47,7 +48,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Let's start by defining some basic settings required for the example:
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 N_DOE_ITERATIONS = 2 if SMOKE_TEST else 25
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 20
 N_INTERRUPTED_CAMPAIGNS = 2 if SMOKE_TEST else 5
