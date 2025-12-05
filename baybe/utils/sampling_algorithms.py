@@ -114,9 +114,7 @@ def farthest_point_sampling(
         return list(range(n_samples))
 
     # Sort the points to produce the same result regardless of the input order
-    # The choice here is done to produce the same results as fpsample==1.0.0
-    # See https://github.com/leonardodalinky/fpsample/issues/10
-    sort_idx = np.lexsort(tuple(points.T))[::-1]
+    sort_idx = np.lexsort(tuple(points.T))
     points = points[sort_idx]
 
     # Pre-compute the pairwise distances between all points
