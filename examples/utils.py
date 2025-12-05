@@ -12,6 +12,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 
+from baybe.utils.boolean import strtobool
+
 
 def create_example_plots(
     ax: Axes | Axes3D,
@@ -37,7 +39,7 @@ def create_example_plots(
         The ``Figure`` containing ``ax``
     """
     # Check whether we immediately return due to just running a SMOKE_TEST
-    if os.environ.get("SMOKE_TEST", "true"):
+    if strtobool(os.environ.get("SMOKE_TEST", "true")):
         return
 
     # Define a fallback theme in case no configuration is found

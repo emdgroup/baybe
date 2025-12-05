@@ -21,6 +21,7 @@ from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
+from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import arrays_to_dataframes
 from examples.utils import create_example_plots
 
@@ -28,9 +29,7 @@ from examples.utils import create_example_plots
 
 # The following settings are used to set up the problem:
 
-SMOKE_TEST = os.environ.get(
-    "SMOKE_TEST", "true"
-)  # reduce the problem complexity in CI pipelines
+SMOKE_TEST = strtobool(os.environ.get("SMOKE_TEST", "true"))
 DIMENSION = 3  # input dimensionality of the test function
 BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 50  # number of Monte Carlo runs
