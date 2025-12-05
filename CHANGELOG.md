@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
-  set to `True`, targets seek to avoid the given `match_value` instead of matching it.
+  set to `True`, targets seek to avoid the given `match_value` instead of matching it
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
   corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
-  the entire associated interval is a valid match, resulting in identical transformed target 
-  values as for the `match_value` itself.
+  the entire associated interval is a valid match, resulting in identical transformed
+  target values as for the `match_value` itself
+- `constructor_history` property for `NumericalTarget`, which stores what constructor
+  and arguments were used to create the object
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
-  performance on regression tasks (direct arilation and aryl halide)
+  performance on regression tasks (direct arylation and aryl halide)
 - Scalar addition and subtraction for `Interval` objects
 - Methods `hshift` and `vshift` to `Transformation` for conveniently performing
   horizontal / vertical shifts
