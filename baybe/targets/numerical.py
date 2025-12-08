@@ -222,6 +222,26 @@ class NumericalTarget(Target, SerialMixin):
         return history
 
     @classmethod
+    def from_constructor_history(
+        cls, constructor_history: dict[str, Any], /
+    ) -> NumericalTarget:
+        """A convenience constructor for re-creating targets from existing history.
+
+        Args:
+            constructor_history: Contains the construction history.
+
+        Returns:
+            The created target object.
+        """  # noqa: D401
+        history = constructor_history.copy()
+
+        c = history.pop("constructor")
+        if c == "__init__":
+            return cls(**history)
+        else:
+            return getattr(cls, c)(**history)
+
+    @classmethod
     def from_modern_interface(
         cls,
         name: str,

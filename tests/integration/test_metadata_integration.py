@@ -112,20 +112,24 @@ class TestMetadataIntegration:
 )
 def test_constructor_history(constructor, kwargs):
     """The constructor metadata allows to reconstruct the object."""
+    # Create reference target
     if constructor.startswith("match_"):
         kwargs["match_value"] = 1337
-
     if constructor == "__init__":
         t1 = NumericalTarget("t", **kwargs)
     else:
         t1 = getattr(NumericalTarget, constructor)("t", **kwargs)
     history = t1.constructor_history
 
+    # Create target from constructor history via utility constructor
+    t2 = NumericalTarget.from_constructor_history(history)
+
+    # Create target from constructor history manually
     meta_constructor = history.pop("constructor")
     meta_kwargs = history
     if meta_constructor == "__init__":
-        t2 = NumericalTarget(**meta_kwargs)
+        t3 = NumericalTarget(**meta_kwargs)
     else:
-        t2 = getattr(NumericalTarget, meta_constructor)(**meta_kwargs)
+        t3 = getattr(NumericalTarget, meta_constructor)(**meta_kwargs)
 
-    assert t1 == t2
+    assert t1 == t2 == t3
