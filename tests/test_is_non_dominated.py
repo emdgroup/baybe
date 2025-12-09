@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibilityError
+from baybe.exceptions import IncompatibilityError, NoMeasurementsError
 from baybe.objectives import (
     DesirabilityObjective,
     ParetoObjective,
@@ -96,7 +96,7 @@ def test_is_non_dominated_func_call(
 @pytest.mark.parametrize(
     "objective_name, target_names",
     [
-        param(None, ["Target_max"], id="none_min"),
+        param(None, ["Target_max"], id="none_max"),
     ],
 )
 def test_incompatibility(campaign, objective, fake_measurements):
@@ -108,6 +108,25 @@ def test_incompatibility(campaign, objective, fake_measurements):
     if objective is not None:
         with pytest.raises(IncompatibilityError):
             objective.is_non_dominated(fake_measurements)
+
+
+@pytest.mark.parametrize(
+    "objective_name, target_names",
+    [
+        param("pareto", ["Target_max"], id="pareto_max"),
+    ],
+)
+def test_no_measurements(campaign, objective, fake_measurements):
+    """Test for incompatibility for non multioutput targets."""
+    with pytest.raises(NoMeasurementsError):
+        campaign.is_non_dominated(consider_campaign_measurements=True)
+
+    with pytest.raises(NoMeasurementsError):
+        campaign.is_non_dominated(consider_campaign_measurements=False)
+
+    campaign.add_measurements(fake_measurements)
+    with pytest.raises(NoMeasurementsError):
+        campaign.is_non_dominated(consider_campaign_measurements=False)
 
 
 @pytest.mark.parametrize(
