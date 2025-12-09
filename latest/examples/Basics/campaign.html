@@ -1187,9 +1187,13 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-         Solvent             Base         Ligand  Temperature  Concentration
-35   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.153
-258         DMAc  Cesium pivalate      BrettPhos        120.0          0.057
+         Solvent               Base                        Ligand  \
+13   Butyl Ester     Cesium acetate                     BrettPhos   
+404     p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
+
+     Temperature  Concentration  
+13         105.0          0.100  
+404        120.0          0.153  
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1202,13 +1206,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent             Base         Ligand  Temperature  Concentration  \
-35   Butyl Ester  Cesium pivalate  (t-Bu)PhCPhos        120.0          0.153   
-258         DMAc  Cesium pivalate      BrettPhos        120.0          0.057   
+         Solvent               Base                        Ligand  \
+13   Butyl Ester     Cesium acetate                     BrettPhos   
+404     p-Xylene  Potassium acetate  Di-tert-butylphenylphosphine   
 
-         yield  
-35    1.559513  
-258  10.777791  
+     Temperature  Concentration      yield  
+13         105.0          0.100 -35.895511  
+404        120.0          0.153 -77.459674  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>
