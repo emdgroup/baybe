@@ -1120,6 +1120,9 @@ horizontal / vertical shifts</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Objective.to_botorch_posterior_transform</span></code> for use of affine transformations with
 analytical acquisition functions</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.normalized_weights</span></code> property</p></li>
+<li><p>Possibility to set <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> to <code class="docutils literal notranslate"><span class="pre">None</span></code> in <code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code>, which
+increments the simulation random seed per initial data set without having to execute
+the full Cartesian product of all (seed, data)-configurations</p></li>
 </ul>
 </section>
 <section id="changed">

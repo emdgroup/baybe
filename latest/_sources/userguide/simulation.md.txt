@@ -153,13 +153,23 @@ This function returns a dataframe that contains the results. For details on the 
 
 ## Simulating Multiple Scenarios
 
-The function [`simulate_scenarios`](baybe.simulation.scenarios.simulate_scenarios) allows to specify multiple simulation settings at once.
-Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to `Campaign` objects.
-In addition to the keyword arguments available for `simulate_experiment`, this function has two different keywords available:
-1. `n_mc_iterations`: This can be used to perform multiple Monte Carlo runs with a single call. Multiple Monte Carlo runs are always advised to average out the effect of random effects such as the initial starting data.
-2. `initial_data`: This can be used to provide a list of dataframe, where each dataframe is then used as initial data for an independent run. That is, the function performs one optimization loop per dataframe in this list.
+The function {func}`~baybe.simulation.scenarios.simulate_scenarios` allows to specify multiple simulation settings at once.
+Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to {class}`~baybe.campaign.Campaign` objects.
+In addition to the keyword arguments available for {func}`~baybe.simulation.core.simulate_experiment`, this function accepts the following arguments to define the simulation scope:
+1. `n_mc_iterations`: Controls the Monte Carlo repetitions being perforemd for each campaign simulation. Multiple Monte Carlo runs are always advised to average out random effects (e.g. random intializations or measurement noise).
+2. `initial_data`: A sequence of dataframes defining fixed starting conditions for the simulations in form of initial campaign data.
 
-Note that these two keywords are mutually exclusive.
+```{admonition} Interplay of Monte Carlo Iterations and Initial Data 
+:class: important
+
+* When `n_mc_iterations` takes an integer value, the Cartesian product of all possible
+campaign rollouts is executed, i.e. each campaign is simulated with each initial data
+set (if provided) as many times as specifed. 
+* When `n_mc_iterations` is set to `None`, one Monte Carlo iteration is executed per
+initial data set, but unlike in the case of `n_mc_iterations=1`, the seed is
+automatically increased for each rollout to enable trajectory variation for simulations
+that do not depend on the initial data (e.g. when using non-predictive recommenders).
+``` 
 
 ~~~python
 lookup = ...  # some reasonable lookup, e.g. a Callable

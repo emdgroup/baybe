@@ -1310,8 +1310,8 @@ trajectory, which effectively implements early stopping.</p>
 To display the latter in terms of individual trajectories, we can leverage the column
 that keeps track of the Monte Carlo iterations:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">results_interrupted</span> <span class="o">=</span> <span class="n">results_interrupted</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;Scenario&quot;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">results_interrupted</span><span class="p">[</span><span class="s2">&quot;Scenario&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results_interrupted</span><span class="p">[</span><span class="s2">&quot;Monte_Carlo_Run&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
-    <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;PI-stopped, run </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">results_interrupted</span><span class="p">[</span><span class="s2">&quot;Scenario&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results_interrupted</span><span class="p">[</span><span class="s2">&quot;Random_Seed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;PI-stopped, run </span><span class="si">{</span><span class="n">k</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">RANDOM_SEED</span><span class="si">}</span><span class="s2">&quot;</span>
 <span class="p">)</span>
 </pre></div>
 </div>

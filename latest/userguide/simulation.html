@@ -1239,14 +1239,25 @@ It runs a single execution of a DoE loop for either a specific number of iterati
 </section>
 <section id="simulating-multiple-scenarios">
 <h2>Simulating Multiple Scenarios<a class="headerlink" href="#simulating-multiple-scenarios" title="Link to this heading">¶</a></h2>
-<p>The function <a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.simulate_scenarios.html#baybe.simulation.scenarios.simulate_scenarios" title="baybe.simulation.scenarios.simulate_scenarios"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code></span></a> allows to specify multiple simulation settings at once.
-Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> objects.
-In addition to the keyword arguments available for <code class="docutils literal notranslate"><span class="pre">simulate_experiment</span></code>, this function has two different keywords available:</p>
+<p>The function <a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.simulate_scenarios.html#baybe.simulation.scenarios.simulate_scenarios" title="baybe.simulation.scenarios.simulate_scenarios"><code class="xref py py-func docutils literal notranslate"><span class="pre">simulate_scenarios()</span></code></a> allows to specify multiple simulation settings at once.
+Instead of a single campaign, this function expects a dictionary of campaigns, mapping scenario identifiers to <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><code class="xref py py-class docutils literal notranslate"><span class="pre">Campaign</span></code></a> objects.
+In addition to the keyword arguments available for <a class="reference internal" href="../_autosummary/baybe.simulation.core.simulate_experiment.html#baybe.simulation.core.simulate_experiment" title="baybe.simulation.core.simulate_experiment"><code class="xref py py-func docutils literal notranslate"><span class="pre">simulate_experiment()</span></code></a>, this function accepts the following arguments to define the simulation scope:</p>
 <ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code>: This can be used to perform multiple Monte Carlo runs with a single call. Multiple Monte Carlo runs are always advised to average out the effect of random effects such as the initial starting data.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">initial_data</span></code>: This can be used to provide a list of dataframe, where each dataframe is then used as initial data for an independent run. That is, the function performs one optimization loop per dataframe in this list.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code>: Controls the Monte Carlo repetitions being perforemd for each campaign simulation. Multiple Monte Carlo runs are always advised to average out random effects (e.g. random intializations or measurement noise).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">initial_data</span></code>: A sequence of dataframes defining fixed starting conditions for the simulations in form of initial campaign data.</p></li>
 </ol>
-<p>Note that these two keywords are mutually exclusive.</p>
+<div class="important admonition">
+<p class="admonition-title">Interplay of Monte Carlo Iterations and Initial Data</p>
+<ul class="simple">
+<li><p>When <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> takes an integer value, the Cartesian product of all possible
+campaign rollouts is executed, i.e. each campaign is simulated with each initial data
+set (if provided) as many times as specifed.</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> is set to <code class="docutils literal notranslate"><span class="pre">None</span></code>, one Monte Carlo iteration is executed per
+initial data set, but unlike in the case of <code class="docutils literal notranslate"><span class="pre">n_mc_iterations=1</span></code>, the seed is
+automatically increased for each rollout to enable trajectory variation for simulations
+that do not depend on the initial data (e.g. when using non-predictive recommenders).</p></li>
+</ul>
+</div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">lookup</span> <span class="o">=</span> <span class="o">...</span>  <span class="c1"># some reasonable lookup, e.g. a Callable</span>
 <span class="n">campaign1</span> <span class="o">=</span> <span class="n">Campaign</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <span class="n">campaign2</span> <span class="o">=</span> <span class="n">Campaign</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
