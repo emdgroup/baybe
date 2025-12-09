@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective.to_botorch_posterior_transform` for use of affine transformations with
   analytical acquisition functions
 - `DesirabilityObjective.normalized_weights` property 
+- Possibility to set `n_mc_iterations` to `None` in `simulate_scenarios`, which
+  increments the simulation random seed per initial data set without having to execute
+  the full Cartesian product of all (seed, data)-configurations
 
 ### Changed
 - Creating one-element composite transformations now returns the contained

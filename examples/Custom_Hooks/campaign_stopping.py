@@ -205,8 +205,8 @@ results_interrupted = simulate_scenarios(
 # that keeps track of the Monte Carlo iterations:
 
 results_interrupted = results_interrupted.drop("Scenario", axis=1)
-results_interrupted["Scenario"] = results_interrupted["Monte_Carlo_Run"].apply(
-    lambda k: f"PI-stopped, run {k}"
+results_interrupted["Scenario"] = results_interrupted["Random_Seed"].apply(
+    lambda k: f"PI-stopped, run {k - RANDOM_SEED}"
 )
 
 # Now, we can easily create the plot from a single combined dataframe:
