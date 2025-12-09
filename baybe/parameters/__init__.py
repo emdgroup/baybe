@@ -7,6 +7,10 @@ from baybe.parameters.enum import (
     CustomEncoding,
     SubstanceEncoding,
 )
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -16,11 +20,13 @@ from baybe.utils.metadata import MeasurableMetadata
 
 __all__ = [
     "CategoricalEncoding",
+    "CategoricalFidelityParameter",
     "CategoricalParameter",
     "CustomDiscreteParameter",
     "CustomEncoding",
     "MeasurableMetadata",
     "NumericalContinuousParameter",
+    "NumericalDiscreteFidelityParameter",
     "NumericalDiscreteParameter",
     "SubstanceEncoding",
     "SubstanceParameter",
