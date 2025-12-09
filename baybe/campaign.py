@@ -888,7 +888,8 @@ class Campaign(SerialMixin):
                 existing campaign measurements.
             consider_campaign_measurements: Allows for consideration of the existing
                 campaign measurements when calculating if the input measurements are
-                non-dominated.
+                non-dominated. When this flag is active, the non dominated points are
+                only returned for the input data, not for the campaign measurements.
 
         Raises:
             IncompatibilityError: If objective is None
@@ -898,19 +899,16 @@ class Campaign(SerialMixin):
             A series of boolean values indicating whether the corresponding measurement
             is non-dominated.
         """
+        # TODO: Is the 4th option blocked : measurements None and consider campaign None
         if self.objective is None:
             raise IncompatibilityError(
                 f"Cannot get the non dominated points since no '{Objective.__name__}' "
                 "is defined."
             )
-        if not self.objective.is_multi_output:
-            raise IncompatibilityError(
-                f"{self.objective.is_non_dominated.__name__} is only available for "
-                f"Objectives with {self.objective.is_multi_output.__name__} set to "
-                "True."
-            )
 
-        validate_target_input(measurements, self.objective.targets)
+        # TODO: Update cases when None, not None, or consider_campaign_measurements
+        if measurements is not None:
+            validate_target_input(measurements, self.objective.targets)
 
         campaign_measurement_added_at = None
         if measurements is None:

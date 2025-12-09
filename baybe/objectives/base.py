@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, ClassVar
 import pandas as pd
 from attrs import define, field
 
-from baybe.exceptions import IncompatibilityError
 from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
@@ -268,20 +267,12 @@ class Objective(ABC, SerialMixin):
         Args:
             measurements: The measurements used to identify the non-dominated points.
 
-        Raises:
-            IncompatibilityError: If the objective does not support multi output
-
         Returns:
             A series of boolean values indicating whether the corresponding measurement
             is non-dominated.
         """
         from botorch.utils.multi_objective.pareto import is_non_dominated
 
-        if not self.is_multi_output:
-            raise IncompatibilityError(
-                f"{self.is_non_dominated.__name__} is only available for Objectives "
-                f"with {self.is_multi_output.__name__} set to True."
-            )
         validate_target_input(measurements, self.targets)
 
         y_comp = self.transform(measurements, allow_extra=True)
