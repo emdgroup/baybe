@@ -1,7 +1,9 @@
 """Test is non dominated functionality for objective."""
 
+import numpy as np
+import pandas as pd
 import pytest
-from pytest import mark, param
+from pytest import param
 
 from baybe.exceptions import IncompatibilityError
 from baybe.objectives import (
@@ -9,73 +11,96 @@ from baybe.objectives import (
     ParetoObjective,
     SingleTargetObjective,
 )
-from baybe.targets import NumericalTarget
+from baybe.parameters import NumericalDiscreteParameter
 from baybe.utils.dataframe import create_fake_input
 
 
-@mark.parametrize(
-    "objective",
+@pytest.fixture(name="objective_name")
+def fixture_default_objective_name():
+    """The default objective name to be used if not specified differently."""
+    return "single"
+
+
+# Overwrite Objective fixture to use ParetoObjective
+@pytest.fixture(name="objective")
+def fixture_default_objective(targets, objective_name):
+    """The objective defined by the objective name."""
+    if objective_name is None:
+        return None
+    elif "single" in objective_name.lower() or len(targets) == 1:
+        return SingleTargetObjective(targets[0])
+    elif "pareto" in objective_name.lower() and len(targets) >= 2:
+        return ParetoObjective(targets)
+    elif "desirability" in objective_name.lower() and len(targets) >= 2:
+        return DesirabilityObjective(targets)
+    else:
+        return SingleTargetObjective(targets[0])
+
+
+@pytest.mark.parametrize(
+    ("objective_name", "target_names"),
     [
+        param("pareto", ["Target_max", "Target_max"], id="pareto"),
+        param("pareto", ["Target_max", "Target_min"], id="pareto"),
+        param("pareto", ["Target_min", "Target_min"], id="pareto"),
+        param("pareto", ["Target_min", "Target_max"], id="pareto"),
         param(
-            DesirabilityObjective(
-                (
-                    NumericalTarget("t1", mode="MAX", bounds=(0, 100)),
-                    NumericalTarget("t2", mode="MIN", bounds=(0, 100)),
-                )
-            ),
+            "pareto",
+            ["Target_min", "Target_max", "Target_match_triangular"],
+            id="pareto",
+        ),
+        param("single", ["Target_max"], id="single"),
+        param(
+            "desirability",
+            ["Target_match_triangular", "Target_match_triangular"],
             id="desirability",
-        ),
-        param(
-            ParetoObjective(
-                (
-                    NumericalTarget("t1", mode="MAX"),
-                    NumericalTarget("t2", mode="MIN"),
-                )
-            ),
-            id="pareto_max_min",
-        ),
-        param(
-            ParetoObjective(
-                (
-                    NumericalTarget("t1", mode="MAX"),
-                    NumericalTarget("t2", mode="MATCH", bounds=(0, 100)),
-                )
-            ),
-            id="pareto_max_match",
         ),
     ],
 )
 def test_is_non_dominated_func_call(
-    ongoing_campaign, objective, parameters, batch_size
+    ongoing_campaign, objective, parameters, batch_size, targets
 ):
-    """Test function call for accepted objective types with multi output."""
+    """Test function call and expected output size."""
+    # Non dominated points for measurements
     non_dominated_campaign_default = ongoing_campaign.is_non_dominated()
     assert len(ongoing_campaign.measurements) == len(non_dominated_campaign_default)
 
+    # Non dominated points for new measurements
     fake_measures = create_fake_input(
-        parameters, ongoing_campaign.objective.targets, batch_size
+        parameters,
+        targets,
+        batch_size,
     )
-    non_dominated_campaign = ongoing_campaign.is_non_dominated(fake_measures)
+    # Entry point from campaign
+    non_dominated_campaign = ongoing_campaign.is_non_dominated(
+        fake_measures, consider_campaign_measurements=False
+    )
     assert len(fake_measures) == len(non_dominated_campaign)
 
-    non_dominated_objective = objective.is_non_dominated(fake_measures)
+    # Entry point from objective
+    non_dominated_objective = ongoing_campaign.objective.is_non_dominated(fake_measures)
     assert len(fake_measures) == len(non_dominated_objective)
 
+    # Test that both entry points give the same result
+    assert non_dominated_campaign.equals(non_dominated_objective)
 
-@mark.parametrize(
-    "objective",
+    # Test flag consider_campaign_measurements
+    non_dominated_campaign_flag = ongoing_campaign.is_non_dominated(
+        fake_measures, consider_campaign_measurements=True
+    )
+    # Although the campaign measurements are considered for the calculation of
+    # is_dominated, they will not be returned.
+    assert len(fake_measures) == len(non_dominated_campaign_flag)
+
+
+@pytest.mark.parametrize(
+    "objective_name, target_names",
     [
-        param(
-            SingleTargetObjective(
-                NumericalTarget("t1", "MAX"),
-            ),
-            id="single",
-        ),
-        param(None),
+        param(None, ["Target_max"], id="none_min"),
     ],
 )
 def test_incompatibility(campaign, objective, fake_measurements):
-    """Test for incompatibility for non multi output targets."""
+    """Test for incompatibility for non multioutput targets."""
     with pytest.raises(IncompatibilityError):
         campaign.is_non_dominated()
         campaign.is_non_dominated(fake_measurements)
@@ -85,7 +110,84 @@ def test_incompatibility(campaign, objective, fake_measurements):
             objective.is_non_dominated(fake_measurements)
 
 
-@pytest.mark.xfail(reason="Bug in Botorch 0.14.0")
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        param(
+            [
+                NumericalDiscreteParameter(
+                    name="param1",
+                    values=tuple(np.linspace(0, 200, 5)),
+                    tolerance=0.1,
+                ),
+                NumericalDiscreteParameter(
+                    name="param2",
+                    values=tuple(np.linspace(0, 200, 5)),
+                    tolerance=0.1,
+                ),
+            ],
+            id="2params",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "target_names, idx_non_dominated, objective_name",
+    [
+        param(["Target_min", "Target_min"], [0], "pareto", id="pareto_min_min"),
+        param(["Target_max", "Target_min"], [0, 2, 5], "pareto", id="pareto_max_min"),
+        param(["Target_min", "Target_max"], [0, 2, 3], "pareto", id="pareto_min_max"),
+        param(["Target_max", "Target_max"], [2], "pareto", id="pareto_max_max"),
+        param(
+            ["Target_match_bell", "Target_match_bell"],
+            [1, 4],
+            "pareto",
+            id="pareto_bell_bell",
+        ),
+        param(["Target_min"], [0], "single", id="single_min"),
+        param(["Target_max"], [2], "single", id="single_max"),
+        param(["Target_match_bell"], [1, 4], "single", id="single_bell"),
+        param(
+            ["Target_min", "Target_min"], [0], "desirability", id="desirability_min_min"
+        ),
+        param(
+            ["Target_match_bell", "Target_match_bell"],
+            [1, 4],
+            "desirability",
+            id="desirability_bell_bell",
+        ),
+    ],
+)
+def test_is_non_dominated_logic(campaign, targets, idx_non_dominated, target_names):
+    """Test is_non_dominated logic for different target and objective combinations."""
+    # Construct data
+    p1 = np.hstack(
+        (
+            np.linspace(0, 100, 3),
+            np.linspace(100, 0, 3),
+        )
+    )
+    p2 = np.hstack(
+        (
+            np.linspace(0, 100, 3),
+            np.linspace(0, 100, 3),
+        )
+    )
+
+    data_dict = {"param1": p1, "param2": p2}
+
+    data_dict[target_names[0]] = p1 * 0.25 + p2 * 0.75
+    if len(target_names) > 1:
+        data_dict[target_names[1]] = p1 * 0.75 + p2 * 0.25
+
+    measurements = pd.DataFrame(data_dict)
+
+    campaign.add_measurements(measurements)
+    non_dominated = campaign.is_non_dominated()
+
+    assert set(np.where(non_dominated)[0].tolist()) == set(idx_non_dominated)
+
+
+@pytest.mark.xfail(reason="Bug in Botorch 0.14.0; issue #2924")
 def test_botorch_is_non_dominated():
     """Test for bug in botorch 0.14.0 is_non_dominated().
 
