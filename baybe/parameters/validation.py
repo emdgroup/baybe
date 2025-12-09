@@ -1,6 +1,6 @@
 """Validation functionality for parameters."""
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from typing import Any
 
 import numpy as np
@@ -43,3 +43,15 @@ def validate_is_finite(  # noqa: DOC101, DOC103
             f"Cannot assign the following values containing infinity/nan to "
             f"parameter {obj.name}: {value}."
         )
+
+
+def validate_contains_one(  # noqa: DOC101, DOC103
+    obj: Any, _: Any, value: Collection[float]
+):
+    """Validate that ``value`` contains at least one entry equal to ``1.0``.
+
+    Raises:
+        ValueError: If ``value`` does not include ``1.0``
+    """
+    if 1.0 not in value:
+        raise ValueError(f"{obj.name} must contain 1.0")
