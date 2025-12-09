@@ -261,6 +261,9 @@ class Objective(ABC, SerialMixin):
     def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
         """Determine for each point if it is non-dominated across all measurements.
 
+        In case of duplicated non-dominated points, returns both duplicates as
+        non-dominated.
+
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
 
@@ -276,7 +279,7 @@ class Objective(ABC, SerialMixin):
         validate_target_input(measurements, self.targets)
 
         y_comp = self.transform(measurements, allow_extra=True)
-        y_is_non_dominated = is_non_dominated(Y=to_tensor(y_comp))
+        y_is_non_dominated = is_non_dominated(Y=to_tensor(y_comp), deduplicate=False)
 
         return pd.Series(y_is_non_dominated.numpy(), name="is_non_dominated")
 
