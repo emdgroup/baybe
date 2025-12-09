@@ -21,7 +21,6 @@ def fixture_default_objective_name():
     return "single"
 
 
-# Overwrite Objective fixture to use ParetoObjective
 @pytest.fixture(name="objective")
 def fixture_default_objective(targets, objective_name):
     """The objective defined by the objective name."""
@@ -71,17 +70,17 @@ def test_is_non_dominated_func_call(
         targets,
         batch_size,
     )
-    # Entry point from campaign
+
+    # From campaign
     non_dominated_campaign = ongoing_campaign.is_non_dominated(
         fake_measures, consider_campaign_measurements=False
     )
     assert len(fake_measures) == len(non_dominated_campaign)
 
-    # Entry point from objective
+    # From objective
     non_dominated_objective = ongoing_campaign.objective.is_non_dominated(fake_measures)
     assert len(fake_measures) == len(non_dominated_objective)
 
-    # Test that both entry points give the same result
     assert non_dominated_campaign.equals(non_dominated_objective)
 
     # Test flag consider_campaign_measurements
@@ -100,7 +99,7 @@ def test_is_non_dominated_func_call(
     ],
 )
 def test_incompatibility(campaign, objective, fake_measurements):
-    """Test for incompatibility for non multioutput targets."""
+    """Test for incompatibility."""
     with pytest.raises(IncompatibilityError):
         campaign.is_non_dominated()
         campaign.is_non_dominated(fake_measurements)
@@ -117,7 +116,7 @@ def test_incompatibility(campaign, objective, fake_measurements):
     ],
 )
 def test_no_measurements(campaign, objective, fake_measurements):
-    """Test for incompatibility for non multioutput targets."""
+    """Test for error if no measurements are available."""
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=True)
 

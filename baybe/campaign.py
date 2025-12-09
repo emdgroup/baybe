@@ -878,13 +878,13 @@ class Campaign(SerialMixin):
         measurements: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Determine for each point if it is non-dominated across all measurements.
+        """Get the non dominated points from the provided measurements.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
 
         Args:
-            measurements: The measurements with filled target columns.
+            measurements: The measurements with populated target columns.
                 If not provided, the non-dominated points will be determined for the
                 existing campaign measurements.
             consider_campaign_measurements: If set to True, considers the campaign
@@ -894,7 +894,6 @@ class Campaign(SerialMixin):
 
         Raises:
             IncompatibilityError: If objective is None
-            IncompatibilityError: If objective does not support multi output
             NoMeasurementsError: If consider_campaign_measurements is set to True,
                 but no measurements are added to the campaign yet and no data is
                 provided.
@@ -902,7 +901,7 @@ class Campaign(SerialMixin):
                 no data is provided.
 
         Returns:
-            A series of boolean values indicating whether the corresponding measurement
+            A series of boolean values indicating whether the corresponding datapoint
             is non-dominated.
         """
         if self.objective is None:
