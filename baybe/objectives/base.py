@@ -14,11 +14,7 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import (
-    get_transform_objects,
-    to_tensor,
-    transform_target_columns,
-)
+from baybe.utils.dataframe import get_transform_objects, to_tensor
 from baybe.utils.metadata import Metadata, to_metadata
 from baybe.utils.validation import validate_target_input
 
