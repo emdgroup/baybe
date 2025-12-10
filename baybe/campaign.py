@@ -926,7 +926,7 @@ class Campaign(SerialMixin):
                         f"{consider_campaign_measurements}. Therefore, the "
                         "non-dominated points will be determined without considering "
                         "the campaign measurements.",
-                        Warning,
+                        UserWarning,
                     )
             elif measurements is None:
                 measurements = self.measurements
