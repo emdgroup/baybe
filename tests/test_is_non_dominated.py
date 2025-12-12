@@ -1,4 +1,4 @@
-"""Test is non dominated functionality for objective."""
+"""Test is non-dominated functionality for objective."""
 
 import numpy as np
 import pandas as pd
