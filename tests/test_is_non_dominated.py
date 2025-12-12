@@ -39,10 +39,10 @@ def fixture_default_objective(targets, objective_name):
 @pytest.mark.parametrize(
     ("objective_name", "target_names"),
     [
-        param("pareto", ["Target_max", "Target_max"], id="pareto"),
-        param("pareto", ["Target_max", "Target_min"], id="pareto"),
-        param("pareto", ["Target_min", "Target_min"], id="pareto"),
-        param("pareto", ["Target_min", "Target_max"], id="pareto"),
+        param("pareto", ["Target_max", "Target_max"], id="pareto_max_max"),
+        param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
+        param("pareto", ["Target_min", "Target_min"], id="pareto_min_min"),
+        param("pareto", ["Target_min", "Target_max"], id="pareto_min_max"),
         param(
             "pareto",
             ["Target_min", "Target_max", "Target_match_triangular"],
