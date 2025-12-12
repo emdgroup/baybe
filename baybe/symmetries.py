@@ -250,8 +250,9 @@ class MirrorSymmetry(Symmetry):
     """Class for representing mirror symmetries.
 
     A mirror symmetry expresses that certain parameters can be inflected at a mirror
-    point without affecting the outcome of the model. For instance, this is the case if
-    $f(x,y) = f(-x,y)$ (mirror point is 0).
+    point without affecting the outcome of the model. For instance, when specified
+    for parameter ``x`` and mirror point ``c``, the symmetry expresses that
+    $f(..., c+x, ...) = f(..., c-x, ...)$.
     """
 
     _parameter_name: str = field(validator=instance_of(str), alias="parameter_name")
