@@ -160,7 +160,7 @@ class PermutationSymmetry(Symmetry):
                 raise ValueError(
                     f"In the {self.__class__.__name__}, parameter names cannot appear "
                     f"in multiple permutation groups. However, the following parameter "
-                    f"names appear in several groups {overlap}."
+                    f"names appear in several groups: {overlap}."
                 )
 
     @override
