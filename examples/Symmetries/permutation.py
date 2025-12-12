@@ -109,7 +109,7 @@ axs[0].set_ylabel("y");
 # `use_data_augmentation=True`, the model will be fit with an extended set of points,
 # including augmented ones. So as a user, you don't have to generate permutations and
 # add them manually. Depending on the surrogate model, this might have different
-# impacts. We can expect a strong effect for tree-based models because their splits are
+# impacts. For example, we can expect a strong effect for tree-based models because their splits are
 # always parallel to the parameter axes. Thus, without augmented measurements, it is
 # easy to fall into suboptimal splits and overfit. We illustrate this by using the
 # {class}`~baybe.surrogates.ngboost.NGBoostSurrogate`.
