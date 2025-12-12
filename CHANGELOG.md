@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Objective.to_botorch_posterior_transform` for use of affine transformations with
   analytical acquisition functions
 - `DesirabilityObjective.normalized_weights` property 
+- `BayesianRecommender.current_surrogate` property 
 - Possibility to set `n_mc_iterations` to `None` in `simulate_scenarios`, which
   increments the simulation random seed per initial data set without having to execute
   the full Cartesian product of all (seed, data)-configurations
@@ -36,9 +37,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `farthest_point_sampling` now correctly handles predefined `initialization` indices
 - `SearchSpace.from_dataframe` now validates that dataframes contain only
   `active_values`, raising `IncompatibilityError` otherwise
+- False-negative surrogate cache hits when using multi-model surrogates
+- `IndependentGaussianSurrogate` models now properly refuse batch recommendation
+  regardless of their context (e.g. when used within a `CompositeSurrogate`)
+- `CompositeSurrogate` models are now fit on the correct input when using
+  pre-transformations in the objective
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
+- `InvalidSurrogateModelError` exception because there already exists a more appropriate
+  `IncompatibleSurrogateError` exception
  
 ## [0.14.1] - 2025-10-01
 ### Added
