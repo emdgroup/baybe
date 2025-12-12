@@ -131,7 +131,7 @@ class PermutationSymmetry(Symmetry):
         """Validate the copermuted groups.
 
         Raises:
-            ValueError: If any of the copermuted groups don't have the same length as
+            ValueError: If any of the copermuted groups has a different length than
                 the primary group.
             ValueError: If any of the copermuted groups contain duplicate parameters.
             ValueError: If any parameter name appears in multiple permutation groups.
