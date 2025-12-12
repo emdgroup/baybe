@@ -1,4 +1,4 @@
-# # Optimizing a Function that is Permutation Invariant
+# # Optimizing a Permutation-Invariant Function
 
 # In this example, we explore BayBE's capabilities for handling optimization problems
 # with symmetry via automatic data augmentation and / or constraint.
