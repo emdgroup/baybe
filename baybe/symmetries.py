@@ -63,8 +63,8 @@ class Symmetry(SerialMixin, ABC):
 
         Args:
             df: The dataframe containing the measurements to be augmented.
-            parameters: Parameter objects carrying additional information (might not be
-                needed by all augmentation implementations).
+            parameters: Corresponding parameter objects carrying additional information
+                (not needed by all augmentation types).
 
         Returns:
             The augmented dataframe including the original measurements.
