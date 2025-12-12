@@ -878,7 +878,7 @@ class Campaign(SerialMixin):
         measurements: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Get the non dominated points from the provided measurements.
+        """Get the non-dominated points from the provided measurements.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
@@ -906,7 +906,7 @@ class Campaign(SerialMixin):
         """
         if self.objective is None:
             raise IncompatibilityError(
-                f"Cannot get the non dominated points since no '{Objective.__name__}' "
+                f"Cannot get the non-dominated points since no '{Objective.__name__}' "
                 "is defined."
             )
 
