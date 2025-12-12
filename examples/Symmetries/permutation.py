@@ -44,7 +44,7 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
 
 # There are several ways to handle such symmetries. The simplest one is
 # to augment your data. In the case of permutation invariance, augmentation means for
-# each measurement (x,y) you also add a measurement with switched values: (y,x).
+# each measurement $(x,y)$ you also add a measurement with switched values, i.e.,  $(y,x)§.
 # This has the advantage that it is fully model-agnostic, but might
 # come at the expense of increased training time and efficiency due to the larger amount
 # of effective training points. Other ways of treating symmetry, such as using special
