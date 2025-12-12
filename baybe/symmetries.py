@@ -33,8 +33,8 @@ if TYPE_CHECKING:
 class Symmetry(SerialMixin, ABC):
     """Abstract base class for symmetries.
 
-    Symmetry is a concept that can be used to configure the modelling process in the
-    presence of invariances.
+    A ``Symmetry`` is a concept that can be used to configure the modelling process in
+    the presence of invariances.
     """
 
     use_data_augmentation: bool = field(
