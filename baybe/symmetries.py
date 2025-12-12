@@ -133,7 +133,7 @@ class PermutationSymmetry(Symmetry):
         Raises:
             ValueError: If any of the copermuted groups has a different length than
                 the primary group.
-            ValueError: If any of the copermuted groups contain duplicate parameters.
+            ValueError: If any of the copermuted groups contains duplicate parameters.
             ValueError: If any parameter name appears in multiple permutation groups.
         """
         for k, group in enumerate(groups):
