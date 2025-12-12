@@ -85,8 +85,8 @@ class Symmetry(SerialMixin, ABC):
         )
         if parameters_missing:
             raise ValueError(
-                f"The symmetry of type {self.__class__.__name__} was set up with at "
-                f"least one parameter which is not present in the searchspace: "
+                f"The symmetry of type '{self.__class__.__name__}' was set up with the "
+                f"following parameters that are not present in the search space: "
                 f"{parameters_missing}."
             )
 
