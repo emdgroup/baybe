@@ -29,6 +29,8 @@ from baybe.utils.basic import Dummy
 if TYPE_CHECKING:
     import polars as pl
 
+    from baybe.symmetries import DependencySymmetry, PermutationSymmetry
+
 
 @define
 class DiscreteExcludeConstraint(DiscreteConstraint):
@@ -195,10 +197,6 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
     a single constraint.
     """
 
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
-
     # object variables
     conditions: list[Condition] = field()
     """The list of individual conditions."""
@@ -272,6 +270,24 @@ class DiscreteDependenciesConstraint(DiscreteConstraint):
 
         return inds_bad
 
+    def to_symmetries(
+        self, use_data_augmentation=True
+    ) -> tuple[DependencySymmetry, ...]:
+        """Convert to a :class:`~baybe.symmetries.DependencySymmetry`."""
+        from baybe.symmetries import DependencySymmetry
+
+        return tuple(
+            DependencySymmetry(
+                parameter_name=p,
+                condition=c,
+                affected_parameter_names=aps,
+                use_data_augmentation=use_data_augmentation,
+            )
+            for p, c, aps in zip(
+                self.parameters, self.conditions, self.affected_parameters, strict=True
+            )
+        )
+
 
 @define
 class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
@@ -285,10 +301,6 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
     *Note:* This constraint is evaluated during creation. In the future it might also be
     evaluated during modeling to make use of the invariance.
     """
-
-    # class variables
-    eval_during_augmentation: ClassVar[bool] = True
-    # See base class
 
     # object variables
     dependencies: DiscreteDependenciesConstraint | None = field(default=None)
@@ -337,6 +349,18 @@ class DiscretePermutationInvarianceConstraint(DiscreteConstraint):
             inds_invalid = inds_invalid.union(inds_duplicate_independency_adjusted)
 
         return inds_invalid
+
+    def to_symmetry(self, use_data_augmentation=True) -> PermutationSymmetry:
+        """Convert to a :class:`~baybe.symmetries.PermutationSymmetry`."""
+        from baybe.symmetries import PermutationSymmetry
+
+        return PermutationSymmetry(
+            parameter_names=self.parameters,
+            copermuted_groups=(tuple(self.dependencies.parameters),)  # type: ignore[arg-type]
+            if self.dependencies
+            else tuple(),
+            use_data_augmentation=use_data_augmentation,
+        )
 
 
 @define

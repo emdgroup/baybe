@@ -12,14 +12,8 @@ from typing_extensions import override
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
-from baybe.utils.conversion import nonstring_to_tuple
+from baybe.utils.conversion import normalize_str_sequence
 from baybe.utils.numerical import DTypeFloatNumpy
-
-
-def _convert_values(value, self, field) -> tuple[str, ...]:
-    """Sort and convert values for categorical parameters."""
-    value = nonstring_to_tuple(value, self, field)
-    return tuple(sorted(value, key=lambda x: (str(type(x)), x)))
 
 
 def _validate_label_min_len(self, attr, value) -> None:
@@ -38,7 +32,7 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
     # object variables
     _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=Converter(_convert_values, takes_self=True, takes_field=True),  # type: ignore
+        converter=Converter(normalize_str_sequence, takes_self=True, takes_field=True),  # type: ignore
         validator=(  # type: ignore
             validate_unique_values,
             deep_iterable(
