@@ -166,22 +166,23 @@ def main():
     objective = NumericalTarget(name="y", minimize=st_minimize).to_objective()
 
     # Create the surrogate model, acquisition function, and the recommender
-    surrogate_model = surrogate_model_classes[st_surrogate_name]()
     acqf_cls = acquisition_function_classes[st_acqf_name]
     try:
         acqf = acqf_cls(maximize=not st_minimize)
     except TypeError:
         acqf = acqf_cls()
     recommender = BotorchRecommender(
-        surrogate_model=surrogate_model, acquisition_function=acqf
+        surrogate_model=surrogate_model_classes[st_surrogate_name](),
+        acquisition_function=acqf,
     )
 
     # Get the recommendations and extract the posterior mean / standard deviation
     recommendations = recommender.recommend(
         st_n_recommendations, searchspace, objective, measurements
     )
+    surrogate = recommender.get_surrogate(searchspace, objective, measurements)
     with torch.no_grad():
-        posterior = surrogate_model.posterior(candidates)
+        posterior = surrogate.posterior(candidates)
     mean = posterior.mean.squeeze().numpy()
     std = posterior.variance.sqrt().squeeze().numpy()
 
