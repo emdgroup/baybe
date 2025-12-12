@@ -35,7 +35,7 @@ N_DOE_ITERATIONS = 2 if SMOKE_TEST else 50
 
 # ## The Scenario
 
-# We will explore a 2 dimensional function which is permutation-invariant. This means
+# We will explore a 2-dimensional permutation-invariant function, i.e., it holds that
 # $f(x,y) = f(y,x)$. The function was crafted to exhibit no additional mirror symmetry
 # (a common way of also resulting in permutation invariance) and have multiple minima.
 # In practice, permutation invariance can arise e.g. for
