@@ -239,8 +239,8 @@ class PermutationSymmetry(Symmetry):
                     set(cast(DiscreteParameter, p).values) != ref_vals for p in params
                 ):
                     raise ValueError(
-                        f"The parameter group '{group}' contains parameters which have "
-                        f"different values. All parameters in a group must have the "
+                        f"The parameter group '{group}' contains parameters with different "
+                        f"values. All parameters in a group must have the "
                         f"same specification."
                     )
 
