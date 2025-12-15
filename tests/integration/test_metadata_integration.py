@@ -115,6 +115,7 @@ def test_constructor_history(constructor, kwargs):
     # Create reference target
     if constructor.startswith("match_"):
         kwargs["match_value"] = 1337
+
     if constructor == "__init__":
         t1 = NumericalTarget("t", **kwargs)
     else:
