@@ -193,7 +193,7 @@ class NumericalTarget(Target, SerialMixin):
 
     @property
     def constructor_history(self) -> dict[str, Any]:
-        """The constructor arguments used to create this target.
+        """The constructor arguments used to create the target.
 
         This also includes default values of optional arguments that might not have
         been used during construction. Values are affected by possible attribute
