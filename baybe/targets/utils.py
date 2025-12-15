@@ -5,10 +5,9 @@ from __future__ import annotations
 import inspect
 from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Concatenate, ParamSpec
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec
 
-from attrs import fields_dict
-from attrs import evolve, fields
+from attrs import evolve, fields, fields_dict
 
 from baybe.transformations.basic import IdentityTransformation
 
