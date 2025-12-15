@@ -64,7 +64,7 @@ def capture_constructor_history(
         bound.arguments.pop("cls")  # Ignore "cls"
 
         # Store argument history
-        constructor_history: dict[str, object] = {
+        constructor_history: dict[str, Any] = {
             "constructor": constructor.__name__,
             **{
                 k: v
