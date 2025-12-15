@@ -127,7 +127,7 @@ class NumericalTarget(Target, SerialMixin):
     _constructor_history: dict[str, Any] | None = field(
         default=None, init=False, eq=False
     )
-    """Helper to keep track of the construction history used for this object."""
+    """Helper to keep track of the target's construction history."""
 
     def __init__(  # noqa: DOC301
         self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
