@@ -7,7 +7,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, Concatenate, ParamSpec
 
-from attr import fields_dict
+from attrs import fields_dict
 from attrs import evolve, fields
 
 from baybe.transformations.basic import IdentityTransformation
