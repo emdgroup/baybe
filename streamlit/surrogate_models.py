@@ -17,6 +17,7 @@ import streamlit as st
 
 from baybe.acquisition import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
@@ -175,9 +176,17 @@ def main():
     )
 
     # Get the recommendations and extract the posterior mean / standard deviation
-    recommendations = recommender.recommend(
-        st_n_recommendations, searchspace, objective, measurements
-    )
+    try:
+        recommendations = recommender.recommend(
+            st_n_recommendations, searchspace, objective, measurements
+        )
+    except IncompatibleSurrogateError:
+        st.error(
+            f"You requested {st_n_recommendations} recommendations but the selected "
+            f"surrogate class does not support recommending more than one candidate "
+            f"at a time."
+        )
+        st.stop()
     surrogate = recommender.get_surrogate(searchspace, objective, measurements)
     stats = surrogate.posterior_stats(candidates)
     mean, std = stats["y_mean"], stats["y_std"]
