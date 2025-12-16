@@ -51,10 +51,17 @@ def test_caching(patched, searchspace, objective, fake_measurements):
             [NumericalTarget("t1"), NumericalTarget("t2")],
             scalarizer="MEAN",
             require_normalization=False,
+            as_pre_transformation=False,
+        ),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+            as_pre_transformation=True,
         ),
         ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
     ],
-    ids=["single", "desirability", "pareto"],
+    ids=["single", "desirability", "desirability-pre", "pareto"],
 )
 @patch.object(
     GaussianProcessSurrogate,
