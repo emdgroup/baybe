@@ -197,7 +197,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return scaler
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame, *, joint: bool = True) -> Posterior:
         """Compute the posterior for candidates in experimental representation.
 
         Takes a dataframe of parameter configurations in **experimental representation**
@@ -207,6 +207,11 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         Args:
             candidates: A dataframe containing parameter configurations in
                 **experimental representation**.
+            joint: If ``True``, the provided candidates are treated in a "q-batch",
+                meaning that the returned posterior describes the joint distribution
+                over all candidates. If ``False``, the candidates are treated
+                independently as a "t-batch", and the returned posterior describes the
+                collection of marginal distributions at each candidate point.
 
         Raises:
             ModelNotTrainedError: When called before the model has been trained.
@@ -222,9 +227,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a posterior can be computed."
             )
-        return self._posterior_comp(
-            to_tensor(self._searchspace.transform(candidates, allow_extra=True))
-        )
+        tensor = to_tensor(self._searchspace.transform(candidates, allow_extra=True))
+        if not joint:
+            tensor = tensor.unsqueeze(-2)
+        return self._posterior_comp(tensor)
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
@@ -320,7 +326,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                     f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
                     f"part of '{stats=}'."
                 )
-        posterior = self.posterior(candidates)
+        posterior = self.posterior(candidates, joint=False)
 
         import torch
 
