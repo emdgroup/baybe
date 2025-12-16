@@ -8,7 +8,7 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.converters import optional
 from typing_extensions import override
 
@@ -78,17 +78,11 @@ class BayesianRecommender(PureRecommender, ABC):
         """Deprecated!"""
         warnings.warn(
             f"Accessing the surrogate model via 'surrogate_model' has been "
-            f"deprecated. Use '{self.get_surrogate.__name__}' instead to get a "
-            f"trained model instance or "
-            f"'{type(self).current_surrogate.fget.__name__}' to access the current "  # type: ignore[attr-defined]
-            f"(possibly untrained) instance.",
+            f"deprecated. Use '{self.get_surrogate.__name__}' instead to get the "
+            f"trained model instance (or "
+            f"'{fields(type(self))._surrogate_model.name}' to access the raw object).",
             DeprecationWarning,
         )
-        return self._surrogate_model
-
-    @property
-    def current_surrogate(self) -> SurrogateProtocol:
-        """The current (possibly untrained) surrogate model."""
         return self._surrogate_model
 
     def _get_acquisition_function(self, objective: Objective) -> AcquisitionFunction:
