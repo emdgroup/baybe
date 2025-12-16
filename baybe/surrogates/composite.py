@@ -126,7 +126,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
             self.surrogates[target.name].fit(
                 searchspace, target.to_objective(), measurements_filtered
             )
-            self._modeled_quantity_names = tuple(t.name for t in objective.targets)
+            self._modeled_quantity_names = objective._modeled_quantity_names
             return
 
         target_names = [t.name for t in objective.targets]
