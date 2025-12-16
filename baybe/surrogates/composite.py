@@ -13,14 +13,12 @@ from typing_extensions import override
 
 from baybe.exceptions import IncompatibleSurrogateError
 from baybe.objectives.base import Objective
-from baybe.objectives.single import SingleTargetObjective
 from baybe.searchspace.core import SearchSpace
 from baybe.serialization import converter
 from baybe.serialization.core import _TYPE_FIELD, add_type
 from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import handle_missing_values
 
@@ -108,40 +106,17 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        # TODO: This is a temporary workaround to enable non-numerical targets,
-        #  which is required because the pre-transformation step in the other execution
-        #  branch implicitly assumes numerical targets, i.e. there exists no mechanism
-        #  yet to specify the "type" of the object returned by the pre-transformation,
-        #  which explains the hardcoded `NumericalTarget` type the `fit` call below.
-        if not is_all_instance(objective.targets, NumericalTarget):
-            if not isinstance(objective, SingleTargetObjective):
-                raise NotImplementedError(
-                    f"For target types other than '{NumericalTarget.__name__}', "
-                    f"'{self.__class__.__name__}' only supports a single target."
-                )
-            target = objective.targets[0]
-            measurements_filtered = handle_missing_values(
-                measurements, [target.name], drop=True
-            )
-            self.surrogates[target.name].fit(
-                searchspace, target.to_objective(), measurements_filtered
-            )
-            self._modeled_quantity_names = objective._modeled_quantity_names
-            return
-
         target_names = [t.name for t in objective.targets]
         pre_transformed = objective._pre_transform(measurements[target_names])
         pre_transformed = pd.concat(
             [measurements[list(searchspace.parameter_names)], pre_transformed],
             axis=1,
         )
-        for name in objective._modeled_quantity_names:
-            filtered = handle_missing_values(pre_transformed, [name], drop=True)
-            self.surrogates[name].fit(
-                searchspace,
-                NumericalTarget(name).to_objective(),
-                filtered,
-            )
+
+        for q in objective._modeled_quantities:
+            filtered = handle_missing_values(pre_transformed, [q.name], drop=True)
+            self.surrogates[q.name].fit(searchspace, q.to_objective(), filtered)
+
         self._modeled_quantity_names = objective._modeled_quantity_names
 
     @override
