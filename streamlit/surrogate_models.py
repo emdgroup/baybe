@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
-import torch
 
 from baybe.acquisition.acqfs import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
@@ -181,10 +180,8 @@ def main():
         st_n_recommendations, searchspace, objective, measurements
     )
     surrogate = recommender.get_surrogate(searchspace, objective, measurements)
-    with torch.no_grad():
-        posterior = surrogate.posterior(candidates)
-    mean = posterior.mean.squeeze().numpy()
-    std = posterior.variance.sqrt().squeeze().numpy()
+    stats = surrogate.posterior_stats(candidates)
+    mean, std = stats["y_mean"], stats["y_std"]
 
     # Visualize the test function, training points, model predictions, recommendations
     fig = plt.figure()
