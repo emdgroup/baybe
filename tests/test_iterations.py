@@ -78,7 +78,13 @@ for cls in get_subclasses(Surrogate):
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
         continue
-    p = param(cls(), id=cls.__name__)
+    p = param(
+        cls(),
+        id=cls.__name__,
+        marks=pytest.mark.skipif(
+            not cls.is_available, reason="missing optional dependencies"
+        ),
+    )
     valid_surrogate_models.append(p)
 
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
@@ -318,10 +324,7 @@ def test_surrogate_models(ongoing_campaign, n_iterations, batch_size, surrogate_
         )
 
     with context:
-        try:
-            run_iterations(ongoing_campaign, n_iterations, batch_size)
-        except OptionalImportError:
-            pytest.skip("missing optional dependency")
+        run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
