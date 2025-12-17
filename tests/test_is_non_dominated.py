@@ -5,7 +5,11 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import IncompatibilityError, NoMeasurementsError
+from baybe.exceptions import (
+    IncompatibilityError,
+    NoMeasurementsError,
+    NothingToComputeError,
+)
 from baybe.objectives import (
     DesirabilityObjective,
     ParetoObjective,
@@ -123,7 +127,7 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=True)
 
-    with pytest.raises(NoMeasurementsError):
+    with pytest.raises(NothingToComputeError):
         campaign.is_non_dominated(consider_campaign_measurements=False)
 
     with pytest.warns(UserWarning):
@@ -136,7 +140,7 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
     # Test flag if campaign has measurements
     campaign.add_measurements(fake_measurements)
 
-    with pytest.raises(NoMeasurementsError):
+    with pytest.raises(NothingToComputeError):
         campaign.is_non_dominated(consider_campaign_measurements=False)
 
     campaign.is_non_dominated(consider_campaign_measurements=True)
