@@ -1,4 +1,4 @@
-# FORMATTER NOTE: The versions of ufmt, black and usort should be consistent everywhere
+# FORMATTER NOTE: The versions of the developer tools should be consistent everywhere
 # (pre-commit, environment.yml, requirements.txt, pyproject.toml, ...)
 
 ci:

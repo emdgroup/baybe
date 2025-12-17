@@ -131,7 +131,7 @@ lint = [
 ]
 
 mypy = [
-    "mypy>=1.10.1",
+    "mypy>=1.19.1",
     "pandas-stubs>=2.2.2.240603",
     "types-seaborn>=0.13.2.20240618",
     "types-psutil>=7.0.0.20250801",
