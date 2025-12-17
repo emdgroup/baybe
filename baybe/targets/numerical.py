@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from operator import add, mul, sub
 from typing import Any, cast
 
+import cattrs
 import pandas as pd
 from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
@@ -756,13 +757,29 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+converter.register_unstructure_hook(
+    NumericalTarget,
+    cattrs.gen.make_dict_unstructure_fn(
+        NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
+    ),
+)
+
+converter.register_unstructure_hook(
+    NumericalTarget,
+    cattrs.gen.make_dict_unstructure_fn(
+        NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
+    ),
+)
+
 # >>> Deprecation >>> #
+
+_hook = converter.get_structure_hook(NumericalTarget)
 
 
 @converter.register_structure_hook
 def _(dct, cls) -> NumericalTarget:
     if "mode" in dct:
-        return NumericalTarget(*dct)
+        return _hook(*dct)
     return select_constructor_hook(dct, cls)
 
 
