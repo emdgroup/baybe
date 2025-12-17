@@ -117,7 +117,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     @classproperty
     def is_available(cls) -> bool:
-        """Indicates if the surrogate class is available in the current environment.
+        """Indicates if the surrogate class is available in the Python environment.
 
         The property can be used to check for optional dependencies required by
         specific surrogate implementations.
