@@ -18,6 +18,7 @@ from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
+from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer
@@ -113,6 +114,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     Scales a tensor containing target measurements in computational representation
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
+
+    @classproperty
+    def is_available(cls) -> bool:
+        """Indicates if the surrogate class is available in the current environment.
+
+        The property can be used to check for optional dependencies required by
+        specific surrogate implementations.
+        """  # noqa: D401
+        return True
 
     @override
     def to_botorch(self) -> Model:

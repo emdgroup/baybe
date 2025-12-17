@@ -8,10 +8,12 @@ from attrs import define, field
 from numpy.random import RandomState
 from typing_extensions import override
 
+from baybe._optional.info import NGBOOST_INSTALLED
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction, catch_constant_targets
 from baybe.surrogates.validation import make_dict_validator
+from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
@@ -64,6 +66,11 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
 
     def __attrs_post_init__(self):
         self.model_params = {**self._default_model_params, **self.model_params}
+
+    @override
+    @classproperty
+    def is_available(cls) -> bool:
+        return NGBOOST_INSTALLED
 
     @override
     @staticmethod
