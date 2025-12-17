@@ -222,6 +222,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                 over all candidates. If ``False``, the candidates are treated
                 independently as a "t-batch", and the returned posterior describes the
                 collection of marginal distributions at each candidate point.
+                For more information, see `<https://botorch.org/docs/batching>`_.
 
         Raises:
             ModelNotTrainedError: When called before the model has been trained.
