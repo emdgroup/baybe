@@ -54,6 +54,8 @@ def capture_constructor_info(
     def wrapper(
         cls: type[NumericalTarget], *args: P.args, **kwargs: P.kwargs
     ) -> NumericalTarget:
+        from baybe.targets.numerical import NumericalTarget
+
         target = constructor(cls, *args, **kwargs)
 
         # Reconstruct arguments
@@ -72,7 +74,9 @@ def capture_constructor_info(
                 not in fields_dict(target.__class__)  # Ignore persistent attributes
             },
         }
-        object.__setattr__(target, "_constructor_info", constructor_info)
+        object.__setattr__(
+            target, fields(NumericalTarget)._constructor_info.name, constructor_info
+        )
 
         return target
 
