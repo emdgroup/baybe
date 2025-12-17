@@ -22,6 +22,7 @@ from baybe.exceptions import (
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
+    NothingToComputeError,
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -878,7 +879,10 @@ class Campaign(SerialMixin):
         measurements: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Get the non-dominated points from the provided measurements.
+        """Get the non-dominated points for the provided measurements.
+
+        If no measurements are provided, the non-dominated points will be determined
+        for the existing campaign measurements.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
@@ -893,12 +897,12 @@ class Campaign(SerialMixin):
                 measurements are provided.
 
         Raises:
-            IncompatibilityError: If objective is None
+            IncompatibilityError: If the campaign's objective is None
             NoMeasurementsError: If consider_campaign_measurements is set to True,
-                but no measurements are added to the campaign yet and no data is
-                provided.
-            NoMeasurementsError: If consider_campaign_measurements is set to False and
-                no data is provided.
+                but no measurements are added to the campaign yet and no measurements
+                are provided in this method as argument.
+            NothingToComputeError: If no measurements are provided a argument and
+                consider_campaign_measurements is set to False.
 
         Returns:
             A series of boolean values indicating whether the corresponding datapoint
@@ -910,43 +914,53 @@ class Campaign(SerialMixin):
                 "is defined."
             )
 
+        if (
+            measurements is None
+            and consider_campaign_measurements
+            and self.measurements.empty
+        ):
+            raise NoMeasurementsError(
+                "The calculation of non-dominated points for the Campaigns measurement "
+                "was requested, but no campaign measurements have been added yet."
+            )
+
+        if measurements is None and not consider_campaign_measurements:
+            raise NothingToComputeError(
+                "Unable to compute the non-dominated points because no data is "
+                f"available. When setting consider_campaign_measurements to "
+                f"{consider_campaign_measurements} you have to provide measurements "
+                f"for the computation."
+            )
+
+        if (
+            measurements is not None
+            and consider_campaign_measurements
+            and self.measurements.empty
+        ):
+            warnings.warn(
+                "No measurements have been added to the campaign yet, but the flag"
+                "consider_campaign_measurements is set to "
+                f"{consider_campaign_measurements}. Therefore, the non-dominated "
+                f"points will be determined without taking the campaign measurements "
+                f"into account.",
+                UserWarning,
+            )
+
         if measurements is not None:
             validate_target_input(measurements, self.objective.targets)
 
-        campaign_measurement_added_at = None
         if consider_campaign_measurements:
-            if self.measurements.empty:
-                if measurements is None:
-                    raise NoMeasurementsError(
-                        f"No data was provided to '{self.is_non_dominated.__name__}' "
-                        "and the campaign has no measurements added yet, therefore "
-                        "there is nothing to calculate."
-                    )
-                else:
-                    warnings.warn(
-                        "No measurements are provided to the campaign yet, but "
-                        "the flag consider_campaign_measurements is set to "
-                        f"{consider_campaign_measurements}. Therefore, the "
-                        "non-dominated points will be determined without considering "
-                        "the campaign measurements.",
-                        UserWarning,
-                    )
-            elif measurements is None:
-                measurements = self.measurements
+            if measurements is None:
+                comp_measurements = self.measurements
             else:
-                campaign_measurement_added_at = len(measurements)
-                measurements = pd.concat([measurements, self.measurements])
-        elif measurements is None:
-            raise NoMeasurementsError(
-                "If no measurements are provided to "
-                f"'{self.is_non_dominated.__name__}' the flag 'consider_campaign_"
-                "measurements' should not be set to False. Otherwise, there is "
-                "nothing to calculate."
-            )
+                comp_measurements = pd.concat([measurements, self.measurements])
+        else:
+            comp_measurements = measurements
 
-        non_dominated = self.objective.is_non_dominated(measurements=measurements)
-        if campaign_measurement_added_at is not None:
-            non_dominated = non_dominated[:campaign_measurement_added_at]
+        non_dominated = self.objective.is_non_dominated(measurements=comp_measurements)
+
+        if consider_campaign_measurements and measurements is not None:
+            non_dominated = non_dominated[: -len(self.measurements)]
         return non_dominated
 
 
