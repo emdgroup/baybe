@@ -112,20 +112,36 @@ def test_incompatibility(campaign, objective, fake_measurements):
 @pytest.mark.parametrize(
     "objective_name, target_names",
     [
-        param("pareto", ["Target_max"], id="pareto_max"),
+        param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
+        param("desirability", ["Target_max", "Target_max"], id="desirability_max_max"),
+        param("single", ["Target_max"], id="single_max"),
     ],
 )
-def test_no_measurements(campaign, objective, fake_measurements):
-    """Test for error if no measurements are available."""
+def test_logic_consider_campaign_measurements(campaign, objective, fake_measurements):
+    """Test that exceptions are raised for invalid input combinations."""
+    # Test flag if campaign has no measurements
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=True)
 
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=False)
 
+    with pytest.warns(UserWarning):
+        campaign.is_non_dominated(
+            fake_measurements, consider_campaign_measurements=True
+        )
+
+    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=False)
+
+    # Test flag if campaign has measurements
     campaign.add_measurements(fake_measurements)
+
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=False)
+
+    campaign.is_non_dominated(consider_campaign_measurements=True)
+    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=True)
+    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=False)
 
 
 @pytest.mark.parametrize(
