@@ -66,7 +66,12 @@ def test_is_non_dominated_func_call(
     """Test function call and expected output size."""
     # Non dominated points for measurements
     non_dominated_campaign_default = ongoing_campaign.is_non_dominated()
-    assert len(ongoing_campaign.measurements) == len(non_dominated_campaign_default)
+    assert len(ongoing_campaign.measurements) == len(non_dominated_campaign_default), (
+        "The non-dominated points are computed for the campaign's measurements, but "
+        f"the output data of {ongoing_campaign.is_non_dominated.__name__} "
+        f"does not have the same length ({len(non_dominated_campaign_default)}) as the "
+        f"campaign's measurements ({len(ongoing_campaign.measurements)})."
+    )
 
     # Non dominated points for new measurements
     fake_measures = create_fake_input(
