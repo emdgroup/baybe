@@ -12,10 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
   the entire associated interval is a valid match, resulting in identical transformed
   target values as for the `match_value` itself
-- `NumericalTarget.constructor_history` property, which returns what constructor and
+- `NumericalTarget.constructor_info` property, which returns what constructor and
   arguments were used to create the object
-- `NumericalTarget.from_constructor_history` convenience constructor for creating a
-  target from existing constructor history
+- `NumericalTarget.from_constructor_info` convenience constructor for creating a
+  target from existing constructor details
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
   performance on regression tasks (direct arylation and aryl halide)
 - Scalar addition and subtraction for `Interval` objects

@@ -42,7 +42,7 @@ def combine_numerical_targets(
     return evolve(t1, transformation=operator(t1.transformation, t2.transformation))  # type: ignore[call-arg]
 
 
-def capture_constructor_history(
+def capture_constructor_info(
     constructor: Callable[Concatenate[type[NumericalTarget], P], NumericalTarget],
 ) -> Callable[Concatenate[type[NumericalTarget], P], NumericalTarget]:
     """Capture constructor history upon object creation.
@@ -63,7 +63,7 @@ def capture_constructor_history(
         bound.arguments.pop("cls")  # Ignore "cls"
 
         # Store argument history
-        constructor_history: dict[str, Any] = {
+        constructor_info: dict[str, Any] = {
             "constructor": constructor.__name__,
             **{
                 k: v
@@ -72,7 +72,7 @@ def capture_constructor_history(
                 not in fields_dict(target.__class__)  # Ignore persistent attributes
             },
         }
-        object.__setattr__(target, "_constructor_history", constructor_history)
+        object.__setattr__(target, "_constructor_info", constructor_info)
 
         return target
 

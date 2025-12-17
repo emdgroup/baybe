@@ -25,7 +25,7 @@ from baybe.targets._deprecated import (
 from baybe.targets.base import Target
 from baybe.targets.enum import MatchMode
 from baybe.targets.utils import (
-    capture_constructor_history,
+    capture_constructor_info,
     combine_numerical_targets,
 )
 from baybe.transformations import (
@@ -124,10 +124,8 @@ class NumericalTarget(Target, SerialMixin):
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
     """Boolean flag indicating if the target is to be minimized."""
 
-    _constructor_history: dict[str, Any] | None = field(
-        default=None, init=False, eq=False
-    )
-    """Helper to keep track of the target's construction history."""
+    _constructor_info: dict[str, Any] | None = field(default=None, init=False, eq=False)
+    """Helper to keep track of the target's construction details."""
 
     def __init__(  # noqa: DOC301
         self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
@@ -192,7 +190,7 @@ class NumericalTarget(Target, SerialMixin):
         return NotImplemented
 
     @property
-    def constructor_history(self) -> dict[str, Any]:
+    def constructor_info(self) -> dict[str, Any]:
         """The constructor arguments used to create the target.
 
         This also includes default values of optional arguments that might not have
@@ -202,44 +200,44 @@ class NumericalTarget(Target, SerialMixin):
         """
         init_fields = [f.name for f in fields(self.__class__) if f.init]
 
-        history: dict[str, Any] = {}
-        if self._constructor_history is None:
+        info: dict[str, Any] = {}
+        if self._constructor_info is None:
             # The init constructor has no temporary arguments
-            history["constructor"] = "__init__"
+            info["constructor"] = "__init__"
             parameters = init_fields
         else:
             # This includes the constructor name and temporary arguments
-            history.update(self._constructor_history)
+            info.update(self._constructor_info)
 
-            constructor = getattr(self, history["constructor"])
+            constructor = getattr(self, info["constructor"])
             sig = inspect.signature(constructor)
             parameters = list(sig.parameters.keys())
 
         for k in parameters:
-            if k in init_fields and k not in history:
-                history[k] = getattr(self, k)
+            if k in init_fields and k not in info:
+                info[k] = getattr(self, k)
 
-        return history
+        return info
 
     @classmethod
-    def from_constructor_history(
-        cls, constructor_history: dict[str, Any], /
+    def from_constructor_info(
+        cls, constructor_info: dict[str, Any], /
     ) -> NumericalTarget:
-        """A convenience constructor for re-creating targets from existing history.
+        """A convenience constructor for re-creating targets from existing info.
 
         Args:
-            constructor_history: Contains the construction history.
+            constructor_info: Contains the construction details.
 
         Returns:
             The created target object.
         """  # noqa: D401
-        history = constructor_history.copy()
+        info = constructor_info.copy()
 
-        c = history.pop("constructor")
+        c = info.pop("constructor")
         if c == "__init__":
-            return cls(**history)
+            return cls(**info)
         else:
-            return getattr(cls, c)(**history)
+            return getattr(cls, c)(**info)
 
     @classmethod
     def from_modern_interface(
@@ -322,7 +320,7 @@ class NumericalTarget(Target, SerialMixin):
             return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def match_absolute(
         cls,
         name: str,
@@ -354,7 +352,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def match_quadratic(
         cls,
         name: str,
@@ -388,7 +386,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def match_power(
         cls,
         name: str,
@@ -424,7 +422,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def match_triangular(
         cls,
         name: str,
@@ -486,7 +484,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def match_bell(
         cls,
         name: str,
@@ -521,7 +519,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def normalized_ramp(
         cls,
         name: str,
@@ -554,7 +552,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
-    @capture_constructor_history
+    @capture_constructor_info
     def normalized_sigmoid(
         cls,
         name: str,
