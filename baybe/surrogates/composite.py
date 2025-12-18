@@ -130,7 +130,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         else:
             return ModelList(*(s.to_botorch() for s in surrogates))
 
-    def posterior(self, candidates: pd.DataFrame) -> PosteriorList:
+    def posterior(self, candidates: pd.DataFrame, joint: bool = True) -> PosteriorList:
         """Compute the posterior for candidates in experimental representation.
 
         The (independent joint) posterior is represented as a collection of individual
@@ -148,7 +148,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
 
         # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
         #   be handy here but unclear if this is doable with the current typing system
-        posteriors = [s.posterior(candidates) for s in self._surrogates_flat]  # type: ignore[attr-defined]
+        posteriors = [
+            s.posterior(candidates, joint=joint) for s in self._surrogates_flat
+        ]  # type: ignore[attr-defined]
         return PosteriorList(*posteriors)
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> PosteriorList:
