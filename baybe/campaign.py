@@ -893,15 +893,14 @@ class Campaign(SerialMixin):
                 existing campaign measurements.
             consider_campaign_measurements: If set to True, considers the campaign
                 measurements to calculate the non-dominated points. If False, only the
-                provided measurements are considered. Cannot be set to False if no
-                measurements are provided.
+                provided measurements are considered.
 
         Raises:
             IncompatibilityError: If the campaign's objective is None
             NoMeasurementsError: If consider_campaign_measurements is set to True,
                 but no measurements are added to the campaign yet and no measurements
                 are provided in this method as argument.
-            NothingToComputeError: If no measurements are provided a argument and
+            NothingToComputeError: If no measurements are provided an argument and
                 consider_campaign_measurements is set to False.
 
         Returns:
@@ -949,17 +948,21 @@ class Campaign(SerialMixin):
         if measurements is not None:
             validate_target_input(measurements, self.objective.targets)
 
+        crop_comp_measurements = False
         if consider_campaign_measurements:
             if measurements is None:
                 comp_measurements = self.measurements
             else:
                 comp_measurements = pd.concat([measurements, self.measurements])
+                crop_comp_measurements = True
         else:
+            # Mypy does not infer from the above that `measurements` is not None here
+            assert measurements is not None
             comp_measurements = measurements
 
         non_dominated = self.objective.is_non_dominated(measurements=comp_measurements)
 
-        if consider_campaign_measurements and measurements is not None:
+        if crop_comp_measurements:
             non_dominated = non_dominated[: -len(self.measurements)]
         return non_dominated
 
