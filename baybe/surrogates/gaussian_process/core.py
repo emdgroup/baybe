@@ -125,7 +125,7 @@ class GaussianProcessSurrogate(Surrogate):
         return make_gp_from_preset(preset)
 
     @classmethod
-    def _from_prior(
+    def from_prior(
         cls,
         prior_gp: SingleTaskGP,
         kernel_factory: KernelFactory | None = None,
