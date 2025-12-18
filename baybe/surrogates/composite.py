@@ -107,6 +107,11 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         measurements: pd.DataFrame,
     ) -> None:
         target_names = [t.name for t in objective.targets]
+
+        # TODO: This check is overly restrictive and can be relaxed by letting the
+        #   objective decide which information is required and which is not
+        handle_missing_values(measurements, target_names)
+
         pre_transformed = objective._pre_transform(measurements[target_names])
         pre_transformed = pd.concat(
             [measurements[list(searchspace.parameter_names)], pre_transformed],
@@ -114,8 +119,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         )
 
         for q in objective._modeled_quantities:
-            filtered = handle_missing_values(pre_transformed, [q.name], drop=True)
-            self.surrogates[q.name].fit(searchspace, q.to_objective(), filtered)
+            self.surrogates[q.name].fit(searchspace, q.to_objective(), pre_transformed)
 
         self._modeled_quantity_names = objective._modeled_quantity_names
 
