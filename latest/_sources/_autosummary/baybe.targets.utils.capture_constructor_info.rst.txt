@@ -1,0 +1,6 @@
+baybe.targets.utils.capture\_constructor\_info
+==============================================
+
+.. currentmodule:: baybe.targets.utils
+
+.. autofunction:: capture_constructor_info

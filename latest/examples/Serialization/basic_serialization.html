@@ -866,6 +866,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.targets.transforms.html">baybe.targets.transforms</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../_autosummary/baybe.targets.utils.html">baybe.targets.utils</a><input class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><div class="visually-hidden">Toggle navigation of baybe.targets.utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.targets.utils.capture_constructor_info.html">baybe.targets.utils.capture_constructor_info</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../_autosummary/baybe.targets.utils.combine_numerical_targets.html">baybe.targets.utils.combine_numerical_targets</a></li>
 </ul>
 </li>
@@ -1368,8 +1369,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from original object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-65      medium            1.0             155.555556
-50        fine           10.0             100.000000
+43        fine            5.0             133.333333
+89      medium           10.0             200.000000
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendation from recreated object:&quot;</span><span class="p">)</span>
@@ -1378,8 +1379,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from recreated object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-73      medium            5.0             133.333333
-59        fine           10.0             200.000000
+2       coarse            1.0             122.222222
+89      medium           10.0             200.000000
 </pre></div>
 </div>
 </section>

@@ -18,6 +18,7 @@ NumericalTarget
       ~NumericalTarget.abs
       ~NumericalTarget.clamp
       ~NumericalTarget.exp
+      ~NumericalTarget.from_constructor_info
       ~NumericalTarget.from_dict
       ~NumericalTarget.from_json
       ~NumericalTarget.from_legacy_interface
@@ -54,6 +55,7 @@ NumericalTarget
    
       ~NumericalTarget.transformation
       ~NumericalTarget.minimize
+      ~NumericalTarget.constructor_info
       ~NumericalTarget.description
       ~NumericalTarget.is_normalized
       ~NumericalTarget.metadata
