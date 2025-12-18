@@ -764,12 +764,6 @@ converter.register_unstructure_hook(
     ),
 )
 
-converter.register_unstructure_hook(
-    NumericalTarget,
-    cattrs.gen.make_dict_unstructure_fn(
-        NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
-    ),
-)
 
 # >>> Deprecation >>> #
 
