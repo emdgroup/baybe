@@ -16,6 +16,7 @@ from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import get_transform_objects, to_tensor
 from baybe.utils.metadata import Metadata, to_metadata
+from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
@@ -221,6 +222,31 @@ class Objective(ABC, SerialMixin):
         return pd.DataFrame(
             transformed.numpy(), columns=self.output_names, index=df.index
         )
+
+    def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
+        """Determine for each point if it is non-dominated across all measurements.
+
+        In case of duplicated non-dominated points, returns both duplicates as
+        non-dominated.
+
+        Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input`.
+
+        Args:
+            measurements: The measurements used to identify the non-dominated points.
+
+        Returns:
+            A series of boolean values indicating whether the corresponding measurement
+            is non-dominated.
+        """
+        from botorch.utils.multi_objective.pareto import is_non_dominated
+
+        validate_target_input(measurements, self.targets)
+
+        y_comp = self.transform(measurements, allow_extra=True)
+        y_is_non_dominated = is_non_dominated(Y=to_tensor(y_comp), deduplicate=False)
+
+        return pd.Series(y_is_non_dominated.numpy(), name="is_non_dominated")
 
 
 def to_objective(x: Target | Objective, /) -> Objective:

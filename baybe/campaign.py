@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
+import warnings
 from collections.abc import Callable, Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -21,6 +22,7 @@ from baybe.exceptions import (
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
+    NothingToComputeError,
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -868,6 +870,98 @@ class Campaign(SerialMixin):
             pending_experiments,
             acquisition_function,
         )
+
+    def is_non_dominated(
+        self,
+        measurements: pd.DataFrame | None = None,
+        consider_campaign_measurements: bool = True,
+    ) -> pd.Series:
+        """Get the non-dominated points for the provided measurements.
+
+        If no measurements are provided, the non-dominated points will be determined
+        for the existing campaign measurements.
+
+        Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input`.
+
+        Args:
+            measurements: The measurements with populated target columns.
+                If not provided, the non-dominated points will be determined for the
+                existing campaign measurements.
+            consider_campaign_measurements: If set to True, considers the campaign
+                measurements to calculate the non-dominated points. If False, only the
+                provided measurements are considered.
+
+        Raises:
+            IncompatibilityError: If the campaign's objective is None
+            NoMeasurementsError: If consider_campaign_measurements is set to True,
+                but no measurements are added to the campaign yet and no measurements
+                are provided in this method as argument.
+            NothingToComputeError: If no measurements are provided an argument and
+                consider_campaign_measurements is set to False.
+
+        Returns:
+            A series of boolean values indicating whether the corresponding datapoint
+            is non-dominated.
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                f"Cannot get the non-dominated points since no '{Objective.__name__}' "
+                "is defined."
+            )
+
+        if (
+            measurements is None
+            and consider_campaign_measurements
+            and self.measurements.empty
+        ):
+            raise NoMeasurementsError(
+                "The calculation of non-dominated points for the Campaigns measurement "
+                "was requested, but no campaign measurements have been added yet."
+            )
+
+        if measurements is None and not consider_campaign_measurements:
+            raise NothingToComputeError(
+                "Unable to compute the non-dominated points because no data is "
+                f"available. When setting consider_campaign_measurements to "
+                f"{consider_campaign_measurements} you have to provide measurements "
+                f"for the computation."
+            )
+
+        if (
+            measurements is not None
+            and consider_campaign_measurements
+            and self.measurements.empty
+        ):
+            warnings.warn(
+                "No measurements have been added to the campaign yet, but the flag"
+                "consider_campaign_measurements is set to "
+                f"{consider_campaign_measurements}. Therefore, the non-dominated "
+                f"points will be determined without taking the campaign measurements "
+                f"into account.",
+                UserWarning,
+            )
+
+        if measurements is not None:
+            validate_target_input(measurements, self.objective.targets)
+
+        crop_comp_measurements = False
+        if consider_campaign_measurements:
+            if measurements is None:
+                comp_measurements = self.measurements
+            else:
+                comp_measurements = pd.concat([measurements, self.measurements])
+                crop_comp_measurements = True
+        else:
+            # Mypy does not infer from the above that `measurements` is not None here
+            assert measurements is not None
+            comp_measurements = measurements
+
+        non_dominated = self.objective.is_non_dominated(measurements=comp_measurements)
+
+        if crop_comp_measurements:
+            non_dominated = non_dominated[: -len(self.measurements)]
+        return non_dominated
 
 
 def _add_version(dict_: dict) -> dict:
