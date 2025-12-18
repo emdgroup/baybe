@@ -165,25 +165,7 @@ specifically: the Intrinsic Coregionalization Model {cite:p}`NIPS2007_66368270`.
 
 A full example demonstrating BayBE's transfer learning capabilities can be found
 [here](../../examples/Transfer_Learning/basic_transfer_learning).
-Nonetheless, we would like to briefly highlight the results of this example in the 
-user guide.
 
-The goal in the example is to optimize an analytical function.
-We apply transfer learning by providing additional data that was obtained from
-evaluating a negated noisy variant of the same function.
-
-The following plot demonstrates the effect that providing this additional data has
-on the optimization:
-
-```{image} ../../examples/Transfer_Learning/basic_transfer_learning_light.svg
-:align: center
-:class: only-light
-```
-
-```{image} ../../examples/Transfer_Learning/basic_transfer_learning_dark.svg
-:align: center
-:class: only-dark
-```
 
 ```{bibliography}
 ```
