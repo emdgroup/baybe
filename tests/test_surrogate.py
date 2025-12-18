@@ -8,7 +8,9 @@ import pytest
 from pytest import param
 
 from baybe.exceptions import IncompatibleSurrogateError
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.surrogates import (
@@ -42,6 +44,43 @@ def test_caching(patched, searchspace, objective, fake_measurements):
 
 
 @pytest.mark.parametrize(
+    "objective",
+    [
+        SingleTargetObjective(NumericalTarget("t1")),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+            as_pre_transformation=False,
+        ),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+            as_pre_transformation=True,
+        ),
+        ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+    ],
+    ids=["single", "desirability", "desirability-pre", "pareto"],
+)
+@patch.object(
+    GaussianProcessSurrogate,
+    "_fit",
+    side_effect=GaussianProcessSurrogate._fit,
+    autospec=True,
+)
+def test_caching_via_recommender(mock, objective):
+    """Surrogates are correctly cached when requested via a recommender."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    recommender = BotorchRecommender(GaussianProcessSurrogate())
+
+    for _ in range(2):
+        recommender.get_surrogate(searchspace, objective, measurements)
+        assert mock.call_count == objective._n_models
+
+
+@pytest.mark.parametrize(
     "surrogate",
     [
         CompositeSurrogate(
@@ -57,7 +96,7 @@ def test_composite_surrogates(surrogate):
     t2 = NumericalTarget("t2", minimize=True)
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
-    measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0, 1], "t2": [0, 1]})
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
@@ -149,7 +188,7 @@ def test_continuous_incompatibility(campaign):
     if isinstance(s, GaussianProcessSurrogate):
         skip = True
     elif isinstance(s, CompositeSurrogate) and is_all_instance(
-        tuple(s.surrogates[t] for t in s._target_names), GaussianProcessSurrogate
+        s._surrogates_flat, GaussianProcessSurrogate
     ):
         skip = True
 

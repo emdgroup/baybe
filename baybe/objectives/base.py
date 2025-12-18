@@ -50,9 +50,14 @@ class Objective(ABC, SerialMixin):
         """The targets included in the objective."""
 
     @property
+    def _modeled_quantities(self) -> tuple[Target, ...]:
+        """The quantities modeled by this objective."""
+        return self.targets
+
+    @property
     def _modeled_quantity_names(self) -> tuple[str, ...]:
         """The names of the quantities returned by the pre-transformation."""
-        return tuple(t.name for t in self.targets)
+        return tuple(t.name for t in self._modeled_quantities)
 
     @property
     def _n_models(self) -> int:
@@ -60,7 +65,7 @@ class Objective(ABC, SerialMixin):
 
         Corresponds to the number of dimensions after the pre-transformation.
         """
-        return len(self._modeled_quantity_names)
+        return len(self._modeled_quantities)
 
     @property
     def _is_multi_model(self) -> bool:

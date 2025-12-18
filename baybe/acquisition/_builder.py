@@ -143,14 +143,22 @@ class BotorchAcquisitionFunctionBuilder:
         """The posterior mean of the (transformed) targets of the training data."""
         # TODO: Currently, this is the "transformed posterior mean of the targets"
         #   rather than the "posterior mean of the transformed targets".
-        posterior = self._botorch_surrogate.posterior(to_tensor(self._train_x))
+
+        # Evaluate candidates as t-batches since not all surrogates support q-batching
+        # (we only care about the mean here, so this t-batching is fine)
+        batched = to_tensor(self._train_x).unsqueeze(-2)
+
+        posterior = self._botorch_surrogate.posterior(batched)
         if not hasattr(posterior, "mean"):
             raise IncompatibilityError(
                 f"The used surrogate model of type "
                 f"'{type(self._botorch_surrogate).__name__}' "
                 f"does not provide a posterior mean."
             )
-        return self.objective.to_botorch()(posterior.mean)
+        mean = self.objective.to_botorch()(posterior.mean)
+
+        # Undo t-batching
+        return mean.squeeze(-2)
 
     @cached_property
     def _target_configurations(self) -> pd.DataFrame:
