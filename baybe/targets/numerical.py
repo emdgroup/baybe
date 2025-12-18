@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import gc
+import inspect
 import warnings
 from collections.abc import Sequence
 from operator import add, mul, sub
 from typing import Any, cast
 
+import cattrs
 import pandas as pd
-from attrs import define, evolve, field
+from attrs import define, evolve, field, fields
 from attrs.validators import instance_of
 from typing_extensions import assert_never, override
 
@@ -24,6 +26,7 @@ from baybe.targets._deprecated import (
 from baybe.targets.base import Target
 from baybe.targets.enum import MatchMode
 from baybe.targets.utils import (
+    capture_constructor_info,
     combine_numerical_targets,
 )
 from baybe.transformations import (
@@ -122,6 +125,9 @@ class NumericalTarget(Target, SerialMixin):
     minimize: bool = field(default=False, validator=instance_of(bool), kw_only=True)
     """Boolean flag indicating if the target is to be minimized."""
 
+    _constructor_info: dict[str, Any] | None = field(default=None, init=False, eq=False)
+    """Helper to keep track of the target's construction details."""
+
     def __init__(  # noqa: DOC301
         self, name: str, *args, _enforce_modern_interface: bool = False, **kwargs
     ):
@@ -183,6 +189,56 @@ class NumericalTarget(Target, SerialMixin):
         if isinstance(other, (int, float)):
             return self._append_transformation(AffineTransformation(factor=1 / other))
         return NotImplemented
+
+    @property
+    def constructor_info(self) -> dict[str, Any]:
+        """The constructor arguments used to create the target.
+
+        This also includes default values of optional arguments that might not have
+        been used during construction. Values are affected by possible attribute
+        converters and hence do not necessarily resemble the original input, but an
+        equivalent.
+        """
+        init_fields = [f.name for f in fields(self.__class__) if f.init]
+
+        info: dict[str, Any] = {}
+        if self._constructor_info is None:
+            # The init constructor has no temporary arguments
+            info["constructor"] = "__init__"
+            parameters = init_fields
+        else:
+            # This includes the constructor name and temporary arguments
+            info.update(self._constructor_info)
+
+            constructor = getattr(self, info["constructor"])
+            sig = inspect.signature(constructor)
+            parameters = list(sig.parameters.keys())
+
+        for k in parameters:
+            if k in init_fields and k not in info:
+                info[k] = getattr(self, k)
+
+        return info
+
+    @classmethod
+    def from_constructor_info(
+        cls, constructor_info: dict[str, Any], /
+    ) -> NumericalTarget:
+        """A convenience constructor for re-creating targets from existing info.
+
+        Args:
+            constructor_info: Contains the construction details.
+
+        Returns:
+            The created target object.
+        """  # noqa: D401
+        info = constructor_info.copy()
+
+        c = info.pop("constructor")
+        if c == "__init__":
+            return cls(**info)
+        else:
+            return getattr(cls, c)(**info)
 
     @classmethod
     def from_modern_interface(
@@ -265,6 +321,7 @@ class NumericalTarget(Target, SerialMixin):
             return cls(name, mode, bounds, transformation, metadata=metadata)
 
     @classmethod
+    @capture_constructor_info
     def match_absolute(
         cls,
         name: str,
@@ -296,6 +353,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_info
     def match_quadratic(
         cls,
         name: str,
@@ -329,6 +387,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_info
     def match_power(
         cls,
         name: str,
@@ -364,6 +423,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_info
     def match_triangular(
         cls,
         name: str,
@@ -425,6 +485,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_info
     def match_bell(
         cls,
         name: str,
@@ -459,6 +520,7 @@ class NumericalTarget(Target, SerialMixin):
         )._hold_output(match_value, match_mode)
 
     @classmethod
+    @capture_constructor_info
     def normalized_ramp(
         cls,
         name: str,
@@ -491,6 +553,7 @@ class NumericalTarget(Target, SerialMixin):
         )
 
     @classmethod
+    @capture_constructor_info
     def normalized_sigmoid(
         cls,
         name: str,
@@ -694,13 +757,23 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+converter.register_unstructure_hook(
+    NumericalTarget,
+    cattrs.gen.make_dict_unstructure_fn(
+        NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
+    ),
+)
+
+
 # >>> Deprecation >>> #
+
+_hook = converter.get_structure_hook(NumericalTarget)
 
 
 @converter.register_structure_hook
 def _(dct, cls) -> NumericalTarget:
     if "mode" in dct:
-        return NumericalTarget(*dct)
+        return _hook(*dct)
     return select_constructor_hook(dct, cls)
 
 
