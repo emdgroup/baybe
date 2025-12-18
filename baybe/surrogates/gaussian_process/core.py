@@ -24,9 +24,11 @@ from baybe.surrogates.gaussian_process.presets.default import (
     DefaultKernelFactory,
     _default_noise_factory,
 )
+from baybe.surrogates.gaussian_process.prior_modules import PriorMean
 from baybe.utils.conversion import to_string
 
 if TYPE_CHECKING:
+    from botorch.models import SingleTaskGP
     from botorch.models.gpytorch import GPyTorchModel
     from botorch.models.transforms.input import InputTransform
     from botorch.models.transforms.outcome import OutcomeTransform
@@ -113,10 +115,56 @@ class GaussianProcessSurrogate(Surrogate):
     _model = field(init=False, default=None, eq=False)
     """The actual model."""
 
+    # Transfer learning fields
+    _prior_gp = field(init=False, default=None, eq=False)
+    """Prior GP to extract mean/covariance from for transfer learning."""
+
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
+
+    @classmethod
+    def _from_prior(
+        cls,
+        prior_gp: SingleTaskGP,
+        kernel_factory: KernelFactory | None = None,
+        **kwargs,
+    ) -> GaussianProcessSurrogate:
+        """Create a GP surrogate with mean function transfer learning.
+
+        Args:
+            prior_gp: Fitted SingleTaskGP to use as prior
+            kernel_factory: Kernel factory for covariance components
+            **kwargs: Additional arguments for GaussianProcessSurrogate constructor
+
+        Returns:
+            New GaussianProcessSurrogate instance with transfer learning
+
+        Raises:
+            ValueError: If prior_gp is not fitted
+        """
+        from copy import deepcopy
+
+        from botorch.models import SingleTaskGP
+
+        # Validate prior GP is fitted
+        if not isinstance(prior_gp, SingleTaskGP):
+            raise ValueError("prior_gp must be a fitted SingleTaskGP instance")
+        if not hasattr(prior_gp, "train_inputs") or prior_gp.train_inputs is None:
+            raise ValueError("Prior GP must be fitted (have train_inputs) before use")
+
+        # Configure kernel factory (always needed since we only do mean transfer now)
+        if kernel_factory is None:
+            kernel_factory = DefaultKernelFactory()
+
+        # Create new surrogate instance
+        instance = cls(kernel_or_factory=kernel_factory, **kwargs)
+
+        # Configure for transfer learning
+        instance._prior_gp = deepcopy(prior_gp)
+
+        return instance
 
     @override
     def to_botorch(self) -> GPyTorchModel:
@@ -152,22 +200,30 @@ class GaussianProcessSurrogate(Surrogate):
         assert self._searchspace is not None
 
         context = _ModelContext(self._searchspace)
-
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
-
-        # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = Normalize(
-            train_x.shape[-1],
-            bounds=context.parameter_bounds,
-            indices=list(numerical_idxs),
-        )
-        outcome_transform = Standardize(train_y.shape[-1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]
 
+        # Configure input/output transforms
+        if self._prior_gp is not None and hasattr(self._prior_gp, "input_transform"):
+            # Use prior's transforms for consistency in transfer learning
+            input_transform = self._prior_gp.input_transform
+            outcome_transform = self._prior_gp.outcome_transform
+        else:
+            # For GPs, we let botorch handle scaling. See [Scaling Workaround] above.
+            input_transform = Normalize(
+                train_x.shape[-1],
+                bounds=context.parameter_bounds,
+                indices=numerical_idxs,
+            )
+            outcome_transform = Standardize(train_y.shape[-1])
+
         # create GP mean
-        mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
+        if self._prior_gp is not None:
+            mean_module = PriorMean(self._prior_gp, batch_shape=batch_shape)
+        else:
+            mean_module = gpytorch.means.ConstantMean(batch_shape=batch_shape)
 
         # define the covariance module for the numeric dimensions
         base_covar_module = self.kernel_factory(
