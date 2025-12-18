@@ -485,7 +485,7 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
         if (batch_size := candidates_comp_scaled.shape[-2]) != 1:
             raise IncompatibleSurrogateError(
                 f"The specified surrogate model of type '{type(self).__name__}' "
-                f"cannot be used for batch recommendation. "
+                f"cannot be used for joint posterior evaluation. "
                 f"Requested batch size: {batch_size}"
             )
 
