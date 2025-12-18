@@ -35,8 +35,6 @@ class PriorMean(gpytorch.means.Mean):
         # Freeze parameters and set eval mode once
         for param in self.gp.parameters():
             param.requires_grad = False
-        self.gp.eval()
-        self.gp.likelihood.eval()
 
     def forward(self, x: Tensor) -> Tensor:
         """Compute the mean function using the wrapped GP.
@@ -47,6 +45,8 @@ class PriorMean(gpytorch.means.Mean):
         Returns:
             Mean predictions from the wrapped GP.
         """
+        self.gp.eval()
+        self.gp.likelihood.eval()
         with torch.no_grad(), gpytorch.settings.fast_pred_var():
             mean = self.gp(x).mean.detach()
 
