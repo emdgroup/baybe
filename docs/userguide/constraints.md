@@ -339,6 +339,7 @@ DiscreteDependenciesConstraint(
 ```
 
 An end to end example can be found [here](../../examples/Constraints_Discrete/dependency_constraints).
+For more information about the possibility of data augmentation, see [here](surrogate_data_augmentation).
 
 ### DiscretePermutationInvarianceConstraint
 Permutation invariance, enabled by the 
@@ -420,6 +421,7 @@ DiscretePermutationInvarianceConstraint(
 
 The usage of `DiscretePermutationInvarianceConstraint` is also part of the
 [example on slot-based mixtures](../../examples/Mixtures/slot_based).
+For more information about the possibility of data augmentation, see [here](surrogate_data_augmentation).
 
 ### DiscreteCardinalityConstraint
 Like its [continuous cousin](#ContinuousCardinalityConstraint), the
