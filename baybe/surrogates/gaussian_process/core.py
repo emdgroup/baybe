@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -282,6 +283,68 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Kernel factory", self.kernel_factory, single_line=True),
         ]
         return to_string(super().__str__(), *fields)
+
+
+@define
+class AdaptiveGaussianProcessSurrogate:
+    """Adaptive surrogate that automatically chooses between GaussianProcessSurrogate.
+
+    Automatically chooses between GaussianProcessSurrogate and
+    SourcePriorGaussianProcessSurrogate based on TaskParameter.transfer_mode.
+    """
+
+    kernel_factory: KernelFactory = field(
+        alias="kernel_or_factory",
+        factory=DefaultKernelFactory,
+        converter=to_kernel_factory,
+    )
+    """The factory used to create the kernel of the Gaussian process."""
+
+    _delegate: GaussianProcessSurrogate = field(init=False, default=None)
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective,
+        measurements,
+    ) -> None:
+        """Dispatch to appropriate surrogate based on transfer_mode and fit."""
+        task_parameter = None
+        try:
+            task_parameter = next(
+                p for p in searchspace.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            pass
+
+        if (
+            task_parameter is not None
+            and task_parameter.transfer_mode == TransferMode.MEAN
+        ):
+            # Use mean transfer learning
+            from baybe.surrogates.transfer_learning.source_prior import (
+                SourcePriorGaussianProcessSurrogate,
+            )
+
+            self._delegate = SourcePriorGaussianProcessSurrogate(
+                kernel_or_factory=self.kernel_factory,
+            )
+        else:
+            # Use standard IndexKernel approach (JOINT mode or no TaskParameter)
+            self._delegate = GaussianProcessSurrogate(
+                kernel_or_factory=self.kernel_factory,
+            )
+
+        # Fit the chosen delegate
+        self._delegate.fit(searchspace, objective, measurements)
+
+    def posterior(self, candidates, searchspace: SearchSpace):
+        """Delegate posterior computation to the active surrogate."""
+        return self._delegate.posterior(candidates, searchspace)
+
+    def to_botorch(self):
+        """Delegate BoTorch model conversion to the active surrogate."""
+        return self._delegate.to_botorch()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
