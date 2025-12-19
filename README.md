@@ -84,6 +84,79 @@ BayBE also provides built-in chemical encodings.
 - Gain **insights** about the optimization campaigns by analyzing feature importance and model behavior.
 - Conduct **benchmarks** to select between different Bayesian optimization settings via backtesting.
 
+<br><br><br>
+Dropdown format (short example):
+<br><br><br>
+
+<details>
+<summary>🔗 <b>Advanced</b> optimization workflows:</summary>
+<ul>
+<li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
+<li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
+</ul>
+</details>
+<details>
+<summary>🔍 Performance <b>evaluation</b> tools:</summary>
+<ul>
+<li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
+<li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
+</ul>
+</details>
+
+<br><br><br>
+Box format (short example):
+<br><br><br>
+
+<div style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <div style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔗 <b>Advanced</b> Optimization Workflows
+  </div>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
+      <li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
+    </ul>
+  </div>
+</div>
+<div style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <div style="background-color: #535353; color: white; padding: 10px; border-radius: 5px;  cursor: pointer;">
+    🔍 Performance <b>Evaluation</b> Tools
+  </div>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
+      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
+    </ul>
+  </div>
+</div>
+
+<br><br><br>
+Box dropdown format (short example):
+<br><br><br>
+
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔗 <b>Advanced</b> Optimization Workflows
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
+      <li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
+    </ul>
+  </div>
+</details>
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px;  cursor: pointer;">
+    🔍 Performance <b>Evaluation</b> Tools
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
+      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
+    </ul>
+  </div>
+</details>
+
 
 
 ## ⚡ Quick Start
