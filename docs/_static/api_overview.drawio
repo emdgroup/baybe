@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Page-1" id="6k2zMYyjilEWwxgVp3P2">
-        <mxGraphModel dx="941" dy="610" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
+        <mxGraphModel dx="661" dy="610" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="860" pageHeight="800" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -38,7 +38,7 @@
                         <mxGeometry x="110" y="230" width="140" height="100" as="geometry"/>
                     </mxCell>
                 </UserObject>
-                <mxCell id="lGFxbz3i8dvHrvGvqf7d-4" value="Allowed parameter configurations that can be suggested by the model" style="text;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="lGFxbz3i8dvHrvGvqf7d-3" vertex="1">
+                <mxCell id="lGFxbz3i8dvHrvGvqf7d-4" value="All parameter configurations that can be suggested by the model" style="text;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="lGFxbz3i8dvHrvGvqf7d-3" vertex="1">
                     <mxGeometry y="30" width="140" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="TgQTEoghcz0UxrAVnRUr-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;" parent="1" source="lGFxbz3i8dvHrvGvqf7d-7" target="lGFxbz3i8dvHrvGvqf7d-23" edge="1">
@@ -148,7 +148,7 @@
                         <mxGeometry x="30" y="60" width="140" height="101" as="geometry"/>
                     </mxCell>
                 </UserObject>
-                <mxCell id="lGFxbz3i8dvHrvGvqf7d-34" value="Individual configurations to control during an experiment" style="text;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="lGFxbz3i8dvHrvGvqf7d-33" vertex="1">
+                <mxCell id="lGFxbz3i8dvHrvGvqf7d-34" value="Individual configurations to be controled during an experiment" style="text;strokeColor=none;fillColor=default;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" parent="lGFxbz3i8dvHrvGvqf7d-33" vertex="1">
                     <mxGeometry y="30" width="140" height="71" as="geometry"/>
                 </mxCell>
                 <mxCell id="2T1Zwf7EH5pKQzEgwhFY-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="lGFxbz3i8dvHrvGvqf7d-36" target="lGFxbz3i8dvHrvGvqf7d-3" edge="1">
