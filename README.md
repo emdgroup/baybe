@@ -56,26 +56,34 @@ focusing on making this procedure easily accessible for real-world experiments.
 
 
 ## 🔋 Batteries Included
-BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
-The following provides a non-comprehensive overview:
+BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
 
-- 📚 Leverage **domain knowledge**: 
-  - 🎨 Capture relationships between categories by encoding categorical data. BayBE also provides built-in chemical encodings.
-  - 🛠️ Build in mechanistic process understanding via custom surrogate models.
-- 🏛️ Leverage **historic data** from similar campaigns to accelerate optimization via transfer learning.
-- 🌀 **Flexibly** define target outcomes, parameter search spaces and optimization strategies:
-  - 🎯 Choose between numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized or matched to a specific value.
-  - 👥👥 Optimized multiple targets at once (e.g., via Pareto optimization or desirability scalarization).
-  - 🎭 Use both continuous and discrete parameters can within a single search space.
-  - 🔢 Define a maximal number of mixture components via cardinality constraints.
-  - ⚖️ Choose between different optimization strategies to balance exploration and exploitation of the search space:
-    - 🌍 Gain the understanding of the whole search space via active learning. 
-    - 🎰 Maximize total gain across a sequence of actions via bandit models.
-- 🌐 Run campaigns **asynchronously** with pending experiments and partial measurements.
-- 🔍 Gain **insights** about the optimization campaigns by analyzing feature importance and model behavior.
-- 📈 Conduct **benchmarks** to select between different Bayesian optimization settings via backtesting.
-- 🔄 Connect BayBE with **database storage and API wrappers** using the serialization functionality.
-- 📝 Rely on **high-quality code base** with comprehensive tests and typing.
+📚 Mechanisms for leveraging **additional information**: 
+- Capture **relationships between categories** by 
+[encoding categorical data](https:/emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter). 
+BayBE also provides built-in chemical encodings.
+- **Build in mechanistic** process understanding via 
+[custom surrogate models](https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html).
+- Leverage **additional data** from similar campaigns to accelerate optimization via 
+[transfer learning](https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html).
+
+🛠️ **Flexible** modeling options:
+- Choose between different **target types**, including numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized or matched to a specific value.
+- Optimize **multiple targets** at once (e.g., via Pareto optimization or desirability scalarization).
+- Use both continuous and discrete parameters within a single **mixed search space**.
+- Define a **maximal number of mixture components** via cardinality constraints.
+- Choose between different optimization strategies to **balance exploration and exploitation** of the search space:
+  - Gain the **understanding of the whole search space** via active learning. 
+  - Maximize **total gain across a sequence of actions** via bandit models.
+
+🔗 **Advanced** optimization workflows:
+- Run campaigns **asynchronously** with pending experiments and partial measurements.
+- Connect BayBE with **database storage and API wrappers** using the serialization functionality.
+
+🔍 Performance **evaluation** tools:
+- Gain **insights** about the optimization campaigns by analyzing feature importance and model behavior.
+- Conduct **benchmarks** to select between different Bayesian optimization settings via backtesting.
+
 
 
 ## ⚡ Quick Start
