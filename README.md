@@ -68,7 +68,8 @@ BayBE also provides built-in chemical encodings.
 [transfer learning](https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html).
 
 🛠️ **Flexible** modeling options:
-- Choose between different **target types**, including numerical targets (e.g., experimental outcome values) or binary targets (e.g., good/bad classification of experimental results). Targets can be minimized, maximized or matched to a specific value.
+- Choose between different **target types**, including numerical targets (e.g., experimental outcome values) and binary targets (e.g., good/bad classification of experimental results). 
+- Specify **how favourable individual target values** are (e.g. for matching to a specific value or saturation behaviour) via target transformations.
 - Optimize **multiple targets** at once (e.g., via Pareto optimization or desirability scalarization).
 - Use both continuous and discrete parameters within a single **mixed search space**.
 - Define a **maximal number of mixture components** via cardinality constraints.
