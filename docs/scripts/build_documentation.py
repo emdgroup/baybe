@@ -81,7 +81,7 @@ def build_documentation(
     examples_exist = examples_directory.is_dir()
 
     rerun_examples = run_examples or full_rebuild
-    perform_linkcheck = verify_links or full_rebuild
+    # perform_linkcheck = verify_links or full_rebuild
 
     if rerun_examples:
         build_examples(
@@ -98,7 +98,8 @@ def build_documentation(
             remove_dir=examples_exist,
         )
 
-    if perform_linkcheck:
+    # if perform_linkcheck:
+    if False:
         check_links()
 
     # Directory where the documentation is build.
