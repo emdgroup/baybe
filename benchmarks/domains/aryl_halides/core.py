@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -48,6 +49,7 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
+    transfer_mode: TransferMode | None = None,
 ) -> SearchSpace:
     """Create the search space for the benchmark."""
     params: list[DiscreteParameter] = [
@@ -66,6 +68,7 @@ def make_searchspace(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
+                transfer_mode=transfer_mode or TransferMode.JOINT,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -109,10 +112,24 @@ def aryl_halide_tl_substance_benchmark(
     """
     data = load_data()
 
-    searchspace = make_searchspace(
+    # Create search spaces for each transfer mode
+    searchspace_joint = make_searchspace(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
+        transfer_mode=TransferMode.JOINT,
+    )
+    searchspace_joint_pos = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        transfer_mode=TransferMode.JOINT_POS,
+    )
+    searchspace_mean = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        transfer_mode=TransferMode.MEAN,
     )
     searchspace_nontl = make_searchspace(data=data)
 
@@ -120,8 +137,17 @@ def aryl_halide_tl_substance_benchmark(
     initial_data = make_initial_data(data, source_tasks)
     objective = make_objective()
 
-    tl_campaign = Campaign(
-        searchspace=searchspace,
+    # Create campaigns for each transfer mode
+    tl_campaign_joint = Campaign(
+        searchspace=searchspace_joint,
+        objective=objective,
+    )
+    tl_campaign_joint_pos = Campaign(
+        searchspace=searchspace_joint_pos,
+        objective=objective,
+    )
+    tl_campaign_mean = Campaign(
+        searchspace=searchspace_mean,
         objective=objective,
     )
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
@@ -133,12 +159,15 @@ def aryl_halide_tl_substance_benchmark(
                 initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
             ]
 
+    # Test all transfer modes with all source data percentages (full matrix testing)
     results = []
     for p in percentages:
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_joint": tl_campaign_joint,
+                    f"{int(100 * p)}_joint_pos": tl_campaign_joint_pos,
+                    f"{int(100 * p)}_mean": tl_campaign_mean,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -151,7 +180,12 @@ def aryl_halide_tl_substance_benchmark(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {
+                "0_joint": tl_campaign_joint,
+                "0_joint_pos": tl_campaign_joint_pos,
+                "0_mean": tl_campaign_mean,
+                "0_naive": nontl_campaign,
+            },
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

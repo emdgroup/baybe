@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -26,7 +27,9 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 from benchmarks.definition.base import RunMode
 
 
-def make_searchspace(use_task_parameter: bool) -> SearchSpace:
+def make_searchspace(
+    use_task_parameter: bool, transfer_mode: TransferMode | None = None
+) -> SearchSpace:
     """Create search space for the benchmark."""
     params: list[Parameter] = [
         NumericalContinuousParameter(
@@ -41,6 +44,7 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
                 name="Function",
                 values=["Target_Function", "Source_Function"],
                 active_values=["Target_Function"],
+                transfer_mode=transfer_mode or TransferMode.JOINT,
             )
         )
 
@@ -131,12 +135,32 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Source_Function": Michalewicz(dim=5, negate=True, noise_std=0.15),
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
+
+    # Create search spaces for each transfer mode
     searchspace_nontl = make_searchspace(use_task_parameter=False)
-    searchspace_tl = make_searchspace(use_task_parameter=True)
+    searchspace_joint = make_searchspace(
+        use_task_parameter=True, transfer_mode=TransferMode.JOINT
+    )
+    searchspace_joint_pos = make_searchspace(
+        use_task_parameter=True, transfer_mode=TransferMode.JOINT_POS
+    )
+    searchspace_mean = make_searchspace(
+        use_task_parameter=True, transfer_mode=TransferMode.MEAN
+    )
 
     objective = make_objective()
-    campaign_tl = Campaign(
-        searchspace=searchspace_tl,
+
+    # Create campaigns for each transfer mode
+    campaign_joint = Campaign(
+        searchspace=searchspace_joint,
+        objective=objective,
+    )
+    campaign_joint_pos = Campaign(
+        searchspace=searchspace_joint_pos,
+        objective=objective,
+    )
+    campaign_mean = Campaign(
+        searchspace=searchspace_mean,
         objective=objective,
     )
     campaign_nontl = Campaign(
@@ -154,11 +178,17 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
                 for _ in range(settings.n_mc_iterations)
             ]
 
+    # Test all transfer modes with all source data points (full matrix testing)
     results = []
     for p in n_points:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                {
+                    f"{p}_joint": campaign_joint,
+                    f"{p}_joint_pos": campaign_joint_pos,
+                    f"{p}_mean": campaign_mean,
+                    f"{p}_naive": campaign_nontl,
+                },
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -171,7 +201,12 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": campaign_tl, "0_naive": campaign_nontl},
+            {
+                "0_joint": campaign_joint,
+                "0_joint_pos": campaign_joint_pos,
+                "0_mean": campaign_mean,
+                "0_naive": campaign_nontl,
+            },
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

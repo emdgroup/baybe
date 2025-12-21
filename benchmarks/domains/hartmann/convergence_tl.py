@@ -11,6 +11,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -62,21 +63,50 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         )
         for name, points in grid_locations.items()
     ]
-    task_param = TaskParameter(
+
+    # Create task parameters for each transfer mode
+    task_param_joint = TaskParameter(
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
+        transfer_mode=TransferMode.JOINT,
     )
-    params_tl = params + [task_param]
+    task_param_joint_pos = TaskParameter(
+        name="Function",
+        values=["Target_Function", "Source_Function"],
+        active_values=["Target_Function"],
+        transfer_mode=TransferMode.JOINT_POS,
+    )
+    task_param_mean = TaskParameter(
+        name="Function",
+        values=["Target_Function", "Source_Function"],
+        active_values=["Target_Function"],
+        transfer_mode=TransferMode.MEAN,
+    )
 
+    # Create search spaces for each transfer mode
     searchspace_nontl = SearchSpace.from_product(parameters=params)
-    searchspace_tl = SearchSpace.from_product(parameters=params_tl)
+    searchspace_joint = SearchSpace.from_product(parameters=params + [task_param_joint])
+    searchspace_joint_pos = SearchSpace.from_product(
+        parameters=params + [task_param_joint_pos]
+    )
+    searchspace_mean = SearchSpace.from_product(parameters=params + [task_param_mean])
 
     objective = SingleTargetObjective(
         target=NumericalTarget(name="Target", minimize=True)
     )
-    tl_campaign = Campaign(
-        searchspace=searchspace_tl,
+
+    # Create campaigns for each transfer mode
+    tl_campaign_joint = Campaign(
+        searchspace=searchspace_joint,
+        objective=objective,
+    )
+    tl_campaign_joint_pos = Campaign(
+        searchspace=searchspace_joint_pos,
+        objective=objective,
+    )
+    tl_campaign_mean = Campaign(
+        searchspace=searchspace_mean,
         objective=objective,
     )
     nontl_campaign = Campaign(
@@ -116,12 +146,15 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
                 initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)
             ]
 
+    # Test all transfer modes with all source data percentages (full matrix testing)
     results = []
     for p in percentages:
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_joint": tl_campaign_joint,
+                    f"{int(100 * p)}_joint_pos": tl_campaign_joint_pos,
+                    f"{int(100 * p)}_mean": tl_campaign_mean,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -134,7 +167,12 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {
+                "0_joint": tl_campaign_joint,
+                "0_joint_pos": tl_campaign_joint_pos,
+                "0_mean": tl_campaign_mean,
+                "0_naive": nontl_campaign,
+            },
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
