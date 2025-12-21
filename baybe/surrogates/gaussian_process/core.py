@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -74,6 +75,41 @@ class _ModelContext:
     def get_numerical_indices(self, n_inputs: int) -> tuple[int, ...]:
         """Get the indices of the regular numerical model inputs."""
         return tuple(i for i in range(n_inputs) if i != self.task_idx)
+
+    @property
+    def transfer_mode(self) -> TransferMode | None:
+        """Return the transfer mode of the task parameter."""
+        task_params = [
+            p for p in self.searchspace.parameters if isinstance(p, TaskParameter)
+        ]
+        if task_params:
+            return task_params[0].transfer_mode
+        return None
+
+    @property
+    def target_task_index(self) -> int | None:
+        """Determine target task index for PositiveIndexKernel normalization."""
+        if not self.is_multitask:
+            return None
+
+        # Find the TaskParameter in the search space
+        task_params = [
+            p for p in self.searchspace.parameters if isinstance(p, TaskParameter)
+        ]
+
+        task_param = task_params[0]  # Assume single TaskParameter
+
+        # Get the active value
+        active_value = task_param.active_values[0]
+
+        # Get the computational representation value for the active value
+        # TaskParameter uses INT encoding, so comp_df has integer values
+        comp_df = task_param.comp_df
+
+        # Extract the computational representation value as target_task_index
+        target_task_index = int(comp_df.loc[active_value].iloc[0])
+
+        return target_task_index
 
 
 @define
@@ -235,9 +271,10 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         # create GP covariance
-        if not context.is_multitask:
+        if not context.is_multitask or context.transfer_mode == TransferMode.IGNORE:
             covar_module = base_covar_module
-        else:
+        elif context.transfer_mode == TransferMode.JOINT:
+            # Use standard IndexKernel for JOINT mode
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
@@ -282,6 +319,68 @@ class GaussianProcessSurrogate(Surrogate):
             to_string("Kernel factory", self.kernel_factory, single_line=True),
         ]
         return to_string(super().__str__(), *fields)
+
+
+@define
+class AdaptiveGaussianProcessSurrogate:
+    """Adaptive surrogate that automatically chooses between GaussianProcessSurrogate.
+
+    Automatically chooses between GaussianProcessSurrogate and
+    SourcePriorGaussianProcessSurrogate based on TaskParameter.transfer_mode.
+    """
+
+    kernel_factory: KernelFactory = field(
+        alias="kernel_or_factory",
+        factory=DefaultKernelFactory,
+        converter=to_kernel_factory,
+    )
+    """The factory used to create the kernel of the Gaussian process."""
+
+    _delegate: GaussianProcessSurrogate = field(init=False, default=None)
+
+    def fit(
+        self,
+        searchspace: SearchSpace,
+        objective,
+        measurements,
+    ) -> None:
+        """Dispatch to appropriate surrogate based on transfer_mode and fit."""
+        task_parameter = None
+        try:
+            task_parameter = next(
+                p for p in searchspace.parameters if isinstance(p, TaskParameter)
+            )
+        except StopIteration:
+            pass
+
+        if (
+            task_parameter is not None
+            and task_parameter.transfer_mode == TransferMode.MEAN
+        ):
+            # Use mean transfer learning
+            from baybe.surrogates.transfer_learning.source_prior import (
+                SourcePriorGaussianProcessSurrogate,
+            )
+
+            self._delegate = SourcePriorGaussianProcessSurrogate(
+                kernel_or_factory=self.kernel_factory,
+            )
+        else:
+            # Use standard IndexKernel approach (JOINT mode or no TaskParameter)
+            self._delegate = GaussianProcessSurrogate(
+                kernel_or_factory=self.kernel_factory,
+            )
+
+        # Fit the chosen delegate
+        self._delegate.fit(searchspace, objective, measurements)
+
+    def posterior(self, candidates):
+        """Delegate posterior computation to the active surrogate."""
+        return self._delegate.posterior(candidates)
+
+    def to_botorch(self):
+        """Delegate BoTorch model conversion to the active surrogate."""
+        return self._delegate.to_botorch()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

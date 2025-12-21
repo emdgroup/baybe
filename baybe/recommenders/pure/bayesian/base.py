@@ -22,12 +22,13 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
+from baybe.surrogates import CustomONNXSurrogate
 from baybe.surrogates.base import (
     IndependentGaussianSurrogate,
     Surrogate,
     SurrogateProtocol,
 )
+from baybe.surrogates.gaussian_process.core import AdaptiveGaussianProcessSurrogate
 from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
 from baybe.utils.validation import (
     validate_object_names,
@@ -52,7 +53,7 @@ class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
     _surrogate_model: SurrogateProtocol = field(
-        alias="surrogate_model", factory=GaussianProcessSurrogate
+        alias="surrogate_model", factory=AdaptiveGaussianProcessSurrogate
     )
     """The surrogate model."""
 
