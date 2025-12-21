@@ -7,14 +7,15 @@ from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
 
+import attrs
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -192,30 +193,21 @@ class SearchSpace(SerialMixin):
             ),
         )
 
-    def remove_task_parameters(self) -> SearchSpace:
-        """Return a new SearchSpace with TaskParameter instances removed.
+    def set_transfer_mode(self, mode: TransferMode) -> SearchSpace:
+        """Return new SearchSpace with updated task parameter transfer mode."""
+        from baybe.parameters.categorical import TaskParameter
 
-        Returns:
-            A new SearchSpace without TaskParameter instances. If no TaskParameter
-            exists, returns a copy of the original SearchSpace.
+        task_parameters = [p for p in self.parameters if isinstance(p, TaskParameter)]
+        if not task_parameters:
+            raise ValueError("No task parameters exist in this SearchSpace.")
 
-        Raises:
-            ValueError: If removing TaskParameters would result in an empty SearchSpace.
-        """
-        all_parameters = list(self.parameters)
-        filtered_parameters = [
-            param for param in all_parameters if not isinstance(param, TaskParameter)
+        updated_parameters = [
+            (attrs.evolve(p, transfer_mode=mode) if isinstance(p, TaskParameter) else p)
+            for p in self.parameters
         ]
 
-        if not filtered_parameters:
-            raise ValueError(
-                "Cannot remove TaskParameters: this would result"
-                "in an empty SearchSpace. "
-                "At least one non-TaskParameter must be present."
-            )
-
         return SearchSpace.from_product(
-            parameters=filtered_parameters, constraints=list(self.constraints)
+            parameters=updated_parameters, constraints=list(self.constraints)
         )
 
     @property

@@ -22,6 +22,7 @@ class TransferMode(Enum):
 
     JOINT = "joint"  # Use IndexKernel approach (multi-task GP)
     MEAN = "mean"  # Use mean transfer from source prior
+    IGNORE = "ignore"  # Don't create task kernel, treat as regular parameter
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:

@@ -76,6 +76,41 @@ class _ModelContext:
         """Get the indices of the regular numerical model inputs."""
         return tuple(i for i in range(n_inputs) if i != self.task_idx)
 
+    @property
+    def transfer_mode(self) -> TransferMode | None:
+        """Return the transfer mode of the task parameter."""
+        task_params = [
+            p for p in self.searchspace.parameters if isinstance(p, TaskParameter)
+        ]
+        if task_params:
+            return task_params[0].transfer_mode
+        return None
+
+    @property
+    def target_task_index(self) -> int | None:
+        """Determine target task index for PositiveIndexKernel normalization."""
+        if not self.is_multitask:
+            return None
+
+        # Find the TaskParameter in the search space
+        task_params = [
+            p for p in self.searchspace.parameters if isinstance(p, TaskParameter)
+        ]
+
+        task_param = task_params[0]  # Assume single TaskParameter
+
+        # Get the active value
+        active_value = task_param.active_values[0]
+
+        # Get the computational representation value for the active value
+        # TaskParameter uses INT encoding, so comp_df has integer values
+        comp_df = task_param.comp_df
+
+        # Extract the computational representation value as target_task_index
+        target_task_index = int(comp_df.loc[active_value].iloc[0])
+
+        return target_task_index
+
 
 @define
 class GaussianProcessSurrogate(Surrogate):
@@ -236,9 +271,10 @@ class GaussianProcessSurrogate(Surrogate):
         )
 
         # create GP covariance
-        if not context.is_multitask:
+        if not context.is_multitask or context.transfer_mode == TransferMode.IGNORE:
             covar_module = base_covar_module
-        else:
+        elif context.transfer_mode == TransferMode.JOINT:
+            # Use standard IndexKernel for JOINT mode
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
@@ -338,9 +374,9 @@ class AdaptiveGaussianProcessSurrogate:
         # Fit the chosen delegate
         self._delegate.fit(searchspace, objective, measurements)
 
-    def posterior(self, candidates, searchspace: SearchSpace):
+    def posterior(self, candidates):
         """Delegate posterior computation to the active surrogate."""
-        return self._delegate.posterior(candidates, searchspace)
+        return self._delegate.posterior(candidates)
 
     def to_botorch(self):
         """Delegate BoTorch model conversion to the active surrogate."""

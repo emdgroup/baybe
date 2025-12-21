@@ -417,3 +417,57 @@ def test_task_parameter_active_values_validation():
     )
     assert len(searchspace.discrete.exp_rep) == 1
     assert all(searchspace.discrete.exp_rep["task"] == "target")
+
+
+def test_set_transfer_mode():
+    """Test SearchSpace.set_transfer_mode functionality."""
+    from baybe.parameters.categorical import TransferMode
+
+    # Create searchspace with TaskParameter
+    task_param = TaskParameter(
+        name="task",
+        values=["source", "target"],
+        active_values=["target"],
+        transfer_mode=TransferMode.JOINT,
+    )
+    num_param = NumericalDiscreteParameter(name="x1", values=[1.0, 2.0, 3.0])
+
+    searchspace = SearchSpace.from_product(parameters=[task_param, num_param])
+
+    # Test that original has JOINT mode
+    original_task_param = next(
+        p for p in searchspace.parameters if isinstance(p, TaskParameter)
+    )
+    assert original_task_param.transfer_mode == TransferMode.JOINT
+
+    # Test setting to IGNORE mode
+    ignore_searchspace = searchspace.set_transfer_mode(TransferMode.IGNORE)
+    ignore_task_param = next(
+        p for p in ignore_searchspace.parameters if isinstance(p, TaskParameter)
+    )
+    assert ignore_task_param.transfer_mode == TransferMode.IGNORE
+
+    # Test that other attributes remain unchanged
+    assert ignore_task_param.name == original_task_param.name
+    assert ignore_task_param.values == original_task_param.values
+    assert ignore_task_param.active_values == original_task_param.active_values
+
+    # Test that non-task parameters are unchanged
+    ignore_num_param = next(
+        p
+        for p in ignore_searchspace.parameters
+        if isinstance(p, NumericalDiscreteParameter)
+    )
+    original_num_param = next(
+        p for p in searchspace.parameters if isinstance(p, NumericalDiscreteParameter)
+    )
+    assert ignore_num_param.name == original_num_param.name
+    assert ignore_num_param.values == original_num_param.values
+
+    # Test original searchspace is unchanged
+    assert original_task_param.transfer_mode == TransferMode.JOINT
+
+    # Test error when no TaskParameter exists
+    no_task_searchspace = SearchSpace.from_product(parameters=[num_param])
+    with pytest.raises(ValueError, match="No task parameters exist"):
+        no_task_searchspace.set_transfer_mode(TransferMode.IGNORE)
