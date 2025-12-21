@@ -21,7 +21,9 @@ class TransferMode(Enum):
     """Transfer learning modes for TaskParameter."""
 
     JOINT = "joint"  # Use IndexKernel approach (multi-task GP)
+    JOINT_POS = "joint_pos"  # Use PositiveIndexKernel approach (multi-task GP)
     MEAN = "mean"  # Use mean transfer from source prior
+    IGNORE = "ignore"  # Don't create task kernel, treat as regular parameter
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:

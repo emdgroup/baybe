@@ -12,7 +12,7 @@ from typing_extensions import override
 
 from baybe.exceptions import ModelNotTrainedError
 from baybe.objectives.base import Objective
-from baybe.parameters import TaskParameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.gaussian_process.core import (
     GaussianProcessSurrogate,
@@ -25,12 +25,10 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
     This surrogate implements transfer learning by:
     1. Splitting measurement data into source and target tasks
-    2. Training a source GP on source task data (without task dimension)
+    2. Training a source GP on source task data (with the task dimension ignored
+         during training)
     3. Training a target GP on target task data, using source GP as prior
     4. Using only the target GP for predictions
-
-    Transfer learning is configured via TransferConfig objects that specify how to
-    transfer mean functions and/or covariance functions from the source GP.
     """
 
     # Class variables
@@ -50,15 +48,6 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         init=False, default=None, eq=False
     )
     """The target surrogate (needed for posterior calls)."""
-
-    _reduced_searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
-    """SearchSpace without task parameter (for routing posterior calls)."""
-
-    _objective: Objective | None = field(init=False, default=None, eq=False)
-    """Stored objective for creating target surrogate."""
-
-    _task_name: str | None = field(init=False, default=None, eq=False)
-    """Name of the task parameter."""
 
     @override
     def fit(
@@ -89,14 +78,9 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
 
         target_tasks = task_param.active_values
         source_tasks = [t for t in task_param.values if t not in target_tasks]
-        self._task_name = task_param.name
 
-        source_data = measurements[
-            measurements[self._task_name].isin(source_tasks)
-        ].drop(columns=[self._task_name])
-        target_data = measurements[
-            measurements[self._task_name].isin(target_tasks)
-        ].drop(columns=[self._task_name])
+        source_data = measurements[measurements[task_param.name].isin(source_tasks)]
+        target_data = measurements[measurements[task_param.name].isin(target_tasks)]
 
         if len(source_data) == 0:
             raise ValueError(
@@ -105,17 +89,15 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
             )
 
         # Store context
-        reduced_searchspace = searchspace.remove_task_parameters()
+        non_tl_searchspace = searchspace.set_transfer_mode(TransferMode.IGNORE)
         # TODO: Do we need to store?
-        self._reduced_searchspace = reduced_searchspace
         self._searchspace = searchspace
-        self._objective = objective
 
         # Train source GP
         self._source_surrogate = GaussianProcessSurrogate(
             kernel_or_factory=self.kernel_factory
         )
-        self._source_surrogate.fit(reduced_searchspace, objective, source_data)
+        self._source_surrogate.fit(non_tl_searchspace, objective, source_data)
         # Train target GP with source prior
         if len(target_data) == 0:
             # No target data - use source surrogate directly
@@ -128,7 +110,46 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
             )
 
             # Fit the target surrogate with target data
-            self._target_surrogate.fit(reduced_searchspace, objective, target_data)
+            self._target_surrogate.fit(non_tl_searchspace, objective, target_data)
+
+        # source_data = measurements[
+        #     measurements[self._task_name].isin(source_tasks)
+        # ].drop(columns=[self._task_name])
+        # target_data = measurements[
+        #     measurements[self._task_name].isin(target_tasks)
+        # ].drop(columns=[self._task_name])
+
+        # if len(source_data) == 0:
+        #     raise ValueError(
+        #         "No source data found. SourcePriorGaussianProcessSurrogate requires "
+        #         "at least source data for transfer learning."
+        #     )
+
+        # # Store context
+        # reduced_searchspace = searchspace.remove_task_parameters()
+        # # TODO: Do we need to store?
+        # self._reduced_searchspace = reduced_searchspace
+        # self._searchspace = searchspace
+        # self._objective = objective
+
+        # # Train source GP
+        # self._source_surrogate = GaussianProcessSurrogate(
+        #     kernel_or_factory=self.kernel_factory
+        # )
+        # self._source_surrogate.fit(reduced_searchspace, objective, source_data)
+        # # Train target GP with source prior
+        # if len(target_data) == 0:
+        #     # No target data - use source surrogate directly
+        #     self._target_surrogate = self._source_surrogate
+        # else:
+        #     # Create target surrogate with transfer learning
+        #     self._target_surrogate = GaussianProcessSurrogate.from_prior(
+        #         prior_gp=self._source_surrogate.to_botorch(),
+        #         kernel_factory=self.kernel_factory,
+        #     )
+
+        #     # Fit the target surrogate with target data
+        #     self._target_surrogate.fit(reduced_searchspace, objective, target_data)
 
     @override
     def posterior(self, candidates: pd.DataFrame) -> Posterior:
@@ -147,9 +168,9 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         if self._target_surrogate is None:
             raise ModelNotTrainedError("Model must be fitted first")
 
-        candidates_clean = candidates.drop(columns=self._task_name, errors="ignore")
+        # candidates_clean = candidates.drop(columns=self._task_name, errors="ignore")
 
-        return self._target_surrogate.posterior(candidates_clean)
+        return self._target_surrogate.posterior(candidates)
 
     @override
     def to_botorch(self) -> Model:
