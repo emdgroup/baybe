@@ -381,7 +381,6 @@ class AdaptiveGaussianProcessSurrogate:
             self._delegate = GaussianProcessSurrogate(
                 kernel_or_factory=self.kernel_factory,
             )
-
         # Fit the chosen delegate
         self._delegate.fit(searchspace, objective, measurements)
 
@@ -392,6 +391,15 @@ class AdaptiveGaussianProcessSurrogate:
     def to_botorch(self):
         """Delegate BoTorch model conversion to the active surrogate."""
         return self._delegate.to_botorch()
+    
+    def posterior_stats(
+        self,
+        candidates,
+        stats,
+    ):
+        """Delegate posterior stats computation to the active surrogate."""
+        
+        return self._delegate.posterior_stats(candidates, stats)   
 
 
 # Collect leftover original slotted classes processed by `attrs.define`

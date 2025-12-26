@@ -171,6 +171,9 @@ class SourcePriorGaussianProcessSurrogate(GaussianProcessSurrogate):
         # candidates_clean = candidates.drop(columns=self._task_name, errors="ignore")
 
         return self._target_surrogate.posterior(candidates)
+    
+    def posterior_stats(self, candidates, stats):
+        return self._target_surrogate.posterior_stats(candidates, stats)
 
     @override
     def to_botorch(self) -> Model:
