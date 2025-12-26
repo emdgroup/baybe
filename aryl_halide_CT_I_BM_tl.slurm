@@ -10,10 +10,12 @@
 
 # Load environment
 module load python/3.11
-source ~/baybe_env/bin/activate
 
 # Change to project directory
-cd ~/baybe
+cd ~/projects/baybe
+
+# Activate environment (relative to project directory)
+source baybe/bin/activate
 
 # Create shared output directory with timestamp
 TIMESTAMP=${TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}
