@@ -8,9 +8,6 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=64G
 
-# Load environment
-module load python/3.11
-
 # Change to project directory
 cd ~/projects/baybe
 
