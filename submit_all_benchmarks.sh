@@ -2,12 +2,53 @@
 
 # BayBE Aryl Halide Benchmarks - Multi-Node Launcher
 # This script submits each benchmark as a separate SLURM job
-# Usage: ./submit_all_benchmarks.sh
+# Usage: ./submit_all_benchmarks.sh [--runmode MODE]
 
 set -e
 
+# Parse command line arguments
+RUNMODE="DEFAULT"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --runmode)
+            RUNMODE="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 [--runmode MODE]"
+            echo "  --runmode MODE    Set benchmark run mode (DEFAULT or SMOKETEST)"
+            echo "Examples:"
+            echo "  $0                    # Run with DEFAULT mode (full resources)"
+            echo "  $0 --runmode SMOKETEST   # Run with SMOKETEST mode (reduced resources)"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Set resources based on run mode
+if [[ "$RUNMODE" == "SMOKETEST" ]]; then
+    export SLURM_CPUS=8
+    export SLURM_MEM="16G"
+    export SLURM_TIME="00:30:00"
+    RESOURCE_DESC="8 CPUs, 16GB RAM, 30min (SMOKETEST)"
+else
+    export SLURM_CPUS=32
+    export SLURM_MEM="64G"
+    export SLURM_TIME="02:00:00"
+    RESOURCE_DESC="32 CPUs, 64GB RAM, 2h (DEFAULT)"
+fi
+
+export BENCHMARK_RUNMODE="$RUNMODE"
+
 echo "BayBE Aryl Halide Benchmarks - Multi-Node Launcher"
 echo "=================================================="
+echo "Run mode: $RUNMODE"
+echo "Resources per job: $RESOURCE_DESC"
 echo "Submitting three benchmarks as separate SLURM jobs..."
 
 # Get timestamp for unique job naming
@@ -26,15 +67,15 @@ echo ""
 echo "Submitting benchmark jobs..."
 
 # Job 1: CT-I-BM Transfer Learning
-JOB1_ID=$(sbatch --export=TIMESTAMP="$TIMESTAMP" aryl_halide_CT_I_BM_tl.slurm)
+JOB1_ID=$(sbatch --time="$SLURM_TIME" --cpus-per-task="$SLURM_CPUS" --mem="$SLURM_MEM" --export=TIMESTAMP="$TIMESTAMP",BENCHMARK_RUNMODE="$BENCHMARK_RUNMODE" aryl_halide_CT_I_BM_tl.slurm)
 echo "CT-I-BM job submitted: $JOB1_ID"
 
 # Job 2: CT-IM Transfer Learning
-JOB2_ID=$(sbatch --export=TIMESTAMP="$TIMESTAMP" aryl_halide_CT_IM_tl.slurm)
+JOB2_ID=$(sbatch --time="$SLURM_TIME" --cpus-per-task="$SLURM_CPUS" --mem="$SLURM_MEM" --export=TIMESTAMP="$TIMESTAMP",BENCHMARK_RUNMODE="$BENCHMARK_RUNMODE" aryl_halide_CT_IM_tl.slurm)
 echo "CT-IM job submitted: $JOB2_ID"
 
 # Job 3: IP-CP Transfer Learning
-JOB3_ID=$(sbatch --export=TIMESTAMP="$TIMESTAMP" aryl_halide_IP_CP_tl.slurm)
+JOB3_ID=$(sbatch --time="$SLURM_TIME" --cpus-per-task="$SLURM_CPUS" --mem="$SLURM_MEM" --export=TIMESTAMP="$TIMESTAMP",BENCHMARK_RUNMODE="$BENCHMARK_RUNMODE" aryl_halide_IP_CP_tl.slurm)
 echo "IP-CP job submitted: $JOB3_ID"
 
 echo ""

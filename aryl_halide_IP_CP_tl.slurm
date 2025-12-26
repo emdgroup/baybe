@@ -25,12 +25,16 @@ mkdir -p logs
 export BAYBE_PARALLEL_PERCENTAGE_RUNS=True
 export BAYBE_PARALLEL_SIMULATION_RUNS=True
 
+# Set default run mode if not provided
+RUNMODE=${BENCHMARK_RUNMODE:-DEFAULT}
+
 echo "Starting aryl_halide_IP_CP_tl benchmark"
 echo "========================================"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Node: $SLURM_NODELIST"
 echo "CPUs: $SLURM_CPUS_PER_TASK"
 echo "Memory: ${SLURM_MEM_PER_NODE}MB"
+echo "Run Mode: $RUNMODE"
 echo "Shared results directory: $SHARED_DIR"
 echo "Parallelization: PERCENTAGE=$BAYBE_PARALLEL_PERCENTAGE_RUNS, SIMULATION=$BAYBE_PARALLEL_SIMULATION_RUNS"
 echo ""
@@ -46,8 +50,8 @@ cd IP_CP_results
 start_time=$(date +%s)
 
 # Run benchmark
-echo "Running benchmark: aryl_halide_IP_CP_tl"
-python -m benchmarks --benchmark-list aryl_halide_IP_CP_tl
+echo "Running benchmark: aryl_halide_IP_CP_tl (mode: $RUNMODE)"
+python -m benchmarks --benchmark-list aryl_halide_IP_CP_tl --runmode $RUNMODE
 
 exit_code=$?
 end_time=$(date +%s)
