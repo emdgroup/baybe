@@ -14,6 +14,9 @@ cd ~/projects/baybe
 # Activate environment (relative to project directory)
 source baybe/bin/activate
 
+# Set PYTHONPATH so benchmarks module can be found
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
 # Create shared output directory with timestamp
 TIMESTAMP=${TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}
 SHARED_DIR="results_aryl_halide_benchmarks_${TIMESTAMP}"
