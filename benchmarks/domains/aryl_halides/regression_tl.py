@@ -10,6 +10,7 @@ from benchmarks.definition import (
     TransferLearningRegressionBenchmark,
     TransferLearningRegressionBenchmarkSettings,
 )
+from baybe.parameters.categorical import TransferMode
 from benchmarks.definition.base import RunMode
 from benchmarks.definition.regression.core import run_tl_regression_benchmark
 from benchmarks.domains.aryl_halides.core import (
@@ -58,12 +59,13 @@ def _aryl_halide_tl_regr(
         DataFrame with benchmark results.
     """
 
-    def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool):
+    def make_searchspace_wrapper(data: pd.DataFrame, use_task_parameter: bool, transfer_mode: TransferMode| None = None) -> SearchSpace:
         if use_task_parameter:
             return make_searchspace(
                 data=data,
                 source_tasks=source_tasks,
                 target_tasks=target_tasks,
+                transfer_mode=transfer_mode,
             )
         else:
             return make_searchspace(data=data)

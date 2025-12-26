@@ -10,9 +10,13 @@ By convention, the benchmarks name use the format
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
+from concurrent.futures import ProcessPoolExecutor
+from distutils.util import strtobool
 
 import pandas as pd
+from joblib import Parallel, delayed
 
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
@@ -94,13 +98,74 @@ def make_objective() -> SingleTargetObjective:
     return NumericalTarget(name="yield").to_objective()
 
 
+def _run_percentage_scenario(
+    p: float,
+    campaigns: dict[str, Campaign],
+    lookup: pd.DataFrame,
+    initial_data_samples: dict[float, list[pd.DataFrame]],
+    batch_size: int,
+    n_doe_iterations: int,
+    random_seed: int,
+) -> pd.DataFrame:
+    """Helper function to run scenarios for a single percentage.
+
+    Args:
+        p: The percentage of initial data to use
+        campaigns: Dictionary of campaign configurations
+        lookup: The lookup DataFrame
+        initial_data_samples: Dictionary mapping percentages to lists of initial data
+        batch_size: Batch size for DOE iterations
+        n_doe_iterations: Number of DOE iterations
+        random_seed: Random seed for reproducibility
+
+    Returns:
+        DataFrame with simulation results for this percentage
+    """
+    scenarios = {
+        f"{int(100 * p)}_joint": campaigns["joint"],
+        f"{int(100 * p)}_joint_pos": campaigns["joint_pos"],
+        f"{int(100 * p)}_mean": campaigns["mean"],
+        f"{int(100 * p)}_naive": campaigns["naive"],
+    }
+
+    return simulate_scenarios(
+        scenarios,
+        lookup,
+        initial_data=initial_data_samples[p],
+        batch_size=batch_size,
+        n_doe_iterations=n_doe_iterations,
+        impute_mode="error",
+        random_seed=random_seed,
+    )
+
+
+def _run_percentage_scenario_wrapper(args: tuple) -> pd.DataFrame:
+    """Wrapper function for concurrent.futures that unpacks arguments."""
+    return _run_percentage_scenario(*args)
+
+
 def aryl_halide_tl_substance_benchmark(
     settings: ConvergenceBenchmarkSettings,
     source_tasks: Sequence[str],
     target_tasks: Sequence[str],
     percentages: Sequence[float],
+    parallel_percentages: bool | None = None,
+    n_percentage_jobs: int = -1,
 ) -> pd.DataFrame:
     """Abstract benchmark function comparing TL and non-TL campaigns.
+
+    Args:
+        settings: Configuration settings for the convergence benchmark
+        source_tasks: List of source task names for transfer learning
+        target_tasks: List of target task names to evaluate
+        percentages: List of percentages of source data to test
+        parallel_percentages: Whether to parallelize over percentages.
+            If None, reads from BAYBE_PARALLEL_PERCENTAGE_RUNS environment variable
+        n_percentage_jobs: Number of parallel jobs for percentage parallelization.
+            -1 uses all available cores
+
+    Returns:
+        DataFrame containing benchmark results
 
     Inputs:
         base:           Substance parameter
@@ -110,6 +175,12 @@ def aryl_halide_tl_substance_benchmark(
     Output:             Continuous (yield)
     Objective:          Maximization
     """
+    # Handle parallelization configuration
+    if parallel_percentages is None:
+        parallel_percentages = strtobool(
+            os.environ.get("BAYBE_PARALLEL_PERCENTAGE_RUNS", "True")
+        )
+
     data = load_data()
 
     # Create search spaces for each transfer mode
@@ -160,24 +231,46 @@ def aryl_halide_tl_substance_benchmark(
             ]
 
     # Test all transfer modes with all source data percentages (full matrix testing)
-    results = []
-    for p in percentages:
-        results.append(
-            simulate_scenarios(
-                {
-                    f"{int(100 * p)}_joint": tl_campaign_joint,
-                    f"{int(100 * p)}_joint_pos": tl_campaign_joint_pos,
-                    f"{int(100 * p)}_mean": tl_campaign_mean,
-                    f"{int(100 * p)}_naive": nontl_campaign,
-                },
-                lookup,
-                initial_data=initial_data_samples[p],
-                batch_size=settings.batch_size,
-                n_doe_iterations=settings.n_doe_iterations,
-                impute_mode="error",
-                random_seed=settings.random_seed,
+    # Create campaigns dictionary for helper function
+    campaigns = {
+        "joint": tl_campaign_joint,
+        "joint_pos": tl_campaign_joint_pos,
+        "mean": tl_campaign_mean,
+        "naive": nontl_campaign,
+    }
+
+    if parallel_percentages and len(percentages) > 1:
+        # Parallel execution over percentages
+        try:
+            # Try joblib first (preferred for HPC compatibility)
+            results = Parallel(n_jobs=n_percentage_jobs, verbose=1, backend='loky')(
+                delayed(_run_percentage_scenario)(
+                    p, campaigns, lookup, initial_data_samples,
+                    settings.batch_size, settings.n_doe_iterations, settings.random_seed
+                )
+                for p in percentages
             )
-        )
+        except Exception as e:
+            print(f"JobLib failed ({e}), falling back to concurrent.futures...")
+            # Fallback to concurrent.futures
+            max_workers = None if n_percentage_jobs == -1 else n_percentage_jobs
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                results = list(executor.map(
+                    _run_percentage_scenario_wrapper,
+                    [(p, campaigns, lookup, initial_data_samples,
+                      settings.batch_size, settings.n_doe_iterations, settings.random_seed)
+                     for p in percentages]
+                ))
+    else:
+        # Sequential execution (fallback)
+        results = []
+        for p in percentages:
+            results.append(
+                _run_percentage_scenario(
+                    p, campaigns, lookup, initial_data_samples,
+                    settings.batch_size, settings.n_doe_iterations, settings.random_seed
+                )
+            )
     results.append(
         simulate_scenarios(
             {

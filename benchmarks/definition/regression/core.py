@@ -19,7 +19,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
-from baybe.parameters import TaskParameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
@@ -39,7 +39,7 @@ class DataLoader(Protocol):
 class SearchSpaceFactory(Protocol):
     """Protocol for SearchSpace creation used in TL regression benchmarks."""
 
-    def __call__(self, data: pd.DataFrame, use_task_parameter: bool) -> SearchSpace:
+    def __call__(self, data: pd.DataFrame, use_task_parameter: bool, transfer_mode: TransferMode) -> SearchSpace:
         """Create a SearchSpace for regression benchmark evaluation.
 
         Args:
@@ -48,6 +48,7 @@ class SearchSpaceFactory(Protocol):
                 scenarios. If True, creates search space with TaskParameter for
                 TL models. If False, creates vanilla search space without
                 task parameter.
+            transfer_mode: The transfer mode to be used in the search space.
 
         Returns:
             The TL and non-TL searchspaces for the benchmark.
@@ -105,6 +106,12 @@ TL_MODELS = {
     "index_kernel": GaussianProcessSurrogate,
 }
 
+from baybe.parameters.categorical import TransferMode
+TRANSFR_MODES = {
+    "joint": TransferMode.JOINT,
+    "joint_pos": TransferMode.JOINT_POS,
+    "mean": TransferMode.MEAN,
+}
 
 # Regression metrics to evaluate model performance
 REGRESSION_METRICS = {
@@ -161,8 +168,8 @@ def run_tl_regression_benchmark(
     # Create search space without task parameter
     vanilla_searchspace = searchspace_factory(data=data, use_task_parameter=False)
 
-    # Create transfer learning search space (with task parameter)
-    tl_searchspace = searchspace_factory(data=data, use_task_parameter=True)
+    #TODO: We only create this search space to extract task parameter details.
+    tl_searchspace = searchspace_factory(data=data, use_task_parameter=True, transfer_mode=TransferMode.JOINT)
 
     # Extract task parameter details
     task_param = next(
@@ -277,9 +284,12 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                for model_suffix, model_class in TL_MODELS.items():
-                    scenario_name = f"{int(100 * fraction_source)}_{model_suffix}"
-                    model = model_class()
+                for transfer_suffix, transfer_mode in TRANSFR_MODES.items():
+                    # Create transfer learning search space (with task parameter)
+                    tl_searchspace = searchspace_factory(data=data, use_task_parameter=True, transfer_mode=transfer_mode)
+                    scenario_name = f"{int(100 * fraction_source)}_{transfer_suffix}"
+                    from baybe.surrogates.gaussian_process.core import AdaptiveGaussianProcessSurrogate
+                    model = AdaptiveGaussianProcessSurrogate()
 
                     metrics = _evaluate_model(
                         model,
