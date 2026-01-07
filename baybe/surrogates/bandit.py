@@ -32,6 +32,9 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    # See base class.
+
     prior: BetaPrior = field(factory=lambda: BetaPrior(1, 1))
     """The beta prior for the win rates of the bandit arms. Uniform by default."""
 
