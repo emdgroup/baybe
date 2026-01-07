@@ -108,7 +108,7 @@ def test_is_non_dominated_func_call(
     ],
 )
 def test_incompatibility(campaign, objective, fake_measurements):
-    """Test for incompatibility."""
+    """Test for incompatibility when objective is ``None``."""
     with pytest.raises(IncompatibilityError):
         campaign.is_non_dominated()
         campaign.is_non_dominated(fake_measurements)

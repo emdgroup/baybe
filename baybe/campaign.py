@@ -879,21 +879,21 @@ class Campaign(SerialMixin):
         measurements: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Get the non-dominated points for the provided measurements.
-
-        If no measurements are provided, the non-dominated points will be determined
-        for the existing campaign measurements.
+        """Create a boolean mask indicating non-dominated points in the measurements.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
 
         Args:
             measurements: The measurements with populated target columns.
-                If not provided, the non-dominated points will be determined for the
-                existing campaign measurements.
-            consider_campaign_measurements: If ``True``, considers the campaign
-                measurements to calculate the non-dominated points. If ``False``, only
-                the provided measurements are considered.
+                If not provided and consider_campaign_measurements is ``True``, a
+                boolean mask is created for the non-dominated points in the campaign's
+                measurements.
+            consider_campaign_measurements: If ``True`` and measurements are provided,
+                the campaign's measurements are considered in the calculation but not
+                returned. If no measurements are provided, a boolean mask is created for
+                the non-dominated points in the campaign's measurements. If ``False``,
+                only the provided measurements are considered.
 
         Raises:
             IncompatibilityError: If the campaign's objective is ``None``
@@ -956,7 +956,7 @@ class Campaign(SerialMixin):
                 comp_measurements = pd.concat([measurements, self.measurements])
                 crop_comp_measurements = True
         else:
-            # Mypy does not infer from the above that `measurements` is not None here
+            # For Mypy: measurements cannot be ``None`` here due to a guard clause above
             assert measurements is not None
             comp_measurements = measurements
 
