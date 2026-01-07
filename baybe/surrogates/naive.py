@@ -26,6 +26,9 @@ class MeanPredictionSurrogate(IndependentGaussianSurrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    # See base class.
+
     _model: float | None = field(init=False, default=None, eq=False)
     """The estimated posterior mean value of the training targets."""
 

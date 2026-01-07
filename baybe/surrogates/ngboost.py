@@ -49,6 +49,9 @@ class NGBoostSurrogate(IndependentGaussianSurrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    # See base class.
+
     _default_model_params: ClassVar[dict] = {"n_estimators": 25, "verbose": False}
     """Class variable encoding the default model parameters."""
 

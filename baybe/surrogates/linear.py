@@ -44,6 +44,9 @@ class BayesianLinearSurrogate(IndependentGaussianSurrogate):
     supports_transfer_learning: ClassVar[bool] = False
     # See base class.
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    # See base class.
+
     model_params: _ARDRegressionParams = field(
         factory=dict,
         converter=dict,
