@@ -948,22 +948,21 @@ class Campaign(SerialMixin):
         if measurements is not None:
             validate_target_input(measurements, self.objective.targets)
 
-        crop_comp_measurements = False
+        crop_measurements = False
         if consider_campaign_measurements:
             if measurements is None:
-                comp_measurements = self.measurements
+                measurements = self.measurements
             else:
-                comp_measurements = pd.concat([measurements, self.measurements])
-                crop_comp_measurements = True
+                measurements = pd.concat([measurements, self.measurements])
+                crop_measurements = True
         else:
             # For Mypy: measurements cannot be ``None`` here due to a guard clause above
             assert measurements is not None
-            comp_measurements = measurements
 
-        non_dominated = self.objective.is_non_dominated(measurements=comp_measurements)
+        non_dominated = self.objective.is_non_dominated(measurements=measurements)
 
-        if crop_comp_measurements:
-            non_dominated = non_dominated[: -len(self.measurements)]
+        if crop_measurements:
+            non_dominated = non_dominated.iloc[: -len(self.measurements)]
         return non_dominated
 
 
