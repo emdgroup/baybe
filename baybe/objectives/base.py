@@ -255,10 +255,16 @@ class Objective(ABC, SerialMixin):
         )
 
     def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
-        """Determine for each point if it is non-dominated across all measurements.
+        """Create a boolean mask indicating non-dominated points in the measurements.
 
-        In case of duplicated non-dominated points, returns both duplicates as
+        In case of duplicated non-dominated data points, return both duplicates as
         non-dominated.
+
+        If :attr:`~baybe.objectives.base.Objective.is_multi_output` is ``True``, for
+        example in the case of :class:`baybe.objectives.pareto.ParetoObjective`, the
+        non-dominated front is multidimensional. If it is ``False``, the non-dominated
+        front is one-dimensional, meaning only one unique data point can be ``True`` in
+        the boolean mask.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
