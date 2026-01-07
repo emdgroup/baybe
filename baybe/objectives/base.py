@@ -15,8 +15,8 @@ from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import (
+    df_handle_missing_values,
     get_transform_objects,
-    handle_missing_values,
     to_tensor,
 )
 from baybe.utils.metadata import Metadata, to_metadata
@@ -122,7 +122,7 @@ class Objective(ABC, SerialMixin):
         """
         cleaned: dict[str, pd.DataFrame] = {}
         for t in self.targets:
-            data = handle_missing_values(measurements, [t.name], drop=True)
+            data = df_handle_missing_values(measurements, [t.name], drop=True)
             cleaned[t.name] = data
 
         return cleaned

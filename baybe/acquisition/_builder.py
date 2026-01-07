@@ -42,7 +42,7 @@ from baybe.targets.binary import BinaryTarget
 from baybe.targets.numerical import NumericalTarget
 from baybe.transformations import IdentityTransformation
 from baybe.utils.basic import match_attributes
-from baybe.utils.dataframe import handle_missing_values, to_tensor
+from baybe.utils.dataframe import df_handle_missing_values, to_tensor
 
 _OPT_FIELD: None = object()  # type: ignore[assignment]
 """Sentinel value indicating optional acquisition function attributes."""
@@ -172,7 +172,7 @@ class BotorchAcquisitionFunctionBuilder:
         Raises:
             ValueError: If no complete measurement exists.
         """
-        configurations = handle_missing_values(
+        configurations = df_handle_missing_values(
             self.measurements[[t.name for t in self.objective.targets]],
             [t.name for t in self.objective.targets],
             drop=True,

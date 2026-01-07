@@ -23,7 +23,7 @@ from baybe.targets.numerical import UncertainBool
 from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import handle_missing_values, pretty_print_df
+from baybe.utils.dataframe import df_handle_missing_values, pretty_print_df
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
@@ -219,7 +219,7 @@ class DesirabilityObjective(Objective):
         if self.as_pre_transformation:
             # Returns one cleaned frame for the overall desirability
             return {
-                self._modeled_quantity_names[0]: handle_missing_values(
+                self._modeled_quantity_names[0]: df_handle_missing_values(
                     measurements, [t.name for t in self.targets], drop=True
                 )
             }
