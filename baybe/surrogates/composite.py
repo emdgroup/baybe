@@ -20,7 +20,6 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import handle_missing_values
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
@@ -106,20 +105,20 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        target_names = [t.name for t in objective.targets]
+        # See base class.
 
-        # TODO: This check is overly restrictive and can be relaxed by letting the
-        #   objective decide which information is required and which is not
-        handle_missing_values(measurements, target_names)
-
-        pre_transformed = objective._pre_transform(measurements[target_names])
-        pre_transformed = pd.concat(
-            [measurements[list(searchspace.parameter_names)], pre_transformed],
-            axis=1,
-        )
-
-        for q in objective._modeled_quantities:
-            self.surrogates[q.name].fit(searchspace, q.to_objective(), pre_transformed)
+        for name, data in objective.handle_missing_values(measurements).items():
+            pre_transformed = objective._pre_transform(
+                data[[t.name for t in objective.targets]]
+            )
+            pre_transformed = pd.concat(
+                [data[list(searchspace.parameter_names)], pre_transformed],
+                axis=1,
+            )
+            quantity = next(x for x in objective._modeled_quantities if x.name == name)
+            self.surrogates[name].fit(
+                searchspace, quantity.to_objective(), pre_transformed
+            )
 
         self._modeled_quantity_names = objective._modeled_quantity_names
 

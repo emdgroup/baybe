@@ -14,7 +14,11 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import get_transform_objects, to_tensor
+from baybe.utils.dataframe import (
+    get_transform_objects,
+    handle_missing_values,
+    to_tensor,
+)
 from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
@@ -99,6 +103,29 @@ class Objective(ABC, SerialMixin):
     def _full_transformation(self) -> MCAcquisitionObjective:
         """The end-to-end transformation applied, from targets to objective values."""
         return self.to_botorch()
+
+    def handle_missing_values(
+        self, measurements: pd.DataFrame
+    ) -> dict[str, pd.DataFrame]:
+        """Handle missing values in the given measurements for each modeled quantity.
+
+        This base implementation returns one dedicated dataframe per target which
+        works for objectives where modeled quantities correspond to targets. It is
+        expected that derived objectives which modeled quantities that use combined
+        targets overwrite this method and implement a stricter handling accordingly.
+
+        Args:
+            measurements: Data to be checked.
+
+        Returns:
+            A dictionary with one entry for each modeled quantity.
+        """
+        cleaned: dict[str, pd.DataFrame] = {}
+        for t in self.targets:
+            data = handle_missing_values(measurements, [t.name], drop=True)
+            cleaned[t.name] = data
+
+        return cleaned
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""
