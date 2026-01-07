@@ -891,16 +891,16 @@ class Campaign(SerialMixin):
             measurements: The measurements with populated target columns.
                 If not provided, the non-dominated points will be determined for the
                 existing campaign measurements.
-            consider_campaign_measurements: If set to True, considers the campaign
-                measurements to calculate the non-dominated points. If False, only the
-                provided measurements are considered.
+            consider_campaign_measurements: If ``True``, considers the campaign
+                measurements to calculate the non-dominated points. If ``False``, only 
+                the provided measurements are considered.
 
         Raises:
-            IncompatibilityError: If the campaign's objective is None
-            NoMeasurementsError: If consider_campaign_measurements is set to True,
+            IncompatibilityError: If the campaign's objective is ``None``
+            NoMeasurementsError: If consider_campaign_measurements is ``True``,
                 but no measurements are added to the campaign yet and no measurements
                 are provided in this method as argument.
-            NothingToComputeError: If no measurements are provided an argument and
+            NothingToComputeError: If no measurements are provided as argument and
                 consider_campaign_measurements is set to False.
 
         Returns:
@@ -919,7 +919,7 @@ class Campaign(SerialMixin):
             and self.measurements.empty
         ):
             raise NoMeasurementsError(
-                "The calculation of non-dominated points for the Campaigns measurement "
+                "The calculation of non-dominated points for the Campaign's measurement "
                 "was requested, but no campaign measurements have been added yet."
             )
 
