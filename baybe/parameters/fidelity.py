@@ -11,7 +11,6 @@ from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
     validate_contains_one,
     validate_is_finite,
@@ -23,17 +22,6 @@ from baybe.utils.numerical import DTypeFloatNumpy
 @define(frozen=True, slots=False)
 class CategoricalFidelityParameter(DiscreteParameter):
     """Parameter class for categorical fidelity parameters."""
-
-    # class variables
-    is_numerical: ClassVar[bool] = True
-    # See base class.
-
-    # object variables
-    encoding: CategoricalEncoding | None = field(
-        init=False,
-        default=None,
-    )
-    # See base class.
 
     _values: tuple[str, ...] = field(
         alias="values",
@@ -47,9 +35,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     _costs: tuple[float, ...] = field(
         alias="costs",
-        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
-        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
             validate_is_finite,
@@ -58,14 +44,17 @@ class CategoricalFidelityParameter(DiscreteParameter):
     )
     """The costs associated with querying the parameter at each value."""
 
-    _target_fidelity: str = field(
-        alias="target_fidelity",
+    high_fidelity: str = field(
         converter=str,
+        default=None,
     )
-    """The column index of the target fidelity value."""
+    """The name of the highest fidelity value."""
 
-    # TODO Jordan MHS: handle hyperparameters from different acqfs.
-    _zeta: tuple[float, ...] | float = field(
+    # TODO: Handle other kinds of assumption about the relationship between fidelities.
+    # _zeta currently takes the role of the discrepancy parameter in MF-GP-UCB
+    # (Kandasamy et al, 2017) but other parameters may be needed for more general
+    # multi-fidelity approaches which use a CategoricalFidelityParameter.
+    _zeta: tuple[float, ...] | float | None = field(
         alias="zeta",
         # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: (
@@ -77,7 +66,11 @@ class CategoricalFidelityParameter(DiscreteParameter):
         ),
         default=None,
     )
-    """The maximum discrepancy from target fidelity at any design choice."""
+    """The maximum discrepancy from target fidelity at any design choice.
+
+    Either a tuple of positive values, one for each fidelity, or a scalar specifying
+    that the first fidelity input into 'values' has discrepancy 0 (it is the high
+    fidelity), the next have discrepancy 'zeta', 2*'zeta' and so on."""
 
     @_costs.validator
     def _validate_cost_length(  # noqa: DOC101, DOC103
@@ -117,9 +110,9 @@ class CategoricalFidelityParameter(DiscreteParameter):
                 return
 
         else:
-            assert isinstance(self._zeta, tuple)
+            assert isinstance(value, tuple)
 
-            if len(self._zeta) != len(self._values):
+            if len(value) != len(self._values):
                 raise ValueError(
                     f"Tuples 'zeta' and 'values' are different lengths in {self.name}"
                 )
@@ -129,19 +122,35 @@ class CategoricalFidelityParameter(DiscreteParameter):
                     f"Tuple 'zeta' contains infinite values in {self.name}"
                 )
 
-    @_target_fidelity.validator
-    def _validate_target_fidelity(  # noqa: DOC101, DOC103
+    @high_fidelity.validator
+    def _validate_high_fidelity(  # noqa: DOC101, DOC103
         self, _: Any, target_value: str
     ):
         if target_value not in self._values:
             raise ValueError(
-                f"'target_fidelity' {target_value} is not in 'values' in {self.name}"
+                f"'high_fidelity' {target_value} is not in 'values' in {self.name}"
             )
+
+        target_idx = self._values[target_value]
+
+        if isinstance(self._zeta, tuple):
+            if self._zeta[target_idx] != 0:
+                raise ValueError(
+                    f"'high_fidelity' cannot have a 'zeta' value of 0 in the"
+                    f"fidelity parameter {self.name}."
+                )
+
+        elif isinstance(self._zeta, float):
+            if target_idx != 0:
+                raise ValueError(
+                    f"When specifying scalar 'zeta', 'high_fidelity' must be the first"
+                    f"name in 'values' so it has 'zeta' = 0 in {self.name}."
+                )
 
     @override
     @property
     def values(self) -> tuple:
-        """The fidelity values of the parameter."""
+        """The fidelity values of the parameter, sorted lexicographically."""
         sorted_fidelities = sorted(
             range(len(self._values)), key=lambda i: self._values[i]
         )
@@ -149,7 +158,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     @property
     def costs(self) -> tuple:
-        """The fidelity costs of the parameter."""
+        """The fidelity costs of the parameter, sorted according to values."""
         sorted_fidelities = sorted(
             range(len(self._values)), key=lambda i: self._values[i]
         )
@@ -157,11 +166,10 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     @property
     def zeta(self) -> tuple:
-        """The fidelity discrepancies of the parameter."""
+        """The fidelity discrepancies of the parameter, sorted according to values."""
         if isinstance(self._zeta, float):
             fids = range(len(self._values))
-            zeta_tup = tuple((f + 1) * self._zeta for f in fids)
-
+            zeta_tup = tuple(f * self._zeta for f in fids)
         else:
             zeta_tup = self._zeta
 
@@ -169,11 +177,6 @@ class CategoricalFidelityParameter(DiscreteParameter):
             range(len(self._values)), key=lambda i: self._values[i]
         )
         return tuple(zeta_tup[f] for f in sorted_fidelities)
-
-    @property
-    def target_fidelity(self) -> str:
-        """Categorical value of the target fidelity."""
-        return self._target_fidelity
 
     @override
     @cached_property
@@ -185,9 +188,9 @@ class CategoricalFidelityParameter(DiscreteParameter):
         return comp_df
 
     @property
-    def target_fidelity_comp(self) -> int:
+    def high_fidelity_comp(self) -> int:
         """Integer encoding value of the target fidelity."""
-        return cast(int, self.comp_df.loc[self.target_fidelity, self.name])
+        return cast(int, self.comp_df.loc[self.high_fidelity, self.name])
 
 
 @define(frozen=True, slots=False)
@@ -199,10 +202,6 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
 
     # class variables
     is_numerical: ClassVar[bool] = True
-    # See base class.
-
-    # object variables
-    encoding: None = field(init=False, default=None)
     # See base class.
 
     _values: tuple[float, ...] = field(
@@ -220,9 +219,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
 
     _costs: tuple[float, ...] = field(
         alias="costs",
-        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
-        # FIXME[typing]: https://github.com/python-attrs/attrs/issues/1197
         validator=[
             min_len(2),
             validate_is_finite,
