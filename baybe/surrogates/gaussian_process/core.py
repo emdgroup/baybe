@@ -117,7 +117,7 @@ class GaussianProcessSurrogate(Surrogate):
 
     # Transfer learning fields
     _prior_gp = field(init=False, default=None, eq=False)
-    """Prior GP to extract mean/covariance from for transfer learning."""
+    """Prior GP to extract mean/covariance for transfer learning."""
 
     @staticmethod
     def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
