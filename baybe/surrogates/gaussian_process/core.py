@@ -127,14 +127,14 @@ class GaussianProcessSurrogate(Surrogate):
     @classmethod
     def from_prior(
         cls,
-        prior_gp: SingleTaskGP,
+        prior_gp: GaussianProcessSurrogate,
         kernel_factory: KernelFactory | None = None,
         **kwargs,
     ) -> GaussianProcessSurrogate:
         """Create a GP surrogate with mean function transfer learning.
 
         Args:
-            prior_gp: Fitted SingleTaskGP to use as prior
+            prior_gp: Fitted GaussianProcessSurrogate to use as prior
             kernel_factory: Kernel factory for covariance components
             **kwargs: Additional arguments for GaussianProcessSurrogate constructor
 
@@ -146,13 +146,13 @@ class GaussianProcessSurrogate(Surrogate):
         """
         from copy import deepcopy
 
-        from botorch.models import SingleTaskGP
-
         # Validate prior GP is fitted
-        if not isinstance(prior_gp, SingleTaskGP):
-            raise ValueError("prior_gp must be a fitted SingleTaskGP instance")
-        if not hasattr(prior_gp, "train_inputs") or prior_gp.train_inputs is None:
-            raise ValueError("Prior GP must be fitted (have train_inputs) before use")
+        if not isinstance(prior_gp, cls):
+            raise ValueError(
+                "prior_gp must be a fitted GaussianProcessSurrogate instance"
+            )
+        if prior_gp._model is None:
+            raise ValueError("Prior GP must be fitted before use")
 
         # Configure kernel factory (always needed since we only do mean transfer now)
         if kernel_factory is None:
@@ -161,8 +161,8 @@ class GaussianProcessSurrogate(Surrogate):
         # Create new surrogate instance
         instance = cls(kernel_or_factory=kernel_factory, **kwargs)
 
-        # Configure for transfer learning
-        instance._prior_gp = deepcopy(prior_gp)
+        # Configure for transfer learning - store the BoTorch model
+        instance._prior_gp = deepcopy(prior_gp.to_botorch())
 
         return instance
 
