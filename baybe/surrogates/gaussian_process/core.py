@@ -142,7 +142,7 @@ class GaussianProcessSurrogate(Surrogate):
             New GaussianProcessSurrogate instance with transfer learning
 
         Raises:
-            ValueError: If prior_gp is not fitted
+            ValueError: If prior_gp is not a GaussianProcessSurrogate or is not fitted
         """
         from copy import deepcopy
 
