@@ -116,7 +116,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     # Transfer learning fields
-    _prior_gp = field(init=False, default=None, eq=False)
+    _prior_gp: SingleTaskGP | None = field(init=False, default=None, eq=False)
     """Prior GP to extract mean/covariance for transfer learning."""
 
     @staticmethod
