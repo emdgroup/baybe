@@ -131,7 +131,10 @@ class GaussianProcessSurrogate(Surrogate):
         kernel_factory: KernelFactory | None = None,
         **kwargs,
     ) -> GaussianProcessSurrogate:
-        """Create a GP surrogate with mean function transfer learning.
+        """Create a GP surrogate using a prior GP's predictions as the mean function.
+
+        Transfers knowledge by using the prior GP's posterior mean predictions
+        as the mean function for a new GP, while learning covariance from scratch.
 
         Args:
             prior_gp: Fitted GaussianProcessSurrogate to use as prior
