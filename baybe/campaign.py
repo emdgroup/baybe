@@ -887,13 +887,13 @@ class Campaign(SerialMixin):
         Args:
             measurements: The measurements with populated target columns.
                 If not provided and consider_campaign_measurements is ``True``, a
-                boolean mask is created for the non-dominated points in the campaign's
-                measurements.
+                boolean mask is created indicating the non-dominated points in the
+                campaign's measurements.
             consider_campaign_measurements: If ``True`` and measurements are provided,
                 the campaign's measurements are considered in the calculation but not
-                returned. If no measurements are provided, a boolean mask is created for
-                the non-dominated points in the campaign's measurements. If ``False``,
-                only the provided measurements are considered.
+                returned. If no measurements are provided, a boolean mask is created to
+                identify the non-dominated points in the campaign's measurements. If
+                ``False``, only the provided measurements are considered.
 
         Raises:
             IncompatibilityError: If the campaign's objective is ``None``
@@ -904,7 +904,7 @@ class Campaign(SerialMixin):
                 consider_campaign_measurements is set to False.
 
         Returns:
-            A series of boolean values indicating whether the corresponding datapoint
+            A series of boolean values indicating whether the corresponding data point
             is non-dominated.
         """
         if self.objective is None:
