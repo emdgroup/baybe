@@ -280,10 +280,10 @@ class Objective(ABC, SerialMixin):
 
         validate_target_input(measurements, self.targets)
 
-        y_comp = self.transform(measurements, allow_extra=True)
-        y_is_non_dominated = is_non_dominated(Y=to_tensor(y_comp), deduplicate=False)
+        targets = self.transform(measurements, allow_extra=True)
+        non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
 
-        return pd.Series(y_is_non_dominated.numpy(), name="is_non_dominated")
+        return pd.Series(non_dominated.numpy(), name="is_non_dominated")
 
 
 def to_objective(x: Target | Objective, /) -> Objective:
