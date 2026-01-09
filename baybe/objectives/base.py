@@ -257,14 +257,14 @@ class Objective(ABC, SerialMixin):
     def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
         """Create a boolean mask indicating non-dominated points in the measurements.
 
+        While the concept of dominated points originates from Pareto optimization, it
+        can also be generalized to non-Pareto objectives. In these cases, we define
+        non-dominated points as the optimal point(s) according to the objective's logic,
+        which recovers the Pareto sense for objectives that rank points according to a
+        single value.
+
         In case of duplicated non-dominated data points, return both duplicates as
         non-dominated.
-
-        If :attr:`~baybe.objectives.base.Objective.is_multi_output` is ``True``, for
-        example in the case of :class:`baybe.objectives.pareto.ParetoObjective`, the
-        non-dominated front is multidimensional. If it is ``False``, the non-dominated
-        front is one-dimensional, meaning only one unique data point can be ``True`` in
-        the boolean mask.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.

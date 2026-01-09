@@ -889,10 +889,11 @@ class Campaign(SerialMixin):
                 If not provided and consider_campaign_measurements is ``True``, a
                 boolean mask is created indicating the non-dominated points in the
                 campaign's measurements.
-            consider_campaign_measurements: If ``True`` and measurements are provided,
-                the campaign's measurements are considered in the calculation but not
-                returned. If no measurements are provided, a boolean mask is created to
-                identify the non-dominated points in the campaign's measurements. If
+            consider_campaign_measurements: If ``True``and measurements are provided,
+                the campaign's measurements will be considered in the calculation along
+                with the provided measurements, but they will not be returned. If no
+                measurements are provided, a boolean mask will be created to identify
+                the non-dominated points within the campaign's measurements. If
                 ``False``, only the provided measurements are considered.
 
         Raises:
