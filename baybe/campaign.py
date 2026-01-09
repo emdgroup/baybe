@@ -881,9 +881,6 @@ class Campaign(SerialMixin):
     ) -> pd.Series:
         """Create a boolean mask indicating non-dominated points in the measurements.
 
-        Possible validation exceptions are documented in
-        :func:`baybe.utils.validation.validate_target_input`.
-
         Args:
             measurements: The measurements with populated target columns.
                 If not provided and consider_campaign_measurements is ``True``, a
@@ -903,6 +900,9 @@ class Campaign(SerialMixin):
                 are provided in this method as argument.
             NothingToComputeError: If no measurements are provided as argument and
                 consider_campaign_measurements is set to False.
+            Additional validation exceptions are documented in
+                :func:`baybe.utils.validation.validate_target_input`.
+
 
         Returns:
             A series of boolean values indicating whether the corresponding data point
