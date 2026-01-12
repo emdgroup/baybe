@@ -20,7 +20,7 @@ from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
 from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import df_handle_missing_values, to_tensor
+from baybe.utils.dataframe import handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer
 
 if TYPE_CHECKING:
@@ -429,7 +429,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             )
 
         # Block partial measurements
-        df_handle_missing_values(measurements, [t.name for t in objective.targets])
+        handle_missing_values(measurements, [t.name for t in objective.targets])
 
         # Remember the training context
         self._searchspace = searchspace

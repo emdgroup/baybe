@@ -704,7 +704,7 @@ class _ValidatedDataFrame(pd.DataFrame):
     """Wrapper indicating the underlying experimental data was already validated."""
 
 
-def df_handle_missing_values(
+def handle_missing_values(
     data: pd.DataFrame, columns: Collection[str], drop: bool = False
 ) -> pd.DataFrame:
     """Handle missing inputs by dropping corresponding rows or raising an error.

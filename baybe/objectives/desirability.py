@@ -23,7 +23,8 @@ from baybe.targets.numerical import UncertainBool
 from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import df_handle_missing_values, pretty_print_df
+from baybe.utils.dataframe import handle_missing_values as df_handle_missing_values
+from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:

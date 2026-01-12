@@ -14,10 +14,9 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
+from baybe.utils.dataframe import get_transform_objects, to_tensor
 from baybe.utils.dataframe import (
-    df_handle_missing_values,
-    get_transform_objects,
-    to_tensor,
+    handle_missing_values as df_handle_missing_values,
 )
 from baybe.utils.metadata import Metadata, to_metadata
 
