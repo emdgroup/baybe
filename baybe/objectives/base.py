@@ -63,6 +63,11 @@ class Objective(ABC, SerialMixin):
         return tuple(t.name for t in self._modeled_quantities)
 
     @property
+    def _model_quantities_to_target_names(self) -> dict[str, list[str]]:
+        """The mapping from modeled quantity names to names of the required targets."""
+        return {mq.name: [mq.name] for mq in self._modeled_quantities}
+
+    @property
     def _n_models(self) -> int:
         """The number of models used in the objective.
 
@@ -108,21 +113,16 @@ class Objective(ABC, SerialMixin):
     ) -> dict[str, pd.DataFrame]:
         """Handle missing values in the given measurements for each modeled quantity.
 
-        This base implementation returns one dedicated dataframe per target which
-        works for objectives where modeled quantities correspond to targets. It is
-        expected that derived objectives which modeled quantities that use combined
-        targets overwrite this method and implement a stricter handling accordingly.
-
         Args:
-            measurements: Data to be checked.
+            measurements: Data potentially containing missing values.
 
         Returns:
-            A dictionary with one entry for each modeled quantity.
+            A dictionary with one dataframe for each modeled quantity.
         """
         cleaned: dict[str, pd.DataFrame] = {}
-        for t in self.targets:
-            data = df_handle_missing_values(measurements, [t.name], drop=True)
-            cleaned[t.name] = data
+        for quantity, target_names in self._model_quantities_to_target_names.items():
+            data = df_handle_missing_values(measurements, target_names, drop=True)
+            cleaned[quantity] = data
 
         return cleaned
 

@@ -23,7 +23,6 @@ from baybe.targets.numerical import UncertainBool
 from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import is_all_instance, to_tuple
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import handle_missing_values as df_handle_missing_values
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
 
@@ -168,6 +167,14 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
+    def _model_quantities_to_target_names(self) -> dict[str, list[str]]:
+        if self.as_pre_transformation:
+            return {_OUTPUT_NAME: [t.name for t in self.targets]}
+        else:
+            return {t.name: [t.name] for t in self.targets}
+
+    @override
+    @property
     def output_names(self) -> tuple[str, ...]:
         return (_OUTPUT_NAME,)
 
@@ -210,23 +217,6 @@ class DesirabilityObjective(Objective):
     @property
     def _full_transformation(self) -> MCAcquisitionObjective:
         return self._to_botorch_full()
-
-    @override
-    def handle_missing_values(
-        self, measurements: pd.DataFrame
-    ) -> dict[str, pd.DataFrame]:
-        # See base class.
-
-        if self.as_pre_transformation:
-            # Returns one cleaned frame for the overall desirability
-            return {
-                self._modeled_quantity_names[0]: df_handle_missing_values(
-                    measurements, [t.name for t in self.targets], drop=True
-                )
-            }
-        else:
-            # Base class implementation returns one df per target separately
-            return super().handle_missing_values(measurements)
 
     @override
     def to_botorch(self) -> MCAcquisitionObjective:
