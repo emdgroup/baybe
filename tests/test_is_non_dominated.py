@@ -16,7 +16,6 @@ from baybe.objectives import (
     SingleTargetObjective,
 )
 from baybe.parameters import NumericalDiscreteParameter
-from baybe.utils.dataframe import create_fake_input
 
 
 @pytest.fixture(name="objective_name")
@@ -61,7 +60,7 @@ def fixture_default_objective(targets, objective_name):
     ],
 )
 def test_is_non_dominated_func_call(
-    ongoing_campaign, objective, parameters, batch_size, targets
+    ongoing_campaign, objective, parameters, batch_size, targets, fake_measurements
 ):
     """Test function call and expected output size."""
     # Non dominated points for measurements
@@ -73,32 +72,27 @@ def test_is_non_dominated_func_call(
         f"campaign's measurements ({len(ongoing_campaign.measurements)})."
     )
 
-    # Non dominated points for new measurements
-    fake_measures = create_fake_input(
-        parameters,
-        targets,
-        batch_size,
-    )
-
     # From campaign
     non_dominated_campaign = ongoing_campaign.is_non_dominated(
-        fake_measures, consider_campaign_measurements=False
+        fake_measurements, consider_campaign_measurements=False
     )
-    assert len(fake_measures) == len(non_dominated_campaign)
+    assert len(fake_measurements) == len(non_dominated_campaign)
 
     # From objective
-    non_dominated_objective = ongoing_campaign.objective.is_non_dominated(fake_measures)
-    assert len(fake_measures) == len(non_dominated_objective)
+    non_dominated_objective = ongoing_campaign.objective.is_non_dominated(
+        fake_measurements
+    )
+    assert len(fake_measurements) == len(non_dominated_objective)
 
     assert non_dominated_campaign.equals(non_dominated_objective)
 
     # Test flag consider_campaign_measurements
     non_dominated_campaign_flag = ongoing_campaign.is_non_dominated(
-        fake_measures, consider_campaign_measurements=True
+        fake_measurements, consider_campaign_measurements=True
     )
     # Although the campaign measurements are considered for the calculation of
     # is_dominated, they will not be returned.
-    assert len(fake_measures) == len(non_dominated_campaign_flag)
+    assert len(fake_measurements) == len(non_dominated_campaign_flag)
 
 
 @pytest.mark.parametrize(
