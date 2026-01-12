@@ -105,11 +105,9 @@ def test_incompatibility(campaign, objective, fake_measurements):
     """Test for incompatibility when objective is ``None``."""
     with pytest.raises(IncompatibilityError):
         campaign.is_non_dominated()
-        campaign.is_non_dominated(fake_measurements)
 
-    if objective is not None:
-        with pytest.raises(IncompatibilityError):
-            objective.is_non_dominated(fake_measurements)
+    with pytest.raises(IncompatibilityError):
+        campaign.is_non_dominated(fake_measurements)
 
 
 @pytest.mark.parametrize(
