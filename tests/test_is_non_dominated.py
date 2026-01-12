@@ -59,8 +59,19 @@ def fixture_default_objective(targets, objective_name):
         ),
     ],
 )
+@pytest.mark.parametrize(
+    "consider_campaign_measurements",
+    [True, False],
+    ids=["consider_m", "not_consider_m"],
+)
 def test_is_non_dominated_func_call(
-    ongoing_campaign, objective, parameters, batch_size, targets, fake_measurements
+    ongoing_campaign,
+    objective,
+    parameters,
+    batch_size,
+    targets,
+    fake_measurements,
+    consider_campaign_measurements,
 ):
     """Test function call and expected output size."""
     # Non dominated points for measurements
@@ -74,25 +85,22 @@ def test_is_non_dominated_func_call(
 
     # From campaign
     non_dominated_campaign = ongoing_campaign.is_non_dominated(
-        fake_measurements, consider_campaign_measurements=False
+        fake_measurements, consider_campaign_measurements=consider_campaign_measurements
     )
     assert len(fake_measurements) == len(non_dominated_campaign)
 
-    # From objective
+    # From objective, not considering campaign measurements in any case
     non_dominated_objective = ongoing_campaign.objective.is_non_dominated(
         fake_measurements
     )
     assert len(fake_measurements) == len(non_dominated_objective)
 
-    assert non_dominated_campaign.equals(non_dominated_objective)
-
-    # Test flag consider_campaign_measurements
-    non_dominated_campaign_flag = ongoing_campaign.is_non_dominated(
-        fake_measurements, consider_campaign_measurements=True
-    )
-    # Although the campaign measurements are considered for the calculation of
-    # is_dominated, they will not be returned.
-    assert len(fake_measurements) == len(non_dominated_campaign_flag)
+    # If the flag is False, the results should be equal. If the flag is True, the
+    # results may differ, but not always. For example, if all points in the campaign are
+    # dominated by points in the fake_measurements, the results will be identical.
+    # Hence, not testing for that case here.
+    if not consider_campaign_measurements:
+        assert non_dominated_campaign.equals(non_dominated_objective)
 
 
 @pytest.mark.parametrize(
