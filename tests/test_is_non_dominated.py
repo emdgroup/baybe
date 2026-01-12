@@ -128,7 +128,7 @@ def test_incompatibility(campaign, objective, fake_measurements):
 )
 def test_logic_consider_campaign_measurements(campaign, objective, fake_measurements):
     """Test that exceptions are raised for invalid input combinations."""
-    # Test flag if campaign has no measurements
+    # Test flag when campaign has no measurements
     with pytest.raises(NoMeasurementsError):
         campaign.is_non_dominated(consider_campaign_measurements=True)
 
@@ -142,7 +142,7 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
 
     campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=False)
 
-    # Test flag if campaign has measurements
+    # Test flag when campaign has measurements
     campaign.add_measurements(fake_measurements)
 
     with pytest.raises(NothingToComputeError):
