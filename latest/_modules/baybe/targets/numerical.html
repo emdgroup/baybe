@@ -1651,6 +1651,7 @@
         <span class="n">cutoffs</span><span class="p">:</span> <span class="n">ConvertibleToInterval</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">descending</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a target that is affine in a given range and clamped to 0/1 outside.</span>
@@ -1660,6 +1661,7 @@
 <span class="sd">            cutoffs: The cutoff values defining the affine region.</span>
 <span class="sd">            descending: Boolean flag indicating if the transformation is ascending</span>
 <span class="sd">                or descending in the affine region.</span>
+<span class="sd">            minimize: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
@@ -1673,6 +1675,7 @@
             <span class="n">AffineTransformation</span><span class="o">.</span><span class="n">from_values_mapped_to_unit_interval</span><span class="p">(</span><span class="o">*</span><span class="n">bounds</span><span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
                 <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
             <span class="p">),</span>
+            <span class="n">minimize</span><span class="o">=</span><span class="n">minimize</span><span class="p">,</span>
             <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -1686,6 +1689,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">anchors</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
         <span class="o">*</span><span class="p">,</span>
+        <span class="n">minimize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">metadata</span><span class="p">:</span> <span class="n">ConvertibleToMeasurableMetadata</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NumericalTarget</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a sigmoid-transformed target.</span>
@@ -1693,13 +1697,17 @@
 <span class="sd">        Args:</span>
 <span class="sd">            name: The name of the target.</span>
 <span class="sd">            anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.</span>
+<span class="sd">            minimize: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 <span class="sd">            metadata: See :class:`baybe.targets.numerical.NumericalTarget`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            The target with applied sigmoid transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">NumericalTarget</span><span class="p">(</span>
-            <span class="n">name</span><span class="p">,</span> <span class="n">SigmoidTransformation</span><span class="o">.</span><span class="n">from_anchors</span><span class="p">(</span><span class="n">anchors</span><span class="p">),</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">SigmoidTransformation</span><span class="o">.</span><span class="n">from_anchors</span><span class="p">(</span><span class="n">anchors</span><span class="p">),</span>
+            <span class="n">minimize</span><span class="o">=</span><span class="n">minimize</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

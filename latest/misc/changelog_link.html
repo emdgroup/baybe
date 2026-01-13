@@ -1113,6 +1113,9 @@ set to <code class="docutils literal notranslate"><span class="pre">True</span><
 corresponds to traditional set point matching, values <code class="docutils literal notranslate"><span class="pre">&quot;&gt;=&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;&lt;=&quot;</span></code> indicate that
 the entire associated interval is a valid match, resulting in identical transformed
 target values as for the <code class="docutils literal notranslate"><span class="pre">match_value</span></code> itself</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NumericalTarget.normalized_ramp</span></code> and <code class="docutils literal notranslate"><span class="pre">NumericalTarget.normalized_sigmoid</span></code>
+constructors now accept a <code class="docutils literal notranslate"><span class="pre">minimize</span></code> argument for controlling the optimization
+direction of the target</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">NumericalTarget.constructor_info</span></code> property, which returns what constructor and
 arguments were used to create the object</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">NumericalTarget.from_constructor_info</span></code> convenience constructor for creating a
