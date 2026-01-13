@@ -28,10 +28,6 @@ _DEFAULT_SEED = 1337
 class _Rollouts:
     """A utility class for managing multiple simulation rollouts."""
 
-    # Note: This class was now changed to also completely manage scenarios,
-    #  making the full cases directly
-    # TODO remove this note
-
     n_mc_iterations: int | None = field(
         default=None, validator=optional([instance_of(int), ge(1)])
     )
@@ -56,7 +52,7 @@ class _Rollouts:
         default=False,
         validator=instance_of(bool),
     )
-    """Whether scenarios increment the seed if `n_mc_iterations` is `None`."""
+    """Whether the seed is incremented for scenarios if `n_mc_iterations` is `None`."""
 
     initial_random_seed: int = field(
         default=_DEFAULT_SEED,
@@ -173,10 +169,9 @@ def simulate_scenarios(
             True), or their combination (if both conditions are fulfilled) is conducted,
             with random seed incremented with each simulation.
         mc_scenarios: If `True`, scenarios will be treated as Monte Carlo runs, i.e.,
-            the random seed will be incremented for each scenario.
-            If multiple initial datasets are provided, the random seed will be
-            incremented for each combination of scenario and initial dataset.
-            If `False`, the same random seed configurations are used for all scenarios.
+            the random seed will be incremented along scenarios when `n_mc_iterations`
+            is None. If `False`, the same random seed configurations will be used for
+            all scenarios.
         random_seed: An optional integer specifying the random seed for the first Monte
             Carlo run. Each subsequent runs will increase this value by 1. If omitted,
             the current random seed is used.
