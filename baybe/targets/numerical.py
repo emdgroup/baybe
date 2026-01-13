@@ -527,6 +527,7 @@ class NumericalTarget(Target, SerialMixin):
         cutoffs: ConvertibleToInterval,
         *,
         descending: bool = False,
+        minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a target that is affine in a given range and clamped to 0/1 outside.
@@ -536,6 +537,7 @@ class NumericalTarget(Target, SerialMixin):
             cutoffs: The cutoff values defining the affine region.
             descending: Boolean flag indicating if the transformation is ascending
                 or descending in the affine region.
+            minimize: See :class:`baybe.targets.numerical.NumericalTarget`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
@@ -549,6 +551,7 @@ class NumericalTarget(Target, SerialMixin):
             AffineTransformation.from_values_mapped_to_unit_interval(*bounds).clamp(
                 0, 1
             ),
+            minimize=minimize,
             metadata=metadata,
         )
 
@@ -559,6 +562,7 @@ class NumericalTarget(Target, SerialMixin):
         name: str,
         anchors: Sequence[Sequence[float]],
         *,
+        minimize: bool = False,
         metadata: ConvertibleToMeasurableMetadata = None,
     ) -> NumericalTarget:
         """Create a sigmoid-transformed target.
@@ -566,13 +570,17 @@ class NumericalTarget(Target, SerialMixin):
         Args:
             name: The name of the target.
             anchors: See :class:`baybe.transformations.basic.SigmoidTransformation`.
+            minimize: See :class:`baybe.targets.numerical.NumericalTarget`.
             metadata: See :class:`baybe.targets.numerical.NumericalTarget`.
 
         Returns:
             The target with applied sigmoid transformation.
         """
         return NumericalTarget(
-            name, SigmoidTransformation.from_anchors(anchors), metadata=metadata
+            name,
+            SigmoidTransformation.from_anchors(anchors),
+            minimize=minimize,
+            metadata=metadata,
         )
 
     @property
