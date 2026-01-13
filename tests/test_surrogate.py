@@ -8,21 +8,25 @@ import pytest
 from pytest import param
 
 from baybe.exceptions import IncompatibleSurrogateError
+from baybe.objectives.base import Objective
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates import (
     BayesianLinearSurrogate,
     MeanPredictionSurrogate,
     NGBoostSurrogate,
 )
+from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
+from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance
+from baybe.utils.basic import get_subclasses, is_all_instance
 from baybe.utils.dataframe import create_fake_input
 
 
@@ -201,3 +205,28 @@ def test_continuous_incompatibility(campaign):
         )
     ):
         campaign.recommend(1)
+
+
+@pytest.mark.parametrize(
+    "surrogate",
+    [
+        cls()
+        for cls in get_subclasses(IndependentGaussianSurrogate)
+        if cls != CustomONNXSurrogate
+    ],
+    ids=lambda surrogate: surrogate.__class__.__name__,
+)
+def test_batching_incompatibility(
+    surrogate: Surrogate, searchspace: SearchSpace, objective: Objective
+):
+    """Surrogates that do not support batch predictions reject batch requests."""
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=2
+    )
+    surrogate.fit(searchspace, objective, measurements)
+
+    with pytest.raises(
+        IncompatibleSurrogateError,
+        match="cannot be used for joint posterior evaluation",
+    ):
+        surrogate.posterior(measurements, joint=True)
