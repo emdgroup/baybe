@@ -54,9 +54,8 @@ class CategoricalFidelityParameter(DiscreteParameter):
     # _zeta currently takes the role of the discrepancy parameter in MF-GP-UCB
     # (Kandasamy et al, 2017) but other parameters may be needed for more general
     # multi-fidelity approaches which use a CategoricalFidelityParameter.
-    _zeta: tuple[float, ...] | float | None = field(
+    _zeta: tuple[float, ...] | float = field(
         alias="zeta",
-        # FIXME[typing]: https://github.com/python-attrs/cattrs/issues/111
         converter=lambda x: (
             None
             if x is None
@@ -66,7 +65,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
         ),
         default=None,
     )
-    """The maximum discrepancy from target fidelity at any design choice.
+    """The maximum discrepancy from target (high) fidelity at any design choice.
 
     Either a tuple of positive values, one for each fidelity, or a scalar specifying
     that the first fidelity input into 'values' has discrepancy 0 (it is the high
@@ -131,7 +130,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
                 f"'high_fidelity' {target_value} is not in 'values' in {self.name}"
             )
 
-        target_idx = self._values[target_value]
+        target_idx = self._values.index(target_value)
 
         if isinstance(self._zeta, tuple):
             if self._zeta[target_idx] != 0:
@@ -232,10 +231,10 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     def _validate_cost_length(  # noqa: DOC101, DOC103
         self, _: Any, value: tuple[float, ...]
     ) -> None:
-        """Validate that ``len(_costs)`` equals ``len(_values)``.
+        """Validate that .
 
         Raises:
-            ValueError: If ``len(_costs) != len(_values)``.
+            ValueError: If 'costs' and 'values' have different lengths.
         """
         if len(value) != len(self._values):
             raise ValueError(f"Length of 'costs' and 'values' different in {self.name}")
@@ -243,7 +242,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     @override
     @property
     def values(self) -> tuple:
-        """The fidelity values of the parameter."""
+        """The fidelity values of the parameter, sorted in numerical order."""
         sorted_fidelities = sorted(
             range(len(self._values)), key=lambda i: self._values[i]
         )
@@ -251,7 +250,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
 
     @property
     def costs(self) -> tuple:
-        """The fidelity costs of the parameter."""
+        """The fidelity costs of the parameter, sorted according to values."""
         sorted_fidelities = sorted(
             range(len(self._values)), key=lambda i: self._values[i]
         )
