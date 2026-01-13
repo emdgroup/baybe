@@ -28,20 +28,35 @@ _DEFAULT_SEED = 1337
 class _Rollouts:
     """A utility class for managing multiple simulation rollouts."""
 
+    # Note: This class was now changed to also completely manage scenarios,
+    #  making the full cases directly
+    # TODO remove this note
+
     n_mc_iterations: int | None = field(
         default=None, validator=optional([instance_of(int), ge(1)])
     )
     """The number of Monte Carlo runs.
 
-    * Integer values specify the number of Monte Carlo runs per initial data set.
-    * `None` means one Monte Carlo run per initial data set, but unlike when set to 1,
-      the random seed is incremented with each next data set.
+    * Integer values specify the number of Monte Carlo runs per initial data set and
+      scenario combination.
+    * `None` means one Monte Carlo run per setting (either initial data set or initial
+      data set and scenario combination) is performed, but unlike when set to 1, the
+      random seed is incremented with each next setting.
     """
 
     n_initial_data: int | None = field(
         default=None, validator=optional([instance_of(int), ge(1)])
     )
     """The number of initial data sets (if any)."""
+
+    scenarios: list[Any] = field(default=None, validator=instance_of(list))
+    """Scenario names."""
+
+    mc_scenarios: bool = field(
+        default=False,
+        validator=instance_of(bool),
+    )
+    """Whether scenarios increment the seed if `n_mc_iterations` is `None`."""
 
     initial_random_seed: int = field(
         default=_DEFAULT_SEED,
@@ -50,45 +65,72 @@ class _Rollouts:
     )
     """The random seed for the first Monte Carlo run."""
 
-    @n_initial_data.validator
-    def _validate_n_initial_data(self, _: Attribute, value: Any):
-        if self.n_mc_iterations is None and value is None:
+    @n_mc_iterations.validator
+    def _validate_n_mc_iterations(self, _: Attribute, value: Any):
+        if (
+            value is None
+            and self.n_initial_data is None
+            and (len(self.scenarios) == 1 or not self.mc_scenarios)
+        ):
             raise ValueError(
                 "Setting the number of Monte Carlo iterations to `None` requires that "
-                "initial data is specified. Perhaps you forgot to do so? If not, "
-                "consider setting the number of iterations to 1."
+                "either initial data or multiple scenarios for MC are specified. "
+                "Perhaps you forgot to do so? If not, consider setting the number of "
+                "iterations to 1."
+            )
+
+    @mc_scenarios.validator
+    def _validate_mc_scenarios(self, _: Attribute, value: Any):
+        if value and self.n_mc_iterations is not None:
+            raise ValueError(
+                "If `n_mc_iteratios` is not `None`, `mc_scenarios` does not have an "
+                "effect. Perhaps you misspecified the parameters? If not, consider "
+                "setting `mc_scenarios` to False."
             )
 
     def __len__(self) -> int:
         """The total number of simulation rollouts."""  # noqa: D401
-        return (self.n_mc_iterations or 1) * (self.n_initial_data or 1)
+        return (
+            (self.n_mc_iterations or 1)
+            * (self.n_initial_data or 1)
+            * len(self.scenarios)
+        )
 
     @property
     def cases(self) -> pd.DataFrame:
         """Get all rollout cases as a dataframe."""
-        # When MC iterations is None, we pair each initial dataset with its own seed
+        initial_data = (
+            range(self.n_initial_data) if self.n_initial_data else [float("nan")]
+        )
+
+        # When MC iterations is None, we pair each initial dataset or the combination
+        # of initial data set and scenario with its own seed
         if self.n_mc_iterations is None:
-            assert self.n_initial_data is not None  # ensured by validator
-            return pd.DataFrame(
-                {
-                    "Random_Seed": range(
-                        self.initial_random_seed,
-                        self.initial_random_seed + self.n_initial_data,
-                    ),
-                    "Initial_Data": range(self.n_initial_data),
-                }
+            # ensured by validator
+            assert self.n_initial_data is not None or (
+                len(self.scenarios) > 1 and self.mc_scenarios
             )
+            rollouts = pd.DataFrame({"Initial_Data": initial_data})
+            if self.mc_scenarios:
+                rollouts = pd.merge(
+                    pd.DataFrame({"Scenario": self.scenarios}), rollouts, how="cross"
+                )
+            rollouts["Random_Seed"] = range(
+                self.initial_random_seed, self.initial_random_seed + rollouts.shape[0]
+            )
+            if not self.mc_scenarios:
+                rollouts = pd.merge(
+                    pd.DataFrame({"Scenario": self.scenarios}), rollouts, how="cross"
+                )
+            return rollouts
 
         # Otherwise, create cross-product of MC iterations and initial data
         random_seeds = range(
             self.initial_random_seed, self.initial_random_seed + self.n_mc_iterations
         )
-        initial_data = (
-            range(self.n_initial_data) if self.n_initial_data else [float("nan")]
-        )
         return pd.MultiIndex.from_product(
-            [random_seeds, initial_data],
-            names=["Random_Seed", "Initial_Data"],
+            [random_seeds, initial_data, self.scenarios],
+            names=["Random_Seed", "Initial_Data", "Scenario"],
         ).to_frame(index=False)
 
 
@@ -102,6 +144,7 @@ def simulate_scenarios(
     initial_data: list[pd.DataFrame] | None = None,
     groupby: list[str] | None = None,
     n_mc_iterations: int | None = 1,
+    mc_scenarios: bool = False,
     random_seed: int | None = None,
     impute_mode: Literal[
         "error", "worst", "best", "mean", "random", "ignore"
@@ -124,9 +167,16 @@ def simulate_scenarios(
         groupby: The names of the parameters to be used to partition the search space.
             A separate simulation will be conducted for each partition, with the search
             restricted to that partition.
-        n_mc_iterations: The number of Monte Carlo simulations to be used. If set to
-            `None`, one Monte Carlo simulation per initial data set is conducted, but
-            the random seed is incremented with each initial data set.
+        n_mc_iterations: The number of Monte Carlo simulations to be used per initial
+            data set and scenario combination. If set to `None`, one Monte Carlo
+            simulation per initial data set (if present), scenario (if mc_scenarios is
+            True), or their combination (if both conditions are fulfilled) is conducted,
+            with random seed incremented with each simulation.
+        mc_scenarios: If `True`, scenarios will be treated as Monte Carlo runs, i.e.,
+            the random seed will be incremented for each scenario.
+            If multiple initial datasets are provided, the random seed will be
+            incremented for each combination of scenario and initial dataset.
+            If `False`, the same random seed configurations are used for all scenarios.
         random_seed: An optional integer specifying the random seed for the first Monte
             Carlo run. Each subsequent runs will increase this value by 1. If omitted,
             the current random seed is used.
@@ -213,11 +263,11 @@ def simulate_scenarios(
     rollouts = _Rollouts(
         n_mc_iterations,
         len(initial_data) if initial_data is not None else None,
+        scenarios.keys(),
+        mc_scenarios,
         random_seed,
     )
-    cases = pd.merge(
-        pd.DataFrame({"Scenario": scenarios.keys()}), rollouts.cases, how="cross"
-    ).to_dict(orient="records")
+    cases = rollouts.cases.to_dict(orient="records")
 
     # Simulate and unpack
     result_variable = "simulation_result"
