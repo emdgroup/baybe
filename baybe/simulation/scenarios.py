@@ -263,7 +263,7 @@ def simulate_scenarios(
     rollouts = _Rollouts(
         n_mc_iterations,
         len(initial_data) if initial_data is not None else None,
-        scenarios.keys(),
+        list(scenarios.keys()),
         mc_scenarios,
         random_seed,
     )
