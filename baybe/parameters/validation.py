@@ -46,12 +46,12 @@ def validate_is_finite(  # noqa: DOC101, DOC103
 
 
 def validate_contains_one(  # noqa: DOC101, DOC103
-    obj: Any, _: Any, value: Collection[float]
+    obj: Any, _: Any, values: Collection[float]
 ):
     """Validate that ``value`` contains at least one entry equal to ``1.0``.
 
     Raises:
         ValueError: If ``value`` does not include ``1.0``
     """
-    if 1.0 not in value:
+    if 1.0 not in values:
         raise ValueError(f"{obj.name} must contain 1.0")
