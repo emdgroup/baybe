@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import gc
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from enum import Enum, auto
 from typing import TYPE_CHECKING, ClassVar, Literal, Protocol, TypeAlias
 
 import pandas as pd
 from attrs import define, field
+from attrs.validators import deep_iterable, instance_of
 from joblib.hashing import hash
 from typing_extensions import override
 
@@ -18,6 +19,7 @@ from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
+from baybe.symmetries import Symmetry
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer
@@ -89,6 +91,14 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     """Class variable encoding whether or not the surrogate is multi-output
     compatible."""
 
+    symmetries: tuple[Symmetry, ...] = field(
+        factory=tuple,
+        converter=tuple,
+        validator=deep_iterable(member_validator=instance_of(Symmetry)),
+        kw_only=True,
+    )
+    """Symmetries to be considered by the surrogate model."""
+
     _searchspace: SearchSpace | None = field(init=False, default=None, eq=False)
     """The search space on which the surrogate operates. Available after fitting."""
 
@@ -113,6 +123,24 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
     Scales a tensor containing target measurements in computational representation
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
+
+    def augment_measurements(
+        self, data: pd.DataFrame, parameters: Iterable[Parameter]
+    ) -> pd.DataFrame:
+        """Apply data augmentation to measurements.
+
+        Args:
+            data: A dataframe with measurements.
+            parameters: Parameter objects carrying additional information (might not be
+                needed by all augmentation implementations).
+
+        Returns:
+            A dataframe with the augmented measurements, including the original ones.
+        """
+        for s in self.symmetries:
+            data = s.augment_measurements(data, parameters)
+
+        return data
 
     @override
     def to_botorch(self) -> Model:

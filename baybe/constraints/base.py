@@ -37,10 +37,6 @@ class Constraint(ABC, SerialMixin):
     eval_during_modeling: ClassVar[bool]
     """Class variable encoding whether the condition is evaluated during modeling."""
 
-    eval_during_augmentation: ClassVar[bool] = False
-    """Class variable encoding whether the constraint could be considered during data
-    augmentation."""
-
     numerical_only: ClassVar[bool] = False
     """Class variable encoding whether the constraint is valid only for numerical
     parameters."""

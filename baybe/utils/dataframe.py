@@ -192,6 +192,10 @@ def create_fake_input(
 
     Raises:
         ValueError: If less than one row was requested.
+
+    Note:
+        This function does not consider constraints and might provide unexpected or
+        invalid data if certain constraints are present.
     """
     # Assert at least one fake entry is being generated
     if n_rows < 1:
