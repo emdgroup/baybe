@@ -7,14 +7,15 @@ from collections.abc import Iterable, Sequence
 from enum import Enum
 from typing import cast
 
+import attrs
 import pandas as pd
 from attrs import define, field
 from typing_extensions import override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskParameter, TransferMode
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -190,6 +191,23 @@ class SearchSpace(SerialMixin):
                 df[[p.name for p in cont_params]],
                 cont_params,  # type:ignore[arg-type]
             ),
+        )
+
+    def set_transfer_mode(self, mode: TransferMode) -> SearchSpace:
+        """Return new SearchSpace with updated task parameter transfer mode."""
+        from baybe.parameters.categorical import TaskParameter
+
+        task_parameters = [p for p in self.parameters if isinstance(p, TaskParameter)]
+        if not task_parameters:
+            raise ValueError("No task parameters exist in this SearchSpace.")
+
+        updated_parameters = [
+            (attrs.evolve(p, transfer_mode=mode) if isinstance(p, TaskParameter) else p)
+            for p in self.parameters
+        ]
+
+        return SearchSpace.from_product(
+            parameters=updated_parameters, constraints=list(self.constraints)
         )
 
     @property
