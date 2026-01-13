@@ -15,6 +15,7 @@ from baybe.surrogates.gaussian_process.core import (
     _ModelContext,
 )
 from baybe.surrogates.gaussian_process.kernel_factory import (
+    DiscreteFidelityKernelFactory,
     KernelFactory,
     to_kernel_factory,
 )
@@ -60,7 +61,7 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
     into a :class:`.kernel_factory.PlainKernelFactory`."""
 
-    fidelity_kernel_factory: KernelFactory = field(
+    fidelity_kernel_factory: DiscreteFidelityKernelFactory = field(
         alias="fidelity_kernel_or_factory",
         factory=DefaultFidelityKernelFactory,
         converter=to_kernel_factory,
@@ -152,7 +153,6 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
 
         fidelity_covar_module = self.fidelity_kernel_factory(
             num_tasks=context.n_fidelities,
-            active_dims=context.fidelity_idx,
             rank=context.n_fidelities,  # TODO: make controllable
         ).to_gpytorch(
             ard_num_dims=1,
@@ -198,7 +198,7 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
 
 
 @define
-class GaussianProcessSurrogateSTMF(GaussianProcessSurrogate):
+class GaussianProcessSurrogateSTMF(Surrogate):
     """Botorch's single task multi fidelity Gaussian process."""
 
     supports_transfer_learning: ClassVar[bool] = False
@@ -262,7 +262,7 @@ class GaussianProcessSurrogateSTMF(GaussianProcessSurrogate):
         input_transform = botorch.models.transforms.Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
-            indices=numerical_design_idxs,
+            indices=list(numerical_design_idxs),
         )
         outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
 

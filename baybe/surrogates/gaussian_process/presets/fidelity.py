@@ -28,7 +28,6 @@ class IndependentFidelityKernelFactory(KernelFactory):
     ) -> Kernel:
         return IndexKernel(
             num_tasks=searchspace.n_fidelities,
-            active_dims=searchspace.fidelity_idx,
             rank=0,
         )
 
@@ -43,7 +42,6 @@ class IndexFidelityKernelFactory(KernelFactory):
     ) -> Kernel:
         return IndexKernel(
             num_tasks=searchspace.n_fidelities,
-            active_dims=searchspace.fidelity_idx,
             rank=searchspace.n_fidelities,
         )
 

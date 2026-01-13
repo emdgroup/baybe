@@ -5,8 +5,10 @@ from __future__ import annotations
 import gc
 from typing import TYPE_CHECKING, Protocol
 
+from attr.converters import optional as optional_c
 from attrs import define, field
 from attrs.validators import instance_of
+from attrs.validators import optional as optional_v
 from typing_extensions import override
 
 from baybe.kernels.base import Kernel
@@ -25,6 +27,16 @@ class KernelFactory(Protocol):
     ) -> Kernel:
         """Create a :class:`baybe.kernels.base.Kernel` for the given DOE context."""
         ...
+
+
+class DiscreteFidelityKernelFactory(KernelFactory):
+    """A protocol for discrete fidelity kernel factories."""
+
+    num_tasks: int = field(converter=int, validator=instance_of(int))
+
+    rank: int | None = field(
+        converter=optional_c(int), validator=optional_v(instance_of(int))
+    )
 
 
 @define(frozen=True)
