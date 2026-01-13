@@ -6,7 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
+    from baybe.surrogates.base import Surrogate
 
 
 class GaussianProcessPreset(Enum):
@@ -23,7 +23,7 @@ class GaussianProcessPreset(Enum):
     kernel over design subspace and a full rank index kernel over fidelities."""
 
 
-def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+def make_gp_from_preset(preset: GaussianProcessPreset) -> Surrogate:
     """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.surrogates.gaussian_process.multi_fidelity import (
