@@ -79,7 +79,7 @@ class _Rollouts:
     def _validate_mc_scenarios(self, _: Attribute, value: Any):
         if value and self.n_mc_iterations is not None:
             raise ValueError(
-                "If `n_mc_iteratios` is not `None`, `mc_scenarios` does not have an "
+                "If `n_mc_iterations` is not `None`, `mc_scenarios` does not have an "
                 "effect. Perhaps you misspecified the parameters? If not, consider "
                 "setting `mc_scenarios` to False."
             )
