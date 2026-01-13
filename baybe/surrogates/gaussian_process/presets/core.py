@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from baybe.surrogates.base import Surrogate
 
 from surrogates.gaussian_process.core import GaussianProcessSurrogate
 
@@ -23,7 +27,7 @@ class GaussianProcessPreset(Enum):
     """Recreates the default settings of the BOTORCH SingleTaskMultiFidelityGP."""
 
 
-def make_gp_from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+def make_gp_from_preset(preset: GaussianProcessPreset) -> Surrogate:
     """Create a :class:`GaussianProcessSurrogate` from a :class:`GaussianProcessPreset."""  # noqa: E501
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.surrogates.gaussian_process.multi_fidelity import (
