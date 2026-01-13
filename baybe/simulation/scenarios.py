@@ -28,6 +28,9 @@ _DEFAULT_SEED = 1337
 class _Rollouts:
     """A utility class for managing multiple simulation rollouts."""
 
+    scenarios: list[Any] = field(validator=instance_of(list))
+    """Scenario names."""
+
     n_mc_iterations: int | None = field(
         default=None, validator=optional([instance_of(int), ge(1)])
     )
@@ -44,9 +47,6 @@ class _Rollouts:
         default=None, validator=optional([instance_of(int), ge(1)])
     )
     """The number of initial data sets (if any)."""
-
-    scenarios: list[Any] = field(default=None, validator=instance_of(list))
-    """Scenario names."""
 
     mc_scenarios: bool = field(
         default=False,
@@ -256,11 +256,11 @@ def simulate_scenarios(
 
     # Collect the settings to be simulated
     rollouts = _Rollouts(
-        n_mc_iterations,
-        len(initial_data) if initial_data is not None else None,
-        list(scenarios.keys()),
-        mc_scenarios,
-        random_seed,
+        scenarios=list(scenarios.keys()),
+        n_mc_iterations=n_mc_iterations,
+        n_initial_data=len(initial_data) if initial_data is not None else None,
+        mc_scenarios=mc_scenarios,
+        initial_random_seed=random_seed,
     )
     cases = rollouts.cases.to_dict(orient="records")
 
