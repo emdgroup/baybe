@@ -225,7 +225,7 @@ class IndexKernel(BasicKernel):
     num_tasks: int = field(validator=[instance_of(int), ge(1)])
     """Number of values the parameter can take."""
 
-    rank: int = field(
+    rank: int | None = field(
         default=1,
         converter=optional_c(int),
         validator=optional_v([instance_of(int), ge(1)]),
