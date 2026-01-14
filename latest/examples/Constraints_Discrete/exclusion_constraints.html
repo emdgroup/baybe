@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1284,19 +1283,20 @@ NaN</p>
       Recommender
          BotorchRecommender
             Surrogate
-               GaussianProcessSurrogate
-                  Supports Transfer Learning: True
-                  Kernel factory: DefaultKernelFactory()
-            Acquisition function: None
-            Compatibility: SearchSpaceType.HYBRID
-            Sequential continuous: True
-            Hybrid sampler: None
-            Sampling percentage: 1.0
-      Switch after: 1
-      Remain switched: False
-      Has switched: False
+               CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
 </pre></div>
 </div>
+<p>ocessSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
+Acquisition function: None
+Compatibility: SearchSpaceType.HYBRID
+Sequential continuous: True
+Hybrid sampler: None
+Sampling percentage: 1.0
+Switch after: 1
+Remain switched: False
+Has switched: False</p>
 </section>
 <section id="manual-verification-of-the-constraints">
 <h2>Manual verification of the constraints<a class="headerlink" href="#manual-verification-of-the-constraints" title="Link to this heading">¶</a></h2>

@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1120,7 +1119,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.from_json" title="baybe.surrogates.base.Surrogate.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(source, /)</p></td>
 <td><p>Create an object from its JSON representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.posterior" title="baybe.surrogates.base.Surrogate.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>(candidates, *[, joint])</p></td>
 <td><p>Compute the posterior for candidates in experimental representation.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.posterior_stats" title="baybe.surrogates.base.Surrogate.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>(candidates[, stats])</p></td>
@@ -1145,10 +1144,13 @@
 <div class="table-wrapper autosummary longtable docutils container">
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.supports_multi_output" title="baybe.surrogates.base.Surrogate.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_available</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.supports_multi_output" title="baybe.surrogates.base.Surrogate.supports_multi_output"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multi_output</span></code></a></p></td>
 <td><p>Class variable encoding whether or not the surrogate is multi-output compatible.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.supports_transfer_learning" title="baybe.surrogates.base.Surrogate.supports_transfer_learning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.surrogates.base.Surrogate.supports_transfer_learning" title="baybe.surrogates.base.Surrogate.supports_transfer_learning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_transfer_learning</span></code></a></p></td>
 <td><p>Class variable encoding whether or not the surrogate supports transfer learning.</p></td>
 </tr>
 </tbody>
@@ -1234,21 +1236,29 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.surrogates.base.Surrogate.posterior">
-<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/base.html#Surrogate.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.base.Surrogate.posterior" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">posterior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/base.html#Surrogate.posterior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.base.Surrogate.posterior" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the posterior for candidates in experimental representation.</p>
 <p>Takes a dataframe of parameter configurations in <strong>experimental representation</strong>
 and returns the corresponding posterior object. Therefore, the method serves as
 the user-facing entry point for accessing model predictions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.surrogates.base.Surrogate.posterior.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – A dataframe containing parameter configurations in
-<strong>experimental representation</strong>.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.surrogates.base.Surrogate.posterior.params.candidates"></span><strong>candidates</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – A dataframe containing parameter configurations in
+<strong>experimental representation</strong>.</p></li>
+<li><p><span class="target" id="baybe.surrogates.base.Surrogate.posterior.params.joint"></span><strong>joint</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the provided candidates are treated in a “q-batch”,
+meaning that the returned posterior describes the joint distribution
+over all candidates. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the candidates are treated
+independently as a “t-batch”, and the returned posterior describes the
+collection of marginal distributions at each candidate point.
+For more information, see <a class="reference external" href="https://botorch.org/docs/batching">https://botorch.org/docs/batching</a>.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html#baybe.exceptions.ModelNotTrainedError" title="baybe.exceptions.ModelNotTrainedError"><strong>ModelNotTrainedError</strong></a> – When called before the model has been trained.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.1.dev1+g327a4fc51)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/posteriors.html#botorch.posteriors.posterior.Posterior" title="(in BoTorch v0.1.dev1+gfe663206b)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Posterior</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.posteriors.Posterior</span></code> object representing the posterior
@@ -1312,13 +1322,13 @@ it as a single-target surrogate and applying the same replication mechanism.</p>
 <dt class="sig sig-object py" id="baybe.surrogates.base.Surrogate.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/surrogates/base.html#Surrogate.to_botorch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.surrogates.base.Surrogate.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Create the botorch-ready representation of the fitted model.</p>
-<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev1+g327a4fc51)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
+<p>The <a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev1+gfe663206b)"><code class="xref py py-class docutils literal notranslate"><span class="pre">botorch.models.model.Model</span></code></a> created by this method needs to be
 configured such that it can be called with candidate points in <strong>computational
 representation</strong>, that is, input of the form as obtained via
 <a class="reference internal" href="baybe.searchspace.core.SearchSpace.html#baybe.searchspace.core.SearchSpace.transform" title="baybe.searchspace.core.SearchSpace.transform"><code class="xref py py-meth docutils literal notranslate"><span class="pre">baybe.searchspace.core.SearchSpace.transform()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev1+g327a4fc51)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/models.html#botorch.models.model.Model" title="(in BoTorch v0.1.dev1+gfe663206b)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>

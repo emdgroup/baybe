@@ -35,6 +35,7 @@ GaussianProcessSurrogate
    .. autosummary::
    
       ~GaussianProcessSurrogate.kernel_factory
+      ~GaussianProcessSurrogate.is_available
       ~GaussianProcessSurrogate.supports_multi_output
       ~GaussianProcessSurrogate.supports_transfer_learning
    

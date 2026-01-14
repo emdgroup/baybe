@@ -477,7 +477,6 @@
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1477,8 +1476,6 @@
 </li>
           <li><a href="_autosummary/baybe.exceptions.InputDataTypeWarning.html#baybe.exceptions.InputDataTypeWarning.__init__">(baybe.exceptions.InputDataTypeWarning method)</a>
 </li>
-          <li><a href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html#baybe.exceptions.InvalidSurrogateModelError.__init__">(baybe.exceptions.InvalidSurrogateModelError method)</a>
-</li>
           <li><a href="_autosummary/baybe.exceptions.InvalidTargetValueError.html#baybe.exceptions.InvalidTargetValueError.__init__">(baybe.exceptions.InvalidTargetValueError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html#baybe.exceptions.MinimumCardinalityViolatedWarning.__init__">(baybe.exceptions.MinimumCardinalityViolatedWarning method)</a>
@@ -1736,8 +1733,6 @@
           <li><a href="_autosummary/baybe.exceptions.InfeasibilityError.html#baybe.exceptions.InfeasibilityError.__new__">(baybe.exceptions.InfeasibilityError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.InputDataTypeWarning.html#baybe.exceptions.InputDataTypeWarning.__new__">(baybe.exceptions.InputDataTypeWarning method)</a>
-</li>
-          <li><a href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html#baybe.exceptions.InvalidSurrogateModelError.__new__">(baybe.exceptions.InvalidSurrogateModelError method)</a>
 </li>
           <li><a href="_autosummary/baybe.exceptions.InvalidTargetValueError.html#baybe.exceptions.InvalidTargetValueError.__new__">(baybe.exceptions.InvalidTargetValueError method)</a>
 </li>
@@ -5272,8 +5267,18 @@
 </li>
         <li><a href="_autosummary/baybe.priors.basic.HalfNormalPrior.html#baybe.priors.basic.HalfNormalPrior">HalfNormalPrior (class in baybe.priors.basic)</a>
 </li>
-        <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values">handle_missing_values() (in module baybe.utils.dataframe)</a>
+        <li><a href="_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.handle_missing_values">handle_missing_values() (baybe.objectives.base.Objective method)</a>
+
+        <ul>
+          <li><a href="_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective.handle_missing_values">(baybe.objectives.desirability.DesirabilityObjective method)</a>
 </li>
+          <li><a href="_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective.handle_missing_values">(baybe.objectives.pareto.ParetoObjective method)</a>
+</li>
+          <li><a href="_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective.handle_missing_values">(baybe.objectives.single.SingleTargetObjective method)</a>
+</li>
+          <li><a href="_autosummary/baybe.utils.dataframe.handle_missing_values.html#baybe.utils.dataframe.handle_missing_values">(in module baybe.utils.dataframe)</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/baybe.utils.conversion.html#baybe.utils.conversion.to_string.params.header">header (baybe.utils.conversion.to_string parameter)</a>, <a href="_autosummary/baybe.utils.conversion.to_string.html#baybe.utils.conversion.to_string.params.header">[1]</a>
 </li>
         <li><a href="_autosummary/baybe.utils.basic.hilberts_factory.html#baybe.utils.basic.hilberts_factory">hilberts_factory() (in module baybe.utils.basic)</a>
@@ -5522,8 +5527,6 @@
 </li>
         <li><a href="_autosummary/baybe.utils.interval.Interval.html#baybe.utils.interval.Interval">Interval (class in baybe.utils.interval)</a>
 </li>
-        <li><a href="_autosummary/baybe.exceptions.InvalidSurrogateModelError.html#baybe.exceptions.InvalidSurrogateModelError">InvalidSurrogateModelError</a>
-</li>
         <li><a href="_autosummary/baybe.exceptions.InvalidTargetValueError.html#baybe.exceptions.InvalidTargetValueError">InvalidTargetValueError</a>
 </li>
         <li><a href="_autosummary/baybe.objectives.botorch.ChainedMCObjective.html#baybe.objectives.botorch.ChainedMCObjective.ipu">ipu() (baybe.objectives.botorch.ChainedMCObjective method)</a>
@@ -5760,6 +5763,28 @@
   <h2>J</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior.params.joint">joint (baybe.campaign.Campaign.posterior parameter)</a>, <a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior.params.joint">[1]</a>
+
+        <ul>
+          <li><a href="_autosummary/baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.html#baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.posterior.params.joint">(baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.html#baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html#baybe.surrogates.base.IndependentGaussianSurrogate.posterior.params.joint">(baybe.surrogates.base.IndependentGaussianSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html#baybe.surrogates.base.IndependentGaussianSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior.params.joint">(baybe.surrogates.base.Surrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate.posterior.params.joint">(baybe.surrogates.custom.CustomONNXSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior.params.joint">(baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html#baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.linear.BayesianLinearSurrogate.html#baybe.surrogates.linear.BayesianLinearSurrogate.posterior.params.joint">(baybe.surrogates.linear.BayesianLinearSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.linear.BayesianLinearSurrogate.html#baybe.surrogates.linear.BayesianLinearSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.naive.MeanPredictionSurrogate.html#baybe.surrogates.naive.MeanPredictionSurrogate.posterior.params.joint">(baybe.surrogates.naive.MeanPredictionSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.naive.MeanPredictionSurrogate.html#baybe.surrogates.naive.MeanPredictionSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.ngboost.NGBoostSurrogate.html#baybe.surrogates.ngboost.NGBoostSurrogate.posterior.params.joint">(baybe.surrogates.ngboost.NGBoostSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.ngboost.NGBoostSurrogate.html#baybe.surrogates.ngboost.NGBoostSurrogate.posterior.params.joint">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.surrogates.random_forest.RandomForestSurrogate.html#baybe.surrogates.random_forest.RandomForestSurrogate.posterior.params.joint">(baybe.surrogates.random_forest.RandomForestSurrogate.posterior parameter)</a>, <a href="_autosummary/baybe.surrogates.random_forest.RandomForestSurrogate.html#baybe.surrogates.random_forest.RandomForestSurrogate.posterior.params.joint">[1]</a>
+</li>
+        </ul></li>
         <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.joint_acquisition_value">joint_acquisition_value() (baybe.campaign.Campaign method)</a>
 
         <ul>
@@ -6104,6 +6129,14 @@
           <li><a href="_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.measurements">(baybe.campaign.Campaign property)</a>
 </li>
           <li><a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.from_recommender.params.measurements">(baybe.insights.shap.SHAPInsight.from_recommender parameter)</a>, <a href="_autosummary/baybe.insights.shap.SHAPInsight.html#baybe.insights.shap.SHAPInsight.from_recommender.params.measurements">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.handle_missing_values.params.measurements">(baybe.objectives.base.Objective.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.handle_missing_values.params.measurements">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective.handle_missing_values.params.measurements">(baybe.objectives.desirability.DesirabilityObjective.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective.handle_missing_values.params.measurements">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective.handle_missing_values.params.measurements">(baybe.objectives.pareto.ParetoObjective.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective.handle_missing_values.params.measurements">[1]</a>
+</li>
+          <li><a href="_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective.handle_missing_values.params.measurements">(baybe.objectives.single.SingleTargetObjective.handle_missing_values parameter)</a>, <a href="_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective.handle_missing_values.params.measurements">[1]</a>
 </li>
           <li><a href="_autosummary/baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend.params.measurements">(baybe.recommenders.base.RecommenderProtocol.recommend parameter)</a>, <a href="_autosummary/baybe.recommenders.base.RecommenderProtocol.html#baybe.recommenders.base.RecommenderProtocol.recommend.params.measurements">[1]</a>
 </li>

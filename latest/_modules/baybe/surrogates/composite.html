@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1095,6 +1094,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
@@ -1112,7 +1112,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PosteriorStatistic</span><span class="p">,</span> <span class="n">SurrogateProtocol</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.gaussian_process.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_missing_values</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.models.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelList</span>
@@ -1173,8 +1172,14 @@
     <span class="n">surrogates</span><span class="p">:</span> <span class="n">_SurrogateGetter</span> <span class="o">=</span> <span class="n">field</span><span class="p">()</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An index-based mapping from target names to single-target surrogates.&quot;&quot;&quot;</span>
 
-    <span class="n">_target_names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The names of the targets modeled by the surrogate outputs.&quot;&quot;&quot;</span>
+    <span class="n">_modeled_quantity_names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">init</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eq</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The names of the quantities modeled by the surrogate outputs.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Access the surrogate for a specific quantity by its name.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
 <div class="viewcode-block" id="CompositeSurrogate.from_replication">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.from_replication">[docs]</a>
@@ -1187,8 +1192,8 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_surrogates_flat</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SurrogateProtocol</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The surrogates ordered according to the targets of the modeled objective.&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_names</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantity_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantity_names</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CompositeSurrogate.fit">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.fit">[docs]</a>
@@ -1199,16 +1204,22 @@
         <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
         <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-            <span class="c1"># Drop partial measurements for the respective target</span>
-            <span class="n">measurements_filtered</span> <span class="o">=</span> <span class="n">handle_missing_values</span><span class="p">(</span>
-                <span class="n">measurements</span><span class="p">,</span> <span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">],</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span>
+        <span class="c1"># See base class.</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">handle_missing_values</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">pre_transformed</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">_pre_transform</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">[[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">]]</span>
+            <span class="p">)</span>
+            <span class="n">pre_transformed</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">searchspace</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">)],</span> <span class="n">pre_transformed</span><span class="p">],</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">quantity</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">_modeled_quantities</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+                <span class="n">searchspace</span><span class="p">,</span> <span class="n">quantity</span><span class="o">.</span><span class="n">to_objective</span><span class="p">(),</span> <span class="n">pre_transformed</span>
             <span class="p">)</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">surrogates</span><span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-                <span class="n">searchspace</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">to_objective</span><span class="p">(),</span> <span class="n">measurements_filtered</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">objective</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantity_names</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">_modeled_quantity_names</span></div>
 
 
 <div class="viewcode-block" id="CompositeSurrogate.to_botorch">
@@ -1227,7 +1238,7 @@
 
 <div class="viewcode-block" id="CompositeSurrogate.posterior">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate.posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorList</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PosteriorList</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the posterior for candidates in experimental representation.</span>
 
 <span class="sd">        The (independent joint) posterior is represented as a collection of individual</span>
@@ -1245,7 +1256,10 @@
 
         <span class="c1"># TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would</span>
         <span class="c1">#   be handy here but unclear if this is doable with the current typing system</span>
-        <span class="n">posteriors</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surrogates_flat</span><span class="p">]</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">posteriors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">joint</span><span class="o">=</span><span class="n">joint</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surrogates_flat</span>
+        <span class="p">]</span>
         <span class="k">return</span> <span class="n">PosteriorList</span><span class="p">(</span><span class="o">*</span><span class="n">posteriors</span><span class="p">)</span></div>
 
 
@@ -1313,6 +1327,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Unstructure as the concrete type.&quot;&quot;&quot;</span>
     <span class="n">container_type</span> <span class="o">=</span> <span class="n">_get_surrogate_getter_type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">converter</span><span class="o">.</span><span class="n">unstructure</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">unstructure_as</span><span class="o">=</span><span class="n">container_type</span><span class="p">)</span>
+
+
+<span class="c1"># Collect leftover original slotted classes processed by `attrs.define`</span>
+<span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 
 
 <span class="n">converter</span><span class="o">.</span><span class="n">register_structure_hook_func</span><span class="p">(</span>

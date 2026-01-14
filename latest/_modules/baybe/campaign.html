@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1733,7 +1732,9 @@
 
 <div class="viewcode-block" id="Campaign.posterior">
 <a class="viewcode-back" href="../../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the posterior predictive distribution for the given candidates.</span>
 
 <span class="sd">        Args:</span>
@@ -1741,6 +1742,7 @@
 <span class="sd">                provided, the posterior for the existing campaign measurements is</span>
 <span class="sd">                returned. For details, see</span>
 <span class="sd">                :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
+<span class="sd">            joint: See :meth:`baybe.surrogates.base.Surrogate.posterior`.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            IncompatibilityError: If the underlying surrogate model exposes no</span>
@@ -1760,7 +1762,7 @@
                 <span class="sa">f</span><span class="s2">&quot;provide a &#39;</span><span class="si">{</span><span class="n">method_name</span><span class="si">}</span><span class="s2">&#39; method.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">joint</span><span class="o">=</span><span class="n">joint</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Campaign.posterior_stats">

@@ -17,6 +17,7 @@ ParetoObjective
       ~ParetoObjective.__init__
       ~ParetoObjective.from_dict
       ~ParetoObjective.from_json
+      ~ParetoObjective.handle_missing_values
       ~ParetoObjective.to_botorch
       ~ParetoObjective.to_botorch_posterior_transform
       ~ParetoObjective.to_dict

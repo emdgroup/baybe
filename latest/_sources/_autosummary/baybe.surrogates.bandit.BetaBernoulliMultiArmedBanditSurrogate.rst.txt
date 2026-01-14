@@ -36,6 +36,7 @@ BetaBernoulliMultiArmedBanditSurrogate
    .. autosummary::
    
       ~BetaBernoulliMultiArmedBanditSurrogate.prior
+      ~BetaBernoulliMultiArmedBanditSurrogate.is_available
       ~BetaBernoulliMultiArmedBanditSurrogate.supports_multi_output
       ~BetaBernoulliMultiArmedBanditSurrogate.supports_transfer_learning
    

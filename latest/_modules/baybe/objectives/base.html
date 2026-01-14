@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1108,6 +1107,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets.numerical</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_all_instance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_transform_objects</span><span class="p">,</span> <span class="n">to_tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">handle_missing_values</span> <span class="k">as</span> <span class="n">df_handle_missing_values</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metadata</span><span class="p">,</span> <span class="n">to_metadata</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
@@ -1145,9 +1147,19 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The targets included in the objective.&quot;&quot;&quot;</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_modeled_quantities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Target</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The quantities modeled by this objective.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_modeled_quantity_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The names of the quantities returned by the pre-transformation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantities</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_model_quantities_to_target_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The mapping from modeled quantity names to names of the required targets.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">mq</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">[</span><span class="n">mq</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">mq</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantities</span><span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_n_models</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -1155,7 +1167,7 @@
 
 <span class="sd">        Corresponds to the number of dimensions after the pre-transformation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantity_names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_modeled_quantities</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_multi_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1189,6 +1201,27 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_full_transformation</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MCAcquisitionObjective</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The end-to-end transformation applied, from targets to objective values.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_botorch</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Objective.handle_missing_values">
+<a class="viewcode-back" href="../../../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.handle_missing_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_missing_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">measurements</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle missing values in the given measurements for each modeled quantity.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            measurements: Data potentially containing missing values.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A dictionary with one dataframe for each modeled quantity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cleaned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">target_names</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_quantities_to_target_names</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">df_handle_missing_values</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">target_names</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">cleaned</span><span class="p">[</span><span class="n">quantity</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="k">return</span> <span class="n">cleaned</span></div>
+
 
 <div class="viewcode-block" id="Objective.to_botorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.to_botorch">[docs]</a>

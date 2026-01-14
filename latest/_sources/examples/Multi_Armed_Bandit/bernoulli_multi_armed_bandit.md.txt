@@ -202,7 +202,9 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
             df["clicked"] = reward
             campaign.add_measurements(df)
 
-        estimated_win_rates[mc] = surrogate.posterior_means()
+        estimated_win_rates[mc] = campaign.get_surrogate()[
+            target.name
+        ].posterior_means()
 
     return SimulationResult(earned_rewards, estimated_win_rates)
 ```
@@ -239,7 +241,7 @@ for acqf in ACQFS:
     -----------------
     Optimal win rate: 0.8
     Achieved win rate: 0.62
-    Mean squared error (last iteration): 0.14448993259018328
+    Mean squared error (last iteration): 0.1381325940926448
     
     
 
@@ -248,7 +250,7 @@ for acqf in ACQFS:
     --------------------------
     Optimal win rate: 0.8
     Achieved win rate: 0.5066666666666667
-    Mean squared error (last iteration): 0.09653736976391157
+    Mean squared error (last iteration): 0.10030469692230562
     
     
 

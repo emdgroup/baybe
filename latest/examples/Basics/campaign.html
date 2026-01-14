@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1188,13 +1187,9 @@ objective.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended measurements with batch_size = 2: 
-           Solvent             Base                        Ligand  \
-52     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
-132  Butyornitrile   Cesium acetate  Di-tert-butylphenylphosphine   
-
-     Temperature  Concentration  
-52         120.0          0.100  
-132        120.0          0.057  
+           Solvent             Base     Ligand  Temperature  Concentration
+225           DMAc   Cesium acetate  BrettPhos         90.0          0.057
+145  Butyornitrile  Cesium pivalate  BrettPhos         90.0          0.100
 </pre></div>
 </div>
 <p>Adding target values is done by creating a new column in the <code class="docutils literal notranslate"><span class="pre">recommendation</span></code>
@@ -1207,13 +1202,13 @@ We then update the campaign by adding the measurements.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-           Solvent             Base                        Ligand  \
-52     Butyl Ester  Cesium pivalate  Di-tert-butylphenylphosphine   
-132  Butyornitrile   Cesium acetate  Di-tert-butylphenylphosphine   
+           Solvent             Base     Ligand  Temperature  Concentration  \
+225           DMAc   Cesium acetate  BrettPhos         90.0          0.057   
+145  Butyornitrile  Cesium pivalate  BrettPhos         90.0          0.100   
 
-     Temperature  Concentration      yield  
-52         120.0          0.100 -19.804995  
-132        120.0          0.057  78.800413  
+         yield  
+225 -38.118397  
+145 -12.534053  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

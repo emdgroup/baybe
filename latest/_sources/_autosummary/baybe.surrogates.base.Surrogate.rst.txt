@@ -33,6 +33,7 @@ Surrogate
 
    .. autosummary::
    
+      ~Surrogate.is_available
       ~Surrogate.supports_multi_output
       ~Surrogate.supports_transfer_learning
    

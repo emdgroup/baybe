@@ -17,6 +17,7 @@ DesirabilityObjective
       ~DesirabilityObjective.__init__
       ~DesirabilityObjective.from_dict
       ~DesirabilityObjective.from_json
+      ~DesirabilityObjective.handle_missing_values
       ~DesirabilityObjective.to_botorch
       ~DesirabilityObjective.to_botorch_posterior_transform
       ~DesirabilityObjective.to_dict

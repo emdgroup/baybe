@@ -34,6 +34,7 @@ BayesianLinearSurrogate
    .. autosummary::
    
       ~BayesianLinearSurrogate.model_params
+      ~BayesianLinearSurrogate.is_available
       ~BayesianLinearSurrogate.supports_multi_output
       ~BayesianLinearSurrogate.supports_transfer_learning
    

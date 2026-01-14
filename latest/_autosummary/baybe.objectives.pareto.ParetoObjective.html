@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1117,19 +1116,22 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.from_json" title="baybe.objectives.pareto.ParetoObjective.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a>(source, /)</p></td>
 <td><p>Create an object from its JSON representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch" title="baybe.objectives.pareto.ParetoObjective.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.handle_missing_values" title="baybe.objectives.pareto.ParetoObjective.handle_missing_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_missing_values</span></code></a>(measurements)</p></td>
+<td><p>Handle missing values in the given measurements for each modeled quantity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch" title="baybe.objectives.pareto.ParetoObjective.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
 <td><p>Convert to BoTorch objective.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch_posterior_transform" title="baybe.objectives.pareto.ParetoObjective.to_botorch_posterior_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_posterior_transform</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch_posterior_transform" title="baybe.objectives.pareto.ParetoObjective.to_botorch_posterior_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_posterior_transform</span></code></a>()</p></td>
 <td><p>Convert to BoTorch posterior transform, if possible.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_dict" title="baybe.objectives.pareto.ParetoObjective.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_dict" title="baybe.objectives.pareto.ParetoObjective.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_json" title="baybe.objectives.pareto.ParetoObjective.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_json" title="baybe.objectives.pareto.ParetoObjective.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.transform" title="baybe.objectives.pareto.ParetoObjective.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>([df, allow_missing, allow_extra, data])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.transform" title="baybe.objectives.pareto.ParetoObjective.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>([df, allow_missing, allow_extra, data])</p></td>
 <td><p>Evaluate the objective on the target columns of the given dataframe.</p></td>
 </tr>
 </tbody>
@@ -1216,12 +1218,29 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="baybe.objectives.pareto.ParetoObjective.handle_missing_values">
+<span class="sig-name descname"><span class="pre">handle_missing_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><span class="pre">DataFrame</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.objectives.pareto.ParetoObjective.handle_missing_values" title="Link to this definition">¶</a></dt>
+<dd><p>Handle missing values in the given measurements for each modeled quantity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="target" id="baybe.objectives.pareto.ParetoObjective.handle_missing_values.params.measurements"></span><strong>measurements</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></span>) – Data potentially containing missing values.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.3.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]</span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary with one dataframe for each modeled quantity.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="baybe.objectives.pareto.ParetoObjective.to_botorch">
 <span class="sig-name descname"><span class="pre">to_botorch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baybe.objectives.pareto.ParetoObjective.to_botorch" title="Link to this definition">¶</a></dt>
 <dd><p>Convert to BoTorch objective.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="(in BoTorch v0.1.dev1+g327a4fc51)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.objective.MCAcquisitionObjective" title="(in BoTorch v0.1.dev1+gfe663206b)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCAcquisitionObjective</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1426,6 +1445,7 @@ and will be removed in a future version.</p></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.__init__"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.from_dict"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.from_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.from_json"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.from_json()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.handle_missing_values"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.handle_missing_values()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.to_botorch()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_botorch_posterior_transform"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.to_botorch_posterior_transform()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.pareto.ParetoObjective.to_dict"><code class="docutils literal notranslate"><span class="pre">ParetoObjective.to_dict()</span></code></a></li>

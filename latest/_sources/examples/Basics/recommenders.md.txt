@@ -149,9 +149,10 @@ print(recommender)
        Recommender
           BotorchRecommender
              Surrogate
-                GaussianProcessSurrogate
-                   Supports Transfer Learning: True
-                   Kernel factory: DefaultKernelFactory()
+                CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianProce
+ssSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: True
@@ -246,15 +247,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-               Solvent                Base                        Ligand  \
-    300           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-    211  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    285           DMAc   Potassium acetate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    79   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    67   Butyl Ester   Potassium acetate                     BrettPhos   
+    315         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration  
-    300        105.0          0.057  
-    211        105.0          0.100  
-    285        120.0          0.057  
+    79         120.0          0.100  
+    67         105.0          0.100  
+    315         90.0          0.057  
 
 
 
@@ -267,15 +268,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-               Solvent                Base                        Ligand  \
-    300           DMAc  Potassium pivalate                 (t-Bu)PhCPhos   
-    211  Butyornitrile  Potassium pivalate  Di-tert-butylphenylphosphine   
-    285           DMAc   Potassium acetate                     BrettPhos   
+             Solvent                Base                        Ligand  \
+    79   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
+    67   Butyl Ester   Potassium acetate                     BrettPhos   
+    315         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
     
          Temperature  Concentration      yield  
-    300        105.0          0.057  21.704962  
-    211        105.0          0.100  50.479859  
-    285        120.0          0.057  90.238491  
+    79         120.0          0.100  14.172668  
+    67         105.0          0.100  67.086910  
+    315         90.0          0.057  16.274405  
 
 
 

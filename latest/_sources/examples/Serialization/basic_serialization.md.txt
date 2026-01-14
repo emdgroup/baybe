@@ -145,9 +145,10 @@ Temperature[degr
           Recommender
              BotorchRecommender
                 Surrogate
-                   GaussianProcessSurrogate
-                      Supports Transfer Learning: True
-                      Kernel factory: DefaultKernelFactory()
+                   CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
+ocessSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
                 Acquisition function: None
                 Compatibility: SearchSpaceType.HYBRID
                 Sequential continuous: True
@@ -248,9 +249,10 @@ Temperature[degr
           Recommender
              BotorchRecommender
                 Surrogate
-                   GaussianProcessSurrogate
-                      Supports Transfer Learning: True
-                      Kernel factory: DefaultKernelFactory()
+                   CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
+ocessSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
                 Acquisition function: None
                 Compatibility: SearchSpaceType.HYBRID
                 Sequential continuous: True
@@ -293,8 +295,8 @@ print(recommendation_orig)
 
     Recommendation from original object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    67      medium            1.0             177.777778
-    50        fine           10.0             100.000000
+    60      medium            1.0                  100.0
+    59        fine           10.0                  200.0
 
 
 
@@ -305,6 +307,6 @@ print(recommendation_recreate)
 
     Recommendation from recreated object:
        Granularity  Pressure[bar]  Temperature[degree_C]
-    19      coarse            5.0                  200.0
-    80      medium           10.0                  100.0
+    84      medium           10.0             144.444444
+    39        fine            1.0             200.000000
 

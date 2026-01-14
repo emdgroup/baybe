@@ -17,6 +17,7 @@ SingleTargetObjective
       ~SingleTargetObjective.__init__
       ~SingleTargetObjective.from_dict
       ~SingleTargetObjective.from_json
+      ~SingleTargetObjective.handle_missing_values
       ~SingleTargetObjective.to_botorch
       ~SingleTargetObjective.to_botorch_posterior_transform
       ~SingleTargetObjective.to_dict

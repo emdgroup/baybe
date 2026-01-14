@@ -33,7 +33,6 @@ baybe.exceptions
       IncompleteMeasurementsError
       InfeasibilityError
       InputDataTypeWarning
-      InvalidSurrogateModelError
       InvalidTargetValueError
       MinimumCardinalityViolatedWarning
       ModelNotTrainedError

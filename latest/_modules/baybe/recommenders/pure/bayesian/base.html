@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1110,14 +1109,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.acquisition.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_acqf</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IncompatibleAcquisitionFunctionError</span><span class="p">,</span>
-    <span class="n">InvalidSurrogateModelError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Objective</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.recommenders.pure.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PureRecommender</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="n">CustomONNXSurrogate</span><span class="p">,</span> <span class="n">GaussianProcessSurrogate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessSurrogate</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.surrogates.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">IndependentGaussianSurrogate</span><span class="p">,</span>
     <span class="n">Surrogate</span><span class="p">,</span>
     <span class="n">SurrogateProtocol</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1147,7 +1144,9 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;An abstract class for Bayesian Recommenders.&quot;&quot;&quot;</span>
 
     <span class="n">_surrogate_model</span><span class="p">:</span> <span class="n">SurrogateProtocol</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="n">GaussianProcessSurrogate</span>
+        <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">,</span>
+        <span class="n">factory</span><span class="o">=</span><span class="n">GaussianProcessSurrogate</span><span class="p">,</span>
+        <span class="n">converter</span><span class="o">=</span><span class="n">_autoreplicate</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The surrogate model.&quot;&quot;&quot;</span>
 
@@ -1196,14 +1195,8 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SurrogateProtocol</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the trained surrogate model.&quot;&quot;&quot;</span>
         <span class="c1"># This fit applies internal caching and does not necessarily involve computation</span>
-        <span class="n">surrogate</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">_autoreplicate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">objective</span><span class="o">.</span><span class="n">_is_multi_model</span>
-            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span>
-        <span class="p">)</span>
-        <span class="n">surrogate</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">surrogate</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_setup_botorch_acqf</span><span class="p">(</span>
@@ -1292,19 +1285,6 @@
                 <span class="n">pending_experiments</span><span class="p">,</span> <span class="n">searchspace</span><span class="o">.</span><span class="n">parameters</span>
             <span class="p">)</span>
             <span class="n">pending_experiments</span><span class="o">.</span><span class="vm">__class__</span> <span class="o">=</span> <span class="n">_ValidatedDataFrame</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="p">,</span> <span class="n">IndependentGaussianSurrogate</span><span class="p">)</span>
-            <span class="ow">and</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">1</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">InvalidSurrogateModelError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;The specified surrogate model of type &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;cannot be used for batch recommendation.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_surrogate_model</span><span class="p">,</span> <span class="n">CustomONNXSurrogate</span><span class="p">):</span>
-            <span class="n">CustomONNXSurrogate</span><span class="o">.</span><span class="n">validate_compatibility</span><span class="p">(</span><span class="n">searchspace</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup_botorch_acqf</span><span class="p">(</span>
             <span class="n">searchspace</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">measurements</span><span class="p">,</span> <span class="n">pending_experiments</span>

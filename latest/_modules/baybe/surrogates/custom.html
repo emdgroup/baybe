@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1212,7 +1211,8 @@
         <span class="c1">#   can be trained and attempts to do so for each new DOE iteration.</span>
         <span class="c1">#   Therefore, a refactoring is required in order to properly incorporate</span>
         <span class="c1">#   &quot;static&quot; surrogates and account for them in the exposed APIs.</span>
-        <span class="k">pass</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">CustomONNXSurrogate</span><span class="o">.</span><span class="n">validate_compatibility</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span><span class="p">)</span>
 
 <div class="viewcode-block" id="CustomONNXSurrogate.validate_compatibility">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html#baybe.surrogates.custom.CustomONNXSurrogate.validate_compatibility">[docs]</a>

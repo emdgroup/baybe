@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1131,6 +1130,7 @@ analytical acquisition functions</p></li>
 <li><p>Possibility to set <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> to <code class="docutils literal notranslate"><span class="pre">None</span></code> in <code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code>, which
 increments the simulation random seed per initial data set without having to execute
 the full Cartesian product of all (seed, data)-configurations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Campaign.posterior</span></code> and <code class="docutils literal notranslate"><span class="pre">Surrogate.posterior</span></code> now accept a <code class="docutils literal notranslate"><span class="pre">joint</span></code> argument</p></li>
 </ul>
 </section>
 <section id="changed">
@@ -1150,12 +1150,22 @@ reproducibility of downstream operations</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">farthest_point_sampling</span></code> now correctly handles predefined <code class="docutils literal notranslate"><span class="pre">initialization</span></code> indices</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">SearchSpace.from_dataframe</span></code> now validates that dataframes contain only
 <code class="docutils literal notranslate"><span class="pre">active_values</span></code>, raising <code class="docutils literal notranslate"><span class="pre">IncompatibilityError</span></code> otherwise</p></li>
+<li><p>False-negative surrogate cache hits when using multi-model surrogates</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate</span></code> models now properly refuse batch recommendation
+regardless of their context (e.g. when used within a <code class="docutils literal notranslate"><span class="pre">CompositeSurrogate</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CompositeSurrogate</span></code> models are now fit on the correct input when using
+pre-transformations in the objective</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IndependentGaussianSurrogate</span></code> models now correctly reject batch posterior evaluations
+by throwing an <code class="docutils literal notranslate"><span class="pre">IncompatibleSurrogateError</span></code>. This means that <code class="docutils literal notranslate"><span class="pre">.posterior</span></code> calls that
+worked previously may now require an explicit <code class="docutils literal notranslate"><span class="pre">joint=False</span></code> argument.</p></li>
 </ul>
 </section>
 <section id="removed">
 <h3>Removed<a class="headerlink" href="#removed" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">AffinePosteriorTransformation</span></code> class (since BoTorch provides equivalent functionality)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">InvalidSurrogateModelError</span></code> exception because there already exists a more appropriate
+<code class="docutils literal notranslate"><span class="pre">IncompatibleSurrogateError</span></code> exception</p></li>
 </ul>
 </section>
 </section>

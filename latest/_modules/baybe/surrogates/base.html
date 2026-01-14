@@ -478,7 +478,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1111,6 +1110,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.parameters.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.searchspace</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchSpace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.serialization.mixin</span><span class="w"> </span><span class="kn">import</span> <span class="n">SerialMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.basic</span><span class="w"> </span><span class="kn">import</span> <span class="n">classproperty</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_string</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.dataframe</span><span class="w"> </span><span class="kn">import</span> <span class="n">handle_missing_values</span><span class="p">,</span> <span class="n">to_tensor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">baybe.utils.scaling</span><span class="w"> </span><span class="kn">import</span> <span class="n">ColumnTransformer</span>
@@ -1218,6 +1218,15 @@
 <span class="sd">    Scales a tensor containing target measurements in computational representation</span>
 <span class="sd">    to make them digestible for the model-specific, scale-agnostic posterior logic.&quot;&quot;&quot;</span>
 
+    <span class="nd">@classproperty</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_available</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicates if the surrogate class is available in the Python environment.</span>
+
+<span class="sd">        The property can be used to check for optional dependencies required by</span>
+<span class="sd">        specific surrogate implementations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
 <div class="viewcode-block" id="Surrogate.to_botorch">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.to_botorch">[docs]</a>
     <span class="nd">@override</span>
@@ -1309,7 +1318,7 @@
 
 <div class="viewcode-block" id="Surrogate.posterior">
 <a class="viewcode-back" href="../../../_autosummary/baybe.surrogates.base.Surrogate.html#baybe.surrogates.base.Surrogate.posterior">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">joint</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the posterior for candidates in experimental representation.</span>
 
 <span class="sd">        Takes a dataframe of parameter configurations in **experimental representation**</span>
@@ -1319,6 +1328,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            candidates: A dataframe containing parameter configurations in</span>
 <span class="sd">                **experimental representation**.</span>
+<span class="sd">            joint: If ``True``, the provided candidates are treated in a &quot;q-batch&quot;,</span>
+<span class="sd">                meaning that the returned posterior describes the joint distribution</span>
+<span class="sd">                over all candidates. If ``False``, the candidates are treated</span>
+<span class="sd">                independently as a &quot;t-batch&quot;, and the returned posterior describes the</span>
+<span class="sd">                collection of marginal distributions at each candidate point.</span>
+<span class="sd">                For more information, see `&lt;https://botorch.org/docs/batching&gt;`_.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ModelNotTrainedError: When called before the model has been trained.</span>
@@ -1334,9 +1349,10 @@
             <span class="k">raise</span> <span class="n">ModelNotTrainedError</span><span class="p">(</span>
                 <span class="s2">&quot;The surrogate must be trained before a posterior can be computed.&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior_comp</span><span class="p">(</span>
-            <span class="n">to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="n">tensor</span> <span class="o">=</span> <span class="n">to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_searchspace</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">allow_extra</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">joint</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_posterior_comp</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_posterior_comp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_comp</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Posterior</span><span class="p">:</span>
@@ -1435,7 +1451,7 @@
                     <span class="sa">f</span><span class="s2">&quot;between 0 and 1 (non-inclusive). Provided value: &#39;</span><span class="si">{</span><span class="n">stat</span><span class="si">}</span><span class="s2">&#39; as &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;part of &#39;</span><span class="si">{</span><span class="n">stats</span><span class="si">=}</span><span class="s2">&#39;.&quot;</span>
                 <span class="p">)</span>
-        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+        <span class="n">posterior</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">posterior</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">joint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
@@ -1587,6 +1603,13 @@
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_posterior</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates_comp_scaled</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="o">/</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GPyTorchPosterior</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">batch_size</span> <span class="o">:=</span> <span class="n">candidates_comp_scaled</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IncompatibleSurrogateError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The specified surrogate model of type &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;cannot be used for joint posterior evaluation. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Requested batch size: </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
         <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">botorch.posteriors</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPyTorchPosterior</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">gpytorch.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultivariateNormal</span>

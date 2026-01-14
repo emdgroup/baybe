@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1276,7 +1275,9 @@ acquisition strategy:</p>
             <span class="n">df</span><span class="p">[</span><span class="s2">&quot;clicked&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reward</span>
             <span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
-        <span class="n">estimated_win_rates</span><span class="p">[</span><span class="n">mc</span><span class="p">]</span> <span class="o">=</span> <span class="n">surrogate</span><span class="o">.</span><span class="n">posterior_means</span><span class="p">()</span>
+        <span class="n">estimated_win_rates</span><span class="p">[</span><span class="n">mc</span><span class="p">]</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">get_surrogate</span><span class="p">()[</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">name</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">posterior_means</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">SimulationResult</span><span class="p">(</span><span class="n">earned_rewards</span><span class="p">,</span> <span class="n">estimated_win_rates</span><span class="p">)</span>
 </pre></div>
@@ -1313,7 +1314,7 @@ estimated at the end of the campaign.</p></li>
 -----------------
 Optimal win rate: 0.8
 Achieved win rate: 0.62
-Mean squared error (last iteration): 0.14448993259018328
+Mean squared error (last iteration): 0.1381325940926448
 
 
 
@@ -1322,7 +1323,7 @@ PosteriorStandardDeviation
 --------------------------
 Optimal win rate: 0.8
 Achieved win rate: 0.5066666666666667
-Mean squared error (last iteration): 0.09653736976391157
+Mean squared error (last iteration): 0.10030469692230562
 </pre></div>
 </div>
 </section>

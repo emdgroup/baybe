@@ -479,7 +479,6 @@
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../_autosummary/baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
@@ -1236,19 +1235,20 @@ None           NaN</p>
       Recommender
          BotorchRecommender
             Surrogate
-               GaussianProcessSurrogate
-                  Supports Transfer Learning: True
-                  Kernel factory: DefaultKernelFactory()
-            Acquisition function: None
-            Compatibility: SearchSpaceType.HYBRID
-            Sequential continuous: True
-            Hybrid sampler: None
-            Sampling percentage: 1.0
-      Switch after: 1
-      Remain switched: False
-      Has switched: False
+               CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
 </pre></div>
 </div>
+<p>ocessSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
+Acquisition function: None
+Compatibility: SearchSpaceType.HYBRID
+Sequential continuous: True
+Hybrid sampler: None
+Sampling percentage: 1.0
+Switch after: 1
+Remain switched: False
+Has switched: False</p>
 <p>We next serialize the campaign to JSON.
 This yields a JSON representation in string format.
 Since it is rather complex, we do not print this string here.
@@ -1333,19 +1333,20 @@ None           NaN</p>
       Recommender
          BotorchRecommender
             Surrogate
-               GaussianProcessSurrogate
-                  Supports Transfer Learning: True
-                  Kernel factory: DefaultKernelFactory()
-            Acquisition function: None
-            Compatibility: SearchSpaceType.HYBRID
-            Sequential continuous: True
-            Hybrid sampler: None
-            Sampling percentage: 1.0
-      Switch after: 1
-      Remain switched: False
-      Has switched: False
+               CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianPr
 </pre></div>
 </div>
+<p>ocessSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
+Acquisition function: None
+Compatibility: SearchSpaceType.HYBRID
+Sequential continuous: True
+Hybrid sampler: None
+Sampling percentage: 1.0
+Switch after: 1
+Remain switched: False
+Has switched: False</p>
 <p>Verify that both objects are equal.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">campaign</span> <span class="o">==</span> <span class="n">campaign_recreate</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Passed basic assertion check!&quot;</span><span class="p">)</span>
@@ -1369,8 +1370,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from original object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-67      medium            1.0             177.777778
-50        fine           10.0             100.000000
+60      medium            1.0                  100.0
+59        fine           10.0                  200.0
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendation from recreated object:&quot;</span><span class="p">)</span>
@@ -1379,8 +1380,8 @@ create and compare some recommendations in both campaigns.</p>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommendation from recreated object:
    Granularity  Pressure[bar]  Temperature[degree_C]
-19      coarse            5.0                  200.0
-80      medium           10.0                  100.0
+84      medium           10.0             144.444444
+39        fine            1.0             200.000000
 </pre></div>
 </div>
 </section>
