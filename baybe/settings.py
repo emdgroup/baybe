@@ -88,7 +88,13 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
             # TODO: https://github.com/python-attrs/attrs/issues/1479
             name = fld.alias or fld.name
 
-            def _(self: Settings) -> Any:
+            def get_default_value(self: Settings) -> Any:
+                """Dynamically retrieve the default value for the field.
+
+                Depending on the control flags, the value is retrieved either from the
+                field specification itself, from the corresponding environment variable,
+                or from the current global settings object.
+                """
                 if self._restore_defaults:
                     default = fld.default
                 else:
@@ -108,7 +114,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
                 return default
 
-            return Factory(_, takes_self=True)
+            return Factory(get_default_value, takes_self=True)
 
         results.append(fld.evolve(default=make_default_factory(fld)))
 
