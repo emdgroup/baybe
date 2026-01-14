@@ -152,8 +152,9 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
         #   be handy here but unclear if this is doable with the current typing system
         posteriors = [
-            s.posterior(candidates, joint=joint) for s in self._surrogates_flat
-        ]  # type: ignore[attr-defined]
+            s.posterior(candidates, joint=joint)  # type: ignore[attr-defined]
+            for s in self._surrogates_flat
+        ]
         return PosteriorList(*posteriors)
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> PosteriorList:
