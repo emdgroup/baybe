@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Possibility to set `n_mc_iterations` to `None` in `simulate_scenarios`, which
   increments the simulation random seed per initial data set without having to execute
   the full Cartesian product of all (seed, data)-configurations
+- `Campaign.posterior` and `Surrogate.posterior` now accept a `joint` argument 
 
 ### Changed
 - Creating one-element composite transformations now returns the contained
@@ -43,9 +44,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `farthest_point_sampling` now correctly handles predefined `initialization` indices
 - `SearchSpace.from_dataframe` now validates that dataframes contain only
   `active_values`, raising `IncompatibilityError` otherwise
+- False-negative surrogate cache hits when using multi-model surrogates
+- `IndependentGaussianSurrogate` models now properly refuse batch recommendation
+  regardless of their context (e.g. when used within a `CompositeSurrogate`)
+- `CompositeSurrogate` models are now fit on the correct input when using
+  pre-transformations in the objective
+- `IndependentGaussianSurrogate` models now correctly reject batch posterior evaluations
+  by throwing an `IncompatibleSurrogateError`. This means that `.posterior` calls that
+  worked previously may now require an explicit `joint=False` argument.
 
 ### Removed
 - `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
+- `InvalidSurrogateModelError` exception because there already exists a more appropriate
+  `IncompatibleSurrogateError` exception
  
 ## [0.14.1] - 2025-10-01
 ### Added

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import TYPE_CHECKING, TypeVar
 
-from baybe.exceptions import InvalidSurrogateModelError
+from baybe.exceptions import IncompatibleSurrogateError
 from baybe.surrogates.base import Surrogate
 
 if TYPE_CHECKING:
@@ -160,7 +160,7 @@ def batchify_ensemble_predictor(
             n_estimators = predictions.shape[0]
             assert predictions.shape[1] == t_shape * q_shape
         except AssertionError:
-            raise InvalidSurrogateModelError(
+            raise IncompatibleSurrogateError(
                 f"For the given input of shape {tuple(candidates.shape)}, "
                 f"the ensemble model is supposed to create predictions of shape "
                 f"(n_estimators, t_shape * q_shape) = "

@@ -17,14 +17,12 @@ from baybe.acquisition.base import AcquisitionFunction
 from baybe.acquisition.utils import convert_acqf
 from baybe.exceptions import (
     IncompatibleAcquisitionFunctionError,
-    InvalidSurrogateModelError,
 )
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
+from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
-    IndependentGaussianSurrogate,
     Surrogate,
     SurrogateProtocol,
 )
@@ -52,7 +50,9 @@ class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
     _surrogate_model: SurrogateProtocol = field(
-        alias="surrogate_model", factory=GaussianProcessSurrogate
+        alias="surrogate_model",
+        factory=GaussianProcessSurrogate,
+        converter=_autoreplicate,
     )
     """The surrogate model."""
 
@@ -99,14 +99,8 @@ class BayesianRecommender(PureRecommender, ABC):
     ) -> SurrogateProtocol:
         """Get the trained surrogate model."""
         # This fit applies internal caching and does not necessarily involve computation
-        surrogate = (
-            _autoreplicate(self._surrogate_model)
-            if objective._is_multi_model
-            else self._surrogate_model
-        )
-        surrogate.fit(searchspace, objective, measurements)
-
-        return surrogate
+        self._surrogate_model.fit(searchspace, objective, measurements)
+        return self._surrogate_model
 
     def _setup_botorch_acqf(
         self,
@@ -189,19 +183,6 @@ class BayesianRecommender(PureRecommender, ABC):
                 pending_experiments, searchspace.parameters
             )
             pending_experiments.__class__ = _ValidatedDataFrame
-
-        if (
-            isinstance(self._surrogate_model, IndependentGaussianSurrogate)
-            and batch_size > 1
-        ):
-            raise InvalidSurrogateModelError(
-                f"The specified surrogate model of type "
-                f"'{self._surrogate_model.__class__.__name__}' "
-                f"cannot be used for batch recommendation."
-            )
-
-        if isinstance(self._surrogate_model, CustomONNXSurrogate):
-            CustomONNXSurrogate.validate_compatibility(searchspace)
 
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments

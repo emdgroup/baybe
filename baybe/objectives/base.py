@@ -15,6 +15,9 @@ from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import is_all_instance
 from baybe.utils.dataframe import get_transform_objects, to_tensor
+from baybe.utils.dataframe import (
+    handle_missing_values as df_handle_missing_values,
+)
 from baybe.utils.metadata import Metadata, to_metadata
 
 if TYPE_CHECKING:
@@ -50,9 +53,19 @@ class Objective(ABC, SerialMixin):
         """The targets included in the objective."""
 
     @property
+    def _modeled_quantities(self) -> tuple[Target, ...]:
+        """The quantities modeled by this objective."""
+        return self.targets
+
+    @property
     def _modeled_quantity_names(self) -> tuple[str, ...]:
         """The names of the quantities returned by the pre-transformation."""
-        return tuple(t.name for t in self.targets)
+        return tuple(t.name for t in self._modeled_quantities)
+
+    @property
+    def _model_quantities_to_target_names(self) -> dict[str, list[str]]:
+        """The mapping from modeled quantity names to names of the required targets."""
+        return {mq.name: [mq.name] for mq in self._modeled_quantities}
 
     @property
     def _n_models(self) -> int:
@@ -60,7 +73,7 @@ class Objective(ABC, SerialMixin):
 
         Corresponds to the number of dimensions after the pre-transformation.
         """
-        return len(self._modeled_quantity_names)
+        return len(self._modeled_quantities)
 
     @property
     def _is_multi_model(self) -> bool:
@@ -94,6 +107,24 @@ class Objective(ABC, SerialMixin):
     def _full_transformation(self) -> MCAcquisitionObjective:
         """The end-to-end transformation applied, from targets to objective values."""
         return self.to_botorch()
+
+    def handle_missing_values(
+        self, measurements: pd.DataFrame
+    ) -> dict[str, pd.DataFrame]:
+        """Handle missing values in the given measurements for each modeled quantity.
+
+        Args:
+            measurements: Data potentially containing missing values.
+
+        Returns:
+            A dictionary with one dataframe for each modeled quantity.
+        """
+        cleaned: dict[str, pd.DataFrame] = {}
+        for quantity, target_names in self._model_quantities_to_target_names.items():
+            data = df_handle_missing_values(measurements, target_names, drop=True)
+            cleaned[quantity] = data
+
+        return cleaned
 
     def to_botorch(self) -> MCAcquisitionObjective:
         """Convert to BoTorch objective."""

@@ -14,16 +14,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
-import torch
 
-from baybe.acquisition.acqfs import qLogExpectedImprovement
+from baybe.acquisition import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
-from baybe.parameters.numerical import NumericalDiscreteParameter
-from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.exceptions import IncompatibleSurrogateError
+from baybe.parameters import NumericalDiscreteParameter
+from baybe.recommenders import BotorchRecommender
 from baybe.searchspace import SearchSpace
-from baybe.surrogates import CustomONNXSurrogate
+from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
-from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
 from baybe.utils.random import set_random_seed
@@ -165,25 +164,32 @@ def main():
     searchspace = SearchSpace.from_product(parameters=[parameter])
     objective = NumericalTarget(name="y", minimize=st_minimize).to_objective()
 
-    # Create the surrogate model, acquisition function, and the recommender
-    surrogate_model = surrogate_model_classes[st_surrogate_name]()
+    # Create the acquisition function and the recommender
     acqf_cls = acquisition_function_classes[st_acqf_name]
     try:
         acqf = acqf_cls(maximize=not st_minimize)
     except TypeError:
         acqf = acqf_cls()
     recommender = BotorchRecommender(
-        surrogate_model=surrogate_model, acquisition_function=acqf
+        surrogate_model=surrogate_model_classes[st_surrogate_name](),
+        acquisition_function=acqf,
     )
 
     # Get the recommendations and extract the posterior mean / standard deviation
-    recommendations = recommender.recommend(
-        st_n_recommendations, searchspace, objective, measurements
-    )
-    with torch.no_grad():
-        posterior = surrogate_model.posterior(candidates)
-    mean = posterior.mean.squeeze().numpy()
-    std = posterior.variance.sqrt().squeeze().numpy()
+    try:
+        recommendations = recommender.recommend(
+            st_n_recommendations, searchspace, objective, measurements
+        )
+    except IncompatibleSurrogateError:
+        st.error(
+            f"You requested {st_n_recommendations} recommendations but the selected "
+            f"surrogate class does not support recommending more than one candidate "
+            f"at a time."
+        )
+        st.stop()
+    surrogate = recommender.get_surrogate(searchspace, objective, measurements)
+    stats = surrogate.posterior_stats(candidates)
+    mean, std = stats["y_mean"], stats["y_std"]
 
     # Visualize the test function, training points, model predictions, recommendations
     fig = plt.figure()
