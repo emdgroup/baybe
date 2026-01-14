@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.2] - 2026-01-14
 ### Added
+- Support for Python 3.14
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
   set to `True`, targets seek to avoid the given `match_value` instead of matching it
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
@@ -172,6 +173,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Python version specifier now also allows patch versions of Python 3.13
 
 ## [0.13.1] - 2025-06-06
+### Added
 - Support for Python 3.13
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
   random or deterministic sampling for equidistant cases
