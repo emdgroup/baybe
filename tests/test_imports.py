@@ -51,19 +51,6 @@ def make_import_check(modules: Sequence[str], target: str) -> str:
 
 
 _modules = find_modules()
-# TODO Remove fpsample workaround once fixed,
-#  see https://github.com/leonardodalinky/fpsample/issues/7
-_modules = [
-    param(
-        m,
-        marks=pytest.mark.xfail(
-            reason="fpsample is currently incompatible with Python 3.13", strict=True
-        ),
-    )
-    if sys.version_info[:2] == (3, 13) and "fpsample" in m
-    else m
-    for m in _modules
-]
 
 
 @pytest.mark.parametrize("module", _modules)
@@ -77,7 +64,6 @@ WHITELISTS = {
         "baybe.acquisition.partial",
         "baybe.acquisition._builder",
         "baybe.objectives.botorch",
-        "baybe.targets.botorch",
         "baybe.surrogates._adapter",
         "baybe.utils.torch",
     ],
@@ -91,7 +77,6 @@ WHITELISTS = {
         "baybe.insights.shap",
         "baybe.objectives.botorch",
         "baybe.surrogates._adapter",
-        "baybe.targets.botorch",
         "baybe.utils.chemistry",
         "baybe.utils.clustering_algorithms",
         "baybe.utils.clustering_algorithms.third_party",
@@ -120,11 +105,8 @@ def test_lazy_loading(target: str, whitelist: Sequence[str]):
     """The target does not appear in the module list after loading BayBE modules."""
     all_modules = find_modules()
     assert (w in all_modules for w in whitelist)
+
     modules = [m for m in all_modules if m not in whitelist]
-    if sys.version_info[:2] == (3, 13):
-        # Excluding fpsample modules here, as they are not available in Python 3.13
-        # TODO Remove once fixed, see https://github.com/leonardodalinky/fpsample/issues/7
-        modules = [m for m in modules if "fpsample" not in m]
     code = make_import_check(modules, target)
     python_interpreter = sys.executable
     result = subprocess.call([python_interpreter, "-c", code])

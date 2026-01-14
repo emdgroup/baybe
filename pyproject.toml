@@ -6,7 +6,7 @@ authors = [
 ]
 readme = "README.md"
 license = { text = "Apache-2.0" }
-requires-python =">=3.10,<3.14"
+requires-python =">=3.10,<3.15"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Typing :: Typed",
 ]
@@ -65,7 +66,7 @@ extras = [
     "baybe[polars]",
     "baybe[simulation]",
     "ngboost>=0.3.12,<1",
-    "fpsample>=0.3.3",
+    "fpsample>=1.0.1",
 ]
 
 chem = [
@@ -88,7 +89,7 @@ dev = [
     "pip-audit>=2.5.5",
     "setuptools-scm>=7.1.0",
     "tox-uv>=1.7.0",
-    "uv>=0.8.23",
+    "uv>=0.9.25",
 ]
 
 insights = [
@@ -125,12 +126,12 @@ lint = [
     "flake8==7.3.0", # see DEV TOOLS NOTE
     "pre-commit==4.2.0", # see DEV TOOLS NOTE
     "pydoclint==0.5.5", # see DEV TOOLS NOTE
-    "pyupgrade==3.20.0", # see DEV TOOLS NOTE
-    "ruff==0.13.3", # see DEV TOOLS NOTE
+    "pyupgrade==3.21.2", # see DEV TOOLS NOTE
+    "ruff==0.14.11", # see DEV TOOLS NOTE
 ]
 
 mypy = [
-    "mypy>=1.10.1",
+    "mypy>=1.19.1",
     "pandas-stubs>=2.2.2.240603",
     "types-seaborn>=0.13.2.20240618",
     "types-psutil>=7.0.0.20250801",

@@ -153,7 +153,9 @@ def simulate(acqf: AcquisitionFunction) -> SimulationResult:
             df["clicked"] = reward
             campaign.add_measurements(df)
 
-        estimated_win_rates[mc] = surrogate.posterior_means()
+        estimated_win_rates[mc] = campaign.get_surrogate()[
+            target.name
+        ].posterior_means()
 
     return SimulationResult(earned_rewards, estimated_win_rates)
 

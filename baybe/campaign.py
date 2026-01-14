@@ -610,7 +610,9 @@ class Campaign(SerialMixin):
 
         return rec
 
-    def posterior(self, candidates: pd.DataFrame | None = None) -> Posterior:
+    def posterior(
+        self, candidates: pd.DataFrame | None = None, *, joint: bool = True
+    ) -> Posterior:
         """Get the posterior predictive distribution for the given candidates.
 
         Args:
@@ -618,6 +620,7 @@ class Campaign(SerialMixin):
                 provided, the posterior for the existing campaign measurements is
                 returned. For details, see
                 :meth:`baybe.surrogates.base.Surrogate.posterior`.
+            joint: See :meth:`baybe.surrogates.base.Surrogate.posterior`.
 
         Raises:
             IncompatibilityError: If the underlying surrogate model exposes no
@@ -637,7 +640,7 @@ class Campaign(SerialMixin):
                 f"provide a '{method_name}' method."
             )
 
-        return surrogate.posterior(candidates)
+        return surrogate.posterior(candidates, joint=joint)
 
     def posterior_stats(
         self,

@@ -145,6 +145,7 @@ class GaussianProcessSurrogate(Surrogate):
         import botorch
         import gpytorch
         import torch
+        from botorch.models.transforms import Normalize, Standardize
 
         # FIXME[typing]: It seems there is currently no better way to inform the type
         #   checker that the attribute is available at the time of the function call
@@ -155,12 +156,12 @@ class GaussianProcessSurrogate(Surrogate):
         numerical_idxs = context.get_numerical_indices(train_x.shape[-1])
 
         # For GPs, we let botorch handle the scaling. See [Scaling Workaround] above.
-        input_transform = botorch.models.transforms.Normalize(
+        input_transform = Normalize(
             train_x.shape[-1],
             bounds=context.parameter_bounds,
             indices=list(numerical_idxs),
         )
-        outcome_transform = botorch.models.transforms.Standardize(train_y.shape[-1])
+        outcome_transform = Standardize(train_y.shape[-1])
 
         # extract the batch shape of the training data
         batch_shape = train_x.shape[:-2]

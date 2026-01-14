@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import inspect
+from collections.abc import Callable
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec
 
-from attrs import evolve, fields
+from attrs import evolve, fields, fields_dict
 
 from baybe.transformations.basic import IdentityTransformation
 
 if TYPE_CHECKING:
     from baybe.targets.numerical import NumericalTarget
+
+    P = ParamSpec("P")
 
 
 def _validate_numerical_target_combination(
@@ -35,3 +40,44 @@ def combine_numerical_targets(
     """Combine two numerical targets using a binary operator."""
     _validate_numerical_target_combination(t1, t2)
     return evolve(t1, transformation=operator(t1.transformation, t2.transformation))  # type: ignore[call-arg]
+
+
+def capture_constructor_info(
+    constructor: Callable[Concatenate[type[NumericalTarget], P], NumericalTarget],
+) -> Callable[Concatenate[type[NumericalTarget], P], NumericalTarget]:
+    """Capture constructor history upon object creation.
+
+    To be used as decorator with classmethods.
+    """
+
+    @wraps(constructor)
+    def wrapper(
+        cls: type[NumericalTarget], *args: P.args, **kwargs: P.kwargs
+    ) -> NumericalTarget:
+        from baybe.targets.numerical import NumericalTarget
+
+        target = constructor(cls, *args, **kwargs)
+
+        # Reconstruct arguments
+        sig = inspect.signature(constructor)
+        bound = sig.bind(cls, *args, **kwargs)
+        bound.apply_defaults()  # To make it consistent with results for __init__
+        bound.arguments.pop("cls")  # Ignore "cls"
+
+        # Store argument history
+        constructor_info: dict[str, Any] = {
+            "constructor": constructor.__name__,
+            **{
+                k: v
+                for k, v in bound.arguments.items()
+                if k
+                not in fields_dict(target.__class__)  # Ignore persistent attributes
+            },
+        }
+        object.__setattr__(
+            target, fields(NumericalTarget)._constructor_info.name, constructor_info
+        )
+
+        return target
+
+    return wrapper

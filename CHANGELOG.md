@@ -9,24 +9,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Settings` class for unified and streamlined settings management
 - Settings options to (de-)activate recommendation caching / dataframe preprocessing
 - Settings option for random seed control
+- Support for Python 3.14
+
+## [0.14.2] - 2026-01-14
+### Added
 - `NumericalTarget.match_*` constructors now accept a `mismatch_instead` argument. If 
-  set to `True`, targets seek to avoid the given `match_value` instead of matching it.
+  set to `True`, targets seek to avoid the given `match_value` instead of matching it
 - `NumericalTarget.match_*` constructors now accept a `match_mode` argument. While `"="`
   corresponds to traditional set point matching, values `">="` and `"<="` indicate that 
-  the entire associated interval is a valid match, resulting in identical transformed target 
-  values as for the `match_value` itself.
+  the entire associated interval is a valid match, resulting in identical transformed
+  target values as for the `match_value` itself
+- `NumericalTarget.normalized_ramp` and `NumericalTarget.normalized_sigmoid`
+  constructors now accept a `minimize` argument for controlling the optimization
+  direction of the target
+- `NumericalTarget.constructor_info` property, which returns what constructor and
+  arguments were used to create the object
+- `NumericalTarget.from_constructor_info` convenience constructor for creating a
+  target from existing constructor details
 - Transfer learning regression benchmarks infrastructure for evaluating TL model
-  performance on regression tasks (direct arilation and aryl halide)
+  performance on regression tasks (direct arylation and aryl halide)
 - Scalar addition and subtraction for `Interval` objects
 - Methods `hshift` and `vshift` to `Transformation` for conveniently performing
   horizontal / vertical shifts
+- `Objective.to_botorch_posterior_transform` for use of affine transformations with
+  analytical acquisition functions
+- `DesirabilityObjective.normalized_weights` property 
+- Possibility to set `n_mc_iterations` to `None` in `simulate_scenarios`, which
+  increments the simulation random seed per initial data set without having to execute
+  the full Cartesian product of all (seed, data)-configurations
+- `Campaign.posterior` and `Surrogate.posterior` now accept a `joint` argument 
 
 ### Changed
+- Creating one-element composite transformations now returns the contained
+  transformation directly
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
   reproducibility of downstream operations
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
+- `DesirabilityObjective` now properly interplays with analytical acquisition functions
+- `farthest_point_sampling` now correctly handles predefined `initialization` indices
+- `SearchSpace.from_dataframe` now validates that dataframes contain only
+  `active_values`, raising `IncompatibilityError` otherwise
+- False-negative surrogate cache hits when using multi-model surrogates
+- `IndependentGaussianSurrogate` models now properly refuse batch recommendation
+  regardless of their context (e.g. when used within a `CompositeSurrogate`)
+- `CompositeSurrogate` models are now fit on the correct input when using
+  pre-transformations in the objective
+- `IndependentGaussianSurrogate` models now correctly reject batch posterior evaluations
+  by throwing an `IncompatibleSurrogateError`. This means that `.posterior` calls that
+  worked previously may now require an explicit `joint=False` argument.
+
+### Removed
+- `AffinePosteriorTransformation` class (since BoTorch provides equivalent functionality)
+- `InvalidSurrogateModelError` exception because there already exists a more appropriate
+  `IncompatibleSurrogateError` exception
  
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
@@ -159,6 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Python version specifier now also allows patch versions of Python 3.13
 
 ## [0.13.1] - 2025-06-06
+### Added
 - Support for Python 3.13
 - `random_tie_break` flag to `farthest_point_sampling` to toggle between 
   random or deterministic sampling for equidistant cases

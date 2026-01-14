@@ -18,6 +18,7 @@ from baybe.objectives.base import Objective
 from baybe.parameters.base import Parameter
 from baybe.searchspace import SearchSpace
 from baybe.serialization.mixin import SerialMixin
+from baybe.utils.basic import classproperty
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 from baybe.utils.scaling import ColumnTransformer
@@ -114,6 +115,15 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
     Scales a tensor containing target measurements in computational representation
     to make them digestible for the model-specific, scale-agnostic posterior logic."""
 
+    @classproperty
+    def is_available(cls) -> bool:
+        """Indicates if the surrogate class is available in the Python environment.
+
+        The property can be used to check for optional dependencies required by
+        specific surrogate implementations.
+        """  # noqa: D401
+        return True
+
     @override
     def to_botorch(self) -> Model:
         from baybe.surrogates._adapter import AdapterModel
@@ -197,7 +207,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
 
         return scaler
 
-    def posterior(self, candidates: pd.DataFrame) -> Posterior:
+    def posterior(self, candidates: pd.DataFrame, *, joint: bool = True) -> Posterior:
         """Compute the posterior for candidates in experimental representation.
 
         Takes a dataframe of parameter configurations in **experimental representation**
@@ -207,6 +217,12 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
         Args:
             candidates: A dataframe containing parameter configurations in
                 **experimental representation**.
+            joint: If ``True``, the provided candidates are treated in a "q-batch",
+                meaning that the returned posterior describes the joint distribution
+                over all candidates. If ``False``, the candidates are treated
+                independently as a "t-batch", and the returned posterior describes the
+                collection of marginal distributions at each candidate point.
+                For more information, see `<https://botorch.org/docs/batching>`_.
 
         Raises:
             ModelNotTrainedError: When called before the model has been trained.
@@ -222,9 +238,10 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
             raise ModelNotTrainedError(
                 "The surrogate must be trained before a posterior can be computed."
             )
-        return self._posterior_comp(
-            to_tensor(self._searchspace.transform(candidates, allow_extra=True))
-        )
+        tensor = to_tensor(self._searchspace.transform(candidates, allow_extra=True))
+        if not joint:
+            tensor = tensor.unsqueeze(-2)
+        return self._posterior_comp(tensor)
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> Posterior:
         """Compute the posterior for candidates in computational representation.
@@ -320,7 +337,7 @@ class Surrogate(ABC, SurrogateProtocol, SerialMixin):
                     f"between 0 and 1 (non-inclusive). Provided value: '{stat}' as "
                     f"part of '{stats=}'."
                 )
-        posterior = self.posterior(candidates)
+        posterior = self.posterior(candidates, joint=False)
 
         import torch
 
@@ -465,6 +482,13 @@ class IndependentGaussianSurrogate(Surrogate, ABC):
 
     @override
     def _posterior(self, candidates_comp_scaled: Tensor, /) -> GPyTorchPosterior:
+        if (batch_size := candidates_comp_scaled.shape[-2]) != 1:
+            raise IncompatibleSurrogateError(
+                f"The specified surrogate model of type '{type(self).__name__}' "
+                f"cannot be used for joint posterior evaluation. "
+                f"Requested batch size: {batch_size}"
+            )
+
         import torch
         from botorch.posteriors import GPyTorchPosterior
         from gpytorch.distributions import MultivariateNormal

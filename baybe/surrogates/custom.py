@@ -114,7 +114,8 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
         #   can be trained and attempts to do so for each new DOE iteration.
         #   Therefore, a refactoring is required in order to properly incorporate
         #   "static" surrogates and account for them in the exposed APIs.
-        pass
+        assert self._searchspace is not None
+        CustomONNXSurrogate.validate_compatibility(self._searchspace)
 
     @classmethod
     def validate_compatibility(cls, searchspace: SearchSpace) -> None:

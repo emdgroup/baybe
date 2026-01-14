@@ -138,7 +138,8 @@ def farthest_point_sampling(
     elif isinstance(initialization, Collection) and is_all_instance(
         initialization, int
     ):
-        selected_point_indices = list(initialization)
+        inv_sort_idx = np.argsort(sort_idx)
+        selected_point_indices = [inv_sort_idx[x] for x in initialization]
 
     # Initialize the list of remaining points
     remaining_point_indices = list(range(n_points))

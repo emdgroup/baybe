@@ -1,7 +1,8 @@
 """Tests for the simulation module."""
 
 import os
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Collection, Sequence
+from contextlib import nullcontext
 from functools import partial
 
 import numpy as np
@@ -11,6 +12,9 @@ from pytest import param
 
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
+from baybe.simulation.scenarios import _Rollouts
+from baybe.targets.numerical import NumericalTarget
+from baybe.utils.dataframe import create_fake_input
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
@@ -32,6 +36,28 @@ _aggregators: dict[str, Callable] = {
 }
 
 
+def _validate_target_data(
+    df: pd.DataFrame, targets: Collection[NumericalTarget]
+) -> None:
+    """Validate the target-related columns in the produced simulation dataframe."""
+    for t in targets:
+        aggregator = _aggregators[t.name]
+        assert np.isclose(
+            df[f"{t.name}_IterBest"].values,
+            df[f"{t.name}_Measurements"].apply(aggregator).values,
+        ).all()
+
+        all_measurements = [
+            m for measurements in df[f"{t.name}_Measurements"] for m in measurements
+        ]
+        cum_lens = df[f"{t.name}_Measurements"].apply(len).cumsum().values
+        expected_cum_best = [
+            aggregator(all_measurements[:cum_len]) for cum_len in cum_lens
+        ]
+
+        assert list(df[f"{t.name}_CumBest"]) == expected_cum_best
+
+
 @pytest.mark.parametrize(
     "target_names",
     [
@@ -44,31 +70,64 @@ _aggregators: dict[str, Callable] = {
         ),
     ],
 )
+@pytest.mark.parametrize(
+    ("n_mc_iterations", "n_initial_data"),
+    [
+        param(None, None, id="invalid"),
+        param(2, None, id="some_mc"),
+        param(None, 2, id="some_data"),
+        param(2, 2, id="cartesian"),
+    ],
+)
 @Settings(parallelize_simulation_runs=False)
-def test_simulate_scenarios_structure(campaign, batch_size):
+def test_simulate_scenarios_structure(
+    campaign, batch_size, n_mc_iterations, n_initial_data
+):
     """Test simulate_scenarios output structure and correctness."""
     doe_iterations = 2
-    n_mc_iterations = 2
-    simulation_random_seed = 59234  # <-- uncommon number to avoid clash with default
+    seed = 59234  # <-- uncommon number to avoid clash with default
     scenarios = {"test": campaign}
 
-    result = simulate_scenarios(
-        scenarios,
-        None,  # use random data for lookup
-        n_doe_iterations=doe_iterations,
-        batch_size=batch_size,
-        random_seed=simulation_random_seed,
-        n_mc_iterations=n_mc_iterations,
+    if n_initial_data is None:
+        initial_data = None
+    else:
+        initial_data = [
+            create_fake_input(campaign.parameters, campaign.targets)
+            for _ in range(n_initial_data)
+        ]
+
+    with (
+        pytest.raises(ValueError, match="requires that initial data is specified")
+        if (should_fail := n_mc_iterations is None and n_initial_data is None)
+        else nullcontext()
+    ):
+        result = simulate_scenarios(
+            scenarios,
+            None,  # use random data for lookup
+            n_doe_iterations=doe_iterations,
+            batch_size=batch_size,
+            random_seed=seed,
+            n_mc_iterations=n_mc_iterations,
+            initial_data=initial_data,
+        )
+    if should_fail:
+        return
+
+    expected_length = (
+        len(scenarios)
+        * doe_iterations
+        * len(_Rollouts(n_mc_iterations, n_initial_data))
     )
 
     assert isinstance(result, pd.DataFrame)
-    assert len(result) == doe_iterations * n_mc_iterations * len(scenarios)
+    assert len(result) == expected_length
+
     expected_cols = [
         "Scenario",
-        "Monte_Carlo_Run",
         "Iteration",
         "Num_Experiments",
         "Random_Seed",
+        "Initial_Data",
     ]
     for t in campaign.targets:
         expected_cols += [
@@ -78,31 +137,12 @@ def test_simulate_scenarios_structure(campaign, batch_size):
         ]
     assert set(result.columns) == set(expected_cols), (result.columns, expected_cols)
     assert set(result["Scenario"].unique()) == set(scenarios.keys())
-    assert set(result["Monte_Carlo_Run"].unique()) == set(range(n_mc_iterations))
     assert set(result["Iteration"].unique()) == set(range(doe_iterations))
 
     expected_seed_values = list(
-        range(simulation_random_seed, simulation_random_seed + n_mc_iterations)
+        range(seed, seed + (n_mc_iterations or len(initial_data)))
     )
     assert set(result["Random_Seed"].unique()) == set(expected_seed_values)
-    for mc_run in result["Monte_Carlo_Run"].unique():
-        mc_data = result[result["Monte_Carlo_Run"] == mc_run]
 
-        for t in campaign.targets:
-            aggregator = _aggregators[t.name]
-            assert np.isclose(
-                mc_data[f"{t.name}_IterBest"].values,
-                mc_data[f"{t.name}_Measurements"].apply(aggregator).values,
-            ).all()
-
-            all_measurements = [
-                m
-                for measurements in mc_data[f"{t.name}_Measurements"]
-                for m in measurements
-            ]
-            cum_lens = mc_data[f"{t.name}_Measurements"].apply(len).cumsum().values
-            expected_cum_best = [
-                aggregator(all_measurements[:cum_len]) for cum_len in cum_lens
-            ]
-
-            assert list(mc_data[f"{t.name}_CumBest"]) == expected_cum_best
+    groupby_cols = ["Scenario", "Random_Seed", "Initial_Data"]
+    result.groupby(groupby_cols).apply(_validate_target_data, targets=campaign.targets)

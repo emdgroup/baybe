@@ -197,7 +197,7 @@ sns.lineplot(
     ),
     x="# Experiments",
     y="Wavelength (nm)",
-    hue="Monte_Carlo_Run",
+    hue="Random_Seed",
     marker="o",
     ax=axs[1],
     legend=False,

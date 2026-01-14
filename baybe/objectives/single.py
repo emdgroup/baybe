@@ -10,16 +10,19 @@ from attrs import define, field
 from attrs.validators import instance_of
 from typing_extensions import override
 
+from baybe.exceptions import NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.targets.base import Target
 from baybe.targets.numerical import NumericalTarget
+from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.conversion import to_string
-from baybe.utils.dataframe import (
-    pretty_print_df,
-)
+from baybe.utils.dataframe import pretty_print_df
 
 if TYPE_CHECKING:
-    from botorch.acquisition.objective import MCAcquisitionObjective
+    from botorch.acquisition.objective import (
+        MCAcquisitionObjective,
+        ScalarizedPosteriorTransform,
+    )
 
 
 @define(frozen=True, slots=False)
@@ -69,6 +72,23 @@ class SingleTargetObjective(Objective):
             return ChainedMCObjective(super().to_botorch(), IdentityMCObjective())
 
         return IdentityMCObjective()
+
+    @override
+    def to_botorch_posterior_transform(self) -> ScalarizedPosteriorTransform:
+        if not (
+            isinstance((t := self._target), NumericalTarget)
+            and isinstance(
+                (tr := t.transformation), (IdentityTransformation, AffineTransformation)
+            )
+        ):
+            raise NonGaussianityError(
+                f"Converting an objective of type '{type(self).__name__}' is only "
+                f"possible when the transformation result is Gaussian, that is, "
+                f"when the target is of type '{NumericalTarget.__name__}' and the "
+                f"assigned transformation is affine."
+            )
+
+        return (tr.negate() if t.minimize else tr).to_botorch_posterior_transform()
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
