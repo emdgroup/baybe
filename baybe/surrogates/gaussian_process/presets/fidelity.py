@@ -9,7 +9,9 @@ from attrs import define
 from typing_extensions import override
 
 from baybe.kernels.basic import IndexKernel
-from baybe.surrogates.gaussian_process.kernel_factory import KernelFactory
+from baybe.surrogates.gaussian_process.kernel_factory import (
+    DefaultFidelityKernelFactory,
+)
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @define
-class IndependentFidelityKernelFactory(KernelFactory):
+class IndependentFidelityKernelFactory(DefaultFidelityKernelFactory):
     """Rank 0 index kernel treating fidelities as independent."""
 
     @override
@@ -33,7 +35,7 @@ class IndependentFidelityKernelFactory(KernelFactory):
 
 
 @define
-class IndexFidelityKernelFactory(KernelFactory):
+class IndexFidelityKernelFactory(DefaultFidelityKernelFactory):
     """Full rank index kernel modelling dependent fidelities."""
 
     @override

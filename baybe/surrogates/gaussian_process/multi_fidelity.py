@@ -11,7 +11,6 @@ from typing_extensions import override
 from baybe.parameters.base import Parameter
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.core import (
-    GaussianProcessSurrogate,
     _ModelContext,
 )
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -76,7 +75,7 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     @staticmethod
-    def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+    def from_preset(preset: GaussianProcessPreset) -> Surrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
 
@@ -156,7 +155,9 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
             rank=context.n_fidelities,  # TODO: make controllable
         ).to_gpytorch(
             ard_num_dims=1,
-            active_dims=(context.fidelity_idx,),
+            active_dims=None
+            if context.fidelity_idx is None
+            else (context.fidelity_idx,),
             batch_shape=batch_shape,
         )
 
@@ -216,7 +217,7 @@ class GaussianProcessSurrogateSTMF(Surrogate):
     """The actual model."""
 
     @staticmethod
-    def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+    def from_preset(preset: GaussianProcessPreset) -> Surrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
 
@@ -252,6 +253,11 @@ class GaussianProcessSurrogateSTMF(Surrogate):
         context = _ModelContext(self._searchspace)
 
         numerical_design_idxs = context.get_numerical_indices(train_x.shape[-1])
+
+        assert context.is_multi_fidelity, (
+            "GaussianProcessSurrogateSTMF can only "
+            "be fit on multi fidelity searchspaces."
+        )
 
         if context.is_multi_fidelity:
             numerical_design_idxs = tuple(
