@@ -19,7 +19,6 @@ from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
 if TYPE_CHECKING:
     from _typeshed import ConvertibleToFloat
 
-
 _C = TypeVar("_C", bound=type)
 _T = TypeVar("_T")
 _U = TypeVar("_U")
