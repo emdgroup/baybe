@@ -320,7 +320,8 @@ def test_surrogate_models(ongoing_campaign, n_iterations, batch_size, surrogate_
         surrogate_model, (IndependentGaussianSurrogate, CompositeSurrogate)
     ):
         context = pytest.raises(
-            IncompatibleSurrogateError, match="cannot be used for batch recommendation"
+            IncompatibleSurrogateError,
+            match="cannot be used for joint posterior evaluation",
         )
 
     with context:
