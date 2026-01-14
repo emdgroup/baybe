@@ -1,0 +1,11 @@
+# Custom Hooks
+
+These examples demonstrate how to register custom hooks using the 
+{func}`register_hooks <baybe.utils.basic.register_hooks>` utility.
+```{toctree}
+:maxdepth: 1
+
+Basics<basics>
+Campaign Stopping<campaign_stopping>
+Probability Of Improvement<probability_of_improvement>
+```

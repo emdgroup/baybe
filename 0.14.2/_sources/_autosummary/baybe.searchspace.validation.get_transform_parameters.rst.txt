@@ -1,0 +1,6 @@
+baybe.searchspace.validation.get\_transform\_parameters
+=======================================================
+
+.. currentmodule:: baybe.searchspace.validation
+
+.. autofunction:: get_transform_parameters

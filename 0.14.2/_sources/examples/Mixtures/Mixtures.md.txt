@@ -1,0 +1,10 @@
+# Mixtures
+
+These examples demonstrate how to set up mixture use cases in the traditional as well
+as in the slot-based representation.
+```{toctree}
+:maxdepth: 1
+
+Traditional<traditional>
+Slot Based<slot_based>
+```

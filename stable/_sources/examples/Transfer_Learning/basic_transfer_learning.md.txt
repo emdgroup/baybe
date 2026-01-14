@@ -232,8 +232,6 @@ for p in (0.01, 0.02, 0.05, 0.08, 0.2):
 
     
 
-    
-
 
 For comparison, we also optimize the function without using any initial data:
 
@@ -248,8 +246,6 @@ result_baseline = simulate_scenarios(
 )
 results = pd.concat([result_baseline, *results])
 ```
-
-    
 
     
 

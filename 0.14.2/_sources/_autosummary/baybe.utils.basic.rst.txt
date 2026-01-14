@@ -1,0 +1,61 @@
+baybe.utils.basic
+=================
+
+.. automodule:: baybe.utils.basic
+  
+   
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+      :toctree: 
+      :template: custom-attribute-template.rst                               
+   
+      UNSPECIFIED
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      compose
+      compose_two
+      convert_to_float
+      find_subclass
+      get_baseclasses
+      get_subclasses
+      group_duplicate_values
+      hilberts_factory
+      is_all_instance
+      match_attributes
+      refers_to
+      register_hooks
+      to_tuple
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      Dummy
+      UncertainBool
+      UnspecifiedType
+      classproperty
+   
+   
+
+   
+   
+   
+
+
+

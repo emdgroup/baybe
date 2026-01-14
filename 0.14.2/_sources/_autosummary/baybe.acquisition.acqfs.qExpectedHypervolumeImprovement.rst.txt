@@ -1,0 +1,39 @@
+qExpectedHypervolumeImprovement
+===============================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qExpectedHypervolumeImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qExpectedHypervolumeImprovement.__init__
+      ~qExpectedHypervolumeImprovement.compute_ref_point
+      ~qExpectedHypervolumeImprovement.evaluate
+      ~qExpectedHypervolumeImprovement.from_dict
+      ~qExpectedHypervolumeImprovement.from_json
+      ~qExpectedHypervolumeImprovement.to_botorch
+      ~qExpectedHypervolumeImprovement.to_dict
+      ~qExpectedHypervolumeImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qExpectedHypervolumeImprovement.alpha
+      ~qExpectedHypervolumeImprovement.abbreviation
+      ~qExpectedHypervolumeImprovement.reference_point
+      ~qExpectedHypervolumeImprovement.supports_multi_output
+   
+   

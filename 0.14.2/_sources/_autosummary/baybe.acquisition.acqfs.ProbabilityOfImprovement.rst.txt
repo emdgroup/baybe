@@ -1,0 +1,36 @@
+ProbabilityOfImprovement
+========================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: ProbabilityOfImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~ProbabilityOfImprovement.__init__
+      ~ProbabilityOfImprovement.evaluate
+      ~ProbabilityOfImprovement.from_dict
+      ~ProbabilityOfImprovement.from_json
+      ~ProbabilityOfImprovement.to_botorch
+      ~ProbabilityOfImprovement.to_dict
+      ~ProbabilityOfImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~ProbabilityOfImprovement.abbreviation
+      ~ProbabilityOfImprovement.supports_multi_output
+   
+   

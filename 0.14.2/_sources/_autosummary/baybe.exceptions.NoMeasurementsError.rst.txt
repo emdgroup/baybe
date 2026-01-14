@@ -1,0 +1,6 @@
+baybe.exceptions.NoMeasurementsError
+====================================
+
+.. currentmodule:: baybe.exceptions
+
+.. autoexception:: NoMeasurementsError

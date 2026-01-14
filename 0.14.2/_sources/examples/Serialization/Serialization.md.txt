@@ -1,0 +1,10 @@
+# Serialization
+
+These examples demonstrate BayBE's (de-)serialization capabilities.
+```{toctree}
+:maxdepth: 1
+
+Basic Serialization<basic_serialization>
+Create From Config<create_from_config>
+Validate Config<validate_config>
+```

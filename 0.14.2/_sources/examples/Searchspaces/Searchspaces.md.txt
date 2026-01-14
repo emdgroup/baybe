@@ -1,0 +1,11 @@
+# Searchspaces
+
+These examples demonstrate various ways to configure
+{doc}`Search Spaces </userguide/searchspace>`.
+```{toctree}
+:maxdepth: 1
+
+Continuous Space<continuous_space>
+Discrete Space<discrete_space>
+Hybrid Space<hybrid_space>
+```

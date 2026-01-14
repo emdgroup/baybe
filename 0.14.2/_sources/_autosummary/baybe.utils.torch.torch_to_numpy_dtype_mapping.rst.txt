@@ -1,0 +1,7 @@
+baybe.utils.torch.torch\_to\_numpy\_dtype\_mapping
+==================================================
+
+.. currentmodule:: baybe.utils.torch
+
+
+.. autodata:: torch_to_numpy_dtype_mapping

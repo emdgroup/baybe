@@ -1,0 +1,53 @@
+SubstanceParameter
+==================
+
+.. currentmodule:: baybe.parameters.substance
+
+.. autoclass:: SubstanceParameter
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~SubstanceParameter.__init__
+      ~SubstanceParameter.from_dict
+      ~SubstanceParameter.from_json
+      ~SubstanceParameter.is_in_range
+      ~SubstanceParameter.summary
+      ~SubstanceParameter.to_dict
+      ~SubstanceParameter.to_json
+      ~SubstanceParameter.to_searchspace
+      ~SubstanceParameter.to_subspace
+      ~SubstanceParameter.transform
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~SubstanceParameter.active_values
+      ~SubstanceParameter.comp_df
+      ~SubstanceParameter.comp_rep_columns
+      ~SubstanceParameter.description
+      ~SubstanceParameter.is_continuous
+      ~SubstanceParameter.is_discrete
+      ~SubstanceParameter.is_numerical
+      ~SubstanceParameter.unit
+      ~SubstanceParameter.values
+      ~SubstanceParameter.data
+      ~SubstanceParameter.decorrelate
+      ~SubstanceParameter.encoding
+      ~SubstanceParameter.kwargs_fingerprint
+      ~SubstanceParameter.kwargs_conformer
+      ~SubstanceParameter.name
+      ~SubstanceParameter.metadata
+   
+   

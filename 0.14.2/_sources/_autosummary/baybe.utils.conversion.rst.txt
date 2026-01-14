@@ -1,0 +1,32 @@
+baybe.utils.conversion
+======================
+
+.. automodule:: baybe.utils.conversion
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      fraction_to_float
+      nonstring_to_tuple
+      to_string
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

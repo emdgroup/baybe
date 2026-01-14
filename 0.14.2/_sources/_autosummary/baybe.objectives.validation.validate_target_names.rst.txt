@@ -1,0 +1,6 @@
+baybe.objectives.validation.validate\_target\_names
+===================================================
+
+.. currentmodule:: baybe.objectives.validation
+
+.. autofunction:: validate_target_names

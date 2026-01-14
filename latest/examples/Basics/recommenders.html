@@ -1304,15 +1304,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments: 
-         Solvent                Base                        Ligand  \
-79   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
-67   Butyl Ester   Potassium acetate                     BrettPhos   
-315         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+120  Butyornitrile      Cesium acetate      BrettPhos        105.0   
+44     Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration  
-79         120.0          0.100  
-67         105.0          0.100  
-315         90.0          0.057  
+     Concentration  
+120          0.057  
+44           0.153  
+81           0.057  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">add_fake_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">,</span> <span class="n">campaign</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
@@ -1321,15 +1321,15 @@ as follows.</p>
 </pre></div>
 </div>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Recommended experiments with fake measured values: 
-         Solvent                Base                        Ligand  \
-79   Butyl Ester   Potassium acetate  Di-tert-butylphenylphosphine   
-67   Butyl Ester   Potassium acetate                     BrettPhos   
-315         DMAc  Potassium pivalate  Di-tert-butylphenylphosphine   
+           Solvent                Base         Ligand  Temperature  \
+120  Butyornitrile      Cesium acetate      BrettPhos        105.0   
+44     Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
 
-     Temperature  Concentration      yield  
-79         120.0          0.100  14.172668  
-67         105.0          0.100  67.086910  
-315         90.0          0.057  16.274405  
+     Concentration      yield  
+120          0.057  92.310735  
+44           0.153  20.374717  
+81           0.057 -15.207783  
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">campaign</span><span class="o">.</span><span class="n">add_measurements</span><span class="p">(</span><span class="n">recommendation</span><span class="p">)</span>

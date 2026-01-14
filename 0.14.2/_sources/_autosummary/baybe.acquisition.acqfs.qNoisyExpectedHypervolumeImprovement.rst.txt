@@ -1,0 +1,39 @@
+qNoisyExpectedHypervolumeImprovement
+====================================
+
+.. currentmodule:: baybe.acquisition.acqfs
+
+.. autoclass:: qNoisyExpectedHypervolumeImprovement
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~qNoisyExpectedHypervolumeImprovement.__init__
+      ~qNoisyExpectedHypervolumeImprovement.compute_ref_point
+      ~qNoisyExpectedHypervolumeImprovement.evaluate
+      ~qNoisyExpectedHypervolumeImprovement.from_dict
+      ~qNoisyExpectedHypervolumeImprovement.from_json
+      ~qNoisyExpectedHypervolumeImprovement.to_botorch
+      ~qNoisyExpectedHypervolumeImprovement.to_dict
+      ~qNoisyExpectedHypervolumeImprovement.to_json
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~qNoisyExpectedHypervolumeImprovement.prune_baseline
+      ~qNoisyExpectedHypervolumeImprovement.abbreviation
+      ~qNoisyExpectedHypervolumeImprovement.reference_point
+      ~qNoisyExpectedHypervolumeImprovement.supports_multi_output
+   
+   

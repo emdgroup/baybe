@@ -474,13 +474,13 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
@@ -712,6 +712,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.searchspace.validation.html">baybe.searchspace.validation</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.searchspace.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.get_transform_parameters.html">baybe.searchspace.validation.get_transform_parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_dataframe_active_values.html">baybe.searchspace.validation.validate_dataframe_active_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameter_names.html">baybe.searchspace.validation.validate_parameter_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameters.html">baybe.searchspace.validation.validate_parameters</a></li>
 </ul>
@@ -849,17 +850,17 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.binary.BinaryTarget.html">BinaryTarget</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.botorch.html">baybe.targets.botorch</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.botorch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="baybe.targets.botorch.AffinePosteriorTransform.html">AffinePosteriorTransform</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.enum</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.enum.MatchMode.html">MatchMode</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.numerical.html">baybe.targets.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><div class="visually-hidden">Toggle navigation of baybe.targets.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.numerical.NumericalTarget.html">NumericalTarget</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.targets.transforms.html">baybe.targets.transforms</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.utils.html">baybe.targets.utils</a><input class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><div class="visually-hidden">Toggle navigation of baybe.targets.utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.capture_constructor_info.html">baybe.targets.utils.capture_constructor_info</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.combine_numerical_targets.html">baybe.targets.utils.combine_numerical_targets</a></li>
 </ul>
 </li>
@@ -896,6 +897,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.combine_affine_transformations.html">baybe.transformations.utils.combine_affine_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.compress_transformations.html">baybe.transformations.utils.compress_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.convert_transformation.html">baybe.transformations.utils.convert_transformation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.sum_affine_transformations.html">baybe.transformations.utils.sum_affine_transformations</a></li>
 </ul>
 </li>
 </ul>
@@ -1019,6 +1021,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1093,7 +1096,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baybe.acquisition.partial.</span></span><span class="sig-name descname"><span class="pre">PartialAcquisitionFunction</span></span><a class="reference internal" href="../_modules/baybe/acquisition/partial.html#PartialAcquisitionFunction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Acquisition function for evaluating points in a hybrid search space.</p>
 <p>It can either pin the discrete or the continuous part. The pinned part is assumed
 to be a tensor of dimension <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">x</span> <span class="pre">1</span></code> where d is the computational dimension of
@@ -1130,7 +1133,7 @@ defined for the full hybrid space.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">botorch_acqf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.15.2.dev42+g2591f32c5)"><span class="pre">AcquisitionFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned_part</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.10.0a0+git704cd77 ))"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin_discrete</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">botorch_acqf</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.1.dev1+gfe663206b)"><span class="pre">AcquisitionFunction</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pinned_part</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.11.0a0+git4301818 ))"><span class="pre">Tensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">pin_discrete</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Method generated by attrs for class PartialAcquisitionFunction.</p>
 <p>For details on the parameters, see <strong>Public attributes and properties</strong>.</p>
 <dl class="field-list simple">
@@ -1139,14 +1142,14 @@ defined for the full hybrid space.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending">
-<span class="sig-name descname"><span class="pre">set_X_pending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.10.0a0+git704cd77 ))"><span class="pre">Tensor</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/acquisition/partial.html#PartialAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_X_pending</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_pending</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.11.0a0+git4301818 ))"><span class="pre">Tensor</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/acquisition/partial.html#PartialAcquisitionFunction.set_X_pending"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending" title="Link to this definition">¶</a></dt>
 <dd><p>Inform the acquisition function about pending design points.</p>
 <p>Enhances the original <code class="docutils literal notranslate"><span class="pre">set_X_pending</span></code> function from the full acquisition
 function as we need to store the full point, i.e., the point in the hybrid space
 for the <code class="docutils literal notranslate"><span class="pre">PartialAcquisitionFunction</span></code> to work properly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending.params.X_pending"></span><strong>X_pending</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.10.0a0+git704cd77 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">x</span> <span class="pre">d</span></code> Tensor with n d-dim design points that have been
+<dd class="field-odd"><p><span class="target" id="baybe.acquisition.partial.PartialAcquisitionFunction.set_X_pending.params.X_pending"></span><strong>X_pending</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.11.0a0+git4301818 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span>) – <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">x</span> <span class="pre">d</span></code> Tensor with n d-dim design points that have been
 submitted for evaluation but have not yet been evaluated.</p>
 </dd>
 </dl>
@@ -1154,20 +1157,20 @@ submitted for evaluation but have not yet been evaluated.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction.botorch_acqf">
-<span class="sig-name descname"><span class="pre">botorch_acqf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.15.2.dev42+g2591f32c5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.botorch_acqf" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">botorch_acqf</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://botorch.readthedocs.io/en/latest/acquisition.html#botorch.acquisition.acquisition.AcquisitionFunction" title="(in BoTorch v0.1.dev1+gfe663206b)"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionFunction</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.botorch_acqf" title="Link to this definition">¶</a></dt>
 <dd><p>The acquisition function for the hybrid space.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction.pin_discrete">
-<span class="sig-name descname"><span class="pre">pin_discrete</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.pin_discrete" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pin_discrete</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.pin_discrete" title="Link to this definition">¶</a></dt>
 <dd><p>A flag for denoting whether <code class="docutils literal notranslate"><span class="pre">pinned_part</span></code> corresponds to the discrete
 subspace.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="baybe.acquisition.partial.PartialAcquisitionFunction.pinned_part">
-<span class="sig-name descname"><span class="pre">pinned_part</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.10.0a0+git704cd77 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.pinned_part" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pinned_part</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.pytorch.org/docs/main/tensors.html#torch.Tensor" title="(in PyTorch vmain (2.11.0a0+git4301818 ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></a></em><a class="headerlink" href="#baybe.acquisition.partial.PartialAcquisitionFunction.pinned_part" title="Link to this definition">¶</a></dt>
 <dd><p>The values that will be attached whenever evaluating the acquisition function.</p>
 </dd></dl>
 

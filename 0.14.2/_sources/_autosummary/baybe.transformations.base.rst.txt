@@ -1,0 +1,32 @@
+baybe.transformations.base
+==========================
+
+.. automodule:: baybe.transformations.base
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:                                       
+      :template: custom-class-template.rst              
+   
+      MonotonicTransformation
+      Transformation
+   
+   
+
+   
+   
+   
+
+
+

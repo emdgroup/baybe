@@ -1,0 +1,23 @@
+EDBOKernelFactory
+=================
+
+.. currentmodule:: baybe.surrogates.gaussian_process.presets.edbo
+
+.. autoclass:: EDBOKernelFactory
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~EDBOKernelFactory.__init__
+   
+   
+
+   
+   
+   

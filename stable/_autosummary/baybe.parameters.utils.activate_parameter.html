@@ -474,13 +474,13 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
@@ -712,6 +712,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.searchspace.validation.html">baybe.searchspace.validation</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.searchspace.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.get_transform_parameters.html">baybe.searchspace.validation.get_transform_parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_dataframe_active_values.html">baybe.searchspace.validation.validate_dataframe_active_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameter_names.html">baybe.searchspace.validation.validate_parameter_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameters.html">baybe.searchspace.validation.validate_parameters</a></li>
 </ul>
@@ -849,17 +850,17 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.binary.BinaryTarget.html">BinaryTarget</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.botorch.html">baybe.targets.botorch</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.botorch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="baybe.targets.botorch.AffinePosteriorTransform.html">AffinePosteriorTransform</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.enum</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.enum.MatchMode.html">MatchMode</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.numerical.html">baybe.targets.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><div class="visually-hidden">Toggle navigation of baybe.targets.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.numerical.NumericalTarget.html">NumericalTarget</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.targets.transforms.html">baybe.targets.transforms</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.utils.html">baybe.targets.utils</a><input class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><div class="visually-hidden">Toggle navigation of baybe.targets.utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.capture_constructor_info.html">baybe.targets.utils.capture_constructor_info</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.combine_numerical_targets.html">baybe.targets.utils.combine_numerical_targets</a></li>
 </ul>
 </li>
@@ -896,6 +897,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.combine_affine_transformations.html">baybe.transformations.utils.combine_affine_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.compress_transformations.html">baybe.transformations.utils.compress_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.convert_transformation.html">baybe.transformations.utils.convert_transformation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.sum_affine_transformations.html">baybe.transformations.utils.sum_affine_transformations</a></li>
 </ul>
 </li>
 </ul>
@@ -1019,6 +1021,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1120,10 +1123,10 @@ would no longer have a continuous value range.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If the threshold interval does not contain zero.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If the parameter cannot be activated since both its bounds are
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the threshold interval does not contain zero.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the parameter cannot be activated since both its bounds are
     in the inactive range.</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.13)"><strong>NotImplementedError</strong></a> – In situations that cannot be encountered in a regular
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#NotImplementedError" title="(in Python v3.14)"><strong>NotImplementedError</strong></a> – In situations that cannot be encountered in a regular
     recommendation context since prevented by other validation measures (for
     example, edge case of an activation that would result in a single active
     point when the open inactive interval aligns on one side with the parameter

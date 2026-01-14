@@ -1,0 +1,31 @@
+baybe.constraints.deprecation
+=============================
+
+.. automodule:: baybe.constraints.deprecation
+  
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:                                       
+   
+      ContinuousLinearEqualityConstraint
+      ContinuousLinearInequalityConstraint
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,37 @@
+baybe.kernels
+=============
+
+.. automodule:: baybe.kernels
+  
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+
+   base
+
+   basic
+
+   composite
+

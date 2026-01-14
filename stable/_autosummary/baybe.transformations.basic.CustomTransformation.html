@@ -474,13 +474,13 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.IncompleteMeasurementsError.html">baybe.exceptions.IncompleteMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InfeasibilityError.html">baybe.exceptions.InfeasibilityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InputDataTypeWarning.html">baybe.exceptions.InputDataTypeWarning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidSurrogateModelError.html">baybe.exceptions.InvalidSurrogateModelError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.InvalidTargetValueError.html">baybe.exceptions.InvalidTargetValueError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.MinimumCardinalityViolatedWarning.html">baybe.exceptions.MinimumCardinalityViolatedWarning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.ModelNotTrainedError.html">baybe.exceptions.ModelNotTrainedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMCAcquisitionFunctionError.html">baybe.exceptions.NoMCAcquisitionFunctionError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
@@ -712,6 +712,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.searchspace.validation.html">baybe.searchspace.validation</a><input class="toctree-checkbox" id="toctree-checkbox-77" name="toctree-checkbox-77" role="switch" type="checkbox"/><label for="toctree-checkbox-77"><div class="visually-hidden">Toggle navigation of baybe.searchspace.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.get_transform_parameters.html">baybe.searchspace.validation.get_transform_parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_dataframe_active_values.html">baybe.searchspace.validation.validate_dataframe_active_values</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameter_names.html">baybe.searchspace.validation.validate_parameter_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.searchspace.validation.validate_parameters.html">baybe.searchspace.validation.validate_parameters</a></li>
 </ul>
@@ -849,17 +850,17 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.binary.BinaryTarget.html">BinaryTarget</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.botorch.html">baybe.targets.botorch</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.botorch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="baybe.targets.botorch.AffinePosteriorTransform.html">AffinePosteriorTransform</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a><input class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><div class="visually-hidden">Toggle navigation of baybe.targets.enum</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.enum.MatchMode.html">MatchMode</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="baybe.targets.enum.html">baybe.targets.enum</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.numerical.html">baybe.targets.numerical</a><input class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><div class="visually-hidden">Toggle navigation of baybe.targets.numerical</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.numerical.NumericalTarget.html">NumericalTarget</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.targets.transforms.html">baybe.targets.transforms</a></li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.targets.utils.html">baybe.targets.utils</a><input class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><div class="visually-hidden">Toggle navigation of baybe.targets.utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.capture_constructor_info.html">baybe.targets.utils.capture_constructor_info</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.targets.utils.combine_numerical_targets.html">baybe.targets.utils.combine_numerical_targets</a></li>
 </ul>
 </li>
@@ -896,6 +897,7 @@
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.combine_affine_transformations.html">baybe.transformations.utils.combine_affine_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.compress_transformations.html">baybe.transformations.utils.compress_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.convert_transformation.html">baybe.transformations.utils.convert_transformation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.transformations.utils.sum_affine_transformations.html">baybe.transformations.utils.sum_affine_transformations</a></li>
 </ul>
 </li>
 </ul>
@@ -1019,6 +1021,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.torch.html">baybe.utils.torch</a><input class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><div class="visually-hidden">Toggle navigation of baybe.utils.torch</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
 <li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="baybe.utils.validation.html">baybe.utils.validation</a><input class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><div class="visually-hidden">Toggle navigation of baybe.utils.validation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -1123,6 +1126,18 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.get_image" title="baybe.transformations.basic.CustomTransformation.get_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_image</span></code></a>([interval])</p></td>
 <td><p>Get the image of a certain interval (assuming transformation continuity).</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_left_from" title="baybe.transformations.basic.CustomTransformation.hold_output_left_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hold_output_left_from</span></code></a>(abscissa, /)</p></td>
+<td><p>Hold the output of the transformation left from a given abscissa value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_outside" title="baybe.transformations.basic.CustomTransformation.hold_output_outside"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hold_output_outside</span></code></a>(interval, /)</p></td>
+<td><p>Hold the output of the transformation outside a given interval.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_right_from" title="baybe.transformations.basic.CustomTransformation.hold_output_right_from"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hold_output_right_from</span></code></a>(abscissa, /)</p></td>
+<td><p>Hold the output of the transformation right from a given abscissa value.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hshift" title="baybe.transformations.basic.CustomTransformation.hshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hshift</span></code></a>(shift, /)</p></td>
+<td><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.negate" title="baybe.transformations.basic.CustomTransformation.negate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">negate</span></code></a>()</p></td>
 <td><p>Negate the output of the transformation.</p></td>
 </tr>
@@ -1134,6 +1149,9 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.to_json" title="baybe.transformations.basic.CustomTransformation.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.vshift" title="baybe.transformations.basic.CustomTransformation.vshift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">vshift</span></code></a>(shift, /)</p></td>
+<td><p>Vertical shift (i.e. add a constant to the transformation output).</p></td>
 </tr>
 </tbody>
 </table>
@@ -1181,7 +1199,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.clamp">
-<span class="sig-name descname"><span class="pre">clamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.clamp" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">clamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">inf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.clamp" title="Link to this definition">¶</a></dt>
 <dd><p>Clamp the output of the transformation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1192,14 +1210,14 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.from_dict">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.from_dict" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.from_dict" title="Link to this definition">¶</a></dt>
 <dd><p>Create an object from its dictionary representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="target" id="baybe.transformations.basic.CustomTransformation.from_dict.params.dictionary"></span><strong>dictionary</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – The dictionary representation.</p>
+<dd class="field-odd"><p><span class="target" id="baybe.transformations.basic.CustomTransformation.from_dict.params.dictionary"></span><strong>dictionary</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – The dictionary representation.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>, bound= SerialMixin)</span></p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>The reconstructed object.</p>
@@ -1209,7 +1227,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.from_json">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsRead</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.from_json" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsRead</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.from_json" title="Link to this definition">¶</a></dt>
 <dd><p>Create an object from its JSON representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1222,7 +1240,7 @@
 </p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">source</span></code> is not one of the allowed types.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">source</span></code> is not one of the allowed types.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type">_T</span></p>
@@ -1235,7 +1253,7 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.get_codomain">
-<span class="sig-name descname"><span class="pre">get_codomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><span class="pre">Interval</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#CustomTransformation.get_codomain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.get_codomain" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_codomain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><span class="pre">Interval</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/transformations/basic.html#CustomTransformation.get_codomain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.get_codomain" title="Link to this definition">¶</a></dt>
 <dd><p>Get the codomain of a certain interval (assuming transformation continuity).</p>
 <p>In accordance with the mathematical definition of a function’s <a class="reference external" href="https://en.wikipedia.org/wiki/Codomain">codomain</a>, we define the codomain of a given
 <a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a> under a certain (assumed continuous)
@@ -1253,7 +1271,7 @@ compute a codomain. The codomain always contains the image, but might be larger.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.get_image">
-<span class="sig-name descname"><span class="pre">get_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><span class="pre">Interval</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.get_image" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><span class="pre">Interval</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.get_image" title="Link to this definition">¶</a></dt>
 <dd><p>Get the image of a certain interval (assuming transformation continuity).</p>
 <p>In accordance with the mathematical definition of a function’s <a class="reference external" href="https://en.wikipedia.org/wiki/Image_(mathematics)">image</a>, we define the image of a
 given <a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a> under a certain (assumed
@@ -1264,6 +1282,50 @@ the <code class="xref py py-class docutils literal notranslate"><span class="pre
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><code class="xref py py-class docutils literal notranslate"><span class="pre">Interval</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.hold_output_left_from">
+<span class="sig-name descname"><span class="pre">hold_output_left_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">abscissa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.hold_output_left_from" title="Link to this definition">¶</a></dt>
+<dd><p>Hold the output of the transformation left from a given abscissa value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.hold_output_outside">
+<span class="sig-name descname"><span class="pre">hold_output_outside</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="baybe.utils.interval.Interval.html#baybe.utils.interval.Interval" title="baybe.utils.interval.Interval"><span class="pre">Interval</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.Iterable" title="(in Python v3.14)"><span class="pre">Iterable</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.hold_output_outside" title="Link to this definition">¶</a></dt>
+<dd><p>Hold the output of the transformation outside a given interval.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.hold_output_right_from">
+<span class="sig-name descname"><span class="pre">hold_output_right_from</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">abscissa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.hold_output_right_from" title="Link to this definition">¶</a></dt>
+<dd><p>Hold the output of the transformation right from a given abscissa value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.hshift">
+<span class="sig-name descname"><span class="pre">hshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.hshift" title="Link to this definition">¶</a></dt>
+<dd><p>Horizontal shift (i.e. subtract a constant from the transformation input).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1296,7 +1358,7 @@ the <code class="xref py py-class docutils literal notranslate"><span class="pre
 <dd><p>Create an object’s dictionary representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span></p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The dictionary representation of the object.</p>
@@ -1306,7 +1368,7 @@ the <code class="xref py py-class docutils literal notranslate"><span class="pre
 
 <dl class="py method">
 <dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.to_json">
-<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sink</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsWrite</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.to_json" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sink</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">SupportsWrite</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.to_json" title="Link to this definition">¶</a></dt>
 <dd><p>Create an object’s JSON representation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1321,11 +1383,11 @@ the JSON content.</p></li>
 </p></li>
 <li><p><span class="target" id="baybe.transformations.basic.CustomTransformation.to_json.params.overwrite"></span><strong>overwrite</strong> (<span class="sphinx_autodoc_typehints-type">bool</span>) – Boolean flag indicating if to overwrite the file if it already
 exists. Only relevant if <code class="docutils literal notranslate"><span class="pre">sink</span></code> is a file path or <code class="docutils literal notranslate"><span class="pre">Path</span></code> object.</p></li>
-<li><p><span class="target" id="baybe.transformations.basic.CustomTransformation.to_json.params.**kwargs"></span><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type">Any</span>) – Additional keyword arguments to pass to <a class="reference external" href="https://docs.python.org/3/library/json.html#json.dumps" title="(in Python v3.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">json.dumps()</span></code></a>.</p></li>
+<li><p><span class="target" id="baybe.transformations.basic.CustomTransformation.to_json.params.**kwargs"></span><strong>**kwargs</strong> (<span class="sphinx_autodoc_typehints-type">Any</span>) – Additional keyword arguments to pass to <a class="reference external" href="https://docs.python.org/3/library/json.html#json.dumps" title="(in Python v3.14)"><code class="xref py py-func docutils literal notranslate"><span class="pre">json.dumps()</span></code></a>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.13)"><strong>FileExistsError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">sink</span></code> points to an already existing file but
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileExistsError" title="(in Python v3.14)"><strong>FileExistsError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">sink</span></code> points to an already existing file but
     <code class="docutils literal notranslate"><span class="pre">overwrite</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -1333,6 +1395,17 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The JSON representation as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.transformations.basic.CustomTransformation.vshift">
+<span class="sig-name descname"><span class="pre">vshift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.transformations.basic.CustomTransformation.vshift" title="Link to this definition">¶</a></dt>
+<dd><p>Vertical shift (i.e. add a constant to the transformation output).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="baybe.transformations.base.Transformation.html#baybe.transformations.base.Transformation" title="baybe.transformations.base.Transformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1412,10 +1485,15 @@ exists. Only relevant if <code class="docutils literal notranslate"><span class=
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.from_json"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.get_codomain"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.get_codomain()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.get_image"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.get_image()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_left_from"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.hold_output_left_from()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_outside"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.hold_output_outside()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hold_output_right_from"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.hold_output_right_from()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.hshift"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.hshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.negate"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.negate()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.to_botorch_objective"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.to_botorch_objective()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.to_dict"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.to_json"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.vshift"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.vshift()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.transformations.basic.CustomTransformation.function"><code class="docutils literal notranslate"><span class="pre">CustomTransformation.function</span></code></a></li>
 </ul>
 </li>

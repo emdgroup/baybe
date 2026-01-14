@@ -149,9 +149,10 @@ print(recommender)
        Recommender
           BotorchRecommender
              Surrogate
-                GaussianProcessSurrogate
-                   Supports Transfer Learning: True
-                   Kernel factory: DefaultKernelFactory()
+                CompositeSurrogate(surrogates=_ReplicationMapping(template=GaussianProce
+ssSurrogate(_searchspace=None, _objective=None, _measurements_hash=None,
+_input_scaler=None, _output_scaler=None, kernel_factory=DefaultKernelFactory(),
+_model=None), _data={}), _modeled_quantity_names=None)
              Acquisition function: qLogExpectedImprovement()
              Compatibility: SearchSpaceType.HYBRID
              Sequential continuous: True
@@ -247,14 +248,14 @@ print(recommendation)
     
     Recommended experiments: 
                Solvent                Base         Ligand  Temperature  \
-    206  Butyornitrile  Potassium pivalate      BrettPhos        120.0   
-    270           DMAc   Potassium acetate  (t-Bu)PhCPhos         90.0   
-    110  Butyornitrile      Cesium acetate  (t-Bu)PhCPhos         90.0   
+    120  Butyornitrile      Cesium acetate      BrettPhos        105.0   
+    44     Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+    81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
     
          Concentration  
-    206          0.153  
-    270          0.057  
-    110          0.153  
+    120          0.057  
+    44           0.153  
+    81           0.057  
 
 
 
@@ -268,14 +269,14 @@ print(recommendation)
     
     Recommended experiments with fake measured values: 
                Solvent                Base         Ligand  Temperature  \
-    206  Butyornitrile  Potassium pivalate      BrettPhos        120.0   
-    270           DMAc   Potassium acetate  (t-Bu)PhCPhos         90.0   
-    110  Butyornitrile      Cesium acetate  (t-Bu)PhCPhos         90.0   
+    120  Butyornitrile      Cesium acetate      BrettPhos        105.0   
+    44     Butyl Ester     Cesium pivalate      BrettPhos        120.0   
+    81     Butyl Ester  Potassium pivalate  (t-Bu)PhCPhos         90.0   
     
          Concentration      yield  
-    206          0.153  -4.489616  
-    270          0.057 -89.880775  
-    110          0.153  63.500094  
+    120          0.057  92.310735  
+    44           0.153  20.374717  
+    81           0.057 -15.207783  
 
 
 
