@@ -1,5 +1,6 @@
 """Surrogate tests."""
 
+import os
 from contextlib import nullcontext
 from unittest.mock import patch
 
@@ -207,6 +208,10 @@ def test_continuous_incompatibility(campaign):
         campaign.recommend(1)
 
 
+@pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Certain surrogates are only available in FULLTEST environment.",
+)
 @pytest.mark.parametrize(
     "surrogate",
     [
