@@ -41,6 +41,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.exceptions import IncompatibilityError
 from baybe.kernels import MaternKernel
 from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -583,6 +584,12 @@ def fixture_default_constraint_selection():
     return []
 
 
+@pytest.fixture(name="objective_name")
+def fixture_default_objective_selection(targets):
+    """Default objective used if not specified differently."""
+    return "single" if len(targets) == 1 else "desirability"
+
+
 @pytest.fixture(name="campaign")
 def fixture_campaign(parameters, constraints, recommender, objective):
     """Returns a campaign."""
@@ -697,13 +704,22 @@ def fixture_meta_recommender(
 
 
 @pytest.fixture(name="objective")
-def fixture_default_objective(targets):
-    """The default objective to be used if not specified differently."""
-    return (
-        SingleTargetObjective(targets[0])
-        if len(targets) == 1
-        else DesirabilityObjective(targets)
-    )
+def fixture_default_objective(targets, objective_name):
+    """Provides example objectives via specified names."""
+    if objective_name is None:
+        return None
+    if "single" in objective_name.lower():
+        if len(targets) != 1:
+            raise IncompatibilityError(
+                "You can only use single target objectives with one target but you "
+                f"provided {len(targets)} targets."
+            )
+        return SingleTargetObjective(targets[0])
+    if "pareto" in objective_name.lower():
+        return ParetoObjective(targets)
+    if "desirability" in objective_name.lower():
+        return DesirabilityObjective(targets)
+    raise NotImplementedError(f"unknown objective name: {objective_name}")
 
 
 @pytest.fixture(name="config")
