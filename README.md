@@ -32,7 +32,7 @@ within complex parameter search spaces.
 
 <div align="center">
 
-[![Complex Search Space](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/complex_search_space_automatic.svg)](https://github.com/emdgroup/baybe/)
+[![Complex Search Space](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/complex_search_space.svg)](https://github.com/emdgroup/baybe/)
 
 </div>
 
