@@ -12,6 +12,7 @@ from attrs.validators import gt, is_callable
 from typing_extensions import override
 
 from baybe.serialization import converter
+from baybe.settings import active_settings
 from baybe.transformations.base import (
     MonotonicTransformation,
     Transformation,
@@ -138,11 +139,10 @@ class AffineTransformation(MonotonicTransformation):
         import torch
         from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
-        from baybe.utils.torch import DTypeFloatTorch
-
+        dtype = active_settings.DTypeFloatTorch
         return ScalarizedPosteriorTransform(
-            weights=torch.tensor([self.factor], dtype=DTypeFloatTorch),
-            offset=torch.tensor(self.shift, dtype=DTypeFloatTorch).item(),
+            weights=torch.tensor([self.factor], dtype=dtype),
+            offset=torch.tensor(self.shift, dtype=dtype).item(),
         )
 
     @classmethod
