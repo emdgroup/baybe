@@ -254,8 +254,10 @@ class Objective(ABC, SerialMixin):
             transformed.numpy(), columns=self.output_names, index=df.index
         )
 
-    def is_non_dominated(self, measurements: pd.DataFrame) -> pd.Series:
-        """Create a boolean mask indicating non-dominated points in the measurements.
+    def identify_non_dominated_configurations(
+        self, configurations: pd.DataFrame
+    ) -> pd.Series:
+        """Create a boolean mask indicating the non-dominated configurations.
 
         While the concept of dominated points originates from Pareto optimization, it
         can also be generalized to non-Pareto objectives. In these cases, we define
@@ -263,24 +265,25 @@ class Objective(ABC, SerialMixin):
         which recovers the Pareto sense for objectives that rank points according to a
         single value.
 
-        In case of duplicated non-dominated data points, return both duplicates as
+        In case of duplicated non-dominated points, returns both duplicates as
         non-dominated.
 
         Possible validation exceptions are documented in
         :func:`baybe.utils.validation.validate_target_input`.
 
         Args:
-            measurements: The measurements used to identify the non-dominated points.
+            configurations: The configurations for which the non-dominated points will
+                be identified.
 
         Returns:
-            A series of boolean values indicating whether the corresponding measurement
-            is non-dominated.
+            A series of boolean values indicating whether the corresponding
+                point is non-dominated.
         """
         from botorch.utils.multi_objective.pareto import is_non_dominated
 
-        validate_target_input(measurements, self.targets)
+        validate_target_input(configurations, self.targets)
 
-        targets = self.transform(measurements, allow_extra=True)
+        targets = self.transform(configurations, allow_extra=True)
         non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
 
         return pd.Series(non_dominated.numpy(), name="is_non_dominated")

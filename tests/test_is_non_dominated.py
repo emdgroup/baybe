@@ -36,7 +36,7 @@ from baybe.parameters import NumericalDiscreteParameter
     [True, False],
     ids=["consider_m", "not_consider_m"],
 )
-def test_is_non_dominated_func_call(
+def test_identify_non_dominated_configurations_func_call(
     ongoing_campaign,
     objective,
     parameters,
@@ -46,24 +46,28 @@ def test_is_non_dominated_func_call(
     consider_campaign_measurements,
 ):
     """Test function call and expected output size."""
-    # Non dominated points for measurements
-    non_dominated_campaign_default = ongoing_campaign.is_non_dominated()
+    non_dominated_campaign_default = (
+        ongoing_campaign.identify_non_dominated_configurations()
+    )
     assert len(ongoing_campaign.measurements) == len(non_dominated_campaign_default), (
         "The non-dominated points are computed for the campaign's measurements, but "
-        f"the output data of {ongoing_campaign.is_non_dominated.__name__} "
+        "the output data of "
+        f"{ongoing_campaign.identify_non_dominated_configurations.__name__} "
         f"does not have the same length ({len(non_dominated_campaign_default)}) as the "
         f"campaign's measurements ({len(ongoing_campaign.measurements)})."
     )
 
     # From campaign
-    non_dominated_campaign = ongoing_campaign.is_non_dominated(
+    non_dominated_campaign = ongoing_campaign.identify_non_dominated_configurations(
         fake_measurements, consider_campaign_measurements=consider_campaign_measurements
     )
     assert len(fake_measurements) == len(non_dominated_campaign)
 
-    # From objective, not considering campaign measurements in any case
-    non_dominated_objective = ongoing_campaign.objective.is_non_dominated(
-        fake_measurements
+    # From objective, not considering the campaign's measurements in any case
+    non_dominated_objective = (
+        ongoing_campaign.objective.identify_non_dominated_configurations(
+            fake_measurements
+        )
     )
     assert len(fake_measurements) == len(non_dominated_objective)
 
@@ -84,10 +88,10 @@ def test_is_non_dominated_func_call(
 def test_incompatibility(campaign, objective, fake_measurements):
     """Test for incompatibility when objective is ``None``."""
     with pytest.raises(IncompatibilityError):
-        campaign.is_non_dominated()
+        campaign.identify_non_dominated_configurations()
 
     with pytest.raises(IncompatibilityError):
-        campaign.is_non_dominated(fake_measurements)
+        campaign.identify_non_dominated_configurations(fake_measurements)
 
 
 @pytest.mark.parametrize(
@@ -106,27 +110,39 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
     """Test that exceptions are raised for invalid input combinations."""
     # Test flag when campaign has no measurements
     with pytest.raises(NoMeasurementsError):
-        campaign.is_non_dominated(consider_campaign_measurements=True)
+        campaign.identify_non_dominated_configurations(
+            consider_campaign_measurements=True
+        )
 
     with pytest.raises(NothingToComputeError):
-        campaign.is_non_dominated(consider_campaign_measurements=False)
+        campaign.identify_non_dominated_configurations(
+            consider_campaign_measurements=False
+        )
 
     with pytest.warns(UserWarning):
-        campaign.is_non_dominated(
+        campaign.identify_non_dominated_configurations(
             fake_measurements, consider_campaign_measurements=True
         )
 
-    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=False)
+    campaign.identify_non_dominated_configurations(
+        fake_measurements, consider_campaign_measurements=False
+    )
 
     # Test flag when campaign has measurements
     campaign.add_measurements(fake_measurements)
 
     with pytest.raises(NothingToComputeError):
-        campaign.is_non_dominated(consider_campaign_measurements=False)
+        campaign.identify_non_dominated_configurations(
+            consider_campaign_measurements=False
+        )
 
-    campaign.is_non_dominated(consider_campaign_measurements=True)
-    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=True)
-    campaign.is_non_dominated(fake_measurements, consider_campaign_measurements=False)
+    campaign.identify_non_dominated_configurations(consider_campaign_measurements=True)
+    campaign.identify_non_dominated_configurations(
+        fake_measurements, consider_campaign_measurements=True
+    )
+    campaign.identify_non_dominated_configurations(
+        fake_measurements, consider_campaign_measurements=False
+    )
 
 
 @pytest.mark.parametrize(
@@ -183,7 +199,9 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
         ),
     ],
 )
-def test_is_non_dominated_logic(campaign, targets, idx_non_dominated, target_names):
+def test_identify_non_dominated_configurations_logic(
+    campaign, targets, idx_non_dominated, target_names
+):
     """Test is_non_dominated logic for different target and objective combinations."""
     # Construct data
     p1 = np.hstack(
@@ -208,7 +226,7 @@ def test_is_non_dominated_logic(campaign, targets, idx_non_dominated, target_nam
     measurements = pd.DataFrame(data_dict)
 
     campaign.add_measurements(measurements)
-    non_dominated = campaign.is_non_dominated()
+    non_dominated = campaign.identify_non_dominated_configurations()
 
     assert set(np.where(non_dominated)[0].tolist()) == set(idx_non_dominated)
 
