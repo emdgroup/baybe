@@ -874,48 +874,48 @@ class Campaign(SerialMixin):
             acquisition_function,
         )
 
-    def is_non_dominated(
+    def identify_non_dominated_configurations(
         self,
-        measurements: pd.DataFrame | None = None,
+        configurations: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Create a boolean mask indicating non-dominated points in the measurements.
+        """Create a boolean mask indicating the non-dominated configurations.
 
         Args:
-            measurements: The measurements with populated target columns.
-                If not provided and consider_campaign_measurements is ``True``, a
-                boolean mask is created indicating the non-dominated points in the
-                campaign's measurements.
-            consider_campaign_measurements: If ``True``and measurements are provided,
-                the campaign's measurements will be considered in the calculation along
-                with the provided measurements, but they will not be returned. If no
-                measurements are provided, a boolean mask will be created to identify
-                the non-dominated points within the campaign's measurements. If
-                ``False``, only the provided measurements are considered.
+            configurations: The configurations with populated target columns for which
+                the non-dominated points will be identified. If not provided and
+                consider_campaign_measurements is ``True``, a boolean mask is created
+                identifying the non-dominated points in the campaign's measurements.
+            consider_campaign_measurements: If ``True``and configurations are provided,
+                the campaign's measurements will be considered in calculating the
+                non-dominated points of the configurations but will not be returned. If
+                no configurations are provided, a boolean mask will be created to
+                identify the non-dominated points within the campaign's measurements. If
+                ``False``, only the provided configurations are considered.
 
         Raises:
             IncompatibilityError: If the campaign's objective is ``None``
             NoMeasurementsError: If consider_campaign_measurements is ``True``,
-                but no measurements are added to the campaign yet and no measurements
-                are provided in this method as argument.
-            NothingToComputeError: If no measurements are provided as argument and
-                consider_campaign_measurements is set to False.
+                but no measurements are added to the campaign yet and no configurations
+                are provided as argument.
+            NothingToComputeError: If no configurations are provided as argument and
+                consider_campaign_measurements is ``False``.
             Additional validation exceptions are documented in
                 :func:`baybe.utils.validation.validate_target_input`.
 
 
         Returns:
-            A series of boolean values indicating whether the corresponding data point
-            is non-dominated.
+            A series of boolean values indicating whether the corresponding
+                point is non-dominated.
         """
         if self.objective is None:
             raise IncompatibilityError(
-                f"Cannot get the non-dominated points since no '{Objective.__name__}' "
-                "is defined."
+                "Cannot get the non-dominated configurations since no "
+                f"'{Objective.__name__}' is defined."
             )
 
         if (
-            measurements is None
+            configurations is None
             and consider_campaign_measurements
             and self.measurements.empty
         ):
@@ -924,45 +924,47 @@ class Campaign(SerialMixin):
                 " was requested, but no campaign measurements have been added yet."
             )
 
-        if measurements is None and not consider_campaign_measurements:
+        if configurations is None and not consider_campaign_measurements:
             raise NothingToComputeError(
-                "Unable to compute the non-dominated points because no data is "
-                f"available. When setting consider_campaign_measurements to "
-                f"{consider_campaign_measurements} you have to provide measurements "
-                f"for the computation."
+                "Unable to compute the non-dominated points in configurations because "
+                "no data is available. When setting consider_campaign_measurements to "
+                f"'{consider_campaign_measurements}' you have to provide "
+                "configurations for the computation."
             )
 
         if (
-            measurements is not None
+            configurations is not None
             and consider_campaign_measurements
             and self.measurements.empty
         ):
             warnings.warn(
                 "No measurements have been added to the campaign yet, but the flag"
-                "consider_campaign_measurements is set to "
-                f"{consider_campaign_measurements}. Therefore, the non-dominated "
-                f"points will be determined without taking the campaign measurements "
-                f"into account.",
+                " consider_campaign_measurements is set to "
+                f"'{consider_campaign_measurements}'. Therefore, the non-dominated "
+                f"configurations will be determined without taking the campaign's  "
+                f"measurements into account.",
                 UserWarning,
             )
 
-        if measurements is not None:
-            validate_target_input(measurements, self.objective.targets)
+        if configurations is not None:
+            validate_target_input(configurations, self.objective.targets)
 
-        crop_measurements = False
+        crop_configurations = False
         if consider_campaign_measurements:
-            if measurements is None:
-                measurements = self.measurements
+            if configurations is None:
+                configurations = self.measurements
             else:
-                measurements = pd.concat([measurements, self.measurements])
-                crop_measurements = True
+                configurations = pd.concat([configurations, self.measurements])
+                crop_configurations = True
         else:
-            # For Mypy: measurements cannot be ``None`` here due to a guard clause above
-            assert measurements is not None
+            # For Mypy: configurations cannot be ``None`` here due to guard clause above
+            assert configurations is not None
 
-        non_dominated = self.objective.is_non_dominated(measurements=measurements)
+        non_dominated = self.objective.identify_non_dominated_configurations(
+            configurations=configurations
+        )
 
-        if crop_measurements:
+        if crop_configurations:
             non_dominated = non_dominated.iloc[: -len(self.measurements)]
         return non_dominated
 
