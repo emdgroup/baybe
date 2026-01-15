@@ -62,7 +62,7 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
 - Capture **relationships between categories** by 
 [encoding categorical data](https:/emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter). 
 BayBE also provides built-in chemical encodings.
-- **Build in mechanistic** process understanding via 
+- **Built-in mechanistic** process understanding via 
 [custom surrogate models](https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html).
 - Leverage **additional data** from similar campaigns to accelerate optimization via 
 [transfer learning](https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html).
