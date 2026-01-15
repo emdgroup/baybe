@@ -373,6 +373,9 @@ def fixture_targets(target_names: list[str]):
     # Required for the selection to work as intended (if the input was a single string,
     # the list comprehension would match substrings instead)
     assert isinstance(target_names, list)
+    assert len(target_names) == len(set(target_names)), (
+        "Duplicate target names in fixture 'target_names'."
+    )
 
     valid_targets = [
         NumericalTarget(
