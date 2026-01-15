@@ -6,7 +6,7 @@ from typing import Any, ClassVar, cast
 import cattrs
 import numpy as np
 import pandas as pd
-from attrs import define, field
+from attrs import define, field, fields
 from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
@@ -39,7 +39,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
         validator=[
             min_len(2),
             validate_is_finite,
-            deep_iterable(ge(0.0)),
+            deep_iterable(member_validator=ge(0.0)),
         ],
     )
     """The costs associated with querying the parameter at each value."""
@@ -57,9 +57,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
     _zeta: tuple[float, ...] | float = field(
         alias="zeta",
         converter=lambda x: (
-            None
-            if x is None
-            else cattrs.structure(x, float)
+            cattrs.structure(x, float)
             if isinstance(x, (float, int))
             else cattrs.structure(x, tuple[float, ...])
         ),
@@ -75,13 +73,17 @@ class CategoricalFidelityParameter(DiscreteParameter):
     def _validate_cost_length(  # noqa: DOC101, DOC103
         self, _: Any, value: tuple[float, ...]
     ) -> None:
-        """Validate that ``len(_costs)`` equals ``len(_values)``.
+        """Validate that there is one cost per fidelity parameter.
 
         Raises:
-            ValueError: If ``len(_costs) != len(_values)``.
+            ValueError: If 'costs' and 'values' have different lengths.
         """
         if len(value) != len(self._values):
-            raise ValueError(f"Length of 'costs' and 'values' different in {self.name}")
+            raise ValueError(
+                f"Length of '{fields(type(self))._costs.name}'"
+                f"and '{fields(type(self))._values.name}'"
+                f"different in '{self.name}'."
+            )
 
     @_zeta.validator
     def _validate_zeta(  # noqa: DOC101, DOC103
@@ -98,13 +100,21 @@ class CategoricalFidelityParameter(DiscreteParameter):
             # Jordan MHS TODO: add adaptive_zeta argument
             # Jordan MHS TODO: handle other kinds of discrepancy param
             # Jordan MHS TODO: make zeta optional if above params defined
-            raise ValueError(f"Value 'zeta' undefined in {self.name}")
+            raise ValueError(
+                f"Argument '{fields(type(self))._zeta.name}'undefined in '{self.name}'."
+            )
 
         elif isinstance(value, float):
             if not np.isfinite(value):
-                raise ValueError(f"Parameter 'zeta' is infinite in {self.name}")
+                raise ValueError(
+                    f"Arguemnt '{fields(type(self))._zeta.name}'"
+                    f"is infinite in '{self.name}'."
+                )
             elif value < 0:
-                raise ValueError(f"Parameter 'zeta' is negative in {self.name}")
+                raise ValueError(
+                    f"Parameter '{fields(type(self))._zeta.name}'"
+                    f"is negative in '{self.name}'."
+                )
             else:
                 return
 
@@ -113,12 +123,15 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
             if len(value) != len(self._values):
                 raise ValueError(
-                    f"Tuples 'zeta' and 'values' are different lengths in {self.name}"
+                    f"Tuples '{fields(type(self))._zeta.name}'"
+                    f"and '{fields(type(self))._values.name}' are"
+                    f"different lengths in '{self.name}'."
                 )
 
             if any(np.isinf(value)):
                 raise ValueError(
-                    f"Tuple 'zeta' contains infinite values in {self.name}"
+                    f"Tuple '{fields(type(self))._zeta.name}' contains"
+                    f"infinite values in '{self.name}'."
                 )
 
     @high_fidelity.validator
@@ -127,7 +140,8 @@ class CategoricalFidelityParameter(DiscreteParameter):
     ):
         if target_value not in self._values:
             raise ValueError(
-                f"'high_fidelity' {target_value} is not in 'values' in {self.name}"
+                f"'{fields(type(self)).high_fidelity.name}' {target_value}"
+                f"is not in '{fields(type(self))._values.name}' in '{self.name}'."
             )
 
         target_idx = self._values.index(target_value)
@@ -135,15 +149,18 @@ class CategoricalFidelityParameter(DiscreteParameter):
         if isinstance(self._zeta, tuple):
             if self._zeta[target_idx] != 0:
                 raise ValueError(
-                    f"'high_fidelity' cannot have a 'zeta' value of 0 in the"
-                    f"fidelity parameter {self.name}."
+                    f"'{fields(type(self)).high_fidelity.name}' cannot have a"
+                    f"'{fields(type(self))._zeta.name}' value of '0' in the"
+                    f"fidelity parameter '{self.name}'."
                 )
 
         elif isinstance(self._zeta, float):
             if target_idx != 0:
                 raise ValueError(
-                    f"When specifying scalar 'zeta', 'high_fidelity' must be the first"
-                    f"name in 'values' so it has 'zeta' = 0 in {self.name}."
+                    f"When specifying scalar '{fields(type(self))._zeta.name}',"
+                    f"'{fields(type(self)).high_fidelity.name}' must be the first"
+                    f"name in '{fields(type(self))._values.name}' so it has"
+                    f"'{fields(type(self))._zeta.name} = 0' in '{self.name}'."
                 )
 
     @override
@@ -231,13 +248,16 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     def _validate_cost_length(  # noqa: DOC101, DOC103
         self, _: Any, value: tuple[float, ...]
     ) -> None:
-        """Validate that .
+        """Validate that there is one cost per fidelity parameter.
 
         Raises:
             ValueError: If 'costs' and 'values' have different lengths.
         """
         if len(value) != len(self._values):
-            raise ValueError(f"Length of 'costs' and 'values' different in {self.name}")
+            raise ValueError(
+                f"Length of '{fields(type(self))._costs.name}'"
+                f"and '{fields(type(self))._values.name}' different in '{self.name}'."
+            )
 
     @override
     @property
