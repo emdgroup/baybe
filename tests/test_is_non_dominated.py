@@ -16,9 +16,7 @@ from baybe.parameters import NumericalDiscreteParameter
 @pytest.mark.parametrize(
     ("objective_name", "target_names"),
     [
-        param("pareto", ["Target_max", "Target_max"], id="pareto_max_max"),
         param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
-        param("pareto", ["Target_min", "Target_min"], id="pareto_min_min"),
         param("pareto", ["Target_min", "Target_max"], id="pareto_min_max"),
         param(
             "pareto",
@@ -28,8 +26,8 @@ from baybe.parameters import NumericalDiscreteParameter
         param("single", ["Target_max"], id="single"),
         param(
             "desirability",
-            ["Target_match_triangular", "Target_match_triangular"],
-            id="desirability",
+            ["Target_match_triangular", "Target_min_bounded"],
+            id="desirability_match_min",
         ),
     ],
 )
@@ -96,7 +94,11 @@ def test_incompatibility(campaign, objective, fake_measurements):
     "objective_name, target_names",
     [
         param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
-        param("desirability", ["Target_max", "Target_max"], id="desirability_max_max"),
+        param(
+            "desirability",
+            ["Target_match_triangular", "Target_min_bounded"],
+            id="desirability_max_min_bound",
+        ),
         param("single", ["Target_max"], id="single_max"),
     ],
 )
@@ -150,27 +152,34 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
 @pytest.mark.parametrize(
     "target_names, idx_non_dominated, objective_name",
     [
-        param(["Target_min", "Target_min"], [0], "pareto", id="pareto_min_min"),
+        param(["Target_min_bounded", "Target_min"], [0], "pareto", id="pareto_min_min"),
         param(["Target_max", "Target_min"], [0, 2, 5], "pareto", id="pareto_max_min"),
         param(["Target_min", "Target_max"], [0, 2, 3], "pareto", id="pareto_min_max"),
-        param(["Target_max", "Target_max"], [2], "pareto", id="pareto_max_max"),
+        param(["Target_max_bounded", "Target_max"], [2], "pareto", id="pareto_max_max"),
         param(
-            ["Target_match_bell", "Target_match_bell"],
+            ["Target_match_bell", "Target_match_triangular"],
             [1, 4],
             "pareto",
-            id="pareto_bell_bell",
+            id="pareto_match_bell_trnglr",
         ),
         param(["Target_min"], [0], "single", id="single_min"),
         param(["Target_max"], [2], "single", id="single_max"),
         param(["Target_match_bell"], [1, 4], "single", id="single_bell"),
         param(
-            ["Target_min", "Target_min"], [0], "desirability", id="desirability_min_min"
+            ["Target_min_bounded", "Target_max_bounded"],
+            [
+                3,
+            ],
+            "desirability",
+            id="desirability_min_max",
         ),
         param(
-            ["Target_match_bell", "Target_match_bell"],
-            [1, 4],
+            ["Target_max_bounded", "Target_min_bounded"],
+            [
+                5,
+            ],
             "desirability",
-            id="desirability_bell_bell",
+            id="desirability_max_min",
         ),
     ],
 )
