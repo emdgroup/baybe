@@ -10,33 +10,7 @@ from baybe.exceptions import (
     NoMeasurementsError,
     NothingToComputeError,
 )
-from baybe.objectives import (
-    DesirabilityObjective,
-    ParetoObjective,
-    SingleTargetObjective,
-)
 from baybe.parameters import NumericalDiscreteParameter
-
-
-@pytest.fixture(name="objective_name")
-def fixture_default_objective_name():
-    """The default objective name to be used if not specified differently."""
-    return "single"
-
-
-@pytest.fixture(name="objective")
-def fixture_default_objective(targets, objective_name):
-    """The objective defined by the objective name."""
-    if objective_name is None:
-        return None
-    elif "single" in objective_name.lower() or len(targets) == 1:
-        return SingleTargetObjective(targets[0])
-    elif "pareto" in objective_name.lower() and len(targets) >= 2:
-        return ParetoObjective(targets)
-    elif "desirability" in objective_name.lower() and len(targets) >= 2:
-        return DesirabilityObjective(targets)
-    else:
-        return SingleTargetObjective(targets[0])
 
 
 @pytest.mark.parametrize(
