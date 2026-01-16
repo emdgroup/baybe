@@ -10,6 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -68,6 +69,16 @@ class _ModelContext:
         import torch
 
         return torch.from_numpy(self.searchspace.scaling_bounds.values)
+
+    @property
+    def transfer_mode(self) -> TransferMode | None:
+        """Get the transfer learning mode of the task parameter, if available."""
+        return self.searchspace.transfer_mode
+
+    @property
+    def target_task_idxs(self) -> list[int] | None:
+        """Determine target task index for PositiveIndexKernel normalization."""
+        return self.searchspace.target_task_idxs
 
     def get_numerical_indices(self, n_inputs: int) -> tuple[int, ...]:
         """Get the indices of the regular numerical model inputs."""
@@ -181,7 +192,17 @@ class GaussianProcessSurrogate(Surrogate):
         # create GP covariance
         if not context.is_multitask:
             covar_module = base_covar_module
-        else:
+        elif context.transfer_mode == TransferMode.JOINT_POS:
+            task_covar_module = (
+                botorch.models.kernels.positive_index.PositiveIndexKernel(
+                    num_tasks=context.n_tasks,
+                    active_dims=context.task_idx,
+                    rank=context.n_tasks,  # TODO: make controllable
+                    target_task_index=context.target_task_idxs[0],
+                )
+            )
+            covar_module = base_covar_module * task_covar_module
+        elif context.transfer_mode == TransferMode.JOINT:
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,
