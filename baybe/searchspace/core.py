@@ -15,6 +15,7 @@ from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -278,6 +279,45 @@ class SearchSpace(SerialMixin):
         # When there are no task parameters, we effectively have a single task
         except StopIteration:
             return 1
+
+    @property
+    def target_task_idxs(self) -> list[int] | None:
+        """The indices of the target tasks in the computational representation.
+
+        Returns a list of integer indices corresponding to each active value in the
+        TaskParameter. Returns None when there are no task parameters.
+        """
+        # TODO [16932]: This approach only works for a single task parameter.
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+            comp_df = task_param.comp_df
+
+            # Extract computational representation indices for all active values
+            target_task_idxs = [
+                int(comp_df.loc[active_value].iloc[0])
+                for active_value in task_param.active_values
+            ]
+            return target_task_idxs
+
+        # When there are no task parameters, return None
+        except StopIteration:
+            return None
+
+    @property
+    def task_correlation(self) -> TaskCorrelation | None:
+        """The task correlation mode for this searchspace."""
+        # TODO [16932]: This approach only works for a single task parameter.
+        try:
+            task_param = next(
+                p for p in self.parameters if isinstance(p, TaskParameter)
+            )
+            return task_param.task_correlation
+
+        # When there are no task parameters, we return None
+        except StopIteration:
+            return None
 
     def get_comp_rep_parameter_indices(self, name: str, /) -> tuple[int, ...]:
         """Find a parameter's column indices in the computational representation.
