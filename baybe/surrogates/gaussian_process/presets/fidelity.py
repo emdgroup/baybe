@@ -10,7 +10,7 @@ from typing_extensions import override
 
 from baybe.kernels.basic import IndexKernel
 from baybe.surrogates.gaussian_process.kernel_factory import (
-    DefaultFidelityKernelFactory,
+    DiscreteFidelityKernelFactory,
 )
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 @define
-class IndependentFidelityKernelFactory(DefaultFidelityKernelFactory):
+class IndependentFidelityKernelFactory(DiscreteFidelityKernelFactory):
     """Rank 0 index kernel treating fidelities as independent."""
 
     @override
@@ -35,7 +35,7 @@ class IndependentFidelityKernelFactory(DefaultFidelityKernelFactory):
 
 
 @define
-class IndexFidelityKernelFactory(DefaultFidelityKernelFactory):
+class IndexFidelityKernelFactory(DiscreteFidelityKernelFactory):
     """Full rank index kernel modelling dependent fidelities."""
 
     @override
