@@ -82,7 +82,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
             results.append(fld)
             continue
 
-        # We use a factory here because the environment variables should be lookup up
+        # We use a factory here because the environment variables should be looked up
         # at instantiation time, not at class definition time
         def make_default_factory(fld: Attribute) -> Any:
             # TODO: https://github.com/python-attrs/attrs/issues/1479
