@@ -11,6 +11,7 @@ from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
     validate_contains_one,
     validate_is_finite,
@@ -22,6 +23,9 @@ from baybe.utils.numerical import DTypeFloatNumpy
 @define(frozen=True, slots=False)
 class CategoricalFidelityParameter(DiscreteParameter):
     """Parameter class for categorical fidelity parameters."""
+
+    encoding: CategoricalEncoding = field(init=False, default=CategoricalEncoding.INT)
+    # See base class.
 
     _values: tuple[str, ...] = field(
         alias="values",
@@ -44,7 +48,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
     )
     """The costs associated with querying the parameter at each value."""
 
-    high_fidelity: str = field(
+    highest_fidelity: str = field(
         converter=str,
         default=None,
     )
@@ -134,13 +138,13 @@ class CategoricalFidelityParameter(DiscreteParameter):
                     f"infinite values in '{self.name}'."
                 )
 
-    @high_fidelity.validator
-    def _validate_high_fidelity(  # noqa: DOC101, DOC103
+    @highest_fidelity.validator
+    def _validate_highest_fidelity(  # noqa: DOC101, DOC103
         self, _: Any, target_value: str
     ):
         if target_value not in self._values:
             raise ValueError(
-                f"'{fields(type(self)).high_fidelity.name}' {target_value}"
+                f"'{fields(type(self)).highest_fidelity.name}' {target_value}"
                 f"is not in '{fields(type(self))._values.name}' in '{self.name}'."
             )
 
@@ -149,7 +153,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
         if isinstance(self._zeta, tuple):
             if self._zeta[target_idx] != 0:
                 raise ValueError(
-                    f"'{fields(type(self)).high_fidelity.name}' cannot have a"
+                    f"'{fields(type(self)).highest_fidelity.name}' cannot have a"
                     f"'{fields(type(self))._zeta.name}' value of '0' in the"
                     f"fidelity parameter '{self.name}'."
                 )
@@ -158,7 +162,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
             if target_idx != 0:
                 raise ValueError(
                     f"When specifying scalar '{fields(type(self))._zeta.name}',"
-                    f"'{fields(type(self)).high_fidelity.name}' must be the first"
+                    f"'{fields(type(self)).highest_fidelity.name}' must be the first"
                     f"name in '{fields(type(self))._values.name}' so it has"
                     f"'{fields(type(self))._zeta.name} = 0' in '{self.name}'."
                 )
@@ -204,9 +208,9 @@ class CategoricalFidelityParameter(DiscreteParameter):
         return comp_df
 
     @property
-    def high_fidelity_comp(self) -> int:
+    def highest_fidelity_comp(self) -> int:
         """Integer encoding value of the target fidelity."""
-        return cast(int, self.comp_df.loc[self.high_fidelity, self.name])
+        return cast(int, self.comp_df.loc[self.highest_fidelity, self.name])
 
 
 @define(frozen=True, slots=False)
