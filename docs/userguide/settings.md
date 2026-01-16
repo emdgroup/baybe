@@ -11,8 +11,8 @@ The following settings are available:
 
 | Setting | Description |
 |--------:|-------------|
-| {attr}`~baybe.settings.Settings.cache_campaign_recommendations` | Controls if {class}`~baybe.campaign.Campaign` objects cache their latest recommendation to avoid unnecessary re-computation in case of unchanged recommendation context. |
-| {attr}`~baybe.settings.Settings.cache_directory` | The directory used for persistent caching on disk. |
+| {attr}`~baybe.settings.Settings.cache_campaign_recommendations` | Controls if {class}`~baybe.campaign.Campaign` objects cache their latest set of recommendations. |
+| {attr}`~baybe.settings.Settings.cache_directory` | The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching. |
 | {attr}`~baybe.settings.Settings.parallelize_simulation_runs` | Controls if simulation runs with [`xyzpy`](https://xyzpy.readthedocs.io/) are executed in parallel. |
 | {attr}`~baybe.settings.Settings.preprocess_dataframes` | Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use. |
 | {attr}`~baybe.settings.Settings.random_seed` | The used random seed. |

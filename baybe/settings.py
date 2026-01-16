@@ -211,15 +211,14 @@ class Settings(_SlottedContextDecorator):
     cache_campaign_recommendations: bool = field(
         default=True, validator=instance_of(bool)
     )
-    """Controls if :class:`~baybe.campaign.Campaign` objects cache their latest
-    recommendations to avoid unnecessary re-computation in case of
-    unchanged recommendation context."""
+    """Controls if :class:`~baybe.campaign.Campaign` objects cache their latest set of
+    recommendations."""
 
     cache_directory: Path | None = field(
         default=Path(tempfile.gettempdir()) / ".baybe_cache",
         converter=Converter(_convert_cache_directory, takes_field=True),  # type: ignore[misc]
     )
-    """The directory used for persistent caching on disk. Set to "" or ``None`` to disable caching."""  # noqa: E501
+    """The directory used for persistent caching on disk. Set to ``""`` or ``None`` to disable caching."""  # noqa: E501
 
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
@@ -249,10 +248,10 @@ class Settings(_SlottedContextDecorator):
     """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
 
     use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
-    """The floating point precision used for `numpy <https://numpy.org/>`_ arrays."""
+    """Controls the floating point precision used for `numpy <https://numpy.org/>`_ arrays."""  # noqa: E501
 
     use_single_precision_torch: bool = field(default=False, validator=instance_of(bool))
-    """The floating point precision used for `torch <https://pytorch.org/>`_ tensors."""
+    """Controls the floating point precision used for `torch <https://pytorch.org/>`_ tensors."""  # noqa: E501
 
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
