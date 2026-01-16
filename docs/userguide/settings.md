@@ -27,7 +27,9 @@ For more information, click on the respective link or have a look at the
 ## Changing Settings
 
 BayBE offers flexible control over its settings, allowing you to adjust them in
-different ways, adapted to your specific needs and use cases.
+different ways, adapted to your specific needs and use cases. If you want to understand
+the underlying mechanism in detail, have a look [here](#activation-logic). Otherwise,
+simply choose the most suitable option from the following alternatives:
  
 ### Direct Assignment
 You can change any specific setting by directly assigning a new value to the
@@ -106,6 +108,7 @@ fast_and_furious.restore_previous()
 assert active_settings.preprocess_dataframes is True
 ```
 
+(RESTORING_SETTINGS)=
 ```{admonition} Restoring Previous Settings
 :class: important
 
@@ -186,6 +189,33 @@ falling back to defaults, which is controlled via the `restore_environment` flag
 further details on how they interact with other value sources and how they affect the
 initialization of the {data}`~baybe.settings.active_settings` at startup time, have a
 look at our [initialization precedence](#initialization-precedence) section.
+
+
+## Activation Logic
+The activation of settings follows two simple rules that allow you to understand the
+implications of modifying {class}`~baybe.settings.Settings` objects:
+1. When executing code, BayBE always reads the current value of settings from the
+   {data}`~baybe.settings.active_settings` object, meaning that any changes to this
+   object immediately take effect.
+2. An {meth}`~baybe.settings.Settings.activate` call on a
+   {class}`~baybe.settings.Settings` object copies its attribute values to those of the
+   global {data}`~baybe.settings.active_settings` object and stores a copy of the
+   previously active values in the object on which the call was made. 
+
+This explains, for instance, why:
+* Direct assignments to attributes of {data}`~baybe.settings.active_settings` take
+  immediate global effect.
+* Calling {meth}`~baybe.settings.Settings.activate` on a
+  {class}`~baybe.settings.Settings` object is equivalent to [directly
+  assigning](#direct-assignment) all of its attribute values to the
+  {data}`~baybe.settings.active_settings` object one by one.
+* Adjusting the attribute of any {class}`~baybe.settings.Settings` object other than
+  {data}`~baybe.settings.active_settings` has no immediate effect on the 
+  global settings until its {meth}`~baybe.settings.Settings.activate` method is called,
+  no matter if it has been activated before or not.
+* You can [restore](#restoring_settings) the settings that were active previous to an 
+  {meth}`~baybe.settings.Settings.activate` call using the
+  {meth}`~baybe.settings.Settings.restore_previous` method. 
 
 
 ## Inspecting Settings
