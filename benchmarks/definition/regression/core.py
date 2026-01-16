@@ -108,10 +108,6 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
     return rho
 
 
-# Transfer learning modes to evaluate (no longer need TL_MODELS dict)
-# Dispatching now happens automatically via TaskCorrelation in searchspace
-
-
 # Regression metrics to evaluate model performance
 REGRESSION_METRICS = {
     root_mean_squared_error,
@@ -245,7 +241,7 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
-            # IndexKernel on full search space
+            # IndexKernel on full search space, no source data
             metrics = _evaluate_model(
                 GaussianProcessSurrogate(),
                 target_train,
@@ -265,7 +261,7 @@ def run_tl_regression_benchmark(
             result.update(metrics)
             results.append(result)
 
-            # PositiveIndexKernel on full search space
+            # PositiveIndexKernel on full search space, no source data
             metrics = _evaluate_model(
                 GaussianProcessSurrogate(),
                 target_train,
@@ -308,7 +304,7 @@ def run_tl_regression_benchmark(
 
                 combined_data = pd.concat([source_subset, target_train])
 
-                # Evaluate IndexKernel (JOINT mode)
+                # Evaluate IndexKernel
                 scenario_name = f"{int(100 * fraction_source)}_index"
                 metrics = _evaluate_model(
                     GaussianProcessSurrogate(),
@@ -329,7 +325,7 @@ def run_tl_regression_benchmark(
                 result.update(metrics)
                 results.append(result)
 
-                # Evaluate PositiveIndexKernel (JOINT_POS mode)
+                # Evaluate PositiveIndexKernel
                 scenario_name = f"{int(100 * fraction_source)}_pos_index"
                 metrics = _evaluate_model(
                     GaussianProcessSurrogate(),
