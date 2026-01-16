@@ -212,7 +212,7 @@ class Settings(_SlottedContextDecorator):
         default=True, validator=instance_of(bool)
     )
     """Controls if :class:`~baybe.campaign.Campaign` objects cache their latest
-    recommendation to avoid unnecessary re-computation in case of
+    recommendations to avoid unnecessary re-computation in case of
     unchanged recommendation context."""
 
     cache_directory: Path | None = field(
