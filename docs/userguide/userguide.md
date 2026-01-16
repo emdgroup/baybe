@@ -35,13 +35,13 @@ Campaigns <campaigns>
 Active Learning <active_learning>
 Asynchronous Workflows <async>
 Constraints <constraints>
-Environment Vars <envvars>
 Insights <insights>
 Objectives <objectives>
 Parameters <parameters>
 Recommenders <recommenders>
 Search Spaces <searchspace>
 Serialization <serialization>
+Settings <settings>
 Simulation <simulation>
 Surrogates <surrogates>
 Targets <targets>

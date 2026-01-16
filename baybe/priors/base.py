@@ -6,6 +6,7 @@ from abc import ABC
 from attrs import define
 
 from baybe.serialization.mixin import SerialMixin
+from baybe.settings import active_settings
 from baybe.utils.basic import match_attributes
 
 
@@ -18,12 +19,10 @@ class Prior(ABC, SerialMixin):
         import gpytorch.priors
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         # TODO: This is only a temporary workaround. A proper solution requires
         #   modifying the torch import procedure using the built-in tools of importlib
         #   so that the dtype is set whenever torch is lazily loaded.
-        torch.set_default_dtype(DTypeFloatTorch)
+        torch.set_default_dtype(active_settings.DTypeFloatTorch)
 
         prior_cls = getattr(gpytorch.priors, self.__class__.__name__)
         fields_dict = match_attributes(self, prior_cls.__init__)[0]

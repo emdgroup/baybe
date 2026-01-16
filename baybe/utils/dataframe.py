@@ -13,7 +13,7 @@ from typing_extensions import assert_never
 
 from baybe.exceptions import InputDataTypeWarning, SearchSpaceMatchWarning
 from baybe.parameters.base import Parameter
-from baybe.utils.numerical import DTypeFloatNumpy
+from baybe.settings import active_settings
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -49,14 +49,14 @@ def to_tensor(*x: _ConvertibleToTensor) -> Tensor | tuple[Tensor, ...]:
     """
     import torch
 
-    from baybe.utils.torch import DTypeFloatTorch, torch_to_numpy_dtype_mapping
+    from baybe.utils.torch import torch_to_numpy_dtype_mapping
 
-    numpy_dtype = torch_to_numpy_dtype_mapping[DTypeFloatTorch]
+    numpy_dtype = torch_to_numpy_dtype_mapping[active_settings.DTypeFloatTorch]
 
     def _convert(x: _ConvertibleToTensor, /) -> Tensor:
         match x:
             case int() | float():
-                return torch.tensor(x, dtype=DTypeFloatTorch)
+                return torch.tensor(x, dtype=active_settings.DTypeFloatTorch)
             case np.ndarray():
                 # tensors with negative strides are not supported by PyTorch
                 fix_strides = any(s < 0 for s in x.strides)
@@ -700,10 +700,6 @@ def arrays_to_dataframes(
     return decorator
 
 
-class _ValidatedDataFrame(pd.DataFrame):
-    """Wrapper indicating the underlying experimental data was already validated."""
-
-
 def handle_missing_values(
     data: pd.DataFrame, columns: Collection[str], drop: bool = False
 ) -> pd.DataFrame:
@@ -733,7 +729,9 @@ def handle_missing_values(
     return data.loc[~mask]
 
 
-def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.DataFrame:
+def normalize_input_dtypes(
+    df: pd.DataFrame, objects: Iterable[Parameter | Target], /
+) -> pd.DataFrame:
     """Ensure that the input dataframe has the expected dtypes for all columns.
 
     Args:
@@ -774,5 +772,5 @@ def normalize_input_dtypes(df: pd.DataFrame, objects: Iterable[_T], /) -> pd.Dat
     )
     df = df.copy()
     for col in wrong_cols:
-        df[col] = df[col].astype(DTypeFloatNumpy)
+        df[col] = df[col].astype(active_settings.DTypeFloatNumpy)
     return df

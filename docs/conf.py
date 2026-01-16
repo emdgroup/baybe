@@ -110,7 +110,6 @@ nitpick_ignore_regex = [
     # Ignore everything that does not include baybe
     (r"py:.*", r"^(?!.*baybe).*"),
     # Ignore errors that are from inherited classes we cannot control
-    (r"py:.*", r".*DTypeFloatNumpy.*"),
     (r"py:.*", r".*DTypeFloatONNX.*"),
     # Ignore the functions that we manually delete from in child classes
     (r"py:.*", r".*from_dict.*"),
@@ -143,11 +142,12 @@ nitpick_ignore_regex = [
     ("ref", "k_medoids"),
     # Other
     (r"py:obj", "baybe.utils.basic.UnspecifiedType.UNSPECIFIED"),
-    (r"py:obj", "baybe.utils.basic.UncertainBool.*"),
+    (r"py:obj", "baybe.utils.boolean.UncertainBool.*"),
     ("py:obj", "baybe.targets.botorch.*"),
     ("py:obj", "baybe.objectives.botorch.*"),
     ("py:class", "baybe.parameters.base._DiscreteLabelLikeParameter"),
     ("py:class", "baybe.acquisition.acqfs._ExpectedHypervolumeImprovement"),
+    ("py:class", "baybe.settings._SlottedContextDecorator"),
     # Deprecation
     ("py:.*", "baybe.targets._deprecated.*"),
 ]
