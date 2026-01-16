@@ -18,11 +18,11 @@ from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-class TransferMode(Enum):
-    """Transfer learning modes for TaskParameter."""
+class TaskCorrelation(Enum):
+    """Task correlation modes for TaskParameter."""
 
-    JOINT = "joint"
-    JOINT_POS = "joint_pos"
+    UNKNOWN = "unknown"
+    POSITIVE = "positive"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -96,27 +96,27 @@ class TaskParameter(CategoricalParameter):
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
 
-    transfer_mode: TransferMode = field(default=TransferMode.JOINT_POS)
-    """Transfer learning mode. Defaults to transfer via PositiveIndexKernel."""
+    task_correlation: TaskCorrelation = field(default=TaskCorrelation.POSITIVE)
+    """Task correlation. Defaults to positive correlation via PositiveIndexKernel."""
 
-    @transfer_mode.validator
-    def _validate_transfer_mode_active_values(  # noqa: DOC101, DOC103
-        self, _: Any, value: TransferMode
+    @task_correlation.validator
+    def _validate_task_correlation_active_values(  # noqa: DOC101, DOC103
+        self, _: Any, value: TaskCorrelation
     ) -> None:
-        """Validate active values compatibility with transfer mode.
+        """Validate active values compatibility with task correlation mode.
 
         Raises:
-            ValueError: If transfer_mode is JOINT_POS but active_values contains more
+            ValueError: If task_correlation is POSITIVE but active_values contains more
                 than one value.
         """
-        # Check JOINT_POS constraint: must have exactly one active value
+        # Check POSITIVE constraint: must have exactly one active value
         # Note: _active_values is the internal field, could be None
-        if value == TransferMode.JOINT_POS and self._active_values is not None:
+        if value == TaskCorrelation.POSITIVE and self._active_values is not None:
             if len(self._active_values) > 1:
                 raise ValueError(
-                    f"Transfer mode '{TransferMode.JOINT_POS.value}' requires exactly "
+                    f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
                     f"one active value, but {len(self._active_values)} were provided: "
-                    f"{self._active_values}. The JOINT_POS mode uses the "
+                    f"{self._active_values}. The POSITIVE mode uses the "
                     f"PositiveIndexKernel which assumes a single target task."
                 )
 

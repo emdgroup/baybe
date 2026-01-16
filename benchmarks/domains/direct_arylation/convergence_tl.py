@@ -15,7 +15,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -42,14 +42,14 @@ def load_data() -> pd.DataFrame:
 def make_searchspace(
     data: pd.DataFrame,
     use_task_parameter: bool,
-    transfer_mode: TransferMode = TransferMode.JOINT,
+    task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
 ) -> SearchSpace:
     """Create the search space for the benchmark.
 
     Args:
         data: The benchmark data.
         use_task_parameter: Whether to include a task parameter.
-        transfer_mode: The transfer learning mode (JOINT or JOINT_POS).
+        task_correlation: The task correlation mode (UNKNOWN or POSITIVE).
 
     Returns:
         The configured search space.
@@ -73,7 +73,7 @@ def make_searchspace(
                 name="Temp_C",
                 values=["90", "105", "120"],
                 active_values=["105"],
-                transfer_mode=transfer_mode,
+                task_correlation=task_correlation,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -133,12 +133,12 @@ def direct_arylation_tl_temperature(
     tl_index_searchspace = make_searchspace(
         data=data,
         use_task_parameter=True,
-        transfer_mode=TransferMode.JOINT,
+        task_correlation=TaskCorrelation.UNKNOWN,
     )
     tl_pos_index_searchspace = make_searchspace(
         data=data,
         use_task_parameter=True,
-        transfer_mode=TransferMode.JOINT_POS,
+        task_correlation=TaskCorrelation.POSITIVE,
     )
     searchspace_nontl = make_searchspace(
         data=data,

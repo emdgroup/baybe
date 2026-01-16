@@ -6,7 +6,7 @@ from collections.abc import Sequence
 
 import pandas as pd
 
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from benchmarks.definition import (
     TransferLearningRegressionBenchmark,
     TransferLearningRegressionBenchmarkSettings,
@@ -62,14 +62,14 @@ def _aryl_halide_tl_regr(
     def make_searchspace_wrapper(
         data: pd.DataFrame,
         use_task_parameter: bool,
-        transfer_mode: TransferMode = TransferMode.JOINT,
+        task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
     ):
         if use_task_parameter:
             return make_searchspace(
                 data=data,
                 source_tasks=source_tasks,
                 target_tasks=target_tasks,
-                transfer_mode=transfer_mode,
+                task_correlation=task_correlation,
             )
         else:
             return make_searchspace(data=data)

@@ -10,7 +10,7 @@ from attrs.validators import instance_of
 from typing_extensions import override
 
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate
 from baybe.surrogates.gaussian_process.kernel_factory import (
@@ -71,9 +71,9 @@ class _ModelContext:
         return torch.from_numpy(self.searchspace.scaling_bounds.values)
 
     @property
-    def transfer_mode(self) -> TransferMode | None:
-        """Get the transfer learning mode of the task parameter, if available."""
-        return self.searchspace.transfer_mode
+    def task_correlation(self) -> TaskCorrelation | None:
+        """Get the task correlation mode of the task parameter, if available."""
+        return self.searchspace.task_correlation
 
     @property
     def target_task_idxs(self) -> list[int] | None:
@@ -192,7 +192,7 @@ class GaussianProcessSurrogate(Surrogate):
         # create GP covariance
         if not context.is_multitask:
             covar_module = base_covar_module
-        elif context.transfer_mode == TransferMode.JOINT_POS:
+        elif context.task_correlation == TaskCorrelation.POSITIVE:
             task_covar_module = (
                 botorch.models.kernels.positive_index.PositiveIndexKernel(
                     num_tasks=context.n_tasks,
@@ -202,7 +202,7 @@ class GaussianProcessSurrogate(Surrogate):
                 )
             )
             covar_module = base_covar_module * task_covar_module
-        elif context.transfer_mode == TransferMode.JOINT:
+        elif context.task_correlation == TaskCorrelation.UNKNOWN:
             task_covar_module = gpytorch.kernels.IndexKernel(
                 num_tasks=context.n_tasks,
                 active_dims=context.task_idx,

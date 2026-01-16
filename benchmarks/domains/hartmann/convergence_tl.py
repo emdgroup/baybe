@@ -11,7 +11,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -67,13 +67,13 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
-        transfer_mode=TransferMode.JOINT,
+        task_correlation=TaskCorrelation.UNKNOWN,
     )
     task_param_pos_index = TaskParameter(
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
-        transfer_mode=TransferMode.JOINT_POS,
+        task_correlation=TaskCorrelation.POSITIVE,
     )
     params_tl_index = params + [task_param_index]
     params_tl_pos_index = params + [task_param_pos_index]

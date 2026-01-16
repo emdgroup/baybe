@@ -18,7 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -49,7 +49,7 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
-    transfer_mode: TransferMode = TransferMode.JOINT,
+    task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
 ) -> SearchSpace:
     """Create the search space for the benchmark.
 
@@ -57,7 +57,7 @@ def make_searchspace(
         data: The benchmark data.
         target_tasks: The target tasks for transfer learning.
         source_tasks: The source tasks for transfer learning.
-        transfer_mode: The transfer learning mode (JOINT or JOINT_POS).
+        task_correlation: The task correlation mode (UNKNOWN or POSITIVE).
 
     Returns:
         The configured search space.
@@ -77,7 +77,7 @@ def make_searchspace(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
-                transfer_mode=transfer_mode,
+                task_correlation=task_correlation,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -125,13 +125,13 @@ def aryl_halide_tl_substance_benchmark(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
-        transfer_mode=TransferMode.JOINT,
+        task_correlation=TaskCorrelation.UNKNOWN,
     )
     searchspace_tl_pos_index = make_searchspace(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
-        transfer_mode=TransferMode.JOINT_POS,
+        task_correlation=TaskCorrelation.POSITIVE,
     )
     searchspace_nontl = make_searchspace(data=data)
 

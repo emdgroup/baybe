@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import TaskParameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from benchmarks.definition import TransferLearningRegressionBenchmarkSettings
@@ -44,7 +44,7 @@ class SearchSpaceFactory(Protocol):
         self,
         data: pd.DataFrame,
         use_task_parameter: bool,
-        transfer_mode: TransferMode = TransferMode.JOINT,
+        task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
     ) -> SearchSpace:
         """Create a SearchSpace for regression benchmark evaluation.
 
@@ -54,7 +54,7 @@ class SearchSpaceFactory(Protocol):
                 scenarios. If True, creates search space with TaskParameter for
                 TL models. If False, creates vanilla search space without
                 task parameter.
-            transfer_mode: The transfer learning mode (JOINT or JOINT_POS).
+            task_correlation: The task correlation mode (UNKNOWN or POSITIVE).
                 Only used when use_task_parameter is True.
 
         Returns:
@@ -109,7 +109,7 @@ def spearman_rho_score(x: np.ndarray, y: np.ndarray, /) -> float:
 
 
 # Transfer learning modes to evaluate (no longer need TL_MODELS dict)
-# Dispatching now happens automatically via TransferMode in searchspace
+# Dispatching now happens automatically via TaskCorrelation in searchspace
 
 
 # Regression metrics to evaluate model performance
@@ -169,10 +169,10 @@ def run_tl_regression_benchmark(
 
     # Create transfer learning search spaces (with task parameter)
     tl_index_searchspace = searchspace_factory(
-        data=data, use_task_parameter=True, transfer_mode=TransferMode.JOINT
+        data=data, use_task_parameter=True, task_correlation=TaskCorrelation.UNKNOWN
     )
     tl_pos_index_searchspace = searchspace_factory(
-        data=data, use_task_parameter=True, transfer_mode=TransferMode.JOINT_POS
+        data=data, use_task_parameter=True, task_correlation=TaskCorrelation.POSITIVE
     )
 
     # Extract task parameter details (use index searchspace as reference)

@@ -15,7 +15,7 @@ from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import Parameter
-from baybe.parameters.categorical import TransferMode
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.discrete import (
     MemorySize,
@@ -306,14 +306,14 @@ class SearchSpace(SerialMixin):
             return None
 
     @property
-    def transfer_mode(self) -> TransferMode | None:
-        """The transfer learning mode for this searchspace."""
+    def task_correlation(self) -> TaskCorrelation | None:
+        """The task correlation mode for this searchspace."""
         # TODO [16932]: This approach only works for a single task parameter.
         try:
             task_param = next(
                 p for p in self.parameters if isinstance(p, TaskParameter)
             )
-            return task_param.transfer_mode
+            return task_param.task_correlation
 
         # When there are no task parameters, we return None
         except StopIteration:
