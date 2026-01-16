@@ -19,6 +19,7 @@ from baybe.utils.dataframe import (
     handle_missing_values as df_handle_missing_values,
 )
 from baybe.utils.metadata import Metadata, to_metadata
+from baybe.utils.validation import validate_target_input
 
 if TYPE_CHECKING:
     from botorch.acquisition.objective import MCAcquisitionObjective, PosteriorTransform
@@ -252,6 +253,40 @@ class Objective(ABC, SerialMixin):
         return pd.DataFrame(
             transformed.numpy(), columns=self.output_names, index=df.index
         )
+
+    def identify_non_dominated_configurations(
+        self, configurations: pd.DataFrame
+    ) -> pd.Series:
+        """Create a boolean mask indicating the non-dominated configurations.
+
+        While the concept of dominated points originates from Pareto optimization, it
+        can also be generalized to non-Pareto objectives. In these cases, we define
+        non-dominated points as the optimal point(s) according to the objective's logic,
+        which recovers the Pareto sense for objectives that rank points according to a
+        single value.
+
+        In case of duplicated non-dominated points, returns both duplicates as
+        non-dominated.
+
+        Possible validation exceptions are documented in
+        :func:`baybe.utils.validation.validate_target_input`.
+
+        Args:
+            configurations: The configurations for which the non-dominated points will
+                be identified.
+
+        Returns:
+            A series of boolean values indicating whether the corresponding
+                point is non-dominated.
+        """
+        from botorch.utils.multi_objective.pareto import is_non_dominated
+
+        validate_target_input(configurations, self.targets)
+
+        targets = self.transform(configurations, allow_extra=True)
+        non_dominated = is_non_dominated(Y=to_tensor(targets), deduplicate=False)
+
+        return pd.Series(non_dominated.numpy(), name="is_non_dominated")
 
 
 def to_objective(x: Target | Objective, /) -> Objective:
