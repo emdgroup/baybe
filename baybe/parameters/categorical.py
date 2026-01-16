@@ -1,6 +1,7 @@
 """Categorical parameters."""
 
 import gc
+from enum import Enum
 from functools import cached_property
 
 import numpy as np
@@ -14,6 +15,13 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
+
+
+class TransferMode(Enum):
+    """Transfer learning modes for TaskParameter."""
+
+    JOINT = "joint"
+    JOINT_POS = "joint_pos"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -86,6 +94,9 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
+
+    transfer_mode: TransferMode = field(default=TransferMode.JOINT_POS)
+    """Transfer learning mode. Defaults to transfer via PositiveIndexKernel."""
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
