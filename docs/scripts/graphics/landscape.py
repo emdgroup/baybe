@@ -32,37 +32,42 @@ X, Y = np.meshgrid(x, y)
 Z = chebfun2(X, Y)
 
 # 3D plot
-fig = plt.figure(figsize=(10, 8))
+fig = plt.figure(figsize=(2.5, 2))
 ax = fig.add_subplot(111, projection="3d")
 fancy_cmap = LinearSegmentedColormap.from_list("fancy_logo", COLORS, N=N_COLOR_BINS)
-surf = ax.plot_surface(X, Y, Z, cmap=fancy_cmap, edgecolor="k", linewidth=0.1)
+surf = ax.plot_surface(X, Y, Z, cmap=fancy_cmap, edgecolor="k", linewidth=0.03)
 ax.view_init(elev=20, azim=-120)
 ax.set_box_aspect([1, 1, 0.5])
 
-# Remove tick marks
-ax.set_xticks([])
-ax.set_yticks([])
-ax.set_zticks([])
+# Option used for figure without axes
+plt.axis("off")
 
-# Make axis lines light gray
-ax.xaxis.line.set_color("gray")
-ax.yaxis.line.set_color("gray")
-ax.zaxis.line.set_color("gray")
+# Options used for figure with line-only axes
 
-# Set axis line width
-ax.xaxis.line.set_linewidth(5)
-ax.yaxis.line.set_linewidth(5)
-ax.zaxis.line.set_linewidth(5)
-
-# Set axis line caps to round
-ax.xaxis.line.set_solid_capstyle("round")
-ax.yaxis.line.set_solid_capstyle("round")
-ax.zaxis.line.set_solid_capstyle("round")
-
-# Set pane alpha to 0 to make them transparent
-ax.xaxis.pane.set_alpha(0)
-ax.yaxis.pane.set_alpha(0)
-ax.zaxis.pane.set_alpha(0)
+# # Remove tick marks
+# ax.set_xticks([])
+# ax.set_yticks([])
+# ax.set_zticks([])
+#
+# # Make axis lines light gray
+# ax.xaxis.line.set_color("gray")
+# ax.yaxis.line.set_color("gray")
+# ax.zaxis.line.set_color("gray")
+#
+# # Set axis line width
+# ax.xaxis.line.set_linewidth(5)
+# ax.yaxis.line.set_linewidth(5)
+# ax.zaxis.line.set_linewidth(5)
+#
+# # Set axis line caps to round
+# ax.xaxis.line.set_solid_capstyle("round")
+# ax.yaxis.line.set_solid_capstyle("round")
+# ax.zaxis.line.set_solid_capstyle("round")
+#
+# # Set pane alpha to 0 to make them transparent
+# ax.xaxis.pane.set_alpha(0)
+# ax.yaxis.pane.set_alpha(0)
+# ax.zaxis.pane.set_alpha(0)
 
 plt.tight_layout()
-plt.savefig("landscape.svg", transparent=True)
+plt.savefig("landscape.png", transparent=True, dpi=300, bbox_inches="tight")
