@@ -278,7 +278,9 @@ class GaussianProcessSurrogateSTMF(Surrogate):
             train_y,
             input_transform=input_transform,
             outcome_transform=outcome_transform,
-            data_fidelities=[context.fidelity_idx],
+            data_fidelities=None
+            if context.fidelity_idx is None
+            else (context.fidelity_idx,),
         )
 
         mll = gpytorch.ExactMarginalLogLikelihood(self._model.likelihood, self._model)
