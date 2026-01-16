@@ -3,6 +3,7 @@
 import gc
 from enum import Enum
 from functools import cached_property
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -97,6 +98,27 @@ class TaskParameter(CategoricalParameter):
 
     transfer_mode: TransferMode = field(default=TransferMode.JOINT_POS)
     """Transfer learning mode. Defaults to transfer via PositiveIndexKernel."""
+
+    @transfer_mode.validator
+    def _validate_transfer_mode_active_values(  # noqa: DOC101, DOC103
+        self, _: Any, value: TransferMode
+    ) -> None:
+        """Validate active values compatibility with transfer mode.
+
+        Raises:
+            ValueError: If transfer_mode is JOINT_POS but active_values contains more
+                than one value.
+        """
+        # Check JOINT_POS constraint: must have exactly one active value
+        # Note: _active_values is the internal field, could be None
+        if value == TransferMode.JOINT_POS and self._active_values is not None:
+            if len(self._active_values) > 1:
+                raise ValueError(
+                    f"Transfer mode '{TransferMode.JOINT_POS.value}' requires exactly "
+                    f"one active value, but {len(self._active_values)} were provided: "
+                    f"{self._active_values}. The JOINT_POS mode uses the "
+                    f"PositiveIndexKernel which assumes a single target task."
+                )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
