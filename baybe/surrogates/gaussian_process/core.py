@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 
+# TODO Jordan MHS: _ModelContext is used by fidelity surrogate models now so may deserve
+# its own file.
 @define
 class _ModelContext:
     """Model context for :class:`GaussianProcessSurrogate`."""
@@ -61,6 +63,27 @@ class _ModelContext:
     def n_tasks(self) -> int:
         """The number of tasks."""
         return self.searchspace.n_tasks
+
+    @property
+    def n_fidelity_dimensions(self) -> int:
+        """The number of fidelity dimensions."""
+        # Possible TODO: Generalize to multiple fidelity dimensions
+        return 1 if self.searchspace.fidelity_idx is not None else 0
+
+    @property
+    def is_multi_fidelity(self) -> bool:
+        """Are there any fidelity dimensions?"""
+        return self.n_fidelity_dimensions > 0
+
+    @property
+    def fidelity_idx(self) -> int | None:
+        """The computational column index of the task parameter, if available."""
+        return self.searchspace.fidelity_idx
+
+    @property
+    def n_fidelities(self) -> int:
+        """The number of fidelities."""
+        return self.searchspace.n_fidelities
 
     @property
     def parameter_bounds(self) -> Tensor:
@@ -96,13 +119,15 @@ class GaussianProcessSurrogate(Surrogate):
     supports_transfer_learning: ClassVar[bool] = True
     # See base class.
 
+    supports_multi_fidelity: ClassVar[bool] = False
+    # See base class.
+
     kernel_factory: KernelFactory = field(
         alias="kernel_or_factory",
         factory=DefaultKernelFactory,
         converter=to_kernel_factory,
     )
     """The factory used to create the kernel of the Gaussian process.
-
     Accepts either a :class:`baybe.kernels.base.Kernel` or a
     :class:`.kernel_factory.KernelFactory`.
     When passing a :class:`baybe.kernels.base.Kernel`, it gets automatically wrapped
@@ -114,7 +139,7 @@ class GaussianProcessSurrogate(Surrogate):
     """The actual model."""
 
     @staticmethod
-    def from_preset(preset: GaussianProcessPreset) -> GaussianProcessSurrogate:
+    def from_preset(preset: GaussianProcessPreset) -> Surrogate:
         """Create a Gaussian process surrogate from one of the defined presets."""
         return make_gp_from_preset(preset)
 

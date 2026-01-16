@@ -218,5 +218,21 @@ class RQKernel(BasicKernel):
     """An optional initial value for the kernel lengthscale."""
 
 
+@define(frozen=True)
+class IndexKernel(BasicKernel):
+    """A discrete index kernel."""
+
+    num_tasks: int = field(validator=[instance_of(int), ge(1)])
+    """Number of values the parameter can take."""
+
+    rank: int | None = field(
+        default=None,
+        converter=optional_c(int),
+        validator=optional_v([instance_of(int), ge(1)]),
+    )
+    """Matrix rank controlling the degree of correlation between outputs
+    at different parameter values."""
+
+
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
