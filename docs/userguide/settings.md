@@ -218,20 +218,6 @@ This explains, for instance, why:
   {meth}`~baybe.settings.Settings.restore_previous` method. 
 
 
-## Inspecting Settings
-To inspect either the current active settings or any particular settings object,
-you can simply print the corresponding object:
-
-```python
-from baybe import active_settings, Settings
-
-# Inspect current settings
-print(active_settings)
-
-# Inspect a specific configuration object
-print(Settings(preprocess_dataframes=True, use_polars_for_constraints=True))
-```
-
 ## Initialization Precedence
 Initializing a new {class}`~baybe.settings.Settings` object follows a specific order of
 precedence. Specifically, the value of each attribute is determined by whichever of the
