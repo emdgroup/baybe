@@ -70,8 +70,8 @@ class FPSRecommender(NonPredictiveRecommender):
     """An initial recommender that selects candidates via Farthest Point Sampling.
 
     If the optional `fpsample <https://github.com/leonardodalinky/fpsample>`_ package is
-    installed, a more efficient implementation is available that can be in-/activated
-    via the :attr:`~baybe.settings.Settings.use_fpsample` [setting]. Otherwise, a custom
+    installed, a more efficient implementation is available that can be (de-)activated
+    via the :attr:`~baybe.settings.Settings.use_fpsample` setting. Otherwise, a custom
     fallback implementation is used.
     """
 
