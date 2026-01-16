@@ -228,7 +228,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
             min_len(2),
             validate_unique_values,  # type: ignore
             validate_is_finite,
-            deep_iterable(and_(ge(0.0), le(1.0))),
+            deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
             validate_contains_one,
         ],
     )
@@ -240,7 +240,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
         validator=[
             min_len(2),
             validate_is_finite,
-            deep_iterable(ge(0.0)),
+            deep_iterable(member_validator=ge(0.0)),
         ],
     )
     """The costs associated with querying the parameter at each value."""
