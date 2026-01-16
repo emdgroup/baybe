@@ -341,8 +341,11 @@ def test_random_seed_control():
     # After exiting the context, the previous state is restored
     assert draw_random_numbers() == x_1337
 
-    # The seed can be set to `None`
+    # The seed can in principlebe set to `None` (since this is its default value), but
+    # explicitly setting it to `None` has no effect on the RNG state
+    active_settings.random_seed = 1337
     active_settings.random_seed = None
+    assert draw_random_numbers() == x_1337
 
 
 def test_settings_are_sorted_alphabetically():
