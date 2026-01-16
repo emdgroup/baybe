@@ -58,107 +58,61 @@ focusing on making this procedure easily accessible for real-world experiments.
 ## 🔋 Batteries Included
 BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
 
-📚 Mechanisms for leveraging **additional information**: 
-- Capture **relationships between categories** by 
-[encoding categorical data](https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter). 
-BayBE also provides built-in chemical encodings.
-- **Built-in mechanistic** process understanding via 
-[custom surrogate models](https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html).
-- Leverage **additional data** from similar campaigns to accelerate optimization via 
-[transfer learning](https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html).
-
-🛠️ **Flexible** modeling options:
-- Choose between different **target types**, including numerical targets (e.g., experimental outcome values) and binary targets (e.g., good/bad classification of experimental results). 
-- Specify **how favourable individual target values** are (e.g. for matching to a specific value or saturation behaviour) via target transformations.
-- Optimize **multiple targets** at once (e.g., via Pareto optimization or desirability scalarization).
-- Use both continuous and discrete parameters within a single **mixed search space**.
-- Define a **maximal number of mixture components** via cardinality constraints.
-- Choose between different optimization strategies to **balance exploration and exploitation** of the search space:
-  - Gain the **understanding of the whole search space** via active learning. 
-  - Maximize **total gain across a sequence of actions** via bandit models.
-
-🔗 **Advanced** optimization workflows:
-- Run campaigns **asynchronously** with pending experiments and partial measurements.
-- Connect BayBE with **database storage and API wrappers** using the serialization functionality.
-
-🔍 Performance **evaluation** tools:
-- Gain **insights** about the optimization campaigns by analyzing feature importance and model behavior.
-- Conduct **benchmarks** to select between different Bayesian optimization settings via backtesting.
-
-<br><br><br>
-Dropdown format (short example):
-<br><br><br>
-
-<details>
-<summary>🔗 <b>Advanced</b> optimization workflows:</summary>
-<ul>
-<li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
-<li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
-</ul>
-</details>
-<details>
-<summary>🔍 Performance <b>evaluation</b> tools:</summary>
-<ul>
-<li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
-<li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
-</ul>
-</details>
-
-<br><br><br>
-Box format (short example):
-<br><br><br>
-
-<div style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
-  <div style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    🔗 <b>Advanced</b> Optimization Workflows
-  </div>
-  <div style="padding: 10px;">
-    <ul>
-      <li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
-      <li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
-    </ul>
-  </div>
-</div>
-<div style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
-  <div style="background-color: #535353; color: white; padding: 10px; border-radius: 5px;  cursor: pointer;">
-    🔍 Performance <b>Evaluation</b> Tools
-  </div>
-  <div style="padding: 10px;">
-    <ul>
-      <li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
-      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
-    </ul>
-  </div>
-</div>
-
-<br><br><br>
-Box dropdown format (short example):
-<br><br><br>
-
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
   <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    🔗 <b>Advanced</b> Optimization Workflows
+    🛠️ <b>Flexible</b> modeling options
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Run campaigns <b>asynchronously</b> with pending experiments and partial measurements.</li>
-      <li>Connect BayBE with <b>database storage and API wrappers</b> using the serialization functionality.</li>
+      <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
+      <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
+      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Target/Multi_Target.html">Pareto optimization or desirability scalarization</a>).</li>
+      <li>Use both <b>continuous and discrete parameters</b> within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
+      <li><b>Restrict the search space</b> to only a relevant subspace (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
+      <li>Choose between different optimization strategies to <b>balance exploration and exploitation</b> of the search space:
+        <ul>
+          <li>Gain the <b>understanding of the whole search space</b> via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
+          <li>Maximize <b>total gain across a sequence of actions</b> via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
+        </ul>
+      </li>
     </ul>
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
-  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px;  cursor: pointer;">
-    🔍 Performance <b>Evaluation</b> Tools
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    📚 Mechanisms for leveraging <b>additional information</b>
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Gain <b>insights</b> about the optimization campaigns by analyzing feature importance and model behavior.</li>
-      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via backtesting.</li>
+      <li>Capture <b>relationships between categories</b> by <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">encoding categorical</a> data.</li>
+      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for <b>chemistry-related use cases</b>.</li>
+      <li><b>Built-in mechanistic</b> process understanding via <a href="https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html">custom surrogate</a> models.</li>
+      <li>Leverage <b>additional data</b> from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html">transfer learning</a>.</li>
     </ul>
   </div>
 </details>
-
-
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔗 <b>Advanced</b> optimization workflows
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with <b>partial measurements</b> and pending experiments.</li>
+      <li>Connect BayBE with <b>database storage and API wrappers</b> using the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
+    </ul>
+  </div>
+</details>
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔍 Performance <b>evaluation</b> tools
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by <b>analyzing model behavior</b> and feature importance.</li>
+      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/examples/Backtesting/Backtesting.html">backtesting</a>.</li>
+    </ul>
+  </div>
+</details>
 
 ## ⚡ Quick Start
 
@@ -325,9 +279,6 @@ print(df)
 
 The below table shows the three parameter configurations for which BayBE recommended to 
 measure the reaction yield.
-
-Note that the specific recommendations will depend on both the data
-already fed to the campaign and the random number generator seed that is used.
 
 ```none
    Granularity  Pressure[bar]    Solvent
