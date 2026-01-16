@@ -11,6 +11,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -62,21 +63,34 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         )
         for name, points in grid_locations.items()
     ]
-    task_param = TaskParameter(
+    task_param_index = TaskParameter(
         name="Function",
         values=["Target_Function", "Source_Function"],
         active_values=["Target_Function"],
+        transfer_mode=TransferMode.JOINT,
     )
-    params_tl = params + [task_param]
+    task_param_pos_index = TaskParameter(
+        name="Function",
+        values=["Target_Function", "Source_Function"],
+        active_values=["Target_Function"],
+        transfer_mode=TransferMode.JOINT_POS,
+    )
+    params_tl_index = params + [task_param_index]
+    params_tl_pos_index = params + [task_param_pos_index]
 
     searchspace_nontl = SearchSpace.from_product(parameters=params)
-    searchspace_tl = SearchSpace.from_product(parameters=params_tl)
+    tl_index_searchspace = SearchSpace.from_product(parameters=params_tl_index)
+    tl_pos_index_searchspace = SearchSpace.from_product(parameters=params_tl_pos_index)
 
     objective = SingleTargetObjective(
         target=NumericalTarget(name="Target", minimize=True)
     )
-    tl_campaign = Campaign(
-        searchspace=searchspace_tl,
+    tl_index_campaign = Campaign(
+        searchspace=tl_index_searchspace,
+        objective=objective,
+    )
+    tl_pos_index_campaign = Campaign(
+        searchspace=tl_pos_index_searchspace,
         objective=objective,
     )
     nontl_campaign = Campaign(
@@ -121,7 +135,8 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_index": tl_index_campaign,
+                    f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -134,7 +149,11 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {
+                "0_index": tl_index_campaign,
+                "0_pos_index": tl_pos_index_campaign,
+                "0_naive": nontl_campaign,
+            },
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalContinuousParameter, TaskParameter
 from baybe.parameters.base import Parameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -26,8 +27,18 @@ from benchmarks.definition import ConvergenceBenchmark, ConvergenceBenchmarkSett
 from benchmarks.definition.base import RunMode
 
 
-def make_searchspace(use_task_parameter: bool) -> SearchSpace:
-    """Create search space for the benchmark."""
+def make_searchspace(
+    use_task_parameter: bool, transfer_mode: TransferMode = TransferMode.JOINT
+) -> SearchSpace:
+    """Create search space for the benchmark.
+
+    Args:
+        use_task_parameter: Whether to include a task parameter.
+        transfer_mode: The transfer learning mode (JOINT or JOINT_POS).
+
+    Returns:
+        The configured search space.
+    """
     params: list[Parameter] = [
         NumericalContinuousParameter(
             name=f"x{k}",
@@ -41,6 +52,7 @@ def make_searchspace(use_task_parameter: bool) -> SearchSpace:
                 name="Function",
                 values=["Target_Function", "Source_Function"],
                 active_values=["Target_Function"],
+                transfer_mode=transfer_mode,
             )
         )
 
@@ -132,14 +144,23 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         "Target_Function": Michalewicz(dim=5, negate=True),
     }
     searchspace_nontl = make_searchspace(use_task_parameter=False)
-    searchspace_tl = make_searchspace(use_task_parameter=True)
+    tl_index_searchspace = make_searchspace(
+        use_task_parameter=True, transfer_mode=TransferMode.JOINT
+    )
+    tl_pos_index_searchspace = make_searchspace(
+        use_task_parameter=True, transfer_mode=TransferMode.JOINT_POS
+    )
 
     objective = make_objective()
-    campaign_tl = Campaign(
-        searchspace=searchspace_tl,
+    tl_index_campaign = Campaign(
+        searchspace=tl_index_searchspace,
         objective=objective,
     )
-    campaign_nontl = Campaign(
+    tl_pos_index_campaign = Campaign(
+        searchspace=tl_pos_index_searchspace,
+        objective=objective,
+    )
+    nontl_campaign = Campaign(
         searchspace=searchspace_nontl,
         objective=objective,
     )
@@ -158,7 +179,11 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
     for p in n_points:
         results.append(
             simulate_scenarios(
-                {f"{p}": campaign_tl, f"{p}_naive": campaign_nontl},
+                {
+                    f"{p}_index": tl_index_campaign,
+                    f"{p}_pos_index": tl_pos_index_campaign,
+                    f"{p}_naive": nontl_campaign,
+                },
                 lambda x: wrap_function(
                     functions["Target_Function"], "Target_Function", x
                 ),
@@ -171,7 +196,11 @@ def michalewicz_tl_continuous(settings: ConvergenceBenchmarkSettings) -> pd.Data
         )
     results.append(
         simulate_scenarios(
-            {"0": campaign_tl, "0_naive": campaign_nontl},
+            {
+                "0_index": tl_index_campaign,
+                "0_pos_index": tl_pos_index_campaign,
+                "0_naive": nontl_campaign,
+            },
             lambda x: wrap_function(functions["Target_Function"], "Target_Function", x),
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

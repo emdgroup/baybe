@@ -15,6 +15,7 @@ from baybe.parameters import (
     TaskParameter,
 )
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.categorical import TransferMode
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
@@ -41,8 +42,18 @@ def load_data() -> pd.DataFrame:
 def make_searchspace(
     data: pd.DataFrame,
     use_task_parameter: bool,
+    transfer_mode: TransferMode = TransferMode.JOINT,
 ) -> SearchSpace:
-    """Create the search space for the benchmark."""
+    """Create the search space for the benchmark.
+
+    Args:
+        data: The benchmark data.
+        use_task_parameter: Whether to include a task parameter.
+        transfer_mode: The transfer learning mode (JOINT or JOINT_POS).
+
+    Returns:
+        The configured search space.
+    """
     params: list[DiscreteParameter] = [
         SubstanceParameter(
             name=substance,
@@ -62,6 +73,7 @@ def make_searchspace(
                 name="Temp_C",
                 values=["90", "105", "120"],
                 active_values=["105"],
+                transfer_mode=transfer_mode,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -118,9 +130,15 @@ def direct_arylation_tl_temperature(
     """
     data = load_data()
 
-    searchspace = make_searchspace(
+    tl_index_searchspace = make_searchspace(
         data=data,
         use_task_parameter=True,
+        transfer_mode=TransferMode.JOINT,
+    )
+    tl_pos_index_searchspace = make_searchspace(
+        data=data,
+        use_task_parameter=True,
+        transfer_mode=TransferMode.JOINT_POS,
     )
     searchspace_nontl = make_searchspace(
         data=data,
@@ -131,8 +149,11 @@ def direct_arylation_tl_temperature(
     initial_data = make_initial_data(data)
     objective = make_objective()
 
-    tl_campaign = Campaign(searchspace=searchspace, objective=objective)
-    non_tl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
+    tl_index_campaign = Campaign(searchspace=tl_index_searchspace, objective=objective)
+    tl_pos_index_campaign = Campaign(
+        searchspace=tl_pos_index_searchspace, objective=objective
+    )
+    nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
 
     percentages = [0.01, 0.1, 0.2]
 
@@ -148,8 +169,9 @@ def direct_arylation_tl_temperature(
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
-                    f"{int(100 * p)}_naive": non_tl_campaign,
+                    f"{int(100 * p)}_index": tl_index_campaign,
+                    f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
+                    f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
                 initial_data=initial_data_samples[p],
@@ -161,7 +183,11 @@ def direct_arylation_tl_temperature(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": non_tl_campaign},
+            {
+                "0_index": tl_index_campaign,
+                "0_pos_index": tl_pos_index_campaign,
+                "0_naive": nontl_campaign,
+            },
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,
