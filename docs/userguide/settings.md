@@ -13,13 +13,13 @@ The following settings are available:
 |--------:|-------------|
 | {attr}`~baybe.settings.Settings.cache_campaign_recommendations` | Controls if {class}`~baybe.campaign.Campaign` objects cache their latest recommendation to avoid unnecessary re-computation in case of unchanged recommendation context. |
 | {attr}`~baybe.settings.Settings.cache_directory` | The directory used for persistent caching on disk. |
-| {attr}`~baybe.settings.Settings.float_precision_numpy` | The floating point precision used for [`numpy`](https://numpy.org/) arrays. |
-| {attr}`~baybe.settings.Settings.float_precision_torch` | The floating point precision used for [`torch`](https://pytorch.org/) tensors. |
 | {attr}`~baybe.settings.Settings.parallelize_simulation_runs` | Controls if simulation runs with [`xyzpy`](https://xyzpy.readthedocs.io/) are executed in parallel. |
 | {attr}`~baybe.settings.Settings.preprocess_dataframes` | Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use. |
 | {attr}`~baybe.settings.Settings.random_seed` | The used random seed. |
 | {class}`use_fpsample <baybe.settings.Settings>` | Controls if [`fpsample`](https://github.com/leonardodalinky/fpsample) acceleration is to be used, if available. |
 | {class}`use_polars_for_constraints <baybe.settings.Settings>` | Controls if [`polars`](https://pola.rs/) acceleration is to be used for discrete constraints, if available. |
+| {attr}`~baybe.settings.Settings.use_single_precision_numpy` | Controls the floating point precision used for [`numpy`](https://numpy.org/) arrays. |
+| {attr}`~baybe.settings.Settings.use_single_precision_torch` | Controls the floating point precision used for [`torch`](https://pytorch.org/) tensors. |
 
 For more information, click on the respective link or have a look at the
 {class}`~baybe.settings.Settings` class documentation.

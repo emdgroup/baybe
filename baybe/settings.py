@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 import numpy as np
 from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
-from attrs.validators import in_, instance_of
+from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
 from typing_extensions import Self
 
@@ -221,16 +221,6 @@ class Settings(_SlottedContextDecorator):
     )
     """The directory used for persistent caching on disk. Set to "" or ``None`` to disable caching."""  # noqa: E501
 
-    float_precision_numpy: int = field(
-        default=64, converter=int, validator=in_((16, 32, 64))
-    )
-    """The floating point precision used for `numpy <https://numpy.org/>`_ arrays."""
-
-    float_precision_torch: int = field(
-        default=64, converter=int, validator=in_((16, 32, 64))
-    )
-    """The floating point precision used for `torch <https://pytorch.org/>`_ tensors."""
-
     parallelize_simulation_runs: bool = field(default=True, validator=instance_of(bool))
     """Controls if simulation runs with `xyzpy <https://xyzpy.readthedocs.io/>`_ are executed in parallel."""  # noqa: E501
 
@@ -258,12 +248,18 @@ class Settings(_SlottedContextDecorator):
     )
     """Controls if `polars <https://pola.rs/>`_ acceleration is to be used for constraints, if available."""  # noqa: E501
 
+    use_single_precision_numpy: bool = field(default=False, validator=instance_of(bool))
+    """The floating point precision used for `numpy <https://numpy.org/>`_ arrays."""
+
+    use_single_precision_torch: bool = field(default=False, validator=instance_of(bool))
+    """The floating point precision used for `torch <https://pytorch.org/>`_ tensors."""
+
     def __attrs_pre_init__(self) -> None:
         # >>>>> Deprecation
         flds = fields(Settings)
         pairs: list[tuple[str, Attribute]] = [
-            ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.float_precision_numpy),
-            ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.float_precision_torch),
+            ("BAYBE_NUMPY_USE_SINGLE_PRECISION", flds.use_single_precision_numpy),
+            ("BAYBE_TORCH_USE_SINGLE_PRECISION", flds.use_single_precision_torch),
             ("BAYBE_DEACTIVATE_POLARS", flds._use_polars_for_constraints),
             ("BAYBE_PARALLEL_SIMULATION_RUNS", flds.parallelize_simulation_runs),
             ("BAYBE_CACHE_DIR", flds.cache_directory),
@@ -277,9 +273,7 @@ class Settings(_SlottedContextDecorator):
                     f"For now, we've automatically handled the translation for you.",
                     DeprecationWarning,
                 )
-                if env_var.endswith("SINGLE_PRECISION"):
-                    value = "32" if to_bool(value) else "64"
-                elif env_var.endswith("POLARS"):
+                if env_var.endswith("POLARS"):
                     value = "false" if to_bool(value) else "true"
                 elif env_var.endswith("SIMULATION_RUNS"):
                     value = "true" if to_bool(value) else "false"
@@ -341,14 +335,14 @@ class Settings(_SlottedContextDecorator):
     @property
     def DTypeFloatNumpy(self) -> type[np.floating]:
         """The floating point precision used for ``numpy`` arrays."""
-        return getattr(np, f"float{self.float_precision_numpy}")
+        return np.float32 if self.use_single_precision_numpy else np.float64
 
     @property
     def DTypeFloatTorch(self) -> torch.dtype:
         """The floating point precision used for ``torch`` tensors."""
         import torch
 
-        return getattr(torch, f"float{self.float_precision_torch}")
+        return torch.float32 if self.use_single_precision_torch else torch.float64
 
     @classproperty
     def _non_setting_attributes(cls) -> frozenset[str]:
