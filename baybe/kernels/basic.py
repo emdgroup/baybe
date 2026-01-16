@@ -226,7 +226,7 @@ class IndexKernel(BasicKernel):
     """Number of values the parameter can take."""
 
     rank: int | None = field(
-        default=1,
+        default=None,
         converter=optional_c(int),
         validator=optional_v([instance_of(int), ge(1)]),
     )
