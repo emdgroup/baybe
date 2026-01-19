@@ -5,7 +5,7 @@ from typing import Any, ClassVar, cast
 
 import cattrs
 import pandas as pd
-from attrs import Converter, define, field, fields
+from attrs import NOTHING, Converter, define, field, fields
 from attrs.validators import and_, deep_iterable, ge, instance_of, le, min_len
 from typing_extensions import override
 
@@ -64,6 +64,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
     # To be added in an upcoming pull request.
     _zeta: tuple[float, ...] = field(
         alias="zeta",
+        default=NOTHING,
         converter=Converter(
             lambda value, self: _convert_zetas(value, self),
             takes_self=True,
