@@ -5,7 +5,7 @@ from typing import Any, ClassVar, cast
 
 import cattrs
 import pandas as pd
-from attrs import NOTHING, Converter, define, field, fields
+from attrs import Converter, define, field, fields
 from attrs.validators import and_, deep_iterable, ge, instance_of, le, min_len
 from typing_extensions import override
 
@@ -64,9 +64,8 @@ class CategoricalFidelityParameter(DiscreteParameter):
     # To be added in an upcoming pull request.
     _zeta: tuple[float, ...] = field(
         alias="zeta",
-        default=NOTHING,
-        converter=Converter(
-            lambda value, self: _convert_zetas(value, self),
+        converter=Converter(  # type: ignore
+            _convert_zetas,
             takes_self=True,
         ),
         validator=(
@@ -81,7 +80,11 @@ class CategoricalFidelityParameter(DiscreteParameter):
     'values' has discrepancy 0 (the highest fidelity), the next have discrepancy
     'zeta', 2*'zeta' and so on."""
 
-    highest_fidelity: str | None = field(validator=instance_of(str), default=None)
+    _highest_fidelity: str | None = field(
+        alias="highest_fidelity",
+        validator=instance_of(str),
+        default=None,
+    )
     """The name of the highest fidelity value. Determined by 'zeta' if not given."""
 
     @_costs.validator
@@ -102,7 +105,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     @_zeta.validator
     def _validate_zeta(  # noqa: DOC101, DOC103
-        self, _: Any, value: tuple[float, ...] | float
+        self, _: Any, value: tuple[float, ...]
     ) -> None:
         """Validate instance attribute ``zeta``.
 
@@ -116,13 +119,13 @@ class CategoricalFidelityParameter(DiscreteParameter):
                 f"different lengths in '{self.name}'."
             )
 
-    @highest_fidelity.validator
+    @_highest_fidelity.validator
     def _validate_highest_fidelity(  # noqa: DOC101, DOC103
         self, _: Any, target_value: str
     ):
         if target_value not in self._values:
             raise ValueError(
-                f"'{fields(type(self)).highest_fidelity.alias}' {target_value} is "
+                f"'{fields(type(self))._highest_fidelity.alias}' {target_value} is "
                 f"not in '{fields(type(self))._values.alias}' in '{self.name}'."
             )
 
@@ -131,7 +134,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
         if isinstance(self._zeta, tuple):
             if self._zeta[target_idx] != 0:
                 raise ValueError(
-                    f"'{fields(type(self)).highest_fidelity.alias}' must have "
+                    f"'{fields(type(self))._highest_fidelity.alias}' must have "
                     f"'{fields(type(self))._zeta.alias}' value of '0' in the "
                     f"fidelity parameter '{self.name}'."
                 )
@@ -140,7 +143,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
             if target_idx != 0:
                 raise ValueError(
                     f"When specifying scalar '{fields(type(self))._zeta.alias}', "
-                    f"'{fields(type(self)).highest_fidelity.alias}' must be "
+                    f"'{fields(type(self))._highest_fidelity.alias}' must be "
                     f"the first name in '{fields(type(self))._values.alias}' so it "
                     f"has '{fields(type(self))._zeta.alias} = 0' in '{self.name}'."
                 )
@@ -186,8 +189,16 @@ class CategoricalFidelityParameter(DiscreteParameter):
         return comp_df
 
     @property
+    def highest_fidelity(self) -> str:
+        """Highest fidelity value, set manually or otherwise by ``zeta``."""
+        if self._highest_fidelity is None:
+            return self.values[self.zeta.index(0.0)]
+        else:
+            return self._highest_fidelity
+
+    @property
     def highest_fidelity_comp(self) -> int:
-        """Integer encoding value of the target fidelity."""
+        """Integer encoding value of the highest fidelity."""
         return cast(int, self.comp_df.loc[self.highest_fidelity, self.name])
 
 
