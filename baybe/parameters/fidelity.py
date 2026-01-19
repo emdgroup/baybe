@@ -20,6 +20,15 @@ from baybe.utils.conversion import expand_scalar_progression
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
+def _convert_zetas(value, self) -> tuple[float, ...]:
+    seq_len = len(self._values)
+    if isinstance(value, (int, float)):
+        expanded = expand_scalar_progression(value, seq_len)
+    else:
+        expanded = cattrs.structure(value, tuple[float, ...])
+    return expanded
+
+
 @define(frozen=True, slots=False)
 class CategoricalFidelityParameter(DiscreteParameter):
     """Parameter class for categorical fidelity parameters."""
@@ -56,11 +65,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
     _zeta: tuple[float, ...] = field(
         alias="zeta",
         converter=Converter(
-            lambda value, self: tuple(
-                expand_scalar_progression(value, len(self._values))
-                if isinstance(value, (int, float))
-                else lambda x: cattrs.structure(x, tuple[float, ...])
-            ),
+            lambda value, self: _convert_zetas(value, self),
             takes_self=True,
         ),
         validator=(
