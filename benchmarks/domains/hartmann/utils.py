@@ -19,8 +19,8 @@ class CustomHartmann(Hartmann):
         **kwargs: Keyword arguments passed to parent Hartmann class.
 
     Raises:
-        ValueError: If bounds shape is invalid or if shift shape does not match
-            the used dimensions.
+        ValueError: If bounds shape is invalid (i.e., not list of (min,max) tuples).
+        ValueError: If shift shape does not match the used dimensions.
     """
 
     def __init__(
