@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
-from attrs import Attribute, Converter, Factory, define, field, fields
+from attrs import Attribute, Converter, Factory, cmp_using, define, field, fields
 from attrs.setters import validate
 from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
@@ -52,6 +52,13 @@ def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
             )
     if vars:
         raise RuntimeError(f"Unknown 'BAYBE_*' environment variables: {set(vars)}")
+
+
+def _lazy_torch_equal(a: Tensor, b: Tensor, /) -> bool:
+    """Equality check for tensors with lazy torch import."""
+    import torch
+
+    return torch.equal(a, b)
 
 
 class _SlottedContextDecorator:
@@ -128,10 +135,16 @@ class _RandomState:
     state_builtin = field(init=False, factory=random.getstate)
     """The state of the built-in random number generator."""
 
-    state_numpy = field(init=False, factory=np.random.get_state)
+    state_numpy = field(
+        init=False,
+        factory=np.random.get_state,
+        eq=cmp_using(
+            eq=lambda s1, s2: all(np.array_equal(a, b) for a, b in zip(s1, s2))
+        ),
+    )
     """The state of the Numpy random number generator."""
 
-    state_torch: Tensor = field(init=False)
+    state_torch: Tensor = field(init=False, eq=cmp_using(eq=_lazy_torch_equal))
     """The state of the Torch random number generator."""
     # Note: initialized by attrs default method below (for lazy torch loading)
 
