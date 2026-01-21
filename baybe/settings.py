@@ -30,6 +30,11 @@ if TYPE_CHECKING:
 
     _TSeed = TypeVar("_TSeed", int, None)
 
+
+class AdoptedRandomSeed(int):
+    """Marker class to indicate if a random seed has been adopted from other sources."""
+
+
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
 active_settings: Settings = None  # type: ignore[assignment]
@@ -111,6 +116,13 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     # being created)
                     default = getattr(active_settings, fld.name, fld.default)
 
+                    # Special handling for the random seed:
+                    # When adopting the value from the active settings (since
+                    # unspecified by the user), activating the settings should *not*
+                    # reset the random state to that seed!
+                    if fld.name == "random_seed" and default is not None:
+                        default = AdoptedRandomSeed(default)  # type: ignore[assignment]
+
                 if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
                     env_name = f"BAYBE_{name.upper()}"
@@ -185,9 +197,18 @@ class _RandomState:
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the given random seed on attribute change."""
-    if id(instance) == Settings._global_settings_id and value is not None:
-        _RandomState.activate_from_seed(value)
-    return value
+    if value is None:
+        return None
+
+    activate = (id(instance) == Settings._global_settings_id) and (
+        not isinstance(value, AdoptedRandomSeed)
+    )
+    value_int = int(value)
+
+    if activate:
+        _RandomState.activate_from_seed(value_int)
+
+    return value_int
 
 
 def _convert_cache_directory(
@@ -214,9 +235,6 @@ class Settings(_SlottedContextDecorator):
     """The id of the global settings instance.
 
     Useful to identify if an action is performed on the global or a local instance."""
-
-    _previous_random_state: _RandomState | None = field(init=False, default=None)
-    """The previously set random state."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
@@ -373,7 +391,6 @@ class Settings(_SlottedContextDecorator):
         #   resolve the stringified types coming from `__future__.annotations`?
         return frozenset(
             {
-                "_previous_random_state",
                 "_previous_settings",
                 "_restore_defaults",
                 "_restore_environment",
@@ -393,8 +410,6 @@ class Settings(_SlottedContextDecorator):
         """Activate the settings globally."""
         self._previous_settings = deepcopy(active_settings)
         self.overwrite(active_settings)
-        if self.random_seed is not None:
-            _RandomState.activate_from_seed(self.random_seed)
         return self
 
     def restore_previous(self) -> None:
