@@ -349,6 +349,20 @@ def test_random_seed_control():
     assert draw_random_numbers() == x_1337
 
 
+def test_random_state_adoption():
+    """Random states are not adopted from the active settings."""
+    active_settings.random_seed = 1337
+    random_state = _RandomState()
+    assert random_state == _RandomState()
+
+    random.randint(0, 1)
+    assert random_state != _RandomState()
+
+    new_settings = Settings()
+    new_settings.activate()
+    assert random_state != _RandomState()
+
+
 def test_seed_to_state_conversion():
     """Converting a seed to a state does not affect the active state."""
     state1 = _RandomState.activate_from_seed(0)
