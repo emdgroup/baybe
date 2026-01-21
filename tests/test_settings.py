@@ -303,49 +303,64 @@ def test_random_seed_control():
     """Random seeds are respected regardless if set directly or via context."""
     # Setting the seed changes the attribute value
     active_settings.random_seed = 0
+    state_0 = _RandomState()
     assert active_settings.random_seed == 0
 
     # Generation with different seeds yields different results
     x0 = draw_random_numbers()
     active_settings.random_seed = 1337
+    state_1337 = _RandomState()
     x_1337 = draw_random_numbers()
+    assert state_0 != state_1337
     assert x0 != x_1337
 
     # Using the same seed again reproduces the results
     active_settings.random_seed = 1337
+    assert state_1337 == _RandomState()
     assert draw_random_numbers() == x_1337
 
     # Creating settings objects without activation does not affect the RNG states
+    state_before = _RandomState()
+    assert state_before != state_1337
     assert active_settings.random_seed == 1337
     s = Settings(random_seed=1337)
+    state_after = _RandomState()
+    assert state_before == state_after
     assert draw_random_numbers() != x_1337
     assert active_settings.random_seed == 1337
 
     # Neither does setting the seed attribute of these objects
     s.random_seed = 1337
+    assert _RandomState() != state_1337
     assert draw_random_numbers() != x_1337
     assert active_settings.random_seed == 1337
 
     # Restoring previous settings also activates the corresponding seed
     s = Settings(random_seed=1338).activate()
+    state_1338 = _RandomState()
+    assert _RandomState() != state_1337
     x_1338 = draw_random_numbers()
     s.restore_previous()
+    assert _RandomState() == state_1337
     assert active_settings.random_seed == 1337
     assert draw_random_numbers() == x_1337
 
     # Within the context, the seed is temporarily overwritten
     active_settings.random_seed = 1337  # <-- state to be recovered afterwards
     with Settings(random_seed=1338):
+        assert _RandomState() == state_1338
         assert draw_random_numbers() == x_1338
         assert draw_random_numbers() != x_1338
 
     # After exiting the context, the previous state is restored
+    assert _RandomState() == state_1337
     assert draw_random_numbers() == x_1337
 
     # The seed can in principlebe set to `None` (since this is its default value), but
     # explicitly setting it to `None` has no effect on the RNG state
     active_settings.random_seed = 1337
     active_settings.random_seed = None
+    assert _RandomState() == state_1337
     assert draw_random_numbers() == x_1337
 
 
