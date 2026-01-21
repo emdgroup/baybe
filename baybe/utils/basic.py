@@ -387,7 +387,7 @@ def cache_to_disk(func: Callable, /) -> Callable:
         # The path resolution must happen here inside the wrapper since otherwise
         # settings changes would not take effect
         if (dir := active_settings.cache_directory) is not None:
-            f = Memory(dir).cache(func)
+            f = Memory(dir, verbose=0).cache(func)
         else:
             f = func
         return f(*args, **kwargs)
