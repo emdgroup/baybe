@@ -128,6 +128,7 @@ nitpick_ignore_regex = [
     (r"py:class", "baybe.surrogates.composite._SurrogateGetter"),
     (r"ref:obj", "baybe.surrogates.base.ModelContext"),
     # Ignore custom class properties
+    (r"py:obj", "baybe.settings._AdoptedRandomSeed.*"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_batching"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_pending_experiments"),
     (r"py:obj", "baybe.acquisition.acqfs.*.supports_multi_output"),
