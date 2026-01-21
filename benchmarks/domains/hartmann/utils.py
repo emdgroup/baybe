@@ -2,63 +2,66 @@
 
 import numpy as np
 import torch
-from attr import define, field
 from botorch.test_functions.synthetic import Hartmann
 
 
-@define
-class HartmannShifted:
-    """Wrapper around the Hartmann function that shifts its input dimensions.
+class CustomHartmann(Hartmann):
+    """Custom Hartmann function with support for shifting input dimensions.
 
-    Besides shifting the input, also the bounds will be shifted.
+    Extends the Hartmann test function to support shifting input dimensions
+    (and adjusting bounds accordingly). Other parameters like bounds, dim,
+    noise_std, and negate are passed directly to the parent Hartmann class.
+
+    Args:
+        shift: Amount to shift individual dimension coordinates by.
+            E.g. [0.2, 0, 0] would shift dimension 0 by 0.2.
+            If None, no shifting is applied.
+        **kwargs: Keyword arguments passed to parent Hartmann class.
+
+    Raises:
+        ValueError: If bounds shape is invalid or if shift shape does not match
+            the used dimensions.
     """
 
-    shifts: list[float] = field()
-    """Amount to shift individual dimension coordinates by.
+    def __init__(
+        self,
+        shift: list[float] | None = None,
+        **kwargs,
+    ) -> None:
+        # Get botorch defaults if not specified
+        bounds = np.array(kwargs.get("bounds", Hartmann(**kwargs).bounds.T))
+        if bounds.shape[1] != 2:
+            raise ValueError(
+                "Bounds shape is invalid, it should be tuple (min,max) per dim."
+            )
 
-    E.g. [0, 0.2, 0] would mean shifting dimension 1 by 0.2
-    and 0 for dimensions 0 and 2.
-    """
+        # Process the shifts
+        if shift is not None and len(shift) != bounds.shape[0]:
+            raise ValueError("Shift shape does not match used dimensions.")
+        self.shift = shift if shift is not None else [0.0] * bounds.shape[0]
 
-    kwargs_dict: dict = field(factory=dict)
-    """Additional keyword arguments for the Hartmann function.
+        # Shift the bounds
+        bounds = list(
+            map(
+                tuple,
+                np.array(
+                    [
+                        [
+                            low if shift >= 0 else low + shift
+                            for low, shift in zip(bounds[:, 0], self.shift)
+                        ],
+                        [
+                            high if shift <= 0 else high + shift
+                            for high, shift in zip(bounds[:, 1], self.shift)
+                        ],
+                    ]
+                ).T,
+            )
+        )
 
-    If bounds are not specified, uses bounds of [0, 1] for each dimension.
-    If dim is not specified, it is inferred based on shifts.
-    """
+        kwargs["bounds"] = bounds
 
-    base_func: Hartmann = field(init=False)
-    """The underlying Hartmann function instance."""
-
-    def __attrs_post_init__(self) -> None:
-        """Initialize the shifted Hartmann function."""
-        # Make sure input dimensions are consistent
-        dim = self.kwargs_dict.get("dim", None)
-        if dim is None:
-            dim = len(self.shifts)
-            self.kwargs_dict["dim"] = dim
-        if "bounds" not in self.kwargs_dict:
-            self.kwargs_dict["bounds"] = np.array([[0.0] * dim, [1.0] * dim]).T
-        bounds_original = self.kwargs_dict["bounds"]
-        assert dim == len(self.shifts) == bounds_original.shape[0]
-        assert bounds_original.shape[1] == 2
-
-        # Make shifted bounds
-        bounds_shifted = np.array(
-            [
-                [
-                    low if shift >= 0 else low + shift
-                    for low, shift in zip(bounds_original[:, 0], self.shifts)
-                ],
-                [
-                    high if shift <= 0 else high + shift
-                    for high, shift in zip(bounds_original[:, 1], self.shifts)
-                ],
-            ]
-        ).T
-        self.kwargs_dict["bounds"] = bounds_shifted
-
-        self.base_func = Hartmann(**self.kwargs_dict)
+        super().__init__(**kwargs)
 
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         """Evaluate the shifted Hartmann function.
@@ -71,16 +74,6 @@ class HartmannShifted:
         """
         # Create a copy to avoid modifying input
         x_shifted = x.clone()
-        for dim, shift in enumerate(self.shifts):
+        for dim, shift in enumerate(self.shift):
             x_shifted[:, dim] = x_shifted[:, dim] + shift
-        return self.base_func(x_shifted)
-
-    @property
-    def dim(self) -> int:
-        """Dimension of the input space."""
-        return self.base_func.dim
-
-    @property
-    def _bounds(self) -> np.ndarray:
-        """Bounds of the shifted function."""
-        return self.base_func._bounds
+        return super().__call__(x_shifted)

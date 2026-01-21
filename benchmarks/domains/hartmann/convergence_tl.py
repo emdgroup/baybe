@@ -21,7 +21,7 @@ from benchmarks.definition import (
     ConvergenceBenchmarkSettings,
 )
 from benchmarks.definition.base import RunMode
-from benchmarks.domains.hartmann.utils import HartmannShifted
+from benchmarks.domains.hartmann.utils import CustomHartmann
 
 
 def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -43,20 +43,12 @@ def hartmann_tl_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
     Returns:
         DataFrame containing benchmark results.
     """
-
-    def source(dim: int, bounds: np.ndarray) -> callable:
-        """Source function definition.
-
-        Args:
-            dim: Dimension of the input space.
-            bounds: Input space bounds of shape (dim, 2)
-
-        Returns:
-            Source function callable.
-        """
-        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds)
-
-    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+    return _compose_hartmann_tl_3_20_15(
+        settings=settings,
+        source_noise_std=0.15,
+        source_shift=None,
+        source_negate=False,
+    )
 
 
 def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -78,20 +70,12 @@ def hartmann_tl_inv_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFr
     Returns:
         DataFrame containing benchmark results.
     """
-
-    def source(dim: int, bounds: np.ndarray) -> callable:
-        """Source function definition.
-
-        Args:
-            dim: Dimension of the input space.
-            bounds: Input space bounds of shape (dim, 2)
-
-        Returns:
-            Source function callable.
-        """
-        return Hartmann(dim=dim, noise_std=0.15, bounds=bounds, negate=True)
-
-    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+    return _compose_hartmann_tl_3_20_15(
+        settings=settings,
+        source_noise_std=0.15,
+        source_shift=None,
+        source_negate=True,
+    )
 
 
 def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.DataFrame:
@@ -114,30 +98,19 @@ def hartmann_tl_shift_3_20_15(settings: ConvergenceBenchmarkSettings) -> pd.Data
     Returns:
         DataFrame containing benchmark results.
     """
-
-    def source(dim: int, bounds: np.ndarray) -> callable:
-        """Source function definition.
-
-        Args:
-            dim: Dimension of the input space.
-            bounds: Input space bounds of shape (dim, 2)
-
-        Returns:
-            Source function callable.
-        """
-        shifts = [0.2] + [0] * (dim - 1)
-        return HartmannShifted(
-            shifts=shifts,
-            kwargs_dict={"bounds": bounds, "dim": dim, "noise_std": 0.15},
-        )
-
-    return _compose_hartmann_tl_3_20_15(settings=settings, source=source, target=None)
+    return _compose_hartmann_tl_3_20_15(
+        settings=settings,
+        source_noise_std=0.15,
+        source_shift=[0.2, 0, 0],
+        source_negate=False,
+    )
 
 
 def _compose_hartmann_tl_3_20_15(
     settings: ConvergenceBenchmarkSettings,
-    source: callable,
-    target: callable | None = None,
+    source_noise_std: float,
+    source_shift: list[float] | None,
+    source_negate: bool,
 ) -> pd.DataFrame:
     """Construct benchmark for transfer learning with the Hartmann function in 3D.
 
@@ -151,25 +124,36 @@ def _compose_hartmann_tl_3_20_15(
 
     Args:
         settings: Configuration settings for the convergence benchmark.
-        source: A callable that returns the source function.
-            Takes as inputs bounds - array of size (dim, 2),
-            with first column being lower bounds
-            and second column being upper bounds;
-            and dim - the number of dimensions.
-        target: A callable that returns the target function.
-           The function is initialized so that dimensions and bounds
-           match the source function.
-           If None uses the default Hartmann function.
-
+        source_noise_std: Standard deviation of Gaussian noise to add to
+            source function outputs.
+        source_shift: Amount to shift individual dimension coordinates in
+            source function. E.g. [0.2, 0, 0] would shift dimension 0 by 0.2.
+            If None, no shifting is applied.
+        source_negate: If True, negate the output of the source function.
 
     Returns:
         DataFrame containing benchmark results.
+
+    Raises:
+        ValueError: If source_shift is provided but does not have length 3.
     """
+    if source_shift is not None and len(source_shift) != 3:
+        raise ValueError("Shift list must have length 3 for 3D Hartmann function.")
+
+    # Define base bounds
     bounds = np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]).T
-    source_function = source(dim=3, bounds=bounds)
-    if target is None:
-        target = Hartmann
-    target_function = target(dim=source_function.dim, bounds=source_function._bounds)
+
+    # Create source function with specified parameters
+    source_function = CustomHartmann(
+        bounds=bounds,
+        shift=source_shift,
+        dim=3,
+        noise_std=source_noise_std,
+        negate=source_negate,
+    )
+
+    # Create target function (standard Hartmann with adjusted bounds from source)
+    target_function = Hartmann(dim=source_function.dim, bounds=source_function._bounds)
 
     points_per_dim = 20
     percentages = [0.01, 0.05, 0.1]
