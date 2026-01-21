@@ -17,6 +17,7 @@ from attrs import Attribute
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
+from baybe.settings import _RandomState
 from baybe.utils.basic import cache_to_disk
 
 pytestmark = pytest.mark.skipif(
@@ -346,6 +347,14 @@ def test_random_seed_control():
     active_settings.random_seed = 1337
     active_settings.random_seed = None
     assert draw_random_numbers() == x_1337
+
+
+def test_seed_to_state_conversion():
+    """Converting a seed to a state does not affect the active state."""
+    state1 = _RandomState.activate_from_seed(0)
+    _RandomState.from_seed(42)
+    state2 = _RandomState()
+    assert state1 == state2
 
 
 def test_settings_are_sorted_alphabetically():

@@ -174,6 +174,14 @@ class _RandomState:
 
         return cls()
 
+    @classmethod
+    def from_seed(cls, seed: int) -> Self:
+        """Create a random state corresponding to a given seed."""
+        backup = cls()
+        state = cls.activate_from_seed(seed)
+        backup.activate()
+        return state
+
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the given random seed on attribute change."""
