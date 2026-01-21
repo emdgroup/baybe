@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     _TSeed = TypeVar("_TSeed", int, None)
 
 
-class AdoptedRandomSeed(int):
+class _AdoptedRandomSeed(int):
     """Marker class to indicate if a random seed has been adopted from other sources."""
 
 
@@ -121,7 +121,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     # unspecified by the user), activating the settings should *not*
                     # reset the random state to that seed!
                     if fld.name == "random_seed" and default is not None:
-                        default = AdoptedRandomSeed(default)  # type: ignore[assignment]
+                        default = _AdoptedRandomSeed(default)  # type: ignore[assignment]
 
                 if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
@@ -201,7 +201,7 @@ def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TS
         return None
 
     activate = (id(instance) == Settings._global_settings_id) and (
-        not isinstance(value, AdoptedRandomSeed)
+        not isinstance(value, _AdoptedRandomSeed)
     )
     value_int = int(value)
 
