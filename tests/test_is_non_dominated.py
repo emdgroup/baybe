@@ -229,25 +229,3 @@ def test_identify_non_dominated_configurations_logic(
     non_dominated = campaign.identify_non_dominated_configurations()
 
     assert set(np.where(non_dominated)[0].tolist()) == set(idx_non_dominated)
-
-
-@pytest.mark.xfail(reason="Bug in Botorch 0.14.0; issue #2924", strict=False)
-def test_botorch_is_non_dominated():
-    """Test for bug in botorch 0.14.0 is_non_dominated().
-
-    If first value is Nan, it wrongly returns True.
-    False is expected in this case, but it returns True.
-    See https://github.com/pytorch/botorch/issues/2924.
-    """
-    import torch
-    from botorch.utils.multi_objective.pareto import is_non_dominated
-
-    # First two entries are nans across the two arrays
-    nans = torch.full((2, 2, 3), torch.nan)
-    rands = torch.rand((2, 5, 3))
-    # Nans at the beginning
-    Y = torch.hstack([nans, rands])
-    non_dominated = is_non_dominated(Y)
-    # if the value is Nan, it should always return False
-    assert not any(non_dominated[0, :2])  # first two idx are nans
-    assert not any(non_dominated[:2, 0])  # producing the bug, should be False when nan
