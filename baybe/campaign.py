@@ -879,34 +879,28 @@ class Campaign(SerialMixin):
         configurations: pd.DataFrame | None = None,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Create a boolean mask indicating the non-dominated configurations.
+        """Create a boolean mask indicating the non-dominated points.
+
+        Uses the campaign's measurements by default if no configurations are provided.
 
         Args:
             configurations: The configurations with populated target columns for which
-                the non-dominated points will be identified. If not provided and
-                consider_campaign_measurements is ``True``, a boolean mask is created
-                identifying the non-dominated points in the campaign's measurements.
-            consider_campaign_measurements: If ``True``and configurations are provided,
-                the campaign's measurements will be considered in calculating the
-                non-dominated points of the configurations but will not be returned. If
-                no configurations are provided, a boolean mask will be created to
-                identify the non-dominated points within the campaign's measurements. If
-                ``False``, only the provided configurations are considered.
+                the non-dominated points will be identified. If ``None``, the
+                non-dominated points will be computed for the campaign's measurements.
+            consider_campaign_measurements: If ``True`` the campaign's measurements will
+                be considered in calculating the non-dominated points of the
+                configurations, but will not be returned.
 
         Raises:
-            IncompatibilityError: If the campaign's objective is ``None``
-            NoMeasurementsError: If consider_campaign_measurements is ``True``,
-                but no measurements are added to the campaign yet and no configurations
-                are provided as argument.
-            NothingToComputeError: If no configurations are provided as argument and
-                consider_campaign_measurements is ``False``.
+            IncompatibilityError: If the campaign's objective is ``None``.
+            NothingToComputeError: If no configurations are provided as argument and no
+                measurements are added to the campaign yet.
             Additional validation exceptions are documented in
                 :func:`baybe.utils.validation.validate_target_input`.
 
-
         Returns:
-            A series of boolean values indicating whether the corresponding
-                point is non-dominated.
+            A series of boolean values indicating whether the corresponding point is
+            non-dominated.
         """
         if self.objective is None:
             raise IncompatibilityError(
@@ -914,22 +908,11 @@ class Campaign(SerialMixin):
                 f"'{Objective.__name__}' is defined."
             )
 
-        if (
-            configurations is None
-            and consider_campaign_measurements
-            and self.measurements.empty
-        ):
-            raise NoMeasurementsError(
-                "The calculation of non-dominated points for the Campaign's measurement"
-                " was requested, but no campaign measurements have been added yet."
-            )
-
-        if configurations is None and not consider_campaign_measurements:
+        if configurations is None and self.measurements.empty:
             raise NothingToComputeError(
-                "Unable to compute the non-dominated points in configurations because "
-                "no data is available. When setting consider_campaign_measurements to "
-                f"'{consider_campaign_measurements}' you have to provide "
-                "configurations for the computation."
+                "The calculation of non-dominated points was requested, but neither "
+                "configurations are provided nor does the campaign have any "
+                "measurements added yet. Therefore, there is nothing to compute."
             )
 
         if (
@@ -938,33 +921,25 @@ class Campaign(SerialMixin):
             and self.measurements.empty
         ):
             warnings.warn(
-                "No measurements have been added to the campaign yet, but the flag"
-                " consider_campaign_measurements is set to "
+                "No measurements have been added to the campaign yet, but the flag "
+                "consider_campaign_measurements is set to "
                 f"'{consider_campaign_measurements}'. Therefore, the non-dominated "
                 f"configurations will be determined without taking the campaign's  "
                 f"measurements into account.",
                 UserWarning,
             )
 
-        if configurations is not None:
-            validate_target_input(configurations, self.objective.targets)
+        if configurations is None:
+            configurations = self.measurements
+        validate_target_input(configurations, self.objective.targets)
 
-        crop_configurations = False
-        if consider_campaign_measurements:
-            if configurations is None:
-                configurations = self.measurements
-            else:
-                configurations = pd.concat([configurations, self.measurements])
-                crop_configurations = True
-        else:
-            # For Mypy: configurations cannot be ``None`` here due to guard clause above
-            assert configurations is not None
+        if consider_campaign_measurements and not self.measurements.empty:
+            configurations = pd.concat([configurations, self.measurements])
 
         non_dominated = self.objective.identify_non_dominated_configurations(
             configurations=configurations
         )
-
-        if crop_configurations:
+        if consider_campaign_measurements and not self.measurements.empty:
             non_dominated = non_dominated.iloc[: -len(self.measurements)]
         return non_dominated
 

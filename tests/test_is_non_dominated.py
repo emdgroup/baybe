@@ -7,7 +7,6 @@ from pytest import param
 
 from baybe.exceptions import (
     IncompatibilityError,
-    NoMeasurementsError,
     NothingToComputeError,
 )
 from baybe.parameters import NumericalDiscreteParameter
@@ -46,24 +45,26 @@ def test_identify_non_dominated_configurations_func_call(
     consider_campaign_measurements,
 ):
     """Test function call and expected output size."""
-    non_dominated_campaign_default = (
-        ongoing_campaign.identify_non_dominated_configurations()
+    # Default call using campaign measurements
+    non_dominated_default = ongoing_campaign.identify_non_dominated_configurations(
+        consider_campaign_measurements=consider_campaign_measurements
     )
-    assert len(ongoing_campaign.measurements) == len(non_dominated_campaign_default), (
-        "The non-dominated points are computed for the campaign's measurements, but "
-        "the output data of "
-        f"{ongoing_campaign.identify_non_dominated_configurations.__name__} "
-        f"does not have the same length ({len(non_dominated_campaign_default)}) as the "
-        f"campaign's measurements ({len(ongoing_campaign.measurements)})."
+    non_dominated_default_as_arg = (
+        ongoing_campaign.identify_non_dominated_configurations(
+            ongoing_campaign.measurements,
+            consider_campaign_measurements=not consider_campaign_measurements,
+        )
     )
+    assert non_dominated_default.equals(non_dominated_default_as_arg)
+    assert len(ongoing_campaign.measurements) == len(non_dominated_default)
 
-    # From campaign
+    # Call from campaign
     non_dominated_campaign = ongoing_campaign.identify_non_dominated_configurations(
         fake_measurements, consider_campaign_measurements=consider_campaign_measurements
     )
     assert len(fake_measurements) == len(non_dominated_campaign)
 
-    # From objective, not considering the campaign's measurements in any case
+    # Call from objective, not considering the campaign's measurements in any case
     non_dominated_objective = (
         ongoing_campaign.objective.identify_non_dominated_configurations(
             fake_measurements
@@ -109,7 +110,7 @@ def test_incompatibility(campaign, objective, fake_measurements):
 def test_logic_consider_campaign_measurements(campaign, objective, fake_measurements):
     """Test that exceptions are raised for invalid input combinations."""
     # Test flag when campaign has no measurements
-    with pytest.raises(NoMeasurementsError):
+    with pytest.raises(NothingToComputeError):
         campaign.identify_non_dominated_configurations(
             consider_campaign_measurements=True
         )
@@ -131,12 +132,8 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
     # Test flag when campaign has measurements
     campaign.add_measurements(fake_measurements)
 
-    with pytest.raises(NothingToComputeError):
-        campaign.identify_non_dominated_configurations(
-            consider_campaign_measurements=False
-        )
-
     campaign.identify_non_dominated_configurations(consider_campaign_measurements=True)
+    campaign.identify_non_dominated_configurations(consider_campaign_measurements=False)
     campaign.identify_non_dominated_configurations(
         fake_measurements, consider_campaign_measurements=True
     )
