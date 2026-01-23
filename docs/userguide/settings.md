@@ -232,6 +232,14 @@ following rules applies first:
 4. If none of the above applies, the current value from
    {data}`~baybe.settings.active_settings` is retained.
 
+
+```{admonition} Exception: Random Seed Management
+:class: attention
+
+A notable exception to the above rules applies to managing random seeds, for reasons
+detailed in the [Random Seed Control](#random-seed-control) section.
+```
+
 ```{admonition} Global Settings Initialization
 :class: important
 
@@ -240,4 +248,24 @@ For convenience, `restore_environment` is set to `True` when initializing the gl
 environment variables automatically take effect.
 ```
 
+## Random Seed Control
+Unlike other BayBE setting attributes, whose values remain static until changed
+explicitly, the states of random number generators (RNG) naturally evolve as random
+numbers are drawn during code execution. Applying the same manipulation rules to
+{attr}`~baybe.settings.Settings.random_seed` as we do to other settings attributes would
+therefore lead to rather unexpected behavior from a user's perspective, especially since
+the seed value is only used to initialize the RNG states and remains unchanged while the
+latter progress.
+
+To align RNG control with user expectations, random seed mechanics thus
+slightly deviate from the otherwise general rules outlined in this user guide:
+- In contrast to what is dictated by the [initialization
+  precedence](#initialization-precedence), specifying a random seed via the
+  `BAYBE_RANDOM_SEED` environment variable **only** affects the initialization of the
+  global {data}`~baybe.settings.active_settings` object at session start, but has no
+  effect on the instantiation of subsequent {class}`~baybe.settings.Settings` objects.
+- When [restoring](#restoring_settings) previous settings, the RNG states are only
+  reverted if the {class}`~baybe.settings.Settings` object in question explicitly
+  specified a random seed during its activation (i.e., the RNG state was deliberately
+  controlled). If no seed was specified, the RNG state remains untouched.
 
