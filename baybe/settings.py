@@ -406,15 +406,32 @@ class Settings(_SlottedContextDecorator):
                 "The settings have not yet been activated, "
                 "so there are no previous settings to restore."
             )
-        self._previous_settings.overwrite(active_settings)
+
+        # When restoring, we do not want to re-sync the random state back to
+        # the seed value of the previous setting, since the random state has
+        # potentially progressed in the meantime ...
+        self._previous_settings.overwrite(active_settings, keep_random_state=True)
+
+        # ... Instead, we restore the random state from setting activatino time, but
+        # only when randomness control was actually part of the settings configurations
+        # and the state was altered in the first place.
+        if self.random_seed is not None:
+            self._previous_random_state.activate()
+
+        # Clear backup attributes
         self._previous_settings = None
-        self._previous_random_state.activate()
         self._previous_random_state = None
 
-    def overwrite(self, target: Settings) -> None:
+    def overwrite(self, target: Settings, keep_random_state: bool = False) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
+        if keep_random_state:
+            state = _RandomState()
+
         for fld in self._settings_attributes:
             setattr(target, fld.name, getattr(self, fld.name))
+
+        if keep_random_state:
+            state.activate()
 
 
 # Since there is critical code hardcoded against the attribute name, we

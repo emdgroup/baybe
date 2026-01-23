@@ -1,5 +1,6 @@
 """Tests for settings management."""
 
+import operator as op
 import os
 import random
 import subprocess
@@ -308,7 +309,7 @@ def test_random_seed_control():
     state_0 = _RandomState()
     assert active_settings.random_seed == 0
 
-    # Generation with different seeds yields different results
+    # Number generation with different seeds yields different results
     x0 = draw_random_numbers()
     active_settings.random_seed = 1337
     state_1337 = _RandomState()
@@ -321,7 +322,7 @@ def test_random_seed_control():
     assert state_1337 == _RandomState()
     assert draw_random_numbers() == x_1337
 
-    # Creating settings objects without activation does not affect the RNG states
+    # Creating settings objects without activation does not affect the random state
     state_before = _RandomState()
     assert state_before != state_1337
     assert active_settings.random_seed == 1337
@@ -337,17 +338,33 @@ def test_random_seed_control():
     assert draw_random_numbers() != x_1337
     assert active_settings.random_seed == 1337
 
-    # Restoring previous settings also activates the corresponding seed
-    s = Settings(random_seed=1338).activate()
-    state_1338 = _RandomState()
-    assert _RandomState() != state_1337
-    x_1338 = draw_random_numbers()
-    s.restore_previous()
-    assert _RandomState() == state_1337
-    assert active_settings.random_seed == 1337
-    assert draw_random_numbers() == x_1337
+    # Restoring previous settings also restores the corresponding stored seed attribute
+    # value. However, the random state is only restored if the overwriting settings
+    # object expliciltly requested a specific seed value. The reasoning is:
+    # * When a user provides a seed argument, they expect that the RNG is affected
+    # * BUT: When they only provide arguments for other settings, they do not have
+    #   random number generation in focus hence they would not expect that activation or
+    #   resetting alters the RNG in any way
+    for args in [{"random_seed": 1338}, {}]:
+        Settings(random_seed=1337).activate()
+        s_requested = Settings(**args).activate()
+        state_requested = _RandomState()
+        operator = op.ne if args else op.eq
+        assert operator(_RandomState(), state_1337)
+        draw_random_numbers()
+        state_new = _RandomState()
+        assert state_new != state_1337
+        assert state_new != state_requested
+        s_requested.restore_previous()
+        operator = op.eq if args else op.ne
+        assert operator(_RandomState(), state_1337)
+        assert active_settings.random_seed == 1337
+        assert operator(draw_random_numbers(), x_1337)
 
-    # Within the context, the seed is temporarily overwritten
+    # Within a context, the seed is temporarily overwritten
+    active_settings.random_seed = 1338
+    state_1338 = _RandomState()
+    x_1338 = draw_random_numbers()
     active_settings.random_seed = 1337  # <-- state to be recovered afterwards
     with Settings(random_seed=1338):
         assert _RandomState() == state_1338
@@ -358,8 +375,8 @@ def test_random_seed_control():
     assert _RandomState() == state_1337
     assert draw_random_numbers() == x_1337
 
-    # The seed can in principlebe set to `None` (since this is its default value), but
-    # explicitly setting it to `None` has no effect on the RNG state
+    # The seed can in principle be set to `None` (since this is its default value), but
+    # explicitly setting it to `None` has no effect on the random state
     active_settings.random_seed = 1337
     active_settings.random_seed = None
     assert _RandomState() == state_1337
