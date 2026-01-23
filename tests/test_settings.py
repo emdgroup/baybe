@@ -2,7 +2,9 @@
 
 import os
 import random
+import subprocess
 import sys
+import textwrap
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
@@ -400,6 +402,30 @@ def test_random_state_progression():
     # ... But with specified seed, the state is changed
     Settings(random_seed=42).activate()
     assert _RandomState() == state_42
+
+
+@pytest.mark.parametrize("seed", [False, True])
+def test_environment_seed_control(seed):
+    """The environment seed only affects the initial active settings but subsequent
+    settings objects are unaffected."""  # noqa
+
+    code = textwrap.dedent(f"""
+        from baybe.settings import _RandomState, Settings, active_settings
+        assert active_settings.random_seed is {42 if seed else "None"}
+        state = _RandomState()
+        assert Settings().random_seed is None
+    """)
+    if seed:
+        code += "assert _RandomState() == _RandomState.from_seed(42)\n"
+
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={"BAYBE_RANDOM_SEED": "42"} if seed else {},
+    )
+    assert result.returncode == 0, f"Subprocess failed: {result.stderr}"
 
 
 def test_seed_to_state_conversion():
