@@ -426,5 +426,18 @@ gc.collect()
 
 
 active_settings = Settings(restore_environment=True)
-Settings._global_settings_id = id(active_settings)
 """The currently active global settings instance."""
+
+# Set the global settings id for later reference
+Settings._global_settings_id = id(active_settings)
+
+# Special handling of the random seed:
+# The automatic adoption of seed values from the environment or the active settings
+# object as default value for new settings objects is skipped in the class logic to
+# enable proper progression of random states. However, we still want that a given
+# environmental seed populates the active settings object (and *only* that object) upon
+# session start, so we manually set it here.
+if (
+    _seed := os.environ.get(f"BAYBE_{_RANDOM_SEED_ATTRIBUTE_NAME.upper()}", None)
+) is not None:
+    active_settings.random_seed = int(_seed)
