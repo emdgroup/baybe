@@ -570,25 +570,25 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
 
 
 @pytest.fixture(name="target_names")
-def fixture_default_target_selection():
+def fixture_default_target_names():
     """The default targets to be used if not specified differently."""
     return ["Target_max"]
 
 
 @pytest.fixture(name="parameter_names")
-def fixture_default_parameter_selection():
+def fixture_default_parameter_names():
     """Default parameters used if not specified differently."""
     return ["Categorical_1", "Categorical_2", "Num_disc_1"]
 
 
 @pytest.fixture(name="constraint_names")
-def fixture_default_constraint_selection():
+def fixture_default_constraint_names():
     """Default constraints used if not specified differently."""
     return []
 
 
 @pytest.fixture(name="objective_name")
-def fixture_default_objective_selection(targets):
+def fixture_default_objective_name(targets):
     """Default objective used if not specified differently."""
     return "single" if len(targets) == 1 else "desirability"
 
