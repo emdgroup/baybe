@@ -364,18 +364,42 @@ def test_random_seed_control():
     assert draw_random_numbers() == x_1337
 
 
-def test_random_state_adoption():
-    """Random states are not adopted from the active settings."""
+def test_random_state_progression():
+    """Random states are properly progressed/maintained/reset."""
+    # Starting point
     active_settings.random_seed = 1337
-    random_state = _RandomState()
-    assert random_state == _RandomState()
+    state_1337 = _RandomState()
 
+    # Using the RNG progresses the state
     random.randint(0, 1)
-    assert random_state != _RandomState()
+    altered_state = _RandomState()
+    assert altered_state != state_1337
 
+    # Creating a settings object without explicit seed argument does **not** alter the
+    # state. In particular, it does not adopt adopt the seed from the active settings
+    # and translate it into a new random state.
+    with Settings() as s:
+        assert s.random_seed is None
+        assert _RandomState() == altered_state
+    assert _RandomState() == altered_state
+
+    # ... However, explicitly setting the seed **does** alter the state. But when
+    # done in a context, the previous state is correctly restored afterwards.
+    with Settings(random_seed=42):
+        state_42 = _RandomState()
+        assert state_42 != state_1337
+        assert state_42 != altered_state
+    assert _RandomState() == altered_state
+
+    # Without context and without seed specification, no state change happens
     new_settings = Settings()
+    assert _RandomState() == altered_state
     new_settings.activate()
-    assert random_state != _RandomState()
+    assert _RandomState() == altered_state
+
+    # ... But with specified seed, the state is changed
+    Settings(random_seed=42).activate()
+    assert _RandomState() == state_42
 
 
 def test_seed_to_state_conversion():
