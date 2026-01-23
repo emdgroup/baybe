@@ -30,10 +30,7 @@ if TYPE_CHECKING:
 
     _TSeed = TypeVar("_TSeed", int, None)
 
-
-class _AdoptedRandomSeed(int):
-    """Marker class to indicate if a random seed has been adopted from other sources."""
-
+_RANDOM_SEED_ATTRIBUTE_NAME = "random_seed"
 
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
@@ -90,7 +87,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
     for fld in fields:
-        if fld.name in cls._non_setting_attributes:
+        if fld.name in (*cls._non_setting_attributes, _RANDOM_SEED_ATTRIBUTE_NAME):
             results.append(fld)
             continue
 
@@ -115,13 +112,6 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
                     # the default happens when the global settings object is itself
                     # being created)
                     default = getattr(active_settings, fld.name, fld.default)
-
-                    # Special handling for the random seed:
-                    # When adopting the value from the active settings (since
-                    # unspecified by the user), activating the settings should *not*
-                    # reset the random state to that seed!
-                    if fld.name == "random_seed" and default is not None:
-                        default = _AdoptedRandomSeed(default)  # type: ignore[assignment]
 
                 if self._restore_environment:
                     # If enabled, the environment values take precedence for the default
@@ -197,18 +187,10 @@ class _RandomState:
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the given random seed on attribute change."""
-    if value is None:
-        return None
+    if id(instance) == Settings._global_settings_id and value is not None:
+        _RandomState.activate_from_seed(value)
 
-    activate = (id(instance) == Settings._global_settings_id) and (
-        not isinstance(value, _AdoptedRandomSeed)
-    )
-    value_int = int(value)
-
-    if activate:
-        _RandomState.activate_from_seed(value_int)
-
-    return value_int
+    return value
 
 
 def _convert_cache_directory(
@@ -238,6 +220,9 @@ class Settings(_SlottedContextDecorator):
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
+
+    _previous_random_state: _RandomState | None = field(default=None, init=False)
+    """The previous random state (used for context management)."""
 
     # ----- Control flags ----- #
     _restore_defaults: bool = field(default=False, validator=instance_of(bool))
@@ -392,6 +377,7 @@ class Settings(_SlottedContextDecorator):
         return frozenset(
             {
                 "_previous_settings",
+                "_previous_random_state",
                 "_restore_defaults",
                 "_restore_environment",
             }
@@ -409,6 +395,7 @@ class Settings(_SlottedContextDecorator):
     def activate(self) -> Settings:
         """Activate the settings globally."""
         self._previous_settings = deepcopy(active_settings)
+        self._previous_random_state = _RandomState()
         self.overwrite(active_settings)
         return self
 
@@ -421,12 +408,18 @@ class Settings(_SlottedContextDecorator):
             )
         self._previous_settings.overwrite(active_settings)
         self._previous_settings = None
+        self._previous_random_state.activate()
+        self._previous_random_state = None
 
     def overwrite(self, target: Settings) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
         for fld in self._settings_attributes:
             setattr(target, fld.name, getattr(self, fld.name))
 
+
+# Since there is critical code hardcoded against the attribute name, we
+# ensure that the attribute exists as a sanity check (in case of future name edits)
+assert _RANDOM_SEED_ATTRIBUTE_NAME in (fld.name for fld in fields(Settings))
 
 # Collect leftover original slotted classes processed by `attrs.define`
 gc.collect()
