@@ -20,7 +20,7 @@ from attrs.validators import optional as optional_v
 from typing_extensions import Self
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
-from baybe.exceptions import OptionalImportError
+from baybe.exceptions import NotAllowedError, OptionalImportError
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import AutoBool, to_bool
 
@@ -394,6 +394,12 @@ class Settings(_SlottedContextDecorator):
 
     def activate(self) -> Settings:
         """Activate the settings globally."""
+        if id(self) == Settings._global_settings_id:
+            raise NotAllowedError(
+                f"Calling '{self.activate.__name__}' on the global settings "
+                f"object is not allowed since it is always active."
+            )
+
         self._previous_settings = deepcopy(active_settings)
         self._previous_random_state = _RandomState()
         self.overwrite(active_settings)
@@ -401,6 +407,12 @@ class Settings(_SlottedContextDecorator):
 
     def restore_previous(self) -> None:
         """Restore the previous settings."""
+        if id(self) == Settings._global_settings_id:
+            raise NotAllowedError(
+                f"Calling '{self.restore_previous.__name__}' on the global settings "
+                f"object is not supported."
+            )
+
         if self._previous_settings is None or self._previous_random_state is None:
             raise RuntimeError(
                 "The settings have not yet been activated, "

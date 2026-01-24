@@ -19,6 +19,7 @@ from attrs import Attribute
 
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
+from baybe.exceptions import NotAllowedError
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME, _RandomState
 from baybe.utils.basic import cache_to_disk
@@ -504,3 +505,10 @@ def test_cache_directory(tmp_path: Path):
             else:
                 mock.assert_called_once()
                 assert path.exists()
+
+
+@pytest.mark.parametrize("operation", ["activate", "restore_previous"])
+def test_invalid_operations(operation):
+    """Invalid operations on the global settings object are rejected."""
+    with pytest.raises(NotAllowedError, match="global settings object"):
+        getattr(active_settings, operation)()

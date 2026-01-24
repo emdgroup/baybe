@@ -164,3 +164,7 @@ class UnmatchedAttributeError(Exception):
 
 class InvalidTargetValueError(Exception):
     """A target value was entered that is not in the target space."""
+
+
+class NotAllowedError(Exception):
+    """An operation was attempted that is not allowed in the current context."""
