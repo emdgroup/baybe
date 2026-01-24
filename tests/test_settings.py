@@ -20,7 +20,7 @@ from attrs import Attribute
 from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.settings import _RandomState
+from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME, _RandomState
 from baybe.utils.basic import cache_to_disk
 
 pytestmark = pytest.mark.skipif(
@@ -165,7 +165,14 @@ def test_sequential_setting_via_activation(original_values):
     # The growing collection of all modified attributes
     modified: dict[str, Any] = {}
 
-    for attr in Settings._settings_attributes:
+    # We iterate over the random seed last because changing it does not propagete to
+    # the subsequent settings objects
+    attrs = sorted(
+        Settings._settings_attributes,
+        key=lambda a: a.name == _RANDOM_SEED_ATTRIBUTE_NAME,
+    )
+
+    for attr in attrs:
         # Modify one attribute at a time
         new_value = toggle(original_values[attr.name])
         change = {attr.alias: new_value}
