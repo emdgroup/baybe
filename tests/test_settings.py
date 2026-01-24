@@ -429,9 +429,10 @@ def test_random_state_progression():
 
 
 @pytest.mark.parametrize("seed", [False, True])
-def test_environment_seed_control(seed):
+def test_random_seed_adoption(seed):
     """The environment seed only affects the initial active settings but subsequent
-    settings objects are unaffected."""  # noqa
+    settings objects are unaffected. Likewise, seed values are not adopted from the
+    global active settings when instantiating new settings objects."""  # noqa
 
     code = textwrap.dedent(f"""
         from baybe.settings import _RandomState, Settings, active_settings

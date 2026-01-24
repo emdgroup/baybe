@@ -264,6 +264,9 @@ slightly deviate from the otherwise general rules outlined in this user guide:
   `BAYBE_RANDOM_SEED` environment variable **only** affects the initialization of the
   global {data}`~baybe.settings.active_settings` object at session start, but has no
   effect on the instantiation of subsequent {class}`~baybe.settings.Settings` objects.
+- Likewise, {class}`~baybe.settings.Settings` objects created by the user do not adopt
+  the random seed from the global {data}`~baybe.settings.active_settings` object, which
+  avoids unintended RNG state resets when activating such objects.
 - When [restoring](#restoring_settings) previous settings, the RNG states are only
   reverted if the {class}`~baybe.settings.Settings` object in question explicitly
   specified a random seed during its activation (i.e., the RNG state was deliberately
