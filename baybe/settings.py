@@ -401,7 +401,7 @@ class Settings(_SlottedContextDecorator):
 
     def restore_previous(self) -> None:
         """Restore the previous settings."""
-        if self._previous_settings is None:
+        if self._previous_settings is None or self._previous_random_state is None:
             raise RuntimeError(
                 "The settings have not yet been activated, "
                 "so there are no previous settings to restore."
