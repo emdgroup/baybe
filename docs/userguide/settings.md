@@ -49,16 +49,12 @@ active_settings.random_seed = 1337
 To avoid silent bugs, BayBE automatically validates if the referenced setting
 attribute exists and if the assigned value is compatible:
 
-```python
-import pytest
+~~~python
 from baybe import active_settings
 
-with pytest.raises(AttributeError):
-    active_settings.non_existent_setting = 1337  # <-- error!
-
-with pytest.raises(TypeError):
-    active_settings.preprocess_dataframes = "not_representing_a_boolean"  # <-- error!
-```
+active_settings.non_existent_setting = 1337  # <-- error!
+active_settings.preprocess_dataframes = "not_representing_a_boolean"  # <-- error!
+~~~
 ````
 
 ### Joint Activation
