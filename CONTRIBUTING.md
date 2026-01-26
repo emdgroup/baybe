@@ -114,7 +114,6 @@ If you have questions or problems, simply ask for advice.
 |:------------------------------------------------------------------------------------------------|:------------------------------------------|
 | [ruff](https://docs.astral.sh/ruff/)                                                            | code linting and formatting               |
 | [mypy](https://mypy.readthedocs.io/)                                                            | static type checking                      |
-| [typos](https://github.com/crate-ci/typos)                                                      | basic spell checking                      |
 | [pytest](https://docs.pytest.org/)                                                              | testing                                   |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage                   |
 | [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation              |
