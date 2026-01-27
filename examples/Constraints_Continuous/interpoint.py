@@ -49,7 +49,7 @@ set_random_seed(1337)
 # We consider a synthetic chemical reaction with the following experimental parameters:
 # - **Solvent Volume** (10-30 mL per experiment): The amount of solvent used
 # - **Reactant Concentration** (0.1-2.0 g/L): Primary reactant concentration
-# - **Catalyst Loading** (1-10 mol%): Catalyst amount as percentage of limiting reagent
+# - **Catalyst Loading** (1-20 mol%): Catalyst amount as percentage of limiting reagent
 # - **Temperature** (60-120 °C): Reaction temperature
 #
 # Note that the parameter ranges are chosen arbitrarily and do not correspond to any
