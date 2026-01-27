@@ -165,22 +165,25 @@ class _RandomState:
         np.random.set_state(self.state_numpy)
         torch.set_rng_state(self.state_torch)
 
-    @classmethod
-    def activate_from_seed(cls, seed: int) -> Self:
-        """Active the random state corresponding to a given seed."""
+    @staticmethod
+    def _activate_seed(seed: int) -> None:
+        """Seed all random number generators."""
         import torch
 
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-        return cls()
-
     @classmethod
-    def from_seed(cls, seed: int) -> Self:
+    def from_seed(cls, seed: int, *, activate: bool = False) -> Self:
         """Create a random state corresponding to a given seed."""
+        if activate:
+            cls._activate_seed(seed)
+            return cls()
+
         backup = cls()
-        state = cls.activate_from_seed(seed)
+        cls._activate_seed(seed)
+        state = cls()
         backup.activate()
         return state
 
@@ -188,7 +191,7 @@ class _RandomState:
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the given random seed on attribute change."""
     if id(instance) == Settings._global_settings_id and value is not None:
-        _RandomState.activate_from_seed(value)
+        _RandomState.from_seed(value, activate=True)
 
     return value
 

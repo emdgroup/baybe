@@ -456,7 +456,7 @@ def test_random_seed_adoption(seed):
 
 def test_seed_to_state_conversion():
     """Converting a seed to a state does not affect the active state."""
-    state1 = _RandomState.activate_from_seed(0)
+    state1 = _RandomState.from_seed(0, activate=True)
     _RandomState.from_seed(42)
     state2 = _RandomState()
     assert state1 == state2
