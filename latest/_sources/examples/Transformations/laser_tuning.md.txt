@@ -244,8 +244,6 @@ results = simulate_scenarios(
 
     
 
-    
-
 
 ## Results
 
