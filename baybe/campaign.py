@@ -927,7 +927,8 @@ class Campaign(SerialMixin):
 
         if configurations is None:
             configurations = self.measurements
-        validate_target_input(configurations, self.objective.targets)
+        else:
+            validate_target_input(configurations, self.objective.targets)
 
         if consider_campaign_measurements and not self.measurements.empty:
             configurations = pd.concat([configurations, self.measurements])
