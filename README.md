@@ -36,7 +36,7 @@ within complex parameter search spaces.
 
 </div>
 
-Example use cases:
+BayBE can help to solve many real-world optimization problems, such as:
 
 - 🧪 Find chemical reaction conditions or process parameters
 - 🥣 Create materials, chemical mixtures or formulations with desired properties
@@ -64,9 +64,6 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
-      <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Target/Multi_Target.html">Pareto optimization or desirability scalarization</a>).</li>
       <li>Use both <b>continuous and discrete parameters</b> within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
       <li><b>Restrict the search space</b> to only a relevant subspace (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
       <li>Choose between different optimization strategies to <b>balance exploration and exploitation</b> of the search space:
@@ -75,6 +72,9 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
           <li>Maximize <b>total gain across a sequence of actions</b> via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
         </ul>
       </li>
+      <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
+      <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
+      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Target/Multi_Target.html">Pareto optimization or desirability scalarization</a>).</li>
     </ul>
   </div>
 </details>
