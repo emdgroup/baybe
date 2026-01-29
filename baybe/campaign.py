@@ -936,8 +936,10 @@ class Campaign(SerialMixin):
         non_dominated = self.objective.identify_non_dominated_configurations(
             configurations=configurations
         )
-        if consider_campaign_measurements and not self.measurements.empty:
+
+        if consider_campaign_measurements:
             non_dominated = non_dominated.iloc[: -len(self.measurements)]
+
         return non_dominated
 
 
