@@ -908,25 +908,22 @@ class Campaign(SerialMixin):
                 f"'{Objective.__name__}' is defined."
             )
 
-        if configurations is None and self.measurements.empty:
-            raise NothingToComputeError(
-                "The calculation of non-dominated points was requested, but neither "
-                "configurations are provided nor does the campaign have any "
-                "measurements added yet. Therefore, there is nothing to compute."
-            )
-
-        if (
-            configurations is not None
-            and consider_campaign_measurements
-            and self.measurements.empty
-        ):
-            warnings.warn(
-                "No measurements have been added to the campaign yet, but the flag "
-                "`consider_campaign_measurements` is set to "
-                "'True'. Therefore, the non-dominated configurations will be "
-                "determined without taking any measurements into account.",
-                UserWarning,
-            )
+        if self.measurements.empty:
+            if configurations is None:
+                raise NothingToComputeError(
+                    "The calculation of non-dominated points was requested, but "
+                    "neither are configurations provided nor does the campaign have "
+                    "any measurements added yet. Therefore, there is nothing to "
+                    "compute."
+                )
+            if consider_campaign_measurements:
+                warnings.warn(
+                    "No measurements have been added to the campaign yet, but the flag "
+                    "`consider_campaign_measurements` is set to "
+                    "'True'. Therefore, the non-dominated configurations will be "
+                    "determined without taking any measurements into account.",
+                    UserWarning,
+                )
 
         if configurations is None:
             configurations = self.measurements
