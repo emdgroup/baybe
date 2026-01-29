@@ -112,7 +112,7 @@ class NothingToSimulateError(Exception):
 
 
 class NothingToComputeError(Exception):
-    """There is nothing to compute because there are no valid inputs or data."""
+    """There is nothing to compute because there are no inputs or existing data."""
 
 
 class NoRecommendersLeftError(Exception):
