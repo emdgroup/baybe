@@ -5,10 +5,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
-from baybe.exceptions import (
-    IncompatibilityError,
-    NothingToComputeError,
-)
+from baybe.exceptions import IncompatibilityError, NothingToComputeError
 from baybe.parameters import NumericalDiscreteParameter
 
 
@@ -36,13 +33,7 @@ from baybe.parameters import NumericalDiscreteParameter
     ids=["consider_m", "not_consider_m"],
 )
 def test_identify_non_dominated_configurations_func_call(
-    ongoing_campaign,
-    objective,
-    parameters,
-    batch_size,
-    targets,
-    fake_measurements,
-    consider_campaign_measurements,
+    ongoing_campaign, fake_measurements, consider_campaign_measurements
 ):
     """Test function call and expected output size."""
     # Default call using campaign measurements
@@ -86,7 +77,7 @@ def test_identify_non_dominated_configurations_func_call(
         param(None, ["Target_max"], id="none_max"),
     ],
 )
-def test_incompatibility(campaign, objective, fake_measurements):
+def test_incompatibility(campaign, fake_measurements):
     """Test for incompatibility when objective is ``None``."""
     with pytest.raises(IncompatibilityError):
         campaign.identify_non_dominated_configurations()
@@ -107,7 +98,7 @@ def test_incompatibility(campaign, objective, fake_measurements):
         param("single", ["Target_max"], id="single_max"),
     ],
 )
-def test_logic_consider_campaign_measurements(campaign, objective, fake_measurements):
+def test_logic_consider_campaign_measurements(campaign, fake_measurements):
     """Test that exceptions are raised for invalid input combinations."""
     # Test flag when campaign has no measurements
     with pytest.raises(NothingToComputeError):
@@ -197,7 +188,7 @@ def test_logic_consider_campaign_measurements(campaign, objective, fake_measurem
     ],
 )
 def test_identify_non_dominated_configurations_logic(
-    campaign, targets, idx_non_dominated, target_names
+    campaign, idx_non_dominated, target_names
 ):
     """Test is_non_dominated logic for different target and objective combinations."""
     # Construct data
