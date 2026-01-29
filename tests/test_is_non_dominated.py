@@ -7,6 +7,9 @@ from pytest import param
 
 from baybe.campaign import Campaign
 from baybe.exceptions import IncompatibilityError, NothingToComputeError
+from baybe.objectives.desirability import DesirabilityObjective
+from baybe.objectives.pareto import ParetoObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter
 from baybe.parameters.numerical import NumericalContinuousParameter
 
@@ -18,18 +21,18 @@ def batch_size():
 
 
 @pytest.mark.parametrize(
-    ("objective_name", "target_names"),
+    ("objective_cls", "target_names"),
     [
-        param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
-        param("pareto", ["Target_min", "Target_max"], id="pareto_min_max"),
+        param(ParetoObjective, ["Target_max", "Target_min"], id="pareto_max_min"),
+        param(ParetoObjective, ["Target_min", "Target_max"], id="pareto_min_max"),
         param(
-            "pareto",
+            ParetoObjective,
             ["Target_min", "Target_max", "Target_match_triangular"],
             id="pareto",
         ),
-        param("single", ["Target_max"], id="single"),
+        param(SingleTargetObjective, ["Target_max"], id="single"),
         param(
-            "desirability",
+            DesirabilityObjective,
             ["Target_match_triangular", "Target_min_bounded"],
             id="desirability_match_min",
         ),
@@ -83,15 +86,15 @@ def test_missing_objective():
 
 
 @pytest.mark.parametrize(
-    "objective_name, target_names",
+    ("objective_cls", "target_names"),
     [
-        param("pareto", ["Target_max", "Target_min"], id="pareto_max_min"),
+        param(ParetoObjective, ["Target_max", "Target_min"], id="pareto_max_min"),
         param(
-            "desirability",
+            DesirabilityObjective,
             ["Target_match_triangular", "Target_min_bounded"],
             id="desirability_max_min_bound",
         ),
-        param("single", ["Target_max"], id="single_max"),
+        param(SingleTargetObjective, ["Target_max"], id="single_max"),
     ],
 )
 def test_logic_consider_campaign_measurements(campaign, fake_measurements):
@@ -150,27 +153,47 @@ def test_logic_consider_campaign_measurements(campaign, fake_measurements):
     ],
 )
 @pytest.mark.parametrize(
-    "target_names, idx_non_dominated, objective_name",
+    ("target_names", "idx_non_dominated", "objective_cls"),
     [
-        param(["Target_min_bounded", "Target_min"], [0], "pareto", id="pareto_min_min"),
-        param(["Target_max", "Target_min"], [0, 2, 5], "pareto", id="pareto_max_min"),
-        param(["Target_min", "Target_max"], [0, 2, 3], "pareto", id="pareto_min_max"),
-        param(["Target_max_bounded", "Target_max"], [2], "pareto", id="pareto_max_max"),
+        param(
+            ["Target_min_bounded", "Target_min"],
+            [0],
+            ParetoObjective,
+            id="pareto_min_min",
+        ),
+        param(
+            ["Target_max", "Target_min"],
+            [0, 2, 5],
+            ParetoObjective,
+            id="pareto_max_min",
+        ),
+        param(
+            ["Target_min", "Target_max"],
+            [0, 2, 3],
+            ParetoObjective,
+            id="pareto_min_max",
+        ),
+        param(
+            ["Target_max_bounded", "Target_max"],
+            [2],
+            ParetoObjective,
+            id="pareto_max_max",
+        ),
         param(
             ["Target_match_bell", "Target_match_triangular"],
             [1, 4],
-            "pareto",
+            ParetoObjective,
             id="pareto_match_bell_trnglr",
         ),
-        param(["Target_min"], [0], "single", id="single_min"),
-        param(["Target_max"], [2], "single", id="single_max"),
-        param(["Target_match_bell"], [1, 4], "single", id="single_bell"),
+        param(["Target_min"], [0], SingleTargetObjective, id="single_min"),
+        param(["Target_max"], [2], SingleTargetObjective, id="single_max"),
+        param(["Target_match_bell"], [1, 4], SingleTargetObjective, id="single_bell"),
         param(
             ["Target_min_bounded", "Target_max_bounded"],
             [
                 3,
             ],
-            "desirability",
+            DesirabilityObjective,
             id="desirability_min_max",
         ),
         param(
@@ -178,7 +201,7 @@ def test_logic_consider_campaign_measurements(campaign, fake_measurements):
             [
                 5,
             ],
-            "desirability",
+            DesirabilityObjective,
             id="desirability_max_min",
         ),
     ],

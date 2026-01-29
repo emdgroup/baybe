@@ -587,10 +587,10 @@ def fixture_default_constraint_names():
     return []
 
 
-@pytest.fixture(name="objective_name")
-def fixture_default_objective_name(targets):
-    """Default objective used if not specified differently."""
-    return "single" if len(targets) == 1 else "desirability"
+@pytest.fixture(name="objective_cls")
+def fixture_default_objective_class(targets):
+    """Default objective class used if not specified differently."""
+    return SingleTargetObjective if len(targets) == 1 else DesirabilityObjective
 
 
 @pytest.fixture(name="campaign")
@@ -707,22 +707,22 @@ def fixture_meta_recommender(
 
 
 @pytest.fixture(name="objective")
-def fixture_default_objective(targets, objective_name):
+def fixture_default_objective(targets, objective_cls):
     """Provides example objectives via specified names."""
-    if objective_name is None:
+    if objective_cls is None:
         return None
-    if "single" in objective_name.lower():
+    if objective_cls == SingleTargetObjective:
         if len(targets) != 1:
             raise IncompatibilityError(
                 "You can only use single target objectives with one target but you "
                 f"provided {len(targets)} targets."
             )
         return SingleTargetObjective(targets[0])
-    if "pareto" in objective_name.lower():
+    if objective_cls == ParetoObjective:
         return ParetoObjective(targets)
-    if "desirability" in objective_name.lower():
+    if objective_cls == DesirabilityObjective:
         return DesirabilityObjective(targets)
-    raise NotImplementedError(f"unknown objective name: {objective_name}")
+    raise NotImplementedError(f"Unknown objective class: '{objective_cls}'")
 
 
 @pytest.fixture(name="config")
