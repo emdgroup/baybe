@@ -1,4 +1,4 @@
-"""Test is_non_dominated functionality for objective."""
+"""Test identification of non-dominated configurations."""
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,12 @@ from pytest import param
 
 from baybe.exceptions import IncompatibilityError, NothingToComputeError
 from baybe.parameters import NumericalDiscreteParameter
+
+
+# TODO: Remove once batch size fixture has been deactivated globally
+@pytest.fixture
+def batch_size():
+    return 2
 
 
 @pytest.mark.parametrize(
@@ -32,11 +38,12 @@ from baybe.parameters import NumericalDiscreteParameter
     [True, False],
     ids=["consider_m", "not_consider_m"],
 )
-def test_identify_non_dominated_configurations_func_call(
+def test_consistency(
     ongoing_campaign, fake_measurements, consider_campaign_measurements
 ):
-    """Test function call and expected output size."""
-    # Default call using campaign measurements
+    """Identifying non-dominated configurations yields consistent results, regardless
+    of which entry point is used (campaign w/o measurements or objective)."""  # noqa
+    # With campaign measurements
     non_dominated_default = ongoing_campaign.identify_non_dominated_configurations(
         consider_campaign_measurements=consider_campaign_measurements
     )
@@ -49,24 +56,19 @@ def test_identify_non_dominated_configurations_func_call(
     assert non_dominated_default.equals(non_dominated_default_as_arg)
     assert len(ongoing_campaign.measurements) == len(non_dominated_default)
 
-    # Call from campaign
+    # With external configurations
     non_dominated_campaign = ongoing_campaign.identify_non_dominated_configurations(
         fake_measurements, consider_campaign_measurements=consider_campaign_measurements
     )
-    assert len(fake_measurements) == len(non_dominated_campaign)
-
-    # Call from objective, not considering the campaign's measurements in any case
     non_dominated_objective = (
         ongoing_campaign.objective.identify_non_dominated_configurations(
             fake_measurements
         )
     )
+    assert len(fake_measurements) == len(non_dominated_campaign)
     assert len(fake_measurements) == len(non_dominated_objective)
 
-    # If the flag is False, the results should be equal. If the flag is True, the
-    # results may differ, but not always. For example, if all points in the campaign are
-    # dominated by points in the fake_measurements, the results will be identical.
-    # Hence, not testing for that case here.
+    # Equality is only guaranteed if campaign measurements are not considered
     if not consider_campaign_measurements:
         assert non_dominated_campaign.equals(non_dominated_objective)
 
