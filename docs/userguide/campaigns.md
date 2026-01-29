@@ -241,18 +241,20 @@ offer an interface for this purpose for any
 [`Objective`](baybe.objective.base.Objective):
 
 ```python
-is_non_dominated = campaign.identify_non_dominated_configurations(rec)
+param_configs = campaign.recommend(batch_size=3)
+param_configs["Target_max"] = [9, 3, 4]  # Adding target values matching the batch_size
+is_non_dominated = campaign.identify_non_dominated_configurations(param_configs)
 ```
 
 This will return a `Series` indicating which points in the provided parameter 
 configurations are non-dominated according to the campaign's objective. If no 
 configurations are provided, the campaign's measurements are used by default.
 
-|    | is_non_dominated |
-|---:|:-----------------|
-| 15 | True             |
-| 18 | False            |
-|  9 | False            |
+| is_non_dominated |
+|:-----------------|
+| True             |
+| False            |
+| False            |
 
 When identifying the non-dominated points for a given set of configurations, you can 
 choose to either include or exclude the campaign's measurements in the computation. It 
@@ -261,7 +263,7 @@ configurations, as this allows you to assess them within the context of existing
 
 ```python
 is_non_dominated = campaign.identify_non_dominated_configurations(
-    rec, consider_campaign_measurements=True
+    param_configs, consider_campaign_measurements=True
 )
 ```
 
