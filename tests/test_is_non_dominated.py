@@ -12,8 +12,8 @@ from baybe.exceptions import IncompatibilityError, NothingToComputeError
 from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
 from baybe.objectives.single import SingleTargetObjective
-from baybe.parameters import NumericalDiscreteParameter
 from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.targets.numerical import NumericalTarget
 
 
 # TODO: Remove once batch size fixture has been deactivated globally
@@ -118,107 +118,46 @@ def test_invalid_argument_configurations(
         )
 
 
+# Target definitions
+t_max = NumericalTarget("t_max")
+t_min = NumericalTarget("t_min", minimize=True)
+t_max_b = NumericalTarget.normalized_sigmoid(
+    "t_max_bounded", anchors=[(0, 0.05), (100, 0.95)]
+)
+t_min_b = NumericalTarget.normalized_sigmoid(
+    "t_min_bounded", anchors=[(0, 0.95), (100, 0.05)]
+)
+t_bell = NumericalTarget.match_bell(name="t_bell", match_value=50, sigma=5)
+t_triang = NumericalTarget.match_triangular("t_triang", cutoffs=(0, 100))
+
+
 @pytest.mark.parametrize(
-    "parameters",
+    ("targets", "idx_non_dominated", "objective_cls"),
     [
-        param(
-            [
-                NumericalDiscreteParameter(
-                    name="param1",
-                    values=tuple(np.linspace(0, 200, 5)),
-                    tolerance=0.1,
-                ),
-                NumericalDiscreteParameter(
-                    name="param2",
-                    values=tuple(np.linspace(0, 200, 5)),
-                    tolerance=0.1,
-                ),
-            ],
-            id="2params",
-        ),
+        param([t_min_b, t_min], [0], ParetoObjective, id="pareto_min_min"),
+        param([t_max, t_min], [0, 2, 5], ParetoObjective, id="pareto_max_min"),
+        param([t_min, t_max], [0, 2, 3], ParetoObjective, id="pareto_min_max"),
+        param([t_max_b, t_max], [2], ParetoObjective, id="pareto_max_max"),
+        param([t_bell, t_triang], [1, 4], ParetoObjective, id="pareto_match"),
+        param([t_min], [0], SingleTargetObjective, id="single_min"),
+        param([t_max], [2], SingleTargetObjective, id="single_max"),
+        param([t_bell], [1, 4], SingleTargetObjective, id="single_bell"),
+        param([t_min_b, t_max_b], [3], DesirabilityObjective, id="des_min_max"),
+        param([t_max_b, t_min_b], [5], DesirabilityObjective, id="des_max_min"),
     ],
 )
-@pytest.mark.parametrize(
-    ("target_names", "idx_non_dominated", "objective_cls"),
-    [
-        param(
-            ["Target_min_bounded", "Target_min"],
-            [0],
-            ParetoObjective,
-            id="pareto_min_min",
-        ),
-        param(
-            ["Target_max", "Target_min"],
-            [0, 2, 5],
-            ParetoObjective,
-            id="pareto_max_min",
-        ),
-        param(
-            ["Target_min", "Target_max"],
-            [0, 2, 3],
-            ParetoObjective,
-            id="pareto_min_max",
-        ),
-        param(
-            ["Target_max_bounded", "Target_max"],
-            [2],
-            ParetoObjective,
-            id="pareto_max_max",
-        ),
-        param(
-            ["Target_match_bell", "Target_match_triangular"],
-            [1, 4],
-            ParetoObjective,
-            id="pareto_match_bell_trnglr",
-        ),
-        param(["Target_min"], [0], SingleTargetObjective, id="single_min"),
-        param(["Target_max"], [2], SingleTargetObjective, id="single_max"),
-        param(["Target_match_bell"], [1, 4], SingleTargetObjective, id="single_bell"),
-        param(
-            ["Target_min_bounded", "Target_max_bounded"],
-            [
-                3,
-            ],
-            DesirabilityObjective,
-            id="desirability_min_max",
-        ),
-        param(
-            ["Target_max_bounded", "Target_min_bounded"],
-            [
-                5,
-            ],
-            DesirabilityObjective,
-            id="desirability_max_min",
-        ),
-    ],
-)
-def test_identify_non_dominated_configurations_logic(
-    campaign, idx_non_dominated, target_names
-):
-    """Test is_non_dominated logic for different target and objective combinations."""
-    # Construct data
-    p1 = np.hstack(
-        (
-            np.linspace(0, 100, 3),
-            np.linspace(100, 0, 3),
-        )
+def test_identify_non_dominated_configurations_logic(objective, idx_non_dominated):
+    """The correct set of non-dominated configurations is identified."""
+    df = pd.DataFrame(
+        {
+            "p1": [0, 50, 100, 100, 50, 0],
+            "p2": [0, 50, 100, 0, 50, 100],
+        }
     )
-    p2 = np.hstack(
-        (
-            np.linspace(0, 100, 3),
-            np.linspace(0, 100, 3),
-        )
-    )
+    target_names = [t.name for t in objective.targets]
+    df[target_names[0]] = df["p1"] * 0.25 + df["p2"] * 0.75
+    if len(objective.targets) > 1:
+        df[target_names[1]] = df["p1"] * 0.75 + df["p2"] * 0.25
 
-    data_dict = {"param1": p1, "param2": p2}
-
-    data_dict[target_names[0]] = p1 * 0.25 + p2 * 0.75
-    if len(target_names) > 1:
-        data_dict[target_names[1]] = p1 * 0.75 + p2 * 0.25
-
-    measurements = pd.DataFrame(data_dict)
-
-    campaign.add_measurements(measurements)
-    non_dominated = campaign.identify_non_dominated_configurations()
-
-    assert set(np.where(non_dominated)[0].tolist()) == set(idx_non_dominated)
+    non_dominated = objective.identify_non_dominated_configurations(df)
+    assert set(np.where(non_dominated)[0]) == set(idx_non_dominated)
