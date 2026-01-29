@@ -877,6 +877,8 @@ class Campaign(SerialMixin):
     def identify_non_dominated_configurations(
         self,
         configurations: pd.DataFrame | None = None,
+        /,
+        *,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
         """Create a boolean mask indicating the non-dominated points.
@@ -934,7 +936,7 @@ class Campaign(SerialMixin):
             configurations = pd.concat([configurations, self.measurements])
 
         non_dominated = self.objective.identify_non_dominated_configurations(
-            configurations=configurations
+            configurations
         )
 
         if consider_campaign_measurements:

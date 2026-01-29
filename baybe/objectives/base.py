@@ -255,7 +255,7 @@ class Objective(ABC, SerialMixin):
         )
 
     def identify_non_dominated_configurations(
-        self, configurations: pd.DataFrame
+        self, configurations: pd.DataFrame, /
     ) -> pd.Series:
         """Create a boolean mask indicating the non-dominated configurations.
 
