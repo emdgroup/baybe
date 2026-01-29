@@ -922,10 +922,9 @@ class Campaign(SerialMixin):
         ):
             warnings.warn(
                 "No measurements have been added to the campaign yet, but the flag "
-                "consider_campaign_measurements is set to "
-                f"'{consider_campaign_measurements}'. Therefore, the non-dominated "
-                f"configurations will be determined without taking the campaign's  "
-                f"measurements into account.",
+                "`consider_campaign_measurements` is set to "
+                "'True'. Therefore, the non-dominated configurations will be "
+                "determined without taking any measurements into account.",
                 UserWarning,
             )
 
