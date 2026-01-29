@@ -232,6 +232,47 @@ acq_values = campaign.acquisition_values(rec, UCB())
 joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
 ```
 
+## Non-dominated Points
+You may be interested in identifying the non-dominated points within a given set of 
+parameter configurations. The methods 
+[`Campaign.identify_non_dominated_configurations`](baybe.campaign.Campaign.identify_non_dominated_configurations) 
+and [`Objective.identify_non_dominated_configurations`](baybe.objective.base.Objective.identify_non_dominated_configurations) 
+offer an interface for this purpose for any 
+[`Objective`](baybe.objective.base.Objective):
+
+```python
+is_non_dominated = campaign.identify_non_dominated_configurations(rec)
+```
+
+This will return a `Series` indicating which points in the provided parameter 
+configurations are non-dominated according to the campaign's objective. If no 
+configurations are provided, the campaign's measurements are used by default.
+
+|    | is_non_dominated |
+|---:|:-----------------|
+| 15 | True             |
+| 18 | False            |
+|  9 | False            |
+
+When identifying the non-dominated points for a given set of configurations, you can 
+choose to either include or exclude the campaign's measurements in the computation. It 
+is recommended to consider the campaign's measurements when evaluating new 
+configurations, as this allows you to assess them within the context of existing data.
+
+```python
+is_non_dominated = campaign.identify_non_dominated_configurations(
+    rec, consider_campaign_measurements=True
+)
+```
+
+```{admonition} Non-dominated points for non-pareto objectives
+:class: note
+When using a multi-objective Pareto objective, the non-dominated points correspond to 
+the Pareto front. For single-objective or non-Pareto objectives, the method identifies 
+the best-performing configurations based on the defined optimization criteria.
+```
+
+
 ## Serialization
 
 Like other BayBE objects, [`Campaigns`](baybe.campaign.Campaign) can be (de-)serialized 
