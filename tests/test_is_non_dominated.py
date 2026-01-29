@@ -5,8 +5,10 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.campaign import Campaign
 from baybe.exceptions import IncompatibilityError, NothingToComputeError
 from baybe.parameters import NumericalDiscreteParameter
+from baybe.parameters.numerical import NumericalContinuousParameter
 
 
 # TODO: Remove once batch size fixture has been deactivated globally
@@ -73,19 +75,11 @@ def test_consistency(
         assert non_dominated_campaign.equals(non_dominated_objective)
 
 
-@pytest.mark.parametrize(
-    "objective_name, target_names",
-    [
-        param(None, ["Target_max"], id="none_max"),
-    ],
-)
-def test_incompatibility(campaign, fake_measurements):
-    """Test for incompatibility when objective is ``None``."""
-    with pytest.raises(IncompatibilityError):
+def test_missing_objective():
+    """Identification of non-dominated configurations without object is rejected."""
+    campaign = Campaign(searchspace=NumericalContinuousParameter("p", (0, 1)))
+    with pytest.raises(IncompatibilityError, match="no 'Objective' is defined"):
         campaign.identify_non_dominated_configurations()
-
-    with pytest.raises(IncompatibilityError):
-        campaign.identify_non_dominated_configurations(fake_measurements)
 
 
 @pytest.mark.parametrize(
