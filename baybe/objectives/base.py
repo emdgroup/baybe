@@ -257,27 +257,25 @@ class Objective(ABC, SerialMixin):
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /
     ) -> pd.Series:
-        """Create a boolean mask indicating the non-dominated configurations.
+        """Create a Boolean mask indicating non-dominated configurations.
 
-        While the concept of dominated points originates from Pareto optimization, it
-        can also be generalized to non-Pareto objectives. In these cases, we define
-        non-dominated points as the optimal point(s) according to the objective's logic,
-        which recovers the Pareto sense for objectives that rank points according to a
-        single value.
+        While the concept of (non-)domination is typically associated with Pareto
+        optimization, it can also be applied to objectives of types other than
+        :class:`~baybe.objectives.pareto.ParetoObjective`. In general, we identify
+        non-dominated configurations as the subset of configurations that are
+        Pareto-optimal as measured by their transformed representations specified by the
+        objective. For :class:`~baybe.objectives.pareto.ParetoObjective`, this recovers
+        the standard logic where transformation axes are defined by individual targets.
 
-        In case of duplicated non-dominated points, returns both duplicates as
+        In case of duplicated non-dominated points, all duplicates are marked as
         non-dominated.
 
-        Possible validation exceptions are documented in
-        :func:`baybe.utils.validation.validate_target_input`.
-
         Args:
-            configurations: The configurations for which the non-dominated points will
-                be identified.
+            configurations: The configurations for which the non-dominated points are
+                identified.
 
         Returns:
-            A series of boolean values indicating whether the corresponding
-                point is non-dominated.
+            A Boolean series indicating which configurations are non-dominated.
         """
         from botorch.utils.multi_objective.pareto import is_non_dominated
 

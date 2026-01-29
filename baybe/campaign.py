@@ -881,28 +881,23 @@ class Campaign(SerialMixin):
         *,
         consider_campaign_measurements: bool = True,
     ) -> pd.Series:
-        """Create a boolean mask indicating the non-dominated points.
-
-        Uses the campaign's measurements by default if no configurations are provided.
+        """Create a Boolean mask indicating non-dominated configurations.
 
         Args:
-            configurations: The configurations with populated target columns for which
-                the non-dominated points will be identified. If ``None``, the
-                non-dominated points will be computed for the campaign's measurements.
-            consider_campaign_measurements: If ``True`` the campaign's measurements will
-                be considered in calculating the non-dominated points of the
-                configurations, but will not be returned.
+            configurations: The configurations (with populated target columns) for which
+                non-dominated points are identified. If ``None``, uses the campaign's
+                measurements.
+            consider_campaign_measurements: If ``True``, the campaign's measurements are
+                considered for identifying the non-dominated configurations, but will
+                not be themselves reflected in the returned mask.
 
         Raises:
-            IncompatibilityError: If the campaign's objective is ``None``.
+            IncompatibilityError: If no objective is defined for the campaign.
             NothingToComputeError: If no configurations are provided as argument and no
                 measurements are added to the campaign yet.
-            Additional validation exceptions are documented in
-                :func:`baybe.utils.validation.validate_target_input`.
 
         Returns:
-            A series of boolean values indicating whether the corresponding point is
-            non-dominated.
+            A Boolean series indicating which configurations are non-dominated.
         """
         if self.objective is None:
             raise IncompatibilityError(
