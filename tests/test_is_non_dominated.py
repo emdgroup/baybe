@@ -1,5 +1,7 @@
 """Test identification of non-dominated configurations."""
 
+import contextlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -85,51 +87,35 @@ def test_missing_objective():
         campaign.identify_non_dominated_configurations()
 
 
-@pytest.mark.parametrize(
-    ("objective_cls", "target_names"),
-    [
-        param(ParetoObjective, ["Target_max", "Target_min"], id="pareto_max_min"),
-        param(
-            DesirabilityObjective,
-            ["Target_match_triangular", "Target_min_bounded"],
-            id="desirability_max_min_bound",
-        ),
-        param(SingleTargetObjective, ["Target_max"], id="single_max"),
-    ],
-)
-def test_logic_consider_campaign_measurements(campaign, fake_measurements):
-    """Test that exceptions are raised for invalid input combinations."""
-    # Test flag when campaign has no measurements
-    with pytest.raises(NothingToComputeError):
+@pytest.mark.parametrize("add_measurements", [True, False], ids=["add", "no_add"])
+@pytest.mark.parametrize("external_configurations", [True, False], ids=["ext", "int"])
+@pytest.mark.parametrize("consider", [True, False], ids=["consider", "no_consider"])
+def test_invalid_argument_configurations(
+    campaign,
+    fake_measurements,
+    add_measurements,
+    external_configurations,
+    consider,
+):
+    """For invalid argument configurations, the appropriate error/warning is raised."""
+    if add_measurements:
+        campaign.add_measurements(fake_measurements)
+
+    if not add_measurements and not external_configurations:
+        # No data available -> should raise
+        context = pytest.raises(NothingToComputeError)
+    elif not add_measurements and external_configurations and consider:
+        # Only external data, trying to consider campaign -> should warn
+        context = pytest.warns(UserWarning)
+    else:
+        # Has campaign measurements or not considering them -> fine
+        context = contextlib.nullcontext()
+
+    configurations = fake_measurements if external_configurations else None
+    with context:
         campaign.identify_non_dominated_configurations(
-            consider_campaign_measurements=True
+            configurations, consider_campaign_measurements=consider
         )
-
-    with pytest.raises(NothingToComputeError):
-        campaign.identify_non_dominated_configurations(
-            consider_campaign_measurements=False
-        )
-
-    with pytest.warns(UserWarning):
-        campaign.identify_non_dominated_configurations(
-            fake_measurements, consider_campaign_measurements=True
-        )
-
-    campaign.identify_non_dominated_configurations(
-        fake_measurements, consider_campaign_measurements=False
-    )
-
-    # Test flag when campaign has measurements
-    campaign.add_measurements(fake_measurements)
-
-    campaign.identify_non_dominated_configurations(consider_campaign_measurements=True)
-    campaign.identify_non_dominated_configurations(consider_campaign_measurements=False)
-    campaign.identify_non_dominated_configurations(
-        fake_measurements, consider_campaign_measurements=True
-    )
-    campaign.identify_non_dominated_configurations(
-        fake_measurements, consider_campaign_measurements=False
-    )
 
 
 @pytest.mark.parametrize(
