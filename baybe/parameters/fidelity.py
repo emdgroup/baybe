@@ -16,8 +16,7 @@ from typing_extensions import override
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
-    validate_contains_exactly_one_zero,
-    validate_contains_one,
+    validate_contains_exactly_one,
     validate_equal_length,
     validate_is_finite,
     validate_unique_values,
@@ -71,7 +70,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
         validator=(
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
-            validate_contains_exactly_one_zero,
+            validate_contains_exactly_one(0.0),
             validate_equal_length("_values"),
         ),
     )
@@ -122,7 +121,7 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
             validate_unique_values,  # type: ignore
             validate_is_finite,
             deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
-            validate_contains_one,
+            validate_contains_exactly_one(1.0),
         ],
     )
     # See base class.
