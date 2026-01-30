@@ -232,47 +232,30 @@ acq_values = campaign.acquisition_values(rec, UCB())
 joint_acq_value = campaign.joint_acquisition_value(rec, qPSTD())
 ```
 
-## Non-dominated Points
-You may be interested in identifying the non-dominated points within a given set of 
-parameter configurations. The methods 
-[`Campaign.identify_non_dominated_configurations`](baybe.campaign.Campaign.identify_non_dominated_configurations) 
-and [`Objective.identify_non_dominated_configurations`](baybe.objective.base.Objective.identify_non_dominated_configurations) 
-offer an interface for this purpose for any 
-[`Objective`](baybe.objective.base.Objective):
+## Identifying Non-Dominated Configurations
+While iterating your {class}`~baybe.campaign.Campaign`, you may be interested in
+monitoring the *non-dominated* configurations you have found along the way, to observe
+how the corresponding Pareto front evolves over successive experimentation rounds.
+{ref}`Like for objectives <userguide/objectives:Identifying Non-Dominated
+Configurations>`, the
+{meth}`~baybe.campaign.Campaign.identify_non_dominated_configurations` method offers an
+easy interface for this purpose:
 
 ```python
-param_configs = campaign.recommend(batch_size=3)
-param_configs["Target_max"] = [9, 3, 4]  # Adding target values matching the batch_size
-is_non_dominated = campaign.identify_non_dominated_configurations(param_configs)
+is_non_dominated = campaign.identify_non_dominated_configurations()
 ```
 
-This will return a `Series` indicating which points in the provided parameter 
-configurations are non-dominated according to the campaign's objective. If no 
-configurations are provided, the campaign's measurements are used by default.
+By default, the method looks at the taken measurements of the of the campaign, showing
+you all *optimal* configurations you have found so far. Alternatively, you can provide
+an explicit set of target configurations as input, where you have the choice whether to
+consider the campaign data as additional reference configurations for the evaluation or
+not.
 
-| is_non_dominated |
-|:-----------------|
-| True             |
-| False            |
-| False            |
-
-When identifying the non-dominated points for a given set of configurations, you can 
-choose to either include or exclude the campaign's measurements in the computation. It 
-is recommended to consider the campaign's measurements when evaluating new 
-configurations, as this allows you to assess them within the context of existing data.
-
-```python
+~~~python
 is_non_dominated = campaign.identify_non_dominated_configurations(
-    param_configs, consider_campaign_measurements=True
+    configurations, consider_campaign_measurements=True
 )
-```
-
-```{admonition} Non-dominated points for non-pareto objectives
-:class: note
-When using a multi-objective Pareto objective, the non-dominated points correspond to 
-the Pareto front. For single-objective or non-Pareto objectives, the method identifies 
-the best-performing configurations based on the defined optimization criteria.
-```
+~~~
 
 
 ## Serialization
