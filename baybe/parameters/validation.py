@@ -48,34 +48,27 @@ def validate_is_finite(  # noqa: DOC101, DOC103
         )
 
 
-def validate_contains_exactly_one_zero(  # noqa: DOC101, DOC103
-    obj: Parameter, attribute: Attribute, values: Collection[float]
-) -> None:
-    """Validate that the input contains exactly one element equal to ``0.0``.
+def validate_contains_exactly_one(
+    value: Any, /
+) -> Callable[[Parameter, Attribute, Collection[Any]], None]:
+    """Make a validator to check an attribute contains a certain value exactly once."""
 
-    Raises:
-        ValueError: If the input does not contain ``0.0`` exactly once.
-    """
-    if (count := list(values).count(0.0)) != 1:
-        raise ValueError(
-            f"The '{attribute.alias}' attribute of parameter '{obj.name}' must contain "
-            f"the element 0.0 exactly once. Found {count} such elements: {values}."
-        )
+    def validator(  # noqa: DOC101, DOC103
+        obj: Parameter, attribute: Attribute, values: Collection[float]
+    ) -> None:
+        """Validate that the input contains a reference element exactly once.
 
+        Raises:
+            ValueError: If the input does not contain the reference exactly once.
+        """
+        if (count := list(values).count(value)) != 1:
+            raise ValueError(
+                f"The '{attribute.alias}' attribute of parameter '{obj.name}' must "
+                f"contain the element '{value}' exactly once. "
+                f"Found {count} such elements in the given input: {values}."
+            )
 
-def validate_contains_one(  # noqa: DOC101, DOC103
-    obj: Parameter, attribute: Attribute, values: Collection[float]
-):
-    """Validate that ``value`` contains at least one entry equal to ``1.0``.
-
-    Raises:
-        ValueError: If ``value`` does not include ``1.0``
-    """
-    if 1.0 not in values:
-        raise ValueError(
-            f"The '{attribute.alias}' attribute of parameter '{obj.name}' must "
-            f"contain the element 1.0. Given: {values}."
-        )
+    return validator
 
 
 def validate_equal_length(
