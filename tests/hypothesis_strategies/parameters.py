@@ -12,7 +12,10 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
-from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -40,15 +43,29 @@ categories = st.lists(
 
 @st.composite
 def _zeta(draw: st.DrawFn, n_values: int):
-    """Generate zeta values containing exactly one zero."""
-    without_zero = draw(
+    """Generate zeta values containing exactly one 0.0."""
+    without = draw(
         st.lists(
             finite_floats(min_value=0.0, exclude_min=True),
             min_size=n_values - 1,
             max_size=n_values - 1,
         )
     )
-    return np.random.permutation(np.asarray(without_zero + [0.0]).tolist())
+    return np.random.permutation(np.asarray(without + [0.0]).tolist())
+
+
+@st.composite
+def _numerical_fidelities(draw: st.DrawFn, n_values: int):
+    """Generate numerical fidelity values containing exactly one 1.0."""
+    without = draw(
+        st.lists(
+            finite_floats(min_value=0.0, max_value=1.0, exclude_max=True),
+            min_size=n_values - 1,
+            max_size=n_values - 1,
+            unique=True,
+        )
+    )
+    return np.random.permutation(np.asarray(without + [1.0]).tolist())
 
 
 @st.composite
@@ -243,6 +260,23 @@ def categorical_fidelity_parameters(draw: st.DrawFn):
     )
 
 
+@st.composite
+def numerical_discrete_fidelity_parameters(draw: st.DrawFn):
+    """Generate :class:`baybe.parameters.fidelity.NumericalDiscreteFidelityParameter`."""  # noqa: E501
+    name = draw(parameter_names)
+    n_values = draw(st.integers(min_value=2, max_value=10))
+    values = draw(_numerical_fidelities(n_values))
+    costs = draw(
+        st.lists(
+            finite_floats(min_value=0.0), min_size=len(values), max_size=len(values)
+        )
+    )
+    param_metadata = draw(measurable_metadata())
+    return NumericalDiscreteFidelityParameter(
+        name=name, values=values, costs=costs, metadata=param_metadata
+    )
+
+
 parameters = st.one_of(
     [
         numerical_discrete_parameters(),
@@ -251,6 +285,8 @@ parameters = st.one_of(
         task_parameters(),
         substance_parameters(),
         custom_parameters(),
+        numerical_discrete_fidelity_parameters(),
+        categorical_fidelity_parameters(),
     ]
 )
 """A strategy that generates parameters."""
@@ -263,6 +299,7 @@ discrete_parameters = st.one_of(
         task_parameters(),
         substance_parameters(),
         custom_parameters(),
+        numerical_discrete_fidelity_parameters(),
         categorical_fidelity_parameters(),
     ]
 )
