@@ -41,7 +41,7 @@ def validate_is_finite(  # noqa: DOC101, DOC103
     Raises:
         ValueError: If the input contains infinity/nan.
     """
-    if not all(np.isfinite(values)):
+    if not all(np.isfinite(np.asarray(values))):
         raise ValueError(
             f"The '{attribute.alias}' attribute of parameter '{obj.name}' must not "
             f"contain infinity/nan elements. Given: {values}."
