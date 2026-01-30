@@ -14,7 +14,10 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
-from baybe.parameters.fidelity import CategoricalFidelityParameter
+from baybe.parameters.fidelity import (
+    CategoricalFidelityParameter,
+    NumericalDiscreteFidelityParameter,
+)
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -255,3 +258,23 @@ def test_invalid_categorical_fidelity_parameter(values, costs, zeta, match):
     """Providing an invalid parameter specifications raises an exception."""
     with pytest.raises(ValueError, match=match):
         CategoricalFidelityParameter("invalid", values=values, costs=costs, zeta=zeta)
+
+
+@pytest.mark.parametrize(
+    ("values", "costs", "match"),
+    [
+        param([1], [0], "must be >= 2", id="value_len"),
+        param([1, 1], [0, 1], "unique elements", id="duplicates"),
+        param([1, np.nan], [0, 1], "infinity/nan", id="nan_fidelity"),
+        param([1, 2], [0, 1], "must be <= 1.0", id="fidelity_too_high"),
+        param([1, -1], [0, 1], "must be >= 0.0", id="fidelity_too_low"),
+        param([0, 0.1], [0, 1], "element 1.0", id="no_unit_fidelity"),
+        param([0, 1], [0], "'costs' do not match", id="cost_len"),
+        param([0, 1], [0, -1], "must be >= 0.0", id="neg_cost"),
+        param([0, 1], [0, np.inf], "infinity/nan", id="infinite_cost"),
+    ],
+)
+def test_invalid_numerical_discrete_fidelity_parameter(values, costs, match):
+    """Providing an invalid parameter specifications raises an exception."""
+    with pytest.raises(ValueError, match=match):
+        NumericalDiscreteFidelityParameter("invalid", values=values, costs=costs)
