@@ -12,6 +12,7 @@ from baybe.parameters.categorical import (
     TaskParameter,
 )
 from baybe.parameters.custom import CustomDiscreteParameter
+from baybe.parameters.fidelity import CategoricalFidelityParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -35,6 +36,19 @@ categories = st.lists(
     st.one_of(st.text(min_size=1), st.booleans()), min_size=2, unique=True
 )
 """A strategy that generates parameter categories."""
+
+
+@st.composite
+def _zeta(draw: st.DrawFn, n_values: int):
+    """Generate zeta values containing exactly one zero."""
+    without_zero = draw(
+        st.lists(
+            finite_floats(min_value=0.0, exclude_min=True),
+            min_size=n_values - 1,
+            max_size=n_values - 1,
+        )
+    )
+    return np.random.permutation(np.asarray(without_zero + [0.0]).tolist())
 
 
 @st.composite
@@ -203,6 +217,32 @@ def custom_parameters(draw: st.DrawFn):
     )
 
 
+@st.composite
+def categorical_fidelity_parameters(draw: st.DrawFn):
+    """Generate :class:`baybe.parameters.fidelity.CategoricalFidelityParameter`."""
+    name = draw(parameter_names)
+    values = draw(categories)
+    costs = draw(
+        st.lists(
+            finite_floats(min_value=0.0), min_size=len(values), max_size=len(values)
+        )
+    )
+    zeta = draw(
+        st.one_of(
+            finite_floats(
+                min_value=0.0,
+                max_value=np.finfo(np.float64).max / len(values),
+                exclude_min=True,
+            ),
+            _zeta(len(values)),
+        )
+    )
+    param_metadata = draw(measurable_metadata())
+    return CategoricalFidelityParameter(
+        name=name, values=values, costs=costs, zeta=zeta, metadata=param_metadata
+    )
+
+
 parameters = st.one_of(
     [
         numerical_discrete_parameters(),
@@ -223,6 +263,7 @@ discrete_parameters = st.one_of(
         task_parameters(),
         substance_parameters(),
         custom_parameters(),
+        categorical_fidelity_parameters(),
     ]
 )
 """A strategy that generates discrete parameters."""
