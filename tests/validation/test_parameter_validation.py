@@ -250,8 +250,8 @@ def test_invalid_data_custom_parameter(data, active_values):
         param(["l", "h"], [0, 1], [0], "'zeta' do not match", id="discrepancy_len"),
         param(["l", "h"], [0, 1], [0, -1], "must be >= 0.0", id="neg_discrepancy"),
         param(["l", "h"], [0, 1], [0, np.inf], "infinity/nan", id="inf_discrepancy"),
-        param(["l", "h"], [1, 2], [1, 2], "0.0 exactly once", id="no_zero"),
-        param(["l", "h"], [1, 2], [0, 0], "0.0 exactly once", id="many_zeros"),
+        param(["l", "h"], [1, 2], [1, 2], "'0.0' exactly once", id="no_zero"),
+        param(["l", "h"], [1, 2], [0, 0], "'0.0' exactly once", id="many_zeros"),
     ],
 )
 def test_invalid_categorical_fidelity_parameter(values, costs, zeta, match):
@@ -264,11 +264,12 @@ def test_invalid_categorical_fidelity_parameter(values, costs, zeta, match):
     ("values", "costs", "match"),
     [
         param([1], [0], "must be >= 2", id="value_len"),
-        param([1, 1], [0, 1], "unique elements", id="duplicates"),
+        param([0, 0, 1], [0, 1, 2], "unique elements", id="duplicates"),
         param([1, np.nan], [0, 1], "infinity/nan", id="nan_fidelity"),
         param([1, 2], [0, 1], "must be <= 1.0", id="fidelity_too_high"),
         param([1, -1], [0, 1], "must be >= 0.0", id="fidelity_too_low"),
-        param([0, 0.1], [0, 1], "element 1.0", id="no_unit_fidelity"),
+        param([0, 0], [1, 2], "'1.0' exactly once", id="no_one"),
+        param([1, 1], [1, 2], "'1.0' exactly once", id="many_ones"),
         param([0, 1], [0], "'costs' do not match", id="cost_len"),
         param([0, 1], [0, -1], "must be >= 0.0", id="neg_cost"),
         param([0, 1], [0, np.inf], "infinity/nan", id="infinite_cost"),
