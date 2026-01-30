@@ -1,6 +1,10 @@
 """Fidelity parameters."""
 
+from __future__ import annotations
+
+from collections.abc import Sequence
 from functools import cached_property
+from numbers import Real
 from typing import Any, ClassVar, cast
 
 import cattrs
@@ -19,13 +23,15 @@ from baybe.parameters.validation import (
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
-def _convert_zetas(value, self) -> tuple[float, ...]:
-    seq_len = len(self._values)
-    if isinstance(value, (int, float)):
-        expanded = tuple(i * value for i in range(seq_len))
-    else:
-        expanded = cattrs.structure(value, tuple[float, ...])
-    return expanded
+def _convert_zeta(
+    value: Real | Sequence[Real], self: CategoricalFidelityParameter
+) -> tuple[float, ...]:
+    """Convert zeta input (sequence or scalar) into a tuple of floats."""
+    if isinstance(value, Real):
+        seq_len = len(self._values)
+        return tuple(i * value for i in range(seq_len))
+
+    return cattrs.structure(value, tuple[float, ...])
 
 
 @define(frozen=True, slots=False)
@@ -64,7 +70,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
     _zeta: tuple[float, ...] = field(
         alias="zeta",
         converter=Converter(  # type: ignore
-            _convert_zetas,
+            _convert_zeta,
             takes_self=True,
         ),
         validator=(
