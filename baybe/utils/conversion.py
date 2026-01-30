@@ -47,14 +47,6 @@ def sort_tuple(values: tuple[_T, ...]) -> tuple[_T, ...]:
     return tuple(sorted(values, key=lambda x: (str(type(x)), x)))
 
 
-def expand_scalar_progression(
-    value: int | float,
-    seq_len: int,
-) -> tuple[float, ...]:
-    """Expand a scalar into an arithmetic sequence beginning at 0."""
-    return tuple(i * value for i in range(seq_len))
-
-
 def _indent(text: str, amount: int = 3, ch: str = " ") -> str:
     """Indent a given text by a certain amount."""
     padding = amount * ch
