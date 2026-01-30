@@ -58,9 +58,9 @@ class CategoricalFidelityParameter(DiscreteParameter):
     costs: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=[
+            validate_equal_length("_values"),
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
-            validate_equal_length("_values"),
         ],
     )
     """The costs associated with querying the parameter at each fidelity."""
@@ -68,10 +68,10 @@ class CategoricalFidelityParameter(DiscreteParameter):
     zeta: tuple[float, ...] = field(
         converter=Converter(_convert_zeta, takes_self=True),
         validator=(
+            validate_equal_length("_values"),
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
             validate_contains_exactly_one(0.0),
-            validate_equal_length("_values"),
         ),
     )
     """The maximum discrepancy from the highest fidelity at any design choice.
@@ -118,10 +118,10 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=[
             min_len(2),
+            validate_contains_exactly_one(1.0),
             validate_unique_values,  # type: ignore
             validate_is_finite,
             deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
-            validate_contains_exactly_one(1.0),
         ],
     )
     # See base class.
@@ -130,8 +130,8 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=[
             validate_is_finite,
-            deep_iterable(member_validator=ge(0.0)),
             validate_equal_length("_values"),
+            deep_iterable(member_validator=ge(0.0)),
         ],
     )
     """The costs associated with querying the parameter at each fidelity."""
