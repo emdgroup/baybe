@@ -5,17 +5,18 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import cached_property
 from numbers import Real
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import Converter, define, field, fields
-from attrs.validators import and_, deep_iterable, ge, instance_of, le, min_len
+from attrs import Attribute, Converter, define, field, fields
+from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
 from baybe.parameters.base import DiscreteParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
+    validate_contains_exactly_one_zero,
     validate_contains_one,
     validate_is_finite,
     validate_unique_values,
@@ -51,31 +52,18 @@ class CategoricalFidelityParameter(DiscreteParameter):
     )
     # See base class.
 
-    _costs: tuple[float, ...] = field(
-        alias="costs",
+    costs: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
-        validator=[
-            validate_is_finite,
-            deep_iterable(member_validator=ge(0.0)),
-        ],
+        validator=[validate_is_finite, deep_iterable(member_validator=ge(0.0))],
     )
     """The costs associated with querying the parameter at each value."""
 
-    # TODO: Handle other kinds of assumption about the relationship between fidelities.
-    # _zeta currently takes the role of the discrepancy parameter in MF-GP-UCB
-    # (Kandasamy et al, 2017) but other parameters may be needed for more general
-    # multi-fidelity approaches which use a CategoricalFidelityParameter.
-    # TODO: Add an argument for adaptive learning of fidelity discrepancy.
-    # To be added in an upcoming pull request.
-    _zeta: tuple[float, ...] = field(
-        alias="zeta",
-        converter=Converter(  # type: ignore
-            _convert_zeta,
-            takes_self=True,
-        ),
+    zeta: tuple[float, ...] = field(
+        converter=Converter(_convert_zeta, takes_self=True),
         validator=(
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
+            validate_contains_exactly_one_zero,
         ),
     )
     """The maximum discrepancy from target (high) fidelity at any design choice.
@@ -85,32 +73,25 @@ class CategoricalFidelityParameter(DiscreteParameter):
     'values' has discrepancy 0 (the highest fidelity), the next have discrepancy
     'zeta', 2*'zeta' and so on."""
 
-    _highest_fidelity: str | None = field(
-        alias="highest_fidelity",
-        validator=instance_of(str),
-        default=None,
-    )
-    """The name of the highest fidelity value. Determined by 'zeta' if not given."""
-
-    @_costs.validator
+    @costs.validator
     def _validate_cost_length(  # noqa: DOC101, DOC103
-        self, _: Any, value: tuple[float, ...]
+        self, _: Attribute, costs: tuple[float, ...]
     ) -> None:
         """Validate that there is one cost per fidelity parameter.
 
         Raises:
             ValueError: If 'costs' and 'values' have different lengths.
         """
-        if len(value) != len(self._values):
+        if len(costs) != len(self._values):
             raise ValueError(
                 f"Length of '{fields(type(self))._costs.alias}'"
                 f"and '{fields(type(self))._values.alias}'"
                 f"different in '{self.name}'."
             )
 
-    @_zeta.validator
+    @zeta.validator
     def _validate_zeta(  # noqa: DOC101, DOC103
-        self, _: Any, value: tuple[float, ...]
+        self, _: Attribute, value: tuple[float, ...]
     ) -> None:
         """Validate instance attribute ``zeta``.
 
@@ -124,87 +105,24 @@ class CategoricalFidelityParameter(DiscreteParameter):
                 f"different lengths in '{self.name}'."
             )
 
-    @_highest_fidelity.validator
-    def _validate_highest_fidelity(  # noqa: DOC101, DOC103
-        self, _: Any, target_value: str
-    ):
-        if target_value not in self._values:
-            raise ValueError(
-                f"'{fields(type(self))._highest_fidelity.alias}' {target_value} is "
-                f"not in '{fields(type(self))._values.alias}' in '{self.name}'."
-            )
-
-        target_idx = self._values.index(target_value)
-
-        if isinstance(self._zeta, tuple):
-            if self._zeta[target_idx] != 0:
-                raise ValueError(
-                    f"'{fields(type(self))._highest_fidelity.alias}' must have "
-                    f"'{fields(type(self))._zeta.alias}' value of '0' in the "
-                    f"fidelity parameter '{self.name}'."
-                )
-
-        elif isinstance(self._zeta, float):
-            if target_idx != 0:
-                raise ValueError(
-                    f"When specifying scalar '{fields(type(self))._zeta.alias}', "
-                    f"'{fields(type(self))._highest_fidelity.alias}' must be "
-                    f"the first name in '{fields(type(self))._values.alias}' so it "
-                    f"has '{fields(type(self))._zeta.alias} = 0' in '{self.name}'."
-                )
+    def __attrs_post_init__(self) -> None:
+        """Sort attribute values according to lexographic fidelity values."""
+        idx = sorted(range(len(self._values)), key=lambda i: self._values[i])
+        object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
+        object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
+        object.__setattr__(self, "zeta", tuple(self.zeta[i] for i in idx))
 
     @override
     @property
-    def values(self) -> tuple:
-        """The fidelity values of the parameter, sorted lexicographically."""
-        sorted_fidelities = sorted(
-            range(len(self._values)), key=lambda i: self._values[i]
-        )
-        return tuple(self._values[f] for f in sorted_fidelities)
-
-    @property
-    def costs(self) -> tuple:
-        """The fidelity costs of the parameter, sorted according to values."""
-        sorted_fidelities = sorted(
-            range(len(self._values)), key=lambda i: self._values[i]
-        )
-        return tuple(self._costs[f] for f in sorted_fidelities)
-
-    @property
-    def zeta(self) -> tuple:
-        """The fidelity discrepancies of the parameter, sorted according to values."""
-        if isinstance(self._zeta, float):
-            fids = range(len(self._values))
-            zeta_tup = tuple(f * self._zeta for f in fids)
-        else:
-            zeta_tup = self._zeta
-
-        sorted_fidelities = sorted(
-            range(len(self._values)), key=lambda i: self._values[i]
-        )
-        return tuple(zeta_tup[f] for f in sorted_fidelities)
+    def values(self) -> tuple[float, ...]:
+        return self._values
 
     @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        comp_df = pd.DataFrame(
+        return pd.DataFrame(
             range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
         )
-
-        return comp_df
-
-    @property
-    def highest_fidelity(self) -> str:
-        """Highest fidelity value, set manually or otherwise by ``zeta``."""
-        if self._highest_fidelity is None:
-            return self.values[self.zeta.index(0.0)]
-        else:
-            return self._highest_fidelity
-
-    @property
-    def highest_fidelity_comp(self) -> int:
-        """Integer encoding value of the highest fidelity."""
-        return cast(int, self.comp_df.loc[self.highest_fidelity, self.name])
 
 
 @define(frozen=True, slots=False)
