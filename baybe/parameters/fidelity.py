@@ -9,7 +9,7 @@ from typing import Any, ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import Attribute, Converter, define, field, fields
+from attrs import Converter, define, field, fields
 from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
@@ -18,6 +18,7 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
     validate_contains_exactly_one_zero,
     validate_contains_one,
+    validate_equal_length,
     validate_is_finite,
     validate_unique_values,
 )
@@ -54,7 +55,11 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     costs: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
-        validator=[validate_is_finite, deep_iterable(member_validator=ge(0.0))],
+        validator=[
+            validate_is_finite,
+            deep_iterable(member_validator=ge(0.0)),
+            validate_equal_length("_values"),
+        ],
     )
     """The costs associated with querying the parameter at each value."""
 
@@ -64,6 +69,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
             validate_contains_exactly_one_zero,
+            validate_equal_length("_values"),
         ),
     )
     """The maximum discrepancy from the highest fidelity at any design choice.
@@ -74,38 +80,6 @@ class CategoricalFidelityParameter(DiscreteParameter):
         * A positive scalar, specifying that the *first* fidelity input has discrepancy
           0 (corresponding to the highest fidelity) and the remaining fidelities have
           discrepancy ``zeta``, 2 * ``zeta``, and so on."""
-
-    @costs.validator
-    def _validate_costs(  # noqa: DOC101, DOC103
-        self, _: Attribute, costs: tuple[float, ...]
-    ) -> None:
-        """Validate that each fidelity has an associated cost.
-
-        Raises:
-            ValueError: If the number of costs and fidelities mismatch.
-        """
-        if len(costs) != len(self._values):
-            raise ValueError(
-                f"Each fidelity of parameter '{self.name}' must have an associated "
-                f"cost. Number of fidelities specified: {len(self._values)}. "
-                f"Number of costs specified: {len(costs)}."
-            )
-
-    @zeta.validator
-    def _validate_zeta(  # noqa: DOC101, DOC103
-        self, _: Attribute, value: tuple[float, ...]
-    ) -> None:
-        """Validate that each fidelity has an associated discrepancy value ``zeta``.
-
-        Raises:
-            ValueError: If the number of discrepancies and fidelities mismatch.
-        """
-        if len(value) != len(self._values):
-            raise ValueError(
-                f"Each fidelity of parameter '{self.name}' must have an associated "
-                f"discrepancy value 'zeta'. Number of fidelities specified: "
-                f"{len(self._values)}. Number of discrepancies specified: {len(value)}."
-            )
 
     def __attrs_post_init__(self) -> None:
         """Sort attribute values according to lexographic fidelity values."""
