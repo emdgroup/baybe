@@ -40,6 +40,9 @@ def _convert_zeta(
 class CategoricalFidelityParameter(DiscreteParameter):
     """Parameter class for categorical fidelity parameters."""
 
+    is_numerical: ClassVar[bool] = False
+    # See base class.
+
     encoding: CategoricalEncoding = field(init=False, default=CategoricalEncoding.INT)
     # See base class.
 
