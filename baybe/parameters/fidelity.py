@@ -30,7 +30,7 @@ def _convert_zeta(
     """Convert zeta input (sequence or scalar) into a tuple of floats."""
     if isinstance(value, Real):
         seq_len = len(self._values)
-        return tuple(i * value for i in range(seq_len))
+        return tuple(i * float(value) for i in range(seq_len))
 
     return cattrs.structure(value, tuple[float, ...])
 
@@ -66,7 +66,8 @@ class CategoricalFidelityParameter(DiscreteParameter):
     """The costs associated with querying the parameter at each fidelity."""
 
     zeta: tuple[float, ...] = field(
-        converter=Converter(_convert_zeta, takes_self=True),
+        # FIXME[typing]: https://github.com/python/mypy/issues/19520
+        converter=Converter(_convert_zeta, takes_self=True),  # type: ignore
         validator=(
             validate_equal_length("_values"),
             validate_is_finite,
@@ -92,7 +93,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     @override
     @property
-    def values(self) -> tuple[float, ...]:
+    def values(self) -> tuple[str, ...]:
         return self._values
 
     @override
