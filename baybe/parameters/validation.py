@@ -1,10 +1,10 @@
 """Validation functionality for parameters."""
 
-from collections.abc import Collection
+from collections.abc import Callable, Collection
 from typing import Any
 
 import numpy as np
-from attrs import Attribute
+from attrs import Attribute, fields_dict
 from attrs.validators import gt, instance_of, lt
 
 from baybe.parameters.base import Parameter
@@ -76,3 +76,26 @@ def validate_contains_one(  # noqa: DOC101, DOC103
             f"The '{attribute.alias}' attribute of parameter '{obj.name}' must "
             f"contain the element 1.0. Given: {values}."
         )
+
+
+def validate_equal_length(
+    reference_name: str, /
+) -> Callable[[Parameter, Attribute, Collection[Any]], None]:
+    """Make a validator to check an attribute length against a reference attribute."""
+
+    def validator(obj: Parameter, attribute: Attribute, value: Collection[Any]) -> None:  # noqa: DOC101, DOC103
+        """Validate that the input has the same length as the reference attribute.
+
+        Raises:
+            ValueError: If the lengths of the two attributes mismatch.
+        """
+        other_attr = fields_dict(type(obj))[reference_name]
+        if len(value) != (ref_len := len(getattr(obj, reference_name))):
+            raise ValueError(
+                f"The lengths of the attributes '{other_attr.alias}' and "
+                f"'{attribute.alias}' do not match for parameter '{obj.name}'. "
+                f"Length of '{other_attr.alias}': {ref_len}. "
+                f"Length of '{attribute.alias}': {len(value)}."
+            )
+
+    return validator
