@@ -884,9 +884,8 @@ class Campaign(SerialMixin):
         """Create a Boolean mask indicating non-dominated configurations.
 
         Args:
-            configurations: The configurations (with populated target columns) for which
-                non-dominated points are identified. If ``None``, uses the campaign's
-                measurements.
+            configurations: A dataframe carrying values for all targets tracked by the
+                campaign's objective. If ``None``, uses the campaign's measurements.
             consider_campaign_measurements: If ``True``, the campaign's measurements are
                 considered for identifying the non-dominated configurations, but will
                 not be themselves reflected in the returned mask.

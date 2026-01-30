@@ -257,7 +257,7 @@ class Objective(ABC, SerialMixin):
     def identify_non_dominated_configurations(
         self, configurations: pd.DataFrame, /
     ) -> pd.Series:
-        """Create a Boolean mask indicating non-dominated configurations.
+        """Create a Boolean mask indicating non-dominated target configurations.
 
         While the concept of (non-)domination is typically associated with Pareto
         optimization, it can also be applied to objectives of types other than
@@ -271,8 +271,8 @@ class Objective(ABC, SerialMixin):
         non-dominated.
 
         Args:
-            configurations: The configurations for which the non-dominated points are
-                identified.
+            configurations: The target configurations for which the non-dominated subset
+                is identified.
 
         Returns:
             A Boolean series indicating which configurations are non-dominated.
