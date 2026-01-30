@@ -5,11 +5,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 from functools import cached_property
 from numbers import Real
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import cattrs
 import pandas as pd
-from attrs import Converter, define, field, fields
+from attrs import Converter, define, field
 from attrs.validators import and_, deep_iterable, ge, le, min_len
 from typing_extensions import override
 
@@ -64,7 +64,7 @@ class CategoricalFidelityParameter(DiscreteParameter):
             validate_equal_length("_values"),
         ],
     )
-    """The costs associated with querying the parameter at each value."""
+    """The costs associated with querying the parameter at each fidelity."""
 
     zeta: tuple[float, ...] = field(
         converter=Converter(_convert_zeta, takes_self=True),
@@ -111,7 +111,6 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     Fidelity values are floats in the range [0, 1], including 1 (target fidelity).
     """
 
-    # class variables
     is_numerical: ClassVar[bool] = True
     # See base class.
 
@@ -128,53 +127,30 @@ class NumericalDiscreteFidelityParameter(DiscreteParameter):
     )
     # See base class.
 
-    _costs: tuple[float, ...] = field(
-        alias="costs",
+    costs: tuple[float, ...] = field(
         converter=lambda x: cattrs.structure(x, tuple[float, ...]),
         validator=[
-            min_len(2),
             validate_is_finite,
             deep_iterable(member_validator=ge(0.0)),
+            validate_equal_length("_values"),
         ],
     )
-    """The costs associated with querying the parameter at each value."""
+    """The costs associated with querying the parameter at each fidelity."""
 
-    @_costs.validator
-    def _validate_cost_length(  # noqa: DOC101, DOC103
-        self, _: Any, value: tuple[float, ...]
-    ) -> None:
-        """Validate that there is one cost per fidelity parameter.
-
-        Raises:
-            ValueError: If 'costs' and 'values' have different lengths.
-        """
-        if len(value) != len(self._values):
-            raise ValueError(
-                f"Length of '{fields(type(self))._costs.alias}'"
-                f"and '{fields(type(self))._values.alias}' different in '{self.name}'."
-            )
+    def __attrs_post_init__(self) -> None:
+        """Sort attribute values according to fidelity values."""
+        idx = sorted(range(len(self._values)), key=lambda i: self._values[i])
+        object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
+        object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
 
     @override
     @property
-    def values(self) -> tuple:
-        """The fidelity values of the parameter, sorted in numerical order."""
-        sorted_fidelities = sorted(
-            range(len(self._values)), key=lambda i: self._values[i]
-        )
-        return tuple(self._values[f] for f in sorted_fidelities)
-
-    @property
-    def costs(self) -> tuple:
-        """The fidelity costs of the parameter, sorted according to values."""
-        sorted_fidelities = sorted(
-            range(len(self._values)), key=lambda i: self._values[i]
-        )
-        return tuple(DTypeFloatNumpy(self._costs[f]) for f in sorted_fidelities)
+    def values(self) -> tuple[float, ...]:
+        return self._values
 
     @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
-        comp_df = pd.DataFrame(
+        return pd.DataFrame(
             {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
         )
-        return comp_df
