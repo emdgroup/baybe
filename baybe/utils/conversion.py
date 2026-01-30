@@ -42,14 +42,6 @@ def nonstring_to_tuple(x: Sequence[_T], self: type, field: Attribute) -> tuple[_
     return tuple(x)
 
 
-def expand_scalar_progression(
-    value: int | float,
-    seq_len: int,
-) -> tuple[float, ...]:
-    """Expand a scalar into an arithmetic sequence beginning at 0."""
-    return tuple(i * value for i in range(seq_len))
-
-
 def _indent(text: str, amount: int = 3, ch: str = " ") -> str:
     """Indent a given text by a certain amount."""
     padding = amount * ch
