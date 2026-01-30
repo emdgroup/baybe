@@ -16,14 +16,13 @@ from baybe.parameters.validation import (
     validate_is_finite,
     validate_unique_values,
 )
-from baybe.utils.conversion import expand_scalar_progression
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
 def _convert_zetas(value, self) -> tuple[float, ...]:
     seq_len = len(self._values)
     if isinstance(value, (int, float)):
-        expanded = expand_scalar_progression(value, seq_len)
+        expanded = tuple(i * value for i in range(seq_len))
     else:
         expanded = cattrs.structure(value, tuple[float, ...])
     return expanded
