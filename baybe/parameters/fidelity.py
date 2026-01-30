@@ -66,43 +66,45 @@ class CategoricalFidelityParameter(DiscreteParameter):
             validate_contains_exactly_one_zero,
         ),
     )
-    """The maximum discrepancy from target (high) fidelity at any design choice.
+    """The maximum discrepancy from the highest fidelity at any design choice.
 
-    Either a tuple of positive values, , one for each fidelity, equal to 0 at the
-    highest fidelity, or a scalar specifying that the first fidelity input into
-    'values' has discrepancy 0 (the highest fidelity), the next have discrepancy
-    'zeta', 2*'zeta' and so on."""
+    Can be:
+        * A sequence of values, one for each fidelity, with exactly one element equal to
+          0 corresponding to the highest fidelity and positive values otherwise.
+        * A positive scalar, specifying that the *first* fidelity input has discrepancy
+          0 (corresponding to the highest fidelity) and the remaining fidelities have
+          discrepancy ``zeta``, 2 * ``zeta``, and so on."""
 
     @costs.validator
-    def _validate_cost_length(  # noqa: DOC101, DOC103
+    def _validate_costs(  # noqa: DOC101, DOC103
         self, _: Attribute, costs: tuple[float, ...]
     ) -> None:
-        """Validate that there is one cost per fidelity parameter.
+        """Validate that each fidelity has an associated cost.
 
         Raises:
-            ValueError: If 'costs' and 'values' have different lengths.
+            ValueError: If the number of costs and fidelities mismatch.
         """
         if len(costs) != len(self._values):
             raise ValueError(
-                f"Length of '{fields(type(self))._costs.alias}'"
-                f"and '{fields(type(self))._values.alias}'"
-                f"different in '{self.name}'."
+                f"Each fidelity of parameter '{self.name}' must have an associated "
+                f"cost. Number of fidelities specified: {len(self._values)}. "
+                f"Number of costs specified: {len(costs)}."
             )
 
     @zeta.validator
     def _validate_zeta(  # noqa: DOC101, DOC103
         self, _: Attribute, value: tuple[float, ...]
     ) -> None:
-        """Validate instance attribute ``zeta``.
+        """Validate that each fidelity has an associated discrepancy value ``zeta``.
 
         Raises:
-            ValueError: If ``zeta`` and ``values`` are different lengths.
+            ValueError: If the number of discrepancies and fidelities mismatch.
         """
         if len(value) != len(self._values):
             raise ValueError(
-                f"Tuples '{fields(type(self))._zeta.alias}'"
-                f"and '{fields(type(self))._values.alias}' are"
-                f"different lengths in '{self.name}'."
+                f"Each fidelity of parameter '{self.name}' must have an associated "
+                f"discrepancy value 'zeta'. Number of fidelities specified: "
+                f"{len(self._values)}. Number of discrepancies specified: {len(value)}."
             )
 
     def __attrs_post_init__(self) -> None:
