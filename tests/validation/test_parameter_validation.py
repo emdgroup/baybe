@@ -240,23 +240,25 @@ def test_invalid_data_custom_parameter(data, active_values):
 
 
 @pytest.mark.parametrize(
-    ("values", "costs", "zeta", "match"),
+    ("values", "costs", "zeta", "error", "match"),
     [
-        param(["l"], [0], [0], "must be >= 2", id="value_len"),
-        param(["l", "l"], [0, 1], [0, 1], "unique elements", id="duplicates"),
-        param(["l", "h"], [0], [0, 1], "'costs' do not match", id="cost_len"),
-        param(["l", "h"], [0, -1], [0, 1], "must be >= 0.0", id="neg_cost"),
-        param(["l", "h"], [0, np.inf], [0, 1], "infinity/nan", id="infinite_cost"),
-        param(["l", "h"], [0, 1], [0], "'zeta' do not match", id="discrepancy_len"),
-        param(["l", "h"], [0, 1], [0, -1], "must be >= 0.0", id="neg_discrepancy"),
-        param(["l", "h"], [0, 1], [0, np.inf], "infinity/nan", id="inf_discrepancy"),
-        param(["l", "h"], [1, 2], [1, 2], "'0.0' exactly once", id="no_zero"),
-        param(["l", "h"], [1, 2], [0, 0], "'0.0' exactly once", id="many_zeros"),
+        param("l", [0], [0], ValueError, "cannot be a string", id="string"),
+        param([1, "h"], [0, 1], [0, 1], TypeError, "1 that is", id="non_cat"),
+        param(["l"], [0], [0], ValueError, "must be >= 2", id="value_len"),
+        param(["l", "l"], [0, 1], [0, 1], ValueError, "unique elements", id="dupl"),
+        param(["l", "h"], [0], [0, 1], ValueError, "'costs' do not mat", id="cost_len"),
+        param(["l", "h"], [0, -1], [0, 1], ValueError, "must be >= 0.0", id="neg_cost"),
+        param(["l", "h"], [0, np.inf], [0, 1], ValueError, "infinity/n", id="inf_cost"),
+        param(["l", "h"], [0, 1], [0], ValueError, "'zeta' do not match", id="dis_len"),
+        param(["l", "h"], [0, 1], [0, -1], ValueError, "must be >= 0.0", id="neg_dis"),
+        param(["l", "h"], [0, 1], [0, np.inf], ValueError, "infinity/na", id="inf_dis"),
+        param(["l", "h"], [1, 2], [1, 2], ValueError, "'0.0' exactly once", id="no_0"),
+        param(["l", "h"], [1, 2], [0, 0], ValueError, "'0.0' exactly", id="many_0"),
     ],
 )
-def test_invalid_categorical_fidelity_parameter(values, costs, zeta, match):
+def test_invalid_categorical_fidelity_parameter(values, costs, zeta, error, match):
     """Providing an invalid parameter specifications raises an exception."""
-    with pytest.raises(ValueError, match=match):
+    with pytest.raises(error, match=match):
         CategoricalFidelityParameter("invalid", values=values, costs=costs, zeta=zeta)
 
 
