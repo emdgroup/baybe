@@ -239,6 +239,7 @@ def categorical_fidelity_parameters(draw: st.DrawFn):
     """Generate :class:`baybe.parameters.fidelity.CategoricalFidelityParameter`."""
     name = draw(parameter_names)
     values = draw(categories)
+    active_values = draw(_active_values(values))
     costs = draw(
         st.lists(
             finite_floats(min_value=0.0), min_size=len(values), max_size=len(values)
@@ -256,7 +257,12 @@ def categorical_fidelity_parameters(draw: st.DrawFn):
     )
     param_metadata = draw(measurable_metadata())
     return CategoricalFidelityParameter(
-        name=name, values=values, costs=costs, zeta=zeta, metadata=param_metadata
+        name=name,
+        values=values,
+        costs=costs,
+        zeta=zeta,
+        active_values=active_values,
+        metadata=param_metadata,
     )
 
 

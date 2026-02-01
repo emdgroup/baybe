@@ -10,10 +10,10 @@ from typing import ClassVar
 import cattrs
 import pandas as pd
 from attrs import Converter, define, field
-from attrs.validators import and_, deep_iterable, ge, le, min_len
+from attrs.validators import and_, deep_iterable, ge, instance_of, le, min_len
 from typing_extensions import override
 
-from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.base import DiscreteParameter, _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import (
     validate_contains_exactly_one,
@@ -21,6 +21,7 @@ from baybe.parameters.validation import (
     validate_is_finite,
     validate_unique_values,
 )
+from baybe.utils.conversion import nonstring_to_tuple
 from baybe.utils.numerical import DTypeFloatNumpy
 
 
@@ -36,7 +37,7 @@ def _convert_zeta(
 
 
 @define(frozen=True, slots=False)
-class CategoricalFidelityParameter(DiscreteParameter):
+class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
     """Parameter class for categorical fidelity parameters."""
 
     is_numerical: ClassVar[bool] = False
@@ -45,12 +46,13 @@ class CategoricalFidelityParameter(DiscreteParameter):
     encoding: CategoricalEncoding = field(init=False, default=CategoricalEncoding.INT)
     # See base class.
 
-    _values: tuple[str, ...] = field(
+    _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=lambda x: cattrs.structure(x, tuple[str, ...]),
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
         validator=[
             min_len(2),
             validate_unique_values,  # type: ignore
+            deep_iterable(member_validator=instance_of((str, bool))),
         ],
     )
     # See base class.
@@ -86,7 +88,8 @@ class CategoricalFidelityParameter(DiscreteParameter):
 
     def __attrs_post_init__(self) -> None:
         """Sort attribute values according to lexographic fidelity values."""
-        idx = sorted(range(len(self._values)), key=lambda i: self._values[i])
+        # Because categories can be str or bool, we sort by (type, value)
+        idx = sorted(range(len(self._values)), key=lambda x: (str(type(x)), x))
         object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
         object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
         object.__setattr__(self, "zeta", tuple(self.zeta[i] for i in idx))
