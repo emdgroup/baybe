@@ -89,7 +89,10 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
     def __attrs_post_init__(self) -> None:
         """Sort attribute values according to lexographic fidelity values."""
         # Because categories can be str or bool, we sort by (type, value)
-        idx = sorted(range(len(self._values)), key=lambda x: (str(type(x)), x))
+        idx = sorted(
+            range(len(self._values)),
+            key=lambda i: (str(type(self._values[i])), self._values[i]),
+        )
         object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
         object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
         object.__setattr__(self, "zeta", tuple(self.zeta[i] for i in idx))
