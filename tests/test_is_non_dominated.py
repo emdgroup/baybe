@@ -43,7 +43,7 @@ def batch_size():
 @pytest.mark.parametrize(
     "consider_campaign_measurements",
     [True, False],
-    ids=["consider_m", "not_consider_m"],
+    ids=["consider_m", "dont_consider_m"],
 )
 def test_consistency(
     ongoing_campaign, fake_measurements, consider_campaign_measurements
@@ -87,9 +87,9 @@ def test_missing_objective():
         campaign.identify_non_dominated_configurations()
 
 
-@pytest.mark.parametrize("add_measurements", [True, False], ids=["add", "no_add"])
+@pytest.mark.parametrize("add_measurements", [True, False], ids=["add", "dont_add"])
 @pytest.mark.parametrize("external_configurations", [True, False], ids=["ext", "int"])
-@pytest.mark.parametrize("consider", [True, False], ids=["consider", "no_consider"])
+@pytest.mark.parametrize("consider", [True, False], ids=["consider", "dont_consider"])
 def test_invalid_argument_configurations(
     campaign,
     fake_measurements,
