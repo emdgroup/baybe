@@ -483,9 +483,9 @@ def test_target_transformation(
 
 def test_deprecated_random_seed_control():
     """Using the deprecated random seed helpers raises warnings."""
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning, match="'set_random_seed' is deprecated"):
         set_random_seed(42)
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(DeprecationWarning, match="'temporary_seed' is deprecated"):
         temporary_seed(42)
 
 
@@ -496,7 +496,10 @@ def test_deprecated_floating_point_environment_variables(
 ):
     """Using the deprecated precision environment variables raises warnings."""
     monkeypatch.setenv(f"BAYBE_{library.upper()}_USE_SINGLE_PRECISION", str(value))
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+        DeprecationWarning,
+        match=f"'BAYBE_{library.upper()}_USE_SINGLE_PRECISION' has been deprecated",
+    ):
         attr = getattr(Settings(restore_environment=True), f"DTypeFloat{library}")
     namespace = np if library == "Numpy" else torch
     assert attr is namespace.float32 if value else namespace.float64
@@ -517,7 +520,9 @@ def test_deprecated_floating_point_environment_variables(
 def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
     """Using the deprecated polars environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
+    ):
         assert (
             Settings(restore_environment=True).use_polars_for_constraints is not value
         )
@@ -527,7 +532,9 @@ def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
 def test_deprecated_parallelization_environment_variables(monkeypatch, value: bool):
     """Using the deprecated parallelization environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_PARALLEL_SIMULATION_RUNS", str(value))
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_PARALLEL_SIMULATION_RUNS' has been deprecated"
+    ):
         assert Settings(restore_environment=True).parallelize_simulation_runs is value
 
 
@@ -546,5 +553,7 @@ def set_cache_directory_env_var(monkeypatch, value: str):
 def test_deprecated_cache_environment_variables(monkeypatch, value: str, expected: str):
     """Using the deprecated cache environment variables raises warnings."""
     monkeypatch.setenv("BAYBE_CACHE_DIR", value)
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
+    ):
         assert Settings(restore_environment=True).cache_directory == expected
