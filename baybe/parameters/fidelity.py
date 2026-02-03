@@ -48,7 +48,8 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
 
     _values: tuple[str | bool, ...] = field(
         alias="values",
-        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),
+        # FIXME[typing]: https://github.com/python/mypy/issues/19520
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
         validator=[
             min_len(2),
             validate_unique_values,  # type: ignore
@@ -99,7 +100,7 @@ class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
 
     @override
     @property
-    def values(self) -> tuple[str, ...]:
+    def values(self) -> tuple[str | bool, ...]:
         return self._values
 
     @override
