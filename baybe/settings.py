@@ -134,8 +134,8 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 class _RandomState:
     """Container for the random states of all managed numeric libraries."""
 
-    state_builtin = field(init=False, factory=random.getstate)
-    """The state of the built-in random number generator."""
+    state_python = field(init=False, factory=random.getstate)
+    """The state of the Python random number generator."""
 
     state_numpy = field(
         init=False,
@@ -161,7 +161,7 @@ class _RandomState:
         """Activate the random state."""
         import torch
 
-        random.setstate(self.state_builtin)
+        random.setstate(self.state_python)
         np.random.set_state(self.state_numpy)
         torch.set_rng_state(self.state_torch)
 

@@ -47,7 +47,7 @@ def temporary_seed(seed: int):  # noqa: DOC402, DOC404
     seed %= 2**32
 
     # Collect the current RNG states
-    state_builtin = random.getstate()
+    state_python = random.getstate()
     state_np = np.random.get_state()
     state_torch = torch.get_rng_state()
 
@@ -66,6 +66,6 @@ def temporary_seed(seed: int):  # noqa: DOC402, DOC404
 
     # Restore the original RNG states
     finally:
-        random.setstate(state_builtin)
+        random.setstate(state_python)
         np.random.set_state(state_np)
         torch.set_rng_state(state_torch)
