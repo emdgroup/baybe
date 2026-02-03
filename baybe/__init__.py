@@ -1,5 +1,3 @@
-# ruff: noqa: E402
-
 """BayBE — A Bayesian Back End for Design of Experiments."""
 
 import warnings
