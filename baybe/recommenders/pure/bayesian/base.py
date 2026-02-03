@@ -21,7 +21,7 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
-from baybe.settings import Settings, active_settings
+from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
     Surrogate,
@@ -162,20 +162,19 @@ class BayesianRecommender(PureRecommender, ABC):
                 f"empty training data."
             )
 
-        if active_settings.preprocess_dataframes:
-            measurements = preprocess_dataframe(
-                measurements,
+        measurements = preprocess_dataframe(
+            measurements,
+            searchspace,
+            objective,
+            numerical_measurements_must_be_within_tolerance=False,
+        )
+
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
                 searchspace,
-                objective,
                 numerical_measurements_must_be_within_tolerance=False,
             )
-
-            if pending_experiments is not None:
-                pending_experiments = preprocess_dataframe(
-                    pending_experiments,
-                    searchspace,
-                    numerical_measurements_must_be_within_tolerance=False,
-                )
 
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments

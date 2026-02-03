@@ -11,6 +11,7 @@ import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
+from baybe.settings import active_settings
 from baybe.utils.dataframe import normalize_input_dtypes
 
 if TYPE_CHECKING:
@@ -235,6 +236,7 @@ def preprocess_dataframe(
 
     Checks that the dataframe contains all required columns for the given
     parameters/objective and adjusts their dtypes accordingly.
+    No-op if dataframe preprocessing is disabled in the settings.
 
     Args:
         df: The dataframe to preprocess.
@@ -246,6 +248,9 @@ def preprocess_dataframe(
     Returns:
         The preprocessed dataframe.
     """
+    if not active_settings.preprocess_dataframes:
+        return df
+
     validate_parameter_input(
         df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
     )

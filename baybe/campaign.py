@@ -310,13 +310,12 @@ class Campaign(SerialMixin):
                 numerical parameters need to be within their tolerances.
         """
         # Preprocess incoming data
-        if active_settings.preprocess_dataframes:
-            data = preprocess_dataframe(
-                data,
-                self.searchspace,
-                self.objective,
-                numerical_measurements_must_be_within_tolerance,
-            )
+        data = preprocess_dataframe(
+            data,
+            self.searchspace,
+            self.objective,
+            numerical_measurements_must_be_within_tolerance,
+        )
 
         # With new measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -360,13 +359,12 @@ class Campaign(SerialMixin):
                 measurements.
         """
         # Preprocess incoming data
-        if active_settings.preprocess_dataframes:
-            data = preprocess_dataframe(
-                data,
-                self.searchspace,
-                self.objective,
-                numerical_measurements_must_be_within_tolerance,
-            )
+        data = preprocess_dataframe(
+            data,
+            self.searchspace,
+            self.objective,
+            numerical_measurements_must_be_within_tolerance,
+        )
 
         # With changed measurements, the recommendations must always be recomputed
         self.clear_cache()
@@ -493,7 +491,7 @@ class Campaign(SerialMixin):
             self.clear_cache()
 
         # Preprocess pending experiments
-        if active_settings.preprocess_dataframes and pending_experiments is not None:
+        if pending_experiments is not None:
             pending_experiments = preprocess_dataframe(
                 pending_experiments,
                 self.searchspace,

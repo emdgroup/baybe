@@ -19,7 +19,6 @@ from baybe.searchspace.continuous import SubspaceContinuous
 from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
-from baybe.settings import active_settings
 from baybe.utils.boolean import is_abstract
 from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
@@ -106,21 +105,20 @@ class PureRecommender(ABC, RecommenderProtocol):
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
-        if active_settings.preprocess_dataframes:
-            if measurements is not None:
-                measurements = preprocess_dataframe(
-                    measurements,
-                    searchspace,
-                    objective,
-                    numerical_measurements_must_be_within_tolerance=False,
-                )
+        if measurements is not None:
+            measurements = preprocess_dataframe(
+                measurements,
+                searchspace,
+                objective,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
 
-            if pending_experiments is not None:
-                pending_experiments = preprocess_dataframe(
-                    pending_experiments,
-                    searchspace,
-                    numerical_measurements_must_be_within_tolerance=False,
-                )
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
+            )
 
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(
