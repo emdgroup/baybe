@@ -189,7 +189,7 @@ class _RandomState:
 
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
-    """Activate the given random seed on attribute change."""
+    """Activate the random seed when changing the attribute of the active settings."""
     if id(instance) == Settings._global_settings_id and value is not None:
         _RandomState.from_seed(value, activate=True)
 
