@@ -159,12 +159,19 @@ class DesirabilityObjective(Objective):
 
     @override
     @property
-    def _modeled_quantity_names(self) -> tuple[str, ...]:
-        return (
-            self.output_names
-            if self.as_pre_transformation
-            else tuple(t.name for t in self.targets)
-        )
+    def _modeled_quantities(self) -> tuple[Target, ...]:
+        if self.as_pre_transformation:
+            return (NumericalTarget(_OUTPUT_NAME),)
+        else:
+            return self.targets
+
+    @override
+    @property
+    def _model_quantities_to_target_names(self) -> dict[str, list[str]]:
+        if self.as_pre_transformation:
+            return {_OUTPUT_NAME: [t.name for t in self.targets]}
+        else:
+            return {t.name: [t.name] for t in self.targets}
 
     @override
     @property

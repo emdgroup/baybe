@@ -10,7 +10,7 @@ from pytest import param
 from baybe.acquisition import qKG, qNIPV, qTS, qUCB
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import (
-    InvalidSurrogateModelError,
+    IncompatibleSurrogateError,
     OptionalImportError,
     UnusedObjectWarning,
 )
@@ -47,14 +47,27 @@ from baybe.recommenders.pure.nonpredictive.base import NonPredictiveRecommender
 from baybe.searchspace import SearchSpaceType
 from baybe.surrogates.bandit import BetaBernoulliMultiArmedBanditSurrogate
 from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
+from baybe.surrogates.composite import CompositeSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.presets import (
     DefaultKernelFactory,
     EDBOKernelFactory,
 )
+from baybe.surrogates.linear import BayesianLinearSurrogate
 from baybe.targets.numerical import NumericalTarget
 from baybe.utils.basic import get_subclasses
+from baybe.utils.dataframe import create_fake_input
 from tests.conftest import run_iterations
+
+
+@pytest.fixture
+def ongoing_campaign(campaign):
+    """A campaign containing some initial measurements."""
+    campaign.add_measurements(
+        create_fake_input(campaign.parameters, campaign.targets, n_rows=2)
+    )
+    return campaign
+
 
 ########################################################################################
 # Settings of the individual components to be tested
@@ -65,10 +78,13 @@ for cls in get_subclasses(Surrogate):
         cls, BetaBernoulliMultiArmedBanditSurrogate
     ):
         continue
-    try:
-        p = param(cls(), id=cls.__name__)
-    except OptionalImportError:
-        p = param(cls, marks=pytest.mark.skip(reason="missing optional dependency"))
+    p = param(
+        cls(),
+        id=cls.__name__,
+        marks=pytest.mark.skipif(
+            not cls.is_available, reason="missing optional dependencies"
+        ),
+    )
     valid_surrogate_models.append(p)
 
 valid_initial_recommenders = [cls() for cls in get_subclasses(NonPredictiveRecommender)]
@@ -236,9 +252,9 @@ test_targets = [
     ids=[a.abbreviation for a in acqfs_single_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
+def test_single_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size, acqf):
     context = nullcontext()
-    if campaign.searchspace.type not in [
+    if ongoing_campaign.searchspace.type not in [
         SearchSpaceType.CONTINUOUS,
         SearchSpaceType.HYBRID,
     ] and isinstance(acqf, qKG):
@@ -246,7 +262,7 @@ def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
         context = pytest.raises(UnsupportedError)
 
     with context:
-        run_iterations(campaign, n_iterations, batch_size)
+        run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -260,8 +276,8 @@ def test_single_output_batching_acqfs(campaign, n_iterations, batch_size, acqf):
     ids=[a.abbreviation for a in acqfs_multi_output_batching],
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_multi_output_batching_acqfs(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_multi_output_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -270,8 +286,8 @@ def test_multi_output_batching_acqfs(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_non_batching_acqfs(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_non_batching_acqfs(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -279,25 +295,37 @@ def test_non_batching_acqfs(campaign, n_iterations, batch_size):
     "kernel", valid_kernels, ids=[c.__class__ for c in valid_kernels]
 )
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_kernels(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_kernels(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.parametrize("kernel", valid_kernel_factories)
 @pytest.mark.parametrize("n_iterations", [3], ids=["i3"])
-def test_kernel_factories(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_kernel_factories(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("surrogate_model", valid_surrogate_models)
-def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
+@pytest.mark.parametrize(
+    "surrogate_model",
+    [
+        *valid_surrogate_models,
+        # also test with a non-batchable composite surrogate:
+        param(BayesianLinearSurrogate().replicate(), id="composite"),
+    ],
+)
+def test_surrogate_models(ongoing_campaign, n_iterations, batch_size, surrogate_model):
     context = nullcontext()
-    if batch_size > 1 and isinstance(surrogate_model, IndependentGaussianSurrogate):
-        context = pytest.raises(InvalidSurrogateModelError)
+    if batch_size > 1 and isinstance(
+        surrogate_model, (IndependentGaussianSurrogate, CompositeSurrogate)
+    ):
+        context = pytest.raises(
+            IncompatibleSurrogateError,
+            match="cannot be used for joint posterior evaluation",
+        )
 
     with context:
-        run_iterations(campaign, n_iterations, batch_size)
+        run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -306,18 +334,18 @@ def test_surrogate_models(campaign, n_iterations, batch_size, surrogate_model):
     valid_initial_recommenders,
     ids=[c.__class__ for c in valid_initial_recommenders],
 )
-def test_initial_recommenders(campaign, n_iterations, batch_size):
+def test_initial_recommenders(ongoing_campaign, n_iterations, batch_size):
     with pytest.warns(UnusedObjectWarning):
         try:
-            run_iterations(campaign, n_iterations, batch_size)
+            run_iterations(ongoing_campaign, n_iterations, batch_size)
         except OptionalImportError as e:
             pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("target_names", test_targets)
-def test_targets(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_targets(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -326,9 +354,9 @@ def test_targets(campaign, n_iterations, batch_size):
     valid_discrete_recommenders,
     ids=[c.__class__ for c in valid_discrete_recommenders],
 )
-def test_recommenders_discrete(campaign, n_iterations, batch_size):
+def test_recommenders_discrete(ongoing_campaign, n_iterations, batch_size):
     try:
-        run_iterations(campaign, n_iterations, batch_size)
+        run_iterations(ongoing_campaign, n_iterations, batch_size)
     except OptionalImportError as e:
         pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
@@ -342,8 +370,8 @@ def test_recommenders_discrete(campaign, n_iterations, batch_size):
 @pytest.mark.parametrize(
     "parameter_names", [["Conti_finite1", "Conti_finite2"]], ids=["conti_params"]
 )
-def test_recommenders_continuous(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_recommenders_continuous(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.slow
@@ -372,9 +400,9 @@ def test_recommenders_continuous(campaign, n_iterations, batch_size):
     ],
     ids=["hybrid_params", "hybrid_params_with_active_values"],
 )
-def test_recommenders_hybrid(campaign, n_iterations, batch_size):
+def test_recommenders_hybrid(ongoing_campaign, n_iterations, batch_size):
     try:
-        run_iterations(campaign, n_iterations, batch_size)
+        run_iterations(ongoing_campaign, n_iterations, batch_size)
     except OptionalImportError as e:
         pytest.skip(f"Optional dependency '{e.name}' not installed.")
 
@@ -385,8 +413,8 @@ def test_recommenders_hybrid(campaign, n_iterations, batch_size):
     ids=[c.__class__ for c in valid_meta_recommenders],
     indirect=True,
 )
-def test_meta_recommenders(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size)
+def test_meta_recommenders(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 
 @pytest.mark.parametrize(
@@ -409,5 +437,5 @@ def test_meta_recommenders(campaign, n_iterations, batch_size):
 )
 @pytest.mark.parametrize("target_names", [["Target_binary"]], ids=["binary_target"])
 @pytest.mark.parametrize("batch_size", [1], ids=["b1"])
-def test_multi_armed_bandit(campaign, n_iterations, batch_size):
-    run_iterations(campaign, n_iterations, batch_size, add_noise=False)
+def test_multi_armed_bandit(ongoing_campaign, n_iterations, batch_size):
+    run_iterations(ongoing_campaign, n_iterations, batch_size, add_noise=False)

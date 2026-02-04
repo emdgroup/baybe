@@ -1,5 +1,6 @@
 """Surrogate tests."""
 
+import os
 from contextlib import nullcontext
 from unittest.mock import patch
 
@@ -8,19 +9,25 @@ import pytest
 from pytest import param
 
 from baybe.exceptions import IncompatibleSurrogateError
+from baybe.objectives.base import Objective
+from baybe.objectives.desirability import DesirabilityObjective
 from baybe.objectives.pareto import ParetoObjective
+from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
+from baybe.searchspace.core import SearchSpace
 from baybe.surrogates import (
     BayesianLinearSurrogate,
     MeanPredictionSurrogate,
     NGBoostSurrogate,
 )
+from baybe.surrogates.base import IndependentGaussianSurrogate, Surrogate
 from baybe.surrogates.composite import CompositeSurrogate
+from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.random_forest import RandomForestSurrogate
 from baybe.targets.numerical import NumericalTarget
-from baybe.utils.basic import is_all_instance
+from baybe.utils.basic import get_subclasses, is_all_instance
 from baybe.utils.dataframe import create_fake_input
 
 
@@ -42,6 +49,43 @@ def test_caching(patched, searchspace, objective, fake_measurements):
 
 
 @pytest.mark.parametrize(
+    "objective",
+    [
+        SingleTargetObjective(NumericalTarget("t1")),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+            as_pre_transformation=False,
+        ),
+        DesirabilityObjective(
+            [NumericalTarget("t1"), NumericalTarget("t2")],
+            scalarizer="MEAN",
+            require_normalization=False,
+            as_pre_transformation=True,
+        ),
+        ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")]),
+    ],
+    ids=["single", "desirability", "desirability-pre", "pareto"],
+)
+@patch.object(
+    GaussianProcessSurrogate,
+    "_fit",
+    side_effect=GaussianProcessSurrogate._fit,
+    autospec=True,
+)
+def test_caching_via_recommender(mock, objective):
+    """Surrogates are correctly cached when requested via a recommender."""
+    searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
+    measurements = create_fake_input(searchspace.parameters, objective.targets)
+    recommender = BotorchRecommender(GaussianProcessSurrogate())
+
+    for _ in range(2):
+        recommender.get_surrogate(searchspace, objective, measurements)
+        assert mock.call_count == objective._n_models
+
+
+@pytest.mark.parametrize(
     "surrogate",
     [
         CompositeSurrogate(
@@ -57,7 +101,7 @@ def test_composite_surrogates(surrogate):
     t2 = NumericalTarget("t2", minimize=True)
     searchspace = NumericalDiscreteParameter("p", [0, 1]).to_searchspace()
     objective = ParetoObjective([t1, t2])
-    measurements = pd.DataFrame({"p": [0], "t1": [0], "t2": [0]})
+    measurements = pd.DataFrame({"p": [0, 1], "t1": [0, 1], "t2": [0, 1]})
     BotorchRecommender(surrogate_model=surrogate).recommend(
         2, searchspace, objective, measurements
     )
@@ -149,7 +193,7 @@ def test_continuous_incompatibility(campaign):
     if isinstance(s, GaussianProcessSurrogate):
         skip = True
     elif isinstance(s, CompositeSurrogate) and is_all_instance(
-        tuple(s.surrogates[t] for t in s._target_names), GaussianProcessSurrogate
+        s._surrogates_flat, GaussianProcessSurrogate
     ):
         skip = True
 
@@ -162,3 +206,32 @@ def test_continuous_incompatibility(campaign):
         )
     ):
         campaign.recommend(1)
+
+
+@pytest.mark.skipif(
+    os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
+    reason="Certain surrogates are only available in FULLTEST environment.",
+)
+@pytest.mark.parametrize(
+    "surrogate",
+    [
+        cls()
+        for cls in get_subclasses(IndependentGaussianSurrogate)
+        if cls != CustomONNXSurrogate
+    ],
+    ids=lambda surrogate: surrogate.__class__.__name__,
+)
+def test_batching_incompatibility(
+    surrogate: Surrogate, searchspace: SearchSpace, objective: Objective
+):
+    """Surrogates that do not support batch predictions reject batch requests."""
+    measurements = create_fake_input(
+        searchspace.parameters, objective.targets, n_rows=2
+    )
+    surrogate.fit(searchspace, objective, measurements)
+
+    with pytest.raises(
+        IncompatibleSurrogateError,
+        match="cannot be used for joint posterior evaluation",
+    ):
+        surrogate.posterior(measurements, joint=True)

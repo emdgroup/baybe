@@ -55,8 +55,8 @@ def batch_size():
         ["Conti_finite1", "Conti_finite2"],
         ["Num_disc_1", "Fraction_1"],
         ["Num_disc_1", "Conti_finite1"],
-        ["Num_disc_1", "Categorical_1"],
-        ["Conti_finite1", "Categorical_1"],
+        ["Num_disc_1", "Custom_1"],
+        ["Conti_finite1", "Custom_1"],
     ],
     ids=[
         "params_conti",

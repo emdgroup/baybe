@@ -1,0 +1,163 @@
+"""Fidelity parameters."""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+from functools import cached_property
+from numbers import Real
+from typing import ClassVar
+
+import cattrs
+import pandas as pd
+from attrs import Converter, define, field
+from attrs.validators import and_, deep_iterable, ge, instance_of, le, min_len
+from typing_extensions import override
+
+from baybe.parameters.base import DiscreteParameter, _DiscreteLabelLikeParameter
+from baybe.parameters.enum import CategoricalEncoding
+from baybe.parameters.validation import (
+    validate_contains_exactly_one,
+    validate_equal_length,
+    validate_is_finite,
+    validate_unique_values,
+)
+from baybe.utils.conversion import nonstring_to_tuple
+from baybe.utils.numerical import DTypeFloatNumpy
+
+
+def _convert_zeta(
+    value: Real | Sequence[Real], self: CategoricalFidelityParameter
+) -> tuple[float, ...]:
+    """Convert zeta input (sequence or scalar) into a tuple of floats."""
+    if isinstance(value, Real):
+        seq_len = len(self._values)
+        return tuple(i * float(value) for i in range(seq_len))
+
+    return cattrs.structure(value, tuple[float, ...])
+
+
+@define(frozen=True, slots=False)
+class CategoricalFidelityParameter(_DiscreteLabelLikeParameter):
+    """Parameter class for categorical fidelity parameters."""
+
+    is_numerical: ClassVar[bool] = False
+    # See base class.
+
+    encoding: CategoricalEncoding = field(init=False, default=CategoricalEncoding.INT)
+    # See base class.
+
+    _values: tuple[str | bool, ...] = field(
+        alias="values",
+        # FIXME[typing]: https://github.com/python/mypy/issues/19520
+        converter=Converter(nonstring_to_tuple, takes_self=True, takes_field=True),  # type: ignore
+        validator=[
+            min_len(2),
+            validate_unique_values,  # type: ignore
+            deep_iterable(member_validator=instance_of((str, bool))),
+        ],
+    )
+    # See base class.
+
+    costs: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=[
+            validate_equal_length("_values"),
+            validate_is_finite,
+            deep_iterable(member_validator=ge(0.0)),
+        ],
+    )
+    """The costs associated with querying the parameter at each fidelity."""
+
+    zeta: tuple[float, ...] = field(
+        # FIXME[typing]: https://github.com/python/mypy/issues/19520
+        converter=Converter(_convert_zeta, takes_self=True),  # type: ignore
+        validator=(
+            validate_equal_length("_values"),
+            validate_is_finite,
+            deep_iterable(member_validator=ge(0.0)),
+            validate_contains_exactly_one(0.0),
+        ),
+    )
+    """The maximum discrepancy from the highest fidelity at any design choice.
+
+    Can be:
+        * A sequence of values, one for each fidelity, with exactly one element equal to
+          0 corresponding to the highest fidelity and positive values otherwise.
+        * A positive scalar, specifying that the *first* fidelity input has discrepancy
+          0 (corresponding to the highest fidelity) and the remaining fidelities have
+          discrepancy ``zeta``, 2 * ``zeta``, and so on."""
+
+    def __attrs_post_init__(self) -> None:
+        """Sort attribute values according to lexographic fidelity values."""
+        # Because categories can be str or bool, we sort by (type, value)
+        idx = sorted(
+            range(len(self._values)),
+            key=lambda i: (str(type(self._values[i])), self._values[i]),
+        )
+        object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
+        object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
+        object.__setattr__(self, "zeta", tuple(self.zeta[i] for i in idx))
+
+    @override
+    @property
+    def values(self) -> tuple[str | bool, ...]:
+        return self._values
+
+    @override
+    @cached_property
+    def comp_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
+        )
+
+
+@define(frozen=True, slots=False)
+class NumericalDiscreteFidelityParameter(DiscreteParameter):
+    """Parameter class for numerical discrete fidelity parameters.
+
+    Fidelity values are floats in the range [0, 1], including 1 (target fidelity).
+    """
+
+    is_numerical: ClassVar[bool] = True
+    # See base class.
+
+    _values: tuple[float, ...] = field(
+        alias="values",
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=[
+            min_len(2),
+            validate_contains_exactly_one(1.0),
+            validate_unique_values,  # type: ignore
+            validate_is_finite,
+            deep_iterable(member_validator=and_(ge(0.0), le(1.0))),
+        ],
+    )
+    # See base class.
+
+    costs: tuple[float, ...] = field(
+        converter=lambda x: cattrs.structure(x, tuple[float, ...]),
+        validator=[
+            validate_is_finite,
+            validate_equal_length("_values"),
+            deep_iterable(member_validator=ge(0.0)),
+        ],
+    )
+    """The costs associated with querying the parameter at each fidelity."""
+
+    def __attrs_post_init__(self) -> None:
+        """Sort attribute values according to fidelity values."""
+        idx = sorted(range(len(self._values)), key=lambda i: self._values[i])
+        object.__setattr__(self, "_values", tuple(self._values[i] for i in idx))
+        object.__setattr__(self, "costs", tuple(self.costs[i] for i in idx))
+
+    @override
+    @property
+    def values(self) -> tuple[float, ...]:
+        return self._values
+
+    @override
+    @cached_property
+    def comp_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
+        )

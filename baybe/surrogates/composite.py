@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 from collections.abc import Sequence
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generic, Protocol, TypeVar
@@ -19,7 +20,6 @@ from baybe.serialization.mixin import SerialMixin
 from baybe.surrogates.base import PosteriorStatistic, SurrogateProtocol
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import is_all_instance
-from baybe.utils.dataframe import handle_missing_values
 
 if TYPE_CHECKING:
     from botorch.models.model import ModelList
@@ -78,8 +78,14 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     surrogates: _SurrogateGetter = field()
     """An index-based mapping from target names to single-target surrogates."""
 
-    _target_names: tuple[str, ...] | None = field(init=False, eq=False)
-    """The names of the targets modeled by the surrogate outputs."""
+    _modeled_quantity_names: tuple[str, ...] | None = field(
+        init=False, default=None, eq=False
+    )
+    """The names of the quantities modeled by the surrogate outputs."""
+
+    def __getitem__(self, key: str, /) -> SurrogateProtocol:
+        """Access the surrogate for a specific quantity by its name."""
+        return self.surrogates[key]
 
     @classmethod
     def from_replication(cls, surrogate: SurrogateProtocol) -> CompositeSurrogate:
@@ -89,8 +95,8 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
     @property
     def _surrogates_flat(self) -> tuple[SurrogateProtocol, ...]:
         """The surrogates ordered according to the targets of the modeled objective."""
-        assert self._target_names is not None
-        return tuple(self.surrogates[t] for t in self._target_names)
+        assert self._modeled_quantity_names is not None
+        return tuple(self.surrogates[t] for t in self._modeled_quantity_names)
 
     @override
     def fit(
@@ -99,16 +105,22 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> None:
-        for target in objective.targets:
-            # Drop partial measurements for the respective target
-            measurements_filtered = handle_missing_values(
-                measurements, [target.name], drop=True
+        # See base class.
+
+        for name, data in objective.handle_missing_values(measurements).items():
+            pre_transformed = objective._pre_transform(
+                data[[t.name for t in objective.targets]]
+            )
+            pre_transformed = pd.concat(
+                [data[list(searchspace.parameter_names)], pre_transformed],
+                axis=1,
+            )
+            quantity = next(x for x in objective._modeled_quantities if x.name == name)
+            self.surrogates[name].fit(
+                searchspace, quantity.to_objective(), pre_transformed
             )
 
-            self.surrogates[target.name].fit(
-                searchspace, target.to_objective(), measurements_filtered
-            )
-        self._target_names = tuple(t.name for t in objective.targets)
+        self._modeled_quantity_names = objective._modeled_quantity_names
 
     @override
     def to_botorch(self) -> ModelList:
@@ -121,7 +133,7 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
         else:
             return ModelList(*(s.to_botorch() for s in surrogates))
 
-    def posterior(self, candidates: pd.DataFrame) -> PosteriorList:
+    def posterior(self, candidates: pd.DataFrame, joint: bool = True) -> PosteriorList:
         """Compute the posterior for candidates in experimental representation.
 
         The (independent joint) posterior is represented as a collection of individual
@@ -139,7 +151,10 @@ class CompositeSurrogate(SerialMixin, SurrogateProtocol):
 
         # TODO[typing]: a `has_all_attrs` typeguard similar to `is_all_instance` would
         #   be handy here but unclear if this is doable with the current typing system
-        posteriors = [s.posterior(candidates) for s in self._surrogates_flat]  # type: ignore[attr-defined]
+        posteriors = [
+            s.posterior(candidates, joint=joint)  # type: ignore[attr-defined]
+            for s in self._surrogates_flat
+        ]
         return PosteriorList(*posteriors)
 
     def _posterior_comp(self, candidates_comp: Tensor, /) -> PosteriorList:
@@ -202,6 +217,10 @@ def _unstructure_surrogate_getter(obj: _SurrogateGetter) -> dict:
     """Unstructure as the concrete type."""
     container_type = _get_surrogate_getter_type(type(obj).__name__)
     return converter.unstructure(obj, unstructure_as=container_type)
+
+
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
 
 
 converter.register_structure_hook_func(

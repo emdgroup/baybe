@@ -49,13 +49,13 @@ we recommend the following workflow:
    You can retrieve all available environments via `tox list`.
    For more information, see our [README about tests](https://github.com/emdgroup/baybe/blob/main/tests/README.md).
    
-   For instance, running all code tests in Python 3.13 can be achieved via:
+   For instance, running all code tests in Python 3.14 can be achieved via:
    ```console
-   tox -e fulltest-py313
+   tox -e fulltest-py314
    ```
 
-   Other tox tests that are useful to verify your work locally are `tox -e lint-py313`,
-   `tox -e mypy-py313` and `tox -e coretest-py313`.
+   Other tox tests that are useful to verify your work locally are `tox -e lint-py314`,
+   `tox -e mypy-py314` and `tox -e coretest-py314`.
 
    If you want to challenge your machine, you can run all checks in all Python versions
    in parallel via:
@@ -114,8 +114,6 @@ If you have questions or problems, simply ask for advice.
 |:------------------------------------------------------------------------------------------------|:------------------------------------------|
 | [ruff](https://docs.astral.sh/ruff/)                                                            | code linting and formatting               |
 | [mypy](https://mypy.readthedocs.io/)                                                            | static type checking                      |
-| [pydocstyle](http://www.pydocstyle.org/)   <br/> [pydoclint](https://github.com/jsh9/pydoclint) | analyzing docstrings                      |
-| [typos](https://github.com/crate-ci/typos)                                                      | basic spell checking                      |
 | [pytest](https://docs.pytest.org/)                                                              | testing                                   |
 | [pytest-cov](https://pytest-cov.readthedocs.io/)                                                | measuring test coverage                   |
 | [sphinx](https://www.sphinx-doc.org/)                                                           | generating our documentation              |

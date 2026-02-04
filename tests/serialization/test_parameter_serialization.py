@@ -7,9 +7,11 @@ from pytest import param
 
 from baybe._optional.info import CHEM_INSTALLED
 from tests.hypothesis_strategies.parameters import (
+    categorical_fidelity_parameters,
     categorical_parameters,
     custom_parameters,
     numerical_continuous_parameters,
+    numerical_discrete_fidelity_parameters,
     numerical_discrete_parameters,
     substance_parameters,
     task_parameters,
@@ -32,6 +34,11 @@ from tests.serialization.utils import assert_roundtrip_consistency
                 not CHEM_INSTALLED, reason="Optional chem dependency not installed."
             ),
         ),
+        param(
+            numerical_discrete_fidelity_parameters(),
+            id="NumericalDiscreteFidelityParameter",
+        ),
+        param(categorical_fidelity_parameters(), id="CategoricalFidelityParameter"),
     ],
 )
 @given(data=st.data())
