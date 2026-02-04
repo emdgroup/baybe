@@ -263,7 +263,11 @@ def test_settings_initialization(
     restore_defaults: bool,
     pass_explicit: bool,
 ):
-    """The settings initialization can be configured via control flags."""
+    """The settings initialization can be configured via control flags.
+
+    For simplicity, we test this behavior only for one particular setting attribute.
+    The remaining attributes are built on the same mechanism.
+    """
     # The different sources for the cache_directory setting
     cache_directory_original = active_settings.cache_directory
     cache_directory_env = Path("env")
