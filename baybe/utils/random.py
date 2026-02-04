@@ -121,7 +121,7 @@ class _RandomState:
         torch.set_rng_state(self.state_torch)
 
     @staticmethod
-    def _activate_seed(seed: int) -> None:
+    def _reseed(seed: int) -> None:
         """Seed all random number generators."""
         import torch
 
@@ -133,11 +133,11 @@ class _RandomState:
     def from_seed(cls, seed: int, *, activate: bool = False) -> Self:
         """Create a random state corresponding to a given seed."""
         if activate:
-            cls._activate_seed(seed)
+            cls._reseed(seed)
             return cls()
 
         backup = cls()
-        cls._activate_seed(seed)
+        cls._reseed(seed)
         state = cls()
         backup.activate()
         return state
