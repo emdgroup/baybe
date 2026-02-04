@@ -21,7 +21,7 @@ def validate_decorrelation(obj: Parameter, attribute: Attribute, value: float) -
 def validate_unique_values(  # noqa: DOC101, DOC103
     obj: Parameter, attribute: Attribute, values: Collection[Any]
 ) -> None:
-    """Validate that the input contains unique elements.
+    """Validate that the input contains only unique elements.
 
     Raises:
         ValueError: If the input contains duplicates.
@@ -29,7 +29,7 @@ def validate_unique_values(  # noqa: DOC101, DOC103
     if len(set(values)) != len(values):
         raise ValueError(
             f"The '{attribute.alias}' attribute of parameter '{obj.name}' must contain "
-            f"unique elements. Given: {values}."
+            f"only unique elements. Given: {values}."
         )
 
 
