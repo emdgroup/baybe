@@ -54,7 +54,7 @@ def validate_contains_exactly_one(
     """Make a validator to check an attribute contains a certain value exactly once."""
 
     def validator(  # noqa: DOC101, DOC103
-        obj: Parameter, attribute: Attribute, values: Collection[float]
+        obj: Parameter, attribute: Attribute, values: Collection[Any]
     ) -> None:
         """Validate that the input contains a reference element exactly once.
 
