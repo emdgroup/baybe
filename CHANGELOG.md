@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   automatic data augmentation when assigned to the `symmetries` attribute of a
   `BayesianRecommender`
 - `Parameter.is_equivalent` method for structural parameter comparison
+- `CategoricalFidelityParameter` and `NumericalDiscreteFidelityParameter` classes
 
 ### Changed
 - `BOTORCH` GP preset now includes `BetaPrior(2.5, 1.5)` for the task covariance
