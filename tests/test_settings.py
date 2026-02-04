@@ -364,10 +364,12 @@ def test_random_seed_control():
         state_requested = _RandomState()
         operator = op.ne if args else op.eq
         assert operator(_RandomState(), state_1337)
+
         draw_random_numbers()
         state_new = _RandomState()
         assert state_new != state_1337
         assert state_new != state_requested
+
         s_requested.restore_previous()
         operator = op.eq if args else op.ne
         assert operator(_RandomState(), state_1337)
