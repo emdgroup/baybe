@@ -110,7 +110,7 @@ assert active_settings.preprocess_dataframes is True
 
 Note that {meth}`~baybe.settings.Settings.restore_previous` restores the settings that
 were active **at the time of the {meth}`~baybe.settings.Settings.activate` call**, not
-the previously global active settings. The latter might potentially have changed in the
+the previously active settings. The latter might potentially have changed in the
 meantime, depending on execution flow:
 
 ```python
@@ -195,7 +195,7 @@ implications of modifying {class}`~baybe.settings.Settings` objects:
    object immediately take effect.
 2. An {meth}`~baybe.settings.Settings.activate` call on a
    {class}`~baybe.settings.Settings` object copies its attribute values to those of the
-   global {data}`~baybe.settings.active_settings` object and stores a copy of the
+   {data}`~baybe.settings.active_settings` object and stores a copy of the
    previously active values in the object on which the call was made. 
 
 This explains, for instance, why:
@@ -207,7 +207,7 @@ This explains, for instance, why:
   {data}`~baybe.settings.active_settings` object one by one.
 * Adjusting the attribute of any {class}`~baybe.settings.Settings` object other than
   {data}`~baybe.settings.active_settings` has no immediate effect on the 
-  global settings until its {meth}`~baybe.settings.Settings.activate` method is called,
+  active settings until its {meth}`~baybe.settings.Settings.activate` method is called,
   no matter if it has been activated before or not.
 * You can [restore](#restoring_settings) the settings that were active previous to an 
   {meth}`~baybe.settings.Settings.activate` call using the
@@ -236,10 +236,10 @@ A notable exception to the above rules applies to managing random seeds, for rea
 detailed in the [Random Seed Control](#random-seed-control) section.
 ```
 
-```{admonition} Global Settings Initialization
+```{admonition} Active Settings Initialization
 :class: important
 
-For convenience, `restore_environment` is set to `True` when initializing the global
+For convenience, `restore_environment` is set to `True` when initializing the active
 {data}`~baybe.settings.active_settings` object at package import time, so that
 environment variables automatically take effect.
 ```
@@ -258,10 +258,10 @@ slightly deviate from the otherwise general rules outlined in this user guide:
 - In contrast to what is dictated by the [initialization
   precedence](#initialization-precedence), specifying a random seed via the
   `BAYBE_RANDOM_SEED` environment variable **only** affects the initialization of the
-  global {data}`~baybe.settings.active_settings` object at session start, but has no
+  active {data}`~baybe.settings.active_settings` object at session start, but has no
   effect on the instantiation of subsequent {class}`~baybe.settings.Settings` objects.
 - Likewise, {class}`~baybe.settings.Settings` objects created by the user do not adopt
-  the random seed from the global {data}`~baybe.settings.active_settings` object, which
+  the random seed from the {data}`~baybe.settings.active_settings` object, which
   avoids unintended RNG state resets when activating such objects.
 - When [restoring](#restoring_settings) previous settings, the RNG states are only
   reverted if the {class}`~baybe.settings.Settings` object in question explicitly

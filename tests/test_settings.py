@@ -135,7 +135,7 @@ def test_invalid_setting(attribute: Attribute):
     "attribute", Settings._settings_attributes, ids=lambda a: a.name
 )
 def test_direct_setting(attribute: Attribute):
-    """Attributes of the global settings object can be directly modified."""
+    """Attributes of the active settings object can be directly modified."""
     original_value = getattr(active_settings, attribute.name)
     new_value = toggle(original_value)
     assert original_value != new_value
@@ -299,7 +299,7 @@ def test_settings_initialization(
 @pytest.mark.usefixtures("reset_settings_imports")
 @pytest.mark.parametrize("inject_env", [True, False], ids=["with_env", "without_env"])
 def test_initial_environment_reading(monkeypatch, inject_env: bool):
-    """When initializing the global settings, environment variables are ingested."""
+    """When initializing the active settings, environment variables are ingested."""
     if inject_env:
         monkeypatch.setenv("BAYBE_PREPROCESS_DATAFRAMES", "false")
 
@@ -433,7 +433,7 @@ def test_random_state_progression():
 def test_random_seed_adoption(seed):
     """The environment seed only affects the initial active settings but subsequent
     settings objects are unaffected. Likewise, seed values are not adopted from the
-    global active settings when instantiating new settings objects."""  # noqa
+    active settings when instantiating new settings objects."""  # noqa
 
     code = textwrap.dedent(f"""
         from baybe.settings import _RandomState, Settings, active_settings
@@ -509,6 +509,6 @@ def test_cache_directory(tmp_path: Path):
 
 @pytest.mark.parametrize("operation", ["activate", "restore_previous"])
 def test_invalid_operations(operation):
-    """Invalid operations on the global settings object are rejected."""
-    with pytest.raises(NotAllowedError, match="global settings object"):
+    """Invalid operations on the active settings object are rejected."""
+    with pytest.raises(NotAllowedError, match="active settings object"):
         getattr(active_settings, operation)()

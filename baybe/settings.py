@@ -35,7 +35,7 @@ _RANDOM_SEED_ATTRIBUTE_NAME = "random_seed"
 # The temporary assignment to `None` is needed because the object is already referenced
 # in the `Settings` class body
 active_settings: Settings = None  # type: ignore[assignment]
-"""The global settings instance controlling execution behavior."""
+"""The active settings instance controlling execution behavior."""
 
 _MISSING_PACKAGE_ERROR_MESSAGE = (
     "The setting 'use_{package_name}' cannot be set to 'True' because '{package_name}' "
@@ -102,14 +102,14 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
 
                 Depending on the control flags, the value is retrieved either from the
                 field specification itself, from the corresponding environment variable,
-                or from the current global settings object.
+                or from the active settings object.
                 """
                 if self._restore_defaults:
                     default = fld.default
                 else:
-                    # Here, the current global settings value is used as default, to
+                    # Here, the active settings value is used as default, to
                     # enable updating settings one attribute at a time (the fallback to
-                    # the default happens when the global settings object is itself
+                    # the default happens when the active settings object is itself
                     # being created)
                     default = getattr(active_settings, fld.name, fld.default)
 
@@ -190,7 +190,7 @@ class _RandomState:
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:
     """Activate the random seed when changing the attribute of the active settings."""
-    if id(instance) == Settings._global_settings_id and value is not None:
+    if id(instance) == Settings._active_settings_id and value is not None:
         _RandomState.from_seed(value, activate=True)
 
     return value
@@ -216,10 +216,10 @@ class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
     ### Internal
-    _global_settings_id: ClassVar[int]
-    """The id of the global settings instance.
+    _active_settings_id: ClassVar[int]
+    """The id of the active settings instance.
 
-    Useful to identify if an action is performed on the global or a local instance."""
+    Useful to identify if an action is performed on the active or a local instance."""
 
     _previous_settings: Settings | None = field(default=None, init=False)
     """The previously active settings (used for context management)."""
@@ -397,10 +397,10 @@ class Settings(_SlottedContextDecorator):
 
     def activate(self) -> Settings:
         """Activate the settings globally."""
-        if id(self) == Settings._global_settings_id:
+        if id(self) == Settings._active_settings_id:
             raise NotAllowedError(
-                f"Calling '{self.activate.__name__}' on the global settings "
-                f"object is not allowed since it is always active."
+                f"Calling '{self.activate.__name__}' on the active settings "
+                f"object is not allowed since it is already active."
             )
 
         # Store the previous state only if it's actually required for settings
@@ -415,9 +415,9 @@ class Settings(_SlottedContextDecorator):
 
     def restore_previous(self) -> None:
         """Restore the previous settings."""
-        if id(self) == Settings._global_settings_id:
+        if id(self) == Settings._active_settings_id:
             raise NotAllowedError(
-                f"Calling '{self.restore_previous.__name__}' on the global settings "
+                f"Calling '{self.restore_previous.__name__}' on the active settings "
                 f"object is not supported."
             )
 
@@ -463,10 +463,10 @@ gc.collect()
 
 
 active_settings = Settings(restore_environment=True)
-"""The currently active global settings instance."""
+"""The current active settings."""
 
 # Set the global settings id for later reference
-Settings._global_settings_id = id(active_settings)
+Settings._active_settings_id = id(active_settings)
 
 # Special handling of the random seed:
 # The automatic adoption of seed values from the environment or the active settings
