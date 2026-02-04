@@ -215,7 +215,7 @@ def _convert_cache_directory(
 class Settings(_SlottedContextDecorator):
     """BayBE settings."""
 
-    # ----- Internal ----- #
+    ### Internal
     _global_settings_id: ClassVar[int]
     """The id of the global settings instance.
 
@@ -227,14 +227,14 @@ class Settings(_SlottedContextDecorator):
     _previous_random_state: _RandomState | None = field(default=None, init=False)
     """The previous random state (used for context management)."""
 
-    # ----- Control flags ----- #
+    ### Control flags
     _restore_defaults: bool = field(default=False, validator=instance_of(bool))
     """Controls if settings shall be restored to their default values."""
 
     _restore_environment: bool = field(default=False, validator=instance_of(bool))
     """Controls if environment variables shall be used to initialize settings."""
 
-    # ----- Settings attributes ----- #
+    ### Settings attributes
     cache_campaign_recommendations: bool = field(
         default=True, validator=instance_of(bool)
     )
