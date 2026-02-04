@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gc
 import os
-import random
 import tempfile
 import warnings
 from copy import deepcopy
@@ -13,20 +12,19 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 import numpy as np
-from attrs import Attribute, Converter, Factory, cmp_using, define, field, fields
+from attrs import Attribute, Converter, Factory, define, field, fields
 from attrs.setters import validate
 from attrs.validators import instance_of
 from attrs.validators import optional as optional_v
-from typing_extensions import Self
 
 from baybe._optional.info import FPSAMPLE_INSTALLED, POLARS_INSTALLED
 from baybe.exceptions import NotAllowedError, OptionalImportError
 from baybe.utils.basic import classproperty
 from baybe.utils.boolean import AutoBool, to_bool
+from baybe.utils.random import _RandomState
 
 if TYPE_CHECKING:
     import torch
-    from torch import Tensor
 
     _TSeed = TypeVar("_TSeed", int, None)
 
@@ -54,13 +52,6 @@ def _validate_whitelist_env_vars(vars: dict[str, str], /) -> None:
             )
     if vars:
         raise RuntimeError(f"Unknown 'BAYBE_*' environment variables: {set(vars)}")
-
-
-def _lazy_torch_equal(a: Tensor, b: Tensor, /) -> bool:
-    """Equality check for tensors with lazy torch import."""
-    import torch
-
-    return torch.equal(a, b)
 
 
 class _SlottedContextDecorator:
@@ -128,64 +119,6 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
         results.append(fld.evolve(default=make_default_factory(fld)))
 
     return results
-
-
-@define(frozen=True)
-class _RandomState:
-    """Container for the random states of all managed numeric libraries."""
-
-    state_python = field(init=False, factory=random.getstate)
-    """The state of the Python random number generator."""
-
-    state_numpy = field(
-        init=False,
-        factory=np.random.get_state,
-        eq=cmp_using(
-            eq=lambda s1, s2: all(np.array_equal(a, b) for a, b in zip(s1, s2))
-        ),
-    )
-    """The state of the Numpy random number generator."""
-
-    state_torch: Tensor = field(init=False, eq=cmp_using(eq=_lazy_torch_equal))
-    """The state of the Torch random number generator."""
-    # Note: initialized by attrs default method below (for lazy torch loading)
-
-    @state_torch.default
-    def _default_state_torch(self) -> Tensor:
-        """Get the current Torch random state using a lazy import."""
-        import torch
-
-        return torch.get_rng_state()
-
-    def activate(self) -> None:
-        """Activate the random state."""
-        import torch
-
-        random.setstate(self.state_python)
-        np.random.set_state(self.state_numpy)
-        torch.set_rng_state(self.state_torch)
-
-    @staticmethod
-    def _activate_seed(seed: int) -> None:
-        """Seed all random number generators."""
-        import torch
-
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-
-    @classmethod
-    def from_seed(cls, seed: int, *, activate: bool = False) -> Self:
-        """Create a random state corresponding to a given seed."""
-        if activate:
-            cls._activate_seed(seed)
-            return cls()
-
-        backup = cls()
-        cls._activate_seed(seed)
-        state = cls()
-        backup.activate()
-        return state
 
 
 def _on_set_random_seed(instance: Settings, __: Attribute, value: _TSeed) -> _TSeed:

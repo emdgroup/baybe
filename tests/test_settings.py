@@ -21,8 +21,9 @@ from baybe import Settings, active_settings
 from baybe.campaign import Campaign
 from baybe.exceptions import NotAllowedError
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
-from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME, _RandomState
+from baybe.settings import _RANDOM_SEED_ATTRIBUTE_NAME
 from baybe.utils.basic import cache_to_disk
+from baybe.utils.random import _RandomState
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("BAYBE_TEST_ENV") != "FULLTEST",
