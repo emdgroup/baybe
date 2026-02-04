@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   can now be conveniently controlled via the new `Settings` mechanism
 
 ### Deprecations
+- `set_random_seed` and `temporary_seed` utility functions
 - The environment variables
   `BAYBE_NUMPY_USE_SINGLE_PRECISION`/`BAYBE_TORCH_USE_SINGLE_PRECISION` have been
   replaced with the variables
