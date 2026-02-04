@@ -403,9 +403,14 @@ class Settings(_SlottedContextDecorator):
                 f"object is not allowed since it is always active."
             )
 
+        # Store the previous state only if it's actually required for settings
+        # restoration later on (see `restore_previous` method)
+        if self.random_seed is not None:
+            self._previous_random_state = _RandomState()
+
         self._previous_settings = deepcopy(active_settings)
-        self._previous_random_state = _RandomState()
         self.overwrite(active_settings)
+
         return self
 
     def restore_previous(self) -> None:
@@ -416,7 +421,7 @@ class Settings(_SlottedContextDecorator):
                 f"object is not supported."
             )
 
-        if self._previous_settings is None or self._previous_random_state is None:
+        if self._previous_settings is None:
             raise RuntimeError(
                 "The settings have not yet been activated, "
                 "so there are no previous settings to restore."
@@ -427,15 +432,15 @@ class Settings(_SlottedContextDecorator):
         # potentially progressed in the meantime ...
         self._previous_settings.overwrite(active_settings, keep_random_state=True)
 
-        # ... Instead, we restore the random state from setting activatino time, but
+        # ... Instead, we restore the random state from setting activation time, but
         # only when randomness control was actually part of the settings configurations
         # and the state was altered in the first place.
         if self.random_seed is not None:
             self._previous_random_state.activate()
+            self._previous_random_state = None
 
-        # Clear backup attributes
+        # Clear backup attribute
         self._previous_settings = None
-        self._previous_random_state = None
 
     def overwrite(self, target: Settings, keep_random_state: bool = False) -> None:
         """Overwrite the settings of another :class:`Settings` object."""
