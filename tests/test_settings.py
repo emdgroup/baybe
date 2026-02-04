@@ -358,7 +358,7 @@ def test_random_seed_control():
     # * BUT: When they only provide arguments for other settings, they do not have
     #   random number generation in focus hence they would not expect that activation or
     #   resetting alters the RNG in any way
-    for args in [{"random_seed": 1338}, {}]:
+    for args in [{"random_seed": 0}, {}]:
         Settings(random_seed=1337).activate()
         s_requested = Settings(**args).activate()
         state_requested = _RandomState()
@@ -375,14 +375,14 @@ def test_random_seed_control():
         assert operator(draw_random_numbers(), x_1337)
 
     # Within a context, the seed is temporarily overwritten
-    active_settings.random_seed = 1338
-    state_1338 = _RandomState()
-    x_1338 = draw_random_numbers()
+    active_settings.random_seed = 42
+    state_42 = _RandomState()
+    x_42 = draw_random_numbers()
     active_settings.random_seed = 1337  # <-- state to be recovered afterwards
-    with Settings(random_seed=1338):
-        assert _RandomState() == state_1338
-        assert draw_random_numbers() == x_1338
-        assert draw_random_numbers() != x_1338
+    with Settings(random_seed=42):
+        assert _RandomState() == state_42
+        assert draw_random_numbers() == x_42
+        assert draw_random_numbers() != x_42
 
     # After exiting the context, the previous state is restored
     assert _RandomState() == state_1337
