@@ -405,31 +405,41 @@ def test_random_state_progression():
     state_1337 = _RandomState()
 
     # Using the RNG progresses the state
-    random.randint(0, 1)
+    draw_random_numbers()
     altered_state = _RandomState()
     assert altered_state != state_1337
+
+    active_settings.random_seed = 1337  # <-- undo state progression
 
     # Creating a settings object without explicit seed argument does **not** alter the
     # state. In particular, it does not adopt adopt the seed from the active settings
     # and translate it into a new random state.
     with Settings() as s:
         assert s.random_seed is None
+        assert _RandomState() == state_1337
+    assert _RandomState() == state_1337
+
+    # ... And when when progressing the state inside such a context without specified
+    # seed, the state also remains altered when exiting the context (because none
+    # of the settings modification was done with random seed alteration in mind).
+    with Settings() as s:
+        draw_random_numbers()
         assert _RandomState() == altered_state
     assert _RandomState() == altered_state
+    active_settings.random_seed = 1337  # <-- undo state progression
 
     # ... However, explicitly setting the seed **does** alter the state. But when
     # done in a context, the previous state is correctly restored afterwards.
     with Settings(random_seed=42):
         state_42 = _RandomState()
         assert state_42 != state_1337
-        assert state_42 != altered_state
-    assert _RandomState() == altered_state
+    assert _RandomState() == state_1337
 
     # Without context and without seed specification, no state change happens
     new_settings = Settings()
-    assert _RandomState() == altered_state
+    assert _RandomState() == state_1337
     new_settings.activate()
-    assert _RandomState() == altered_state
+    assert _RandomState() == state_1337
 
     # ... But with specified seed, the state is changed
     Settings(random_seed=42).activate()
