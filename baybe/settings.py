@@ -78,7 +78,7 @@ def adjust_defaults(cls: type[Settings], fields: list[Attribute]) -> list[Attrib
     """Replace default values with the appropriate source, controlled via flags."""
     results = []
     for fld in fields:
-        if fld.name in (*cls._non_setting_attributes, _RANDOM_SEED_ATTRIBUTE_NAME):
+        if fld.name in (*cls._non_settings_names, _RANDOM_SEED_ATTRIBUTE_NAME):
             results.append(fld)
             continue
 
@@ -304,7 +304,7 @@ class Settings(_SlottedContextDecorator):
         return torch.float32 if self.use_single_precision_torch else torch.float64
 
     @classproperty
-    def _non_setting_attributes(cls) -> frozenset[str]:
+    def _non_settings_names(cls) -> frozenset[str]:
         """The names of attributes that do not represent user-facing settings."""  # noqa: D401
         # IMPROVE: This approach is not type-safe but the set is needed already at
         #   class definition time, which means we cannot use `attrs.fields` or similar.
@@ -321,11 +321,11 @@ class Settings(_SlottedContextDecorator):
 
     @classproperty
     def _settings_attributes(cls) -> tuple[Attribute, ...]:
-        """The attributes representing the available settings."""  # noqa: D401
+        """The attributes representing the available user-facing settings."""  # noqa: D401
         return tuple(
             fld
             for fld in fields(Settings)
-            if fld.name not in Settings._non_setting_attributes
+            if fld.name not in Settings._non_settings_names
         )
 
     def activate(self) -> Settings:
