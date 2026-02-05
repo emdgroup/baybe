@@ -31,6 +31,8 @@ from benchmarks.domains.hartmann.convergence import (
 )
 from benchmarks.domains.hartmann.convergence_tl import (
     hartmann_tl_3_20_15_benchmark,
+    hartmann_tl_inv_3_20_15_benchmark,
+    hartmann_tl_shift_3_20_15_benchmark,
 )
 from benchmarks.domains.michalewicz.convergence_tl import (
     michalewicz_tl_continuous_benchmark,
@@ -52,6 +54,8 @@ BENCHMARKS: list[Benchmark] = [
     direct_arylation_tl_temperature_benchmark,
     easom_tl_47_negate_noise5_benchmark,
     hartmann_tl_3_20_15_benchmark,
+    hartmann_tl_inv_3_20_15_benchmark,
+    hartmann_tl_shift_3_20_15_benchmark,
     michalewicz_tl_continuous_benchmark,
     # Transfer-Learning Regression Benchmarks
     direct_arylation_temperature_tl_regr_benchmark,
