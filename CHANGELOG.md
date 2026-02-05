@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Possibility to set `n_mc_iterations` to `None` in `simulate_scenarios`, which
   increments the simulation random seed per initial data set without having to execute
   the full Cartesian product of all (seed, data)-configurations
+- `identify_non_dominated_configurations` method to `Campaign` and `Objective`
+  for determining the Pareto front
 - `Campaign.posterior` and `Surrogate.posterior` now accept a `joint` argument 
 
 ### Changed

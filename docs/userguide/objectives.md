@@ -5,7 +5,10 @@ Optimization problems involve either a single target quantity of interest or sev
 the concept of an [`Objective`](baybe.objectives.base.Objective) to allow the user to
 control how these different types of scenarios are handled.
 
-## SingleTargetObjective
+## Objective Types
+The following objective types are available:
+
+### SingleTargetObjective
 The need to optimize a single [`Target`](baybe.targets.base.Target) is the most basic
 type of situation one can encounter in experimental design. 
 In this scenario, the fact that only one target shall be considered in the design is
@@ -41,7 +44,7 @@ individual [`Targets`](baybe.targets.base.Target) instead and apply the necessar
 conversion behind the scenes.
 ````
 
-## DesirabilityObjective
+### DesirabilityObjective
 The [`DesirabilityObjective`](baybe.objectives.desirability.DesirabilityObjective)
 enables the combination of multiple targets via scalarization into a single numerical
 value (commonly referred to as the *overall desirability*), a method also utilized in
@@ -100,7 +103,7 @@ $\{w_i\}$ are the corresponding target weights:
 \end{align*}
 ```
 
-### Example 1 – Normalized Targets
+#### Example 1 – Normalized Targets
 Here, we consider four **normalized** targets, each with a distict
 {ref}`optimization goal <userguide/targets:NumericalTarget>` chosen arbitrarily
 for demonstration purposes. The first target is given twice as much importance as each
@@ -120,7 +123,7 @@ objective = DesirabilityObjective(
 )
 ```
 
-### Example 2 – Non-Normalized Targets
+#### Example 2 – Non-Normalized Targets
 Sometimes, we explicitly want to bypass the normalization requirement, for example,
 when the target ranges are unknown. In this case, using the unweighted arithmetic mean
 is a reasonable choice:
@@ -137,7 +140,7 @@ objective = DesirabilityObjective(
 )
 ```
 
-## ParetoObjective
+### ParetoObjective
 The [`ParetoObjective`](baybe.objectives.pareto.ParetoObjective) can be used when the
 goal is to find a set of solutions that represent optimal trade-offs among
 multiple conflicting targets. Unlike the
@@ -183,3 +186,53 @@ If you attempt to use a  single-output model, BayBE will automatically turn it i
 [`CompositeSurrogate`](baybe.surrogates.composite.CompositeSurrogate) 
 using [independent replicates](auto_replication).
 ```
+
+## Identifying Non-Dominated Configurations
+The {meth}`~baybe.objectives.base.Objective.identify_non_dominated_configurations`
+method provides a straightforward way to identify *non-dominated* target configurations
+(i.e., those lying on the Pareto front) for any chosen
+{class}`~baybe.objectives.base.Objective`. The result is a Boolean
+{class}`~pandas.Series` highlighting the corresponding subset among the passed set of
+configurations.
+
+```{admonition} Domination for Non-Pareto Objectives
+:class: note
+
+While the concept of (non-)domination is typically associated with Pareto optimization,
+it can also be applied to objectives of types other than
+{class}`~baybe.objectives.pareto.ParetoObjective`. In general, we identify non-dominated
+configurations as the subset of configurations that are Pareto-optimal as measured by
+their **transformed representations** induced by the transformation rules of the
+used objective and involved targets. In other words, the *regular* Pareto criterion is
+applied on the *transformed* space of computed objective values.
+
+This implies two noteworthy special cases:
+* For {class}`~baybe.objectives.pareto.ParetoObjective`, it recovers the standard logic
+where transformation axes are defined by individual (transformed) targets.
+* For {class}`~baybe.objectives.single.SingleTargetObjective`, it corresponds to the
+regular optimization of the respective target, where the Pareto front collapses to a
+single point representing the optimal target value.
+```
+
+```python
+import pandas as pd
+
+from baybe.objectives import ParetoObjective
+from baybe.targets import NumericalTarget
+
+objective = ParetoObjective(
+    targets=[
+        NumericalTarget("t_max"),
+        NumericalTarget("t_min", minimize=True),
+    ]
+)
+configurations = pd.DataFrame(
+    {
+        "t_max": [0.1, 0.3, 0.5, 0.9],
+        "t_min": [0.9, 0.2, 0.6, 0.5],
+    }
+)
+mask = objective.identify_non_dominated_configurations(configurations)
+assert mask.equals(pd.Series([False, True, False, True]))
+```
+

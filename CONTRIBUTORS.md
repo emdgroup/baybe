@@ -38,3 +38,5 @@
   `fpsample` implementation for `FPSRecommender` 
 - Kathrin Skubch (Merck KGaA, Darmstadt, Germany):\
   Transfer learning regression benchmarks infrastructure
+- Myra Zmarsly (Merck Life Science KGaA, Darmstadt, Germany):\
+  Identification of non-dominated parameter configurations

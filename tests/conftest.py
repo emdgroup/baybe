@@ -41,6 +41,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.exceptions import IncompatibilityError
 from baybe.kernels import MaternKernel
 from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -372,6 +373,9 @@ def fixture_targets(target_names: list[str]):
     # Required for the selection to work as intended (if the input was a single string,
     # the list comprehension would match substrings instead)
     assert isinstance(target_names, list)
+    assert len(target_names) == len(set(target_names)), (
+        "Duplicate target names in fixture 'target_names'."
+    )
 
     valid_targets = [
         NumericalTarget(
@@ -566,21 +570,27 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
 
 
 @pytest.fixture(name="target_names")
-def fixture_default_target_selection():
+def fixture_default_target_names():
     """The default targets to be used if not specified differently."""
     return ["Target_max"]
 
 
 @pytest.fixture(name="parameter_names")
-def fixture_default_parameter_selection():
+def fixture_default_parameter_names():
     """Default parameters used if not specified differently."""
     return ["Categorical_1", "Categorical_2", "Num_disc_1"]
 
 
 @pytest.fixture(name="constraint_names")
-def fixture_default_constraint_selection():
+def fixture_default_constraint_names():
     """Default constraints used if not specified differently."""
     return []
+
+
+@pytest.fixture(name="objective_cls")
+def fixture_default_objective_class(targets):
+    """Default objective class used if not specified differently."""
+    return SingleTargetObjective if len(targets) == 1 else DesirabilityObjective
 
 
 @pytest.fixture(name="campaign")
@@ -697,13 +707,22 @@ def fixture_meta_recommender(
 
 
 @pytest.fixture(name="objective")
-def fixture_default_objective(targets):
-    """The default objective to be used if not specified differently."""
-    return (
-        SingleTargetObjective(targets[0])
-        if len(targets) == 1
-        else DesirabilityObjective(targets)
-    )
+def fixture_default_objective(targets, objective_cls):
+    """Provides example objectives via specified names."""
+    if objective_cls is None:
+        return None
+    if objective_cls == SingleTargetObjective:
+        if len(targets) != 1:
+            raise IncompatibilityError(
+                "You can only use single target objectives with one target but you "
+                f"provided {len(targets)} targets."
+            )
+        return SingleTargetObjective(targets[0])
+    if objective_cls == ParetoObjective:
+        return ParetoObjective(targets)
+    if objective_cls == DesirabilityObjective:
+        return DesirabilityObjective(targets)
+    raise NotImplementedError(f"Unknown objective class: '{objective_cls}'")
 
 
 @pytest.fixture(name="config")
