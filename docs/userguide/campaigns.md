@@ -245,11 +245,12 @@ easy interface for this purpose:
 is_non_dominated = campaign.identify_non_dominated_configurations()
 ```
 
-By default, the method looks at the taken measurements of the of the campaign, showing
-you all *optimal* configurations you have found so far. Alternatively, you can provide
-an explicit set of target configurations as input, where you have the choice whether to
-consider the campaign data as additional reference configurations for the evaluation or
-not.
+By default, the method looks at the taken measurements of the campaign, identifying all
+*optimal* configurations you have found so far. Alternatively, you can provide an
+explicit set of target configurations as input. In this case, you can choose whether the
+campaign's measurements should be used as reference points when *evaluating* which of
+the passed target configurations are non-dominated (i.e. the campaign measurements
+themselves will not be reflected in the returned mask):
 
 ~~~python
 is_non_dominated = campaign.identify_non_dominated_configurations(

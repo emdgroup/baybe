@@ -888,7 +888,7 @@ class Campaign(SerialMixin):
                 campaign's objective. If ``None``, uses the campaign's measurements.
             consider_campaign_measurements: If ``True``, the campaign's measurements are
                 considered for identifying the non-dominated configurations, but will
-                not be themselves reflected in the returned mask.
+                not be reflected in the returned mask themselves.
 
         Raises:
             IncompatibilityError: If no objective is defined for the campaign.
