@@ -18,6 +18,7 @@ from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import SubstanceParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.categorical import TaskCorrelation
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -48,8 +49,19 @@ def make_searchspace(
     data: pd.DataFrame,
     target_tasks: Sequence[str] | None = None,
     source_tasks: Sequence[str] | None = None,
+    task_correlation: TaskCorrelation = TaskCorrelation.UNKNOWN,
 ) -> SearchSpace:
-    """Create the search space for the benchmark."""
+    """Create the search space for the benchmark.
+
+    Args:
+        data: The benchmark data.
+        target_tasks: The target tasks for transfer learning.
+        source_tasks: The source tasks for transfer learning.
+        task_correlation: The task correlation mode (UNKNOWN or POSITIVE).
+
+    Returns:
+        The configured search space.
+    """
     params: list[DiscreteParameter] = [
         SubstanceParameter(
             name=substance,
@@ -60,12 +72,12 @@ def make_searchspace(
     ]
     if target_tasks is not None and source_tasks is not None:
         all_tasks = [*source_tasks, *target_tasks]
-        all_tasks = [*source_tasks, *target_tasks]
         params.append(
             TaskParameter(
                 name="aryl_halide",
                 values=all_tasks,
                 active_values=target_tasks,
+                task_correlation=task_correlation,
             )
         )
     return SearchSpace.from_product(parameters=params)
@@ -109,10 +121,17 @@ def aryl_halide_tl_substance_benchmark(
     """
     data = load_data()
 
-    searchspace = make_searchspace(
+    searchspace_tl_index = make_searchspace(
         data=data,
         source_tasks=source_tasks,
         target_tasks=target_tasks,
+        task_correlation=TaskCorrelation.UNKNOWN,
+    )
+    searchspace_tl_pos_index = make_searchspace(
+        data=data,
+        source_tasks=source_tasks,
+        target_tasks=target_tasks,
+        task_correlation=TaskCorrelation.POSITIVE,
     )
     searchspace_nontl = make_searchspace(data=data)
 
@@ -120,8 +139,12 @@ def aryl_halide_tl_substance_benchmark(
     initial_data = make_initial_data(data, source_tasks)
     objective = make_objective()
 
-    tl_campaign = Campaign(
-        searchspace=searchspace,
+    tl_index_campaign = Campaign(
+        searchspace=searchspace_tl_index,
+        objective=objective,
+    )
+    tl_pos_index_campaign = Campaign(
+        searchspace=searchspace_tl_pos_index,
         objective=objective,
     )
     nontl_campaign = Campaign(searchspace=searchspace_nontl, objective=objective)
@@ -138,7 +161,8 @@ def aryl_halide_tl_substance_benchmark(
         results.append(
             simulate_scenarios(
                 {
-                    f"{int(100 * p)}": tl_campaign,
+                    f"{int(100 * p)}_index": tl_index_campaign,
+                    f"{int(100 * p)}_pos_index": tl_pos_index_campaign,
                     f"{int(100 * p)}_naive": nontl_campaign,
                 },
                 lookup,
@@ -151,7 +175,11 @@ def aryl_halide_tl_substance_benchmark(
         )
     results.append(
         simulate_scenarios(
-            {"0": tl_campaign, "0_naive": nontl_campaign},
+            {
+                "0_index": tl_index_campaign,
+                "0_pos_index": tl_pos_index_campaign,
+                "0_naive": nontl_campaign,
+            },
             lookup,
             batch_size=settings.batch_size,
             n_doe_iterations=settings.n_doe_iterations,

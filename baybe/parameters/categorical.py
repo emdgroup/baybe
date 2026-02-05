@@ -1,7 +1,9 @@
 """Categorical parameters."""
 
 import gc
+from enum import Enum
 from functools import cached_property
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -14,6 +16,13 @@ from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
 from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
+
+
+class TaskCorrelation(Enum):
+    """Task correlation modes for TaskParameter."""
+
+    UNKNOWN = "unknown"
+    POSITIVE = "positive"
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -89,6 +98,30 @@ class TaskParameter(CategoricalParameter):
 
     encoding: CategoricalEncoding = field(default=CategoricalEncoding.INT, init=False)
     # See base class.
+
+    task_correlation: TaskCorrelation = field(default=TaskCorrelation.POSITIVE)
+    """Task correlation. Defaults to positive correlation via PositiveIndexKernel."""
+
+    @task_correlation.validator
+    def _validate_task_correlation_active_values(  # noqa: DOC101, DOC103
+        self, _: Any, value: TaskCorrelation
+    ) -> None:
+        """Validate active values compatibility with task correlation mode.
+
+        Raises:
+            ValueError: If task_correlation is POSITIVE but active_values contains more
+                than one value.
+        """
+        # Check POSITIVE constraint: must have exactly one active value
+        # Note: _active_values is the internal field, could be None
+        if value == TaskCorrelation.POSITIVE and self._active_values is not None:
+            if len(self._active_values) > 1:
+                raise ValueError(
+                    f"Task correlation '{TaskCorrelation.POSITIVE.value}' requires "
+                    f"one active value, but {len(self._active_values)} were provided: "
+                    f"{self._active_values}. The POSITIVE mode uses the "
+                    f"PositiveIndexKernel which assumes a single target task."
+                )
 
 
 # Collect leftover original slotted classes processed by `attrs.define`
