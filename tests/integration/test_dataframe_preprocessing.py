@@ -2,28 +2,18 @@
 
 from unittest.mock import patch
 
-from baybe.campaign import preprocess_dataframe
 from baybe.recommenders.pure.bayesian.botorch import BotorchRecommender
 from baybe.utils.dataframe import add_fake_measurements
+from baybe.utils.validation import validate_parameter_input
 
 
-@patch("baybe.campaign.preprocess_dataframe", wraps=preprocess_dataframe)
-@patch("baybe.recommenders.pure.base.preprocess_dataframe", wraps=preprocess_dataframe)
 @patch(
-    "baybe.recommenders.pure.bayesian.base.preprocess_dataframe",
-    wraps=preprocess_dataframe,
+    "baybe.utils.validation.validate_parameter_input", wraps=validate_parameter_input
 )
-def test_dataframes_are_preprocessed_only_once(
-    mock_bayesian, mock_recommender, mock_campaign, campaign
-):
+def test_dataframes_are_preprocessed_only_once(mock, campaign):
     """Data preprocessing happens only once, regardless of the entry point."""
-    # NOTE: This test only ensures that preprocessing happens mutually exclusively
-    #   in campaigns and recommenders. Unfortunately, it does *not* verify if the
-    #   preprocessing function is called in other places of the same execution chain.
-    #   Testing this would require mocking at the function source level, which is
-    #   hardly achievable with the current import structure. As a manual verification
-    #   step: a simple reference search of `preprocess_dataframe` in the main code base
-    #   should reveal imports in only these two places.
+    # NOTE: The call count is tracked based on the first (unconditionally) executed
+    #   statement in the fucntion when validation is active: `validate_parameter_input`
 
     # Get some fake data to be preprocessed
     df = campaign.recommend(1)
@@ -32,10 +22,8 @@ def test_dataframes_are_preprocessed_only_once(
     # Preprocessing happens while adding the data, but not again during recommendation
     campaign.add_measurements(df)
     campaign.recommend(1)
-    assert mock_campaign.call_count == 1
-    assert mock_recommender.call_count == 0
-    assert mock_bayesian.call_count == 0
+    assert mock.call_count == 1
 
     # However, calling the recommender directly triggers preprocessing
     BotorchRecommender().recommend(1, campaign.searchspace, campaign.objective, df)
-    assert mock_bayesian.call_count + mock_recommender.call_count == 1
+    assert mock.call_count == 2
