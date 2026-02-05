@@ -350,7 +350,7 @@ Thanks to our contributors!
 
 ## 📄 License
 
-Copyright 2022-2025 Merck KGaA, Darmstadt, Germany
+Copyright 2022-2026 Merck KGaA, Darmstadt, Germany
 and/or its affiliates. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");

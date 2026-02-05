@@ -111,6 +111,10 @@ class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
 
 
+class NothingToComputeError(Exception):
+    """There is nothing to compute because there are no inputs or existing data."""
+
+
 class NoRecommendersLeftError(Exception):
     """A recommender is requested by a meta recommender but there are no recommenders
     left.

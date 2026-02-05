@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gc
 import json
+import warnings
 from collections.abc import Callable, Collection, Sequence
 from functools import reduce
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -21,6 +22,7 @@ from baybe.exceptions import (
     IncompatibilityError,
     NoMeasurementsError,
     NotEnoughPointsLeftError,
+    NothingToComputeError,
 )
 from baybe.objectives.base import Objective, to_objective
 from baybe.parameters.base import Parameter
@@ -44,7 +46,11 @@ from baybe.utils.basic import UNSPECIFIED, UnspecifiedType, is_all_instance
 from baybe.utils.boolean import eq_dataframe
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import filter_df, fuzzy_row_match
-from baybe.utils.validation import preprocess_dataframe, validate_object_names
+from baybe.utils.validation import (
+    preprocess_dataframe,
+    validate_object_names,
+    validate_target_input,
+)
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -864,6 +870,70 @@ class Campaign(SerialMixin):
             pending_experiments,
             acquisition_function,
         )
+
+    def identify_non_dominated_configurations(
+        self,
+        configurations: pd.DataFrame | None = None,
+        /,
+        *,
+        consider_campaign_measurements: bool = True,
+    ) -> pd.Series:
+        """Create a Boolean mask indicating non-dominated configurations.
+
+        Args:
+            configurations: A dataframe carrying values for all targets tracked by the
+                campaign's objective. If ``None``, uses the campaign's measurements.
+            consider_campaign_measurements: If ``True``, the campaign's measurements are
+                considered for identifying the non-dominated configurations, but will
+                not be reflected in the returned mask themselves.
+
+        Raises:
+            IncompatibilityError: If no objective is defined for the campaign.
+            NothingToComputeError: If no configurations are provided as argument and no
+                measurements are added to the campaign yet.
+
+        Returns:
+            A Boolean series indicating which configurations are non-dominated.
+        """
+        if self.objective is None:
+            raise IncompatibilityError(
+                "Cannot get the non-dominated configurations since no "
+                f"'{Objective.__name__}' is defined."
+            )
+
+        if self.measurements.empty:
+            if configurations is None:
+                raise NothingToComputeError(
+                    "The calculation of non-dominated points was requested, but "
+                    "neither are configurations provided nor does the campaign have "
+                    "any measurements added yet. Therefore, there is nothing to "
+                    "compute."
+                )
+            if consider_campaign_measurements:
+                warnings.warn(
+                    "No measurements have been added to the campaign yet, but the flag "
+                    "`consider_campaign_measurements` is set to "
+                    "'True'. Therefore, the non-dominated configurations will be "
+                    "determined without taking any measurements into account.",
+                    UserWarning,
+                )
+
+        if configurations is None:
+            configurations = self.measurements
+        else:
+            validate_target_input(configurations, self.objective.targets)
+
+        if consider_campaign_measurements and not self.measurements.empty:
+            configurations = pd.concat([configurations, self.measurements])
+
+        non_dominated = self.objective.identify_non_dominated_configurations(
+            configurations
+        )
+
+        if consider_campaign_measurements:
+            non_dominated = non_dominated.iloc[: -len(self.measurements)]
+
+        return non_dominated
 
 
 def _add_version(dict_: dict) -> dict:

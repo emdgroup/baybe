@@ -447,7 +447,7 @@ requires-dist = [
     { name = "scipy", specifier = ">=1.10.1" },
     { name = "seaborn", marker = "extra == 'examples'", specifier = ">=0.12.2" },
     { name = "setuptools-scm", marker = "extra == 'dev'", specifier = ">=7.1.0" },
-    { name = "shap", extras = ["others"], marker = "extra == 'insights'", specifier = ">=0.46.0" },
+    { name = "shap", extras = ["others"], marker = "extra == 'insights'", specifier = ">=0.47.0" },
     { name = "skl2onnx", marker = "extra == 'onnx'", specifier = ">=1.19.1" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.0.2" },
     { name = "sphinx-autodoc-typehints", marker = "extra == 'docs'", specifier = ">=2.4.4" },

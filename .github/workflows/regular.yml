@@ -140,8 +140,7 @@ jobs:
         py-version: [ {semantic: '3.10', tox: 'py310'},
                       {semantic: '3.11', tox: 'py311'},
                       {semantic: '3.12', tox: 'py312'},
-                      {semantic: '3.13', tox: 'py313'},
-                      {semantic: '3.14', tox: 'py314'} ]
+                      {semantic: '3.13', tox: 'py313'} ]
     name: Full Tests ${{ matrix.py-version.semantic }}
     runs-on: ubuntu-latest
     steps:
