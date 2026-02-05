@@ -8,3 +8,19 @@
  volume = {20},
  year = {2007}
 }
+@InProceedings{pmlr-v235-hvarfner24a,
+  title = 	 {Vanilla {B}ayesian Optimization Performs Great in High Dimensions},
+  author =       {Hvarfner, Carl and Hellsten, Erik Orm and Nardi, Luigi},
+  booktitle = 	 {Proceedings of the 41st International Conference on Machine Learning},
+  pages = 	 {20793--20817},
+  year = 	 {2024},
+  editor = 	 {Salakhutdinov, Ruslan and Kolter, Zico and Heller, Katherine and Weller, Adrian and Oliver, Nuria and Scarlett, Jonathan and Berkenkamp, Felix},
+  volume = 	 {235},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {21--27 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://raw.githubusercontent.com/mlresearch/v235/main/assets/hvarfner24a/hvarfner24a.pdf},
+  url = 	 {https://proceedings.mlr.press/v235/hvarfner24a.html},
+  abstract = 	 {High-dimensional optimization problems have long been considered the Achilles’ heel of Bayesian optimization algorithms. Spurred by the curse of dimensionality, a large collection of algorithms aim to make BO more performant in this setting, commonly by imposing various simplifying assumptions on the objective, thereby decreasing its presumed complexity. In this paper, we identify the degeneracies that make vanilla BO poorly suited to high-dimensional tasks, and further show how existing algorithms address these degeneracies through the lens of model complexity. Motivated by the model complexity measure, we derive an enhancement to the prior assumptions that are typical of the vanilla BO algorithm, which reduces the complexity to manageable levels without imposing structural restrictions on the objective. Our modification - a simple scaling of the Gaussian process lengthscale prior in the dimensionality - reveals that standard BO works drastically better than previously thought in high dimensions. Our insights are supplemented by substantial out-performance of existing state-of-the-art on multiple commonly considered real-world high-dimensional tasks.}
+}
+

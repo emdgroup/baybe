@@ -14,7 +14,12 @@ from baybe.kernels.basic import (
     RFFKernel,
     RQKernel,
 )
-from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
+from baybe.kernels.composite import (
+    AdditiveKernel,
+    ProductKernel,
+    ProjectionKernel,
+    ScaleKernel,
+)
 
 __all__ = [
     "AdditiveKernel",
@@ -24,6 +29,7 @@ __all__ = [
     "PiecewisePolynomialKernel",
     "PolynomialKernel",
     "ProductKernel",
+    "ProjectionKernel",
     "RBFKernel",
     "RFFKernel",
     "RQKernel",

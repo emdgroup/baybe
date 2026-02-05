@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
 
 import attrs
 import cattrs
+import numpy as np
 import pandas as pd
 from cattrs.strategies import configure_union_passthrough
 
@@ -104,6 +105,15 @@ def _unstructure_dataframe_hook(df: pd.DataFrame) -> str:
     return base64.b64encode(pickled_df).decode("utf-8")
 
 
+_unstructure_ndarray_hook = _unstructure_dataframe_hook
+
+
+def _structure_ndarray_hook(obj: str, _) -> np.ndarray:
+    """Deserialize a numpy ndarray."""
+    pickled_array = base64.b64decode(obj.encode("utf-8"))
+    return pickle.loads(pickled_array)
+
+
 def block_serialization_hook(obj: Any) -> NoReturn:  # noqa: DOC101, DOC103
     """Prevent serialization of the passed object.
 
@@ -163,6 +173,8 @@ converter.register_structure_hook_factory(
 )
 converter.register_unstructure_hook(pd.DataFrame, _unstructure_dataframe_hook)
 converter.register_structure_hook(pd.DataFrame, _structure_dataframe_hook)
+converter.register_unstructure_hook(np.ndarray, _unstructure_ndarray_hook)
+converter.register_structure_hook(np.ndarray, _structure_ndarray_hook)
 converter.register_unstructure_hook(datetime, lambda x: x.isoformat())
 converter.register_structure_hook(datetime, lambda x, _: datetime.fromisoformat(x))
 converter.register_unstructure_hook(timedelta, lambda x: f"{x.total_seconds()}s")
