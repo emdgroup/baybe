@@ -369,6 +369,7 @@ class Settings(_SlottedContextDecorator):
         # only when randomness control was actually part of the settings configurations
         # and the state was altered in the first place.
         if self.random_seed is not None:
+            assert self._previous_random_state is not None
             self._previous_random_state.activate()
             self._previous_random_state = None
 
