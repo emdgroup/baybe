@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
 
 import cattrs
 from attrs import asdict, has
+from joblib import Memory
 from typing_extensions import override
 
 from baybe.exceptions import UnidentifiedSubclassError, UnmatchedAttributeError
@@ -38,30 +39,6 @@ class UnspecifiedType(enum.Enum):
 
 UNSPECIFIED = UnspecifiedType.UNSPECIFIED
 """Sentinel indicating an unspecified value when `None` is ambiguous."""
-
-
-class UncertainBool(enum.Enum):
-    """Enum for representing uncertain Boolean values."""
-
-    TRUE = "TRUE"
-    FALSE = "FALSE"
-    UNKNOWN = "UNKNOWN"
-
-    def __bool__(self):
-        if self is UncertainBool.TRUE:
-            return True
-        elif self is UncertainBool.FALSE:
-            return False
-        else:
-            raise TypeError(f"'{UncertainBool.UNKNOWN}' has no Boolean representation.")
-
-    @classmethod
-    def from_erroneous_callable(cls, callable_: Callable, /) -> UncertainBool:
-        """Create an uncertain Boolean from a potentially erroneous Boolean call."""
-        try:
-            return cls.TRUE if callable_() else cls.FALSE
-        except Exception:
-            return cls.UNKNOWN
 
 
 @dataclass(frozen=True, repr=False)
@@ -389,3 +366,30 @@ def compose_two(f: Callable, g: Callable, /) -> Callable:
 def compose(*fs: Callable) -> Callable:
     """Compose an arbitrary number of functions (first function is applied first)."""
     return functools.reduce(compose_two, fs)
+
+
+def cache_to_disk(func: Callable, /) -> Callable:
+    """Cache a callable to the filesystem using :class:`joblib.Memory`.
+
+    Allows for persistent caching across different Python sessions.
+    The cache directory is retrieved on-the-fly from the global settings configuration.
+
+    Args:
+        func: The callable to be cached.
+
+    Returns:
+        A wrapped version of the function with filesystem caching enabled.
+    """
+    from baybe import active_settings
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # The path resolution must happen here inside the wrapper since otherwise
+        # settings changes would not take effect
+        if (dir := active_settings.cache_directory) is not None:
+            f = Memory(dir, verbose=0).cache(func)
+        else:
+            f = func
+        return f(*args, **kwargs)
+
+    return wrapper

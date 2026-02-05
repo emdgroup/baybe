@@ -12,8 +12,8 @@ from typing_extensions import override
 from baybe.parameters.base import _DiscreteLabelLikeParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.validation import validate_unique_values
+from baybe.settings import active_settings
 from baybe.utils.conversion import nonstring_to_tuple
-from baybe.utils.numerical import DTypeFloatNumpy
 
 
 def _convert_values(value, self, field) -> tuple[str, ...]:
@@ -69,11 +69,14 @@ class CategoricalParameter(_DiscreteLabelLikeParameter):
                 for val in self.values
             ]
             comp_df = pd.DataFrame(
-                np.eye(len(self.values), dtype=DTypeFloatNumpy), columns=cols
+                np.eye(len(self.values), dtype=active_settings.DTypeFloatNumpy),
+                columns=cols,
             )
         elif self.encoding is CategoricalEncoding.INT:
             comp_df = pd.DataFrame(
-                range(len(self.values)), dtype=DTypeFloatNumpy, columns=[self.name]
+                range(len(self.values)),
+                dtype=active_settings.DTypeFloatNumpy,
+                columns=[self.name],
             )
         comp_df.index = pd.Index(self.values)
 

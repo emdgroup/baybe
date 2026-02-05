@@ -17,11 +17,12 @@ from baybe.exceptions import IncompatibilityError, NonGaussianityError
 from baybe.objectives.base import Objective
 from baybe.objectives.enum import Scalarizer
 from baybe.objectives.validation import validate_target_names
+from baybe.settings import active_settings
 from baybe.targets import NumericalTarget
 from baybe.targets.base import Target
-from baybe.targets.numerical import UncertainBool
 from baybe.transformations.basic import AffineTransformation, IdentityTransformation
 from baybe.utils.basic import is_all_instance, to_tuple
+from baybe.utils.boolean import UncertainBool
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import pretty_print_df
 from baybe.utils.validation import finite_float
@@ -290,8 +291,6 @@ class DesirabilityObjective(Objective):
         import torch
         from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         # Account for minimization
         oriented = [
             tr if not t.minimize else tr.negate()
@@ -312,11 +311,11 @@ class DesirabilityObjective(Objective):
         # Compute the distribution parameters of the weighted sum of Gaussians
         weights = torch.tensor(
             [w * tr.factor for w, tr in zip(self.normalized_weights, converted)],
-            dtype=DTypeFloatTorch,
+            dtype=active_settings.DTypeFloatTorch,
         )
         offset = torch.tensor(
             sum(w * tr.shift for w, tr in zip(self.normalized_weights, converted)),
-            dtype=DTypeFloatTorch,
+            dtype=active_settings.DTypeFloatTorch,
         ).item()
         return ScalarizedPosteriorTransform(weights, offset)
 

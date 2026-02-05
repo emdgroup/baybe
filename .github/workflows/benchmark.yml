@@ -78,7 +78,7 @@ jobs:
     timeout-minutes: 1440
     env:
       BAYBE_BENCHMARKING_PERSISTENCE_PATH: ${{ secrets.TEST_RESULT_S3_BUCKET }}
-      BAYBE_PARALLEL_SIMULATION_RUNS: false
+      BAYBE_PARALLELIZE_SIMULATION_RUNS: false
     steps:
       - name: System Information
         run: |

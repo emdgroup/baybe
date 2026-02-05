@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from pytest import param
 
+from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.simulation.scenarios import _Rollouts
 from baybe.targets.numerical import NumericalTarget
@@ -78,6 +79,7 @@ def _validate_target_data(
         param(2, 2, id="cartesian"),
     ],
 )
+@Settings(parallelize_simulation_runs=False)
 def test_simulate_scenarios_structure(
     campaign, batch_size, n_mc_iterations, n_initial_data
 ):
@@ -107,7 +109,6 @@ def test_simulate_scenarios_structure(
             random_seed=seed,
             n_mc_iterations=n_mc_iterations,
             initial_data=initial_data,
-            parallel_runs=False,
         )
     if should_fail:
         return

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import warnings
 from collections.abc import Callable
 from copy import deepcopy
@@ -15,8 +14,8 @@ from attrs.validators import ge, instance_of, optional
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NothingToSimulateError, UnusedObjectWarning
+from baybe.settings import active_settings
 from baybe.simulation.core import simulate_experiment
-from baybe.utils.boolean import strtobool
 
 if TYPE_CHECKING:
     from xarray import DataArray
@@ -107,7 +106,6 @@ def simulate_scenarios(
         "error", "worst", "best", "mean", "random", "ignore"
     ] = "error",
     noise_percent: float | None = None,
-    parallel_runs: bool | None = None,
 ) -> pd.DataFrame:
     """Simulate multiple Bayesian optimization scenarios.
 
@@ -132,10 +130,6 @@ def simulate_scenarios(
             the current random seed is used.
         impute_mode: See :func:`baybe.simulation.core.simulate_experiment`.
         noise_percent: See :func:`baybe.simulation.core.simulate_experiment`.
-        parallel_runs: If set, the value  is handed over to the ``parallel`` argument of
-            :func:`~xyzpy.combo_runner`, enabling the use of parallel runners. When
-            omitted, its value is determined by the ``BAYBE_PARALLEL_SIMULATION_RUNS``
-            environment variable, with fallback to ``True``.
 
     Returns:
         A dataframe like returned from :func:`baybe.simulation.core.simulate_experiment`
@@ -229,13 +223,9 @@ def simulate_scenarios(
             category=UnusedObjectWarning,
             module="baybe.recommenders.pure.nonpredictive.base",
         )
-        if parallel_runs is None:
-            parallel_runs = strtobool(
-                os.environ.get("BAYBE_PARALLEL_SIMULATION_RUNS", "True")
-            )
-        da_results = batch_simulator.run_cases(cases, parallel=parallel_runs)[
-            result_variable
-        ]
+        da_results = batch_simulator.run_cases(
+            cases, parallel=active_settings.parallelize_simulation_runs
+        )[result_variable]
 
     df_results = unpack_simulation_results(da_results)
 

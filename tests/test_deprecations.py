@@ -1,16 +1,19 @@
 """Deprecation tests."""
 
+import os
 import warnings
 from itertools import pairwise
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from pandas.testing import assert_series_equal
 from pytest import param
 
-from baybe._optional.info import CHEM_INSTALLED
+from baybe._optional.info import CHEM_INSTALLED, POLARS_INSTALLED
 from baybe.constraints import (
     ContinuousLinearConstraint,
     ContinuousLinearEqualityConstraint,
@@ -31,6 +34,7 @@ from baybe.recommenders.pure.bayesian import (
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.searchspace.validation import get_transform_parameters
+from baybe.settings import Settings
 from baybe.targets import NumericalTarget
 from baybe.targets import NumericalTarget as ModernTarget
 from baybe.targets._deprecated import (
@@ -41,6 +45,7 @@ from baybe.targets._deprecated import (
 )
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
+from baybe.utils.random import set_random_seed, temporary_seed
 
 
 def test_surrogate_registration():
@@ -474,3 +479,81 @@ def test_target_transformation(
     if deprecation is not None:
         assert_series_equal(deprecation.transform(series), expected)
     assert_series_equal(modern.transform(series), expected)
+
+
+def test_deprecated_random_seed_control():
+    """Using the deprecated random seed helpers raises warnings."""
+    with pytest.warns(DeprecationWarning, match="'set_random_seed' is deprecated"):
+        set_random_seed(42)
+    with pytest.warns(DeprecationWarning, match="'temporary_seed' is deprecated"):
+        temporary_seed(42)
+
+
+@pytest.mark.parametrize("value", [True, False])
+@pytest.mark.parametrize("library", ["Numpy", "Torch"])
+def test_deprecated_floating_point_environment_variables(
+    monkeypatch, library: str, value: bool
+):
+    """Using the deprecated precision environment variables raises warnings."""
+    monkeypatch.setenv(f"BAYBE_{library.upper()}_USE_SINGLE_PRECISION", str(value))
+    with pytest.warns(
+        DeprecationWarning,
+        match=f"'BAYBE_{library.upper()}_USE_SINGLE_PRECISION' has been deprecated",
+    ):
+        attr = getattr(Settings(restore_environment=True), f"DTypeFloat{library}")
+    namespace = np if library == "Numpy" else torch
+    assert attr is namespace.float32 if value else namespace.float64
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param(
+            False,
+            marks=pytest.mark.skipif(
+                not POLARS_INSTALLED, reason="Optional polars dependency not installed."
+            ),
+        ),
+        True,
+    ],
+)
+def test_deprecated_polars_environment_variables(monkeypatch, value: bool):
+    """Using the deprecated polars environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_DEACTIVATE_POLARS", str(value))
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_DEACTIVATE_POLARS' has been deprecated"
+    ):
+        assert (
+            Settings(restore_environment=True).use_polars_for_constraints is not value
+        )
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_deprecated_parallelization_environment_variables(monkeypatch, value: bool):
+    """Using the deprecated parallelization environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_PARALLEL_SIMULATION_RUNS", str(value))
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_PARALLEL_SIMULATION_RUNS' has been deprecated"
+    ):
+        assert Settings(restore_environment=True).parallelize_simulation_runs is value
+
+
+@pytest.fixture
+def set_cache_directory_env_var(monkeypatch, value: str):
+    """Remove the translated environment variable after the test."""
+    monkeypatch.setenv("BAYBE_CACHE_DIR", value)
+    yield
+    os.environ.pop("BAYBE_CACHE_DIRECTORY", None)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("test", Path("test")), ("", None)], ids=["set", "None"]
+)
+@pytest.mark.usefixtures("set_cache_directory_env_var")
+def test_deprecated_cache_environment_variables(monkeypatch, value: str, expected: str):
+    """Using the deprecated cache environment variables raises warnings."""
+    monkeypatch.setenv("BAYBE_CACHE_DIR", value)
+    with pytest.warns(
+        DeprecationWarning, match="'BAYBE_CACHE_DIR' has been deprecated"
+    ):
+        assert Settings(restore_environment=True).cache_directory == expected

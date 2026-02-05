@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from baybe import active_settings
 from baybe.acquisition import qLogExpectedImprovement
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.exceptions import IncompatibleSurrogateError
@@ -25,7 +26,6 @@ from baybe.surrogates import CustomONNXSurrogate, GaussianProcessSurrogate
 from baybe.surrogates.base import Surrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
-from baybe.utils.random import set_random_seed
 
 # Number of values used for the input parameter
 N_PARAMETER_VALUES = 200
@@ -129,7 +129,7 @@ def main():
     st_function_bias = st.sidebar.slider("Function bias", -100.0, 100.0, 0.0)
 
     # Set the chosen random seed
-    set_random_seed(st_random_seed)
+    active_settings.random_seed = st_random_seed
 
     # Construct the specific test function
     fun = partial(
