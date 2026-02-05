@@ -1,172 +1,269 @@
-## Transfer Learning
+# # Transfer Learning in Chemical Optimization
 
-# This example demonstrates BayBE's
-# {doc}`Transfer Learning </userguide/transfer_learning>` capabilities using the
-# Hartmann test function:
-# * We construct a campaign,
-# * give it access to data from a related but different task,
-# * and show how this additional information boosts optimization performance.
+# In this example, we demonstrate BayBE's transfer learning capabilities using real
+# experimental data from chemical synthesis. We explore how knowledge gained from
+# optimization experiments under certain reaction conditions can be transferred to
+# accelerate optimization under different conditions. Specifically, we investigate a
+# setting where we:
+# * have **historical experimental data** from chemical reactions conducted at
+#   different temperatures
+#   (taken from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y))
+# * want to **maximize reaction yield** at a new target temperature
+# * can leverage the **relationships between reaction conditions** to accelerate
+#   the optimization process.
 
-### Imports
+# ## Imports and Settings
 
 import os
 
-import numpy as np
 import pandas as pd
 import seaborn as sns
-from botorch.test_functions.synthetic import Hartmann
+from matplotlib import pyplot as plt
 
 from baybe import Campaign
-from baybe.parameters import NumericalDiscreteParameter, TaskParameter
+from baybe.parameters import (
+    NumericalDiscreteParameter,
+    SubstanceParameter,
+    TaskParameter,
+)
 from baybe.searchspace import SearchSpace
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.dataframe import arrays_to_dataframes
-from examples.utils import create_example_plots
+from baybe.utils.random import set_random_seed
 
-### Settings
+set_random_seed(1337)
 
-# The following settings are used to set up the problem:
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+N_MC_ITERATIONS = 2 if SMOKE_TEST else 50
+N_DOE_ITERATIONS = 2 if SMOKE_TEST else 25
 
-SMOKE_TEST = "SMOKE_TEST" in os.environ  # reduce the problem complexity in CI pipelines
-DIMENSION = 3  # input dimensionality of the test function
-BATCH_SIZE = 1  # batch size of recommendations per DOE iteration
-N_MC_ITERATIONS = 2 if SMOKE_TEST else 50  # number of Monte Carlo runs
-N_DOE_ITERATIONS = 2 if SMOKE_TEST else 10  # number of DOE iterations
-POINTS_PER_DIM = 3 if SMOKE_TEST else 5  # number of grid points per input dimension
+# ## The Scenario
+
+# Imagine you're a chemist in a pharmaceutical company, tasked with optimizing a
+# direct arylation reaction to maximize product yield. This reaction involves
+# combining different chemical components (solvents, bases, ligands) under varying
+# temperature and concentration conditions. Each experiment is expensive and
+# time-consuming, making efficient optimization crucial.
+
+# However, you have an advantage: your laboratory has already conducted similar
+# optimization campaigns at different temperatures in the past. The question arises:
+# can you leverage this **historical data from related conditions** to accelerate
+# optimization at your target temperature? This is where transfer learning becomes
+# invaluable.
+
+# ## The Chemical System
+
+# Our experimental dataset comes from a real direct arylation study, containing
+# measurements of reaction yields under systematically varied conditions. The key
+# experimental variables are:
+
+# * **Chemical components**: Different solvents, bases, and ligands
+# * **Temperature**: Reaction temperature (90°C, 105°C, 120°C)
+# * **Concentration**: Reagent concentration (0.057, 0.1, 0.153 mol/L)
+# * **Target**: Reaction yield (percentage)
 
 
-### Creating the Optimization Objective
+ENCODING = "RDKIT2DDESCRIPTORS"
+BATCH_SIZE = 1
 
-# The test functions each have a single output that is to be minimized.
-# The corresponding [Objective](baybe.objectives.base.Objective)
-# is created as follows:
+# We define the experimental conditions available in the dataset:
 
-target = NumericalTarget(name="Target", minimize=True)
-objective = target.to_objective()
+TEMPERATURES = [90, 105, 120]
+CONCENTRATIONS = [0.057, 0.1, 0.153]
+TARGET_TEMPERATURES = [90, 105, 120]
+SAMPLE_FRACTIONS = [0.01, 0.02] if SMOKE_TEST else [0.01, 0.02, 0.05, 0.1, 0.2]
 
-### Creating the Searchspace
+# ## Loading the Experimental Dataset
 
-# The bounds of the search space are dictated by the test function:
+try:
+    lookup = pd.read_csv("benchmarks/data/direct_arylation/data.csv")
+except FileNotFoundError:
+    try:
+        lookup = pd.read_csv("../../../benchmarks/data/direct_arylation/data.csv")
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            "Could not find the direct arylation dataset. Please ensure you're "
+            "running from the correct directory and the data file exists."
+        ) from e
 
-BOUNDS = Hartmann(dim=DIMENSION).bounds
+# The dataset maps chemical substance names to their molecular representations (SMILES),
+# enabling us to encode molecular structure information for the optimization algorithm:
 
-# First, we define one
-# [NumericalDiscreteParameter](baybe.parameters.numerical.NumericalDiscreteParameter)
-# per input dimension of the test function:
-
-discrete_params = [
-    NumericalDiscreteParameter(
-        name=f"x{d}",
-        values=np.linspace(lower, upper, POINTS_PER_DIM),
-    )
-    for d, (lower, upper) in enumerate(BOUNDS.T)
-]
-
-# ```{note}
-# While we could optimize the function using
-# [NumericalContinuousParameters](baybe.parameters.numerical.NumericalContinuousParameter),
-# we use discrete parameters here because it lets us interpret the percentages shown in
-# the final plot directly as the proportion of candidates for which there were target
-# values revealed by the training function.
-# ```
-
-# Next, we define a
-# [TaskParameter](baybe.parameters.categorical.TaskParameter) to encode the task context,
-# which allows the model to establish a relationship between the training data and
-# the data collected during the optimization process.
-# Because we want to obtain recommendations only for the test function, we explicitly
-# pass the `active_values` keyword.
-
-task_param = TaskParameter(
-    name="Function",
-    values=["Test_Function", "Training_Function"],
-    active_values=["Test_Function"],
-)
-
-# With the parameters at hand, we can now create our search space.
-
-parameters = [*discrete_params, task_param]
-searchspace = SearchSpace.from_product(parameters=parameters)
-
-### Defining the Tasks
-
-# To demonstrate the transfer learning mechanism, we consider the problem of optimizing
-# the Hartmann function using training data from its negated version, including some
-# noise. The used model is of course not aware of this relationship but needs to infer
-# it from the data gathered during the optimization process.
-
-wrapper = arrays_to_dataframes(
-    [p.name for p in discrete_params], [target.name], use_torch=True
-)
-
-test_functions = {
-    "Test_Function": wrapper(Hartmann(dim=DIMENSION)),
-    "Training_Function": wrapper(Hartmann(dim=DIMENSION, negate=True, noise_std=0.15)),
+substances = {
+    "solvents": dict(zip(lookup["Solvent"], lookup["Solvent_SMILES"])),
+    "bases": dict(zip(lookup["Base"], lookup["Base_SMILES"])),
+    "ligands": dict(zip(lookup["Ligand"], lookup["Ligand_SMILES"])),
 }
 
-# (Lookup)=
-### Generating Lookup Tables
+# ## The Optimization Problem
 
-# We generate two lookup tables containing the target values of both test
-# functions at the given parameter grid.
-# Parts of one lookup serve as the training data for the model.
-# The other lookup is used as the loop-closing element, providing the target values of
-# the test functions on demand.
+target = NumericalTarget(name="yield", minimize=False)
+objective = target.to_objective()
 
-grid = np.meshgrid(*[p.values for p in discrete_params])
+# To enable transfer learning, we use a {class}`~baybe.parameters.categorical.TaskParameter`
+# to represent temperature, which allows the algorithm to learn relationships between
+# different temperature conditions and transfer knowledge between them.
 
-lookups: dict[str, pd.DataFrame] = {}
-for function_name, function in test_functions.items():
-    lookup = pd.DataFrame({f"x{d}": grid_d.ravel() for d, grid_d in enumerate(grid)})
-    lookup = pd.concat([lookup, function(lookup)], axis=1)
-    lookup["Function"] = function_name
-    lookups[function_name] = lookup
-lookup_training_task = lookups["Training_Function"]
-lookup_test_task = lookups["Test_Function"]
 
-### Simulation Loop
+def create_search_space(target_temperature):
+    """Create a search space configured for transfer learning.
 
-# We now simulate campaigns for different amounts of training data unveiled,
-# to show the impact of transfer learning on the optimization performance.
-# To average out and reduce statistical effects that might happen due to the random
-# sampling of the provided data, we perform several Monte Carlo runs.
+    The TaskParameter enables the algorithm to distinguish between different
+    temperature conditions while learning relationships between them. We set
+    ``active_values`` to specify which temperature we want to optimize for,
+    while allowing the model to leverage data from all temperature conditions.
+    """
+    parameters = [
+        SubstanceParameter(
+            name="Solvent", data=substances["solvents"], encoding=ENCODING
+        ),
+        SubstanceParameter(name="Base", data=substances["bases"], encoding=ENCODING),
+        SubstanceParameter(
+            name="Ligand", data=substances["ligands"], encoding=ENCODING
+        ),
+        NumericalDiscreteParameter(
+            name="Concentration", values=CONCENTRATIONS, tolerance=0.001
+        ),
+        TaskParameter(
+            name="Temp_C",
+            values=[str(t) for t in TEMPERATURES],
+            active_values=[str(target_temperature)],
+        ),
+    ]
+    return SearchSpace.from_product(parameters=parameters)
 
-results: list[pd.DataFrame] = []
-for p in (0.01, 0.02, 0.05, 0.08, 0.2):
-    campaign = Campaign(searchspace=searchspace, objective=objective)
-    initial_data = [lookup_training_task.sample(frac=p) for _ in range(N_MC_ITERATIONS)]
-    result_fraction = simulate_scenarios(
-        {f"{int(100 * p)}": campaign},
-        lookup_test_task,
-        initial_data=initial_data,
+
+# We also need to prepare the lookup table with string temperatures for `TaskParameter`
+# compatibility:
+
+lookup_task = lookup.copy()
+lookup_task["Temp_C"] = lookup_task["Temp_C"].astype(str)
+
+
+# ## Simulating Transfer Learning
+
+# To demonstrate the power of transfer learning, we simulate optimization campaigns
+# for each temperature condition. For each target temperature, we compare two approaches:
+#
+# 1. **Baseline**: Optimization without any prior knowledge (cold start)
+# 2. **Transfer Learning**: Optimization using varying amounts of data from other temperatures
+
+
+all_results = {}
+for target_temp in TARGET_TEMPERATURES:
+    training_temps = [t for t in TEMPERATURES if t != target_temp]
+
+    searchspace = create_search_space(target_temp)
+
+    training_temperatures = [str(t) for t in training_temps]
+    lookup_training = lookup_task[
+        lookup_task["Temp_C"].isin(training_temperatures)
+    ].copy()
+
+    results_list: list[pd.DataFrame] = []
+
+    for fraction in SAMPLE_FRACTIONS:
+        campaign = Campaign(searchspace=searchspace, objective=objective)
+
+        # Create initial training datasets by sampling from other temperatures
+        # Multiple random samples provide statistical robustness
+        initial_data = [
+            lookup_training.sample(frac=fraction, random_state=i)
+            for i in range(N_MC_ITERATIONS)
+        ]
+
+        result = simulate_scenarios(
+            {f"{int(100 * fraction)}": campaign},
+            lookup_task,
+            initial_data=initial_data,
+            batch_size=BATCH_SIZE,
+            n_doe_iterations=N_DOE_ITERATIONS,
+        )
+        results_list.append(result)
+
+    # Baseline comparison: optimization without transfer learning
+    result_baseline = simulate_scenarios(
+        {"0": Campaign(searchspace=searchspace, objective=objective)},
+        lookup_task,
         batch_size=BATCH_SIZE,
         n_doe_iterations=N_DOE_ITERATIONS,
+        n_mc_iterations=N_MC_ITERATIONS,
     )
-    results.append(result_fraction)
+    results = pd.concat([result_baseline, *results_list])
 
-# For comparison, we also optimize the function without using any initial data:
+    all_results[target_temp] = results
 
-result_baseline = simulate_scenarios(
-    {"0": Campaign(searchspace=searchspace, objective=objective)},
-    lookup_test_task,
-    batch_size=BATCH_SIZE,
-    n_doe_iterations=N_DOE_ITERATIONS,
-    n_mc_iterations=N_MC_ITERATIONS,
-)
-results = pd.concat([result_baseline, *results])
+# ## Results
 
-# All that remains is to visualize the results.
-# As the example shows, the optimization speed can be significantly increased by
-# using even small amounts of training data from related optimization tasks.
+# The results demonstrate the significant impact of transfer learning on optimization
+# efficiency. Each subplot shows the optimization progress for a different target
+# temperature, comparing baseline performance against transfer learning with various
+# amounts of training data.
 
-results.rename(columns={"Scenario": "% of data used"}, inplace=True)
-ax = sns.lineplot(
-    data=results,
-    marker="o",
-    markersize=10,
-    x="Num_Experiments",
-    y="Target_CumBest",
-    hue="% of data used",
-)
-create_example_plots(ax=ax, base_name="basic_transfer_learning")
+fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+
+summary_data = []
+
+for i, target_temp in enumerate(TARGET_TEMPERATURES):
+    results = all_results[target_temp].copy()
+    results.rename(columns={"Scenario": "% of data used"}, inplace=True)
+
+    ax = axes[i]
+    sns.lineplot(
+        data=results,
+        marker="o",
+        markersize=6,
+        x="Num_Experiments",
+        y="yield_CumBest",
+        hue="% of data used",
+        ax=ax,
+    )
+
+    ax.set_xlabel("Number of Experiments")
+    ax.set_ylabel("Best Yield Achieved (%)")
+    ax.set_title(f"Target: {target_temp}°C")
+    ax.grid(True, alpha=0.3)
+
+    # Show legend only on the rightmost subplot
+    if i < len(TARGET_TEMPERATURES) - 1:
+        ax.legend().set_visible(False)
+    else:
+        ax.legend(
+            title="Training data used", bbox_to_anchor=(1.05, 1), loc="upper left"
+        )
+
+    # Collect quantitative results for summary
+    final_results = results.groupby("% of data used")["yield_CumBest"].max()
+    baseline = final_results.loc["0"]
+    best_transfer = final_results.drop("0").max()
+    improvement = best_transfer - baseline
+
+    training_temps = [t for t in TEMPERATURES if t != target_temp]
+    summary_data.append(
+        {
+            "target_temp": target_temp,
+            "training_temps": training_temps,
+            "baseline": baseline,
+            "best_transfer": best_transfer,
+            "improvement": improvement,
+        }
+    )
+
+plt.tight_layout()
+if not SMOKE_TEST:
+    plt.savefig("basic_transfer_learning.svg")
+
+
+# The results reveal several key insights:
+#
+# 1. Transfer learning provides substantial improvements across all temperature
+#    conditions, demonstrating the robustness of the approach.
+#
+# 2. The magnitude of improvement varies by condition, reflecting differences in how
+#    well knowledge transfers between specific temperature pairs.
+#
+# 2. Even small amounts of training data can yield significant acceleration, making thi
+#    technique practical even with limited historical data.
+#
+# 3. Beyond a certain point, additional training data
+#    provides marginal benefits.
