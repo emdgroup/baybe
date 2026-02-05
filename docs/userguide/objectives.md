@@ -198,12 +198,20 @@ configurations.
 ```{admonition} Domination for Non-Pareto Objectives
 :class: note
 
-Whether a configuration is considered *non-dominated* is evaluated based on the specific
-transformation imposed by the objective. For a
-{class}`~baybe.objectives.pareto.ParetoObjective`, this corresponds to a simple
-comparison based on individual target values. However, the logic
-generalizes to all other objective types, where domination is assessed in the coordinate
-space spanned by the respective objective transformation.
+While the concept of (non-)domination is typically associated with Pareto optimization,
+it can also be applied to objectives of types other than
+{class}`~baybe.objectives.pareto.ParetoObjective`. In general, we identify non-dominated
+configurations as the subset of configurations that are Pareto-optimal as measured by
+their **transformed representations** induced by the transformation rules of the
+used objective and involved targets. In other words, the *regular* Pareto criterion is
+applied on the *transformed* space of computed objective values.
+
+This implies two noteworthy special cases:
+* For {class}`~baybe.objectives.pareto.ParetoObjective`, it recovers the standard logic
+where transformation axes are defined by individual (transformed) targets.
+* For {class}`~baybe.objectives.single.SingleTargetObjective`, it corresponds to the
+regular optimization of the respective target, where the Pareto front collapses to a
+single point representing the optimal target value.
 ```
 
 ```python

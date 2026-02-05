@@ -259,16 +259,15 @@ class Objective(ABC, SerialMixin):
     ) -> pd.Series:
         """Create a Boolean mask indicating non-dominated target configurations.
 
-        While the concept of (non-)domination is typically associated with Pareto
-        optimization, it can also be applied to objectives of types other than
-        :class:`~baybe.objectives.pareto.ParetoObjective`. In general, we identify
-        non-dominated configurations as the subset of configurations that are
-        Pareto-optimal as measured by their transformed representations specified by the
-        objective. For :class:`~baybe.objectives.pareto.ParetoObjective`, this recovers
-        the standard logic where transformation axes are defined by individual targets.
-
         In case of duplicated non-dominated points, all duplicates are marked as
         non-dominated.
+
+        Note:
+            Non-dominated configurations can be computed for any objective type, not
+            just for :class:`~baybe.objectives.pareto.ParetoObjective`.
+            For more details, have a look at the corresponding
+            :ref:`user guide section <userguide/objectives:Identifying Non-Dominated
+            Configurations>`.
 
         Args:
             configurations: The target configurations for which the non-dominated subset
