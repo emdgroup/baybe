@@ -151,8 +151,7 @@ class MultiFidelityGaussianProcessSurrogate(Surrogate):
         )
 
         fidelity_covar_module = self.fidelity_kernel_factory(
-            num_tasks=context.n_fidelities,
-            rank=context.n_fidelities,  # TODO: make controllable
+            searchspace=self._searchspace
         ).to_gpytorch(
             ard_num_dims=1,
             active_dims=None
