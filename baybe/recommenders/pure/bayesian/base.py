@@ -49,6 +49,13 @@ def _autoreplicate(surrogate: SurrogateProtocol, /) -> SurrogateProtocol:
 class BayesianRecommender(PureRecommender, ABC):
     """An abstract class for Bayesian Recommenders."""
 
+    # TODO: Factory defaults the surrogate to a GaussianProcessesSurrogate always.
+    #   Surrogate and kernel defaults should be different for searchspaces with
+    #   CategoricalFidelityParameter or NumericalDiscreteFidelityParameter.
+    #   This can be achieved without the user having to specify the surroagte model,
+    #   e.g., by
+    #   * using a dispatcher factory which decides surrogate model on fit time
+    #   * having a "_setup_surrogate" method similar to the acquisition function logic
     _surrogate_model: SurrogateProtocol = field(
         alias="surrogate_model",
         factory=GaussianProcessSurrogate,

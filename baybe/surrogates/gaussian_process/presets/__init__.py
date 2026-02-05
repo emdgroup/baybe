@@ -6,10 +6,18 @@ from baybe.surrogates.gaussian_process.presets.core import (
 )
 from baybe.surrogates.gaussian_process.presets.default import DefaultKernelFactory
 from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
+from baybe.surrogates.gaussian_process.presets.fidelity import (
+    DefaultFidelityKernelFactory,
+    IndependentFidelityKernelFactory,
+    IndexFidelityKernelFactory,
+)
 
 __all__ = [
     "DefaultKernelFactory",
+    "DefaultFidelityKernelFactory",
     "EDBOKernelFactory",
-    "make_gp_from_preset",
     "GaussianProcessPreset",
+    "IndependentFidelityKernelFactory",
+    "IndexFidelityKernelFactory",
+    "make_gp_from_preset",
 ]
