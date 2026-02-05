@@ -1,7 +1,0 @@
-baybe.utils.torch.VARNAME\_TORCH\_USE\_SINGLE\_PRECISION
-========================================================
-
-.. currentmodule:: baybe.utils.torch
-
-
-.. autodata:: VARNAME_TORCH_USE_SINGLE_PRECISION

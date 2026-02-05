@@ -1,7 +1,7 @@
 UncertainBool
 =============
 
-.. currentmodule:: baybe.utils.basic
+.. currentmodule:: baybe.utils.boolean
 
 .. autoclass:: UncertainBool
    :members:                              

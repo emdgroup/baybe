@@ -26,18 +26,17 @@ from matplotlib import pyplot as plt
 
 
 ```python
-from baybe.campaign import Campaign
-from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.simulation.scenarios import simulate_scenarios
-from baybe.targets.numerical import NumericalTarget
-from baybe.utils.random import set_random_seed
+from baybe import Campaign, active_settings
+from baybe.parameters import NumericalContinuousParameter
+from baybe.simulation import simulate_scenarios
+from baybe.targets import NumericalTarget
 ```
 
 ## Settings
 
 
 ```python
-set_random_seed(1337)
+active_settings.random_seed = 1337
 ```
 
 
@@ -235,6 +234,8 @@ results = simulate_scenarios(
     n_mc_iterations=N_MC_ITERATIONS,
 )
 ```
+
+    
 
     
 

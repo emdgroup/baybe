@@ -3,12 +3,12 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Insights" href="insights.html"><link rel="prev" title="Constraints" href="constraints.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Simulation" href="simulation.html"><link rel="prev" title="Serialization" href="serialization.html">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
         <link rel="prefetch" href="../_static/logo1.svg" as="image">
 
     <link rel="shortcut icon" href="../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
-        <title>Environment Variables - BayBE documentation</title>
+        <title>Settings - BayBE documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -275,13 +275,13 @@
 <li class="toctree-l2"><a class="reference internal" href="active_learning.html">Active Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="async.html">Asynchronous Workflows</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
-<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Environment Vars</a></li>
 <li class="toctree-l2"><a class="reference internal" href="insights.html">Insights</a></li>
 <li class="toctree-l2"><a class="reference internal" href="objectives.html">Objectives</a></li>
 <li class="toctree-l2"><a class="reference internal" href="parameters.html">Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="recommenders.html">Recommenders</a></li>
 <li class="toctree-l2"><a class="reference internal" href="searchspace.html">Search Spaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="serialization.html">Serialization</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Settings</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="surrogates.html">Surrogates</a></li>
 <li class="toctree-l2"><a class="reference internal" href="targets.html">Targets</a></li>
@@ -480,6 +480,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NoMeasurementsError.html">baybe.exceptions.NoMeasurementsError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NotAllowedError.html">baybe.exceptions.NotAllowedError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
@@ -741,68 +742,74 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.html">baybe.simulation</a><input aria-label="Toggle navigation of baybe.simulation" class="toctree-checkbox" id="toctree-checkbox-82" name="toctree-checkbox-82" role="switch" type="checkbox"/><label for="toctree-checkbox-82"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.core.html">baybe.simulation.core</a><input aria-label="Toggle navigation of baybe.simulation.core" class="toctree-checkbox" id="toctree-checkbox-83" name="toctree-checkbox-83" role="switch" type="checkbox"/><label for="toctree-checkbox-83"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.settings.html">baybe.settings</a><input aria-label="Toggle navigation of baybe.settings" class="toctree-checkbox" id="toctree-checkbox-82" name="toctree-checkbox-82" role="switch" type="checkbox"/><label for="toctree-checkbox-82"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html">baybe.settings.active_settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.settings.adjust_defaults.html">baybe.settings.adjust_defaults</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.html">baybe.simulation</a><input aria-label="Toggle navigation of baybe.simulation" class="toctree-checkbox" id="toctree-checkbox-83" name="toctree-checkbox-83" role="switch" type="checkbox"/><label for="toctree-checkbox-83"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.core.html">baybe.simulation.core</a><input aria-label="Toggle navigation of baybe.simulation.core" class="toctree-checkbox" id="toctree-checkbox-84" name="toctree-checkbox-84" role="switch" type="checkbox"/><label for="toctree-checkbox-84"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.simulation.core.simulate_experiment.html">baybe.simulation.core.simulate_experiment</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.lookup.html">baybe.simulation.lookup</a><input aria-label="Toggle navigation of baybe.simulation.lookup" class="toctree-checkbox" id="toctree-checkbox-84" name="toctree-checkbox-84" role="switch" type="checkbox"/><label for="toctree-checkbox-84"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.lookup.html">baybe.simulation.lookup</a><input aria-label="Toggle navigation of baybe.simulation.lookup" class="toctree-checkbox" id="toctree-checkbox-85" name="toctree-checkbox-85" role="switch" type="checkbox"/><label for="toctree-checkbox-85"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.simulation.lookup.look_up_targets.html">baybe.simulation.lookup.look_up_targets</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.html">baybe.simulation.scenarios</a><input aria-label="Toggle navigation of baybe.simulation.scenarios" class="toctree-checkbox" id="toctree-checkbox-85" name="toctree-checkbox-85" role="switch" type="checkbox"/><label for="toctree-checkbox-85"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.html">baybe.simulation.scenarios</a><input aria-label="Toggle navigation of baybe.simulation.scenarios" class="toctree-checkbox" id="toctree-checkbox-86" name="toctree-checkbox-86" role="switch" type="checkbox"/><label for="toctree-checkbox-86"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.simulate_scenarios.html">baybe.simulation.scenarios.simulate_scenarios</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.transfer_learning.html">baybe.simulation.transfer_learning</a><input aria-label="Toggle navigation of baybe.simulation.transfer_learning" class="toctree-checkbox" id="toctree-checkbox-86" name="toctree-checkbox-86" role="switch" type="checkbox"/><label for="toctree-checkbox-86"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.simulation.transfer_learning.html">baybe.simulation.transfer_learning</a><input aria-label="Toggle navigation of baybe.simulation.transfer_learning" class="toctree-checkbox" id="toctree-checkbox-87" name="toctree-checkbox-87" role="switch" type="checkbox"/><label for="toctree-checkbox-87"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.simulation.transfer_learning.simulate_transfer_learning.html">baybe.simulation.transfer_learning.simulate_transfer_learning</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.html">baybe.surrogates</a><input aria-label="Toggle navigation of baybe.surrogates" class="toctree-checkbox" id="toctree-checkbox-87" name="toctree-checkbox-87" role="switch" type="checkbox"/><label for="toctree-checkbox-87"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.bandit.html">baybe.surrogates.bandit</a><input aria-label="Toggle navigation of baybe.surrogates.bandit" class="toctree-checkbox" id="toctree-checkbox-88" name="toctree-checkbox-88" role="switch" type="checkbox"/><label for="toctree-checkbox-88"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.html">baybe.surrogates</a><input aria-label="Toggle navigation of baybe.surrogates" class="toctree-checkbox" id="toctree-checkbox-88" name="toctree-checkbox-88" role="switch" type="checkbox"/><label for="toctree-checkbox-88"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.bandit.html">baybe.surrogates.bandit</a><input aria-label="Toggle navigation of baybe.surrogates.bandit" class="toctree-checkbox" id="toctree-checkbox-89" name="toctree-checkbox-89" role="switch" type="checkbox"/><label for="toctree-checkbox-89"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.bandit.BetaBernoulliMultiArmedBanditSurrogate.html">BetaBernoulliMultiArmedBanditSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.html">baybe.surrogates.base</a><input aria-label="Toggle navigation of baybe.surrogates.base" class="toctree-checkbox" id="toctree-checkbox-89" name="toctree-checkbox-89" role="switch" type="checkbox"/><label for="toctree-checkbox-89"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.html">baybe.surrogates.base</a><input aria-label="Toggle navigation of baybe.surrogates.base" class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.PosteriorStatistic.html">baybe.surrogates.base.PosteriorStatistic</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.IndependentGaussianSurrogate.html">IndependentGaussianSurrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.Surrogate.html">Surrogate</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.base.SurrogateProtocol.html">SurrogateProtocol</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.composite.html">baybe.surrogates.composite</a><input aria-label="Toggle navigation of baybe.surrogates.composite" class="toctree-checkbox" id="toctree-checkbox-90" name="toctree-checkbox-90" role="switch" type="checkbox"/><label for="toctree-checkbox-90"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.composite.html">baybe.surrogates.composite</a><input aria-label="Toggle navigation of baybe.surrogates.composite" class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html">CompositeSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.custom.html">baybe.surrogates.custom</a><input aria-label="Toggle navigation of baybe.surrogates.custom" class="toctree-checkbox" id="toctree-checkbox-91" name="toctree-checkbox-91" role="switch" type="checkbox"/><label for="toctree-checkbox-91"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.custom.html">baybe.surrogates.custom</a><input aria-label="Toggle navigation of baybe.surrogates.custom" class="toctree-checkbox" id="toctree-checkbox-92" name="toctree-checkbox-92" role="switch" type="checkbox"/><label for="toctree-checkbox-92"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.custom.register_custom_architecture.html">baybe.surrogates.custom.register_custom_architecture</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.custom.CustomONNXSurrogate.html">CustomONNXSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.html">baybe.surrogates.gaussian_process</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process" class="toctree-checkbox" id="toctree-checkbox-92" name="toctree-checkbox-92" role="switch" type="checkbox"/><label for="toctree-checkbox-92"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.html">baybe.surrogates.gaussian_process.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.core" class="toctree-checkbox" id="toctree-checkbox-93" name="toctree-checkbox-93" role="switch" type="checkbox"/><label for="toctree-checkbox-93"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.html">baybe.surrogates.gaussian_process</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process" class="toctree-checkbox" id="toctree-checkbox-93" name="toctree-checkbox-93" role="switch" type="checkbox"/><label for="toctree-checkbox-93"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.html">baybe.surrogates.gaussian_process.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.core" class="toctree-checkbox" id="toctree-checkbox-94" name="toctree-checkbox-94" role="switch" type="checkbox"/><label for="toctree-checkbox-94"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate.html">GaussianProcessSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.kernel_factory.html">baybe.surrogates.gaussian_process.kernel_factory</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.kernel_factory" class="toctree-checkbox" id="toctree-checkbox-94" name="toctree-checkbox-94" role="switch" type="checkbox"/><label for="toctree-checkbox-94"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.kernel_factory.html">baybe.surrogates.gaussian_process.kernel_factory</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.kernel_factory" class="toctree-checkbox" id="toctree-checkbox-95" name="toctree-checkbox-95" role="switch" type="checkbox"/><label for="toctree-checkbox-95"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.kernel_factory.to_kernel_factory.html">baybe.surrogates.gaussian_process.kernel_factory.to_kernel_factory</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.kernel_factory.KernelFactory.html">KernelFactory</a></li>
 <li class="toctree-l5"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.kernel_factory.PlainKernelFactory.html">PlainKernelFactory</a></li>
 </ul>
 </li>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-95" name="toctree-checkbox-95" role="switch" type="checkbox"/><label for="toctree-checkbox-95"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-96" name="toctree-checkbox-96" role="switch" type="checkbox"/><label for="toctree-checkbox-96"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.html">baybe.surrogates.gaussian_process.presets</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets" class="toctree-checkbox" id="toctree-checkbox-96" name="toctree-checkbox-96" role="switch" type="checkbox"/><label for="toctree-checkbox-96"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.core.html">baybe.surrogates.gaussian_process.presets.core</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.core" class="toctree-checkbox" id="toctree-checkbox-97" name="toctree-checkbox-97" role="switch" type="checkbox"/><label for="toctree-checkbox-97"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.core.make_gp_from_preset.html">baybe.surrogates.gaussian_process.presets.core.make_gp_from_preset</a></li>
 <li class="toctree-l6"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.core.GaussianProcessPreset.html">GaussianProcessPreset</a></li>
 </ul>
 </li>
-<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.default.html">baybe.surrogates.gaussian_process.presets.default</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.default" class="toctree-checkbox" id="toctree-checkbox-97" name="toctree-checkbox-97" role="switch" type="checkbox"/><label for="toctree-checkbox-97"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.default.html">baybe.surrogates.gaussian_process.presets.default</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.default" class="toctree-checkbox" id="toctree-checkbox-98" name="toctree-checkbox-98" role="switch" type="checkbox"/><label for="toctree-checkbox-98"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.default.DefaultKernelFactory.html">DefaultKernelFactory</a></li>
 </ul>
 </li>
-<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.edbo.html">baybe.surrogates.gaussian_process.presets.edbo</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo" class="toctree-checkbox" id="toctree-checkbox-98" name="toctree-checkbox-98" role="switch" type="checkbox"/><label for="toctree-checkbox-98"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.edbo.html">baybe.surrogates.gaussian_process.presets.edbo</a><input aria-label="Toggle navigation of baybe.surrogates.gaussian_process.presets.edbo" class="toctree-checkbox" id="toctree-checkbox-99" name="toctree-checkbox-99" role="switch" type="checkbox"/><label for="toctree-checkbox-99"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../_autosummary/baybe.surrogates.gaussian_process.presets.edbo.EDBOKernelFactory.html">EDBOKernelFactory</a></li>
 </ul>
 </li>
@@ -810,29 +817,29 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.linear.html">baybe.surrogates.linear</a><input aria-label="Toggle navigation of baybe.surrogates.linear" class="toctree-checkbox" id="toctree-checkbox-99" name="toctree-checkbox-99" role="switch" type="checkbox"/><label for="toctree-checkbox-99"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.linear.html">baybe.surrogates.linear</a><input aria-label="Toggle navigation of baybe.surrogates.linear" class="toctree-checkbox" id="toctree-checkbox-100" name="toctree-checkbox-100" role="switch" type="checkbox"/><label for="toctree-checkbox-100"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.linear.BayesianLinearSurrogate.html">BayesianLinearSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.naive.html">baybe.surrogates.naive</a><input aria-label="Toggle navigation of baybe.surrogates.naive" class="toctree-checkbox" id="toctree-checkbox-100" name="toctree-checkbox-100" role="switch" type="checkbox"/><label for="toctree-checkbox-100"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.naive.html">baybe.surrogates.naive</a><input aria-label="Toggle navigation of baybe.surrogates.naive" class="toctree-checkbox" id="toctree-checkbox-101" name="toctree-checkbox-101" role="switch" type="checkbox"/><label for="toctree-checkbox-101"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.naive.MeanPredictionSurrogate.html">MeanPredictionSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.ngboost.html">baybe.surrogates.ngboost</a><input aria-label="Toggle navigation of baybe.surrogates.ngboost" class="toctree-checkbox" id="toctree-checkbox-101" name="toctree-checkbox-101" role="switch" type="checkbox"/><label for="toctree-checkbox-101"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.ngboost.html">baybe.surrogates.ngboost</a><input aria-label="Toggle navigation of baybe.surrogates.ngboost" class="toctree-checkbox" id="toctree-checkbox-102" name="toctree-checkbox-102" role="switch" type="checkbox"/><label for="toctree-checkbox-102"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.ngboost.NGBoostSurrogate.html">NGBoostSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.random_forest.html">baybe.surrogates.random_forest</a><input aria-label="Toggle navigation of baybe.surrogates.random_forest" class="toctree-checkbox" id="toctree-checkbox-102" name="toctree-checkbox-102" role="switch" type="checkbox"/><label for="toctree-checkbox-102"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.random_forest.html">baybe.surrogates.random_forest</a><input aria-label="Toggle navigation of baybe.surrogates.random_forest" class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.random_forest.RandomForestSurrogate.html">RandomForestSurrogate</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.utils.html">baybe.surrogates.utils</a><input aria-label="Toggle navigation of baybe.surrogates.utils" class="toctree-checkbox" id="toctree-checkbox-103" name="toctree-checkbox-103" role="switch" type="checkbox"/><label for="toctree-checkbox-103"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.utils.html">baybe.surrogates.utils</a><input aria-label="Toggle navigation of baybe.surrogates.utils" class="toctree-checkbox" id="toctree-checkbox-104" name="toctree-checkbox-104" role="switch" type="checkbox"/><label for="toctree-checkbox-104"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.utils.batchify_ensemble_predictor.html">baybe.surrogates.utils.batchify_ensemble_predictor</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.utils.batchify_mean_var_prediction.html">baybe.surrogates.utils.batchify_mean_var_prediction</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.utils.catch_constant_targets.html">baybe.surrogates.utils.catch_constant_targets</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.validation.html">baybe.surrogates.validation</a><input aria-label="Toggle navigation of baybe.surrogates.validation" class="toctree-checkbox" id="toctree-checkbox-104" name="toctree-checkbox-104" role="switch" type="checkbox"/><label for="toctree-checkbox-104"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.surrogates.validation.html">baybe.surrogates.validation</a><input aria-label="Toggle navigation of baybe.surrogates.validation" class="toctree-checkbox" id="toctree-checkbox-105" name="toctree-checkbox-105" role="switch" type="checkbox"/><label for="toctree-checkbox-105"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.validation.type_validation_converter.html">baybe.surrogates.validation.type_validation_converter</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.validation.make_dict_validator.html">baybe.surrogates.validation.make_dict_validator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.surrogates.validation.validate_custom_architecture_cls.html">baybe.surrogates.validation.validate_custom_architecture_cls</a></li>
@@ -840,39 +847,39 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.html">baybe.targets</a><input aria-label="Toggle navigation of baybe.targets" class="toctree-checkbox" id="toctree-checkbox-105" name="toctree-checkbox-105" role="switch" type="checkbox"/><label for="toctree-checkbox-105"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.base.html">baybe.targets.base</a><input aria-label="Toggle navigation of baybe.targets.base" class="toctree-checkbox" id="toctree-checkbox-106" name="toctree-checkbox-106" role="switch" type="checkbox"/><label for="toctree-checkbox-106"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.html">baybe.targets</a><input aria-label="Toggle navigation of baybe.targets" class="toctree-checkbox" id="toctree-checkbox-106" name="toctree-checkbox-106" role="switch" type="checkbox"/><label for="toctree-checkbox-106"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.base.html">baybe.targets.base</a><input aria-label="Toggle navigation of baybe.targets.base" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.base.Target.html">Target</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.binary.html">baybe.targets.binary</a><input aria-label="Toggle navigation of baybe.targets.binary" class="toctree-checkbox" id="toctree-checkbox-107" name="toctree-checkbox-107" role="switch" type="checkbox"/><label for="toctree-checkbox-107"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.binary.html">baybe.targets.binary</a><input aria-label="Toggle navigation of baybe.targets.binary" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.binary.ChoiceValue.html">baybe.targets.binary.ChoiceValue</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.binary.BinaryTarget.html">BinaryTarget</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.enum.html">baybe.targets.enum</a><input aria-label="Toggle navigation of baybe.targets.enum" class="toctree-checkbox" id="toctree-checkbox-108" name="toctree-checkbox-108" role="switch" type="checkbox"/><label for="toctree-checkbox-108"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.enum.html">baybe.targets.enum</a><input aria-label="Toggle navigation of baybe.targets.enum" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.enum.MatchMode.html">MatchMode</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.numerical.html">baybe.targets.numerical</a><input aria-label="Toggle navigation of baybe.targets.numerical" class="toctree-checkbox" id="toctree-checkbox-109" name="toctree-checkbox-109" role="switch" type="checkbox"/><label for="toctree-checkbox-109"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.numerical.html">baybe.targets.numerical</a><input aria-label="Toggle navigation of baybe.targets.numerical" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.numerical.NumericalTarget.html">NumericalTarget</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.targets.transforms.html">baybe.targets.transforms</a></li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.utils.html">baybe.targets.utils</a><input aria-label="Toggle navigation of baybe.targets.utils" class="toctree-checkbox" id="toctree-checkbox-110" name="toctree-checkbox-110" role="switch" type="checkbox"/><label for="toctree-checkbox-110"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.targets.utils.html">baybe.targets.utils</a><input aria-label="Toggle navigation of baybe.targets.utils" class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.utils.capture_constructor_info.html">baybe.targets.utils.capture_constructor_info</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.targets.utils.combine_numerical_targets.html">baybe.targets.utils.combine_numerical_targets</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-111" name="toctree-checkbox-111" role="switch" type="checkbox"/><label for="toctree-checkbox-111"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.html">baybe.transformations</a><input aria-label="Toggle navigation of baybe.transformations" class="toctree-checkbox" id="toctree-checkbox-112" name="toctree-checkbox-112" role="switch" type="checkbox"/><label for="toctree-checkbox-112"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.base.html">baybe.transformations.base</a><input aria-label="Toggle navigation of baybe.transformations.base" class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.base.MonotonicTransformation.html">MonotonicTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.base.Transformation.html">Transformation</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.html">baybe.transformations.basic</a><input aria-label="Toggle navigation of baybe.transformations.basic" class="toctree-checkbox" id="toctree-checkbox-113" name="toctree-checkbox-113" role="switch" type="checkbox"/><label for="toctree-checkbox-113"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.html">baybe.transformations.basic</a><input aria-label="Toggle navigation of baybe.transformations.basic" class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.AbsoluteTransformation.html">AbsoluteTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.AffineTransformation.html">AffineTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.BellTransformation.html">BellTransformation</a></li>
@@ -887,13 +894,13 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.basic.TwoSidedAffineTransformation.html">TwoSidedAffineTransformation</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.composite.html">baybe.transformations.composite</a><input aria-label="Toggle navigation of baybe.transformations.composite" class="toctree-checkbox" id="toctree-checkbox-114" name="toctree-checkbox-114" role="switch" type="checkbox"/><label for="toctree-checkbox-114"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.composite.html">baybe.transformations.composite</a><input aria-label="Toggle navigation of baybe.transformations.composite" class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.composite.AdditiveTransformation.html">AdditiveTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.composite.ChainedTransformation.html">ChainedTransformation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.composite.MultiplicativeTransformation.html">MultiplicativeTransformation</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.utils.html">baybe.transformations.utils</a><input aria-label="Toggle navigation of baybe.transformations.utils" class="toctree-checkbox" id="toctree-checkbox-115" name="toctree-checkbox-115" role="switch" type="checkbox"/><label for="toctree-checkbox-115"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.transformations.utils.html">baybe.transformations.utils</a><input aria-label="Toggle navigation of baybe.transformations.utils" class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.utils.combine_affine_transformations.html">baybe.transformations.utils.combine_affine_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.utils.compress_transformations.html">baybe.transformations.utils.compress_transformations</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.transformations.utils.convert_transformation.html">baybe.transformations.utils.convert_transformation</a></li>
@@ -902,14 +909,15 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.html">baybe.utils</a><input aria-label="Toggle navigation of baybe.utils" class="toctree-checkbox" id="toctree-checkbox-116" name="toctree-checkbox-116" role="switch" type="checkbox"/><label for="toctree-checkbox-116"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.augmentation.html">baybe.utils.augmentation</a><input aria-label="Toggle navigation of baybe.utils.augmentation" class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.html">baybe.utils</a><input aria-label="Toggle navigation of baybe.utils" class="toctree-checkbox" id="toctree-checkbox-117" name="toctree-checkbox-117" role="switch" type="checkbox"/><label for="toctree-checkbox-117"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.augmentation.html">baybe.utils.augmentation</a><input aria-label="Toggle navigation of baybe.utils.augmentation" class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.augmentation.df_apply_dependency_augmentation.html">baybe.utils.augmentation.df_apply_dependency_augmentation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.augmentation.df_apply_permutation_augmentation.html">baybe.utils.augmentation.df_apply_permutation_augmentation</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input aria-label="Toggle navigation of baybe.utils.basic" class="toctree-checkbox" id="toctree-checkbox-118" name="toctree-checkbox-118" role="switch" type="checkbox"/><label for="toctree-checkbox-118"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.basic.html">baybe.utils.basic</a><input aria-label="Toggle navigation of baybe.utils.basic" class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UNSPECIFIED.html">baybe.utils.basic.UNSPECIFIED</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.cache_to_disk.html">baybe.utils.basic.cache_to_disk</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.compose.html">baybe.utils.basic.compose</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.compose_two.html">baybe.utils.basic.compose_two</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.convert_to_float.html">baybe.utils.basic.convert_to_float</a></li>
@@ -924,27 +932,29 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.register_hooks.html">baybe.utils.basic.register_hooks</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.to_tuple.html">baybe.utils.basic.to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.Dummy.html">Dummy</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UncertainBool.html">UncertainBool</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.UnspecifiedType.html">UnspecifiedType</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.basic.classproperty.html">classproperty</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.html">baybe.utils.boolean</a><input aria-label="Toggle navigation of baybe.utils.boolean" class="toctree-checkbox" id="toctree-checkbox-119" name="toctree-checkbox-119" role="switch" type="checkbox"/><label for="toctree-checkbox-119"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.html">baybe.utils.boolean</a><input aria-label="Toggle navigation of baybe.utils.boolean" class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.check_if_in.html">baybe.utils.boolean.check_if_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.is_abstract.html">baybe.utils.boolean.is_abstract</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html">baybe.utils.boolean.strtobool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.to_bool.html">baybe.utils.boolean.to_bool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.AutoBool.html">AutoBool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.boolean.UncertainBool.html">UncertainBool</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input aria-label="Toggle navigation of baybe.utils.chemistry" class="toctree-checkbox" id="toctree-checkbox-120" name="toctree-checkbox-120" role="switch" type="checkbox"/><label for="toctree-checkbox-120"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.html">baybe.utils.chemistry</a><input aria-label="Toggle navigation of baybe.utils.chemistry" class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_canonical_smiles.html">baybe.utils.chemistry.get_canonical_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.get_fingerprint_class.html">baybe.utils.chemistry.get_fingerprint_class</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.name_to_smiles.html">baybe.utils.chemistry.name_to_smiles</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.chemistry.smiles_to_fingerprint_features.html">baybe.utils.chemistry.smiles_to_fingerprint_features</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.html">baybe.utils.clustering_algorithms</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms" class="toctree-checkbox" id="toctree-checkbox-121" name="toctree-checkbox-121" role="switch" type="checkbox"/><label for="toctree-checkbox-121"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.third_party.html">baybe.utils.clustering_algorithms.third_party</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms.third_party" class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.html">baybe.utils.clustering_algorithms.third_party.kmedoids</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms.third_party.kmedoids" class="toctree-checkbox" id="toctree-checkbox-123" name="toctree-checkbox-123" role="switch" type="checkbox"/><label for="toctree-checkbox-123"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.html">baybe.utils.clustering_algorithms</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms" class="toctree-checkbox" id="toctree-checkbox-122" name="toctree-checkbox-122" role="switch" type="checkbox"/><label for="toctree-checkbox-122"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.third_party.html">baybe.utils.clustering_algorithms.third_party</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms.third_party" class="toctree-checkbox" id="toctree-checkbox-123" name="toctree-checkbox-123" role="switch" type="checkbox"/><label for="toctree-checkbox-123"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.html">baybe.utils.clustering_algorithms.third_party.kmedoids</a><input aria-label="Toggle navigation of baybe.utils.clustering_algorithms.third_party.kmedoids" class="toctree-checkbox" id="toctree-checkbox-124" name="toctree-checkbox-124" role="switch" type="checkbox"/><label for="toctree-checkbox-124"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l6"><a class="reference internal" href="../_autosummary/baybe.utils.clustering_algorithms.third_party.kmedoids.KMedoids.html">KMedoids</a></li>
 </ul>
 </li>
@@ -952,13 +962,13 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input aria-label="Toggle navigation of baybe.utils.conversion" class="toctree-checkbox" id="toctree-checkbox-124" name="toctree-checkbox-124" role="switch" type="checkbox"/><label for="toctree-checkbox-124"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.html">baybe.utils.conversion</a><input aria-label="Toggle navigation of baybe.utils.conversion" class="toctree-checkbox" id="toctree-checkbox-125" name="toctree-checkbox-125" role="switch" type="checkbox"/><label for="toctree-checkbox-125"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.fraction_to_float.html">baybe.utils.conversion.fraction_to_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.nonstring_to_tuple.html">baybe.utils.conversion.nonstring_to_tuple</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.conversion.to_string.html">baybe.utils.conversion.to_string</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input aria-label="Toggle navigation of baybe.utils.dataframe" class="toctree-checkbox" id="toctree-checkbox-125" name="toctree-checkbox-125" role="switch" type="checkbox"/><label for="toctree-checkbox-125"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.html">baybe.utils.dataframe</a><input aria-label="Toggle navigation of baybe.utils.dataframe" class="toctree-checkbox" id="toctree-checkbox-126" name="toctree-checkbox-126" role="switch" type="checkbox"/><label for="toctree-checkbox-126"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_fake_measurements.html">baybe.utils.dataframe.add_fake_measurements</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows.html">baybe.utils.dataframe.add_noise_to_perturb_degenerate_rows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.add_parameter_noise.html">baybe.utils.dataframe.add_parameter_noise</a></li>
@@ -977,60 +987,57 @@
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.dataframe.transform_target_columns.html">baybe.utils.dataframe.transform_target_columns</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input aria-label="Toggle navigation of baybe.utils.interval" class="toctree-checkbox" id="toctree-checkbox-126" name="toctree-checkbox-126" role="switch" type="checkbox"/><label for="toctree-checkbox-126"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.interval.html">baybe.utils.interval</a><input aria-label="Toggle navigation of baybe.utils.interval" class="toctree-checkbox" id="toctree-checkbox-127" name="toctree-checkbox-127" role="switch" type="checkbox"/><label for="toctree-checkbox-127"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.ConvertibleToInterval.html">baybe.utils.interval.ConvertibleToInterval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.use_fallback_constructor_hook.html">baybe.utils.interval.use_fallback_constructor_hook</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.Interval.html">Interval</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.interval.InfiniteIntervalError.html">baybe.utils.interval.InfiniteIntervalError</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input aria-label="Toggle navigation of baybe.utils.memory" class="toctree-checkbox" id="toctree-checkbox-127" name="toctree-checkbox-127" role="switch" type="checkbox"/><label for="toctree-checkbox-127"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.memory.html">baybe.utils.memory</a><input aria-label="Toggle navigation of baybe.utils.memory" class="toctree-checkbox" id="toctree-checkbox-128" name="toctree-checkbox-128" role="switch" type="checkbox"/><label for="toctree-checkbox-128"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.memory.bytes_to_human_readable.html">baybe.utils.memory.bytes_to_human_readable</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.html">baybe.utils.metadata</a><input aria-label="Toggle navigation of baybe.utils.metadata" class="toctree-checkbox" id="toctree-checkbox-128" name="toctree-checkbox-128" role="switch" type="checkbox"/><label for="toctree-checkbox-128"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.html">baybe.utils.metadata</a><input aria-label="Toggle navigation of baybe.utils.metadata" class="toctree-checkbox" id="toctree-checkbox-129" name="toctree-checkbox-129" role="switch" type="checkbox"/><label for="toctree-checkbox-129"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.ConvertibleToMeasurableMetadata.html">baybe.utils.metadata.ConvertibleToMeasurableMetadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.to_metadata.html">baybe.utils.metadata.to_metadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.MeasurableMetadata.html">MeasurableMetadata</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.metadata.Metadata.html">Metadata</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input aria-label="Toggle navigation of baybe.utils.numerical" class="toctree-checkbox" id="toctree-checkbox-129" name="toctree-checkbox-129" role="switch" type="checkbox"/><label for="toctree-checkbox-129"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION.html">baybe.utils.numerical.VARNAME_NUMPY_USE_SINGLE_PRECISION</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.DTypeFloatNumpy.html">baybe.utils.numerical.DTypeFloatNumpy</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.html">baybe.utils.numerical</a><input aria-label="Toggle navigation of baybe.utils.numerical" class="toctree-checkbox" id="toctree-checkbox-130" name="toctree-checkbox-130" role="switch" type="checkbox"/><label for="toctree-checkbox-130"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.DTypeFloatONNX.html">baybe.utils.numerical.DTypeFloatONNX</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.closer_element.html">baybe.utils.numerical.closer_element</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.numerical.closest_element.html">baybe.utils.numerical.closest_element</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input aria-label="Toggle navigation of baybe.utils.random" class="toctree-checkbox" id="toctree-checkbox-130" name="toctree-checkbox-130" role="switch" type="checkbox"/><label for="toctree-checkbox-130"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.random.html">baybe.utils.random</a><input aria-label="Toggle navigation of baybe.utils.random" class="toctree-checkbox" id="toctree-checkbox-131" name="toctree-checkbox-131" role="switch" type="checkbox"/><label for="toctree-checkbox-131"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.random.set_random_seed.html">baybe.utils.random.set_random_seed</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.random.temporary_seed.html">baybe.utils.random.temporary_seed</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input aria-label="Toggle navigation of baybe.utils.sampling_algorithms" class="toctree-checkbox" id="toctree-checkbox-131" name="toctree-checkbox-131" role="switch" type="checkbox"/><label for="toctree-checkbox-131"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.html">baybe.utils.sampling_algorithms</a><input aria-label="Toggle navigation of baybe.utils.sampling_algorithms" class="toctree-checkbox" id="toctree-checkbox-132" name="toctree-checkbox-132" role="switch" type="checkbox"/><label for="toctree-checkbox-132"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.farthest_point_sampling.html">baybe.utils.sampling_algorithms.farthest_point_sampling</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.sample_numerical_df.html">baybe.utils.sampling_algorithms.sample_numerical_df</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.sampling_algorithms.DiscreteSamplingMethod.html">DiscreteSamplingMethod</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input aria-label="Toggle navigation of baybe.utils.scaling" class="toctree-checkbox" id="toctree-checkbox-132" name="toctree-checkbox-132" role="switch" type="checkbox"/><label for="toctree-checkbox-132"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.html">baybe.utils.scaling</a><input aria-label="Toggle navigation of baybe.utils.scaling" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.scaling.ColumnTransformer.html">ColumnTransformer</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input aria-label="Toggle navigation of baybe.utils.torch" class="toctree-checkbox" id="toctree-checkbox-133" name="toctree-checkbox-133" role="switch" type="checkbox"/><label for="toctree-checkbox-133"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION.html">baybe.utils.torch.VARNAME_TORCH_USE_SINGLE_PRECISION</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.torch.DTypeFloatTorch.html">baybe.utils.torch.DTypeFloatTorch</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.torch.html">baybe.utils.torch</a><input aria-label="Toggle navigation of baybe.utils.torch" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.torch.torch_to_numpy_dtype_mapping.html">baybe.utils.torch.torch_to_numpy_dtype_mapping</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input aria-label="Toggle navigation of baybe.utils.validation" class="toctree-checkbox" id="toctree-checkbox-134" name="toctree-checkbox-134" role="switch" type="checkbox"/><label for="toctree-checkbox-134"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../_autosummary/baybe.utils.validation.html">baybe.utils.validation</a><input aria-label="Toggle navigation of baybe.utils.validation" class="toctree-checkbox" id="toctree-checkbox-135" name="toctree-checkbox-135" role="switch" type="checkbox"/><label for="toctree-checkbox-135"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.finite_float.html">baybe.utils.validation.finite_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.finite_float.html">baybe.utils.validation.finite_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_inf_float.html">baybe.utils.validation.non_inf_float</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.non_nan_float.html">baybe.utils.validation.non_nan_float</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.preprocess_dataframe.html">baybe.utils.validation.preprocess_dataframe</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.validate_not_nan.html">baybe.utils.validation.validate_not_nan</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.validate_object_names.html">baybe.utils.validation.validate_object_names</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../_autosummary/baybe.utils.validation.validate_objective_input.html">baybe.utils.validation.validate_objective_input</a></li>
@@ -1071,7 +1078,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="../_sources/userguide/envvars.md.txt" title="View this page">
+  <a class="muted-link" href="../_sources/userguide/settings.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -1089,126 +1096,292 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section class="tex2jax_ignore mathjax_ignore" id="environment-variables">
-<h1>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading">¶</a></h1>
-<p>Several aspects of BayBE can be configured via environment variables.</p>
-<section id="basic-instructions">
-<h2>Basic Instructions<a class="headerlink" href="#basic-instructions" title="Link to this heading">¶</a></h2>
-<p>Setting an environment variable with the name <code class="docutils literal notranslate"><span class="pre">ENVVAR_NAME</span></code> is best done before calling
-any Python code, and must also be done in the same session unless made persistent, e.g.
-via <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code> or similar:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">ENVAR_NAME</span><span class="o">=</span><span class="s2">&quot;my_value&quot;</span>
-python<span class="w"> </span>do_baybe_work.py
-</pre></div>
+          <section class="tex2jax_ignore mathjax_ignore" id="settings">
+<h1>Settings<a class="headerlink" href="#settings" title="Link to this heading">¶</a></h1>
+<p>BayBE provides a variety of settings that can be configured to change its behavior.
+These settings can be adjusted using environment variables or by modifying the
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">baybe.settings.active_settings</span></code></a> object in various ways, as detailed
+<a class="reference internal" href="#changing-settings">below</a>.</p>
+<section id="available-settings">
+<h2>Available Settings<a class="headerlink" href="#available-settings" title="Link to this heading">¶</a></h2>
+<p>The following settings are available:</p>
+<div class="table-wrapper colwidths-auto docutils container">
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head text-right"><p>Setting</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.cache_campaign_recommendations" title="baybe.settings.Settings.cache_campaign_recommendations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cache_campaign_recommendations</span></code></a></p></td>
+<td><p>Controls if <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><code class="xref py py-class docutils literal notranslate"><span class="pre">Campaign</span></code></a> objects cache their latest set of recommendations.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.cache_directory" title="baybe.settings.Settings.cache_directory"><code class="xref py py-attr docutils literal notranslate"><span class="pre">cache_directory</span></code></a></p></td>
+<td><p>The directory used for persistent caching on disk. Set to <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code> to disable caching.</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.parallelize_simulation_runs" title="baybe.settings.Settings.parallelize_simulation_runs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">parallelize_simulation_runs</span></code></a></p></td>
+<td><p>Controls if simulation runs with <a class="reference external" href="https://xyzpy.readthedocs.io/"><code class="docutils literal notranslate"><span class="pre">xyzpy</span></code></a> are executed in parallel.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.preprocess_dataframes" title="baybe.settings.Settings.preprocess_dataframes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">preprocess_dataframes</span></code></a></p></td>
+<td><p>Controls if incoming user dataframes are preprocessed (i.e., dtype-converted and validated) before use.</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.random_seed" title="baybe.settings.Settings.random_seed"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seed</span></code></a></p></td>
+<td><p>The used random seed.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">use_fpsample</span></code></a></p></td>
+<td><p>Controls if <a class="reference external" href="https://github.com/leonardodalinky/fpsample"><code class="docutils literal notranslate"><span class="pre">fpsample</span></code></a> acceleration is to be used, if available.</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">use_polars_for_constraints</span></code></a></p></td>
+<td><p>Controls if <a class="reference external" href="https://pola.rs/"><code class="docutils literal notranslate"><span class="pre">polars</span></code></a> acceleration is to be used for discrete constraints, if available.</p></td>
+</tr>
+<tr class="row-odd"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.use_single_precision_numpy" title="baybe.settings.Settings.use_single_precision_numpy"><code class="xref py py-attr docutils literal notranslate"><span class="pre">use_single_precision_numpy</span></code></a></p></td>
+<td><p>Controls the floating point precision used for <a class="reference external" href="https://numpy.org/"><code class="docutils literal notranslate"><span class="pre">numpy</span></code></a> arrays.</p></td>
+</tr>
+<tr class="row-even"><td class="text-right"><p><a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.use_single_precision_torch" title="baybe.settings.Settings.use_single_precision_torch"><code class="xref py py-attr docutils literal notranslate"><span class="pre">use_single_precision_torch</span></code></a></p></td>
+<td><p>Controls the floating point precision used for <a class="reference external" href="https://pytorch.org/"><code class="docutils literal notranslate"><span class="pre">torch</span></code></a> tensors.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Or on Windows:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">set</span><span class="w"> </span><span class="nv">ENVAR_NAME</span><span class="o">=</span>my_value
-</pre></div>
-</div>
-<p>Note that variables set in this manner are interpreted as text, but converted internally
-to the needed format. See for instance the <a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">strtobool</span></code></span></a>
-converter for values that can be set so BayBE can interpret them as Booleans.</p>
-<p>It is also possible to set environment variables in Python:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<p>For more information, click on the respective link or have a look at the
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> class documentation.</p>
+</section>
+<section id="changing-settings">
+<h2>Changing Settings<a class="headerlink" href="#changing-settings" title="Link to this heading">¶</a></h2>
+<p>BayBE offers flexible control over its settings, allowing you to adjust them in
+different ways, adapted to your specific needs and use cases. If you want to understand
+the underlying mechanism in detail, have a look <a class="reference internal" href="#activation-logic">here</a>. Otherwise,
+simply choose the most suitable option from the following alternatives:</p>
+<section id="direct-assignment">
+<h3>Direct Assignment<a class="headerlink" href="#direct-assignment" title="Link to this heading">¶</a></h3>
+<p>You can change any specific setting by directly assigning a new value to the
+corresponding attribute of the <a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object. For
+example, to set a value for <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.random_seed" title="baybe.settings.Settings.random_seed"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seed</span></code></a>,
+simply run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">active_settings</span>
 
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ENVAR_NAME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;my_value&quot;</span>
+<span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="mi">1337</span>
+</pre></div>
+</div>
+<div class="note admonition">
+<p class="admonition-title">Validation</p>
+<p>To avoid silent bugs, BayBE automatically validates if the referenced setting
+attribute exists and if the assigned value is compatible:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">active_settings</span>
 
-<span class="c1"># proceed with BayBE code ...</span>
+<span class="n">active_settings</span><span class="o">.</span><span class="n">non_existent_setting</span> <span class="o">=</span> <span class="mi">1337</span>  <span class="c1"># &lt;-- error!</span>
+<span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="o">=</span> <span class="s2">&quot;not_representing_a_boolean&quot;</span>  <span class="c1"># &lt;-- error!</span>
 </pre></div>
 </div>
-<p>However, this needs to be done carefully at the entry point of your script or session and
-will not persist between sessions.</p>
-</section>
-<section id="polars">
-<h2>Polars<a class="headerlink" href="#polars" title="Link to this heading">¶</a></h2>
-<p>If BayBE was installed with the additional <code class="docutils literal notranslate"><span class="pre">polars</span></code> dependency (<code class="docutils literal notranslate"><span class="pre">baybe[polars]</span></code>), it
-will use the advanced methods of Polars to create the searchspace lazily and perform a
-streamed evaluation of constraints. This will improve speed and memory consumption
-during this process, and thus might be beneficial for very large search spaces.</p>
-<p>Since this is still somewhat experimental, you might want to deactivate Polars without
-changing the Python environment. To do so, you can set the environment variable
-<code class="docutils literal notranslate"><span class="pre">BAYBE_DEACTIVATE_POLARS</span></code> to any truthy value accepted by
-<a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">strtobool</span></code></span></a>.</p>
-<div class="caution admonition">
-<p class="admonition-title">Row Order</p>
-<p>For performance reasons, search space manipulation using <code class="docutils literal notranslate"><span class="pre">polars</span></code> is not
-guaranteed to produce the same row order as the corresponding <code class="docutils literal notranslate"><span class="pre">pandas</span></code> operations.</p>
 </div>
 </section>
-<section id="disk-caching">
-<h2>Disk Caching<a class="headerlink" href="#disk-caching" title="Link to this heading">¶</a></h2>
-<p>For some components, such as the
-<a class="reference internal" href="../_autosummary/baybe.parameters.substance.SubstanceParameter.html#baybe.parameters.substance.SubstanceParameter" title="baybe.parameters.substance.SubstanceParameter"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">SubstanceParameter</span></code></span></a>, some of the
-computation results are cached in local storage.</p>
-<p>By default, BayBE determines the location of temporary files on your system and puts
-cached data into a subfolder <code class="docutils literal notranslate"><span class="pre">.baybe_cache</span></code> there. If you want to change the location of
-the disk cache, change:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BAYBE_CACHE_DIR</span><span class="o">=</span><span class="s2">&quot;/path/to/your/desired/cache/folder&quot;</span>
+<section id="joint-activation">
+<h3>Joint Activation<a class="headerlink" href="#joint-activation" title="Link to this heading">¶</a></h3>
+<p>While you can change several settings one at a time using direct assignment, a more
+convenient way is to instantiate a <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">baybe.settings.Settings</span></code></a> object, which allows
+to define multiple settings at once. In order for the settings to take effect,
+call its <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span><span class="p">,</span> <span class="n">active_settings</span>
+
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">parallelize_simulation_runs</span> <span class="ow">is</span> <span class="kc">True</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">use_polars_for_constraints</span> <span class="ow">is</span> <span class="kc">True</span>
+
+<span class="n">Settings</span><span class="p">(</span><span class="n">parallelize_simulation_runs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_polars_for_constraints</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">parallelize_simulation_runs</span> <span class="ow">is</span> <span class="kc">False</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">use_polars_for_constraints</span> <span class="ow">is</span> <span class="kc">False</span>
 </pre></div>
 </div>
-<p>By setting</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BAYBE_CACHE_DIR</span><span class="o">=</span><span class="s2">&quot;&quot;</span>
+</section>
+<section id="delayed-activation">
+<h3>Delayed Activation<a class="headerlink" href="#delayed-activation" title="Link to this heading">¶</a></h3>
+<p>Adjusting settings via the <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> class has the additional
+benefit that it allows you to delay the activation of a particular settings
+configuration to a later point, giving you the possibility to store and organize several
+configurations in your code. For example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
+
+<span class="n">slow_and_pedantic</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span><span class="n">preprocess_dataframes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">use_fpsample</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">fast_and_furious</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span><span class="n">preprocess_dataframes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_fpsample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>you can turn off disk caching entirely.</p>
+<p>You can then active these configurations in various places and in different ways:</p>
+<section id="manual-activation">
+<h4>Manual Activation<a class="headerlink" href="#manual-activation" title="Link to this heading">¶</a></h4>
+<p>To <em>manually</em> activate a particular settings configuration, use its
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> method. The previously active settings will be
+automatically remembered and can easily be restored at a later point using the
+corresponding <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.restore_previous" title="baybe.settings.Settings.restore_previous"><code class="xref py py-meth docutils literal notranslate"><span class="pre">restore_previous()</span></code></a> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+<span class="n">fast_and_furious</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">False</span>
+<span class="n">fast_and_furious</span><span class="o">.</span><span class="n">restore_previous</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+</pre></div>
+</div>
+<div class="important admonition" id="restoring-settings">
+<p class="admonition-title">Restoring Previous Settings</p>
+<p>Note that <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.restore_previous" title="baybe.settings.Settings.restore_previous"><code class="xref py py-meth docutils literal notranslate"><span class="pre">restore_previous()</span></code></a> restores the settings that
+were active <strong>at the time of the <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> call</strong>, not
+the previously active settings. The latter might potentially have changed in the
+meantime, depending on execution flow:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span><span class="p">,</span> <span class="n">active_settings</span>
+
+<span class="n">s_0</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span><span class="n">random_seed</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">0</span>
+
+<span class="n">s_42</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span><span class="n">random_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">42</span>
+
+<span class="n">s_1337</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">(</span><span class="n">random_seed</span><span class="o">=</span><span class="mi">1337</span><span class="p">)</span><span class="o">.</span><span class="n">activate</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">1337</span>
+
+<span class="c1"># At this point, the active seed is 1337, and the previous active seed was 42.</span>
+<span class="c1"># However, the effect of &quot;restoring settings&quot; crucially depends on which object is used:</span>
+
+<span class="n">s_42</span><span class="o">.</span><span class="n">restore_previous</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">0</span>  <span class="c1"># &lt;-- the seed before s_42 got activated</span>
+
+<span class="n">s_1337</span><span class="o">.</span><span class="n">restore_previous</span><span class="p">()</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">==</span> <span class="mi">42</span>  <span class="c1"># &lt;-- the seed before s_42 got activated</span>
+</pre></div>
+</div>
+</div>
 </section>
-<section id="experimental-floating-point-precision">
-<h2>EXPERIMENTAL: Floating Point Precision<a class="headerlink" href="#experimental-floating-point-precision" title="Link to this heading">¶</a></h2>
-<p>In general, double precision is recommended because numerical stability during optimization
-can be bad when single precision is used. This impacts gradient-based optimization,
-i.e. search spaces with continuous parameters, more than optimization without gradients.</p>
-<p>If you still want to use single precision, you can set the following Boolean variables:</p>
+<section id="context-activation">
+<h4>Context Activation<a class="headerlink" href="#context-activation" title="Link to this heading">¶</a></h4>
+<p>Using <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.restore_previous" title="baybe.settings.Settings.restore_previous"><code class="xref py py-meth docutils literal notranslate"><span class="pre">restore_previous()</span></code></a> can be useful in special cases
+where settings objects need to be passed around. However, in most cases where settings
+should be activated <em>temporarily</em> within a specific scope, a more convenient approach is
+to use a context manager:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+
+<span class="c1"># Within the context, the specified settings become active</span>
+<span class="k">with</span> <span class="n">fast_and_furious</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">False</span>
+
+<span class="c1"># Outside the context, the previous settings are restored</span>
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+<section id="decorator-activation">
+<h4>Decorator Activation<a class="headerlink" href="#decorator-activation" title="Link to this heading">¶</a></h4>
+<p>Finally, <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> objects can also be used to decorate
+callables, activating the corresponding configuration for the duration of the call:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+
+
+<span class="nd">@fast_and_furious</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">regret_nothing</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">False</span>
+
+
+<span class="n">regret_nothing</span><span class="p">()</span>  <span class="c1"># &lt;-- the assert passes</span>
+
+<span class="k">assert</span> <span class="n">active_settings</span><span class="o">.</span><span class="n">preprocess_dataframes</span> <span class="ow">is</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="environment-variables">
+<h3>Environment Variables<a class="headerlink" href="#environment-variables" title="Link to this heading">¶</a></h3>
+<p>Settings can also be controlled via environment variables, which is particularly useful
+for deploying applications in different environments without having to change any
+underlying code.</p>
+<p>Each individual setting attribute has a corresponding environment variable, written in
+uppercase letters and prefixed with <code class="docutils literal notranslate"><span class="pre">BAYBE_</span></code>. For example, the
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.preprocess_dataframes" title="baybe.settings.Settings.preprocess_dataframes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">preprocess_dataframes</span></code></a> attribute is linked to the
+<code class="docutils literal notranslate"><span class="pre">BAYBE_PREPROCESS_DATAFRAMES</span></code> environment variable.</p>
+<p>When present, these variables can be used to populate settings attributes instead of
+falling back to defaults, which is controlled via the <code class="docutils literal notranslate"><span class="pre">restore_environment</span></code> flag. For
+further details on how they interact with other value sources and how they affect the
+initialization of the <a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> at startup time, have a
+look at our <a class="reference internal" href="#initialization-precedence">initialization precedence</a> section.</p>
+</section>
+</section>
+<section id="activation-logic">
+<h2>Activation Logic<a class="headerlink" href="#activation-logic" title="Link to this heading">¶</a></h2>
+<p>The activation of settings follows two simple rules that allow you to understand the
+implications of modifying <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> objects:</p>
+<ol class="arabic simple">
+<li><p>When executing code, BayBE always reads the current value of settings from the
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object, meaning that any changes to this
+object immediately take effect.</p></li>
+<li><p>An <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> call on a
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> object copies its attribute values to those of the
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object and stores a copy of the
+previously active values in the object on which the call was made.</p></li>
+</ol>
+<p>This explains, for instance, why:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">BAYBE_NUMPY_USE_SINGLE_PRECISION</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">BAYBE_TORCH_USE_SINGLE_PRECISION</span></code> (defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
+<li><p>Direct assignments to attributes of <a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> take
+immediate global effect.</p></li>
+<li><p>Calling <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> on a
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> object is equivalent to <a class="reference internal" href="#direct-assignment">directly
+assigning</a> all of its attribute values to the
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object one by one.</p></li>
+<li><p>Adjusting the attribute of any <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> object other than
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> has no immediate effect on the
+active settings until its <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> method is called,
+no matter if it has been activated before or not.</p></li>
+<li><p>You can <a class="reference internal" href="#restoring-settings">restore</a> the settings that were active previous to an
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.activate" title="baybe.settings.Settings.activate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">activate()</span></code></a> call using the
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.restore_previous" title="baybe.settings.Settings.restore_previous"><code class="xref py py-meth docutils literal notranslate"><span class="pre">restore_previous()</span></code></a> method.</p></li>
 </ul>
-<div class="warning admonition">
-<p class="admonition-title">Experimental Feature</p>
-<p>Currently, it cannot be guaranteed that all calculations will be performed in single precision,
-even when setting the aforementioned variables. The reason is that there are several code snippets
-within <code class="docutils literal notranslate"><span class="pre">BoTorch</span></code> that transform single precision variables to double precision variables.
-Consequently, this feature is currently only available as an <em>experimental</em> feature.
-We are however actively working on fully enabling single precision.</p>
+</section>
+<section id="initialization-precedence">
+<h2>Initialization Precedence<a class="headerlink" href="#initialization-precedence" title="Link to this heading">¶</a></h2>
+<p>Initializing a new <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> object follows a specific order of
+precedence. Specifically, the value of each attribute is determined by whichever of the
+following rules applies first:</p>
+<ol class="arabic simple">
+<li><p>If a value is passed explicitly to the <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> constructor,
+it always takes the highest precedence.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">restore_environment=True</span></code> is passed, the value of the setting’s corresponding
+environment variable is used, provided it exists.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">restore_defaults=True</span></code> is passed, the default value for the attribute defined
+by the class is used.</p></li>
+<li><p>If none of the above applies, the current value from
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> is retained.</p></li>
+</ol>
+<div class="attention admonition">
+<p class="admonition-title">Exception: Random Seed Management</p>
+<p>A notable exception to the above rules applies to managing random seeds, for reasons
+detailed in the <a class="reference internal" href="#random-seed-control">Random Seed Control</a> section.</p>
+</div>
+<div class="important admonition">
+<p class="admonition-title">Active Settings Initialization</p>
+<p>For convenience, <code class="docutils literal notranslate"><span class="pre">restore_environment</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> when initializing the active
+<a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object at package import time, so that
+environment variables automatically take effect.</p>
 </div>
 </section>
-<section id="parallel-runs-in-scenario-simulations">
-<h2>Parallel Runs in Scenario Simulations<a class="headerlink" href="#parallel-runs-in-scenario-simulations" title="Link to this heading">¶</a></h2>
-<p>By default, <a class="reference internal" href="../_autosummary/baybe.simulation.scenarios.simulate_scenarios.html#baybe.simulation.scenarios.simulate_scenarios" title="baybe.simulation.scenarios.simulate_scenarios"><span class="xref myst py py-func"><code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code></span></a>
-function is to run in parallel. This can be disabled by setting the environment variable <code class="docutils literal notranslate"><span class="pre">BAYBE_PARALLEL_SIMULATION_RUNS</span></code> to a <a class="reference internal" href="../_autosummary/baybe.utils.boolean.strtobool.html#baybe.utils.boolean.strtobool" title="baybe.utils.boolean.strtobool"><span class="xref myst py py-func">falsy value</span></a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BAYBE_PARALLEL_SIMULATION_RUNS</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="w">  </span><span class="c1"># Set this to disable parallel execution</span>
-</pre></div>
-</div>
-<p>Alternatively, you can directly specify the <code class="docutils literal notranslate"><span class="pre">parallel_runs</span></code> parameter when calling the function, which takes precedence over the environment variable:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">baybe.simulation</span><span class="w"> </span><span class="kn">import</span> <span class="n">simulate_scenarios</span>
-
-<span class="n">results</span> <span class="o">=</span> <span class="n">simulate_scenarios</span><span class="p">(</span>
-    <span class="n">scenarios</span><span class="o">=</span><span class="n">scenarios</span><span class="p">,</span>
-    <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
-    <span class="n">n_mc_iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-    <span class="n">parallel_runs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Disable parallel runners for this call</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<div class="warning admonition">
-<p class="admonition-title">Experimental Feature</p>
-<p>While parallel execution usually speeds up computation significantly, the performance
-impact can vary depending on the machine and simulation configuration. In some cases, it
-might even lead to longer run times due to overhead costs.</p>
-</div>
-</section>
-<section id="fps-sampling-implementation">
-<h2>FPS Sampling Implementation<a class="headerlink" href="#fps-sampling-implementation" title="Link to this heading">¶</a></h2>
-<p>The optional package <code class="docutils literal notranslate"><span class="pre">fpsample</span></code> can be installed, e.g. by specifying the optional
-dependency group in <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">baybe[extras]</span></code>. This prompts BayBE to use an
-implementation of <a class="reference internal" href="../_autosummary/baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.html#baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender" title="baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender"><span class="xref myst py py-class">farthest point sampling</span></a>
-which is far more memory-efficient and scalable. This implementation, however, requires
-setting <a class="reference internal" href="../_autosummary/baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.html#baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.initialization" title="baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.initialization"><span class="xref myst py py-attr"><code class="docutils literal notranslate"><span class="pre">FPSRecommender.initialization=&quot;farthest&quot;</span></code></span></a>
-and <a class="reference internal" href="../_autosummary/baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.html#baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.random_tie_break" title="baybe.recommenders.pure.nonpredictive.sampling.FPSRecommender.random_tie_break"><span class="xref myst py py-attr"><code class="docutils literal notranslate"><span class="pre">FPSRecommender.random_tie_break=False</span></code></span></a>.</p>
-<p>In case you want to use other settings while having <code class="docutils literal notranslate"><span class="pre">fpsample</span></code> installed, you can
-bypass the use of <code class="docutils literal notranslate"><span class="pre">fpsample</span></code> via an environment variable:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BAYBE_USE_FPSAMPLE</span><span class="o">=</span><span class="s2">&quot;False&quot;</span><span class="w">  </span><span class="c1"># Do not use `fpsample` even if installed</span>
-</pre></div>
-</div>
+<section id="random-seed-control">
+<h2>Random Seed Control<a class="headerlink" href="#random-seed-control" title="Link to this heading">¶</a></h2>
+<p>Unlike other BayBE setting attributes, whose values remain static until changed
+explicitly, the states of random number generators (RNG) naturally evolve as random
+numbers are drawn during code execution. Applying the same manipulation rules to
+<a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings.random_seed" title="baybe.settings.Settings.random_seed"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seed</span></code></a> as we do to other settings attributes would
+therefore lead to rather unexpected behavior from a user’s perspective, especially since
+the seed value is only used to initialize the RNG states and remains unchanged while the
+latter progress.</p>
+<p>To align RNG control with user expectations, random seed mechanics thus
+slightly deviate from the otherwise general rules outlined in this user guide:</p>
+<ul class="simple">
+<li><p>In contrast to what is dictated by the <a class="reference internal" href="#initialization-precedence">initialization
+precedence</a>, specifying a random seed via the
+<code class="docutils literal notranslate"><span class="pre">BAYBE_RANDOM_SEED</span></code> environment variable <strong>only</strong> affects the initialization of the
+active <a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object at session start, but has no
+effect on the instantiation of subsequent <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> objects.</p></li>
+<li><p>Likewise, <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> objects created by the user do not adopt
+the random seed from the <a class="reference internal" href="../_autosummary/baybe.settings.active_settings.html#baybe.settings.active_settings" title="baybe.settings.active_settings"><code class="xref py py-data docutils literal notranslate"><span class="pre">active_settings</span></code></a> object, which
+avoids unintended RNG state resets when activating such objects.</p></li>
+<li><p>When <a class="reference internal" href="#restoring-settings">restoring</a> previous settings, the RNG states are only
+reverted if the <a class="reference internal" href="../_autosummary/baybe.settings.Settings.html#baybe.settings.Settings" title="baybe.settings.Settings"><code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code></a> object in question explicitly
+specified a random seed during its activation (i.e., the RNG state was deliberately
+controlled). If no seed was specified, the RNG state remains untouched.</p></li>
+</ul>
 </section>
 </section>
 
@@ -1217,23 +1390,23 @@ bypass the use of <code class="docutils literal notranslate"><span class="pre">f
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="insights.html">
+          <a class="next-page" href="simulation.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Insights</div>
+                <div class="title">Simulation</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="constraints.html">
+          <a class="prev-page" href="serialization.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Constraints</div>
+                <div class="title">Serialization</div>
                 
               </div>
             </a>
@@ -1267,13 +1440,23 @@ bypass the use of <code class="docutils literal notranslate"><span class="pre">f
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Environment Variables</a><ul>
-<li><a class="reference internal" href="#basic-instructions">Basic Instructions</a></li>
-<li><a class="reference internal" href="#polars">Polars</a></li>
-<li><a class="reference internal" href="#disk-caching">Disk Caching</a></li>
-<li><a class="reference internal" href="#experimental-floating-point-precision">EXPERIMENTAL: Floating Point Precision</a></li>
-<li><a class="reference internal" href="#parallel-runs-in-scenario-simulations">Parallel Runs in Scenario Simulations</a></li>
-<li><a class="reference internal" href="#fps-sampling-implementation">FPS Sampling Implementation</a></li>
+<li><a class="reference internal" href="#">Settings</a><ul>
+<li><a class="reference internal" href="#available-settings">Available Settings</a></li>
+<li><a class="reference internal" href="#changing-settings">Changing Settings</a><ul>
+<li><a class="reference internal" href="#direct-assignment">Direct Assignment</a></li>
+<li><a class="reference internal" href="#joint-activation">Joint Activation</a></li>
+<li><a class="reference internal" href="#delayed-activation">Delayed Activation</a><ul>
+<li><a class="reference internal" href="#manual-activation">Manual Activation</a></li>
+<li><a class="reference internal" href="#context-activation">Context Activation</a></li>
+<li><a class="reference internal" href="#decorator-activation">Decorator Activation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#environment-variables">Environment Variables</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#activation-logic">Activation Logic</a></li>
+<li><a class="reference internal" href="#initialization-precedence">Initialization Precedence</a></li>
+<li><a class="reference internal" href="#random-seed-control">Random Seed Control</a></li>
 </ul>
 </li>
 </ul>

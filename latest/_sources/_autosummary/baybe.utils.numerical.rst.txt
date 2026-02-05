@@ -11,8 +11,6 @@ baybe.utils.numerical
       :toctree: 
       :template: custom-attribute-template.rst                               
    
-      VARNAME_NUMPY_USE_SINGLE_PRECISION
-      DTypeFloatNumpy
       DTypeFloatONNX
    
    

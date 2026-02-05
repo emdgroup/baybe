@@ -31,7 +31,8 @@ from scipy.stats import gaussian_kde
 
 
 ```python
-from baybe.acquisition.acqfs import ProbabilityOfImprovement
+from baybe import active_settings
+from baybe.acquisition import ProbabilityOfImprovement
 from baybe.campaign import Campaign
 from baybe.objectives.base import Objective
 from baybe.parameters import NumericalDiscreteParameter
@@ -45,7 +46,6 @@ from baybe.surrogates import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import register_hooks
 from baybe.utils.dataframe import arrays_to_dataframes
-from baybe.utils.random import set_random_seed
 from examples.utils import create_example_plots
 ```
 
@@ -67,7 +67,7 @@ We also fix the random seed to create a consistent plot:
 
 
 ```python
-set_random_seed(1337)
+active_settings.random_seed = 1337
 ```
 
 ## Defining the Hook

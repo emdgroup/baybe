@@ -1,0 +1,6 @@
+baybe.settings.adjust\_defaults
+===============================
+
+.. currentmodule:: baybe.settings
+
+.. autofunction:: adjust_defaults

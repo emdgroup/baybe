@@ -1,7 +1,0 @@
-baybe.utils.numerical.VARNAME\_NUMPY\_USE\_SINGLE\_PRECISION
-============================================================
-
-.. currentmodule:: baybe.utils.numerical
-
-
-.. autodata:: VARNAME_NUMPY_USE_SINGLE_PRECISION

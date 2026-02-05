@@ -247,15 +247,15 @@ print(recommendation)
     
     
     Recommended experiments: 
-          Solvent                Base                        Ligand  Temperature  \
-    360  p-Xylene     Cesium pivalate                     BrettPhos         90.0   
-    289      DMAc   Potassium acetate  Di-tert-butylphenylphosphine         90.0   
-    426  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+               Solvent               Base                        Ligand  \
+    183  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+    121  Butyornitrile     Cesium acetate                     BrettPhos   
+    31     Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
     
-         Concentration  
-    360          0.057  
-    289          0.100  
-    426          0.057  
+         Temperature  Concentration  
+    183        105.0          0.057  
+    121        105.0          0.100  
+    31         105.0          0.100  
 
 
 
@@ -268,15 +268,15 @@ print(recommendation)
     
     
     Recommended experiments with fake measured values: 
-          Solvent                Base                        Ligand  Temperature  \
-    360  p-Xylene     Cesium pivalate                     BrettPhos         90.0   
-    289      DMAc   Potassium acetate  Di-tert-butylphenylphosphine         90.0   
-    426  p-Xylene  Potassium pivalate  Di-tert-butylphenylphosphine        105.0   
+               Solvent               Base                        Ligand  \
+    183  Butyornitrile  Potassium acetate  Di-tert-butylphenylphosphine   
+    121  Butyornitrile     Cesium acetate                     BrettPhos   
+    31     Butyl Ester    Cesium pivalate                 (t-Bu)PhCPhos   
     
-         Concentration      yield  
-    360          0.057 -75.139425  
-    289          0.100  48.180119  
-    426          0.057 -61.426079  
+         Temperature  Concentration      yield  
+    183        105.0          0.057 -72.780491  
+    121        105.0          0.100 -31.399171  
+    31         105.0          0.100  70.950572  
 
 
 

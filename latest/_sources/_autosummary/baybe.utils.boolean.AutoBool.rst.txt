@@ -1,0 +1,32 @@
+AutoBool
+========
+
+.. currentmodule:: baybe.utils.boolean
+
+.. autoclass:: AutoBool
+   :members:                              
+   :show-inheritance:                 
+   :inherited-members:
+
+   
+   
+   .. rubric:: Public methods
+
+   .. autosummary::
+   
+      ~AutoBool.evaluate
+      ~AutoBool.from_unstructured
+   
+   
+
+   
+   
+   .. rubric:: Public attributes and properties
+
+   .. autosummary::
+   
+      ~AutoBool.TRUE
+      ~AutoBool.FALSE
+      ~AutoBool.AUTO
+   
+   

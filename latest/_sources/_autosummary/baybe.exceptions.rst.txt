@@ -40,6 +40,7 @@ baybe.exceptions
       NoMeasurementsError
       NoRecommendersLeftError
       NonGaussianityError
+      NotAllowedError
       NotEnoughPointsLeftError
       NothingToComputeError
       NothingToSimulateError

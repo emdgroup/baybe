@@ -22,6 +22,7 @@ baybe.utils.basic
    .. autosummary::
       :toctree:                                       
    
+      cache_to_disk
       compose
       compose_two
       convert_to_float
@@ -47,7 +48,6 @@ baybe.utils.basic
       :template: custom-class-template.rst              
    
       Dummy
-      UncertainBool
       UnspecifiedType
       classproperty
    

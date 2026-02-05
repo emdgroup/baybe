@@ -126,7 +126,7 @@ constraints = [sum_constraint_1, sum_constraint_2, prod_constraint]
 searchspace = SearchSpace.from_product(parameters=parameters, constraints=constraints)
 ```
 
-    /home/runner/work/baybe/baybe/baybe/utils/chemistry.py:126: DeprecationWarning:
+    /home/runner/work/baybe/baybe/baybe/utils/chemistry.py:109: DeprecationWarning:
 Substance encoding 'RDKIT' is deprecated and will be disabled in a future version. Use
 'RDKIT2DDESCRIPTORS' instead.
       warnings.warn(
@@ -280,6 +280,8 @@ for kIter in range(N_ITERATIONS):
     Number of entries with 1,2-sum above 150:       0
     Number of entries with 3,4-product under 30:    0
     Number of entries with 5,6-sum unequal to 100:  0
+
+
     
     
     #### ITERATION 2 ####
