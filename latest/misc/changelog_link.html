@@ -481,6 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
@@ -1123,6 +1124,8 @@ analytical acquisition functions</p></li>
 <li><p>Possibility to set <code class="docutils literal notranslate"><span class="pre">n_mc_iterations</span></code> to <code class="docutils literal notranslate"><span class="pre">None</span></code> in <code class="docutils literal notranslate"><span class="pre">simulate_scenarios</span></code>, which
 increments the simulation random seed per initial data set without having to execute
 the full Cartesian product of all (seed, data)-configurations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">identify_non_dominated_configurations</span></code> method to <code class="docutils literal notranslate"><span class="pre">Campaign</span></code> and <code class="docutils literal notranslate"><span class="pre">Objective</span></code>
+for determining the Pareto front</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">Campaign.posterior</span></code> and <code class="docutils literal notranslate"><span class="pre">Surrogate.posterior</span></code> now accept a <code class="docutils literal notranslate"><span class="pre">joint</span></code> argument</p></li>
 </ul>
 </section>

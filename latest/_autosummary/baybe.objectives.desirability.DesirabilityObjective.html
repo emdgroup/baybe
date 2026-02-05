@@ -481,6 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
@@ -1111,19 +1112,22 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.handle_missing_values" title="baybe.objectives.desirability.DesirabilityObjective.handle_missing_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_missing_values</span></code></a>(measurements)</p></td>
 <td><p>Handle missing values in the given measurements for each modeled quantity.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch" title="baybe.objectives.desirability.DesirabilityObjective.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations" title="baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identify_non_dominated_configurations</span></code></a>(...)</p></td>
+<td><p>Create a Boolean mask indicating non-dominated target configurations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch" title="baybe.objectives.desirability.DesirabilityObjective.to_botorch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch</span></code></a>()</p></td>
 <td><p>Convert to BoTorch objective.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch_posterior_transform" title="baybe.objectives.desirability.DesirabilityObjective.to_botorch_posterior_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_posterior_transform</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch_posterior_transform" title="baybe.objectives.desirability.DesirabilityObjective.to_botorch_posterior_transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_botorch_posterior_transform</span></code></a>()</p></td>
 <td><p>Convert to BoTorch posterior transform, if possible.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_dict" title="baybe.objectives.desirability.DesirabilityObjective.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_dict" title="baybe.objectives.desirability.DesirabilityObjective.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_json" title="baybe.objectives.desirability.DesirabilityObjective.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_json" title="baybe.objectives.desirability.DesirabilityObjective.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.transform" title="baybe.objectives.desirability.DesirabilityObjective.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>([df, allow_missing, allow_extra, data])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.transform" title="baybe.objectives.desirability.DesirabilityObjective.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a>([df, allow_missing, allow_extra, data])</p></td>
 <td><p>Evaluate the objective on the target columns of the given dataframe.</p></td>
 </tr>
 </tbody>
@@ -1237,6 +1241,33 @@
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A dictionary with one dataframe for each modeled quantity.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations">
+<span class="sig-name descname"><span class="pre">identify_non_dominated_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations" title="Link to this definition">¶</a></dt>
+<dd><p>Create a Boolean mask indicating non-dominated target configurations.</p>
+<p>In case of duplicated non-dominated points, all duplicates are marked as
+non-dominated.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Non-dominated configurations can be computed for any objective type, not
+just for <a class="reference internal" href="baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoObjective</span></code></a>.
+For more details, have a look at the corresponding
+<a class="reference internal" href="../userguide/objectives.html#identifying-non-dominated-configurations"><span class="std std-ref">user guide section</span></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="target" id="baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations.params.configurations"></span><strong>configurations</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span>) – The target configurations for which the non-dominated subset
+is identified.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A Boolean series indicating which configurations are non-dominated.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1484,6 +1515,7 @@ By default, all targets are considered equally important.</p>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.from_dict"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.from_dict()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.from_json"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.handle_missing_values"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.handle_missing_values()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.identify_non_dominated_configurations"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.identify_non_dominated_configurations()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.to_botorch()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_botorch_posterior_transform"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.to_botorch_posterior_transform()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.objectives.desirability.DesirabilityObjective.to_dict"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective.to_dict()</span></code></a></li>

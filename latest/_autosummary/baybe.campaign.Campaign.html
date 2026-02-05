@@ -481,6 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
@@ -1138,31 +1139,34 @@ series of measurements and the iterative sequence of events involved.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.get_surrogate" title="baybe.campaign.Campaign.get_surrogate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_surrogate</span></code></a>([batch_size, pending_experiments])</p></td>
 <td><p>Get the current surrogate model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.joint_acquisition_value" title="baybe.campaign.Campaign.joint_acquisition_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">joint_acquisition_value</span></code></a>(candidates[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.identify_non_dominated_configurations" title="baybe.campaign.Campaign.identify_non_dominated_configurations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">identify_non_dominated_configurations</span></code></a>([...])</p></td>
+<td><p>Create a Boolean mask indicating non-dominated configurations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.joint_acquisition_value" title="baybe.campaign.Campaign.joint_acquisition_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">joint_acquisition_value</span></code></a>(candidates[, ...])</p></td>
 <td><p>Compute the joint acquisition values for the given candidate batch.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior" title="baybe.campaign.Campaign.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>([candidates, joint])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior" title="baybe.campaign.Campaign.posterior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior</span></code></a>([candidates, joint])</p></td>
 <td><p>Get the posterior predictive distribution for the given candidates.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior_stats" title="baybe.campaign.Campaign.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>([candidates, stats])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.posterior_stats" title="baybe.campaign.Campaign.posterior_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">posterior_stats</span></code></a>([candidates, stats])</p></td>
 <td><p>Return posterior statistics for each target.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.recommend" title="baybe.campaign.Campaign.recommend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommend</span></code></a>(batch_size[, pending_experiments])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.recommend" title="baybe.campaign.Campaign.recommend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recommend</span></code></a>(batch_size[, pending_experiments])</p></td>
 <td><p>Provide the recommendations for the next batch of experiments.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_dict" title="baybe.campaign.Campaign.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_dict" title="baybe.campaign.Campaign.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
 <td><p>Create an object's dictionary representation.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_json" title="baybe.campaign.Campaign.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.to_json" title="baybe.campaign.Campaign.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a>([sink, overwrite])</p></td>
 <td><p>Create an object's JSON representation.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates" title="baybe.campaign.Campaign.toggle_discrete_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_discrete_candidates</span></code></a>(constraints, exclude)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.toggle_discrete_candidates" title="baybe.campaign.Campaign.toggle_discrete_candidates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">toggle_discrete_candidates</span></code></a>(constraints, exclude)</p></td>
 <td><p>In-/exclude certain discrete points in/from the candidate set.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.update_measurements" title="baybe.campaign.Campaign.update_measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_measurements</span></code></a>(data[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.update_measurements" title="baybe.campaign.Campaign.update_measurements"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_measurements</span></code></a>(data[, ...])</p></td>
 <td><p>Update previously added measurements.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#baybe.campaign.Campaign.validate_config" title="baybe.campaign.Campaign.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(config_json)</p></td>
 <td><p>Validate a given campaign configuration JSON.</p></td>
 </tr>
 </tbody>
@@ -1400,6 +1404,36 @@ the transformed target(s) / objective. This means that if you are using a
 <code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code>, the model’s output will correspond to the
 transformed quantities and not the original untransformed target(s).</p>
 </div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="baybe.campaign.Campaign.identify_non_dominated_configurations">
+<span class="sig-name descname"><span class="pre">identify_non_dominated_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">/</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">consider_campaign_measurements</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/baybe/campaign.html#Campaign.identify_non_dominated_configurations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#baybe.campaign.Campaign.identify_non_dominated_configurations" title="Link to this definition">¶</a></dt>
+<dd><p>Create a Boolean mask indicating non-dominated configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span class="target" id="baybe.campaign.Campaign.identify_non_dominated_configurations.params.configurations"></span><strong>configurations</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code>]</span>) – A dataframe carrying values for all targets tracked by the
+campaign’s objective. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, uses the campaign’s measurements.</p></li>
+<li><p><span class="target" id="baybe.campaign.Campaign.identify_non_dominated_configurations.params.consider_campaign_measurements"></span><strong>consider_campaign_measurements</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the campaign’s measurements are
+considered for identifying the non-dominated configurations, but will
+not be reflected in the returned mask themselves.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="baybe.exceptions.IncompatibilityError.html#baybe.exceptions.IncompatibilityError" title="baybe.exceptions.IncompatibilityError"><strong>IncompatibilityError</strong></a> – If no objective is defined for the campaign.</p></li>
+<li><p><a class="reference internal" href="baybe.exceptions.NothingToComputeError.html#baybe.exceptions.NothingToComputeError" title="baybe.exceptions.NothingToComputeError"><strong>NothingToComputeError</strong></a> – If no configurations are provided as argument and no
+    measurements are added to the campaign yet.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></span></p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A Boolean series indicating which configurations are non-dominated.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -1766,6 +1800,7 @@ a <a class="reference internal" href="baybe.searchspace.continuous.SubspaceConti
 <li><a class="reference internal" href="#baybe.campaign.Campaign.from_json"><code class="docutils literal notranslate"><span class="pre">Campaign.from_json()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.get_acquisition_function"><code class="docutils literal notranslate"><span class="pre">Campaign.get_acquisition_function()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.get_surrogate"><code class="docutils literal notranslate"><span class="pre">Campaign.get_surrogate()</span></code></a></li>
+<li><a class="reference internal" href="#baybe.campaign.Campaign.identify_non_dominated_configurations"><code class="docutils literal notranslate"><span class="pre">Campaign.identify_non_dominated_configurations()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.joint_acquisition_value"><code class="docutils literal notranslate"><span class="pre">Campaign.joint_acquisition_value()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.posterior"><code class="docutils literal notranslate"><span class="pre">Campaign.posterior()</span></code></a></li>
 <li><a class="reference internal" href="#baybe.campaign.Campaign.posterior_stats"><code class="docutils literal notranslate"><span class="pre">Campaign.posterior_stats()</span></code></a></li>

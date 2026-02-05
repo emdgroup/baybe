@@ -481,6 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
@@ -1430,6 +1431,29 @@ targets.</p>
 </pre></div>
 </div>
 </section>
+<section id="identifying-non-dominated-configurations">
+<h2>Identifying Non-Dominated Configurations<a class="headerlink" href="#identifying-non-dominated-configurations" title="Link to this heading">¶</a></h2>
+<p>While iterating your <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><code class="xref py py-class docutils literal notranslate"><span class="pre">Campaign</span></code></a>, you may be interested in
+monitoring the <em>non-dominated</em> configurations you have found along the way, to observe
+how the corresponding Pareto front evolves over successive experimentation rounds.
+<a class="reference internal" href="objectives.html#identifying-non-dominated-configurations"><span class="std std-ref">Like for objectives</span></a>, the
+<a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign.identify_non_dominated_configurations" title="baybe.campaign.Campaign.identify_non_dominated_configurations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">identify_non_dominated_configurations()</span></code></a> method offers an
+easy interface for this purpose:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">is_non_dominated</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">identify_non_dominated_configurations</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>By default, the method looks at the taken measurements of the campaign, identifying all
+<em>optimal</em> configurations you have found so far. Alternatively, you can provide an
+explicit set of target configurations as input. In this case, you can choose whether the
+campaign’s measurements should be used as reference points when <em>evaluating</em> which of
+the passed target configurations are non-dominated (i.e. the campaign measurements
+themselves will not be reflected in the returned mask):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">is_non_dominated</span> <span class="o">=</span> <span class="n">campaign</span><span class="o">.</span><span class="n">identify_non_dominated_configurations</span><span class="p">(</span>
+    <span class="n">configurations</span><span class="p">,</span> <span class="n">consider_campaign_measurements</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
 <section id="serialization">
 <h2>Serialization<a class="headerlink" href="#serialization" title="Link to this heading">¶</a></h2>
 <p>Like other BayBE objects, <a class="reference internal" href="../_autosummary/baybe.campaign.Campaign.html#baybe.campaign.Campaign" title="baybe.campaign.Campaign"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Campaigns</span></code></span></a> can be (de-)serialized
@@ -1541,6 +1565,7 @@ to have a look at the most suitable example.</p>
 <li><a class="reference internal" href="#adding-measurements">Adding Measurements</a></li>
 <li><a class="reference internal" href="#predictive-statistics">Predictive Statistics</a></li>
 <li><a class="reference internal" href="#acquisition-function-values">Acquisition Function Values</a></li>
+<li><a class="reference internal" href="#identifying-non-dominated-configurations">Identifying Non-Dominated Configurations</a></li>
 <li><a class="reference internal" href="#serialization">Serialization</a></li>
 <li><a class="reference internal" href="#further-information">Further Information</a></li>
 </ul>

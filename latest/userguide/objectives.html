@@ -481,6 +481,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NoRecommendersLeftError.html">baybe.exceptions.NoRecommendersLeftError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NonGaussianityError.html">baybe.exceptions.NonGaussianityError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NotEnoughPointsLeftError.html">baybe.exceptions.NotEnoughPointsLeftError</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToComputeError.html">baybe.exceptions.NothingToComputeError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NothingToSimulateError.html">baybe.exceptions.NothingToSimulateError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.NumericalUnderflowError.html">baybe.exceptions.NumericalUnderflowError</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../_autosummary/baybe.exceptions.OptionalImportError.html">baybe.exceptions.OptionalImportError</a></li>
@@ -1094,8 +1095,11 @@
 (potentially conflicting) targets that need to be considered simultaneously. BayBE uses
 the concept of an <a class="reference internal" href="../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Objective</span></code></span></a> to allow the user to
 control how these different types of scenarios are handled.</p>
+<section id="objective-types">
+<h2>Objective Types<a class="headerlink" href="#objective-types" title="Link to this heading">¶</a></h2>
+<p>The following objective types are available:</p>
 <section id="singletargetobjective">
-<h2>SingleTargetObjective<a class="headerlink" href="#singletargetobjective" title="Link to this heading">¶</a></h2>
+<h3>SingleTargetObjective<a class="headerlink" href="#singletargetobjective" title="Link to this heading">¶</a></h3>
 <p>The need to optimize a single <a class="reference internal" href="../_autosummary/baybe.targets.base.Target.html#baybe.targets.base.Target" title="baybe.targets.base.Target"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">Target</span></code></span></a> is the most basic
 type of situation one can encounter in experimental design.
 In this scenario, the fact that only one target shall be considered in the design is
@@ -1134,7 +1138,7 @@ conversion behind the scenes.</p></li>
 </div>
 </section>
 <section id="desirabilityobjective">
-<h2>DesirabilityObjective<a class="headerlink" href="#desirabilityobjective" title="Link to this heading">¶</a></h2>
+<h3>DesirabilityObjective<a class="headerlink" href="#desirabilityobjective" title="Link to this heading">¶</a></h3>
 <p>The <a class="reference internal" href="../_autosummary/baybe.objectives.desirability.DesirabilityObjective.html#baybe.objectives.desirability.DesirabilityObjective" title="baybe.objectives.desirability.DesirabilityObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">DesirabilityObjective</span></code></span></a>
 enables the combination of multiple targets via scalarization into a single numerical
 value (commonly referred to as the <em>overall desirability</em>), a method also utilized in
@@ -1185,7 +1189,7 @@ where <span class="math notranslate nohighlight">\(\{t_i\}\)</span> refer the <s
 \end{align*}\end{split}\]</div>
 </div>
 <section id="example-1-normalized-targets">
-<h3>Example 1 – Normalized Targets<a class="headerlink" href="#example-1-normalized-targets" title="Link to this heading">¶</a></h3>
+<h4>Example 1 – Normalized Targets<a class="headerlink" href="#example-1-normalized-targets" title="Link to this heading">¶</a></h4>
 <p>Here, we consider four <strong>normalized</strong> targets, each with a distict
 <a class="reference internal" href="targets.html#numericaltarget"><span class="std std-ref">optimization goal</span></a> chosen arbitrarily
 for demonstration purposes. The first target is given twice as much importance as each
@@ -1206,7 +1210,7 @@ of the other three by assigning it a higher weight:</p>
 </div>
 </section>
 <section id="example-2-non-normalized-targets">
-<h3>Example 2 – Non-Normalized Targets<a class="headerlink" href="#example-2-non-normalized-targets" title="Link to this heading">¶</a></h3>
+<h4>Example 2 – Non-Normalized Targets<a class="headerlink" href="#example-2-non-normalized-targets" title="Link to this heading">¶</a></h4>
 <p>Sometimes, we explicitly want to bypass the normalization requirement, for example,
 when the target ranges are unknown. In this case, using the unweighted arithmetic mean
 is a reasonable choice:</p>
@@ -1225,7 +1229,7 @@ is a reasonable choice:</p>
 </section>
 </section>
 <section id="paretoobjective">
-<h2>ParetoObjective<a class="headerlink" href="#paretoobjective" title="Link to this heading">¶</a></h2>
+<h3>ParetoObjective<a class="headerlink" href="#paretoobjective" title="Link to this heading">¶</a></h3>
 <p>The <a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">ParetoObjective</span></code></span></a> can be used when the
 goal is to find a set of solutions that represent optimal trade-offs among
 multiple conflicting targets. Unlike the
@@ -1266,6 +1270,55 @@ specify the corresponding target objects:</p>
 If you attempt to use a  single-output model, BayBE will automatically turn it into a
 <a class="reference internal" href="../_autosummary/baybe.surrogates.composite.CompositeSurrogate.html#baybe.surrogates.composite.CompositeSurrogate" title="baybe.surrogates.composite.CompositeSurrogate"><span class="xref myst py py-class"><code class="docutils literal notranslate"><span class="pre">CompositeSurrogate</span></code></span></a>
 using <a class="reference internal" href="surrogates.html#auto-replication"><span class="std std-ref">independent replicates</span></a>.</p>
+</div>
+</section>
+</section>
+<section id="identifying-non-dominated-configurations">
+<h2>Identifying Non-Dominated Configurations<a class="headerlink" href="#identifying-non-dominated-configurations" title="Link to this heading">¶</a></h2>
+<p>The <a class="reference internal" href="../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective.identify_non_dominated_configurations" title="baybe.objectives.base.Objective.identify_non_dominated_configurations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">identify_non_dominated_configurations()</span></code></a>
+method provides a straightforward way to identify <em>non-dominated</em> target configurations
+(i.e., those lying on the Pareto front) for any chosen
+<a class="reference internal" href="../_autosummary/baybe.objectives.base.Objective.html#baybe.objectives.base.Objective" title="baybe.objectives.base.Objective"><code class="xref py py-class docutils literal notranslate"><span class="pre">Objective</span></code></a>. The result is a Boolean
+<a class="reference external" href="https://pandas.pydata.org/docs/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v3.0.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></a> highlighting the corresponding subset among the passed set of
+configurations.</p>
+<div class="note admonition">
+<p class="admonition-title">Domination for Non-Pareto Objectives</p>
+<p>While the concept of (non-)domination is typically associated with Pareto optimization,
+it can also be applied to objectives of types other than
+<a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoObjective</span></code></a>. In general, we identify non-dominated
+configurations as the subset of configurations that are Pareto-optimal as measured by
+their <strong>transformed representations</strong> induced by the transformation rules of the
+used objective and involved targets. In other words, the <em>regular</em> Pareto criterion is
+applied on the <em>transformed</em> space of computed objective values.</p>
+<p>This implies two noteworthy special cases:</p>
+<ul class="simple">
+<li><p>For <a class="reference internal" href="../_autosummary/baybe.objectives.pareto.ParetoObjective.html#baybe.objectives.pareto.ParetoObjective" title="baybe.objectives.pareto.ParetoObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParetoObjective</span></code></a>, it recovers the standard logic
+where transformation axes are defined by individual (transformed) targets.</p></li>
+<li><p>For <a class="reference internal" href="../_autosummary/baybe.objectives.single.SingleTargetObjective.html#baybe.objectives.single.SingleTargetObjective" title="baybe.objectives.single.SingleTargetObjective"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleTargetObjective</span></code></a>, it corresponds to the
+regular optimization of the respective target, where the Pareto front collapses to a
+single point representing the optimal target value.</p></li>
+</ul>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.objectives</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParetoObjective</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">baybe.targets</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumericalTarget</span>
+
+<span class="n">objective</span> <span class="o">=</span> <span class="n">ParetoObjective</span><span class="p">(</span>
+    <span class="n">targets</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">NumericalTarget</span><span class="p">(</span><span class="s2">&quot;t_max&quot;</span><span class="p">),</span>
+        <span class="n">NumericalTarget</span><span class="p">(</span><span class="s2">&quot;t_min&quot;</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">configurations</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;t_max&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span>
+        <span class="s2">&quot;t_min&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">identify_non_dominated_configurations</span><span class="p">(</span><span class="n">configurations</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">]))</span>
+</pre></div>
 </div>
 </section>
 </section>
@@ -1326,6 +1379,7 @@ using <a class="reference internal" href="surrogates.html#auto-replication"><spa
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Objective</a><ul>
+<li><a class="reference internal" href="#objective-types">Objective Types</a><ul>
 <li><a class="reference internal" href="#singletargetobjective">SingleTargetObjective</a></li>
 <li><a class="reference internal" href="#desirabilityobjective">DesirabilityObjective</a><ul>
 <li><a class="reference internal" href="#example-1-normalized-targets">Example 1 – Normalized Targets</a></li>
@@ -1333,6 +1387,9 @@ using <a class="reference internal" href="surrogates.html#auto-replication"><spa
 </ul>
 </li>
 <li><a class="reference internal" href="#paretoobjective">ParetoObjective</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#identifying-non-dominated-configurations">Identifying Non-Dominated Configurations</a></li>
 </ul>
 </li>
 </ul>

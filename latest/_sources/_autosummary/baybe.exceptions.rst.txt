@@ -41,6 +41,7 @@ baybe.exceptions
       NoRecommendersLeftError
       NonGaussianityError
       NotEnoughPointsLeftError
+      NothingToComputeError
       NothingToSimulateError
       NumericalUnderflowError
       OptionalImportError
