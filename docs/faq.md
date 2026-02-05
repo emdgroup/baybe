@@ -24,4 +24,3 @@ your campaign, depending on your settings for the
 {attr}`~baybe.campaign.Campaign.allow_recommending_already_measured` and
 {attr}`~baybe.campaign.Campaign.allow_recommending_already_recommended` flags.
 ```
-

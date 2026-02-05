@@ -27,35 +27,113 @@
 
 # BayBE — A Bayesian Back End for Design of Experiments
 
-The **Bay**esian **B**ack **E**nd (**BayBE**) is a general-purpose toolbox for Bayesian Design
-of Experiments, focusing on additions that enable real-world experimental campaigns.
+The **Bay**esian **B**ack **E**nd (**BayBE**) helps to find **good parameter configurations** 
+within complex parameter search spaces. 
+
+<div align="center">
+
+![Complex Search Space](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/complex_search_space.svg)
+
+</div>
+
+BayBE can help to solve many real-world optimization problems, such as:
+
+- 🧪 Find chemical reaction conditions or process parameters
+- 🥣 Create materials, chemical mixtures or formulations with desired properties
+- ✈️ Optimize the 3D shape of a physical object
+- 🖥️ Optimize a virtual simulation
+- ⚙️ Select model hyperparameters
+- 🫖 Find tasty espresso machine settings
+
+This is achieved via **Bayesian Design of Experiments**, 
+which helps to efficiently navigate parameter search spaces. 
+It balances
+exploitation of parameter space regions known to lead to good outcomes 
+and exploration of unknown regions. 
+
+BayBE provides a **general-purpose toolbox** for Bayesian Design of Experiments, 
+focusing on making this procedure easily accessible for real-world experiments.
+
 
 ## 🔋 Batteries Included
-Besides its core functionality to perform a typical recommend-measure loop, BayBE
-offers a range of ✨**built&#8209;in&nbsp;features**✨ crucial for real-world use cases.
-The following provides a non-comprehensive overview:
+BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
 
-- 🛠️ Custom parameter encodings: Improve your campaign with domain knowledge
-- 🧪 Built-in chemical encodings: Improve your campaign with chemical knowledge
-- 🎯 Numerical and binary targets with min, max and match objectives
-- ⚖️  Multi-target support via Pareto optimization and desirability scalarization
-- 🔍 Insights: Easily analyze feature importance and model behavior
-- 🎭 Hybrid (mixed continuous and discrete) spaces
-- 🚀 Transfer learning: Mix data from multiple campaigns and accelerate optimization
-- 🎰 Bandit models: Efficiently find the best among many options in noisy environments (e.g. A/B Testing)
-- 🔢 Cardinality constraints: Control the number of active factors in your design
-- 🌎 Distributed workflows: Run campaigns asynchronously with pending experiments and partial measurements
-- 🎓 Active learning: Perform smart data acquisition campaigns
-- ⚙️ Custom surrogate models: Enhance your predictions through mechanistic understanding
-- 📈 Comprehensive backtest, simulation and imputation utilities: Benchmark and find your best settings
-- 📝 Fully typed and hypothesis-tested: Robust code base
-- 🔄 All objects are fully (de-)serializable: Useful for storing results in databases or use in wrappers like APIs
-
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🛠️ <b>Flexible</b> modeling options
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Use both <b>continuous and discrete parameters</b> within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
+      <li><b>Restrict the search space</b> to only a relevant subspace (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
+      <li>Choose between different optimization strategies to <b>balance exploration and exploitation</b> of the search space:
+        <ul>
+          <li>Gain the <b>understanding of the whole search space</b> via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
+          <li>Maximize <b>total gain across a sequence of actions</b> via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
+        </ul>
+      </li>
+      <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
+      <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
+      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Target/Multi_Target.html">Pareto optimization or desirability scalarization</a>).</li>
+    </ul>
+  </div>
+</details>
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    📚 Mechanisms for leveraging <b>additional information</b>
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Capture <b>relationships between categories</b> by <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">encoding categorical</a> data.</li>
+      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for <b>chemistry-related use cases</b>.</li>
+      <li><b>Built-in mechanistic</b> process understanding via <a href="https://emdgroup.github.io/baybe/stable/examples/Custom_Surrogates/Custom_Surrogates.html">custom surrogate</a> models.</li>
+      <li>Leverage <b>additional data</b> from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/examples/Transfer_Learning/basic_transfer_learning.html">transfer learning</a>.</li>
+    </ul>
+  </div>
+</details>
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔗 <b>Advanced</b> optimization workflows
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with <b>partial measurements</b> and pending experiments.</li>
+      <li>Connect BayBE with <b>database storage and API wrappers</b> using the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
+    </ul>
+  </div>
+</details>
+<details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
+  <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
+    🔍 Performance <b>evaluation</b> tools
+  </summary>
+  <div style="padding: 10px;">
+    <ul>
+      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by <b>analyzing model behavior</b> and feature importance.</li>
+      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/examples/Backtesting/Backtesting.html">backtesting</a>.</li>
+    </ul>
+  </div>
+</details>
 
 ## ⚡ Quick Start
 
-Let us consider a simple experiment where we control three parameters and want to
-maximize a single target called `Yield`.
+To perform Bayesian Design of Experiments with BayBE, 
+you should first specify the **parameter search space** and **objective** to be optimized. 
+Based on this information and any **available data** about outcomes of specific parameter configurations, 
+BayBE will **recommend the next set of parameter configurations** to be **measured**. 
+To inform the next recommendation cycle, the newly generated measurements can be added to BayBE.
+
+<div align="center">
+
+![Quick Start](https://raw.githubusercontent.com/Hrovatin/baybe/docs/easy_access/docs/_static/quick_start_automatic.svg)
+
+</div>
+
+From the user perspective, the most important part is the "setup" step (top of the figure).
+
+Below we show a simple optimization procedure, starting with the setup step and subsequently
+performing the recommendation loop. 
+The provided example aims to maximize the yield of a chemical reaction by adjusting its parameter configurations 
+(also known as reaction conditions).
 
 First, install BayBE into your Python environment: 
 ```bash 
@@ -66,7 +144,7 @@ For more information on this step, see our
 
 ### Defining the Optimization Objective
 
-In BayBE's language, the `Yield` can be represented as a `NumericalTarget`,
+In BayBE's language, the reaction yield can be represented as a `NumericalTarget`,
 which we wrap into a `SingleTargetObjective`:
 
 ```python
@@ -76,9 +154,9 @@ from baybe.objectives import SingleTargetObjective
 target = NumericalTarget(name="Yield")
 objective = SingleTargetObjective(target=target)
 ```
-In cases where we are confronted with multiple (potentially conflicting) targets,
-the `ParetoObjective` or `DesirabilityObjective` can be used instead.
-These allow to define additional settings, such as how the targets should be balanced.
+In cases where we are confronted with multiple (potentially conflicting) targets 
+(e.g., yield vs cost),
+the `ParetoObjective` or `DesirabilityObjective` can be used to define how the targets should be balanced.
 For more details, see the
 [objectives section](https://emdgroup.github.io/baybe/stable/userguide/objectives.html)
 of the user guide.
@@ -86,11 +164,9 @@ of the user guide.
 ### Defining the Search Space
 
 Next, we inform BayBE about the available "control knobs", that is, the underlying
-system parameters we can tune to optimize our targets. This also involves specifying 
-their values/ranges and other parameter-specific details.
-
-For our example, we assume that we can control three parameters – `Granularity`,
-`Pressure[bar]`, and `Solvent` – as follows:
+reaction parameters we can tune to optimize the yield. 
+In this case we tune granularity, pressure and solvent, each being encoded as a `Parameter`.
+We also need to specify which values individual parameters can take.
 
 ```python
 from baybe.parameters import (
@@ -147,20 +223,15 @@ and alternative ways of construction.
 
 ### Optional: Defining the Optimization Strategy
 
-As an optional step, we can specify details on how the optimization should be
-conducted. If omitted, BayBE will choose a default setting.
+As an optional step, we can specify details on how the optimization of the experimental configurations should be
+performed. If omitted, BayBE will choose a default Bayesian optimization setting.
 
 For our example, we combine two recommenders via a so-called meta recommender named
 `TwoPhaseMetaRecommender`:
 
 1. In cases where no measurements have been made prior to the interaction with BayBE,
-   a selection via `initial_recommender` is used.
-2. As soon as the first measurements are available, we switch to `recommender`.
-
-For more details on the different recommenders, their underlying algorithmic
-details, and their configuration settings, see the
-[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
-of the user guide.
+   the parameters will be recommended with the `initial_recommender`.
+2. As soon as the first measurements are available, we switch to the `recommender`.
 
 ```python
 from baybe.recommenders import (
@@ -175,9 +246,14 @@ recommender = TwoPhaseMetaRecommender(
 )
 ```
 
+For more details on the different recommenders, their underlying algorithmic
+details and how their settings can be adjusted, see the
+[recommenders section](https://emdgroup.github.io/baybe/stable/userguide/recommenders.html)
+of the user guide.
+
 ### The Optimization Loop
 
-We can now construct a campaign object that brings all pieces of the puzzle together:
+We can now construct a `Campaign` that performs the Bayesian optimization of the experimental configurations:
 
 ```python
 from baybe import Campaign
@@ -185,21 +261,24 @@ from baybe import Campaign
 campaign = Campaign(searchspace, objective, recommender)
 ```
 
-With this object at hand, we can start our experimentation cycle.
+With this object at hand, we can start our optimization cycle.
 In particular:
 
-* We can ask BayBE to `recommend` new experiments.
-* We can `add_measurements` for certain experimental settings to the campaign's 
-  database.
+* The campaign can `recommend` new experiments.
+* We can `add_measurements` of target values for the measured parameter configurations 
+  to the campaign's database.
 
 Note that these two steps can be performed in any order.
 In particular, available measurements can be submitted at any time and also several 
 times before querying the next recommendations.
 
 ```python
-df = campaign.recommend(batch_size=3)
+df = campaign.recommend(batch_size=3) # Recommend three experimental configurations to test
 print(df)
 ```
+
+The below table shows the three parameter configurations for which BayBE recommended to 
+measure the reaction yield.
 
 ```none
    Granularity  Pressure[bar]    Solvent
@@ -208,31 +287,32 @@ print(df)
 29        fine            5.0  Solvent B
 ```
 
-Note that the specific recommendations will depend on both the data
-already fed to the campaign and the random number generator seed that is used.
-
-After having conducted the corresponding experiments, we can add our measured
-targets to the table and feed it back to the campaign:
+After having conducted the recommended experiments, we can add the newly measured
+target information to the campaign:
 
 ```python
-df["Yield"] = [79.8, 54.1, 59.4]
+df["Yield"] = [79.8, 54.1, 59.4] # Measured yields for the three recommended parameter configurations
 campaign.add_measurements(df)
 ```
 
-With the newly arrived data, BayBE can produce a refined design for the next iteration.
-This loop would typically continue until a desired target value has been achieved in
-the experiment.
+With the newly provided data, BayBE can produce a refined recommendation for the next iteration.
+This loop typically continues until a desired target value is achieved in the experiment.
 
-### Advanced Example: Chemical Substances
-BayBE has several modules to go beyond traditional approaches. One such example is the
-use of custom encodings for categorical parameters. Chemical encodings for substances
-are a special built-in case of this that comes with BayBE.
+### Inspect the Progress of the Experimental Configuration Optimization
 
-In the following picture you can see
-the outcome for treating the solvent, base and ligand in a direct arylation reaction
-optimization (from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)) with
-chemical encodings compared to one-hot and a random baseline:
-![Substance Encoding Example](./examples/Backtesting/full_lookup_light.svg)
+The below plot shows progression of a campaign that optimized direct arylation reaction
+by tuning the solvent, base and ligand 
+(from [Shields, B.J. et al.](https://doi.org/10.1038/s41586-021-03213-y)).
+Each line shows the best target value that was cumulatively achieved after a given number of experimental iterations.
+
+
+Different lines show outcomes of `Campaigns` with different designs.
+
+![Substance Encoding Example](./examples/Backtesting/full_lookup_automatic.svg)
+
+In particular, the five `Campaigns` differ in how molecules are encoded within each chemical `Parameter`.
+We can see that optimization is more efficient when 
+using chemical encodings (e.g., *MORDRED*) rather than encoding categories with *one-hot* encoding or *random* features.
 
 (installation)=
 ## 💻 Installation
@@ -263,7 +343,7 @@ pip install git+https://github.com/emdgroup/baybe.git@main
 
 Alternatively, you can install the package from your own local copy.
 First, clone the repository, navigate to the repository root folder, check out the
-desired commit, and run:
+desired commit and run:
 
 ```bash
 pip install .

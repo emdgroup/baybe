@@ -36,6 +36,10 @@ htmlcov
 # Pictures created by backtesting
 *.png
 
+# Picture components for documentation
+docs/scripts/graphics/*.svg
+docs/scripts/graphics/*.png
+
 # Folders that are temporarily created when building the documentation
 docs/_autosummary
 docs/_build
