@@ -17,7 +17,7 @@ from typing_extensions import assert_never, override
 
 from baybe.exceptions import IncompatibilityError
 from baybe.serialization import SerialMixin, converter
-from baybe.serialization.core import select_constructor_hook
+from baybe.serialization.core import _TYPE_FIELD, select_constructor_hook
 from baybe.targets._deprecated import (
     _VALID_TRANSFORMATIONS,
     TargetMode,
@@ -785,6 +785,7 @@ _hook = converter.get_structure_hook(NumericalTarget)
 @converter.register_structure_hook
 def _enable_legacy_target_deserialization(dct: dict[str, Any], cls) -> NumericalTarget:
     if "mode" in dct:
+        dct.pop(_TYPE_FIELD, None)
         return NumericalTarget(**dct)
     return _hook(dct, cls)
 
