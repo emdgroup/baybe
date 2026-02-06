@@ -765,40 +765,13 @@ class NumericalTarget(Target, SerialMixin):
         )
 
 
+# Collect leftover original slotted classes processed by `attrs.define`
+gc.collect()
+
 converter.register_unstructure_hook(
     NumericalTarget,
     cattrs.gen.make_dict_unstructure_fn(
         NumericalTarget, converter, _constructor_info=cattrs.override(omit=False)
     ),
 )
-
-
-# >>> Deprecation >>> #
-
-_hook = converter.get_structure_hook(NumericalTarget)
-
-
-@converter.register_structure_hook
-def _(dct, cls) -> NumericalTarget:
-    if "mode" in dct:
-        return _hook(*dct)
-    return select_constructor_hook(dct, cls)
-
-
-_hook = converter.get_structure_hook(NumericalTarget)
-
-
-@converter.register_structure_hook
-def _structure_legacy_target_arguments(x: dict[str, Any], _) -> NumericalTarget:
-    """Accept legacy target argument for backward compatibility."""
-    x.pop("type", None)
-    try:
-        return _hook(x, _)
-    except Exception:
-        return NumericalTarget(**x)  # type: ignore[return-value]
-
-
-# <<< Deprecation <<< #
-
-
-gc.collect()
+converter.register_structure_hook(NumericalTarget, select_constructor_hook)
