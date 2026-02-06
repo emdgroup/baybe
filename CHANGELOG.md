@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for determining the Pareto front
 - Interpoint constraints for continuous search spaces
 
+### Breaking Changes
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
+
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization
   can now be conveniently controlled via the new `Settings` mechanism
@@ -65,10 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   transformation directly
 - Dataframe-to-tensor conversion now yields contiguous tensors, improving
   reproducibility of downstream operations
-
-### Breaking Changes
-- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
-  instead of a single tuple (needed for interpoint constraints)
 
 ### Fixed
 - Random seed not entering simulation when explicitly passed to `simulate_scenarios`
