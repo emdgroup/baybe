@@ -133,6 +133,7 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     if constructor_name := specs.pop("constructor", None):
         # Drop potentially existing type field
         # (The type is already fully determined in this execution branch)
+        specs = specs.copy()
         specs.pop(_TYPE_FIELD, None)
 
         # Extract the constructor callable
@@ -144,7 +145,6 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 
         # Extract the constructor parameter types and deserialize the arguments
         type_hints = get_type_hints(constructor)
-        specs = specs.copy()
         for key in specs:
             annotation = type_hints[key]
 
