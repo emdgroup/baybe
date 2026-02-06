@@ -775,3 +775,18 @@ converter.register_unstructure_hook(
     ),
 )
 converter.register_structure_hook(NumericalTarget, select_constructor_hook)
+
+
+# >>> Deprecation >>> #
+
+_hook = converter.get_structure_hook(NumericalTarget)
+
+
+@converter.register_structure_hook
+def _enable_legacy_target_deserialization(dct: dict[str, Any], cls) -> NumericalTarget:
+    if "mode" in dct:
+        return NumericalTarget(**dct)
+    return _hook(dct, cls)
+
+
+# <<< Deprecation <<< #
