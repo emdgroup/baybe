@@ -12,9 +12,9 @@ from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
 from baybe.targets import NumericalTarget
-from baybe.utils.random import temporary_seed
 from benchmarks.definition import (
     ConvergenceBenchmark,
     ConvergenceBenchmarkSettings,
@@ -109,7 +109,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
 
     meshgrid = np.meshgrid(*[points for points in grid_locations.values()])
 
-    with temporary_seed(settings.random_seed):
+    with Settings(random_seed=settings.random_seed):
         lookups = []
         for function_name, function in functions.items():
             lookup = pd.DataFrame(
@@ -126,7 +126,7 @@ def easom_tl_47_negate_noise5(settings: ConvergenceBenchmarkSettings) -> pd.Data
     initial_data = concat_lookups[concat_lookups["Function"] == "Source_Function"]
 
     initial_data_samples = {}
-    with temporary_seed(settings.random_seed):
+    with Settings(random_seed=settings.random_seed):
         for p in percentages:
             initial_data_samples[p] = [
                 initial_data.sample(frac=p) for _ in range(settings.n_mc_iterations)

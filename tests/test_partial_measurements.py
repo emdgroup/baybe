@@ -4,7 +4,6 @@ import re
 from contextlib import nullcontext
 
 import numpy as np
-import pandas as pd
 import pytest
 from pytest import param
 
@@ -35,14 +34,14 @@ def test_invalid_partial_measurements(campaign):
     incomplete measurements.
     """  # noqa: D205
     target_names = [t.name for t in campaign.targets]
+    measurements = create_fake_input(campaign.parameters, campaign.targets, 2)
+    measurements[target_names] = float("nan")
     with pytest.raises(
         IncompleteMeasurementsError,
         match=f"missing values for the following targets: "
         f"{re.escape(str(target_names))}",
     ):
-        campaign.add_measurements(
-            pd.DataFrame({t.name: [float("nan")] for t in campaign.targets})
-        )
+        campaign.add_measurements(measurements)
 
 
 @pytest.mark.parametrize(

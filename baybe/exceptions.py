@@ -111,6 +111,10 @@ class NothingToSimulateError(Exception):
     """There is nothing to simulate because there are no testable configurations."""
 
 
+class NothingToComputeError(Exception):
+    """There is nothing to compute because there are no inputs or existing data."""
+
+
 class NoRecommendersLeftError(Exception):
     """A recommender is requested by a meta recommender but there are no recommenders
     left.
@@ -164,3 +168,7 @@ class UnmatchedAttributeError(Exception):
 
 class InvalidTargetValueError(Exception):
     """A target value was entered that is not in the target space."""
+
+
+class NotAllowedError(Exception):
+    """An operation was attempted that is not allowed in the current context."""

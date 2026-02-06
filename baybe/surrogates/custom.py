@@ -28,6 +28,7 @@ from baybe.parameters import (
 )
 from baybe.searchspace import SearchSpace
 from baybe.serialization import converter
+from baybe.settings import active_settings
 from baybe.surrogates.base import IndependentGaussianSurrogate
 from baybe.surrogates.utils import batchify_mean_var_prediction
 from baybe.utils.conversion import to_string
@@ -88,7 +89,6 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
         import torch
 
         from baybe._optional.onnx import onnxruntime as ort
-        from baybe.utils.torch import DTypeFloatTorch
 
         model_inputs = {
             self.onnx_input_name: candidates_comp_scaled.numpy().astype(DTypeFloatONNX)
@@ -102,8 +102,8 @@ class CustomONNXSurrogate(IndependentGaussianSurrogate):
         #   about the mean only and it's not clear how this will be handled in the
         #   future. Once there are more choices available, this should be revisited.
         return (
-            torch.from_numpy(results[0]).to(DTypeFloatTorch),
-            torch.from_numpy(results[1]).pow(2).to(DTypeFloatTorch),
+            torch.from_numpy(results[0]).to(active_settings.DTypeFloatTorch),
+            torch.from_numpy(results[1]).pow(2).to(active_settings.DTypeFloatTorch),
         )
 
     @override

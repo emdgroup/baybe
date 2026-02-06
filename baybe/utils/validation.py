@@ -11,10 +11,13 @@ import pandas as pd
 from attrs import Attribute
 
 from baybe.exceptions import IncompleteMeasurementsError
+from baybe.settings import active_settings
+from baybe.utils.dataframe import normalize_input_dtypes
 
 if TYPE_CHECKING:
     from baybe.objectives.base import Objective
     from baybe.parameters.base import Parameter
+    from baybe.searchspace.core import SearchSpace
     from baybe.targets.base import Target
 
 
@@ -220,3 +223,41 @@ def validate_object_names(objects: Iterable[Parameter | Target], /) -> None:
             f"All parameters and targets must have unique names. The following names "
             f"appear multiple times: {duplicates}."
         )
+
+
+def preprocess_dataframe(
+    df: pd.DataFrame,
+    /,
+    searchspace: SearchSpace,
+    objective: Objective | None = None,
+    numerical_measurements_must_be_within_tolerance: bool = True,
+) -> pd.DataFrame:
+    """Preprocess an experimental dataframe by validating and normalizing its contents.
+
+    Checks that the dataframe contains all required columns for the given
+    parameters/objective and adjusts their dtypes accordingly.
+    No-op if dataframe preprocessing is disabled in the settings.
+
+    Args:
+        df: The dataframe to preprocess.
+        searchspace: The search space to validate the dataframe columns against.
+        objective: The objective to validate the dataframe columns against.
+        numerical_measurements_must_be_within_tolerance:
+            See :meth:`validate_parameter_input`.
+
+    Returns:
+        The preprocessed dataframe.
+    """
+    if not active_settings.preprocess_dataframes:
+        return df
+
+    validate_parameter_input(
+        df, searchspace.parameters, numerical_measurements_must_be_within_tolerance
+    )
+    if objective is not None:
+        targets = objective.targets
+        validate_target_input(df, targets)
+        validate_objective_input(df, objective)
+    else:
+        targets = ()
+    return normalize_input_dtypes(df, [*searchspace.parameters, *targets])

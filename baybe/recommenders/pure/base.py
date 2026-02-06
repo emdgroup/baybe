@@ -20,13 +20,7 @@ from baybe.searchspace.core import SearchSpaceType
 from baybe.searchspace.discrete import SubspaceDiscrete
 from baybe.serialization.core import add_type, converter
 from baybe.utils.boolean import is_abstract
-from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import (
-    validate_object_names,
-    validate_objective_input,
-    validate_parameter_input,
-    validate_target_input,
-)
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 _DEPRECATION_ERROR_MESSAGE = (
     "The attribute '{}' is no longer available for recommenders. "
@@ -108,34 +102,23 @@ class PureRecommender(ABC, RecommenderProtocol):
         measurements: pd.DataFrame | None = None,
         pending_experiments: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        # Validation
         if objective is not None:
             validate_object_names(searchspace.parameters + objective.targets)
 
-        if (
-            measurements is not None
-            and not isinstance(measurements, _ValidatedDataFrame)
-            and not measurements.empty
-            and objective is not None
-            and searchspace is not None
-        ):
-            validate_target_input(measurements, objective.targets)
-            validate_objective_input(measurements, objective)
-            validate_parameter_input(measurements, searchspace.parameters)
-            measurements = normalize_input_dtypes(
-                measurements, searchspace.parameters + objective.targets
+        if measurements is not None:
+            measurements = preprocess_dataframe(
+                measurements,
+                searchspace,
+                objective,
+                numerical_measurements_must_be_within_tolerance=False,
             )
-            measurements.__class__ = _ValidatedDataFrame
-        if (
-            pending_experiments is not None
-            and not isinstance(pending_experiments, _ValidatedDataFrame)
-            and searchspace is not None
-        ):
-            validate_parameter_input(pending_experiments, searchspace.parameters)
-            pending_experiments = normalize_input_dtypes(
-                pending_experiments, searchspace.parameters
+
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
             )
-            pending_experiments.__class__ = _ValidatedDataFrame
 
         if searchspace.type is SearchSpaceType.CONTINUOUS:
             return self._recommend_continuous(

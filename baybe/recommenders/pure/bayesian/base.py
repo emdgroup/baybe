@@ -21,18 +21,13 @@ from baybe.exceptions import (
 from baybe.objectives.base import Objective
 from baybe.recommenders.pure.base import PureRecommender
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.base import (
     Surrogate,
     SurrogateProtocol,
 )
-from baybe.utils.dataframe import _ValidatedDataFrame, normalize_input_dtypes
-from baybe.utils.validation import (
-    validate_object_names,
-    validate_objective_input,
-    validate_parameter_input,
-    validate_target_input,
-)
+from baybe.utils.validation import preprocess_dataframe, validate_object_names
 
 if TYPE_CHECKING:
     from botorch.acquisition import AcquisitionFunction as BoAcquisitionFunction
@@ -161,41 +156,39 @@ class BayesianRecommender(PureRecommender, ABC):
 
         validate_object_names(searchspace.parameters + objective.targets)
 
-        # Experimental input validation
         if (measurements is None) or measurements.empty:
             raise NotImplementedError(
                 f"Recommenders of type '{BayesianRecommender.__name__}' do not support "
                 f"empty training data."
             )
-        if not isinstance(measurements, _ValidatedDataFrame):
-            validate_target_input(measurements, objective.targets)
-            validate_objective_input(measurements, objective)
-            validate_parameter_input(measurements, searchspace.parameters)
-            measurements = normalize_input_dtypes(
-                measurements, searchspace.parameters + objective.targets
+
+        measurements = preprocess_dataframe(
+            measurements,
+            searchspace,
+            objective,
+            numerical_measurements_must_be_within_tolerance=False,
+        )
+
+        if pending_experiments is not None:
+            pending_experiments = preprocess_dataframe(
+                pending_experiments,
+                searchspace,
+                numerical_measurements_must_be_within_tolerance=False,
             )
-            measurements.__class__ = _ValidatedDataFrame
-        if pending_experiments is not None and not isinstance(
-            pending_experiments, _ValidatedDataFrame
-        ):
-            validate_parameter_input(pending_experiments, searchspace.parameters)
-            pending_experiments = normalize_input_dtypes(
-                pending_experiments, searchspace.parameters
-            )
-            pending_experiments.__class__ = _ValidatedDataFrame
 
         self._setup_botorch_acqf(
             searchspace, objective, measurements, pending_experiments
         )
 
         try:
-            return super().recommend(
-                batch_size=batch_size,
-                searchspace=searchspace,
-                objective=objective,
-                measurements=measurements,
-                pending_experiments=pending_experiments,
-            )
+            with Settings(preprocess_dataframes=False):
+                return super().recommend(
+                    batch_size=batch_size,
+                    searchspace=searchspace,
+                    objective=objective,
+                    measurements=measurements,
+                    pending_experiments=pending_experiments,
+                )
         except RuntimeError as ex:
             # Search spaces with continuous components are incompatible with surrogates
             # that do not support gradient computation

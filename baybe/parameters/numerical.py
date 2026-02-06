@@ -14,8 +14,8 @@ from typing_extensions import override
 from baybe.exceptions import NumericalUnderflowError
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter
 from baybe.parameters.validation import validate_is_finite, validate_unique_values
+from baybe.settings import active_settings
 from baybe.utils.interval import InfiniteIntervalError, Interval
-from baybe.utils.numerical import DTypeFloatNumpy
 
 
 @define(frozen=True, slots=False)
@@ -82,13 +82,15 @@ class NumericalDiscreteParameter(DiscreteParameter):
     @override
     @property
     def values(self) -> tuple:
-        return tuple(DTypeFloatNumpy(itm) for itm in self._values)
+        return tuple(active_settings.DTypeFloatNumpy(itm) for itm in self._values)
 
     @override
     @cached_property
     def comp_df(self) -> pd.DataFrame:
         comp_df = pd.DataFrame(
-            {self.name: self.values}, index=self.values, dtype=DTypeFloatNumpy
+            {self.name: self.values},
+            index=self.values,
+            dtype=active_settings.DTypeFloatNumpy,
         )
         return comp_df
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import time
 import warnings
+from copy import deepcopy
 from itertools import chain
 from unittest.mock import Mock
 
@@ -23,6 +24,7 @@ from tenacity import (
 )
 from torch._C import _LinAlgError
 
+from baybe import active_settings
 from baybe._optional.info import CHEM_INSTALLED
 from baybe.acquisition import qLogEI, qLogNEHVI
 from baybe.campaign import Campaign
@@ -41,6 +43,7 @@ from baybe.constraints import (
     SubSelectionCondition,
     ThresholdCondition,
 )
+from baybe.exceptions import IncompatibilityError
 from baybe.kernels import MaternKernel
 from baybe.objectives import ParetoObjective
 from baybe.objectives.desirability import DesirabilityObjective
@@ -67,6 +70,7 @@ from baybe.recommenders.pure.bayesian.botorch import (
 )
 from baybe.recommenders.pure.nonpredictive.sampling import RandomRecommender
 from baybe.searchspace import SearchSpace
+from baybe.settings import Settings
 from baybe.surrogates import GaussianProcessSurrogate
 from baybe.surrogates.custom import CustomONNXSurrogate
 from baybe.targets import NumericalTarget
@@ -78,7 +82,6 @@ from baybe.utils.dataframe import (
     add_parameter_noise,
     create_fake_input,
 )
-from baybe.utils.random import temporary_seed
 
 # Hypothesis settings
 hypothesis_settings.register_profile("ci", deadline=500, max_examples=100)
@@ -110,6 +113,14 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture(autouse=True)
+def reset_settings():
+    """Reset the settings object to its original state before each test."""
+    original_settings = deepcopy(active_settings)
+    yield
+    original_settings.overwrite(active_settings)
 
 
 @pytest.fixture(params=[2], name="n_iterations", ids=["i2"])
@@ -372,6 +383,9 @@ def fixture_targets(target_names: list[str]):
     # Required for the selection to work as intended (if the input was a single string,
     # the list comprehension would match substrings instead)
     assert isinstance(target_names, list)
+    assert len(target_names) == len(set(target_names)), (
+        "Duplicate target names in fixture 'target_names'."
+    )
 
     valid_targets = [
         NumericalTarget(
@@ -601,21 +615,27 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
 
 
 @pytest.fixture(name="target_names")
-def fixture_default_target_selection():
+def fixture_default_target_names():
     """The default targets to be used if not specified differently."""
     return ["Target_max"]
 
 
 @pytest.fixture(name="parameter_names")
-def fixture_default_parameter_selection():
+def fixture_default_parameter_names():
     """Default parameters used if not specified differently."""
     return ["Categorical_1", "Categorical_2", "Num_disc_1"]
 
 
 @pytest.fixture(name="constraint_names")
-def fixture_default_constraint_selection():
+def fixture_default_constraint_names():
     """Default constraints used if not specified differently."""
     return []
+
+
+@pytest.fixture(name="objective_cls")
+def fixture_default_objective_class(targets):
+    """Default objective class used if not specified differently."""
+    return SingleTargetObjective if len(targets) == 1 else DesirabilityObjective
 
 
 @pytest.fixture(name="campaign")
@@ -759,13 +779,22 @@ def fixture_meta_recommender(
 
 
 @pytest.fixture(name="objective")
-def fixture_default_objective(targets):
-    """The default objective to be used if not specified differently."""
-    return (
-        SingleTargetObjective(targets[0])
-        if len(targets) == 1
-        else DesirabilityObjective(targets)
-    )
+def fixture_default_objective(targets, objective_cls):
+    """Provides example objectives via specified names."""
+    if objective_cls is None:
+        return None
+    if objective_cls == SingleTargetObjective:
+        if len(targets) != 1:
+            raise IncompatibilityError(
+                "You can only use single target objectives with one target but you "
+                f"provided {len(targets)} targets."
+            )
+        return SingleTargetObjective(targets[0])
+    if objective_cls == ParetoObjective:
+        return ParetoObjective(targets)
+    if objective_cls == DesirabilityObjective:
+        return DesirabilityObjective(targets)
+    raise NotImplementedError(f"Unknown objective class: '{objective_cls}'")
 
 
 @pytest.fixture(name="config")
@@ -940,7 +969,7 @@ def run_iterations(
         batch_size: Number of recommended points per iteration.
         add_noise: Flag whether measurement noise should be added every 2nd iteration.
     """
-    with temporary_seed(int(time.time())):
+    with Settings(random_seed=int(time.time())):
         for k in range(n_iterations):
             rec = campaign.recommend(batch_size=batch_size)
 

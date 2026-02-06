@@ -18,15 +18,14 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from baybe.campaign import Campaign
-from baybe.parameters.numerical import NumericalContinuousParameter
-from baybe.simulation.scenarios import simulate_scenarios
-from baybe.targets.numerical import NumericalTarget
-from baybe.utils.random import set_random_seed
+from baybe import Campaign, active_settings
+from baybe.parameters import NumericalContinuousParameter
+from baybe.simulation import simulate_scenarios
+from baybe.targets import NumericalTarget
 
 # ## Settings
 
-set_random_seed(1337)
+active_settings.random_seed = 1337
 
 SMOKE_TEST = "SMOKE_TEST" in os.environ
 N_MC_ITERATIONS = 2 if SMOKE_TEST else 20

@@ -20,6 +20,7 @@ from baybe.constraints.base import (
     ContinuousNonlinearConstraint,
 )
 from baybe.parameters import NumericalContinuousParameter
+from baybe.settings import active_settings
 from baybe.utils.interval import Interval
 from baybe.utils.validation import finite_float
 
@@ -158,13 +159,14 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         import torch
 
-        from baybe.utils.torch import DTypeFloatTorch
-
         # Handle direction of inequality by sign flip
         coefficients = self._multiplier * torch.tensor(
-            self.coefficients, dtype=DTypeFloatTorch
+            self.coefficients, dtype=active_settings.DTypeFloatTorch
         )
-        rhs = self._multiplier * torch.tensor(self.rhs, dtype=DTypeFloatTorch).item()
+        rhs = (
+            self._multiplier
+            * torch.tensor(self.rhs, dtype=active_settings.DTypeFloatTorch).item()
+        )
 
         # Locate where the parameters referenced by the constraint will later be found
         # in the input tensor provided to BoTorch

@@ -14,10 +14,10 @@ from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.enum import CategoricalEncoding
 from baybe.priors import BetaPrior
 from baybe.searchspace.core import SearchSpace
+from baybe.settings import Settings
 from baybe.surrogates.base import Surrogate
 from baybe.targets.binary import _FAILURE_VALUE_COMP, _SUCCESS_VALUE_COMP
 from baybe.utils.conversion import to_string
-from baybe.utils.random import temporary_seed
 
 if TYPE_CHECKING:
     from botorch.models.model import Model
@@ -100,7 +100,7 @@ class BetaBernoulliMultiArmedBanditSurrogate(Surrogate):
             def forward(self, posterior: Posterior) -> Tensor:
                 """Sample the posterior."""
                 # FIXME[typing]: https://github.com/meta-pytorch/botorch/issues/3061
-                with temporary_seed(int(self.seed)):
+                with Settings(random_seed=int(self.seed)):
                     samples = posterior.rsample(self.sample_shape)
                 return samples
 

@@ -13,10 +13,9 @@ import pandas as pd
 
 from baybe.campaign import Campaign
 from baybe.exceptions import NotEnoughPointsLeftError, NothingToSimulateError
+from baybe.settings import Settings, active_settings
 from baybe.simulation.lookup import look_up_targets
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.numerical import DTypeFloatNumpy
-from baybe.utils.random import temporary_seed
 
 
 def simulate_experiment(
@@ -97,8 +96,9 @@ def simulate_experiment(
             "to be tracked."
         )
 
-    context = temporary_seed(random_seed) if random_seed is not None else nullcontext()
-    with context:
+    with (
+        Settings(random_seed=random_seed) if random_seed is not None else nullcontext()
+    ):
         #   Validate the lookup mechanism
         if not (isinstance(lookup, (pd.DataFrame, Callable)) or (lookup is None)):
             raise TypeError(
@@ -115,7 +115,9 @@ def simulate_experiment(
         if isinstance(lookup, pd.DataFrame):
             lookup = lookup.copy()
             float_cols = lookup.select_dtypes(include=["float"]).columns
-            lookup[float_cols] = lookup[float_cols].astype(DTypeFloatNumpy)
+            lookup[float_cols] = lookup[float_cols].astype(
+                active_settings.DTypeFloatNumpy
+            )
 
         # Clone the campaign to avoid mutating the original object
         # TODO: Reconsider if deepcopies are required once [16605] is resolved

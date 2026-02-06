@@ -6,6 +6,7 @@ import pytest
 import torch
 from torch.testing import assert_close
 
+from baybe import active_settings
 from baybe.acquisition.acqfs import qKnowledgeGradient
 from baybe.acquisition.base import AcquisitionFunction
 from baybe.objectives.pareto import ParetoObjective
@@ -13,7 +14,6 @@ from baybe.parameters.numerical import NumericalDiscreteParameter
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.targets import NumericalTarget
 from baybe.utils.basic import get_subclasses
-from baybe.utils.random import set_random_seed
 
 
 def compute_posterior_and_acqf(
@@ -44,7 +44,7 @@ def test_minimization(acqf_cls: type[AcquisitionFunction]):
     searchspace = NumericalDiscreteParameter("p", values).to_searchspace()
 
     # Maximization of plain targets
-    set_random_seed(0)
+    active_settings.random_seed = 0
     if acqf_cls.supports_multi_output:
         df_max = pd.DataFrame({"p": values, "t1": values, "t2": values})
         obj_max = ParetoObjective([NumericalTarget("t1"), NumericalTarget("t2")])
@@ -54,7 +54,7 @@ def test_minimization(acqf_cls: type[AcquisitionFunction]):
     p_min, acqf_max = compute_posterior_and_acqf(acqf_cls, df_max, searchspace, obj_max)
 
     # Minimization of inverted targets
-    set_random_seed(0)
+    active_settings.random_seed = 0
     if acqf_cls.supports_multi_output:
         df_min = pd.DataFrame({"p": values, "t1": -values, "t2": -values})
         obj_min = ParetoObjective(

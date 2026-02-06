@@ -19,9 +19,9 @@ from baybe.recommenders import (
     TwoPhaseMetaRecommender,
 )
 from baybe.searchspace.core import SearchSpaceType
+from baybe.settings import Settings
 from baybe.utils.basic import get_subclasses
 from baybe.utils.dataframe import add_parameter_noise
-from baybe.utils.random import temporary_seed
 
 _discrete_params = ["Categorical_1", "Switch_1", "Num_disc_1"]
 _continuous_params = ["Conti_finite1", "Conti_finite2", "Conti_finite3"]
@@ -113,10 +113,10 @@ def test_pending_points(campaign, batch_size, fake_measurements):
     # Get recommendations and set them as pending experiments while getting another set
     # Fix the random seed for each recommend call to limit influence of randomness in
     # some recommenders which could also trivially avoid overlap
-    with temporary_seed(1337):
+    with Settings(random_seed=1337):
         rec1 = campaign.recommend(batch_size)
     campaign.clear_cache()
-    with temporary_seed(1337):
+    with Settings(random_seed=1337):
         rec2 = campaign.recommend(batch_size=batch_size, pending_experiments=rec1)
 
     # Assert they have no overlap, round to avoid numerical fluctuation

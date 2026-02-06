@@ -34,10 +34,10 @@ from baybe.searchspace.validation import (
     validate_parameter_names,
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
+from baybe.settings import active_settings
 from baybe.utils.basic import flatten, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
-from baybe.utils.numerical import DTypeFloatNumpy
 
 if TYPE_CHECKING:
     from torch import Tensor
@@ -317,7 +317,7 @@ class SubspaceContinuous(SerialMixin):
         return pd.DataFrame(
             {p.name: p.bounds.to_tuple() for p in self.parameters},
             index=["min", "max"],
-            dtype=DTypeFloatNumpy,
+            dtype=active_settings.DTypeFloatNumpy,
         )
 
     @property
