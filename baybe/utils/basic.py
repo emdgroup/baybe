@@ -5,6 +5,7 @@ from __future__ import annotations
 import enum
 import functools
 import inspect
+import itertools
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeGuard, TypeVar
@@ -393,3 +394,8 @@ def cache_to_disk(func: Callable, /) -> Callable:
         return f(*args, **kwargs)
 
     return wrapper
+
+
+def flatten(x: Iterable[Iterable[_T]]) -> list[_T]:
+    """Flatten one level of nesting of a given iterable."""
+    return list(itertools.chain.from_iterable(item for item in x))

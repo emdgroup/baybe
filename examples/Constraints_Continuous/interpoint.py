@@ -1,0 +1,238 @@
+# # Chemical Reaction Optimization with Catalyst Constraints
+
+# This example demonstrates the use of **interpoint constraints**, which can be used to
+# apply restrictions on plates (batches) of experiments rather than on individual
+# experiments.
+# For more details on interpoint constraints, we refer to the {ref}`constraints user
+# guide <userguide/constraints:Interpoint Constraints>`.
+
+# ## The Scenario
+
+# For the example, we consider a microscale HTE optimization scenario carried out on a
+# small plate with four experiments (e.g., a subset of a 96-well plate). The goal is to
+# optimize reaction conditions for this plate where exactly 8 µmol of a certain catalyst
+# must be used for the entire plate while not using more than 1.2 mL of solvent in total.
+
+# This scenario illustrates two common challenges in laboratory settings:
+# 1. First, it demonstrates how to enforce a **catalyst requirement**: Exactly 8 µmol
+# of the catalyst must be used across the entire plate since the catalyst is supplied in
+# a sealed sensitive package that cannot be reused once opened.
+# 2. Second, it shows how to include a **solvent budget** constraint for
+# controlling the total solvent consumption across experiments for cost efficiency.
+
+# ## Imports and Settings
+
+import os
+
+import pandas as pd
+from matplotlib import pyplot as plt
+
+from baybe import Campaign
+from baybe.constraints import ContinuousLinearConstraint
+from baybe.parameters import NumericalContinuousParameter
+from baybe.recommenders import BotorchRecommender
+from baybe.recommenders.meta.sequential import TwoPhaseMetaRecommender
+from baybe.searchspace import SearchSpace
+from baybe.targets import NumericalTarget
+from baybe.utils.dataframe import add_fake_measurements
+from baybe.utils.random import set_random_seed
+
+SMOKE_TEST = "SMOKE_TEST" in os.environ
+BATCH_SIZE = 4
+N_ITERATIONS = 2 if SMOKE_TEST else 15
+TOLERANCE = 0.01
+
+
+set_random_seed(1337)
+
+# ## Problem Definition
+
+# We consider a synthetic chemical reaction with the following microscale HTE
+# parameters:
+# - **Solvent Volume** (0.05-0.30 mL per experiment): The amount of solvent used
+# - **Reactant Concentration** (0.05-0.20 mol/L): Primary reactant concentration
+# - **Catalyst Amount** (0.5-5 µmol): Absolute catalyst amount per experiment
+# - **Temperature** (60-110 °C): Reaction temperature
+#
+# Note that the parameter ranges are chosen arbitrarily and do not correspond to any
+# specific real-world reaction.
+
+parameters = [
+    NumericalContinuousParameter(
+        name="Solvent_Volume", bounds=(0.05, 0.30), metadata={"unit": "mL"}
+    ),
+    NumericalContinuousParameter(
+        name="Reactant_Conc", bounds=(0.05, 0.20), metadata={"unit": "mol/L"}
+    ),
+    NumericalContinuousParameter(
+        name="Catalyst_Amount", bounds=(0.5, 5.0), metadata={"unit": "µmol"}
+    ),
+    NumericalContinuousParameter(
+        name="Temperature", bounds=(60.0, 110.0), metadata={"unit": "°C"}
+    ),
+]
+
+# ## Constraint Definition
+
+# For the example, the following constraints are applied:
+#
+# 1. **Reagent efficiency**: For each experiment, the solvent volume must satisfy
+#    $V_{\mathrm{solvent}} \ge k \cdot C_{\mathrm{reactant}}$ with
+#    $k = 1.5\,\mathrm{mL\cdot L/mol}$ (to ensure proper dilution).
+# 2. **Catalyst constraint**: The total catalyst amount across all experiments in a
+#    plate must equal exactly 8 µmol.
+# 3. **Solvent budget**: The total solvent used for each plate should be at most 1.2 mL.
+
+# The first constraint is an *intrapoint* constraint since it applies to individual
+# experiments. The latter two are *interpoint* constraints as they apply to a plate as a
+# whole.
+
+intrapoint_constraints = [
+    ContinuousLinearConstraint(
+        parameters=["Solvent_Volume", "Reactant_Conc"],
+        operator=">=",
+        coefficients=[1, -1.5],
+        rhs=0.0,
+    ),
+]
+
+interpoint_constraints = [
+    ContinuousLinearConstraint(
+        parameters=["Catalyst_Amount"],
+        operator="=",
+        coefficients=[1],
+        rhs=8.0,
+        interpoint=True,
+    ),
+    ContinuousLinearConstraint(
+        parameters=["Solvent_Volume"],
+        operator="<=",
+        coefficients=[1],
+        rhs=1.2,
+        interpoint=True,
+    ),
+]
+
+# ## Campaign Setup
+
+# With these components in place, we can now define our search space and set up the
+# corresponding experimental campaign:
+
+searchspace = SearchSpace.from_product(
+    parameters=parameters,
+    constraints=intrapoint_constraints + interpoint_constraints,
+)
+objective = NumericalTarget(name="Reaction_Yield").to_objective()
+recommender = TwoPhaseMetaRecommender(
+    recommender=BotorchRecommender(sequential_continuous=False)
+)
+campaign = Campaign(
+    searchspace=searchspace,
+    objective=objective,
+    recommender=recommender,
+)
+
+
+# ## Optimization Loop with Constraint Validation
+
+# Next, we run several optimization iterations and validate that the interpoint
+# constraints are satisfied for each plate to ensure the optimization respects
+# our resource limitations:
+
+results_log = []
+
+for it in range(N_ITERATIONS):
+    recommendations = campaign.recommend(batch_size=BATCH_SIZE)
+
+    add_fake_measurements(recommendations, campaign.targets)
+    campaign.add_measurements(recommendations)
+    total_sol = recommendations["Solvent_Volume"].sum()
+    total_cat = recommendations["Catalyst_Amount"].sum()
+    solvent_ok = total_sol <= (1.2 + TOLERANCE)
+    catalyst_ok = abs(total_cat - 8.0) < TOLERANCE
+
+    assert solvent_ok, f"Solvent constraint violated: {total_sol:.2f} mL (max 1.2 mL)"
+    assert catalyst_ok, (
+        f"Catalyst constraint violated: {total_cat:.1f} µmol (expected 8.0 µmol)"
+    )
+
+    results_log.append(
+        {
+            "iteration": it + 1,
+            "total_solvent_mL": total_sol,
+            "total_catalyst_µmol": total_cat,
+            "individual_solvent_mL": recommendations["Solvent_Volume"].tolist(),
+            "individual_catalyst_µmol": recommendations["Catalyst_Amount"].tolist(),
+        }
+    )
+
+# ## Visualization
+
+# The plots below show the parameter values of individual experiments (labeled `Exp <n>`)
+# and as well as their totals over the respective plate (labeled `Total`), to
+# illustrate the effects of the two interpoint constraints:
+# * The total solvent used for any individual plate never exceeds the given budget of
+# 1.2 mL, even though the exact amount varies across plates and distributes differently
+# among individual experiments.
+# * By constrast, the total catalyst amount per plate is always
+# exactly 8 µmol, even though individual experiments have varying amounts.
+
+# fmt: off
+fig, axs = plt.subplots(1, 2, figsize=(10, 4));
+# fmt: on
+
+plot_configs = [
+    {
+        "ax": axs[0],
+        "individual_col": "individual_solvent_mL",
+        "total_col": "total_solvent_mL",
+        "y": 1.2,
+        "label": "Budget",
+        "title": "Solvent",
+        "ylabel": "Solvent Volume (mL)",
+    },
+    {
+        "ax": axs[1],
+        "individual_col": "individual_catalyst_µmol",
+        "total_col": "total_catalyst_µmol",
+        "y": 8,
+        "label": "Required",
+        "title": "Catalyst",
+        "ylabel": "Catalyst Amount (µmol)",
+    },
+]
+
+results_df = pd.DataFrame(results_log)
+for config in plot_configs:
+    plt.sca(config["ax"])
+
+    for exp_idx, values_per_exp in enumerate(
+        zip(*results_df[config["individual_col"]]), start=1
+    ):
+        plt.plot(
+            results_df["iteration"],
+            values_per_exp,
+            "o-",
+            label=f"Exp {exp_idx}",
+        )
+
+    plt.plot(
+        results_df["iteration"],
+        results_df[config["total_col"]],
+        "s-",
+        label="Total",
+        zorder=0,
+    )
+
+    plt.axhline(y=config["y"], label=config["label"], color="black")
+    plt.ylim(bottom=0)
+    plt.title(config["title"])
+    plt.xlabel("Plate")
+    plt.ylabel(config["ylabel"])
+    # fmt: off
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5));
+    # fmt: on
+    plt.tight_layout()
+
+if not SMOKE_TEST:
+    plt.savefig("interpoint.svg")

@@ -571,6 +571,41 @@ def fixture_constraints(constraint_names: list[str], mock_substances, n_grid_poi
             coefficients=[1.0, 3.0],
             rhs=0.3,
         ),
+        "InterConstraint_1": ContinuousLinearConstraint(
+            parameters=["Conti_finite1"],
+            operator="=",
+            coefficients=[1],
+            rhs=0.3,
+            interpoint=True,
+        ),
+        "InterConstraint_2": ContinuousLinearConstraint(
+            parameters=["Conti_finite1"],
+            operator=">=",
+            coefficients=[2],
+            rhs=0.3,
+            interpoint=True,
+        ),
+        "InterConstraint_3": ContinuousLinearConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            operator="=",
+            coefficients=[1, 2],
+            rhs=0.3,
+            interpoint=True,
+        ),
+        "InterConstraint_4": ContinuousLinearConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[2, -1],
+            operator=">=",
+            rhs=0.3,
+            interpoint=True,
+        ),
+        "InterConstraint_5": ContinuousLinearConstraint(
+            parameters=["Conti_finite1", "Conti_finite2"],
+            coefficients=[2, -1],
+            operator="<=",
+            rhs=0.3,
+            interpoint=True,
+        ),
     }
     return [
         c_item
@@ -611,6 +646,20 @@ def fixture_campaign(parameters, constraints, recommender, objective):
             parameters=parameters, constraints=constraints
         ),
         recommender=recommender,
+        objective=objective,
+    )
+
+
+@pytest.fixture(name="campaign_non_sequential")
+def fixture_campaign_non_sequential(
+    parameters, constraints, non_sequential_recommender, objective
+):
+    """Returns a campaign using non-sequential recommender."""
+    return Campaign(
+        searchspace=SearchSpace.from_product(
+            parameters=parameters, constraints=constraints
+        ),
+        recommender=non_sequential_recommender,
         objective=objective,
     )
 
@@ -695,6 +744,19 @@ def fixture_recommender(initial_recommender, surrogate_model, acqf):
         initial_recommender=initial_recommender,
         recommender=BotorchRecommender(
             surrogate_model=surrogate_model, acquisition_function=acqf
+        ),
+    )
+
+
+@pytest.fixture(name="non_sequential_recommender")
+def fixture_non_sequential_recommender(initial_recommender, surrogate_model, acqf):
+    """A recommender for non-sequential optimization."""
+    return TwoPhaseMetaRecommender(
+        initial_recommender=initial_recommender,
+        recommender=BotorchRecommender(
+            surrogate_model=surrogate_model,
+            acquisition_function=acqf,
+            sequential_continuous=False,
         ),
     )
 

@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings option for random seed control
 - `identify_non_dominated_configurations` method to `Campaign` and `Objective`
   for determining the Pareto front
+- Interpoint constraints for continuous search spaces
+
+### Breaking Changes
+- `ContinuousLinearConstraint.to_botorch` now returns a collection of constraint tuples
+  instead of a single tuple (needed for interpoint constraints)
 
 ### Removed
 - `parallel_runs` argument from `simulate_scenarios`, since parallelization

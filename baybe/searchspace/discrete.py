@@ -502,6 +502,11 @@ class SubspaceDiscrete(SerialMixin):
         return len(self.parameters) == 0
 
     @property
+    def is_constrained(self) -> bool:
+        """Boolean indicating if the subspace has any constraints."""
+        return len(self.constraints) > 0
+
+    @property
     def parameter_names(self) -> tuple[str, ...]:
         """Return tuple of parameter names."""
         return tuple(p.name for p in self.parameters)

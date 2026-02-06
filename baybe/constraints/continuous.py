@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gc
 import math
-from collections.abc import Collection, Iterator, Sequence
+from collections.abc import Collection, Iterable, Iterator, Sequence
 from itertools import combinations
 from math import comb
 from typing import TYPE_CHECKING, Any
@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import cattrs
 import numpy as np
 from attrs import define, field
-from attrs.validators import deep_iterable, gt, in_, lt
+from attrs.validators import deep_iterable, gt, in_, instance_of, lt
 
 from baybe.constraints.base import (
     CardinalityConstraint,
@@ -26,6 +26,8 @@ from baybe.utils.validation import finite_float
 
 if TYPE_CHECKING:
     from torch import Tensor
+
+    ConstraintTuple = tuple[Tensor, Tensor, float]
 
 _valid_linear_constraint_operators = ["=", ">=", "<="]
 
@@ -51,6 +53,18 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
     rhs: float = field(default=0.0, converter=float, validator=finite_float)
     """Right-hand side value of the in-/equality."""
+
+    is_interpoint: bool = field(
+        alias="interpoint", default=False, validator=instance_of(bool)
+    )
+    """Flag for defining an interpoint constraint.
+
+    While intrapoint constraints impose conditions on each individual point of a batch,
+    interpoint constraints do so **across** the points of the batch. That is, an
+    interpoint constraint of the form ``x <= 100`` encodes that the sum of the values
+    of the parameter ``x`` across all points in the batch must be less than or equal to
+    ``100``.
+    """
 
     @coefficients.validator
     def _validate_coefficients(  # noqa: DOC101, DOC103
@@ -105,8 +119,13 @@ class ContinuousLinearConstraint(ContinuousConstraint):
         )
 
     def to_botorch(
-        self, parameters: Sequence[NumericalContinuousParameter], idx_offset: int = 0
-    ) -> tuple[Tensor, Tensor, float]:
+        self,
+        parameters: Iterable[NumericalContinuousParameter],
+        idx_offset: int = 0,
+        *,
+        batch_size: int | None = None,
+        flatten: bool = False,
+    ) -> list[ConstraintTuple]:
         """Cast the constraint in a format required by botorch.
 
         Used in calling ``optimize_acqf_*`` functions, for details see
@@ -114,30 +133,70 @@ class ContinuousLinearConstraint(ContinuousConstraint):
 
         Args:
             parameters: The parameter objects of the continuous space.
-            idx_offset: Offset to the provided parameter indices.
+            idx_offset: An offset added to the provided parameter indices. This is
+                useful when the parameters are represented as part of a larger input
+                tensor and do not start at index zero.
+            batch_size: The batch size used for the recommendation. Necessary
+                for interpoint constraints and flattened representation, where the
+                indices need to be created for all elements of the batch.
+            flatten: If ``True``, the constraint is returned in a "flattened" format,
+                where each element of the batch is assumed to be represented via its own
+                dimension in an augmented input tensor. This is useful for routines
+                that do not natively support batch dimensions, such as
+                :func:`botorch.utils.sampling.get_polytope_samples`.
+
+        Raises:
+            ValueError: When a batch size is provided but not required, or vice versa.
 
         Returns:
-            The tuple required by botorch.
+            A collection of tuples representing the constraint in BoTorch format.
         """
+        if (batch_size is not None) ^ (self.is_interpoint or flatten):
+            raise ValueError(
+                "A batch size must be set if and only if the constraint is "
+                "an interpoint constraint or flattening is enabled."
+            )
+
         import torch
 
-        param_names = [p.name for p in parameters]
-        param_indices = [
-            param_names.index(p) + idx_offset
-            for p in self.parameters
-            if p in param_names
-        ]
-
-        return (
-            torch.tensor(param_indices),
-            torch.tensor(
-                [self._multiplier * c for c in self.coefficients],
-                dtype=active_settings.DTypeFloatTorch,
-            ),
-            np.asarray(
-                self._multiplier * self.rhs, dtype=active_settings.DTypeFloatNumpy
-            ).item(),
+        # Handle direction of inequality by sign flip
+        coefficients = self._multiplier * torch.tensor(
+            self.coefficients, dtype=active_settings.DTypeFloatTorch
         )
+        rhs = (
+            self._multiplier
+            * torch.tensor(self.rhs, dtype=active_settings.DTypeFloatTorch).item()
+        )
+
+        # Locate where the parameters referenced by the constraint will later be found
+        # in the input tensor provided to BoTorch
+        names = [p.name for p in parameters]
+        n_parameters = len(names)
+        idxs = torch.tensor([names.index(p) + idx_offset for p in self.parameters])
+
+        # Early return for the simplest case: single constraint for all batch elements
+        if not flatten and not self.is_interpoint:
+            return [(idxs, coefficients, rhs)]
+
+        assert batch_size is not None
+
+        # Construct augmented indices for batched constraints
+        idxs_batched_2d = torch.cartesian_prod(torch.arange(batch_size), idxs)
+        idxs_batched_1d = torch.mv(
+            idxs_batched_2d, torch.tensor([n_parameters + idx_offset, 1])
+        )
+        coefficients_batched = coefficients.repeat(batch_size)
+
+        if flatten and self.is_interpoint:
+            return [(idxs_batched_1d, coefficients_batched, rhs)]
+        elif flatten:
+            return [
+                (i, coefficients, rhs) for i in idxs_batched_1d.view(batch_size, -1)
+            ]
+        else:
+            # The constraint can be represented in 2D form (interpoint, non-flattened)
+            # https://github.com/pytorch/botorch/blob/1518b304f47f5cdbaf9c175e808c90b3a0a6b86d/botorch/optim/optimize.py#L609 # noqa: E501
+            return [(idxs_batched_2d, coefficients_batched, rhs)]
 
 
 @define

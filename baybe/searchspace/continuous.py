@@ -35,11 +35,13 @@ from baybe.searchspace.validation import (
 )
 from baybe.serialization import SerialMixin, converter, select_constructor_hook
 from baybe.settings import active_settings
-from baybe.utils.basic import to_tuple
+from baybe.utils.basic import flatten, to_tuple
 from baybe.utils.conversion import to_string
 from baybe.utils.dataframe import get_transform_objects, pretty_print_df
 
 if TYPE_CHECKING:
+    from torch import Tensor
+
     from baybe.searchspace.core import SearchSpace
 
 _MAX_CARDINALITY_SAMPLING_ATTEMPTS = 10_000
@@ -290,12 +292,12 @@ class SubspaceContinuous(SerialMixin):
 
     @property
     def is_empty(self) -> bool:
-        """Return whether this subspace is empty."""
+        """Boolean indicating if the subspace is empty."""
         return len(self.parameters) == 0
 
     @property
     def parameter_names(self) -> tuple[str, ...]:
-        """Return tuple of parameter names."""
+        """The names of the parameters spanning the subspace."""
         return tuple(p.name for p in self.parameters)
 
     @property
@@ -344,6 +346,24 @@ class SubspaceContinuous(SerialMixin):
                 for c in self.constraints_lin_ineq
                 if set(c.parameters) - set(parameter_names)
             ],
+        )
+
+    @property
+    def is_constrained(self) -> bool:
+        """Boolean indicating if the subspace is constrained in any way."""
+        return any(
+            (
+                self.constraints_lin_eq,
+                self.constraints_lin_ineq,
+                self.constraints_nonlin,
+            )
+        )
+
+    @property
+    def has_interpoint_constraints(self) -> bool:
+        """Boolean indicating if the subspace has any interpoint constraints."""
+        return any(
+            c.is_interpoint for c in self.constraints_lin_eq + self.constraints_lin_ineq
         )
 
     def _enforce_cardinality_constraints(
@@ -453,11 +473,7 @@ class SubspaceContinuous(SerialMixin):
         if not self.parameters:
             return pd.DataFrame(index=pd.RangeIndex(0, batch_size))
 
-        if (
-            len(self.constraints_lin_eq) == 0
-            and len(self.constraints_lin_ineq) == 0
-            and len(self.constraints_cardinality) == 0
-        ):
+        if not self.is_constrained:
             return self._sample_from_bounds(batch_size, self.comp_rep_bounds.values)
 
         if len(self.constraints_cardinality) == 0:
@@ -480,17 +496,67 @@ class SubspaceContinuous(SerialMixin):
         import torch
         from botorch.utils.sampling import get_polytope_samples
 
-        points = get_polytope_samples(
-            n=batch_size,
-            bounds=torch.from_numpy(bounds),
-            equality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_eq
-            ],
-            inequality_constraints=[
-                c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
-            ],
-        )
+        bounds_tensor = torch.from_numpy(bounds)
+        if not self.has_interpoint_constraints:
+            points = get_polytope_samples(
+                n=batch_size,
+                bounds=bounds_tensor,
+                equality_constraints=flatten(
+                    c.to_botorch(self.parameters) for c in self.constraints_lin_eq
+                ),
+                inequality_constraints=flatten(
+                    c.to_botorch(self.parameters) for c in self.constraints_lin_ineq
+                ),
+            )
+        else:
+            points = self._sample_from_polytope_with_interpoint_constraints(
+                batch_size, bounds_tensor
+            )
+
         return pd.DataFrame(points, columns=self.parameter_names)
+
+    def _sample_from_polytope_with_interpoint_constraints(
+        self, batch_size: int, bounds: Tensor
+    ) -> Tensor:
+        """Draw samples from a polytope with interpoint constraints.
+
+        If the space has interpoint constraints, we need to sample from a larger
+        searchspace that models the batch size via additional dimension. This is
+        necessary since `get_polytope_samples` cannot handle interpoint
+        constraints, see https://github.com/pytorch/botorch/issues/2468
+
+        Args:
+            batch_size: The number of samples to draw.
+            bounds: The bounds of the parameters as a 2D tensor where the first row
+                contains the lower bounds and the second row the upper bounds.
+
+        Returns:
+            A tensor of shape (batch_size, n_params) containing the samples.
+        """
+        from botorch.utils.sampling import get_polytope_samples
+
+        eq_constraints = flatten(
+            c.to_botorch(self.parameters, batch_size=batch_size, flatten=True)
+            for c in self.constraints_lin_eq
+        )
+        ineq_constraints = flatten(
+            c.to_botorch(self.parameters, batch_size=batch_size, flatten=True)
+            for c in self.constraints_lin_ineq
+        )
+
+        flattened_bounds = bounds.repeat(1, batch_size)
+
+        points = get_polytope_samples(
+            n=1,
+            bounds=flattened_bounds,
+            equality_constraints=eq_constraints,
+            inequality_constraints=ineq_constraints,
+        )
+
+        # Reshape to separate batch dimension from parameter dimension
+        points_per_batch, remainder = divmod(points.shape[-1], batch_size)
+        assert remainder == 0, "Dimensions mismatch."
+        return points.reshape(batch_size, points_per_batch)
 
     def _sample_from_polytope_with_cardinality_constraints(
         self, batch_size: int
