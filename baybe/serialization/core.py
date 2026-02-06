@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import pickle
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
@@ -129,8 +130,13 @@ def block_deserialization_hook(_: Any, cls: type) -> NoReturn:  # noqa: DOC101, 
 def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
     """Use the constructor specified in the 'constructor' field for deserialization."""
     # If a constructor is specified, use it
-    specs = specs.copy()
     if constructor_name := specs.pop("constructor", None):
+        # Drop potentially existing type field
+        # (The type is already fully determined in this execution branch)
+        specs = specs.copy()
+        specs.pop(_TYPE_FIELD, None)
+
+        # Extract the constructor callable
         constructor = getattr(cls, constructor_name)
 
         # If given a non-attrs class, simply call the constructor
@@ -139,9 +145,14 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
 
         # Extract the constructor parameter types and deserialize the arguments
         type_hints = get_type_hints(constructor)
-        for key, value in specs.items():
+        for key in specs:
             annotation = type_hints[key]
-            specs[key] = converter.structure(specs[key], annotation)
+
+            # For some types (e.g. unions), there might not be a registered structure
+            # hook. In this case, the constructor will accept the raw value, so we
+            # simply pass it through.
+            with contextlib.suppress(cattrs.StructureHandlerNotFoundError):
+                specs[key] = converter.structure(specs[key], annotation)
 
         # Call the constructor with the deserialized arguments
         return constructor(**specs)
