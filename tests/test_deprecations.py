@@ -39,6 +39,7 @@ from baybe.targets._deprecated import (
     linear_transform,
     triangular_transform,
 )
+from baybe.targets.base import Target
 from baybe.targets.binary import BinaryTarget
 from baybe.transformations.basic import AffineTransformation
 
@@ -474,3 +475,20 @@ def test_target_transformation(
     if deprecation is not None:
         assert_series_equal(deprecation.transform(series), expected)
     assert_series_equal(modern.transform(series), expected)
+
+
+def test_deserialization_using_constructor():
+    """Deserialization using the 'constructor' field works despite having other
+    deprecation mechanisms in place."""  # noqa
+    config = """
+    {
+        "type": "NumericalTarget",
+        "name": "t_max_bounds",
+        "constructor": "normalized_ramp",
+        "cutoffs": [0, 100]
+    }
+    """
+    t_old = NumericalTarget("t_max_bounds", mode="MAX", bounds=(0, 100))
+    t_new = NumericalTarget.normalized_ramp("t_max_bounds", cutoffs=(0, 100))
+    t_new_config = Target.from_json(config)
+    assert t_old == t_new == t_new_config

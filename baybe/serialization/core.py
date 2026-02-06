@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextlib
 import pickle
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, NoReturn, TypeVar, get_type_hints
@@ -146,7 +147,12 @@ def select_constructor_hook(specs: dict, cls: type[_T]) -> _T:
         specs = specs.copy()
         for key in specs:
             annotation = type_hints[key]
-            specs[key] = converter.structure(specs[key], annotation)
+
+            # For some types (e.g. unions), there might not be a registered structure
+            # hook. In this case, the constructor will accept the raw value, so we
+            # simply pass it through.
+            with contextlib.suppress(cattrs.StructureHandlerNotFoundError):
+                specs[key] = converter.structure(specs[key], annotation)
 
         # Call the constructor with the deserialized arguments
         return constructor(**specs)
