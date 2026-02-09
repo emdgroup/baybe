@@ -60,56 +60,56 @@ BayBE offers a range of ✨**built&#8209;in&nbsp;features**✨, including:
 
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
   <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    🛠️ <b>Flexible</b> modeling options
+    🛠️ Flexible modeling options
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Use both <b>continuous and discrete parameters</b> within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
-      <li><b>Restrict the search space</b> to only a relevant subspace (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
-      <li>Choose between different optimization strategies to <b>balance exploration and exploitation</b> of the search space:
+      <li>Use both continuous and discrete parameters within a single <a href="https://emdgroup.github.io/baybe/stable/examples/Searchspaces/hybrid_space.html">hybrid search space</a>.</li>
+      <li>Restrict the search space to only a relevant subspace (e.g., to define a maximal number of mixture components) using <a href="https://emdgroup.github.io/baybe/stable/userguide/constraints.html">constraints</a>.</li>
+      <li>Choose between different optimization strategies to balance exploration and exploitation of the search space:
         <ul>
-          <li>Gain the <b>understanding of the whole search space</b> via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
-          <li>Maximize <b>total gain across a sequence of actions</b> via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
+          <li>Gain the understanding of the whole search space via <a href="https://emdgroup.github.io/baybe/stable/userguide/active_learning.html">active learning</a>.</li>
+          <li>Maximize total gain across a sequence of actions via <a href="https://emdgroup.github.io/baybe/stable/examples/Multi_Armed_Bandit/Multi_Armed_Bandit.html">bandit models</a>.</li>
         </ul>
       </li>
-      <li>Choose between different <b>target types</b>, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
-      <li>Specify <b>how favourable individual target values</b> are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
-      <li>Optimize <b>multiple targets</b> at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>).</li>
+      <li>Choose between different target types, including <a href="https://emdgroup.github.io/baybe/stable/userguide/targets.html#numericaltarget">numerical targets</a> (e.g., experimental outcome values) and <a href="https://emdgroup.github.io/baybe/stable/_autosummary/baybe.targets.binary.BinaryTarget.html">binary targets</a> (e.g., good/bad classification of experimental results).</li>
+      <li>Specify how favourable individual target values are (e.g., for matching to a specific value or saturation behaviour) via <a href="https://emdgroup.github.io/baybe/stable/userguide/transformations.html">target transformations</a>.</li>
+      <li>Optimize multiple targets at once (e.g., via <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#paretoobjective">Pareto optimization</a> or <a href="https://emdgroup.github.io/baybe/stable/userguide/objectives.html#desirabilityobjective">desirability scalarization</a>).</li>
     </ul>
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
   <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    📚 Mechanisms for leveraging <b>additional information</b>
+    📚 Mechanisms for leveraging additional information
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Capture <b>relationships between categories</b> by <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">encoding categorical</a> data.</li>
-      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for <b>chemistry-related use cases</b>.</li>
-      <li><b>Built-in mechanistic</b> process understanding via <a href="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
-      <li>Leverage <b>additional data</b> from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/userguide/transfer_learning.html">transfer learning</a>.</li>
+      <li>Capture relationships between categories by <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#customdiscreteparameter">encoding categorical</a> data.</li>
+      <li>Use built-in <a href="https://emdgroup.github.io/baybe/stable/userguide/parameters.html#substanceparameter">chemical encodings</a> for chemistry-related use cases.</li>
+      <li>Built-in mechanistic process understanding via <a href="https://emdgroup.github.io/baybe/stable/userguide/surrogates.html#using-custom-models">custom surrogate</a> models.</li>
+      <li>Leverage additional data from similar campaigns to accelerate optimization via <a href="https://emdgroup.github.io/baybe/stable/userguide/transfer_learning.html">transfer learning</a>.</li>
     </ul>
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
   <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    🔗 <b>Advanced</b> optimization workflows
+    🔗 Advanced optimization workflows
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with <b>partial measurements</b> and pending experiments.</li>
-      <li>Connect BayBE with <b>database storage and API wrappers</b> using the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
+      <li>Run campaigns <a href="https://emdgroup.github.io/baybe/stable/userguide/async.html">asynchronously</a> with partial measurements and pending experiments.</li>
+      <li>Connect BayBE with database storage and API wrappers using the <a href="https://emdgroup.github.io/baybe/stable/userguide/serialization.html">serialization</a> functionality.</li>
     </ul>
   </div>
 </details>
 <details style="border:2px solid #535353; border-radius: 7px; margin: 5px;">
   <summary style="background-color: #535353; color: white; padding: 10px; border-radius: 5px; cursor: pointer;">
-    🔍 Performance <b>evaluation</b> tools
+    🔍 Performance evaluation tools
   </summary>
   <div style="padding: 10px;">
     <ul>
-      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by <b>analyzing model behavior</b> and feature importance.</li>
-      <li>Conduct <b>benchmarks</b> to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/userguide/simulation.html">backtesting</a>.</li>
+      <li>Gain <a href="https://emdgroup.github.io/baybe/stable/userguide/insights.html">insights</a> about the optimization campaigns by analyzing model behavior and feature importance.</li>
+      <li>Conduct benchmarks to select between different Bayesian optimization settings via <a href="https://emdgroup.github.io/baybe/stable/userguide/simulation.html">backtesting</a>.</li>
     </ul>
   </div>
 </details>
